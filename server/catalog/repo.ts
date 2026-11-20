@@ -88,11 +88,6 @@ export function getOrCreateTrackTx(tx: Tx, artistId: number, title: string, dura
   return id;
 }
 
-export const getOrCreateArtist = async (name: string): Promise<number> => transact(tx => getOrCreateArtistTx(tx, name));
-export const getOrCreateAlbum = async (artistId: number, title: string, releaseDate: string | null = null): Promise<number> =>
-  transact(tx => getOrCreateAlbumTx(tx, artistId, title, releaseDate));
-export const getOrCreateTrack = async (artistId: number, title: string, duration = 0, albumId: number | null = null, position?: number): Promise<number> =>
-  transact(tx => getOrCreateTrackTx(tx, artistId, title, duration, albumId, position));
 
 /** The names a play arrives with. An empty or missing album means none was given. */
 export type TrackNames = { artist: string; track: string; album?: string; duration?: number };

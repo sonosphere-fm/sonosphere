@@ -1,8 +1,8 @@
 // Data access for name corrections: renaming what is already in the catalogue, and the record of the last sweep.
 import { and, eq, ne } from "drizzle-orm";
-import { db, transact, type Tx } from "../db/client";
+import { transact, type Tx } from "../db/client";
 import { albums, artists, meta, tracks } from "../db/schema";
-import { first, norm } from "../util";
+import { norm } from "../util";
 
 /** Corrected titles for one artist: `fix` keeps the name and changes its capitals, `move` is a different name. */
 export type Titles = { fix: Map<string, string>; move: Map<string, string> };
@@ -59,5 +59,3 @@ export function sweep(r: Renames, status: (result: SweepResult) => string): Swee
 }
 
 /** The saved record of the last sweep (JSON text), or null if there has not been one. */
-export const lastSweep = async (): Promise<string | null> =>
-  (await first(db.select({ value: meta.value }).from(meta).where(eq(meta.key, STATUS)).limit(1)))?.value ?? null;

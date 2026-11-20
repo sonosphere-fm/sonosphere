@@ -7,9 +7,5 @@ export type ProfileEdit = {
   hideRecent?: boolean; shoutsEnabled?: boolean; dmPolicy?: string;
 };
 export type ProfileSaved = Session;
-/** POST /api/me/password */
-export type PasswordChange = { current: string; next: string };
-/** POST /api/me/delete and /api/me/clear-scrobbles ask for the password again. */
-export type PasswordConfirm = { password: string };
 /** POST /api/me/clear-scrobbles: how many plays were removed. */
 export type ScrobblesCleared = { deleted: number };

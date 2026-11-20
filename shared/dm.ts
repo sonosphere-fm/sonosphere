@@ -28,7 +28,6 @@ export type DmWith = { user: DmUser; threadId: number | null; can: boolean; why:
 /** GET /api/dm/thread/:id. `max` is the longest message allowed, `unsendFor` the seconds a message can be taken back. */
 export type DmThreadPage = { thread: DmThread; messages: DmMessage[]; more: boolean; can: boolean; why: string; blocked: boolean; max: number; unsendFor: number };
 /** POST /api/dm/send */
-export type DmSendRequest = { thread?: number; to?: string; body: string };
 export type DmSent = { message: DmMessage; thread: DmThread };
 /** POST /api/dm/thread/:id/read, POST .../decline and DELETE /api/dm/thread/:id */
 export type DmDone = { ok: true; counts: DmCounts };

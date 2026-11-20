@@ -33,7 +33,7 @@ export function UserPage({ tab }: { tab: Tab }) {
       return (
         <>
           <Hero tabs={<Tabs items={[[base, "Overview", true], [`${base}/listening-report`, "Reports"], [`${base}/library`, "Library"], [`${base}/following`, `Following (${u.following})`], [`${base}/followers`, "Followers"], [`${base}/loved`, "Loved"], [`${base}/journal`, "Journal"], [`${base}/earworms`, "Earworms"], [`${base}/playlists`, "Playlists"], [`${base}/events`, "Events"], [`${base}/soundalikes`, "Soundalikes"], [`${base}/tags`, "Tags"], [`${base}/wall`, `Wall (${u.shoutCount})`]]} />} image={u.image}
-            art={<Art name={u.username} image={u.image} kind="user" />} kicker={u.followsYou ? "Follows you" : "Listener"} title={u.username}
+            art={<Art image={u.image} kind="user" />} kicker={u.followsYou ? "Follows you" : "Listener"} title={u.username}
             sub={<>{[u.realname, u.country].filter(Boolean).join(" · ")}{(u.realname || u.country) && " · "}scrobbling since {date(u.registeredAt)}</>}
             stats={<><Stat label="Scrobbles" value={<Link to={`${base}/library`}>{num(u.playcount)}</Link>} /><Stat label="Artists" value={<Link to={`${base}/library/artists`}>{num(u.artistCount)}</Link>} />
               <Stat label="Loved tracks" value={<Link to={`${base}/loved`}>{num(u.lovedCount)}</Link>} /><Stat label="Followers" value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} /></>}
@@ -114,7 +114,7 @@ function Overview({ u, mine }: { u: Profile; mine: boolean }) {
         )}
         {u.obsession && (
           <Section title="Current earworm" more={`${base}/earworms`} moreLabel="All">
-            <div className="obsession"><Link to={trackUrl(u.obsession.artist, u.obsession.title)}><Art name={u.obsession.album || u.obsession.title} sub={u.obsession.artist} image={u.obsession.image} /></Link>
+            <div className="obsession"><Link to={trackUrl(u.obsession.artist, u.obsession.title)}><Art image={u.obsession.image} /></Link>
               <div><Link className="strong" to={trackUrl(u.obsession.artist, u.obsession.title)}>{u.obsession.title}</Link><Link className="muted" to={artistUrl(u.obsession.artist)}>{u.obsession.artist}</Link>{u.obsession.comment && <p className="small">“{u.obsession.comment}”</p>}</div></div>
           </Section>
         )}

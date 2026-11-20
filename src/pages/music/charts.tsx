@@ -18,7 +18,7 @@ function ChartCol(props: ChartColProps) {
   const name = (r: ChartItem) => ("name" in r ? r.name : r.title);
   const artist = (r: ChartItem) => ("artist" in r ? r.artist : undefined);
   const to = (r: ChartItem) => kind === "artist" ? artistUrl(name(r)) : kind === "tag" ? tagUrl(name(r)) : kind === "album" ? albumUrl(artist(r) ?? "", name(r)) : trackUrl(artist(r) ?? "", name(r));
-  const art = (r: ChartItem) => <Art name={"album" in r ? r.album || r.title : name(r)} sub={artist(r)} image={"image" in r ? r.image : undefined} kind={kind === "artist" ? "artist" : "album"} />;
+  const art = (r: ChartItem) => <Art image={"image" in r ? r.image : undefined} kind={kind === "artist" ? "artist" : "album"} />;
   const [top, ...rest] = items, lead = kind !== "tag" && top;
   return (
     <section className="chartcol" id={`top-${kind}s`}>

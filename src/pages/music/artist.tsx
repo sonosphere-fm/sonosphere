@@ -29,8 +29,8 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
           actions={<><PlayButton queue={a.topTracks} label="Play artist" /><StationButton type="artist" name={a.name} label="Artist radio" ghost />{me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}</>}
           stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>}
           cards={tab === "overview" && (a.latestAlbum || top) ? <>
-            {a.latestAlbum && <FeatureCard label="Latest release" to={albumUrl(a.name, a.latestAlbum.title)} image={a.latestAlbum.image} name={a.latestAlbum.title} artist={a.name} title={a.latestAlbum.title} sub={a.latestAlbum.releaseDate && releaseDate(a.latestAlbum.releaseDate)} />}
-            {top && <FeatureCard label={a.weekTrack ? "Popular this week" : "Most popular track"} to={trackUrl(a.name, top.title)} image={top.image} name={top.album || top.title} artist={a.name} title={top.title} sub={`${num(top.listeners)} listeners`} />}
+            {a.latestAlbum && <FeatureCard label="Latest release" to={albumUrl(a.name, a.latestAlbum.title)} image={a.latestAlbum.image} title={a.latestAlbum.title} sub={a.latestAlbum.releaseDate && releaseDate(a.latestAlbum.releaseDate)} />}
+            {top && <FeatureCard label={a.weekTrack ? "Popular this week" : "Most popular track"} to={trackUrl(a.name, top.title)} image={top.image} title={top.title} sub={`${num(top.listeners)} listeners`} />}
           </> : null} />
         <div className="wrap page mpage">
           {tab === "overview" && (
@@ -96,7 +96,7 @@ function ArtistSimilar({ name }: { name: string }) {
   return <Async q={q}>{d => d.items.length ? (
     <ul className="similar">{d.items.map(s => (
       <li key={s.id}>
-        <Link to={artistUrl(s.name)} className="similar-art"><Art name={s.name} image={s.image} kind="artist" /></Link>
+        <Link to={artistUrl(s.name)} className="similar-art"><Art image={s.image} kind="artist" /></Link>
         <div className="grow"><Link className="strong" to={artistUrl(s.name)}>{s.name}</Link><span className="muted small">{num(s.listeners)} listeners</span><TagChips tags={s.tags.map(n => ({ name: n }))} /></div>
         <div className="match" title={`${Math.round(s.match * 100)}% match`}><span style={{ width: `${Math.min(100, s.match * 100)}%` }} /></div>
       </li>

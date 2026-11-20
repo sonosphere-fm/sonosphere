@@ -82,11 +82,6 @@ export function sweep(): repo.SweepResult {
   return repo.sweep({ artistCase, artistMove, titles }, r => JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules }));
 }
 
-/** What the last sweep did and which versions of the data it used, or null if there has not been one. */
-export async function correctionsStatus(): Promise<unknown> {
-  try { return JSON.parse((await repo.lastSweep()) || "null"); } catch { return null; }
-}
-
 /** Load the saved copy straight away, then refresh from the network when it is more than a day old. */
 export async function syncCorrections(force = false): Promise<repo.SweepResult | null> {
   if (!enabled) return null;

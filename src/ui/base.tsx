@@ -6,7 +6,7 @@ import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
 
 // ---------- artwork ----------
 /** A picture when there is one; otherwise a flat grey tile with a quiet glyph (a person for artists and listeners, a record for albums). */
-export function Art({ name, sub = "", image, kind = "album" }: { name: string; sub?: string; image?: number | null; kind?: "artist" | "album" | "user" }) {
+export function Art({ image, kind = "album" }: { image?: number | null; kind?: "artist" | "album" | "user" }) {
   if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image)} alt="" loading="lazy" /></span>;
   return (
     <span className={`art art-${kind} art-none`}>
@@ -79,8 +79,8 @@ export function useAction() {
   return { busy, run, note, error };
 }
 export const Avatar = ({ user, size = 40, plain }: { user: { username: string; image?: number | null }; size?: number; plain?: boolean }) => plain
-  ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art name={user.username} image={user.image} kind="user" /></span> // inside another link
-  : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art name={user.username} image={user.image} kind="user" /></Link>;
+  ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art image={user.image} kind="user" /></span> // inside another link
+  : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art image={user.image} kind="user" /></Link>;
 
 // The wordmark: heavy italic type with a corner of a record (spindle and two grooves) spinning off the end.
 export const LogoDisc = () => <svg className="wm-grooves" viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="4.6" strokeLinecap="round"><path d="M4 8a28 28 0 0 1 28 28" /><path d="M4 19a17 17 0 0 1 17 17" /></g><circle cx="5.5" cy="34.5" r="5.5" fill="currentColor" /></svg>;

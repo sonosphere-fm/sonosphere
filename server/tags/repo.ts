@@ -19,7 +19,6 @@ export function getOrCreateTagTx(tx: Tx, name: string): number {
   const row = tx.select({ id: tags.id }).from(tags).where(eq(tags.nameNorm, n)).get();
   return row ? row.id : tx.insert(tags).values({ name: n, nameNorm: n }).returning({ id: tags.id }).get().id;
 }
-export const getOrCreateTag = async (name: string): Promise<number> => transact(tx => getOrCreateTagTx(tx, name));
 
 // ---------- one person's tags ----------
 /** The names of the tags a person has put on an item. Nobody (no user id) has none. */

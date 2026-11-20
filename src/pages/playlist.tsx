@@ -17,7 +17,7 @@ export function PlaylistPage() {
   return (
     <Async q={q}>{p => (
       <>
-        <Hero art={<Art name={p.title + p.id} image={p.tracks[0]?.image} />} kicker="Playlist" title={p.title} sub={<>by <Link to={userUrl(p.owner)}>{p.owner}</Link> · {plural(p.tracks.length, "track")} · {dur(p.tracks.reduce((s, t) => s + (t.duration || 0), 0)) || "0:00"}</>}
+        <Hero art={<Art image={p.tracks[0]?.image} />} kicker="Playlist" title={p.title} sub={<>by <Link to={userUrl(p.owner)}>{p.owner}</Link> · {plural(p.tracks.length, "track")} · {dur(p.tracks.reduce((s, t) => s + (t.duration || 0), 0)) || "0:00"}</>}
           actions={<><PlayButton queue={p.tracks} label="Play playlist" />{p.mine && <><Button kind="btn ghost" onClick={() => setEdit({ title: p.title, description: p.description })}>Edit details</Button>
             <Button kind="btn ghost" onClick={() => { if (window.confirm("Delete this playlist?")) api<PlaylistOk>(`/playlist/${id}`, { method: "DELETE" }).then(() => nav(`${userUrl(p.owner)}/playlists`)); }}>Delete</Button></>}</>}>
           {p.description && <p className="prose">{p.description}</p>}

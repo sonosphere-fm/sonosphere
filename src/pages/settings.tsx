@@ -37,7 +37,7 @@ function ProfileSettings() {
   return (
     <>
       <Section title="Avatar">
-        <div className="row"><span className="avatar" style={{ width: 96, height: 96 }}><Art name={me!.username} image={me!.image} kind="user" /></span>
+        <div className="row"><span className="avatar" style={{ width: 96, height: 96 }}><Art image={me!.image} kind="user" /></span>
           <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={e => { const x = e.target.files?.[0]; if (x) img.run(async () => { await api<ImageSaved>("/image?type=user", { raw: x, headers: { "Content-Type": x.type } }); refresh(); return "Avatar updated."; }); e.target.value = ""; }} />
           <Button kind="btn" loading={img.busy} onClick={() => file.current?.click()}>Upload image</Button>
           {me!.image && <Button kind="btn ghost" onClick={() => img.run(async () => { await api<Ok>("/image", { method: "DELETE" }); refresh(); })}>Remove</Button>}

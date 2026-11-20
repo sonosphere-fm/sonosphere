@@ -3,12 +3,11 @@ import { need } from "../guards";
 import { Router } from "../http";
 import { requireUser } from "../users/service";
 import * as dm from "./service";
-import type { DmAccepted, DmCounts, DmDone, DmList, DmSent, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
+import type { DmAccepted, DmDone, DmList, DmSent, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
 
 export const router = new Router();
 
 router.get<DmList>("/api/dm", c => dm.list(need(c), c.q.get("box") === "requests" ? "requests" : "inbox"));
-router.get<DmCounts>("/api/dm/counts", c => dm.dmCounts(need(c).id));
 
 router.get<DmWith>("/api/dm/with", async c => { const me = need(c); return dm.withUser(me, await requireUser(c.q.get("name"))); });
 

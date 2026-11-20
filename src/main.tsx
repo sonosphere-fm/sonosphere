@@ -70,7 +70,7 @@ function Header() {
           <NavLink to="/events">Events</NavLink>
           {me ? (
             <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480}
-              button={{ label: `${me.username} menu`, variant: "ghost", className: "menu-toggle", children: <><span className="avatar" style={{ width: 30, height: 30 }}><Art name={me.username} image={me.image} kind="user" /></span>{me.unread + me.dm.unread + me.dm.requests > 0 && <b className="dot">{me.unread + me.dm.unread + me.dm.requests}</b>}</> }}>
+              button={{ label: `${me.username} menu`, variant: "ghost", className: "menu-toggle", children: <><span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>{me.unread + me.dm.unread + me.dm.requests > 0 && <b className="dot">{me.unread + me.dm.unread + me.dm.requests}</b>}</> }}>
               <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
               <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
               <DropdownMenuItem icon={<Ico.Reports />} label="Listening reports" href={`${userUrl(me.username)}/listening-report/week`} />

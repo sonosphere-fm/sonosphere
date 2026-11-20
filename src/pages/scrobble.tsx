@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Button, Input } from "../kit";
 import { Link } from "react-router-dom";
 import { api, dateTime, num, plural, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
@@ -60,7 +60,6 @@ export function ScrobblePage() {
   const [f, setF] = useState({ artist: "", track: "", album: "", when: local() }), act = useAction(), imp = useAction();
   const [rows, setRows] = useState<ImportRow[] | null>(null), [fileName, setFileName] = useState(""), [progress, setProgress] = useState("");
   const [what, setWhat] = useState<"scrobbles" | "loved">("scrobbles"), noun = what === "loved" ? "loved track" : "scrobble";
-  const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   const recent = useApi<UserRecent>(`/user/recent${qs({ name: me!.username, limit: 5 })}`);
   useTitle("Scrobble");
   const submit = (e: FormEvent) => { e.preventDefault(); act.run(async () => {
@@ -99,16 +98,16 @@ export function ScrobblePage() {
               <label>Track
                 <Suggest label="Track" autoFocus placeholder="Start typing a song…" value={f.track} onChange={v => setF({ ...f, track: v })} search={findTracks} text={t => t.title}
                   onPick={t => setF({ ...f, track: t.title, artist: t.artist, album: t.album || "" })}
-                  row={t => <><Art name={t.album || t.title} sub={t.artist} image={t.image} /><span><strong>{t.title}</strong><span>{t.artist}{t.album && ` · ${t.album}`}</span></span></>} />
+                  row={t => <><Art image={t.image} /><span><strong>{t.title}</strong><span>{t.artist}{t.album && ` · ${t.album}`}</span></span></>} />
               </label>
               <div className="pair">
               <label>Artist
                 <Suggest label="Artist" value={f.artist} onChange={v => setF({ ...f, artist: v })} search={findArtists} text={a => a.name} onPick={a => setF({ ...f, artist: a.name })}
-                  row={a => <><Art name={a.name} image={a.image} kind="artist" /><span><strong>{a.name}</strong><span>{num(a.listeners)} listeners</span></span></>} />
+                  row={a => <><Art image={a.image} kind="artist" /><span><strong>{a.name}</strong><span>{num(a.listeners)} listeners</span></span></>} />
               </label>
               <label><span>Album <span className="muted opt">optional</span></span>
                 <Suggest label="Album" value={f.album} onChange={v => setF({ ...f, album: v })} search={findAlbums} text={a => a.title} onPick={a => setF({ ...f, album: a.title, artist: f.artist.trim() ? f.artist : a.artist })}
-                  row={a => <><Art name={a.title} sub={a.artist} image={a.image} /><span><strong>{a.title}</strong><span>{a.artist}</span></span></>} />
+                  row={a => <><Art image={a.image} /><span><strong>{a.title}</strong><span>{a.artist}</span></span></>} />
               </label>
               </div>
               <label>Listened at

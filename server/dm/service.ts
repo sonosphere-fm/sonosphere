@@ -17,7 +17,7 @@ import { blockedEither, findById, hasBlocked, type User } from "../users/repo";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
-import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith, ReportedMessage } from "../../shared/dm";
+import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
 
 export const DM = {
   MAX_LENGTH: 2000,
@@ -162,7 +162,6 @@ export async function announceRemoved(removed: readonly (repo.Removed | null)[])
 }
 
 /** What a report of a message shows staff: the message, who wrote it, and the few messages around it. */
-export const reportedMessage = async (id: number): Promise<ReportedMessage | null> => repo.reportedMessageTx(repo.connection, id);
 export const reportedMessageTx = repo.reportedMessageTx;
 
 // ---------- what the HTTP routes do ----------

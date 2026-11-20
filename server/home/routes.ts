@@ -7,7 +7,7 @@ import { recommendations, recommendedArtists } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
-import type { TopAlbum, TopTrack } from "../../shared/listening";
+import type { TopAlbum } from "../../shared/listening";
 
 export const router = new Router();
 

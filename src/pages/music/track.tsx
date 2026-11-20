@@ -54,7 +54,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
         <MusicHero image={t.artistImage ?? t.image} soft={!t.artistImage} title={t.title} over={<Link to={artistUrl(t.artist)}>{t.artist}</Link>}
           tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />}
           stats={<><HeroStat label="Listeners" value={t.listeners} /><HeroStat label="Scrobbles" value={t.playcount} /></>}
-          cards={tab === "overview" && t.album ? <FeatureCard label="From the album" to={albumUrl(t.artist, t.album)} image={t.image} name={t.album} artist={t.artist} title={t.album} sub={t.artist} /> : null}
+          cards={tab === "overview" && t.album ? <FeatureCard label="From the album" to={albumUrl(t.artist, t.album)} image={t.image} title={t.album} sub={t.artist} /> : null}
           actions={<>
             <PlayButton queue={[t, ...t.similar]} label="Play track" />
             <LoveButton track={t} loved={t.loved} label onChange={q.reload} />
