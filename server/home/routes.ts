@@ -3,7 +3,7 @@ import { need } from "../guards";
 import { bad, oneOf, paging, Router } from "../http";
 import { range } from "../listening/period";
 import { counts, nowPlaying, recent, top, topAlbums, topArtists, topTracks } from "../listening/repo";
-import { recommendedArtists } from "../recommend/service";
+import { recommendations, recommendedArtists } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
@@ -57,9 +57,7 @@ router.get<Home>("/api/home", async c => {
 });
 
 router.get<Recommended>("/api/recommended", async c => {
-  const u = need(c), artists = await recommendedArtists(u.id, 30);
-  const tracks: TopTrack[] = [];
-  for (const a of artists.slice(0, 15)) tracks.push(...(await topTracks({ artistId: a.id, viewerId: u.id, global: true }, 2)).items);
+  const u = need(c), { artists, tracks } = await recommendations(u.id, u.id, 30, 30);
   const albums: TopAlbum[] = [];
   for (const a of artists.slice(0, 18)) albums.push(...(await topAlbums({ artistId: a.id, global: true }, 1)).items);
   return { artists, tracks, albums, events: await repo.upcomingEvents(now(), u.id, 20) };

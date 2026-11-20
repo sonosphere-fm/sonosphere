@@ -494,6 +494,16 @@ export const userNeighbours = sqliteTable("user_neighbours", {
 	index("user_neighbours_best").on(table.userId, table.score),
 ]);
 
+/** Taste vectors learned from everyone's listening at once (server/recommend/als.ts), one per user and per artist. */
+export const tasteFactors = sqliteTable("taste_factors", {
+	kind: text().notNull(), // "artist" or "user"
+	id: integer().notNull(),
+	vec: blob({ mode: "buffer" }).notNull(), // float32 values
+},
+(table) => [
+	primaryKey({ columns: [table.kind, table.id] }),
+]);
+
 /** A listener's linked Spotify account. Tokens are sealed (server/spotify/seal.ts), never stored in the clear. */
 export const spotifyLinks = sqliteTable("spotify_links", {
 	userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" } ),

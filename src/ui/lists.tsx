@@ -137,6 +137,7 @@ export function Grid<T extends CardItem>({ items, kind, sub, cols = 6, lead, flu
 
 /** One recommendation: picture with caption, a badge for what it is, and the reason underneath. */
 export function RecCard({ kind, item, because = [] }: { kind: "artist" | "album" | "track"; item: Recommendation | TopAlbum | TopTrack; because?: string[] }) {
+  const via = "via" in item ? item.via : undefined;
   const name = "name" in item ? item.name : item.title, artist = "artist" in item ? item.artist : "";
   const album = "album" in item ? item.album : null, duration = "duration" in item ? item.duration : 0;
   const to = kind === "artist" ? artistUrl(name) : kind === "album" ? albumUrl(artist, name) : trackUrl(artist, name);
@@ -160,7 +161,7 @@ export function RecCard({ kind, item, because = [] }: { kind: "artist" | "album"
         {kind !== "artist" && <>By <Link to={artistUrl(artist)}>{artist}</Link>{similar.length > 0 && ", similar to "}</>}
         {kind === "artist" && similar.length > 0 && "Similar to "}
         {similar}
-        {kind === "artist" && !similar.length && "Picked from your listening"}
+        {kind === "artist" && !similar.length && (via === "neighbours" ? "Popular with listeners like you" : "Picked from your listening")}
       </p>
     </article>
   );

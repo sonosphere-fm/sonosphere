@@ -7,7 +7,8 @@ import { dirname } from "node:path";
 import * as schema from "./schema";
 import { applyMigrations } from "./migrate";
 
-const path = process.env.DB_PATH || "data/needle.db";
+export const dbPath = process.env.DB_PATH || "data/needle.db";
+const path = dbPath;
 mkdirSync(dirname(path), { recursive: true });
 export const sqlite = new Database(path, { create: true });
 // busy_timeout lets two server processes share the file for the few seconds a rolling deploy overlaps them.
