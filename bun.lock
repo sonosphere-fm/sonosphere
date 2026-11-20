@@ -9,6 +9,7 @@
         "@astryxdesign/theme-neutral": "^0.7.16",
         "@fontsource-variable/radio-canada": "^5.3.0",
         "@fontsource-variable/radio-canada-big": "^5.3.0",
+        "@fontsource-variable/source-sans-3": "^5.3.1",
         "@fontsource/barlow": "^5.3.0",
         "@fontsource/chivo-mono": "^5.3.0",
         "@phosphor-icons/react": "^2.1.10",
@@ -173,6 +174,8 @@
     "@fontsource-variable/radio-canada": ["@fontsource-variable/radio-canada@5.3.0", "", {}, "sha512-fETv8aje0pTyUaTVX792FCS7SV+QmNpJGpbf4atw8yD49AUhKWhp4qtYnOdYTkn4Cf5Cf/WvX5JU8+wyF1Ey0A=="],
 
     "@fontsource-variable/radio-canada-big": ["@fontsource-variable/radio-canada-big@5.3.0", "", {}, "sha512-/FeAm/7zKWokLGpXKJXga307K/ZOOO08t8ldHKQuemPucgjRcLBqLA5dZFY1QQsIK+j2XBMyWfk0Z6hHN/rNpw=="],
+
+    "@fontsource-variable/source-sans-3": ["@fontsource-variable/source-sans-3@5.3.1", "", {}, "sha512-u0p5Z/PM2e1uxYOMiodLM6NVzxHwULcB6Oi7QSr2WU/sdoLBFP/BeOZ3YYHeJ6rHsjPZA1nZweZVaV7sf2MAyQ=="],
 
     "@fontsource/barlow": ["@fontsource/barlow@5.3.0", "", {}, "sha512-tGR0y6QObRtKv71MOth44222+mdNFM/ZWFWDV1VLzNbG4oK9PNRlyJzmkck4vHAi9ibHBXgt4SlY51amFP55CA=="],
 

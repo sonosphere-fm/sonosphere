@@ -1,5 +1,6 @@
+@import "@fontsource-variable/source-sans-3/wght.css";
+@import "@fontsource-variable/source-sans-3/wght-italic.css";
 @import "@fontsource-variable/radio-canada/wght.css";
-@import "@fontsource-variable/radio-canada/wght-italic.css";
 @import "@fontsource-variable/radio-canada-big/wght.css";
 @import "@fontsource-variable/radio-canada-big/wght-italic.css";
 @import "@fontsource/chivo-mono/latin-400.css";
@@ -15,8 +16,8 @@
   --sun: #ffcf33; --sun-dark: #f2bd0e;
   --ink: #17150f; --ink-2: #45413a; --muted: #6b665c; --line: #d9d2c3; --panel: #ece7db; --bg: #f6f2e9; --card: #fffdf7;
   --ok: #1b7a3d; --bad: #c2321f;
-  --font: "Radio Canada Variable", "Helvetica Neue", Arial, sans-serif;
-  --display: "Radio Canada Big Variable", "Radio Canada Variable", "Helvetica Neue", Arial, sans-serif;
+  --font: "Source Sans 3 Variable", "Helvetica Neue", Arial, sans-serif;
+  --display: "Radio Canada Big Variable", "Source Sans 3 Variable", "Helvetica Neue", Arial, sans-serif;
   --mono: "Chivo Mono", ui-monospace, Menlo, monospace;
 }
 * { box-sizing: border-box; }
@@ -1225,8 +1226,8 @@ a.bar:hover > span { background: #ffe066; }
 .home-page .cols > .main, .search-page .cols > .main { border-top: 1px solid var(--line); }
 @media (max-width: 900px) { .home-page .cols > .main, .search-page .cols > .main { border-top: 0; } }
 
-/* Trial: headings in the body family. */
-:root { --display: var(--font); }
+/* Headings in Radio Canada, body text in Source Sans 3. */
+:root { --display: "Radio Canada Variable", "Helvetica Neue", Arial, sans-serif; }
 
 /* Monospace only for code. Labels and links use the body family. */
 :root { --mono: var(--font); }

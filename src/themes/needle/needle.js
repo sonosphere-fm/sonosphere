@@ -92,7 +92,7 @@ export const needleTheme = {
     "--_astryx-pre-tempo-duration-slow": "0ms",
     "--_astryx-pre-tempo-duration-slow-max": "0ms",
     "--_astryx-motion-tempo": "1",
-    "--font-family-body": "\"Radio Canada Variable\", \"Helvetica Neue\", Arial, sans-serif",
+    "--font-family-body": "\"Source Sans 3 Variable\", \"Helvetica Neue\", Arial, sans-serif",
     "--font-family-heading": "\"Radio Canada Variable\", \"Helvetica Neue\", Arial, sans-serif",
     "--font-family-code": "ui-monospace, \"SF Mono\", Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
     "--color-syntax-keyword": "light-dark(#6b187c, #efa8ff)",
@@ -503,11 +503,11 @@ export const needleTheme = {
         "ratio": 1.2
       },
       "body": {
-        "family": "Radio Canada Variable",
+        "family": "Source Sans 3 Variable",
         "fallbacks": "\"Helvetica Neue\", Arial, sans-serif"
       },
       "heading": {
-        "family": "Radio Canada Variable",
+        "family": "Source Sans 3 Variable",
         "fallbacks": "\"Helvetica Neue\", Arial, sans-serif"
       },
       "code": {

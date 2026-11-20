@@ -1,7 +1,7 @@
 import { defineTheme } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral";
 
-const BARLOW = { family: "Radio Canada Variable", fallbacks: '"Helvetica Neue", Arial, sans-serif' };
+const BARLOW = { family: "Source Sans 3 Variable", fallbacks: '"Helvetica Neue", Arial, sans-serif' };
 const NONE = "0 0 0 transparent";
 const OFF = "0ms"; // nothing fades, slides or pulses: a click changes the screen in one paint
 
