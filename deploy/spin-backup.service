@@ -1,0 +1,5 @@
+[Unit]
+Description=Back up the Spin database
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /opt/spin/backup.sh

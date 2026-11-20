@@ -1,0 +1,37 @@
+{
+  "name": "spin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot server/index.ts",
+    "start": "NODE_ENV=production bun server/index.ts",
+    "import:dev": "bun server/dev/import.ts",
+    "reset": "rm -f data/needle.db data/needle.db-wal data/needle.db-shm data/dev-login.txt",
+    "db:generate": "drizzle-kit generate",
+    "build": "bun scripts/build.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@astryxdesign/core": "^0.7.16",
+    "@astryxdesign/theme-neutral": "^0.7.16",
+    "@fontsource-variable/radio-canada": "^5.3.0",
+    "@fontsource-variable/radio-canada-big": "^5.3.0",
+    "@fontsource/barlow": "^5.3.0",
+    "@fontsource/chivo-mono": "^5.3.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@stylexjs/stylex": "^0.19.2",
+    "drizzle-orm": "^0.45.4",
+    "react": "19",
+    "react-dom": "19",
+    "react-router-dom": "6"
+  },
+  "devDependencies": {
+    "@astryxdesign/cli": "^0.7.16",
+    "@types/bun": "^1.4.4",
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "cheerio": "^1.2.0",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,13 @@
+// Types shared by the server and the browser for search.
+import type { TagCount } from "./tags";
+import type { Paging, PublicUser } from "./users";
+
+export type FoundArtist = { id: number; name: string; image: number | null; listeners: number };
+export type FoundAlbum = { id: number; title: string; image: number | null; artist: string; listeners: number };
+export type FoundTrack = {
+  id: number; title: string; duration: number; artist: string; album: string | null; image: number | null;
+  listeners: number; playcount: number; loved: number;
+};
+export type FoundUser = PublicUser & { playcount: number };
+/** GET /api/search. Lists that were not asked for come back empty; an empty search carries no paging. */
+export type SearchResults = { artists: FoundArtist[]; albums: FoundAlbum[]; tracks: FoundTrack[]; tags: TagCount[]; users: FoundUser[] } & Partial<Paging>;

@@ -1,0 +1,15 @@
+[Unit]
+Description=Spin (port %i)
+After=network.target
+[Service]
+WorkingDirectory=/opt/spin/slot/%i
+Environment=NODE_ENV=production PORT=%i DB_PATH=/opt/spin/data/needle.db
+# site settings such as SPOTIFY_CLIENT_ID live here (optional; see deploy/spin.env.example)
+EnvironmentFile=-/opt/spin/spin.env
+ExecStart=/usr/local/bin/bun server/index.ts
+Restart=always
+# on stop the site finishes the requests it is serving before it exits
+KillSignal=SIGTERM
+TimeoutStopSec=20
+[Install]
+WantedBy=multi-user.target

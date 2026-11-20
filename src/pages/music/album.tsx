@@ -1,0 +1,52 @@
+import { type ReactNode } from "react";
+import { Link, useParams } from "react-router-dom";
+import { albumUrl, artistUrl, dec, dur, plural, qs, useApi, useAuth, useTitle } from "../../lib";
+import { Async, Section, Tabs } from "../../ui/base";
+import { Grid, TrackList } from "../../ui/lists";
+import { Shoutbox } from "../../ui/shoutbox";
+import { Tagger } from "../../ui/tags";
+import { WikiPage } from "../../ui/wiki";
+import { PlayButton } from "../../player";
+import { UploadImage } from "./shared";
+import type { AlbumPage as AlbumData } from "../../../shared/catalog";
+import { MusicHero, HeroStat, releaseDate, YourScrobbles, About, ByArtist, Trend, Listeners, TrendingBand } from "./entity";
+
+// ---------- album ----------
+export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
+  const p = useParams(), artist = dec(p.artist), album = dec(p.album), base = albumUrl(artist, album);
+  const q = useApi<AlbumData>(`/album${qs({ artist, album })}`);
+  const { me } = useAuth();
+  useTitle(q.data ? `${q.data.title} - ${q.data.artist}` : album);
+  return (
+    <Async q={q}>{a => (
+      <>
+        <MusicHero image={a.artistImage ?? a.image} soft={!a.artistImage} title={a.title} over={<Link to={artistUrl(a.artist)}>{a.artist}</Link>}
+          tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />}
+          actions={<><PlayButton queue={a.tracks} label="Play album" />{me && <UploadImage type="album" id={a.id} onDone={q.reload} />}</>}
+          stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>} />
+        <div className="wrap page mpage">
+          {tab === "wiki" ? <WikiPage type="album" id={a.id} title={a.title} /> : (
+            <div className="cols">
+              <div className="main">
+                <YourScrobbles count={a.userPlaycount} />
+                <About wiki={a.wiki} to={`${base}/+wiki`} facts={[...(a.releaseDate ? [["Release date", releaseDate(a.releaseDate)] satisfies [string, ReactNode]] : []), ["Length", a.tracks.length ? `${plural(a.tracks.length, "track")}, ${dur(a.duration)}` : "Unknown"]]}>
+                  <Tagger type="album" id={a.id} tags={a.tags} myTags={a.myTags} />
+                </About>
+                <Section title="Tracklist" aside={<PlayButton queue={a.tracks} />}><TrackList items={a.tracks} numbered showArtist={false} showDuration count="listeners" /></Section>
+                <Listeners items={a.topListeners} />
+                <Section title="Wall"><Shoutbox type="album" id={a.id} limit={10} /></Section>
+                {a.otherAlbums.length > 0 && <Section title={`More by ${a.artist}`} more={`${artistUrl(a.artist)}/+albums`} moreLabel="View all albums" foot><Grid below kind="album" cols={4} items={a.otherAlbums.slice(0, 4)} /></Section>}
+              </div>
+              <aside className="side">
+                <ByArtist name={a.artist} image={a.artistImage} />
+                <Trend data={a.trend} />
+                {a.mbid && <Section title="Elsewhere"><p className="side-links"><a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a></p></Section>}
+              </aside>
+            </div>
+          )}
+        </div>
+        {tab === "overview" && <TrendingBand />}
+      </>
+    )}</Async>
+  );
+}

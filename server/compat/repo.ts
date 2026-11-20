@@ -1,0 +1,104 @@
+// Data access for the scrobbler-compatible API: the applications, tokens and sessions it signs requests with, and
+// the listings whose order and paging its clients expect.
+import { and, count, countDistinct, desc, eq, like, lt, sql } from "drizzle-orm";
+import { db } from "../db/client";
+import { albumTracks, albums, apiApps, apiSessions, apiTokens, artists, follows, lovedTracks, taggings, tags, tracks, userArtists, userTracks, users } from "../db/schema";
+import { first, now } from "../util";
+
+const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
+
+// ---------- applications, tokens, sessions ----------
+export type App = { id: number; name: string; secret: string };
+export const appByKey = (apiKey: string): Promise<App | null> =>
+  first(db.select({ id: apiApps.id, name: apiApps.name, secret: apiApps.secret }).from(apiApps).where(eq(apiApps.apiKey, apiKey)).limit(1));
+
+/** Whose session this key is, if the application it was granted to is the one asking. */
+export const sessionUser = async (key: string, appId: number): Promise<number | null> =>
+  (await first(db.select({ userId: apiSessions.userId }).from(apiSessions).where(and(eq(apiSessions.key, key), eq(apiSessions.appId, appId))).limit(1)))?.userId ?? null;
+
+export async function createSession(key: string, appId: number, userId: number): Promise<void> {
+  await db.insert(apiSessions).values({ key, appId, userId, createdAt: now() });
+}
+export async function createToken(token: string, appId: number): Promise<void> {
+  await db.insert(apiTokens).values({ token, appId, createdAt: now() });
+}
+/** A token this application asked for. `userId` is null until someone approves it. */
+export const findToken = (token: string, appId: number): Promise<{ token: string; userId: number | null; createdAt: number } | null> =>
+  first(db.select({ token: apiTokens.token, userId: apiTokens.userId, createdAt: apiTokens.createdAt }).from(apiTokens)
+    .where(and(eq(apiTokens.token, token), eq(apiTokens.appId, appId))).limit(1));
+export async function deleteToken(token: string): Promise<void> {
+  await db.delete(apiTokens).where(eq(apiTokens.token, token));
+}
+
+// ---------- one person's lists ----------
+export type LovedRow = { title: string; duration: number; artist: string; image: number | null; at: number };
+/** The tracks someone loves, the latest first. */
+export const lovedPage = (userId: number, limit: number, offset: number): Promise<LovedRow[]> =>
+  db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: albums.imageId, at: lovedTracks.createdAt }).from(lovedTracks)
+    .innerJoin(tracks, eq(tracks.id, lovedTracks.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
+    .where(eq(lovedTracks.userId, userId)).orderBy(desc(lovedTracks.createdAt)).limit(limit).offset(offset);
+
+export type Friend = { username: string; realname: string; country: string; imageId: number | null; registeredAt: number };
+/** The people someone follows, the latest first. */
+export const friendsPage = (userId: number, limit: number, offset: number): Promise<Friend[]> =>
+  db.select({ username: users.username, realname: users.realname, country: users.country, imageId: users.imageId, registeredAt: users.registeredAt }).from(follows)
+    .innerJoin(users, eq(users.id, follows.followeeId)).where(eq(follows.followerId, userId)).orderBy(desc(follows.createdAt)).limit(limit).offset(offset);
+
+/** The tags someone uses most. */
+export function userTopTags(userId: number, limit: number): Promise<{ name: string; count: number }[]> {
+  const uses = count().as("count");
+  return db.select({ name: tags.name, count: uses }).from(taggings).innerJoin(tags, eq(tags.id, taggings.tagId))
+    .where(eq(taggings.userId, userId)).groupBy(tags.id).orderBy(desc(uses)).limit(limit);
+}
+
+// ---------- search (the pattern is used as given: % and _ in it are wildcards, as they always were here) ----------
+export type ArtistHit = { name: string; image: number | null; listeners: number };
+export function searchArtists(pattern: string, limit: number, offset: number): Promise<ArtistHit[]> {
+  const listeners = sql<number>`((SELECT COUNT(*) FROM ${userArtists} WHERE ${userArtists.artistId} = ${artists.id}) + ${artists.baseListeners})`.as("listeners");
+  return db.select({ name: artists.name, image: artists.imageId, listeners }).from(artists).where(like(artists.nameNorm, pattern)).orderBy(desc(listeners)).limit(limit).offset(offset);
+}
+export const countArtists = (pattern: string): Promise<number> => total(db.select({ c: count() }).from(artists).where(like(artists.nameNorm, pattern)));
+
+export type AlbumHit = { title: string; image: number | null; artist: string };
+export const searchAlbums = (pattern: string, limit: number, offset: number): Promise<AlbumHit[]> =>
+  db.select({ title: albums.title, image: albums.imageId, artist: artists.name }).from(albums).innerJoin(artists, eq(artists.id, albums.artistId))
+    .where(like(albums.titleNorm, pattern)).limit(limit).offset(offset);
+export const countAlbums = (pattern: string): Promise<number> => total(db.select({ c: count() }).from(albums).where(like(albums.titleNorm, pattern)));
+
+export type TrackHit = { title: string; duration: number; artist: string; image: number | null; listeners: number };
+/** Tracks whose title matches, most listeners first. `artistNorm` narrows it to one artist (normalised name). */
+export function searchTracks(pattern: string, artistNorm: string | null, limit: number, offset: number): Promise<TrackHit[]> {
+  const listeners = sql<number>`((SELECT COUNT(*) FROM ${userTracks} WHERE ${userTracks.trackId} = ${tracks.id}) + ${tracks.baseListeners})`.as("listeners");
+  return db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: albums.imageId, listeners }).from(tracks)
+    .innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
+    .where(and(like(tracks.titleNorm, pattern), artistNorm === null ? undefined : eq(artists.nameNorm, artistNorm))).orderBy(desc(listeners)).limit(limit).offset(offset);
+}
+
+// ---------- albums ----------
+/** An album's track list in running order. */
+export const albumTrackList = (albumId: number): Promise<{ title: string; duration: number; position: number }[]> =>
+  db.select({ title: tracks.title, duration: tracks.duration, position: albumTracks.position }).from(albumTracks)
+    .innerJoin(tracks, eq(tracks.id, albumTracks.trackId)).where(eq(albumTracks.albumId, albumId)).orderBy(albumTracks.position);
+
+// ---------- tags ----------
+/** The artists a tag was put on most often. */
+export function tagTopArtists(tagId: number, limit: number, offset: number): Promise<{ name: string; image: number | null }[]> {
+  const uses = count().as("c");
+  return db.select({ name: artists.name, image: artists.imageId, c: uses }).from(taggings).innerJoin(artists, eq(artists.id, taggings.itemId))
+    .where(and(eq(taggings.tagId, tagId), eq(taggings.itemType, "artist"))).groupBy(artists.id).orderBy(desc(uses)).limit(limit).offset(offset);
+}
+/** Every artist carrying a tag. */
+export const taggedArtistIds = async (tagId: number): Promise<number[]> =>
+  (await db.selectDistinct({ id: taggings.itemId }).from(taggings).where(and(eq(taggings.tagId, tagId), eq(taggings.itemType, "artist")))).map(r => r.id);
+
+/** The site's most used tags, with how many people used each. */
+export function chartTopTags(limit: number, offset: number): Promise<{ name: string; taggings: number; reach: number }[]> {
+  const uses = count().as("taggings");
+  return db.select({ name: tags.name, taggings: uses, reach: countDistinct(taggings.userId) }).from(taggings).innerJoin(tags, eq(tags.id, taggings.tagId))
+    .groupBy(tags.id).orderBy(desc(uses)).limit(limit).offset(offset);
+}
+
+/** Drops desktop-app sign-in tokens that were never used within the hour they are valid for. */
+export async function dropStaleTokens(): Promise<void> {
+  await db.delete(apiTokens).where(lt(apiTokens.createdAt, now() - 3600));
+}
