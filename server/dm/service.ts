@@ -13,7 +13,7 @@
 // Delivery to open tabs goes through server/realtime.ts.
 import { fail, HttpError } from "../http";
 import { onClientMessage, push, type ClientMessage } from "../realtime";
-import { blockedEither, findById, type User } from "../users/repo";
+import { blockedEither, findById, hasBlocked, type User } from "../users/repo";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
@@ -65,10 +65,12 @@ async function gate(from: User, to: User): Promise<"active" | "request"> {
   return policy === "everyone" || known ? "active" : "request";
 }
 /** Whether a message would be allowed, as the pages show it: yes, or no with the reason. */
-async function allowed(from: User, to: User | null): Promise<{ can: boolean; why: string; opens: "active" | "request" }> {
-  if (!to) return { can: false, why: GONE, opens: "active" };
-  try { return { can: true, why: "", opens: await gate(from, to) }; }
-  catch (e) { if (e instanceof HttpError) return { can: false, why: e.message, opens: "active" }; throw e; }
+// `blocked` is only ever the sender's own block: they may know about that one, so the page can offer to undo it.
+async function allowed(from: User, to: User | null): Promise<{ can: boolean; why: string; blocked: boolean; opens: "active" | "request" }> {
+  if (!to) return { can: false, why: GONE, blocked: false, opens: "active" };
+  if (await hasBlocked(from.id, to.id)) return { can: false, why: `You blocked ${to.username}.`, blocked: true, opens: "active" };
+  try { return { can: true, why: "", blocked: false, opens: await gate(from, to) }; }
+  catch (e) { if (e instanceof HttpError) return { can: false, why: e.message, blocked: false, opens: "active" }; throw e; }
 }
 
 /**
@@ -175,16 +177,16 @@ export async function list(me: User, box: "inbox" | "requests"): Promise<DmList>
 export async function withUser(me: User, to: User): Promise<DmWith> {
   const t = await repo.threadOf(me.id, to.id);
   const visible = t && !(t.status === "declined" && t.requesterId !== me.id) ? t : null;
-  const { can, why, opens } = await allowed(me, to);
-  return { user: (await repo.person(to.id)) ?? fail(404, "User not found"), threadId: visible?.id ?? null, can, why, request: !visible && opens === "request" };
+  const { can, why, blocked, opens } = await allowed(me, to);
+  return { user: (await repo.person(to.id)) ?? fail(404, "User not found"), threadId: visible?.id ?? null, can, why, blocked, request: !visible && opens === "request" };
 }
 
 /** One page of a conversation: up to 50 messages older than `before`, oldest first. */
 export async function page(me: User, threadId: unknown, before: number): Promise<DmThreadPage> {
   const t = await myThread(threadId, me.id), cleared = side(t, me.id) === "lo" ? t.loCleared : t.hiCleared;
   const rows = await repo.messagesBetween(t.id, cleared, before, 51);
-  const { can, why } = await allowed(me, await findById(otherId(t, me.id)));
-  return { thread: await threadShape(t, me.id), messages: rows.slice(0, 50).reverse().map(messageShape), more: rows.length > 50, can, why, max: DM.MAX_LENGTH, unsendFor: DM.UNSEND_WINDOW };
+  const { can, why, blocked } = await allowed(me, await findById(otherId(t, me.id)));
+  return { thread: await threadShape(t, me.id), messages: rows.slice(0, 50).reverse().map(messageShape), more: rows.length > 50, can, why, blocked, max: DM.MAX_LENGTH, unsendFor: DM.UNSEND_WINDOW };
 }
 
 /** Send into an existing conversation. */

@@ -144,6 +144,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
   const decline = () => api<DmDone>(`${threadPath(id)}/decline`, { body: {} }).then(leave);
   const remove = () => api<DmDone>(threadPath(id), { method: "DELETE" }).then(leave);
   const block = () => api<BlockResult>("/block", { body: { username: other.username, block: true } }).then(() => { invalidateAll(); nav(back, { replace: true }); });
+  const unblock = () => api<BlockResult>("/block", { body: { username: other.username, block: false } }).then(() => { invalidateAll(); q.reload(); });
   const unsend = (m: Msg) => api<DmUnsent>(`/dm/message/${m.id}`, { method: "DELETE" }).then(() => applyDmEvent({ t: "dm-deleted", threadId: id, id: m.id })).catch(() => {});
   const lastTheirs = [...d.messages].reverse().find(m => m.from !== me!.id && !m.deleted); // a report is filed against a message; staff see the ones around it
   const lastMine = [...d.messages].reverse().find(m => m.from === me!.id && !m.deleted);
@@ -155,7 +156,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
           <DropdownMenuItem label="View profile" href={userUrl(other.username)} />
           {lastTheirs && <DropdownMenuItem label={`Report ${other.username}`} onClick={() => setReporting(lastTheirs.id)} />}
           <DropdownMenuItem label="Delete conversation" onClick={remove} />
-          <DropdownMenuItem label={`Block ${other.username}`} onClick={block} />
+          <DropdownMenuItem label={d.blocked ? `Unblock ${other.username}` : `Block ${other.username}`} onClick={d.blocked ? unblock : block} />
         </DropdownMenu>
       </Head>
       <div className="dm-scroll" ref={scroller}>
@@ -191,7 +192,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
             <Button kind="btn ghost" type="button" onClick={() => decline().then(block)}>Block</Button>
           </div>
         </div>
-      ) : !d.can ? <p className="dm-closed muted">{d.why}</p> : t.left === 0 ? <p className="dm-closed muted">Your message request has been sent. You can write again once {other.username} replies.</p> : (
+      ) : d.blocked ? <Blocked name={other.username} onUnblock={unblock} /> : !d.can ? <p className="dm-closed muted">{d.why}</p> : t.left === 0 ? <p className="dm-closed muted">Your message request has been sent. You can write again once {other.username} replies.</p> : (
         <>
           {t.left != null && <p className="dm-closed muted small">This is a message request: {other.username} will see it under Requests. You can send {t.left} more {t.left === 1 ? "message" : "messages"}, without links, until they reply.</p>}
           <Composer onSend={send} max={d.max} threadId={t.status === "active" ? id : undefined} placeholder={`Message ${other.username}`} />
@@ -199,6 +200,14 @@ function Conversation({ id, back }: { id: number; back: string }) {
       )}
       {reporting > 0 && <ReportButton type="dm" id={reporting} open onClose={() => setReporting(0)} />}
     </>
+  );
+}
+
+/** In place of the composer when the reader has blocked the other person. */
+function Blocked({ name, onUnblock }: { name: string; onUnblock: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <p className="dm-closed muted">You blocked {name}, so you can't message each other. <Button kind="link" type="button" loading={busy} onClick={() => { setBusy(true); onUnblock().finally(() => setBusy(false)); }}>Unblock</Button></p>
   );
 }
 
@@ -216,9 +225,10 @@ function NewConversation({ name }: { name: string }) {
   return (
     <>
       <Head user={d.user} back="/messages" />
-      <div className="dm-scroll"><p className="dm-start muted small">{d.can
+      <div className="dm-scroll">{!d.blocked && <p className="dm-start muted small">{d.can
         ? d.request ? `${d.user.username} doesn't follow you, so your message will arrive as a request. You can send up to 3 messages, without links, until they reply.` : `Say hello to ${d.user.username}.`
-        : d.why}</p></div>
+        : d.why}</p>}</div>
+      {d.blocked && <Blocked name={d.user.username} onUnblock={() => api<BlockResult>("/block", { body: { username: d.user.username, block: false } }).then(() => { invalidateAll(); q.reload(); })} />}
       {d.can && <Composer onSend={send} max={2000} placeholder={`Message ${d.user.username}`} />}
     </>
   );
