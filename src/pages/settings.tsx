@@ -14,6 +14,7 @@ import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
 import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
 import { Ico } from "../icons";
 import { Art, Async, Section, useAction } from "../ui/base";
+import { ImageWithFallback } from "../ui/image";
 import { UserList } from "../ui/lists";
 import type { ThemePref } from "../theme";
 
@@ -167,7 +168,15 @@ function BannerSettings() {
   return (
     <Section title="Banner">
       <div className="banner-edit">
-        {me!.banner && <img className="banner-preview" src={imageUrl(me!.banner)} alt="Your profile banner" />}
+        {me!.banner && (
+          <ImageWithFallback
+            className="banner-preview"
+            src={imageUrl(me!.banner)}
+            alt="Your profile banner"
+            fallback={<span className="image-placeholder">Loading banner…</span>}
+            errorFallback={<span className="image-placeholder">Image unavailable</span>}
+          />
+        )}
         <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} disabled={act.busy} />
         <div className="avatar-actions">
           <Button kind="btn small" type="button" loading={act.busy} onClick={() => file.current?.click()}>
