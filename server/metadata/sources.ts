@@ -2,6 +2,7 @@ import { attempt, getJson, setJson } from "../kv";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { catalogueGet, NoCapacity } from "../spotify/service";
 import * as mbdb from "./mbdb";
+import { spotifyPulling } from "../spotify/pulling";
 
 type Json = Record<string, unknown>;
 const obj = (v: unknown): Json | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : null);
@@ -270,11 +271,9 @@ export async function coverArt(mbid: string, of: "release-group" | "release" = "
 const lane = new AsyncLocalStorage<"spare">();
 export const inSpareTime = <T>(job: () => Promise<T>) => lane.run("spare", job);
 
-// Catalogue lookups share each listener's own app with their imports, so they stay off unless SPOTIFY_CATALOGUE=1.
-const catalogueOn = () => process.env.SPOTIFY_CATALOGUE === "1";
 
 async function sp(path: string): Promise<Json | null> {
-  if (!catalogueOn()) throw new Busy("spotify");
+  if (!spotifyPulling()) throw new Busy("spotify");
   const spare = lane.getStore() === "spare";
   await pausedFor("spotify");
   if (spare) await turn("spotify-spare", 1000, 2000);
@@ -288,7 +287,7 @@ async function sp(path: string): Promise<Json | null> {
     throw new Busy("spotify");
   }
 }
-export const spotifyResting = async () => !catalogueOn() || !!(await getJson<number>(pauseKey("spotify")));
+export const spotifyResting = async () => !spotifyPulling() || !!(await getJson<number>(pauseKey("spotify")));
 const search = (type: string, q: string) => sp(`/search?${new URLSearchParams({ q, type, limit: "10" })}`);
 const quoted = (s: string) => s.replace(/"/g, "");
 

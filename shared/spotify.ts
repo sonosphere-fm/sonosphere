@@ -9,7 +9,7 @@ export type SpotifyLink = {
   restingUntil: number | null;
 };
 
-export type SpotifyStatus = { enabled: false } | { enabled: true; redirectUri: string; link: SpotifyLink | null };
+export type SpotifyStatus = { enabled: false } | { enabled: true; redirectUri: string; pulling: boolean; link: SpotifyLink | null };
 export type SpotifyConnectBody = { clientId: string; playback?: boolean };
 export type SpotifyConnect = { url: string };
 export type SpotifyPlayerToken = { token: string | null; expiresAt: number };
