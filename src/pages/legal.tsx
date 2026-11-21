@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTitle } from "../lib";
 
-// ---------- terms of service and privacy policy ----------
 const UPDATED = "November 21, 2026";
 const CONTACT = "legal@sonosp.here";
 const Mail = () => <a href={`mailto:${CONTACT}`}>{CONTACT}</a>;

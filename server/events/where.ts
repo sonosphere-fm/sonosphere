@@ -1,18 +1,23 @@
-// Roughly where someone is, from the location Cloudflare works out for each visitor's connection (its "visitor
-// location headers"). Used only to show events nearby; never stored.
 const names = new Intl.DisplayNames(["en"], { type: "region" });
 
-export type Place = { lat: number | null; lon: number | null; city: string; country: string };
+type Place = { lat: number | null; lon: number | null; city: string; country: string };
 
 export function whereFrom(h: Headers): Place | null {
   const code = (h.get("cf-ipcountry") || "").toUpperCase();
-  if (!/^[A-Z]{2}$/.test(code) || code === "XX" || code === "T1") return null; // unknown, or Tor
+  // XX is unknown, T1 is Tor
+  if (!/^[A-Z]{2}$/.test(code) || code === "XX" || code === "T1") return null;
   let country = code;
-  try { country = names.of(code) ?? code; } catch { /* keep the code */ }
-  const lat = Number(h.get("cf-iplatitude")), lon = Number(h.get("cf-iplongitude")), known = h.has("cf-iplatitude") && Number.isFinite(lat) && Number.isFinite(lon);
-  // header values are Latin-1 on the wire; Cloudflare sends UTF-8 bytes, so a city like "Zürich" needs reading back
+  try {
+    country = names.of(code) ?? code;
+  } catch {}
+  const lat = Number(h.get("cf-iplatitude"));
+  const lon = Number(h.get("cf-iplongitude"));
+  const known = h.has("cf-iplatitude") && Number.isFinite(lat) && Number.isFinite(lon);
+  // header values are Latin-1 on the wire but Cloudflare sends UTF-8 bytes, so "Zürich" needs decoding
   const raw = h.get("cf-ipcity") || "";
   let city = raw;
-  try { city = new TextDecoder().decode(Uint8Array.from(raw, ch => ch.charCodeAt(0) & 255)); } catch { /* as sent */ }
+  try {
+    city = new TextDecoder().decode(Uint8Array.from(raw, ch => ch.charCodeAt(0) & 255));
+  } catch {}
   return { lat: known ? lat : null, lon: known ? lon : null, city, country };
 }

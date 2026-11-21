@@ -1,4 +1,3 @@
-// Site charts, the home page and the recommendations page.
 import { need } from "../guards";
 import { bad, oneOf, paging, Router } from "../http";
 import { range } from "../listening/period";
@@ -15,13 +14,18 @@ const WEEK = 7 * 86400;
 const playedAt = (f: FriendActivity) => ("playedAt" in f.track ? f.track.playedAt : 0);
 
 router.get<Charts>("/api/charts", async c => {
-  const pg = paging(c.q), [from, to] = range(c.q);
-  if (c.q.get("kind") === "tags") return { items: await repo.tagChart(pg.limit, pg.offset), total: await repo.usedTagCount(), ...pg };
+  const pg = paging(c.q);
+  const [from, to] = range(c.q);
+  if (c.q.get("kind") === "tags") {
+    const items = await repo.tagChart(pg.limit, pg.offset);
+    return { items, total: await repo.usedTagCount(), ...pg };
+  }
   const kind = oneOf(c.q.get("kind"), ["artists", "albums", "tracks"]) ?? bad("kind must be artists, albums, tracks or tags");
-  return { ...(await siteTop(kind, { from, to, viewerId: c.user?.id }, pg.limit, pg.offset)), ...pg };
+  const top = await siteTop(kind, { from, to, viewerId: c.user?.id }, pg.limit, pg.offset);
+  return { ...top, ...pg };
 });
 
-/** What each person the viewer follows is playing or played last: those playing now first, then the most recent. */
+// Those playing now first, then the most recent.
 async function friendActivity(viewerId: number): Promise<FriendActivity[]> {
   const out: FriendActivity[] = [];
   for (const user of await repo.openFollowees(viewerId)) {
@@ -29,7 +33,9 @@ async function friendActivity(viewerId: number): Promise<FriendActivity[]> {
     const track = playing ?? (await recent({ userId: user.id, viewerId }, 1)).items[0];
     if (track) out.push({ user, track, nowPlaying: !!playing });
   }
-  return out.sort((a, b) => Number(b.nowPlaying) - Number(a.nowPlaying) || playedAt(b) - playedAt(a));
+  return out.sort((a, b) => {
+    return Number(b.nowPlaying) - Number(a.nowPlaying) || playedAt(b) - playedAt(a);
+  });
 }
 
 router.get<Home>("/api/home", async c => {
@@ -51,14 +57,20 @@ router.get<Home>("/api/home", async c => {
     out.friends = await friendActivity(viewerId);
     out.friendLoves = await repo.friendLoves(viewerId, 8);
     out.recommended = await recommendedArtists(viewerId, 6);
-    out.week = { now: (await counts({ userId: viewerId, from: since })).playcount, before: (await counts({ userId: viewerId, from: since - WEEK, to: since })).playcount };
+    const thisWeek = await counts({ userId: viewerId, from: since });
+    const lastWeek = await counts({ userId: viewerId, from: since - WEEK, to: since });
+    out.week = { now: thisWeek.playcount, before: lastWeek.playcount };
   }
   return out;
 });
 
 router.get<Recommended>("/api/recommended", async c => {
-  const u = need(c), { artists, tracks } = await recommendations(u.id, u.id, 30, 30);
+  const u = need(c);
+  const { artists, tracks } = await recommendations(u.id, u.id, 30, 30);
   const albums: TopAlbum[] = [];
-  for (const a of artists.slice(0, 18)) albums.push(...(await topAlbums({ artistId: a.id, global: true }, 1)).items);
+  for (const a of artists.slice(0, 18)) {
+    const top = await topAlbums({ artistId: a.id, global: true }, 1);
+    albums.push(...top.items);
+  }
   return { artists, tracks, albums, events: await repo.upcomingEvents(now(), u.id, 20) };
 });

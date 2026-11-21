@@ -1,18 +1,13 @@
-// Cloudflare Turnstile on sign-up and log-in, so scripts cannot hammer them. Set TURNSTILE_SITE_KEY (shown to the
-// browser) and TURNSTILE_SECRET_KEY (kept here) to turn it on; without them the check is skipped
-// (development uses Cloudflare's test keys instead).
 import { fail } from "../http";
 
-// In development without keys, Cloudflare's published test keys: the widget shows and is required, and always passes.
+// Without keys in development, Cloudflare's published test keys: the widget shows and always passes.
 const DEV = process.env.NODE_ENV !== "production" && !process.env.TURNSTILE_SITE_KEY;
 const SITE = DEV ? "1x00000000000000000000AA" : process.env.TURNSTILE_SITE_KEY || null;
 const SECRET = DEV ? "1x0000000000000000000000000000000AA" : process.env.TURNSTILE_SECRET_KEY || null;
 const VERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-/** The key the browser needs to show the widget, or null when the check is off. */
 export const turnstileSiteKey = () => (SITE && SECRET ? SITE : null);
 
-/** Checks a widget token with Cloudflare and refuses the request when it is missing, used, expired or fake. */
 export async function checkTurnstile(token: unknown, ip: string, action: string): Promise<void> {
   if (!turnstileSiteKey()) return;
   if (typeof token !== "string" || !token || token.length > 2048) fail(400, "Complete the check that you are not a robot");

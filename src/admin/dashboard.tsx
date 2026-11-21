@@ -6,9 +6,15 @@ import { adminUrl } from "./common";
 import { AuditList } from "./audit";
 import type { Dashboard as DashboardData, DayCount } from "../../shared/admin";
 
-// ---------- dashboard ----------
 const series = (rows: DayCount[]) =>
-  rows.map(r => ({ label: String(new Date(r.day * 1000).getUTCDate()), value: r.count, tip: new Date(r.day * 1000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }) }));
+  rows.map(r => {
+    const day = new Date(r.day * 1000);
+    return {
+      label: String(day.getUTCDate()),
+      value: r.count,
+      tip: day.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }),
+    };
+  });
 export function Dashboard() {
   const q = useApi<DashboardData>("/admin/dashboard");
   useTitle("Admin dashboard");
@@ -23,13 +29,19 @@ export function Dashboard() {
             <Stat label="Scrobbles" value={num(t.scrobbles)} hint={`${num(t.scrobbles7)} this week`} />
             <Stat label="Open reports" value={<Link to="/admin/reports">{num(t.openReports)}</Link>} hint={`${num(t.reports7)} filed this week`} />
             <Stat label="Spam flags" value={<Link to="/admin/messages?tab=flags">{num(t.openFlags)}</Link>} hint="raised by the message limits" />
-            <Stat label="Suspended" value={<Link to="/admin/users?filter=suspended">{num(t.suspended)}</Link>} hint={<Link to="/admin/users?filter=banned">{plural(t.banned, "banned account")}</Link>} />
+            <Stat
+              label="Suspended"
+              value={<Link to="/admin/users?filter=suspended">{num(t.suspended)}</Link>}
+              hint={<Link to="/admin/users?filter=banned">{plural(t.banned, "banned account")}</Link>}
+            />
           </div>
           <div className="cols even adm-charts">
             <Section title="Scrobbles per day"><BarChart data={series(d.series.scrobbles)} height={110} every={5} /></Section>
             <Section title="Sign-ups per day"><BarChart data={series(d.series.signups)} height={110} every={5} unit="sign-ups" /></Section>
             <Section title="Reports per day"><BarChart data={series(d.series.reports)} height={110} every={5} unit="reports" /></Section>
-            <Section title="Posts per day"><BarChart data={series(d.series.posts)} height={110} every={5} unit="wall posts, journal posts and wiki edits" /></Section>
+            <Section title="Posts per day">
+              <BarChart data={series(d.series.posts)} height={110} every={5} unit="wall posts, journal posts and wiki edits" />
+            </Section>
           </div>
           <div className="cols adm-split">
             <Section title="Recent staff actions" more="/admin/audit" moreLabel="Audit log">
@@ -37,9 +49,15 @@ export function Dashboard() {
             </Section>
             <aside className="side">
               <Section title="Newest members" more="/admin/users">
-                <ul className="adm-people">{d.recentUsers.map(u => (
-                  <li key={u.id}><Avatar user={u} size={32} /><Link className="grow strong" to={adminUrl(u.username)}>{u.username}</Link><span className="muted small">{ago(u.registeredAt)}</span></li>
-                ))}</ul>
+                <ul className="adm-people">
+                  {d.recentUsers.map(u => (
+                    <li key={u.id}>
+                      <Avatar user={u} size={32} />
+                      <Link className="grow strong" to={adminUrl(u.username)}>{u.username}</Link>
+                      <span className="muted small">{ago(u.registeredAt)}</span>
+                    </li>
+                  ))}
+                </ul>
               </Section>
               <Section title="At a glance">
                 <dl className="adm-facts">

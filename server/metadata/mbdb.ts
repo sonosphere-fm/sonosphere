@@ -1,7 +1,3 @@
-// Our own copy of MusicBrainz (MBDB_URL): a Postgres holding the tables of the twice-weekly MusicBrainz export that
-// lookups need, with names stored in a loose form (mbkey(): case, accents, punctuation and a leading "The" dropped).
-// It answers the same questions as the MusicBrainz API calls in sources.ts, without its one-request-a-second limit.
-// The copy is kept current elsewhere; if it can't be reached, sources.ts asks musicbrainz.org instead.
 import postgres from "postgres";
 import type { ListedTrack, MbAlbum, MbArtist, MbTrack } from "./sources";
 
@@ -9,16 +5,22 @@ const url = process.env.MBDB_URL || "";
 const g = globalThis as { __spinMbdb?: postgres.Sql };
 const sql = url ? (g.__spinMbdb ??= postgres(url, { max: 4, idle_timeout: 120, connect_timeout: 5, prepare: false })) : null;
 
-/** Whether a copy is configured. */
 export const mbdbOn = !!sql;
-const db = () => { if (!sql) throw new Error("MBDB_URL is not set"); return sql; };
+const db = () => {
+  if (!sql) throw new Error("MBDB_URL is not set");
+  return sql;
+};
 
-/** MusicBrainz spells with typographic hyphens and quotes ("Don’t", "Anti‐Hero"), scrobbles don't. */
-const tidy = (v: string | null) => (v ?? "").replace(/[‐‑]/g, "-").replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...");
+// MusicBrainz spells with typographic hyphens and quotes ("Don’t", "Anti‐Hero"), scrobbles don't
+const tidy = (v: string | null) =>
+  (v ?? "")
+    .replace(/[‐‑]/g, "-")
+    .replace(/[‘’ʼ]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/…/g, "...");
 
 export async function artist(name: string): Promise<MbArtist | null> {
-  // the name itself before another name they're known by, then whoever has put out more (mbkey() of a value is worked
-  // out once, before the plan, so the indexes on key serve: one round trip)
+  // the name itself before an alias, then whoever has put out more
   const [r] = await db()<{ mbid: string; name: string; alias: string | null }[]>`
     WITH hits AS (SELECT id, 1.0 AS w, NULL::text AS alias FROM artist WHERE key = mbkey(${name}) AND mbkey(${name}) <> ''
                   UNION ALL SELECT artist, 0.25, name FROM artist_alias WHERE key = mbkey(${name}) AND mbkey(${name}) <> '')
@@ -30,23 +32,17 @@ export async function artist(name: string): Promise<MbArtist | null> {
 }
 
 const latin = (s: string) => /[a-z]/i.test(s);
-/**
- * The name to show and file an artist under: their own, unless it's in a script the search wasn't (青葉市子 found by
- * typing "ichiko aoba"), then the other name of theirs that matched (Ichiko Aoba).
- */
+// their own name, unless it's in a script the search wasn't (青葉市子 found by typing "ichiko aoba"): then the alias that matched
 const shownName = (name: string, alias: string | null, typed: string) => (alias && latin(typed) && !latin(name) ? alias : name);
 
 export type ArtistHit = { mbid: string; name: string; key: string; exact: boolean; viaAlias: boolean; releases: number; spotify: boolean };
 
-/**
- * Artists whose name (or another name they're known by) starts with the search: up to 60 candidates, the best known
- * first, for search to rerank (server/search/rank.ts). The best known come from artist_top, so a search of two letters
- * still finds them among thousands of names.
- */
+/** Up to 60 prefix matches, best known first, for server/search/rank.ts to rerank. */
 export async function searchArtists(term: string): Promise<ArtistHit[]> {
-  // one round trip: mbkey() of the search is worked out before the plan, so "LIKE ... || '%'" can use the prefix
-  // indexes (mbkey() leaves only letters, digits and spaces, so nothing in it is a LIKE wildcard)
-  const rows = await db()<{ id: number; mbid: string; name: string; key: string; alias: string | null; akey: string | null; releases: number; spotify: boolean; k: string }[]>`
+  // mbkey() leaves only letters, digits and spaces, so nothing in it is a LIKE wildcard; artist_top lets a
+  // two-letter search still find the best known among thousands of names
+  type Row = { id: number; mbid: string; name: string; key: string; alias: string | null; akey: string | null; releases: number; spotify: boolean; k: string };
+  const rows = await db()<Row[]>`
     WITH hits AS (
       (SELECT id, NULL::text AS alias, NULL::text AS akey FROM artist_top WHERE key LIKE mbkey(${term}) || '%' AND length(mbkey(${term})) >= 2 ORDER BY n DESC LIMIT 150)
       UNION ALL
@@ -64,7 +60,16 @@ export async function searchArtists(term: string): Promise<ArtistHit[]> {
     .map(r => {
       const viaAlias = !r.key.startsWith(k);
       const name = tidy(shownName(r.name, viaAlias || !latin(r.name) ? r.alias : null, term));
-      return { mbid: r.mbid, name, key: viaAlias ? r.akey ?? r.key : r.key, exact: (viaAlias ? r.akey : r.key) === k, viaAlias, releases: r.releases, spotify: r.spotify };
+      const matchedKey = viaAlias ? r.akey : r.key;
+      return {
+        mbid: r.mbid,
+        name,
+        key: matchedKey ?? r.key,
+        exact: matchedKey === k,
+        viaAlias,
+        releases: r.releases,
+        spotify: r.spotify,
+      };
     });
 }
 
@@ -73,8 +78,7 @@ export async function spotifyId(mbid: string): Promise<string | null> {
   return r?.spotify ?? null;
 }
 
-// an album with the first-credited artist's name; "plain" = an album, EP or single that isn't a compilation, live
-// recording, remix and the like, with at least one official release
+// "plain": an album, EP or single that isn't a compilation, live recording, remix and the like, with an official release
 const ALBUM = `
   SELECT rg.gid::text AS mbid, rg.name AS title, acn.name AS artist, m.date, coalesce(t.name, '') AS type,
     coalesce(t.name IN ('Album', 'EP', 'Single'), false) AND NOT EXISTS (SELECT 1 FROM rg_secondary s WHERE s.release_group = rg.id)
@@ -85,11 +89,21 @@ const ALBUM = `
   LEFT JOIN release_group_meta m ON m.id = rg.id
   LEFT JOIN rg_type t ON t.id = rg.type`;
 type AlbumRow = { mbid: string; title: string; artist: string; date: string | null; type: string; plain: boolean; releases: number };
-const albumOf = (r: AlbumRow): MbAlbum => ({ mbid: r.mbid, title: tidy(r.title), artist: tidy(r.artist), date: r.date, type: r.type });
+const albumOf = (r: AlbumRow): MbAlbum => ({
+  mbid: r.mbid,
+  title: tidy(r.title),
+  artist: tidy(r.artist),
+  date: r.date,
+  type: r.type,
+});
 
-/** "Song (feat. Someone)" as MusicBrainz files it: "Song", the guest in the credits. */
-const unfeat = (title: string) => title.replace(/\s*[([]\s*(feat\.?|ft\.?|featuring|with)\s[^)\]]*[)\]]\s*$/i, "").replace(/\s+(feat\.?|ft\.?|featuring)\s.*$/i, "").trim();
-/** Asks again without a "(feat. ...)" in the title when the title as given finds nothing. */
+// MusicBrainz files "Song (feat. Someone)" as "Song", with the guest in the credits
+const unfeat = (title: string) =>
+  title
+    .replace(/\s*[([]\s*(feat\.?|ft\.?|featuring|with)\s[^)\]]*[)\]]\s*$/i, "")
+    .replace(/\s+(feat\.?|ft\.?|featuring)\s.*$/i, "")
+    .trim();
+
 async function orUnfeat<T>(title: string, find: (title: string) => Promise<T | null>): Promise<T | null> {
   const r = await find(title);
   const bare = unfeat(title);
@@ -105,13 +119,13 @@ async function albumAs(artistName: string, title: string): Promise<MbAlbum | nul
   return rows[0] ? albumOf(rows[0]) : null;
 }
 
-/** An artist's albums and EPs, oldest first. */
-/** The album (release group id) a release belongs to. */
 export async function releaseGroupOf(releaseMbid: string): Promise<string | null> {
-  const [r] = await db()<{ gid: string }[]>`SELECT rg.gid::text AS gid FROM release r JOIN release_group rg ON rg.id = r.release_group WHERE r.gid = ${releaseMbid}::uuid`;
+  const [r] = await db()<{ gid: string }[]>`
+    SELECT rg.gid::text AS gid FROM release r JOIN release_group rg ON rg.id = r.release_group WHERE r.gid = ${releaseMbid}::uuid`;
   return r?.gid ?? null;
 }
 
+/** Albums and EPs, oldest first. */
 export async function discography(mbid: string): Promise<MbAlbum[]> {
   const rows = await db().unsafe<AlbumRow[]>(`SELECT * FROM (${ALBUM}
     JOIN artist a ON a.id = acn.artist
@@ -122,7 +136,8 @@ export async function discography(mbid: string): Promise<MbAlbum[]> {
 
 export const track = (artistName: string, title: string) => orUnfeat(title, t => trackAs(artistName, t));
 async function trackAs(artistName: string, title: string): Promise<MbTrack | null> {
-  const recs = await db()<{ id: number; name: string; length: number | null; comment: string; video: boolean; artist: string }[]>`
+  type Rec = { id: number; name: string; length: number | null; comment: string; video: boolean; artist: string };
+  const recs = await db()<Rec[]>`
     WITH k AS (SELECT mbkey(${artistName}) AS a, mbkey(${title}) AS t),
     who AS (SELECT id FROM artist, k WHERE key = k.a UNION SELECT artist FROM artist_alias, k WHERE key = k.a),
     credits AS (SELECT DISTINCT artist_credit FROM artist_credit_name WHERE position = 0 AND artist IN (SELECT id FROM who))
@@ -133,7 +148,8 @@ async function trackAs(artistName: string, title: string): Promise<MbTrack | nul
   if (!recs.length) return null;
   // live takes, remixes and the like carry a note ("live, 1994"); the original may too ("explicit", "clean")
   const studio = recs.filter(r => !r.video && !VARIANT.test(r.comment));
-  const found = studio.length ? await db()<{ recording: number; mbid: string; title: string; type: string; date: string | null }[]>`
+  type Appearance = { recording: number; mbid: string; title: string; type: string; date: string | null };
+  const found = studio.length ? await db()<Appearance[]>`
     SELECT t.recording, rg.gid::text AS mbid, rg.name AS title, pt.name AS type, w.date
     FROM track t JOIN medium md ON md.id = t.medium JOIN release rl ON rl.id = md.release
     JOIN release_status st ON st.id = rl.status AND st.name = 'Official'
@@ -149,20 +165,19 @@ async function trackAs(artistName: string, title: string): Promise<MbTrack | nul
   let best: (typeof dated)[number] | null = null;
   for (const f of dated) {
     if (rank(f.type) < 2 && f.year > firstYear + 2) continue;
-    if (!best || rank(f.type) < rank(best.type) || (rank(f.type) === rank(best.type) && f.date! < best.date!)) best = f;
+    const better = !best || rank(f.type) < rank(best.type) || (rank(f.type) === rank(best.type) && f.date! < best.date!);
+    if (better) best = f;
   }
   const rec = (best && studio.find(r => r.id === best.recording)) ?? studio[0] ?? recs[0]!;
   const seconds = Math.round((rec.length || studio.map(r => r.length || 0).find(n => n > 0) || 0) / 1000);
   const name = tidy(rec.artist);
-  return {
-    title: tidy(rec.name), artist: name, seconds,
-    album: best ? { mbid: best.mbid, title: tidy(best.title), artist: name, date: best.date, type: best.type } : null,
-  };
+  const album = best ? { mbid: best.mbid, title: tidy(best.title), artist: name, date: best.date, type: best.type } : null;
+  return { title: tidy(rec.name), artist: name, seconds, album };
 }
 
 const VARIANT = /\b(live|demo|remix|mix|edit|acoustic|instrumental|karaoke|a ?cappella|unplugged|session|rehearsal|reprise|alternate|alt|take|cover|dub|sped|slowed|nightcore|orchestral|piano)\b/i;
 
-/** The track list of an album's first official release (discs in order, video discs left out). */
+/** The first official release's tracks, video discs left out. */
 export async function trackList(rgid: string): Promise<ListedTrack[]> {
   const [rel] = await db()`
     SELECT rl.id FROM release_group rg JOIN release rl ON rl.release_group = rg.id
@@ -176,27 +191,42 @@ export async function trackList(rgid: string): Promise<ListedTrack[]> {
     FROM medium md LEFT JOIN medium_format f ON f.id = md.format JOIN track t ON t.medium = md.id JOIN recording r ON r.id = t.recording
     WHERE md.release = ${rel.id} AND coalesce(f.name, '') !~* 'dvd|blu-ray|video'
     ORDER BY md.position, t.position LIMIT 100`;
-  return rows.map(r => ({ title: tidy(r.name), seconds: Math.round((r.length || 0) / 1000) })).filter(t => t.title);
+  return rows
+    .map(r => ({ title: tidy(r.name), seconds: Math.round((r.length || 0) / 1000) }))
+    .filter(t => t.title);
 }
 
-// ---------- events ----------
-/** A concert or festival in the copy (event_x, see sonomb's events.sh), with its bill: headliners first. */
+/** Lineup is headliners first. */
 export type MbEvent = {
-  gid: string; name: string; date: string; time: string | null; festival: boolean; venue: string | null; city: string | null;
-  country: string | null; lat: number | null; lon: number | null; lineup: { mbid: string; name: string }[];
+  gid: string;
+  name: string;
+  date: string;
+  time: string | null;
+  festival: boolean;
+  venue: string | null;
+  city: string | null;
+  country: string | null;
+  lat: number | null;
+  lon: number | null;
+  lineup: { mbid: string; name: string }[];
 };
 
-/**
- * Concerts and festivals on dates from `from` to `to` (YYYY-MM-DD), not called off. With `onlyArtists`, just the ones
- * where one of those artists (MusicBrainz ids) plays.
- */
+/** Concerts and festivals not called off, optionally only those with one of `onlyArtists` (MusicBrainz ids) playing. */
 export async function events(from: string, to: string, onlyArtists?: string[]): Promise<MbEvent[]> {
-  const rows = await db()<(Omit<MbEvent, "lineup"> & { lineup: { mbid: string; name: string }[] | null })[]>`
+  const byArtist = onlyArtists
+    ? db()`AND e.id IN (SELECT x.event FROM event_artist_x x JOIN artist a ON a.id = x.artist WHERE a.gid = ANY(${onlyArtists}::uuid[]))`
+    : db()``;
+  const rows = await db()<(Omit<MbEvent, "lineup"> & { lineup: MbEvent["lineup"] | null })[]>`
     SELECT e.gid::text AS gid, e.name, e.date, e.time, e.type = 2 AS festival, e.venue, e.city, e.country, e.lat, e.lon,
       (SELECT json_agg(json_build_object('mbid', a.gid::text, 'name', a.name) ORDER BY x.role, x.ord, a.name)
        FROM event_artist_x x JOIN artist a ON a.id = x.artist WHERE x.event = e.id) AS lineup
     FROM event_x e
     WHERE e.date BETWEEN ${from} AND ${to} AND e.type IN (1, 2) AND NOT e.cancelled
-      ${onlyArtists ? db()`AND e.id IN (SELECT x.event FROM event_artist_x x JOIN artist a ON a.id = x.artist WHERE a.gid = ANY(${onlyArtists}::uuid[]))` : db()``}`;
-  return rows.map(r => ({ ...r, name: tidy(r.name), venue: r.venue && tidy(r.venue), lineup: (r.lineup ?? []).map(a => ({ mbid: a.mbid, name: tidy(a.name) })) }));
+      ${byArtist}`;
+  return rows.map(r => ({
+    ...r,
+    name: tidy(r.name),
+    venue: r.venue && tidy(r.venue),
+    lineup: (r.lineup ?? []).map(a => ({ mbid: a.mbid, name: tidy(a.name) })),
+  }));
 }

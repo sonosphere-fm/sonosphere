@@ -1,4 +1,3 @@
-// Data access for the staff dashboard: site-wide totals, daily activity and the newest accounts.
 import { and, count, countDistinct, desc, eq, gte, isNull, ne, sql } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
@@ -9,9 +8,9 @@ import type { Dashboard, DayCount } from "../../shared/admin";
 
 const DAY = 86400;
 
-/** Site-wide counts as of `t` (Unix seconds). */
 export async function totals(t: number): Promise<Dashboard["totals"]> {
-  const week = t - 7 * DAY, staffOnly = and(eq(users.isAdmin, true), eq(users.banned, false));
+  const week = t - 7 * DAY;
+  const staffOnly = and(eq(users.isAdmin, true), eq(users.banned, false));
   const active = await db.select({ c: countDistinct(scrobbles.userId) }).from(scrobbles).where(gte(scrobbles.playedAt, week));
   return {
     users: await db.$count(users),
@@ -30,33 +29,44 @@ export async function totals(t: number): Promise<Dashboard["totals"]> {
     shouts7: await db.$count(shouts, gte(shouts.createdAt, week)),
     journals7: await db.$count(journals, gte(journals.createdAt, week)),
     wikis7: await db.$count(wikis, gte(wikis.createdAt, week)),
-    artists: await db.$count(artists), albums: await db.$count(albums), tracks: await db.$count(tracks),
+    artists: await db.$count(artists),
+    albums: await db.$count(albums),
+    tracks: await db.$count(tracks),
     lockedWikis: await db.$count(wikiLocks),
   };
 }
 
-/** Rows per UTC day ("YYYY-MM-DD") since `from`, counted on a time column. */
+// Keyed by UTC day, "YYYY-MM-DD".
 async function perDay(table: PgTable, time: PgColumn, from: number): Promise<Map<string, number>> {
   const day = timeBucket(time, "day");
   const rows = await db.select({ d: day, c: count() }).from(table).where(gte(time, from)).groupBy(sql`1`);
   return new Map(rows.map(r => [String(r.d), r.c]));
 }
-/** One entry per day for `days` days starting at `from`, adding up the given per-day counts. */
+
 function series(from: number, days: number, ...counts: Map<string, number>[]): DayCount[] {
   return Array.from({ length: days }, (_, i) => {
-    const ts = from + i * DAY, d = new Date(ts * 1000).toISOString().slice(0, 10);
+    const ts = from + i * DAY;
+    const d = new Date(ts * 1000).toISOString().slice(0, 10);
     return { day: ts, count: counts.reduce((n, m) => n + (m.get(d) ?? 0), 0) };
   });
 }
-/** Daily activity for `days` days starting at `from` (the start of a UTC day). */
+
 export async function activity(from: number, days: number): Promise<Dashboard["series"]> {
+  const posts = [
+    await perDay(shouts, shouts.createdAt, from),
+    await perDay(journals, journals.createdAt, from),
+    await perDay(wikis, wikis.createdAt, from),
+  ];
   return {
     scrobbles: series(from, days, await perDay(scrobbles, scrobbles.playedAt, from)),
     signups: series(from, days, await perDay(users, users.registeredAt, from)),
     reports: series(from, days, await perDay(reports, reports.createdAt, from)),
-    posts: series(from, days, await perDay(shouts, shouts.createdAt, from), await perDay(journals, journals.createdAt, from), await perDay(wikis, wikis.createdAt, from)),
+    posts: series(from, days, ...posts),
   };
 }
 
 export const newestUsers = (limit: number): Promise<Dashboard["recentUsers"]> =>
-  db.select({ ...publicCols, registeredAt: users.registeredAt }).from(users).orderBy(desc(users.registeredAt), desc(users.id)).limit(limit);
+  db.select({ ...publicCols, registeredAt: users.registeredAt })
+    .from(users)
+    .orderBy(desc(users.registeredAt), desc(users.id))
+    .limit(limit);

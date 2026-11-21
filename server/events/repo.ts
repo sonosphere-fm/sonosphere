@@ -1,4 +1,3 @@
-// Data access for events, their line-ups and who is going.
 import { and, asc, count, desc, eq, gte, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import { getOrCreateArtistTx } from "../catalog/repo";
 import { db, transact } from "../db/client";
@@ -8,24 +7,30 @@ import { now } from "../util";
 import type { Attendance, EventArtist, EventPlace, EventSummary } from "../../shared/events";
 import type { PublicUser } from "../../shared/users";
 
-/** Which events a list covers. Every field narrows it. */
+/** Every field narrows the list. */
 export type Filter = {
   id?: number;
-  /** Starting before this time (Unix seconds). */
   before?: number;
-  /** Starting at or after this time. */
   from?: number;
-  /** Lower-case text to find in the title, venue, city or country. `%` and `_` act as wildcards, as they always have. */
+  /** Lower-case; `%` and `_` act as wildcards, as they always have. */
   text?: string;
-  /** Events this user has said they are going to or interested in. */
   attendee?: number;
   /** Events with one of this user's 50 most played artists on the bill. */
   fanOf?: number;
-  /** Events at a venue within `km` of a point. */
   near?: { lat: number; lon: number; km: number };
-  /** Events in this country (its English name, as stored). */
   country?: string;
 };
+
+function nearby(lat: number, lon: number, km: number): SQL[] {
+  const dLat = km / 111;
+  const dLon = km / (111 * Math.max(0.1, Math.cos(lat * Math.PI / 180)));
+  // a cheap bounding box first, then the great-circle distance
+  return [
+    sql`${events.lat} BETWEEN ${lat - dLat} AND ${lat + dLat} AND ${events.lon} BETWEEN ${lon - dLon} AND ${lon + dLon}`,
+    sql`6371 * 2 * asin(sqrt(power(sin(radians(${events.lat} - ${lat}) / 2), 2)
+      + cos(radians(${lat})) * cos(radians(${events.lat})) * power(sin(radians(${events.lon} - ${lon}) / 2), 2))) <= ${km}`,
+  ];
+}
 
 function matching(f: Filter): SQL | undefined {
   const c: SQL[] = [];
@@ -34,75 +39,102 @@ function matching(f: Filter): SQL | undefined {
   if (f.from !== undefined) c.push(gte(events.startsAt, f.from));
   if (f.text) {
     const pattern = `%${f.text}%`;
-    const any = or(...[events.city, events.country, events.venue, events.title].map(col => sql`lower(${col}) LIKE ${pattern}`));
+    const cols = [events.city, events.country, events.venue, events.title];
+    const any = or(...cols.map(col => sql`lower(${col}) LIKE ${pattern}`));
     if (any) c.push(any);
   }
-  if (f.attendee !== undefined) c.push(inArray(events.id, db.select({ id: eventAttendance.eventId }).from(eventAttendance).where(eq(eventAttendance.userId, f.attendee))));
+  if (f.attendee !== undefined) {
+    const attending = db.select({ id: eventAttendance.eventId }).from(eventAttendance).where(eq(eventAttendance.userId, f.attendee));
+    c.push(inArray(events.id, attending));
+  }
   if (f.fanOf !== undefined) {
-    const favourites = db.select({ id: userArtists.artistId }).from(userArtists).where(eq(userArtists.userId, f.fanOf)).orderBy(desc(userArtists.plays)).limit(50);
-    c.push(inArray(events.id, db.select({ id: eventArtists.eventId }).from(eventArtists).where(inArray(eventArtists.artistId, favourites))));
+    const favourites = db.select({ id: userArtists.artistId }).from(userArtists)
+      .where(eq(userArtists.userId, f.fanOf))
+      .orderBy(desc(userArtists.plays))
+      .limit(50);
+    const billed = db.select({ id: eventArtists.eventId }).from(eventArtists).where(inArray(eventArtists.artistId, favourites));
+    c.push(inArray(events.id, billed));
   }
-  if (f.near) {
-    const { lat, lon, km } = f.near, dLat = km / 111, dLon = km / (111 * Math.max(0.1, Math.cos(lat * Math.PI / 180)));
-    // a box first (cheap), then the great-circle distance
-    c.push(sql`${events.lat} BETWEEN ${lat - dLat} AND ${lat + dLat} AND ${events.lon} BETWEEN ${lon - dLon} AND ${lon + dLon}`);
-    c.push(sql`6371 * 2 * asin(sqrt(power(sin(radians(${events.lat} - ${lat}) / 2), 2)
-      + cos(radians(${lat})) * cos(radians(${events.lat})) * power(sin(radians(${events.lon} - ${lon}) / 2), 2))) <= ${km}`);
-  }
+  if (f.near) c.push(...nearby(f.near.lat, f.near.lon, f.near.km));
   if (f.country) c.push(sql`lower(${events.country}) = ${f.country.toLowerCase()}`);
   return and(...c);
 }
 
-const headCount = (status: Attendance) => db.select({ c: count() }).from(eventAttendance).where(and(eq(eventAttendance.eventId, events.id), eq(eventAttendance.status, status)));
+const headCount = (status: Attendance) =>
+  db.select({ c: count() }).from(eventAttendance)
+    .where(and(eq(eventAttendance.eventId, events.id), eq(eventAttendance.status, status)));
 
-/** An event's line-up, in billing order. */
-export const lineup = (eventId: number): Promise<EventArtist[]> =>
-  db.select({ name: artists.name, image: artists.imageId }).from(eventArtists).innerJoin(artists, eq(artists.id, eventArtists.artistId))
-    .where(eq(eventArtists.eventId, eventId)).orderBy(asc(eventArtists.position));
+const lineup = (eventId: number): Promise<EventArtist[]> =>
+  db.select({ name: artists.name, image: artists.imageId })
+    .from(eventArtists)
+    .innerJoin(artists, eq(artists.id, eventArtists.artistId))
+    .where(eq(eventArtists.eventId, eventId))
+    .orderBy(asc(eventArtists.position));
 
-/** Events matching a filter, by start time, each with its line-up, head counts and what the viewer said about it. */
 export async function listEvents(f: Filter, viewerId: number | undefined, order: "asc" | "desc", limit: number, offset = 0): Promise<EventSummary[]> {
-  const mine = db.select({ status: eventAttendance.status }).from(eventAttendance).where(and(eq(eventAttendance.eventId, events.id), eq(eventAttendance.userId, viewerId || 0)));
+  const mine = db.select({ status: eventAttendance.status }).from(eventAttendance)
+    .where(and(eq(eventAttendance.eventId, events.id), eq(eventAttendance.userId, viewerId || 0)));
   const rows = await db.select({
-    id: events.id, title: events.title, venue: events.venue, city: events.city, country: events.country, startsAt: events.startsAt,
-    description: events.description, url: events.url, creator: users.username, source: events.source,
-    going: sql<number>`${headCount("going")}`, interested: sql<number>`${headCount("interested")}`,
-    // the status column only ever holds the two values of Attendance (see setAttendance)
+    id: events.id,
+    title: events.title,
+    venue: events.venue,
+    city: events.city,
+    country: events.country,
+    startsAt: events.startsAt,
+    description: events.description,
+    url: events.url,
+    creator: users.username,
+    source: events.source,
+    going: sql<number>`${headCount("going")}`,
+    interested: sql<number>`${headCount("interested")}`,
     status: sql<Attendance | null>`${mine}`,
-  }).from(events).leftJoin(users, eq(users.id, events.creatorId)).where(matching(f))
-    .orderBy(order === "asc" ? asc(events.startsAt) : desc(events.startsAt)).limit(limit).offset(offset);
+  })
+    .from(events)
+    .leftJoin(users, eq(users.id, events.creatorId))
+    .where(matching(f))
+    .orderBy(order === "asc" ? asc(events.startsAt) : desc(events.startsAt))
+    .limit(limit)
+    .offset(offset);
   return Promise.all(rows.map(async e => ({ ...e, artists: await lineup(e.id) })));
 }
 
-export const countEvents = async (f: Filter): Promise<number> => (await db.select({ c: count() }).from(events).where(matching(f)))[0]?.c ?? 0;
+export const countEvents = async (f: Filter): Promise<number> => {
+  const [row] = await db.select({ c: count() }).from(events).where(matching(f));
+  return row?.c ?? 0;
+};
 
-/** The latest 40 people who gave this answer for an event. */
+/** The latest 40 people who gave this answer. */
 export const attendees = (eventId: number, status: Attendance): Promise<PublicUser[]> =>
-  db.select(publicCols).from(eventAttendance).innerJoin(users, eq(users.id, eventAttendance.userId))
-    .where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.status, status))).orderBy(desc(eventAttendance.createdAt)).limit(40);
+  db.select(publicCols)
+    .from(eventAttendance)
+    .innerJoin(users, eq(users.id, eventAttendance.userId))
+    .where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.status, status)))
+    .orderBy(desc(eventAttendance.createdAt))
+    .limit(40);
 
-export type NewEvent = { title: string; venue: string; city: string; country: string; startsAt: number; description: string; url: string };
+type NewEvent = { title: string; venue: string; city: string; country: string; startsAt: number; description: string; url: string };
 
-/**
- * Adds an event with its line-up (artists new to the catalogue are added to it) and marks the creator as going.
- * Returns the event's id.
- */
 export async function createEvent(e: NewEvent, artistNames: string[], creatorId: number): Promise<number> {
-  return (await transact(async tx => {
-    const id = (await tx.insert(events).values({ ...e, creatorId, createdAt: now() }).returning({ id: events.id }))[0].id;
+  return transact(async tx => {
+    const [row] = await tx.insert(events).values({ ...e, creatorId, createdAt: now() }).returning({ id: events.id });
+    const id = row!.id;
     for (const [position, name] of artistNames.entries()) {
-      await tx.insert(eventArtists).values({ eventId: id, artistId: await getOrCreateArtistTx(tx, name), position }).onConflictDoNothing();
+      const artistId = await getOrCreateArtistTx(tx, name);
+      await tx.insert(eventArtists).values({ eventId: id, artistId, position }).onConflictDoNothing();
     }
     await tx.insert(eventAttendance).values({ eventId: id, userId: creatorId, status: "going", createdAt: now() });
     return id;
-  }));
+  });
 }
 
-/** Deletes an event if this user created it. False when they did not (or there is no such event). */
-export const deleteOwnEvent = async (id: number, creatorId: number): Promise<boolean> =>
-  (await db.delete(events).where(and(eq(events.id, id), eq(events.creatorId, creatorId))).returning({ id: events.id })).length > 0;
+export const deleteOwnEvent = async (id: number, creatorId: number): Promise<boolean> => {
+  const deleted = await db.delete(events)
+    .where(and(eq(events.id, id), eq(events.creatorId, creatorId)))
+    .returning({ id: events.id });
+  return deleted.length > 0;
+};
 
-/** Records what a user says about an event, replacing any earlier answer. Null withdraws it. */
+/** Null withdraws the answer. */
 export async function setAttendance(eventId: number, userId: number, status: Attendance | null): Promise<void> {
   await transact(async tx => {
     await tx.delete(eventAttendance).where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.userId, userId)));
@@ -110,14 +142,22 @@ export async function setAttendance(eventId: number, userId: number, status: Att
   });
 }
 
-/** Places events are already held at, most used first, for the add form's suggestions. Countries come all at once (there are few);
- *  venues and cities only those containing the typed text. A venue carries its city and country, a city its country. */
+/** Suggestions for the add form, most used first. Countries come all at once (there are few). */
 export async function places(field: "venue" | "city" | "country", q: string): Promise<EventPlace[]> {
-  const col = events[field], n = sql<number>`count(*)::int`;
+  const col = events[field];
+  const n = sql<number>`count(*)::int`;
   const like = `%${q.toLowerCase().replace(/[\\%_]/g, c => "\\" + c)}%`;
   const where = and(sql`${col} <> ''`, field === "country" || !q ? undefined : sql`lower(${col}) LIKE ${like}`);
-  if (field === "country") return db.select({ name: col, count: n }).from(events).where(where).groupBy(col).orderBy(desc(n));
+  if (field === "country") {
+    return db.select({ name: col, count: n }).from(events).where(where).groupBy(col).orderBy(desc(n));
+  }
   // the most common city and country seen with each name
-  const city = sql<string>`mode() within group (order by ${events.city})`, country = sql<string>`mode() within group (order by ${events.country})`;
-  return db.select({ name: col, count: n, ...(field === "venue" && { city }), country }).from(events).where(where).groupBy(col).orderBy(desc(n), asc(col)).limit(8);
+  const city = sql<string>`mode() within group (order by ${events.city})`;
+  const country = sql<string>`mode() within group (order by ${events.country})`;
+  return db.select({ name: col, count: n, ...(field === "venue" && { city }), country })
+    .from(events)
+    .where(where)
+    .groupBy(col)
+    .orderBy(desc(n), asc(col))
+    .limit(8);
 }

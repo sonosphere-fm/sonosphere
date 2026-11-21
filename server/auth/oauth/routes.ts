@@ -1,11 +1,5 @@
-// Signing in with another site (OAuth 2 authorization code flow), for every provider in providers.ts:
-//   GET  /api/auth/oauth/:provider/start?intent=login|link&next=/path   off to the provider
-//   GET  /api/auth/oauth/:provider/callback                             back from it
-//   GET  /api/auth/oauth/pending, POST /api/auth/oauth/complete         a new account picks its username
-//   GET  /api/me/logins, POST /api/me/logins/unlink                     settings
-// A provider account that is already linked signs straight in. One that is not makes a new account, unless its email
-// belongs to an existing one: that person logs in with their password and connects the provider from settings, so
-// nobody can take over an account by showing up with the same address. Unverified provider emails are refused outright.
+// A provider email that belongs to an existing account is refused rather than linked, so nobody can take over an
+// account by showing up with the same address; the owner connects the provider from settings instead.
 import { need } from "../../guards";
 import { bad, ipOf, limit, Router, type Ctx } from "../../http";
 import { getJson, setJson, takeJson } from "../../kv";
@@ -23,35 +17,60 @@ export const router = new Router();
 type State = { provider: string; intent: "login" | "link"; userId: number; next: string; verifier: string };
 type Pending = { provider: string; subject: string; name: string; email: string; next: string };
 
-const STATE_LIFE = 10 * 60, PENDING_LIFE = 30 * 60;
+const STATE_LIFE = 10 * 60;
+const PENDING_LIFE = 30 * 60;
 const SECURE = SITE_URL.startsWith("https:") ? "; Secure" : "";
-const cookie = (name: string, value: string, maxAge: number) => `${name}=${value}; Path=/api/auth/oauth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE}`;
-const cookieOf = (c: Ctx, name: string) => new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]+)`).exec(c.req.headers.get("cookie") || "")?.[1] || "";
-const safeNext = (n: unknown) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\") ? n.slice(0, 300) : "/");
+const cookie = (name: string, value: string, maxAge: number) =>
+  `${name}=${value}; Path=/api/auth/oauth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE}`;
+
+function cookieOf(c: Ctx, name: string): string {
+  const match = new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]+)`).exec(c.req.headers.get("cookie") || "");
+  return match?.[1] || "";
+}
+
+// Only same-site paths, so the redirect can't be pointed at another host.
+function safeNext(n: unknown): string {
+  if (typeof n !== "string") return "/";
+  if (!n.startsWith("/") || n.startsWith("//") || n.startsWith("/\\")) return "/";
+  return n.slice(0, 300);
+}
+
 const redirectUri = (p: Provider) => `${SITE_URL}/api/auth/oauth/${p.id}/callback`;
 const b64url = (b: ArrayBuffer) => Buffer.from(b).toString("base64url");
 
-/** A redirect that keeps the cookies set on this request (a session, cleared one-time cookies). */
+// Keeps the cookies set on this request (a session, cleared one-time cookies).
 function go(c: Ctx, to: string): Response {
   const h = new Headers({ Location: to, "Cache-Control": "no-store" });
   for (const v of c.headers.getSetCookie()) h.append("Set-Cookie", v);
   return new Response(null, { status: 302, headers: h });
 }
-// what went wrong goes back as a code the page turns into words, never as text from the URL
-const failTo = (c: Ctx, intent: State["intent"], code: string) => go(c, intent === "link" ? `/settings/account?oauth=${code}` : `/login?oauth=${code}`);
+// Errors go back as a code the page turns into words, never as text from the URL.
+function failTo(c: Ctx, intent: State["intent"], code: string): Response {
+  return go(c, intent === "link" ? `/settings/account?oauth=${code}` : `/login?oauth=${code}`);
+}
 
 router.get("/api/auth/oauth/:provider/start", async c => {
-  const p = providerById(c.params[0]!), intent = c.q.get("intent") === "link" ? "link" : "login";
+  const p = providerById(c.params[0]!);
+  const intent = c.q.get("intent") === "link" ? "link" : "login";
   if (!p) return failTo(c, intent, "off");
   await limit(`oauth:${ipOf(c.req)}`, 30, 3600);
   if (intent === "link" && !c.user) return go(c, `/login?next=${encodeURIComponent("/settings/account")}`);
-  const state = rid(16), verifier = p.pkce ? rid(32) : "";
-  await setJson(`oauth:state:${digest(state)}`, { provider: p.id, intent, userId: c.user?.id ?? 0, next: safeNext(c.q.get("next")), verifier } satisfies State, STATE_LIFE * 1000);
+  const state = rid(16);
+  const verifier = p.pkce ? rid(32) : "";
+  const saved: State = { provider: p.id, intent, userId: c.user?.id ?? 0, next: safeNext(c.q.get("next")), verifier };
+  await setJson(`oauth:state:${digest(state)}`, saved, STATE_LIFE * 1000);
   c.headers.append("Set-Cookie", cookie("oauth_state", state, STATE_LIFE));
   const u = new URL(p.authorizeUrl);
-  u.search = new URLSearchParams({ client_id: p.clientId, redirect_uri: redirectUri(p), response_type: "code", scope: p.scope, state }).toString();
+  u.search = new URLSearchParams({
+    client_id: p.clientId,
+    redirect_uri: redirectUri(p),
+    response_type: "code",
+    scope: p.scope,
+    state,
+  }).toString();
   if (verifier) {
-    u.searchParams.set("code_challenge", b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
+    const challenge = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+    u.searchParams.set("code_challenge", b64url(challenge));
     u.searchParams.set("code_challenge_method", "S256");
   }
   return go(c, u.toString());
@@ -59,7 +78,8 @@ router.get("/api/auth/oauth/:provider/start", async c => {
 
 router.get("/api/auth/oauth/:provider/callback", async c => {
   // the state has to come back to the browser that set off, once, within ten minutes
-  const sent = c.q.get("state") || "", mine = cookieOf(c, "oauth_state");
+  const sent = c.q.get("state") || "";
+  const mine = cookieOf(c, "oauth_state");
   c.headers.append("Set-Cookie", cookie("oauth_state", "", 0));
   const st = sent && sent === mine ? await takeJson<State>(`oauth:state:${digest(sent)}`) : null;
   if (!st || st.provider !== c.params[0]) return failTo(c, c.user ? "link" : "login", "expired");
@@ -68,8 +88,13 @@ router.get("/api/auth/oauth/:provider/callback", async c => {
   if (c.q.get("error") || !c.q.get("code")) return failTo(c, st.intent, "cancelled");
 
   let who;
-  try { who = await p.profile(await exchange(p, c.q.get("code")!, st.verifier)); }
-  catch (e) { console.error(`oauth ${p.id}:`, e instanceof Error ? e.message : e); return failTo(c, st.intent, "failed"); }
+  try {
+    const token = await exchange(p, c.q.get("code")!, st.verifier);
+    who = await p.profile(token);
+  } catch (e) {
+    console.error(`oauth ${p.id}:`, e instanceof Error ? e.message : e);
+    return failTo(c, st.intent, "failed");
+  }
   if (!who.email || !who.emailVerified) return failTo(c, st.intent, "unverified");
   const link = await repo.findLink(p.id, who.subject);
 
@@ -92,27 +117,44 @@ router.get("/api/auth/oauth/:provider/callback", async c => {
     return go(c, st.next);
   }
   if (await emailTaken(who.email)) return failTo(c, "login", "email");
-  // a new account: the person picks a username first (pending is kept on the server, keyed by a one-time cookie)
+  // a new account picks a username first; the pending sign-up is keyed by a one-time cookie
   const ticket = rid(16);
-  await setJson(`oauth:pending:${digest(ticket)}`, { provider: p.id, subject: who.subject, name: who.name, email: who.email, next: st.next } satisfies Pending, PENDING_LIFE * 1000);
+  const pending: Pending = { provider: p.id, subject: who.subject, name: who.name, email: who.email, next: st.next };
+  await setJson(`oauth:pending:${digest(ticket)}`, pending, PENDING_LIFE * 1000);
   c.headers.append("Set-Cookie", cookie("oauth_ticket", ticket, PENDING_LIFE));
   return go(c, "/join/oauth");
 });
 
-/** Trades the code the provider sent back for an access token. */
 async function exchange(p: Provider, code: string, verifier: string): Promise<string> {
-  const form = new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: redirectUri(p), client_id: p.clientId, client_secret: p.clientSecret });
+  const form = new URLSearchParams({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: redirectUri(p),
+    client_id: p.clientId,
+    client_secret: p.clientSecret,
+  });
   if (verifier) form.set("code_verifier", verifier);
-  const r = await fetch(p.tokenUrl, { method: "POST", body: form, headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
+  const r = await fetch(p.tokenUrl, {
+    method: "POST",
+    body: form,
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
   const j = (await r.json().catch(() => ({}))) as { access_token?: string; error?: string };
   if (!r.ok || !j.access_token) throw new Error(`token exchange answered ${r.status} ${j.error ?? ""}`);
   return j.access_token;
 }
 
-// ---------- a new account from another site ----------
-const pendingOf = (c: Ctx) => { const t = cookieOf(c, "oauth_ticket"); return t ? getJson<Pending>(`oauth:pending:${digest(t)}`) : Promise.resolve(null); };
-/** A username to offer: their handle there, cut down to what usernames here allow. */
-const suggest = (name: string) => { const s = name.replace(/[^a-zA-Z0-9_-]/g, "").replace(/^[^a-zA-Z]+/, "").slice(0, 15); return USERNAME.test(s) ? s : ""; };
+async function pendingOf(c: Ctx): Promise<Pending | null> {
+  const t = cookieOf(c, "oauth_ticket");
+  return t ? getJson<Pending>(`oauth:pending:${digest(t)}`) : null;
+}
+
+// Their handle at the provider, cut down to what usernames here allow.
+function suggest(name: string): string {
+  const s = name.replace(/[^a-zA-Z0-9_-]/g, "").replace(/^[^a-zA-Z]+/, "").slice(0, 15);
+  return USERNAME.test(s) ? s : "";
+}
 
 router.get<OAuthPending>("/api/auth/oauth/pending", async c => {
   const pd = (await pendingOf(c)) ?? bad("This sign-up has expired. Start again from the join page.");
@@ -121,11 +163,14 @@ router.get<OAuthPending>("/api/auth/oauth/pending", async c => {
 
 router.post<OAuthCreated>("/api/auth/oauth/complete", async c => {
   await limit(`signup:${ipOf(c.req)}`, 5, 3600, "Too many sign-ups from here. Try again later.");
-  const t = cookieOf(c, "oauth_ticket"), key = `oauth:pending:${digest(t)}`;
+  const t = cookieOf(c, "oauth_ticket");
+  const key = `oauth:pending:${digest(t)}`;
   const pd = (t && (await getJson<Pending>(key))) || bad("This sign-up has expired. Start again from the join page.");
   const username = clean(c.body.username, 15);
   await checkNewAccount(username, pd.email);
-  if (await repo.findLink(pd.provider, pd.subject)) bad(`That ${providerLabel(pd.provider)} account is already connected to an account here. Log in instead.`);
+  if (await repo.findLink(pd.provider, pd.subject)) {
+    bad(`That ${providerLabel(pd.provider)} account is already connected to an account here. Log in instead.`);
+  }
   if (!(await takeJson<Pending>(key))) bad("This sign-up has expired. Start again from the join page.");
   // the provider confirmed the address, so it counts as confirmed here
   const u = await createAccount(username, pd.email, "", true);
@@ -135,18 +180,20 @@ router.post<OAuthCreated>("/api/auth/oauth/complete", async c => {
   return { user: await me(u), next: pd.next };
 });
 
-// ---------- settings ----------
 router.get<Logins>("/api/me/logins", async c => {
-  const u = need(c), links = await repo.linksOf(u.id);
+  const u = need(c);
+  const links = await repo.linksOf(u.id);
   const ids = [...new Set([...PROVIDERS.map(p => p.id), ...links.map(l => l.provider)])];
-  return {
-    hasPassword: !!u.passwordHash,
-    providers: ids.map(id => { const l = links.find(x => x.provider === id); return { id, label: providerLabel(id), connected: l ? { name: l.name, since: l.createdAt } : null }; }),
-  };
+  const providers = ids.map(id => {
+    const l = links.find(x => x.provider === id);
+    return { id, label: providerLabel(id), connected: l ? { name: l.name, since: l.createdAt } : null };
+  });
+  return { hasPassword: !!u.passwordHash, providers };
 });
 
 router.post<Ok>("/api/me/logins/unlink", async c => {
-  const u = need(c), provider = String(c.body.provider || "");
+  const u = need(c);
+  const provider = String(c.body.provider || "");
   const links = await repo.linksOf(u.id);
   if (!links.some(l => l.provider === provider)) bad("That isn't connected");
   if (!u.passwordHash && links.length === 1) bad("Set a password first, or you won't be able to log in");
@@ -154,5 +201,4 @@ router.post<Ok>("/api/me/logins/unlink", async c => {
   return { ok: true };
 });
 
-/** The providers the sign-in pages offer. */
 export const oauthProviders = () => PROVIDERS.map(p => ({ id: p.id, label: p.label }));

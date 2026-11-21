@@ -1,34 +1,25 @@
-// The database schema. Every table the site uses is declared here; queries elsewhere are built from these definitions,
-// so column names and types are checked by the compiler. Changes are applied with migrations (see server/db/migrate.ts).
 import { pgTable, integer, bigint, boolean, text, customType, primaryKey, index, uniqueIndex, unique, real, type AnyPgColumn } from "drizzle-orm/pg-core";
-
-/** Binary data (pictures, packed vectors), returned as a Buffer. */
-const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
-/** Whole numbers that can pass 2^31 (catalogue play counts, millisecond times), read back as plain numbers. */
-const big = (name: string) => bigint(name, { mode: "number" });
 import { sql } from "drizzle-orm";
 
-/**
- * A real foreign key for one kind of a type/id pair (a shout on an artist, a tag on a track): the id when the type is `kind`,
- * else null. The database fills it in, so deleting the item deletes the rows attached to it, and nothing can point at an
- * item that is not there. Merges move rows by changing the id, which this follows.
- */
-const kindRef = (typeCol: string, idCol: string, kind: string, target: () => AnyPgColumn) =>
-  integer(`${kind}_ref`).generatedAlwaysAs(sql.raw(`CASE WHEN ${typeCol} = '${kind}' THEN ${idCol} END`)).references(target, { onDelete: "cascade" });
-const kindIndexes = (table: string, cols: Record<string, AnyPgColumn>) => Object.entries(cols).map(([k, c]) => index(`${table}_${k}_ref`).on(c).where(sql`${c} IS NOT NULL`));
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+const big = (name: string) => bigint(name, { mode: "number" });
 
-/**
- * Pictures, with random ids. The files live in object storage (server/storage): `key` (img/<id>) names them, a full-size WebP at `<key>.webp` and a
- * small one at `<key>-s.webp`, and `size` is both together in bytes. `data` holds the original upload of pictures from
- * before object storage, kept as a fallback until it is cleared.
- */
+// a real, cascading foreign key for one kind of a polymorphic type/id pair (a shout on an artist, a tag on a track)
+const kindRef = (typeCol: string, idCol: string, kind: string, target: () => AnyPgColumn) =>
+  integer(`${kind}_ref`)
+    .generatedAlwaysAs(sql.raw(`CASE WHEN ${typeCol} = '${kind}' THEN ${idCol} END`))
+    .references(target, { onDelete: "cascade" });
+const kindIndexes = (table: string, cols: Record<string, AnyPgColumn>) =>
+  Object.entries(cols).map(([k, c]) => index(`${table}_${k}_ref`).on(c).where(sql`${c} IS NOT NULL`));
+
+// files live in object storage at `<key>.webp` and `<key>-s.webp`; `size` is both together in bytes
 export const images = pgTable("images", {
 	// random, so links to pictures cannot be counted through
 	id: text().primaryKey().default(sql`replace(gen_random_uuid()::text, '-', '')`),
 	mime: text().notNull(),
 	data: bytea(),
 	key: text(),
-	// a picture shown from where it lives (an artist photo on Spotify's servers) instead of from our storage
+	// hotlinked from elsewhere (an artist photo on Spotify's servers) instead of our storage
 	url: text(),
 	size: integer().notNull().default(0),
 	width: integer(),
@@ -63,20 +54,17 @@ export const users = pgTable("users", {
 	banReason: text("ban_reason").default("").notNull(),
 	dmPolicy: text("dm_policy").default("requests").notNull(),
 	dmMuted: boolean("dm_muted").default(false).notNull(),
-	// when the address in `email` was confirmed by following an emailed link; null until then
 	emailVerifiedAt: integer("email_verified_at"),
-	// notification emails: "instant", "daily", "weekly" or "off"; the kinds turned off (comma separated); the last digest
+	// "instant", "daily", "weekly" or "off"
 	emailNotify: text("email_notify").default("instant").notNull(),
+	// comma separated
 	emailMuted: text("email_muted").default("").notNull(),
-	// site theme: "light" (default), "system" (follow the device) or "dark"
+	// "light", "system" or "dark"
 	theme: text().default("light").notNull(),
 	digestAt: integer("digest_at"),
 });
 
-/**
- * Single-use links sent by email: confirming an address (`verify`, and `change` for a new address, which only replaces
- * `users.email` once confirmed) and resetting a password (`reset`). Only a hash of the token is kept.
- */
+// kind: "verify", "change" (a new address, replaces users.email once confirmed) or "reset"
 export const emailTokens = pgTable("email_tokens", {
 	hash: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
@@ -86,7 +74,6 @@ export const emailTokens = pgTable("email_tokens", {
 	expiresAt: integer("expires_at").notNull(),
 }, t => [index("email_tokens_user").on(t.userId, t.kind)]);
 
-/** Mail waiting to go out (server/mail). Rows are deleted once sent, or after giving up. */
 export const outbox = pgTable("outbox", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	to: text().notNull(),
@@ -99,10 +86,6 @@ export const outbox = pgTable("outbox", {
 	createdAt: integer("created_at").notNull(),
 }, t => [index("outbox_next").on(t.nextAt)]);
 
-/**
- * Accounts at other sites (Discord, and later others) that can sign in to a Sonosphere account. `provider` names the site
- * (server/auth/oauth/providers.ts), `subject` is that site's stable id for the person; `name` is their handle there, for display.
- */
 export const oauthAccounts = pgTable("oauth_accounts", {
 	provider: text().notNull(),
 	subject: text().notNull(),
@@ -115,7 +98,7 @@ export const oauthAccounts = pgTable("oauth_accounts", {
 	unique("oauth_accounts_user_provider").on(table.userId, table.provider),
 ]);
 
-// Sign-in tokens are kept only as their SHA-256 (digest in server/util.ts): a copy of the database cannot be used to sign in.
+// tokens are stored as SHA-256 digests, so a copy of the database cannot be used to sign in
 export const sessions = pgTable("sessions", {
 	token: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
@@ -130,13 +113,12 @@ export const artists = pgTable("artists", {
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
-	// filled in from MusicBrainz and Spotify (server/metadata); metaAt is when that was last tried
 	mbid: text(),
 	spotifyId: text("spotify_id"),
 	metaAt: integer("meta_at"),
-	// when Spotify answered for this entry (found or not): it is asked once, never again after a real answer
+	// Spotify is asked once, never again after a real answer
 	spAt: integer("sp_at"),
-	// when Wikidata was asked for a photo (by the MusicBrainz id): asked again after a month, photos get added there
+	// Wikidata is asked again after a month: photos get added there
 	wdAt: integer("wd_at"),
 });
 
@@ -150,7 +132,7 @@ export const albums = pgTable("albums", {
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
-	// the MusicBrainz release group; metaAt as on artists, coverAt when a cover was last looked for
+	// the MusicBrainz release group
 	mbid: text(),
 	metaAt: integer("meta_at"),
 	coverAt: integer("cover_at"),
@@ -196,7 +178,7 @@ export const scrobbles = pgTable("scrobbles", {
 	albumId: integer("album_id").references(() => albums.id, { onDelete: "set null" } ),
 	playedAt: integer("played_at").notNull(),
 	source: text().default("web").notNull(),
-	// the names as the player sent them, before matching, so a correction or a merge never loses what was played (null on older plays)
+	// the names as the player sent them, so a correction or a merge never loses what was played
 	sentArtist: text("sent_artist"),
 	sentTrack: text("sent_track"),
 	sentAlbum: text("sent_album"),
@@ -326,10 +308,9 @@ export const events = pgTable("events", {
 	url: text().default("").notNull(),
 	creatorId: integer("creator_id").references(() => users.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
-	// where it came from: "user" (added here), "musicbrainz" or "ticketmaster" (server/events/sync.ts), and its id there
+	// "user", "musicbrainz" or "ticketmaster"
 	source: text().default("user").notNull(),
 	sourceId: text("source_id"),
-	// the venue's coordinates, when known, for events near someone
 	lat: real(),
 	lon: real(),
 },
@@ -401,7 +382,7 @@ export const apiApps = pgTable("api_apps", {
 	description: text().default("").notNull(),
 	apiKey: text("api_key").notNull().unique(),
 	secret: text().notNull(),
-	// where web sign-in sends people back to (with ?token=) after they approve the app; empty when the app passes cb= each time
+	// empty when the app passes cb= each time
 	callbackUrl: text("callback_url").default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
@@ -413,7 +394,7 @@ export const apiTokens = pgTable("api_tokens", {
 	createdAt: integer("created_at").notNull(),
 });
 
-// `token` and `key` below hold digests too. A session not used for a year lapses (server/compat/repo.ts).
+// `token` and `key` hold digests too
 export const apiSessions = pgTable("api_sessions", {
 	key: text().primaryKey(),
 	appId: integer("app_id").notNull().references(() => apiApps.id, { onDelete: "cascade" } ),
@@ -599,8 +580,6 @@ export const dmFlags = pgTable("dm_flags", {
 ]);
 
 
-// ---------- taste: similar artists and listening neighbours, worked out in the background ----------
-/** Artists and users whose listening changed and whose matches are due a refresh. */
 export const tasteQueue = pgTable("taste_queue", {
 	kind: text().notNull(), // "artist" or "user"
 	id: integer().notNull(),
@@ -611,7 +590,6 @@ export const tasteQueue = pgTable("taste_queue", {
 	index("taste_queue_age").on(table.queuedAt),
 ]);
 
-/** Length of each artist's listener vector (and each user's artist vector), needed to turn overlap into a 0-1 score. */
 export const tasteNorms = pgTable("taste_norms", {
 	kind: text().notNull(),
 	id: integer().notNull(),
@@ -632,7 +610,6 @@ export const userNeighbours = pgTable("user_neighbours", {
 	index("user_neighbours_best").on(table.userId, table.score),
 ]);
 
-/** Taste vectors learned from everyone's listening at once (server/recommend/als.ts), one per user and per artist. */
 export const tasteFactors = pgTable("taste_factors", {
 	kind: text().notNull(), // "artist" or "user"
 	id: integer().notNull(),
@@ -642,25 +619,25 @@ export const tasteFactors = pgTable("taste_factors", {
 	primaryKey({ columns: [table.kind, table.id] }),
 ]);
 
-/** A listener's linked Spotify account. Tokens are sealed (server/spotify/seal.ts), never stored in the clear. */
+// tokens are sealed (server/spotify/seal.ts)
 export const spotifyLinks = pgTable("spotify_links", {
 	userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" } ),
-	/** The listener's own Spotify app (each brings one: Spotify caps a development app at a handful of users). */
+	// each listener brings their own Spotify app: Spotify caps a development app at a handful of users
 	clientId: text("client_id").notNull().default(""),
 	spotifyId: text("spotify_id").notNull(),
 	displayName: text("display_name").default("").notNull(),
 	accessToken: text("access_token").notNull(),
 	refreshToken: text("refresh_token").notNull(),
 	expiresAt: integer("expires_at").notNull(),
-	/** played_at (ms) of the newest play already imported: the next poll asks only for later ones */
+	// played_at (ms) of the newest play already imported
 	cursor: big("cursor").default(0).notNull(),
 	recentAt: integer("recent_at").default(0).notNull(),
 	playingAt: integer("playing_at").default(0).notNull(),
 	importedAt: integer("imported_at"),
 	imported: integer().default(0).notNull(),
-	/** set when Spotify refuses the link (revoked access): polling stops until the listener reconnects */
+	// set when Spotify refuses the link; polling stops until the listener reconnects
 	broken: text(),
-	/** what Spotify granted, space separated; "streaming" means the browser player can play through it */
+	// space separated
 	scopes: text("scopes").default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 },
@@ -668,20 +645,18 @@ export const spotifyLinks = pgTable("spotify_links", {
 	index("spotify_links_due").on(table.recentAt),
 ]);
 
-/** A sign-in with Spotify in progress, between leaving for Spotify and coming back. Lives ten minutes. */
 export const spotifyAuth = pgTable("spotify_auth", {
 	state: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	verifier: text().notNull(),
 	clientId: text("client_id").notNull().default(""),
-	/** The site address the listener started from, to return to when Spotify comes back through a relay. */
+	// where to return to when Spotify comes back through a relay
 	origin: text().notNull().default(""),
 	redirectUri: text("redirect_uri").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
 
-// Imports of past listening (server/listening/imports.ts), worked through in the background.
-// kind: "scrobbles" or "loved" (from a file), or "lastfm" (read from a Last.fm profile, plays then loved tracks).
+// kind: "scrobbles" or "loved" (from a file), or "lastfm" (read from a Last.fm profile).
 // status: "uploading" (file chunks still arriving), "queued", "running", "done", "failed" or "cancelled".
 // cursor: how many rows have been worked through (files), or Last.fm pages read in the current phase.
 export const importJobs = pgTable("import_jobs", {
@@ -708,7 +683,6 @@ export const importJobs = pgTable("import_jobs", {
 	index("import_jobs_status").on(table.status),
 ]);
 
-// An uploaded file's rows, 20,000 to a chunk (JSON), dropped once worked through.
 export const importChunks = pgTable("import_chunks", {
 	jobId: integer("job_id").notNull().references(() => importJobs.id, { onDelete: "cascade" } ),
 	n: integer().notNull(),

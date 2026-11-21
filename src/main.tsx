@@ -1,5 +1,5 @@
 import { Ico, Spinner } from "./icons";
-import { lazy, Suspense, useCallback, useEffect, useState, type ComponentProps, type FormEvent } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
@@ -18,8 +18,6 @@ import { NotFound } from "./pages/notfound";
 import { Private } from "./pages/private";
 import { SiteBanner, VerifyBanner } from "./banner";
 
-// Every page but the home page is its own download, fetched the first time it is needed. Pointing at a link
-// renders its page out of sight (see LookAhead below), which also starts that download before the click.
 const ArtistPage = lazy(() => import("./pages/music/artist").then(m => ({ default: m.ArtistPage })));
 const AlbumPage = lazy(() => import("./pages/music/album").then(m => ({ default: m.AlbumPage })));
 const TrackPage = lazy(() => import("./pages/music/track").then(m => ({ default: m.TrackPage })));
@@ -47,26 +45,57 @@ const Terms = lazy(() => import("./pages/legal").then(m => ({ default: m.Terms }
 const PrivacyPolicy = lazy(() => import("./pages/legal").then(m => ({ default: m.Privacy })));
 const Guidelines = lazy(() => import("./pages/legal").then(m => ({ default: m.Guidelines })));
 
-// The staff portal is a separate download, fetched only when a member of staff opens it.
 const AdminPage = lazy(() => import("./admin/index"));
 
 function Header() {
-  const { me, setMe } = useAuth(), nav = useNavigate(), loc = useLocation();
-  const [term, setTerm] = useState(""), [open, setOpen] = useState(false);
-  const close = () => { setTerm(""); setOpen(false); };
+  const { me, setMe } = useAuth();
+  const nav = useNavigate();
+  const loc = useLocation();
+  const [term, setTerm] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const close = () => {
+    setTerm("");
+    setOpen(false);
+  };
   useEffect(close, [loc.pathname, loc.search]);
-  const search = (e: FormEvent) => { e.preventDefault(); if (term.trim()) nav(`/search?q=${encodeURIComponent(term.trim())}`); };
-  const logout = () => api<Ok>("/auth/logout", { body: {} }).then(() => { setMe(null); nav("/"); });
+
+  const search = (e: FormEvent) => {
+    e.preventDefault();
+    if (term.trim()) nav(`/search?q=${encodeURIComponent(term.trim())}`);
+  };
+  const logout = () => api<Ok>("/auth/logout", { body: {} }).then(() => {
+    setMe(null);
+    nav("/");
+  });
+  const closeOnBlur = (e: FocusEvent<HTMLFormElement>) => {
+    if (!term && !e.currentTarget.contains(e.relatedTarget as Node)) close();
+  };
+
   if (open) return (
     <header className="site-header searching">
-      <form className="header-search wrap" onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }}
-        onBlur={e => { /* `as`: typed as EventTarget, but focus only moves between DOM nodes */ if (!term && !e.currentTarget.contains(e.relatedTarget as Node)) close(); }}>
+      <form className="header-search wrap" onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }} onBlur={closeOnBlur}>
         <input autoFocus value={term} onChange={e => setTerm(e.target.value)} placeholder="Search for music…" aria-label="Search for music" />
         <button type="button" className="header-search-x" aria-label="Close search" onClick={close}><Ico.X /></button>
         <button type="submit" className="header-search-go" aria-label="Search"><Ico.Search /></button>
       </form>
     </header>
   );
+
+  const dmCount = me ? me.dm.unread + me.dm.requests : 0;
+  const badge = me ? me.unread + dmCount : 0;
+  const menuButton = me && {
+    label: `${me.username} menu`,
+    variant: "ghost" as const,
+    className: "menu-toggle",
+    children: (
+      <>
+        <span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>
+        {badge > 0 && <b className="dot">{badge}</b>}
+      </>
+    ),
+  };
+
   return (
     <header className="site-header">
       <div className="wrap">
@@ -76,35 +105,55 @@ function Header() {
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/charts">Charts</NavLink>
           <NavLink to="/events">Events</NavLink>
-          {me ? (
-            <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480}
-              button={{ label: `${me.username} menu`, variant: "ghost", className: "menu-toggle", children: <><span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>{me.unread + me.dm.unread + me.dm.requests > 0 && <b className="dot">{me.unread + me.dm.unread + me.dm.requests}</b>}</> }}>
+          {me && menuButton ? (
+            <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480} button={menuButton}>
               <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
               <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
               <DropdownMenuItem icon={<Ico.Reports />} label="Listening reports" href={`${userUrl(me.username)}/listening-report/week`} />
               <DropdownMenuItem icon={<Ico.Recommended />} label="Recommended" href="/recommended" />
-              <DropdownMenuItem icon={<Ico.Chat />} label={me.dm.unread + me.dm.requests > 0 ? `Messages (${me.dm.unread + me.dm.requests})` : "Messages"} href={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"} />
+              <DropdownMenuItem
+                icon={<Ico.Chat />}
+                label={dmCount > 0 ? `Messages (${dmCount})` : "Messages"}
+                href={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"}
+              />
               <DropdownMenuItem icon={<Ico.Inbox />} label={me.unread > 0 ? `Inbox (${me.unread})` : "Inbox"} href="/inbox" />
               <DropdownMenuItem icon={<Ico.Scrobble />} label="Scrobble" href="/scrobble" />
               <DropdownMenuItem icon={<Ico.Settings />} label="Settings" href="/settings" />
-              {me.admin && <DropdownMenuItem icon={<Ico.Shield />} label={me.openReports > 0 ? `Admin (${me.openReports})` : "Admin"} href={me.openReports > 0 ? "/admin/reports" : "/admin"} />}
+              {me.admin && (
+                <DropdownMenuItem
+                  icon={<Ico.Shield />}
+                  label={me.openReports > 0 ? `Admin (${me.openReports})` : "Admin"}
+                  href={me.openReports > 0 ? "/admin/reports" : "/admin"}
+                />
+              )}
               <DropdownMenuItem icon={<Ico.LogOut />} label="Log out" onClick={logout} />
             </DropdownMenu>
-          ) : <><NavLink to="/login">Log in</NavLink><Link to="/join" className="join">Join</Link></>}
+          ) : (
+            <>
+              <NavLink to="/login">Log in</NavLink>
+              <Link to="/join" className="join">Join</Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
   );
 }
+
+type LinkColumn = [string, [string, string][]];
+
 function Footer() {
   const { me } = useAuth();
   const u = me ? userUrl(me.username) : "";
-  const account: [string, [string, string][]][] = me ? [["Account", [["Messages", "/messages"], ["Inbox", "/inbox"], ["Settings", "/settings"], ["Privacy", "/settings/privacy"], ["Your data", "/settings/data"]]]] : [];
-  const cols: [string, [string, string][]][] = [
+  const yourMusic: LinkColumn = me
+    ? ["Your music", [["Profile", u], ["Library", `${u}/library`], ["Listening report", `${u}/listening-report`], ["Loved tracks", `${u}/loved`], ["Recommended", "/recommended"]]]
+    : ["Get started", [["Join free", "/join"], ["Log in", "/login"], ["Search", "/search"]]];
+  const account: LinkColumn[] = me
+    ? [["Account", [["Messages", "/messages"], ["Inbox", "/inbox"], ["Settings", "/settings"], ["Privacy", "/settings/privacy"], ["Your data", "/settings/data"]]]]
+    : [];
+  const cols: LinkColumn[] = [
     ["Music", [["Charts", "/charts"], ["Top tracks", "/charts?kind=tracks"], ["Top artists", "/charts?kind=artists"], ["Top albums", "/charts?kind=albums"], ["Top tags", "/charts?kind=tags"], ["Events", "/events"]]],
-    me
-      ? ["Your music", [["Profile", u], ["Library", `${u}/library`], ["Listening report", `${u}/listening-report`], ["Loved tracks", `${u}/loved`], ["Recommended", "/recommended"]]]
-      : ["Get started", [["Join free", "/join"], ["Log in", "/login"], ["Search", "/search"]]],
+    yourMusic,
     ["Scrobbling", [["Scrobble manually", "/scrobble"], ["Connect a player", "/settings/applications"], ["Import & export", "/settings/data"]]],
     ["Developers", [["API documentation", "/developers"], ["API keys", "/settings/applications"]]],
     ...account,
@@ -123,44 +172,70 @@ function Footer() {
         <div className="wrap">
           <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
           <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
-          <span className="footer-legal"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/guidelines">Guidelines</Link><a href="mailto:support@sonosp.here">Contact</a></span>
+          <span className="footer-legal">
+            <Link to="/terms">Terms</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/guidelines">Guidelines</Link>
+            <a href="mailto:support@sonosp.here">Contact</a>
+          </span>
         </div>
       </div>
     </footer>
   );
 }
+
 function ScrollTop() {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
-/** The API request a page will make first, so it can be fetched while the pointer is still on the link. */
+function safeDec(x: string) {
+  try {
+    return dec(x);
+  } catch {
+    return x;
+  }
+}
+
+/** The first API request a page makes, so it can be prefetched on hover. */
 function apiFor(pathname: string): string | null {
-  const p = pathname.split("/").filter(Boolean), d = (x: string) => { try { return dec(x); } catch { return x; } };
+  const p = pathname.split("/").filter(Boolean);
   if (!p.length) return "/home";
   if (p[0] === "music" && p[1]) {
-    if (p[2] === "_" && p[3]) return `/track${qs({ artist: d(p[1]), track: d(p[3]) })}`;
-    if (p[2] && !p[2].startsWith("+")) return `/album${qs({ artist: d(p[1]), album: d(p[2]) })}`;
-    return `/artist${qs({ name: d(p[1]) })}`;
+    if (p[2] === "_" && p[3]) return `/track${qs({ artist: safeDec(p[1]), track: safeDec(p[3]) })}`;
+    if (p[2] && !p[2].startsWith("+")) return `/album${qs({ artist: safeDec(p[1]), album: safeDec(p[2]) })}`;
+    return `/artist${qs({ name: safeDec(p[1]) })}`;
   }
-  if (p[0] === "tag" && p[1]) return `/tag${qs({ name: d(p[1]) })}`;
-  if (p[0] === "user" && p[1]) return `/user${qs({ name: d(p[1]) })}`;
+  if (p[0] === "tag" && p[1]) return `/tag${qs({ name: safeDec(p[1]) })}`;
+  if (p[0] === "user" && p[1]) return `/user${qs({ name: safeDec(p[1]) })}`;
   if ((p[0] === "event" || p[0] === "playlist") && p[1]) return `/${p[0]}/${p[1]}`;
   return null;
 }
-/** What a profile tab asks for once the profile itself has arrived, so both requests can go out together.
- *  Keys must match the ones the tab builds (src/pages/user/); a mismatch only costs a wasted request. */
+
+// Keys must match the ones the tabs in src/pages/user/ build; a mismatch only costs a wasted request.
 function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
-  const page = Number(sp.get("page")) || 1, period = sp.get("period");
+  const page = Number(sp.get("page")) || 1;
+  const period = sp.get("period");
   switch (p[2]) {
-    case undefined: return [`/user/recent${qs({ name, limit: 10 })}`, ...["artists", "albums", "tracks"].map(kind => `/user/top${qs({ name, kind, period: period || "7day", limit: kind === "tracks" ? 10 : 8 })}`)];
+    case undefined: {
+      const tops = ["artists", "albums", "tracks"].map(kind => {
+        const limit = kind === "tracks" ? 10 : 8;
+        return `/user/top${qs({ name, kind, period: period || "7day", limit })}`;
+      });
+      return [`/user/recent${qs({ name, limit: 10 })}`, ...tops];
+    }
     case "library": {
       if (p[3] === "music" || sp.get("from") || sp.get("to")) return [];
       const params = { name, page, limit: 50, period: period || "overall" };
-      return [!p[3] || p[3] === "scrobbles" ? `/user/recent${qs(params)}` : `/user/top${qs({ ...params, kind: p[3] })}`];
+      if (!p[3] || p[3] === "scrobbles") return [`/user/recent${qs(params)}`];
+      return [`/user/top${qs({ ...params, kind: p[3] })}`];
     }
-    case "listening-report": { const type = p[3] === "year" ? "year" : "week"; return [`/user/report${qs({ name, type, offset: Number(sp.get("offset") || (type === "week" ? "1" : "0")), tz: -new Date().getTimezoneOffset() })}`]; }
+    case "listening-report": {
+      const type = p[3] === "year" ? "year" : "week";
+      const offset = Number(sp.get("offset") || (type === "week" ? "1" : "0"));
+      return [`/user/report${qs({ name, type, offset, tz: -new Date().getTimezoneOffset() })}`];
+    }
     case "loved": return [`/user/loved${qs({ name, page })}`];
     case "journal": return p[3] ? [] : [`/user/journal${qs({ name, page })}`];
     case "following": case "followers": return [`/user/${p[2]}${qs({ name })}`];
@@ -171,21 +246,28 @@ function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
     default: return [];
   }
 }
-/** Every request a page will make that can be known from its address alone. */
+
 function apisFor(url: string): string[] {
-  const at = new URL(url, location.origin), first = apiFor(at.pathname);
+  const at = new URL(url, location.origin);
+  const first = apiFor(at.pathname);
   if (!first) return [];
   const p = at.pathname.split("/").filter(Boolean);
   if (p[0] !== "user" || !p[1]) return [first];
   return [first, ...userTabApi(p, at.searchParams, dec(p[1]))];
 }
-/** The staff portal, for staff. Everyone else gets a short notice and the portal's code is never requested. */
+
 function Staff() {
   const { me } = useAuth();
-  if (!me?.admin) return <div className="wrap page narrow"><h1 className="page-title">Admin</h1><Empty>This area is for moderators and admins.</Empty></div>;
+  if (!me?.admin) return (
+    <div className="wrap page narrow">
+      <h1 className="page-title">Admin</h1>
+      <Empty>This area is for moderators and admins.</Empty>
+    </div>
+  );
   return <AdminPage />;
 }
-/** Every page of the site. Rendered once for real, and once more (unseen) for a link the pointer is resting on. */
+
+/** Rendered once for real, and once more (unseen) for a link the pointer is resting on. */
 function Pages() {
   const U = (tab: ComponentProps<typeof UserPage>["tab"]) => <UserPage tab={tab} />;
   return (
@@ -253,44 +335,73 @@ function Pages() {
   );
 }
 
-// ---------- instant navigation ----------
-// Pointing at a link renders its page out of sight. Nothing reaches the screen, but every request that page makes
-// (and the pictures in the replies) is under way before the click, so the click only has to paint.
+// Pointing at a link renders its page out of sight, so its code and requests are under way before the click.
 const inApp = (e: Event) => {
-  // `as`: event targets are DOM elements here, and closest("a[href]") can only match an anchor
   const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
-  return a && a.origin === location.origin && !a.target && !a.hasAttribute("download") && !a.pathname.startsWith("/api/") ? a : null;
+  if (!a || a.origin !== location.origin || a.target || a.hasAttribute("download") || a.pathname.startsWith("/api/")) return null;
+  return a;
 };
+
 let ahead: (url: string) => void = () => {};
-for (const type of ["mouseover", "touchstart", "focusin"]) document.addEventListener(type, e => { const a = inApp(e); if (a) { const url = a.pathname + a.search; for (const path of apisFor(url)) prefetch(path); ahead(url); } }, { passive: true });
+
+function lookAheadAt(e: Event) {
+  const a = inApp(e);
+  if (!a) return;
+  const url = a.pathname + a.search;
+  for (const path of apisFor(url)) prefetch(path);
+  ahead(url);
+}
+for (const type of ["mouseover", "touchstart", "focusin"]) {
+  document.addEventListener(type, lookAheadAt, { passive: true });
+}
+
 const never = new Promise<void>(() => {});
-function Never(): null { throw never; } // keeps the look-ahead from ever being committed: no DOM, no effects
+// Suspends forever so the look-ahead render is never committed: no DOM, no effects.
+function Never(): null {
+  throw never;
+}
+
 function LookAhead() {
-  const [url, setUrl] = useState(""), here = useLocation(), nav = useNavigate();
-  useEffect(() => { ahead = setUrl; return () => { ahead = () => {}; }; }, []);
-  useEffect(() => { setUrl(""); }, [here.pathname, here.search]);
-  // go on press rather than on release: the click that follows lands on the page already showing
+  const [url, setUrl] = useState("");
+  const here = useLocation();
+  const nav = useNavigate();
   useEffect(() => {
+    ahead = setUrl;
+    return () => { ahead = () => {}; };
+  }, []);
+  useEffect(() => { setUrl(""); }, [here.pathname, here.search]);
+
+  // Navigate on press rather than release; the click that follows must not navigate a second time.
+  useEffect(() => {
+    let went: HTMLAnchorElement | null = null;
     const down = (e: MouseEvent) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
       const a = inApp(e);
-      // `as`: a mouse press always lands on an element
       if (!a || (e.target as Element).closest("button, input, select, textarea, [role=menu]")) return;
       const to = a.pathname + a.search + a.hash;
-      if (to !== location.pathname + location.search + location.hash) { nav(to); went = a; }
+      if (to !== location.pathname + location.search + location.hash) {
+        nav(to);
+        went = a;
+      }
     };
-    // the release that completes this press must not navigate a second time
-    const click = (e: MouseEvent) => { if (went && inApp(e) === went) e.preventDefault(); went = null; };
-    let went: HTMLAnchorElement | null = null;
+    const click = (e: MouseEvent) => {
+      if (went && inApp(e) === went) e.preventDefault();
+      went = null;
+    };
     document.addEventListener("mousedown", down);
     document.addEventListener("click", click, true);
-    return () => { document.removeEventListener("mousedown", down); document.removeEventListener("click", click, true); };
+    return () => {
+      document.removeEventListener("mousedown", down);
+      document.removeEventListener("click", click, true);
+    };
   }, [nav]);
+
   if (!url || url === here.pathname + here.search) return null;
   const at = new URL(url, location.origin);
+  const aheadLocation = { pathname: at.pathname, search: at.search, hash: "", state: null, key: "ahead" };
   return (
     <Suspense key={url} fallback={null}>
-      <LocationContext.Provider value={{ location: { pathname: at.pathname, search: at.search, hash: "", state: null, key: "ahead" }, navigationType: NavigationType.Pop }}>
+      <LocationContext.Provider value={{ location: aheadLocation, navigationType: NavigationType.Pop }}>
         <Pages />
         <Never />
       </LocationContext.Provider>
@@ -298,36 +409,59 @@ function LookAhead() {
   );
 }
 
-// the first page's data is requested straight away, alongside the session check, rather than after it
 for (const path of apisFor(location.pathname + location.search)) prefetch(path);
 
-// A click shows the next page at once. If its code or data has not arrived yet (nothing preloaded it on hover),
-// the old page gives way to a spinner rather than sitting there as if the click did nothing. Keying on the path
-// remounts the page so it cannot hold on to the previous one; changes to the query string (period, page) stay in place.
+// Keyed on the path so a page that is still loading shows a spinner instead of the previous page.
 function Routed() {
   const { pathname } = useLocation();
   return <Suspense key={pathname} fallback={<Spinner page />}><Pages /></Suspense>;
 }
 
+// The server embeds the /api/me response in the page (server/app.ts); in development it is fetched.
 const boot = (window as { __ME?: MeResponse }).__ME;
 
 function App() {
-  // the server puts the answer to /api/me in the page (server/app.ts); in development it is fetched
-  const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null), [ready, setReady] = useState(!!boot);
+  const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null);
+  const [ready, setReady] = useState(!!boot);
   const themePref = me?.theme ?? (ready ? "light" : startingTheme());
-  useEffect(() => { if (ready) applyTheme(themePref); }, [themePref, ready]); // not before the session check, or a signed-in reload would forget the remembered theme
-  // what the API returns depends on who is asking, so a change of viewer refetches everything on screen
-  const setMe = useCallback((m: Me | null) => { setMeRaw(prev => { if ((prev?.username ?? null) !== (m?.username ?? null)) invalidateAll(); return m; }); }, []);
-  const refresh = useCallback(() => { api<MeResponse>("/me").then(r => setMeRaw(r.user)).catch(() => {}).finally(() => setReady(true)); }, []);
+  // Wait for the session check, or a signed-in reload would forget the remembered theme.
+  useEffect(() => { if (ready) applyTheme(themePref); }, [themePref, ready]);
+
+  // API responses depend on the viewer, so a change of viewer refetches everything.
+  const setMe = useCallback((m: Me | null) => {
+    setMeRaw(prev => {
+      if ((prev?.username ?? null) !== (m?.username ?? null)) invalidateAll();
+      return m;
+    });
+  }, []);
+  const refresh = useCallback(() => {
+    api<MeResponse>("/me")
+      .then(r => setMeRaw(r.user))
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, []);
   useEffect(() => { if (!boot) refresh(); }, [refresh]);
-  // live updates: one socket while signed in. Events patch the cached pages and the unread badge.
+
   useEffect(() => { liveConnect(!!me?.id); }, [me?.id]);
   useLive(e => {
-    if (e.t === "open" && e.again) { invalidateAll(); refresh(); return; } // back online: catch up on what was missed
+    if (e.t === "open" && e.again) {
+      invalidateAll();
+      refresh();
+      return;
+    }
     applyDmEvent(e);
-    if ("counts" in e) { const counts = e.counts; setMeRaw(m => m && { ...m, dm: counts }); }
+    if ("counts" in e) {
+      const counts = e.counts;
+      setMeRaw(m => m && { ...m, dm: counts });
+    }
   });
-  if (!ready) return <><header className="site-header"><div className="wrap"><span className="logo"><Logo /></span></div></header><Spinner page /></>;
+
+  if (!ready) return (
+    <>
+      <header className="site-header"><div className="wrap"><span className="logo"><Logo /></span></div></header>
+      <Spinner page />
+    </>
+  );
   return (
     <Theme theme={needleTheme} mode={themePref}>
     <LinkProvider component={RouteLink}>

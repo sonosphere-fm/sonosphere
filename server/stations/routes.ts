@@ -1,4 +1,3 @@
-// Stations API: the next batch of tracks for a library, recommendations, mix, artist or tag station.
 import { requireArtist, requireTag } from "../catalog/service";
 import { need } from "../guards";
 import { bad, fail, Router, type Ctx } from "../http";
@@ -15,10 +14,15 @@ async function station(type: string | null, name: string | null, c: Ctx): Promis
   if (type === "library") {
     const u = name ? await requireUser(name) : need(c);
     if (!canSee(u, c.user)) fail(403, "This user keeps their listening private");
-    return { title: u.id === viewer ? "Your library" : `${u.username}'s library`, tracks: await service.library(u.id, viewer) };
+    const title = u.id === viewer ? "Your library" : `${u.username}'s library`;
+    return { title, tracks: await service.library(u.id, viewer) };
   }
-  if (type === "recommended") return { title: "Your recommendations", tracks: await service.recommended(need(c).id, viewer) };
-  if (type === "mix") return { title: "Your mix", tracks: await service.mix(need(c).id, viewer) };
+  if (type === "recommended") {
+    return { title: "Your recommendations", tracks: await service.recommended(need(c).id, viewer) };
+  }
+  if (type === "mix") {
+    return { title: "Your mix", tracks: await service.mix(need(c).id, viewer) };
+  }
   if (type === "artist") {
     const a = await requireArtist(name);
     return { title: `${a.name} radio`, tracks: await service.artistRadio(a.id, viewer) };

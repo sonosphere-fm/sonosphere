@@ -1,5 +1,3 @@
-// Every JSON route of the site in one router, assembled from the domain folders. Each folder's routes.ts owns its
-// URLs; this file only decides which folders make up the API.
 import { Router } from "./http";
 import { router as account } from "./account/routes";
 import { router as apps } from "./apps/routes";

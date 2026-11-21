@@ -1,15 +1,14 @@
 import { defineTheme } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral";
 
-const BARLOW = { family: "Source Sans 3 Variable", fallbacks: '"Helvetica Neue", Arial, sans-serif' };
+const FONT = { family: "Source Sans 3 Variable", fallbacks: '"Helvetica Neue", Arial, sans-serif' };
 const NONE = "0 0 0 transparent";
-const OFF = "0ms"; // nothing fades, slides or pulses: a click changes the screen in one paint
+const OFF = "0ms";
 
-/** Needle on Astryx: red, Barlow, flat, square, instant. Light and dark, following the device unless the reader picks one (src/theme.ts). */
 export const needleTheme = defineTheme({
   name: "needle",
   extends: neutralTheme,
-  typography: { scale: { base: 16, ratio: 1.2 }, body: BARLOW, heading: BARLOW },
+  typography: { scale: { base: 16, ratio: 1.2 }, body: FONT, heading: FONT },
   radius: { base: 0, multiplier: 0 },
   tokens: {
     "--color-accent": ["#2438d6", "#5468ff"],
@@ -34,17 +33,36 @@ export const needleTheme = defineTheme({
     "--color-border-error": ["#1a299f", "#ff8f7d"],
     "--color-success": ["#1b7a3d", "#6fd492"],
     "--color-text-success": ["#1b7a3d", "#6fd492"],
-    "--radius-inner": "0px", "--radius-element": "0px", "--radius-container": "0px", "--radius-page": "0px", "--radius-full": "0px",
-    "--shadow-low": NONE, "--shadow-med": NONE, "--shadow-high": NONE,
-    "--duration-exit": OFF, "--duration-fast": OFF, "--duration-fast-min": OFF, "--duration-fast-max": OFF,
-    "--duration-medium": OFF, "--duration-medium-min": OFF, "--duration-medium-max": OFF,
-    "--duration-slow": OFF, "--duration-slow-min": OFF, "--duration-slow-max": OFF,
+    "--radius-inner": "0px",
+    "--radius-element": "0px",
+    "--radius-container": "0px",
+    "--radius-page": "0px",
+    "--radius-full": "0px",
+    "--shadow-low": NONE,
+    "--shadow-med": NONE,
+    "--shadow-high": NONE,
+    "--duration-exit": OFF,
+    "--duration-fast": OFF,
+    "--duration-fast-min": OFF,
+    "--duration-fast-max": OFF,
+    "--duration-medium": OFF,
+    "--duration-medium-min": OFF,
+    "--duration-medium-max": OFF,
+    "--duration-slow": OFF,
+    "--duration-slow-min": OFF,
+    "--duration-slow-max": OFF,
   },
   components: {
     button: {
       base: { fontWeight: "600", borderRadius: "0px" },
       "variant:primary": { backgroundColor: "var(--color-accent)", color: "var(--color-on-accent)" },
-      "variant:secondary": { backgroundColor: "transparent", color: "var(--color-text-primary)", borderWidth: "2px", borderStyle: "solid", borderColor: "var(--color-text-primary)" },
+      "variant:secondary": {
+        backgroundColor: "transparent",
+        color: "var(--color-text-primary)",
+        borderWidth: "2px",
+        borderStyle: "solid",
+        borderColor: "var(--color-text-primary)",
+      },
       "variant:destructive": { backgroundColor: "var(--color-text-primary)", color: "var(--color-background-body)" },
     },
   },

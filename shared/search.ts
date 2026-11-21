@@ -1,4 +1,3 @@
-// Types shared by the server and the browser for search.
 import type { TagCount } from "./tags";
 import type { Paging, PublicUser } from "./users";
 
@@ -9,5 +8,4 @@ export type FoundTrack = {
   listeners: number; playcount: number; loved: number;
 };
 export type FoundUser = PublicUser & { playcount: number };
-/** GET /api/search. Lists that were not asked for come back empty; an empty search carries no paging. */
 export type SearchResults = { artists: FoundArtist[]; albums: FoundAlbum[]; tracks: FoundTrack[]; tags: TagCount[]; users: FoundUser[] } & Partial<Paging>;
