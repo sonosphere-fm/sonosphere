@@ -581,10 +581,9 @@ function SpotifySettings() {
         <p className="form-error">{l.broken}</p>
       ) : (
         <>
-          {!s.pulling && <p className="muted small">Importing from Spotify is paused for now.</p>}
           <p className="muted small">
             {l.lastImport ? <>Last import {ago(l.lastImport)} · {num(l.imported)} plays imported</> : "Importing your recent plays..."}.
-            {s.pulling && " New plays are picked up every few minutes."}
+            New plays are picked up every few minutes.
           </p>
           {l.restingUntil && (
             <p className="muted small">Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.</p>
@@ -602,7 +601,7 @@ function SpotifySettings() {
       <div className="row">
         {!l.broken && !redo && (
           <>
-            {s.pulling && <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>}
+            <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>
             <Button kind="btn ghost" onClick={() => setRedo(true)}>Change app</Button>
           </>
         )}
