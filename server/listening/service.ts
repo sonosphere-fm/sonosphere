@@ -79,13 +79,13 @@ export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], sour
 }
 
 /** False when artist or track is missing. */
-export async function setNowPlaying(userId: number, input: ScrobbleInput): Promise<boolean> {
+export async function setNowPlaying(userId: number, input: ScrobbleInput): Promise<TrackRef | null> {
   const ref = await resolve(input);
-  if (!ref) return false;
+  if (!ref) return null;
   const seconds = Number(input.duration) || (await findItem("track", ref.trackId))?.duration || 240;
   await repo.saveNowPlaying(userId, ref, seconds);
   listeningChanged(userId, "nowplaying");
-  return true;
+  return ref;
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

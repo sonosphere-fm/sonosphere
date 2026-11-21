@@ -1,7 +1,7 @@
 // Spotify caps development-mode apps at a few users, so each listener links their own app with PKCE.
 import { createHash } from "node:crypto";
 import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
-import { attempt, exclusive, getJson, setJson } from "../kv";
+import { attempt, exclusive, getJson, setJson, takeJson } from "../kv";
 import { now, rid } from "../util";
 import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
@@ -268,12 +268,16 @@ async function mirrorPlaying(link: repo.Link) {
   if (await paused(link.clientId)) return;
   try {
     const reply = await spotifyGet(link, "/me/player/currently-playing");
+    const mirrored = `spotify-playing:${link.userId}`;
     if (!reply || reply.is_playing !== true || reply.currently_playing_type !== "track") {
-      await clearNowPlaying(link.userId);
+      // only what Spotify put there: another scrobbler's now playing stays
+      const trackId = await takeJson<number>(mirrored);
+      if (trackId) await clearNowPlaying(link.userId, trackId);
       return;
     }
     const input = trackInput(reply.item);
-    if (input) await setNowPlaying(link.userId, input);
+    const ref = input && (await setNowPlaying(link.userId, input));
+    if (ref) await setJson(mirrored, ref.trackId, 3600_000);
   } catch (e) {
     failed(link, e);
   }
