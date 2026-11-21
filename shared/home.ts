@@ -13,10 +13,13 @@ export type FriendLove = {
   lovedAt: number; user: string; userImage: string | null; loved: number;
 };
 export type SiteTotals = { scrobbles: number; users: number; artists: number; tracks: number };
+export type FeaturedSphere = { tag: string; albums: TopAlbum[] };
 export type Home = {
   trendingPeriod: "week" | "overall";
   trendingArtists: TopArtist[]; trendingTracks: TopTrack[]; trendingAlbums: TopAlbum[];
   tags: TagCount[]; events: EventSummary[]; stats: SiteTotals;
+  featuredSphere: FeaturedSphere | null;
+  sphereAlbums: TopAlbum[];
   friends?: FriendActivity[]; friendLoves?: FriendLove[]; recommended?: Recommendation[];
   week?: { now: number; before: number };
 };
