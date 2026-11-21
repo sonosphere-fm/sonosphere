@@ -18,12 +18,15 @@ type HeroProps = {
   children?: ReactNode;
   tabs?: ReactNode;
   image?: string | null;
+  banner?: string | null;
 };
 
-export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image }: HeroProps) {
+export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image, banner }: HeroProps) {
   return (
     <div className="hero">
-      {image ? <div className="hero-bg" style={{ backgroundImage: `url(${imageUrl(image)})` }} /> : null}
+      {banner
+        ? <div className="hero-banner" style={{ backgroundImage: `url(${imageUrl(banner)})` }} aria-hidden="true" />
+        : image ? <div className="hero-bg" style={{ backgroundImage: `url(${imageUrl(image)})` }} /> : null}
       <div className="wrap hero-inner">
         {art && <div className="hero-art">{art}</div>}
         <div className="hero-body">

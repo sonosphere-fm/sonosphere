@@ -148,6 +148,13 @@
       "when": 1795262328030,
       "tag": "0020_user_trust",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795265010415,
+      "tag": "0021_user_banners",
+      "breakpoints": true
     }
   ]
 }

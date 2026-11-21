@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, ty
 import { Button, Input, Select, useConfirm } from "../kit";
 import { MdEditor } from "../md";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ago, api, copyText, date, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
+import { ago, api, copyText, date, imageUrl, invalidateAll, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { ApiApp, AppOk, Apps } from "../../shared/apps";
 import { useTurnstile } from "./auth";
@@ -120,6 +120,7 @@ function ProfileSettings() {
           </div>
         </div>
       </Section>
+      <BannerSettings />
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
           <label>Display name<Input value={f.realname} onChange={set("realname")} maxLength={60} /></label>
@@ -136,6 +137,48 @@ function ProfileSettings() {
       </Section>
       <Appearance />
     </>
+  );
+}
+
+function BannerSettings() {
+  const { me, refresh } = useAuth();
+  const act = useAction();
+  const file = useRef<HTMLInputElement>(null);
+
+  const upload = (e: ChangeEvent<HTMLInputElement>) => {
+    const image = e.target.files?.[0];
+    e.target.value = "";
+    if (!image) return;
+    act.run(async () => {
+      await api<ImageSaved>("/image?type=banner", { raw: image, headers: { "Content-Type": image.type } });
+      refresh();
+      invalidateAll();
+      return "Banner updated.";
+    });
+  };
+
+  const remove = () => act.run(async () => {
+    await api<Ok>("/image?type=banner", { method: "DELETE" });
+    refresh();
+    invalidateAll();
+    return "Banner removed.";
+  });
+
+  return (
+    <Section title="Banner">
+      <div className="banner-edit">
+        {me!.banner && <img className="banner-preview" src={imageUrl(me!.banner)} alt="Your profile banner" />}
+        <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} disabled={act.busy} />
+        <div className="avatar-actions">
+          <Button kind="btn small" type="button" loading={act.busy} onClick={() => file.current?.click()}>
+            {me!.banner ? "Change banner" : "Upload banner"}
+          </Button>
+          {me!.banner && <button type="button" className="linklike muted" disabled={act.busy} onClick={remove}>Remove banner</button>}
+        </div>
+        <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to fit.</p>
+        {act.note}
+      </div>
+    </Section>
   );
 }
 

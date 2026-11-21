@@ -102,6 +102,7 @@ export function UserPage({ tab }: { tab: Tab }) {
           <Hero
             tabs={<Tabs items={profileTabs(u, base, locked)} />}
             image={u.image}
+            banner={u.banner}
             art={<Art image={u.image} kind="user" />}
             kicker={u.followsYou ? "Follows you" : "Listener"}
             title={u.username}

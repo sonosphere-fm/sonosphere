@@ -20,6 +20,7 @@ export async function me(u: User): Promise<Me> {
     country: u.country,
     website: u.website,
     image: u.imageId,
+    banner: u.bannerId,
     hideRecent: u.hideRecent,
     privateListening: u.privateListening,
     shoutsEnabled: u.shoutsEnabled,
