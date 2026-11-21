@@ -1313,6 +1313,15 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .check input[type="checkbox"] { height: 16px !important; min-height: 0 !important; padding: 0 !important; }
 @media (max-width: 600px) { .vplayer-bar { gap: 0; } .vplayer-bar > button, .vplayer-bar > a { width: 34px; } }
 .footer-legal { display: flex; gap: 14px; }
+.profile-about { min-width: 0; overflow-wrap: anywhere; }
+.profile-about .prose { min-width: 0; max-width: 100%; }
+.profile-about pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.footer-theme { display: inline-flex; align-items: center; gap: 10px; }
+.theme-toggle { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; background: transparent; color: #f6f2e9; border: 1px solid #6b665c; border-radius: 50%; }
+.theme-toggle:hover { background: #3a372f; color: var(--sun); border-color: var(--sun); }
+.theme-toggle:focus-visible { outline-color: var(--sun); }
+.theme-toggle:disabled { cursor: progress; opacity: .6; }
+.footer-theme .form-error { margin: 0; color: #ff8f7d; font-size: 12px; }
 .legal { max-width: 82ch; font-size: 14px; line-height: 1.5; }
 .legal p { margin: 0 0 8px; } .legal.docs h2 { margin: 22px 0 6px; font-size: 16px; }
 .legal ol { list-style: none; counter-reset: cl; margin: 0 0 8px; padding-left: 28px; }
