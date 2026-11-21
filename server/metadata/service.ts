@@ -339,25 +339,36 @@ async function backfill() {
       const until = Date.now() + 18_000, due = now() - MONTH;
       if (src.mbLocal()) {
         // the wanted first, then everything never looked up
+        // at most half the time, so the backlog below always moves too
+        const half = Date.now() + 9_000;
         for (const w of await setTake(WANTED, 40)) {
-          if (Date.now() > until) { await setAdd(WANTED, [w], 20_000); continue; }
+          if (Date.now() > half) { await setAdd(WANTED, [w], 20_000); continue; }
           const [kind, n] = w.split(":"), id = Number(n);
           await fillWanted(kind as "artist" | "album" | "track", id, due).catch(quiet(`wanted ${w}`));
         }
         // then batches of everything never looked up, until the time is up or nothing is left
+        // (four at a time: most of each is waiting on a download)
         while (Date.now() < until) {
-          const artists = await repo.unlookedArtists(10), albums = await repo.unlookedAlbums(10), tracks = await repo.unlookedTracks(10);
+          const artists = await repo.unlookedArtists(8), albums = await repo.unlookedAlbums(12), tracks = await repo.unlookedTracks(12);
           if (!artists.length && !albums.length && !tracks.length) break;
-          for (const r of artists) if (await repo.claim("artist", r.id, due)) await fillArtist(r.id).catch(quiet(`artist ${r.id}`));
           const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
-          for (const r of albums) if (await repo.claim("album", r.id, due)) await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`));
-          for (const r of tracks) if (await repo.claim("track", r.id, due)) await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
+          await inParallel(4, [
+            ...artists.map(r => async () => { if (await repo.claim("artist", r.id, due)) await fillArtist(r.id).catch(quiet(`artist ${r.id}`)); }),
+            ...albums.map(r => async () => { if (await repo.claim("album", r.id, due)) await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`)); }),
+            ...tracks.map(r => async () => { if (await repo.claim("track", r.id, due)) await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`)); }),
+          ]);
         }
       }
       await spotifyBackfill(until);
     }));
   } catch (e) { quiet("backfill")(e); }
   finally { filling = false; }
+}
+
+/** Runs jobs, at most `n` at once. */
+async function inParallel(n: number, jobs: (() => Promise<void>)[]) {
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(n, jobs.length) }, async () => { while (next < jobs.length) await jobs[next++]!(); }));
 }
 
 /** A wanted entry: looked up in full if it never was, else just asked of Spotify if it wasn't yet. */

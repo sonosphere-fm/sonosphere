@@ -154,6 +154,7 @@ export async function claim(name: string, ttlMs: number): Promise<(() => Promise
  * `ttlMs` must outlast the job; a process that dies holding the lock frees it when the time runs out.
  */
 export async function exclusive<T>(name: string, ttlMs: number, job: () => Promise<T>): Promise<T | null> {
+  if (closing) return null;
   const release = await claim(name, ttlMs);
   if (!release) return null;
   held.add(release);
@@ -161,7 +162,8 @@ export async function exclusive<T>(name: string, ttlMs: number, job: () => Promi
 }
 const held = new Set<() => Promise<void>>();
 /** Frees the locks of jobs still running, for a process about to exit (a deploy), so the next one can start them at once. */
-export const releaseAll = () => Promise.all([...held].map(r => r())).then(() => {});
+export const releaseAll = () => { closing = true; return Promise.all([...held].map(r => r())).then(() => {}); };
+let closing = false; // no new jobs start once the process is on its way out
 
 // ---------- fan-out between processes ----------
 // Subscribing takes a connection of its own. Subscriptions do not survive a reconnect, so they are made again on

@@ -263,7 +263,11 @@ export async function spTrack(artist: string, title: string): Promise<SpTrack | 
 // track is on, album track lists, MusicBrainz ids. Its artist pictures are all one placeholder, so none are taken.
 // Last.fm allows a few calls a second per key; one every 250ms, shared by every process. Calls go through a pool of
 // keys: one that is refused (rate limited, suspended, invalid) or whose call fails rests and the next is tried.
-const LASTFM_KEYS = ["65fb65f79427db8ce5626269c0d7fa2b", "b78b45822bf96da886e41623cd85a280", "ad74f41f756691160923dbb55219c7cb", "63ee7f19c3ed5f781dcf7c810e5e6913"];
+const LASTFM_KEYS = [
+  "65fb65f79427db8ce5626269c0d7fa2b", "b78b45822bf96da886e41623cd85a280", "ad74f41f756691160923dbb55219c7cb", "63ee7f19c3ed5f781dcf7c810e5e6913",
+  "f3dcf9598625bbd0e657377b9f822465", "f27fb27503f9aa73c6f308fd9e3bc7f0", "f332496fd8c26c0ee467cbc72c76717a", "80bc71f587173ac1268627cde1021429",
+  "5e0318e76aed3ee67e256ee7b543caae", "1c577c2b8de945f82181a654317fc4e2", "5c22d0c4d4ed2d089c3523638c657d37",
+];
 const keyRest = (i: number) => `lastfm-key-rest:${i}`;
 
 /**

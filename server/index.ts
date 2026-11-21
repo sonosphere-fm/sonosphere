@@ -77,8 +77,9 @@ syncCorrections().catch(e => console.error(e));
 // A rolling deploy stops the old process with SIGTERM once the new one is serving: finish what is in flight, then exit.
 process.once("SIGTERM", () => {
   const forced = setTimeout(() => process.exit(0), 10_000);
-  releaseAll().catch(() => {});
-  server.stop().then(() => { clearTimeout(forced); process.exit(0); }, () => process.exit(0));
+  // background jobs' locks are freed first (at most 2s), so the new process can pick the jobs up at once
+  const freed = Promise.race([releaseAll().catch(() => {}), new Promise(r => setTimeout(r, 2000))]);
+  server.stop().then(() => freed).then(() => { clearTimeout(forced); process.exit(0); }, () => process.exit(0));
 });
 
 console.log(`Sonosphere is running at ${server.url}`);
