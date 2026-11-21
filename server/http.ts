@@ -3,9 +3,9 @@
 // asking, call their domain's service or repo, and return a plain object that is sent as JSON.
 import type { users } from "./db/schema";
 import { sessionUser } from "./auth/session";
-import { attempt } from "./kv";
+import { attempt, hits } from "./kv";
 
-export class HttpError extends Error { constructor(public status: number, message: string) { super(message); } }
+export class HttpError extends Error { constructor(public status: number, message: string, public retryAfter = 0) { super(message); } }
 export const fail = (status: number, msg: string): never => { throw new HttpError(status, msg); };
 export const bad = (msg: string): never => fail(400, msg);
 export const missing = (what: string): never => fail(404, `${what} not found`);
@@ -59,6 +59,7 @@ export class Router {
       if (pgCode === "22P02" || pgCode === "22003") e = new HttpError(400, "Invalid number");
       const status = e instanceof HttpError ? e.status : 500;
       if (status === 500) console.error(e);
+      if (e instanceof HttpError && e.retryAfter) headers.set("Retry-After", String(e.retryAfter));
       return new Response(JSON.stringify({ error: e instanceof HttpError ? e.message : "Something went wrong" }), { status, headers });
     }
   };
@@ -76,6 +77,15 @@ export const ipOf = (req: Request) => req.headers.get("x-forwarded-for")?.split(
  */
 export async function limit(key: string, max: number, seconds: number, msg = "Too many attempts. Wait a few minutes and try again."): Promise<void> {
   if (!(await attempt(key, max, seconds * 1000))) fail(429, msg);
+}
+
+/**
+ * Like limit(), with a fixed window instead of a sliding one: cheaper, so it suits busy routes and day-long caps
+ * (`seconds` may be anything). Refuses with 429 and a Retry-After saying when the window resets.
+ */
+export async function throttle(key: string, max: number, seconds: number, msg = "You are going a bit fast. Wait a moment and try again."): Promise<void> {
+  const wait = await hits(key, max, seconds);
+  if (wait) throw new HttpError(429, msg, wait);
 }
 
 /** Other addresses the site is served from, such as a proxy in front of it (TRUSTED_ORIGINS, comma separated). */

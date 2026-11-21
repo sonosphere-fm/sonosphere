@@ -1,5 +1,5 @@
 // API applications: registering apps that scrobble through the Last.fm-compatible API, and approving their access.
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { bad, missing, Router } from "../http";
 import { clean, now, rid } from "../util";
 import * as repo from "./repo";
@@ -16,7 +16,7 @@ router.get<Apps>("/api/apps", async c => {
 });
 
 router.post<AppOk>("/api/apps", async c => {
-  const u = need(c), name = clean(c.body.name, 60) || bad("Give the application a name");
+  const u = confirmed(need(c)), name = clean(c.body.name, 60) || bad("Give the application a name");
   await repo.createApp({ userId: u.id, name, description: clean(c.body.description, 300), apiKey: rid(16), secret: rid(16) });
   return { ok: true };
 });

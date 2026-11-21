@@ -27,7 +27,8 @@ const smtp = env.SMTP_URL || (env.SMTP_HOST ? {
 /** True when mail really leaves the machine. */
 export const mailEnabled = !!smtp;
 const transport = smtp
-  ? nodemailer.createTransport(typeof smtp === "string" ? smtp : { ...smtp, connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000 })
+  // `name` is what the server is greeted with (EHLO); otherwise it would be this machine's host name
+  ? nodemailer.createTransport({ ...(typeof smtp === "string" ? { url: smtp } : smtp), name: new URL(SITE_URL).hostname, connectionTimeout: 15_000, greetingTimeout: 15_000, socketTimeout: 30_000 })
   : nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "unix" });
 const DEV_DIR = join(env.DATA_DIR || "data", "mail");
 
@@ -43,8 +44,27 @@ export async function send(m: Mail): Promise<void> {
 const RETRY = [60, 300, 900, 3600, 3 * 3600, 6 * 3600, 12 * 3600];
 const day = () => new Date().toISOString().slice(0, 10);
 
+// The message is put together here rather than by nodemailer, which only carries it: its own composer stamps an
+// X-Mailer header, its name in the part boundaries and its own Message-ID style on everything it builds.
+const DOMAIN = (/@([^>\s]+)>?\s*$/.exec(FROM)?.[1] || new URL(SITE_URL).hostname).toLowerCase();
+const hex = (n: number) => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => b.toString(16).padStart(2, "0")).join("");
+const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64").replace(/.{76}/g, "$&\r\n");
+const word = (s: string) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s, "utf8").toString("base64")}?=`);
+const addressOf = (s: string) => /<([^>]+)>/.exec(s)?.[1] ?? s.trim();
+const named = (s: string) => { const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(s); return m && m[1] ? `${word(m[1])} <${m[2]}>` : s.trim(); };
+
+function compose(m: Mail): string {
+  const boundary = hex(14);
+  const part = (type: string, body: string) => [`--${boundary}`, `Content-Type: ${type}; charset=utf-8`, "Content-Transfer-Encoding: base64", "", b64(body)].join("\r\n");
+  return [
+    `From: ${named(FROM)}`, `To: ${m.to}`, `Subject: ${word(m.subject)}`, `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
+    `Message-ID: <${hex(16)}@${DOMAIN}>`, "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${boundary}"`, "",
+    part("text/plain", m.text), part("text/html", m.html), `--${boundary}--`, "",
+  ].join("\r\n");
+}
+
 async function sendOne(m: Mail): Promise<void> {
-  const info = await transport.sendMail({ from: FROM, to: m.to, subject: m.subject, text: m.text, html: m.html });
+  const info = await transport.sendMail({ envelope: { from: addressOf(FROM), to: [m.to] }, raw: compose(m) });
   if (!smtp) {
     await mkdir(DEV_DIR, { recursive: true });
     const file = join(DEV_DIR, `${Date.now()}-${m.to.replace(/[^a-z0-9@.-]/gi, "_")}.eml`);

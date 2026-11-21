@@ -1,6 +1,6 @@
 // Events API: browse upcoming and past events, one event's page, adding and deleting events, and saying you will go.
 import { requireItem } from "../catalog/service";
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { fail, oneOf, paging, Router } from "../http";
 import { requireUser } from "../users/service";
 import { norm, now } from "../util";
@@ -28,7 +28,10 @@ router.get<EventList>("/api/events", async c => {
 
 router.get<EventPage>("/api/event/:id", c => eventPage(Number(c.params[0]), c.user));
 
-router.post<EventCreated>("/api/events", async c => ({ id: await addEvent(c.body, need(c)) }));
+router.post<EventCreated>("/api/events", async c => {
+  const u = confirmed(need(c));
+  return { id: await addEvent(c.body, u) };
+});
 
 router.delete<EventOk>("/api/event/:id", async c => {
   if (!(await repo.deleteOwnEvent(Number(c.params[0]), need(c).id))) fail(403, "Only the creator can delete an event");

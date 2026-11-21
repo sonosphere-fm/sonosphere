@@ -2,7 +2,7 @@
 // An upload is the raw file as the request body. Whatever was sent is decoded in a sandbox and stored as WebP in two
 // sizes (process.ts); the bytes as uploaded are never stored or served.
 import { requireItem } from "../catalog/service";
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { bad, fail, ipOf, limit, missing, Router, type Ctx } from "../http";
 import { getJson, setJson } from "../kv";
 import { store } from "../storage";
@@ -74,7 +74,7 @@ router.get("/api/image/:id", async c => {
 });
 
 router.post<ImageSaved>("/api/image", async c => {
-  const u = need(c), type = c.q.get("type");
+  const u = confirmed(need(c)), type = c.q.get("type");
   if (type === "user") {
     const image = await storeImage(c, u.id);
     await repo.setUserImage(u.id, image);

@@ -85,6 +85,16 @@ export async function bump(key: string, by: number, ttlMs: number): Promise<numb
   } catch (e) { warn(e); return local(); }
 }
 
+/**
+ * Counts one request under `key` in the current fixed window of `seconds` (one counter per window, so it is cheap
+ * enough to run on every request). Returns 0 while within `max`, otherwise the seconds until the window resets.
+ */
+export async function hits(key: string, max: number, seconds: number): Promise<number> {
+  const ms = seconds * 1000, slot = Math.floor(Date.now() / ms);
+  if ((await bump(`w:${key}:${seconds}:${slot}`, 1, ms + 1000)) <= max) return 0;
+  return Math.max(1, Math.ceil(((slot + 1) * ms - Date.now()) / 1000));
+}
+
 // ---------- values ----------
 export async function getJson<T>(key: string): Promise<T | null> {
   if (ready) await ready;

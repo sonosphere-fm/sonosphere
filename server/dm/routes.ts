@@ -1,5 +1,5 @@
 // HTTP routes for direct messages. Every one needs a signed-in user; the rules live in ./service.
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { Router } from "../http";
 import { requireUser } from "../users/service";
 import * as dm from "./service";
@@ -15,7 +15,7 @@ router.get<DmThreadPage>("/api/dm/thread/:id", c => dm.page(need(c), c.params[0]
 
 /** Into an existing conversation (`thread`) or to a username (`to`), which may start one. */
 router.post<DmSent>("/api/dm/send", async c => {
-  const me = need(c);
+  const me = confirmed(need(c));
   if (c.body.thread != null) return dm.sendToThread(me, c.body.thread, c.body.body);
   return dm.send(me, await requireUser(String(c.body.to ?? "")), c.body.body);
 });

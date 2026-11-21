@@ -1,5 +1,5 @@
 // Journals API: a user's posts, one post, and writing, editing and deleting your own.
-import { need, poster } from "../guards";
+import { confirmed, need, poster } from "../guards";
 import { bad, missing, paging, Router, type Body, type Ctx } from "../http";
 import { findById, publicUser } from "../users/repo";
 import { requireUser } from "../users/service";
@@ -40,12 +40,12 @@ router.get<JournalPost>("/api/journal/:id", async c => {
 });
 
 router.post<JournalSaved>("/api/journal", async c => {
-  const u = poster(c);
+  const u = confirmed(poster(c));
   return { id: await repo.createJournal(u.id, textOf(c.body)) };
 });
 
 router.patch<JournalSaved>("/api/journal/:id", async c => {
-  poster(c);
+  confirmed(poster(c));
   const j = await own(c);
   await repo.updateJournal(j.id, textOf(c.body));
   return { id: j.id };

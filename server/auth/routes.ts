@@ -1,5 +1,5 @@
 // HTTP routes for signing up, logging in and out, and asking who is signed in.
-import { bad, ipOf, limit, Router, tokenOf } from "../http";
+import { bad, ipOf, limit, Router, throttle, tokenOf } from "../http";
 import { need } from "../guards";
 import { disconnect } from "../realtime";
 import { clean } from "../util";
@@ -41,10 +41,12 @@ router.post<Session>("/api/auth/login", async c => {
 router.post<Ok>("/api/auth/forgot", async c => {
   const email = clean(c.body.email, 200).toLowerCase();
   if (!validEmail(email)) bad("Enter a valid email address");
-  await limit(`forgot:${ipOf(c.req)}`, 5, 3600, "Too many reset requests from here. Try again later.");
+  await limit(`forgot-m:${ipOf(c.req)}`, 3, 30, "Wait 30 seconds before asking again.");
+  await limit(`forgot:${ipOf(c.req)}`, 20, 3600, "Too many reset requests from here. Try again later.");
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "forgot");
   // the same answer whether or not an account uses the address; a second request for one address within the hour is dropped quietly
-  await limit(`forgot-to:${email}`, 2, 3600).then(() => requestReset(email), () => {});
+  // per address too (silently, so nobody can flood someone's inbox or learn whether the address has an account)
+  await Promise.all([limit(`forgot-to-m:${email}`, 1, 30), limit(`forgot-to:${email}`, 10, 3600), throttle(`forgot-to-d:${email}`, 30, 86_400)]).then(() => requestReset(email), () => {});
   return { ok: true };
 });
 
@@ -66,7 +68,11 @@ router.post<Ok>("/api/auth/verify", async c => {
 router.post<Ok>("/api/me/verify", async c => {
   const u = need(c);
   if (u.emailVerifiedAt) bad("Your email is already confirmed");
-  await limit(`verify-send:${u.id}`, 3, 3600, "We already sent a few links. Check your spam folder, or try again in an hour.");
+  // mail is cheap: a short wait between sends, and only floods are stopped
+  await limit(`verify-send-m:${u.id}`, 1, 30, "We just sent one. Give it 30 seconds (and check your spam folder).");
+  await limit(`verify-send:${u.id}`, 10, 3600, "We have sent a lot of links. Check your spam folder, or try again a bit later.");
+  await throttle(`verify-send-d:${u.id}`, 30, 86_400, "We have sent a lot of links today. Check your spam folder, or try again tomorrow.");
+  await limit(`verify-send-ip:${ipOf(c.req)}`, 30, 3600, "Too many requests from here. Try again later.");
   await sendVerification(u);
   return { ok: true };
 });
