@@ -1,0 +1,1 @@
+ALTER TABLE "artists" ADD COLUMN "wd_at" integer;

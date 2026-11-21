@@ -51,7 +51,7 @@ function ProfileSettings() {
               <Button kind="btn small" loading={img.busy} onClick={() => file.current?.click()}>{me!.image ? "Change picture" : "Upload picture"}</Button>
               {me!.image && <button type="button" className="linklike muted" onClick={() => img.run(async () => { await api<Ok>("/image", { method: "DELETE" }); refresh(); })}>Remove</button>}
             </div>
-            <p className="muted small">PNG, JPEG, WebP or GIF, up to 8 MB. Animated GIFs keep their first frame.</p>
+            <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB).</p>
             {img.note}
           </div>
         </div>
@@ -84,7 +84,6 @@ function Appearance() {
       <div className="theme-pick" role="group" aria-label="Theme">
         {THEMES.map(([v, name]) => <button key={v} type="button" aria-pressed={(me!.theme ?? "light") === v} onClick={() => pick(v)}>{name}</button>)}
       </div>
-      <p className="muted small">Automatic follows your device's light or dark setting.</p>
       {act.note}
     </Section>
   );
@@ -96,8 +95,8 @@ function PrivacySettings() {
     <>
     <Section title="Privacy">
       <div className="form">
-        <label className="check"><Input type="checkbox" checked={me!.hideRecent || me!.privateListening} disabled={me!.privateListening} onChange={e => save({ hideRecent: e.target.checked })} /> <span><b>Hide recent listening</b><br /><span className="muted small">Other people can't see your recent tracks or scrobble history. Your charts stay visible.</span></span></label>
-        <label className="check"><Input type="checkbox" checked={me!.privateListening} onChange={e => save({ privateListening: e.target.checked })} /> <span><b>Keep all my listening private</b><br /><span className="muted small">Only you can see your charts, library, loved tracks, play counts and listening reports, and you're left out of other people's soundalikes and top listener lists. Your plays still count toward site-wide charts, without your name on them.</span></span></label>
+        <label className="check"><Input type="checkbox" checked={me!.hideRecent || me!.privateListening} disabled={me!.privateListening} onChange={e => save({ hideRecent: e.target.checked })} /> <span><b>Hide recent listening</b><br /><span className="muted small">Your scrobble history and recent tracks will not be visible to other users. Your charts will still be shown on your profile.</span></span></label>
+        <label className="check"><Input type="checkbox" checked={me!.privateListening} onChange={e => save({ privateListening: e.target.checked })} /> <span><b>Keep all my listening private</b><br /><span className="muted small">Your charts, library, loved tracks, play counts and listening reports will be hidden from other users. You will also be excluded from other users' soundalikes and top listener lists. Your plays will still count anonymously toward site-wide charts.</span></span></label>
         <label className="check"><Input type="checkbox" checked={me!.shoutsEnabled} onChange={e => save({ shoutsEnabled: e.target.checked })} /> <span><b>Let people write on my wall</b><br /><span className="muted small">Turn off to close your shoutbox to new shouts.</span></span></label>
         <label>Who can send you direct messages?
           <Select label="Who can message you" value={me!.dmPolicy} onChange={v => save({ dmPolicy: v })} options={[["everyone", "Anyone"], ["requests", "Anyone, but people I don't follow go to Requests"], ["following", "Only people I follow"], ["nobody", "Nobody"]]} />

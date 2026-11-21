@@ -32,14 +32,16 @@ const pauseKey = (clientId: string) => `spotify-pause:${clientId}`;
 const paused = async (clientId: string) => (await getJson<number>(pauseKey(clientId))) !== null;
 const strikeKey = (clientId: string) => `spotify-strikes:${clientId}`;
 /**
- * Spotify said 429: the app rests for as long as Spotify asks, and longer each time it happens again within the hour
- * (30s, 1m, 2m ... up to an hour), so an app near its limit isn't pushed straight back into it.
+ * Spotify said 429: the app rests for as long as Spotify asks, however long that is, and at least 30s, 1m, 2m ... (up
+ * to an hour) when it happens again within the hour, so an app near its limit isn't pushed straight back into it.
+ * Coming back before Spotify's Retry-After is up is what gets an app restricted, so that is never shortened.
  */
 async function slowDown(clientId: string, retryAfter: string | null) {
   const strikes = ((await getJson<number>(strikeKey(clientId))) ?? 0) + 1;
-  await setJson(strikeKey(clientId), strikes, 3600_000);
-  const seconds = Math.min(3600, Math.max(Number(retryAfter) || 0, 30 * 2 ** (strikes - 1)));
+  const asked = Number(retryAfter) || 0, seconds = Math.max(asked, Math.min(3600, 30 * 2 ** (strikes - 1)));
+  await setJson(strikeKey(clientId), strikes, Math.max(3600, seconds) * 1000);
   await setJson(pauseKey(clientId), 1, seconds * 1000);
+  console.warn(`spotify: app ${clientId.slice(0, 6)} rate limited (Retry-After ${retryAfter ?? "none"}), resting ${seconds}s, strike ${strikes}`);
 }
 
 // ---------- small JSON readers (Spotify's replies are untrusted input) ----------

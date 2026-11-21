@@ -67,7 +67,7 @@ function useImportJob() {
 function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => void }) {
   const what = job.kind === "lastfm" ? `Last.fm (${job.lastfmUser})` : job.kind === "loved" ? "your loved tracks" : "your file";
   const pct = job.total ? Math.min(100, Math.round((job.done / job.total) * 100)) : 0;
-  if (job.status === "done") return <p className="form-ok">Imported {plural(job.accepted, "scrobble")} from {what}{job.done > job.accepted ? `; ${num(job.done - job.accepted)} skipped (already there, or missing an artist or title)` : ""}.</p>;
+  if (job.status === "done") return <p className="form-ok">Imported {plural(job.accepted, "scrobble")} from {what}{job.done > job.accepted ? `, skipped ${num(job.done - job.accepted)} duplicates/errors` : ""}.</p>;
   if (job.status === "failed") return <p className="form-error">The import from {what} stopped: {job.error} {job.accepted > 0 && `${plural(job.accepted, "scrobble")} imported before that stay.`}</p>;
   if (job.status === "cancelled") return <p className="muted">The import from {what} was cancelled{job.accepted > 0 ? ` after ${plural(job.accepted, "scrobble")}` : ""}.</p>;
   return (
@@ -173,9 +173,8 @@ export function ScrobblePage() {
                   <Button kind="btn" loading={lfmAct.busy} disabled={!lfm.trim()}>Import from Last.fm</Button>
                 </form>
                 {lfmAct.note}
-                <p className="muted small">Brings in every scrobble and loved track on that profile (its listening must be public). Big histories take a while; it runs in the background, so you can close the page.</p>
-                <hr />
-                <p>Or upload a CSV or JSON file of past listens or loved tracks. CSV columns: <code>artist, album, track, timestamp</code> (Unix seconds or an ISO date; only artist and track are required). This is the same format as <Link to="/settings/data">your data export</Link>. JSON dumps of Last.fm’s recent-tracks and loved-tracks API work too.</p>
+                <p className="muted small">Scrobbles and loved tracks are imported to your profile. Large imports may take a while but you are free to close the page once the import starts.</p>
+                <p>Or import scrobbles or loved tracks from a CSV/JSON file. CSV columns: <code>artist, album, track, timestamp</code> (Unix seconds or ISO date; only artist and track are required).</p>
                 <div className="tabs sub" role="group" aria-label="What the file contains">
                   <button type="button" className={what === "scrobbles" ? "active" : ""} aria-pressed={what === "scrobbles"} onClick={() => setWhat("scrobbles")}>Scrobbles</button>
                   <button type="button" className={what === "loved" ? "active" : ""} aria-pressed={what === "loved"} onClick={() => setWhat("loved")}>Loved tracks</button>
@@ -194,7 +193,7 @@ export function ScrobblePage() {
             </div>
           </Section>
           <Section title="Scrobble from other apps">
-            <p>Sonosphere speaks the Last.fm 2.0 scrobbling protocol at <code>/2.0/</code>. Create an API key under <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link> and see the <Link to="/developers">API docs</Link>.</p>
+            <p>Sonosphere's API is compatible with applications that support the Last.fm 2.0 protocol. To scrobble from another app, create an API key under <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link> and refer to the <Link to="/developers">API docs</Link>.</p>
           </Section>
         </div>
       </div>

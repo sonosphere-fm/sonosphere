@@ -183,6 +183,33 @@ export const mbTrackList = (rgid: string) => own(() => mbdb.trackList(rgid), () 
 /** Whether lookups are cheap (our own copy) rather than limited to one a second. */
 export const mbLocal = () => mbdb.mbdbOn && Date.now() - ownDownAt > 60_000;
 
+// ---------- Wikidata (artist photos) ----------
+// Wikidata files each artist's MusicBrainz id (P434) and often a photo on Wikimedia Commons (P18), so one query
+// answers for a batch of artists. The photo is shown from Commons at 500px (Special:FilePath picks the thumbnail).
+const WDQS = "https://query.wikidata.org/sparql";
+
+/** Photos for MusicBrainz artist ids: the ids Wikidata has a photo for, with it. Throws when Wikidata can't answer. */
+export async function wikiPhotos(mbids: string[]): Promise<Map<string, Picture>> {
+  const ids = mbids.filter(m => /^[0-9a-f-]{36}$/.test(m));
+  const out = new Map<string, Picture>();
+  if (!ids.length) return out;
+  await pausedFor("wikidata");
+  await turn("wikidata", 1000);
+  const query = `SELECT ?mbid (SAMPLE(?img) AS ?image) WHERE { VALUES ?mbid { ${ids.map(m => `"${m}"`).join(" ")} } ?item wdt:P434 ?mbid; wdt:P18 ?img. } GROUP BY ?mbid`;
+  const res = await fetch(`${WDQS}?${new URLSearchParams({ query, format: "json" })}`, {
+    headers: { "User-Agent": agent(), Accept: "application/sparql-results+json" }, signal: AbortSignal.timeout(30_000),
+  });
+  if (res.status === 429) { await pause("wikidata", Number(res.headers.get("retry-after")) || 60); throw new Busy("wikidata"); }
+  if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
+  const rows = objs(obj(obj(await res.json())?.results)?.bindings);
+  for (const r of rows) {
+    const mbid = str(obj(r.mbid)?.value), img = str(obj(r.image)?.value);
+    const file = /\/Special:FilePath\/(.+)$/.exec(img)?.[1];
+    if (mbid && file) out.set(mbid, { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=500`, width: null, height: null });
+  }
+  return out;
+}
+
 // ---------- Cover Art Archive ----------
 /** The front cover of an album (500px) by its release group's id, or of one release of it; null when the archive has none. */
 export async function coverArt(mbid: string, of: "release-group" | "release" = "release-group"): Promise<Uint8Array | null> {

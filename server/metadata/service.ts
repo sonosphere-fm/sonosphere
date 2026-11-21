@@ -1,5 +1,6 @@
-// Filling in the catalogue from MusicBrainz, the Cover Art Archive, Last.fm and Spotify (server/metadata/sources.ts).
-// Each fills what the ones before it lack: MusicBrainz first, then Last.fm (generous limits), then Spotify (scarce).
+// Filling in the catalogue from MusicBrainz, the Cover Art Archive, Wikidata, Last.fm and Spotify (server/metadata/sources.ts).
+// Each fills what the ones before it lack: MusicBrainz first (artist photos from Wikidata by its id, album covers from
+// the Cover Art Archive), then Last.fm (generous limits, but no artist photos), then Spotify (scarce) as the fallback.
 //
 // Spotify lookups borrow a connected listener's token (server/spotify).
 // - An artist, album or track page we have nothing for, opened by a signed-in account with a confirmed email, is
@@ -143,8 +144,13 @@ async function fillArtist(id: number): Promise<void> {
   if (mbid) await repo.addDiscography(id, await src.mbDiscography(mbid)); // their covers come from the background loop
 }
 
-/** The artist's photo from Spotify (by the Spotify id MusicBrainz links, else by name). */
+/** The artist's photo: from Wikidata by the MusicBrainz id, else from Spotify (by the Spotify id MusicBrainz links, else by name). */
 async function artistPhoto(a: { id: number; name: string; spotifyId: string | null; spAt: number | null }, mbid: string | null) {
+  if (mbid) {
+    const found = await src.wikiPhotos([mbid]).then(m => m.get(mbid) ?? null, e => { quiet(`wikidata artist ${a.id}`)(e); return undefined; });
+    if (found !== undefined) await repo.setArtist(a.id, { wdAt: now(), ...(found ? { imageId: await showPicture(found) } : {}) });
+    if (found) return;
+  }
   const s = await askSpotify("artist", a.id, a.spAt, async () => src.spArtist(a.name, a.spotifyId || (mbid ? await src.mbSpotifyId(mbid) : null)));
   if (s) await repo.setArtist(a.id, { spotifyId: s.id, ...(s.picture ? { imageId: await showPicture(s.picture) } : {}) });
 }
@@ -457,9 +463,32 @@ async function lastfmBackfill() {
 }
 const noSpotify = async () => null;
 
+/**
+ * Photos from Wikidata for artists that have a MusicBrainz id but no photo, fifty to a query every 20 seconds, so the
+ * backlog clears in an hour or two and Spotify is only asked about the artists Wikidata has nothing for.
+ */
+let wdFilling = false;
+async function wikidataBackfill() {
+  if (wdFilling) return;
+  wdFilling = true;
+  try {
+    await exclusive("metadata-wikidata", 5 * 60_000, async () => {
+      const rows = await repo.wikidataDueArtists(50, now() - MONTH);
+      if (!rows.length) return;
+      const photos = await src.wikiPhotos(rows.map(r => r.mbid!));
+      for (const r of rows) {
+        const p = photos.get(r.mbid!);
+        if (p) await repo.setArtist(r.id, { imageId: await showPicture(p) });
+      }
+      await repo.wikidataAnswered(rows.map(r => r.id));
+    });
+  } catch (e) { quiet("wikidata backfill")(e); }
+  finally { wdFilling = false; }
+}
+
 /** Started once at boot (server/index.ts). */
 export function startMetadata() {
   const g = globalThis as { __spinMetadata?: ReturnType<typeof setInterval> }; // survives hot reloads in development
   clearInterval(g.__spinMetadata);
-  g.__spinMetadata = setInterval(() => { src.inSpareTime(tick); backfill(); lastfmBackfill(); }, 20_000);
+  g.__spinMetadata = setInterval(() => { src.inSpareTime(tick); backfill(); lastfmBackfill(); wikidataBackfill(); }, 20_000);
 }

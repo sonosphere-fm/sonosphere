@@ -136,6 +136,8 @@ export const artists = pgTable("artists", {
 	metaAt: integer("meta_at"),
 	// when Spotify answered for this entry (found or not): it is asked once, never again after a real answer
 	spAt: integer("sp_at"),
+	// when Wikidata was asked for a photo (by the MusicBrainz id): asked again after a month, photos get added there
+	wdAt: integer("wd_at"),
 });
 
 export const albums = pgTable("albums", {

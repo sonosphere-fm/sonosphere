@@ -22,7 +22,7 @@ export const addArtist = (name: string) => transact(tx => getOrCreateArtistTx(tx
 export const addAlbum = (artistId: number, title: string, date: string | null) => transact(tx => getOrCreateAlbumTx(tx, artistId, title, date));
 export const addTrack = (artistId: number, title: string, seconds: number) => transact(tx => getOrCreateTrackTx(tx, artistId, title, seconds));
 
-export async function setArtist(id: number, set: { mbid?: string; spotifyId?: string; imageId?: string; metaAt?: number }) {
+export async function setArtist(id: number, set: { mbid?: string; spotifyId?: string; imageId?: string; metaAt?: number; wdAt?: number }) {
   if (Object.keys(set).length) await db.update(artists).set(set).where(eq(artists.id, id));
 }
 export async function setAlbum(id: number, set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number | null; metaAt?: number }) {
@@ -90,9 +90,18 @@ export async function spotifyAnswered(kind: Kind, id: number) {
   const t = table[kind];
   await db.update(t).set({ spAt: now() }).where(eq(t.id, id));
 }
+/** Artists with a MusicBrainz id and no photo that Wikidata wasn't asked about this month. */
+export const wikidataDueArtists = (limit: number, due: number) =>
+  db.select({ id: artists.id, mbid: artists.mbid }).from(artists)
+    .where(and(isNull(artists.imageId), isNotNull(artists.mbid), or(isNull(artists.wdAt), lt(artists.wdAt, due)))).orderBy(asc(artists.id)).limit(limit);
+/** Wikidata was asked about these artists (found or not). */
+export async function wikidataAnswered(ids: number[]) {
+  if (ids.length) await db.update(artists).set({ wdAt: now() }).where(inArray(artists.id, ids));
+}
 /** Entries looked up elsewhere that still lack something Spotify might have and that Spotify was never asked about. */
 export const spotifyDueArtists = (limit: number) =>
-  db.select({ id: artists.id }).from(artists).where(and(isNull(artists.imageId), isNull(artists.spAt), isNotNull(artists.metaAt))).orderBy(asc(artists.id)).limit(limit);
+  // (Wikidata goes first for artists it can be asked about)
+  db.select({ id: artists.id }).from(artists).where(and(isNull(artists.imageId), isNull(artists.spAt), isNotNull(artists.metaAt), or(isNull(artists.mbid), isNotNull(artists.wdAt)))).orderBy(asc(artists.id)).limit(limit);
 export const spotifyDueAlbums = (limit: number) =>
   db.select({ id: albums.id, artistId: albums.artistId, title: albums.title }).from(albums)
     .where(and(isNull(albums.imageId), isNull(albums.spAt), or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt))))).orderBy(asc(albums.id)).limit(limit);
