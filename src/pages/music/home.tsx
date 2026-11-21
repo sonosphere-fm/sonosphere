@@ -21,7 +21,7 @@ function HomeFeed({ name }: { name: string }) {
       {!hidden && (
         <div className="welcome">
           <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}><Ico.X /></Button>
-          <h1>Welcome to Spin, {name}!</h1>
+          <h1>Welcome to Sonosphere, {name}!</h1>
           <p>The more you scrobble, the better these picks get. Everything below is chosen from the artists you play most and what listeners like you keep on repeat.</p>
         </div>
       )}
@@ -47,9 +47,9 @@ export function Home() {
           <div className="wrap banner-inner">
             <div className="banner-copy">
               <h1>Track what you love.</h1>
-              <p>Spin scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
+              <p>Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
               <div className="row"><Button kind="btn invert" href="/join">Join free</Button><Button kind="btn outline-invert" href="/login">Log in</Button></div>
-              {q.data && q.data.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(q.data.stats.users))}+ users scrobbling on Spin</p>}
+              {q.data && q.data.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(q.data.stats.users))}+ users scrobbling on Sonosphere</p>}
             </div>
             {q.data && q.data.trendingTracks.length > 0 && (
               <ol className="banner-chart">

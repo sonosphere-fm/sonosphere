@@ -6,7 +6,7 @@
 @import "./themes/needle/needle.css";
 
 :root {
-  /* Spin: blue ink on warm paper, with a yellow highlighter. */
+  /* Sonosphere: blue ink on warm paper, with a yellow highlighter. */
   --accent: #2438d6; --accent-dark: #1a299f; --accent-tint: #ffe98a; --accent-faint: #ece7db; --link: #2438d6; --black: #17150f;
   --sun: #ffcf33; --sun-dark: #f2bd0e;
   --ink: #17150f; --ink-2: #45413a; --muted: #6b665c; --line: #d9d2c3; --panel: #ece7db; --bg: #f6f2e9; --card: #fffdf7;
@@ -656,8 +656,11 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 }
 
 /* ---------- wordmark ---------- */
-.wordmark { display: inline-flex; align-items: flex-start; font-size: 34px; font-weight: 900; font-style: italic; line-height: 1; letter-spacing: -.035em; white-space: nowrap; padding-bottom: .1em; }
-.logo .wordmark .wm-grooves.wm-grooves { width: .52em; height: .52em; margin: .07em 0 0 .07em; overflow: visible; flex: none; }
+.wordmark { display: inline-flex; align-items: center; font-size: 34px; line-height: 1; }
+.logo .wordmark svg.brand-logo { height: .935em; width: auto; overflow: visible; }
+.logo .wordmark svg.logo-small { display: none; height: 1em; width: 1em; overflow: visible; }
+/* narrow screens: the mark alone */
+@media (max-width: 480px) { .site-header .logo .wordmark svg.brand-logo { display: none; } .site-header .logo .wordmark svg.logo-small { display: block; } }
 .footer-base .logo .wordmark { font-size: 24px; }
 @media (max-width: 520px) { .wordmark { font-size: 30px; } }
 
@@ -939,7 +942,7 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 /* Menu icons sit in a fixed box so labels line up. */
 .astryx-dropdown-menu-item .ico { width: 20px; height: 20px; }
 
-/* ───────── Spin design language ─────────
+/* ───────── Sonosphere design language ─────────
    Blue ink on warm paper, yellow highlighter. Music is square, people are round.
    Display type for names and headings, mono for anything you would count. */
 h1, h2, h3, .page-title, .logo, .stat-value, .cal b { font-family: var(--display); }
@@ -949,6 +952,7 @@ h1, .page-title { font-weight: 700; letter-spacing: -.025em; }
 .kicker { color: var(--accent); }
 a:hover { color: var(--accent); }
 ::selection { background: var(--sun); color: var(--ink); }
+.banner ::selection { background: var(--accent); color: #fff; } /* the home banner is yellow itself */
 
 /* Header: a solid blue bar, yellow wordmark. */
 .site-header { background: var(--accent); }
@@ -1256,6 +1260,9 @@ a.bar:hover > span { background: #ffe066; }
 
 /* Keep room for the scrollbar on every page, so the header and logo don't shift sideways when a page becomes long enough to scroll. */
 html { scrollbar-gutter: stable; }
+/* Scrollbars: quiet warm grey on paper (the colour is inherited by every scrolling box); thin inside panels and menus. */
+html { scrollbar-color: #bdb4a2 var(--bg); }
+.modal, .suggest-list, .tag-suggest, .dm-threads, .dm-scroll, .md-input.md, pre { scrollbar-width: thin; scrollbar-color: #c9c1b0 transparent; }
 
 /* The clear button is narrower than a normal button: drop its side padding so the icon isn't clipped. */
 .search-field .search-clear.search-clear { padding: 0; min-width: 0; }

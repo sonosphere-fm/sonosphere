@@ -385,7 +385,7 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
   log(`Imported ${root}`);
   log("  " + Object.entries(stats).map(([k, v]) => `${v} ${k}`).join(" · "));
   if (owner) {
-    const note = `Spin dev login (created by the one-time import)\nusername: ${owner}\npassword: ${password}\n`;
+    const note = `Sonosphere dev login (created by the one-time import)\nusername: ${owner}\npassword: ${password}\n`;
     mkdirSync("data", { recursive: true }); writeFileSync("data/dev-login.txt", note, { mode: 0o600 });
     log(`  Log in as "${owner}" with password "${password}" (also saved to data/dev-login.txt; change it in Settings).`);
   }

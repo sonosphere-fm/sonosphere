@@ -1,4 +1,4 @@
-// The Spin server: one Bun process serving the JSON API (server/api.ts), the scrobbler-compatible API (/2.0/),
+// The Sonosphere server: one Bun process serving the JSON API (server/api.ts), the scrobbler-compatible API (/2.0/),
 // live updates over WebSocket and the React app. In production the app comes from dist/ (see server/app.ts);
 // in development Bun bundles src/ on the fly with hot reload.
 import type { Server } from "bun";
@@ -37,6 +37,7 @@ const app = production ? await appRoutes() : { "/*": (await import("../src/index
 
 const server = Bun.serve<SocketData>({
   port: Number(process.env.PORT) || 3000,
+  hostname: production ? "127.0.0.1" : undefined, // in production only nginx, on the same machine, talks to it
   development: production ? false : { hmr: true, console: false },
   routes: {
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv), // live updates; same process, same port
@@ -65,4 +66,4 @@ process.once("SIGTERM", () => {
   server.stop().then(() => { clearTimeout(forced); process.exit(0); }, () => process.exit(0));
 });
 
-console.log(`Spin is running at ${server.url}`);
+console.log(`Sonosphere is running at ${server.url}`);

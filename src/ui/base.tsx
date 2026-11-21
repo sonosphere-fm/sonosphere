@@ -1,3 +1,4 @@
+import { Lockup, Mark } from "./brand";
 import { Ico } from "../icons";
 import { useRef, useState, type ReactNode } from "react";
 import { Pages, Select } from "../kit";
@@ -83,5 +84,4 @@ export const Avatar = ({ user, size = 40, plain }: { user: { username: string; i
   : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art image={user.image} kind="user" /></Link>;
 
 // The wordmark: heavy italic type with a corner of a record (spindle and two grooves) spinning off the end.
-export const LogoDisc = () => <svg className="wm-grooves" viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="4.6" strokeLinecap="round"><path d="M4 8a28 28 0 0 1 28 28" /><path d="M4 19a17 17 0 0 1 17 17" /></g><circle cx="5.5" cy="34.5" r="5.5" fill="currentColor" /></svg>;
-export const Logo = () => <span className="wordmark" role="img" aria-label="spin">spin<LogoDisc /></span>;
+export const Logo = () => <span className="wordmark" role="img" aria-label="sonosphere"><Lockup /><Mark className="brand-mark logo-small" /></span>;

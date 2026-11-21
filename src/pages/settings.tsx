@@ -130,7 +130,7 @@ function SpotifySetup({ redirectUri, initial, onConnect, busy, note }: { redirec
       <p>Spotify only lets each app be used by a few people, so you connect through your own free Spotify app. It takes about two minutes:</p>
       <ol className="steps">
         <li>Open the <a href={SPOTIFY_DASHBOARD} target="_blank" rel="noreferrer">Spotify developer dashboard</a> and log in with your Spotify account. Accept the developer terms if asked.</li>
-        <li>Click <b>Create app</b>. Any name and description will do, such as "My Spin scrobbler".</li>
+        <li>Click <b>Create app</b>. Any name and description will do, such as "My Sonosphere scrobbler".</li>
         <li>Under <b>Redirect URIs</b>, paste this address exactly and click <b>Add</b>:
           <span className="copy-row"><code onClick={e => { const r = document.createRange(); r.selectNodeContents(e.currentTarget); getSelection()?.removeAllRanges(); getSelection()?.addRange(r); }}>{redirectUri}</code><Button kind="btn ghost small" type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</Button></span>
         </li>

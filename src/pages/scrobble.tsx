@@ -141,7 +141,7 @@ export function ScrobblePage() {
             </div>
           </Section>
           <Section title="Scrobble from other apps">
-            <p>Spin speaks the Last.fm 2.0 scrobbling protocol at <code>/2.0/</code>. Create an API key under <Link to="/settings/applications">Settings → Applications</Link> and see the <Link to="/developers">API docs</Link>.</p>
+            <p>Sonosphere speaks the Last.fm 2.0 scrobbling protocol at <code>/2.0/</code>. Create an API key under <Link to="/settings/applications">Settings → Applications</Link> and see the <Link to="/developers">API docs</Link>.</p>
           </Section>
         </div>
       </div>

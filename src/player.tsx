@@ -1,11 +1,12 @@
-// The player embeds the matching YouTube video (Spin hosts no audio). It reports "now playing" and
+// The player embeds the matching YouTube video (Sonosphere hosts no audio). It reports "now playing" and
 // scrobbles by the usual rule: track longer than 30s, and half of it or 4 minutes actually listened.
 import { Ico } from "./icons";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "./kit";
 import { Link, useNavigate } from "react-router-dom";
 import { api, artistUrl, qs, trackUrl, useAuth } from "./lib";
-import { errorText, LogoDisc } from "./ui/base";
+import { errorText } from "./ui/base";
+import { Mark } from "./ui/brand";
 import type { Ok } from "../shared/auth";
 import type { ScrobbleResponse } from "../shared/listening";
 import type { Station as StationReply } from "../shared/stations";
@@ -158,7 +159,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         <button type="button" className="vplayer-x" aria-label="Close player" onClick={close}><Ico.X /></button>
         <div className="vplayer-screen">
           <div className="vplayer-video" ref={mount} style={{ visibility: state.status === "ready" ? "visible" : "hidden" }} />
-          {state.status !== "ready" && <div className="vplayer-blank"><LogoDisc /></div>}
+          {state.status !== "ready" && <div className="vplayer-blank"><Mark /></div>}
         </div>
         <div className="vplayer-progress"><div style={{ width: state.length ? `${Math.min(100, (state.position / state.length) * 100)}%` : 0 }} /></div>
         {t && (

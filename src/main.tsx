@@ -62,7 +62,7 @@ function Header() {
   return (
     <header className="site-header">
       <div className="wrap">
-        <Link to="/" className="logo" aria-label="Spin home"><Logo /></Link>
+        <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
         <nav className="site-nav" aria-label="Main">
           <Button kind="nav-search" type="button" aria-label="Search" onClick={() => setOpen(true)}><Ico.Search /></Button>
           <NavLink to="/" end>Home</NavLink>
@@ -113,8 +113,8 @@ function Footer() {
       </div>
       <div className="footer-base">
         <div className="wrap">
-          <Link to="/" className="logo" aria-label="Spin home"><Logo /></Link>
-          <span className="footer-copy">© {new Date().getFullYear()} Spin</span>
+          <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
+          <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
         </div>
       </div>
     </footer>

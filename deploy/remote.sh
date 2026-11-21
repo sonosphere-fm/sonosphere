@@ -42,6 +42,11 @@ i=0; until curl -sf -o /dev/null http://127.0.0.1:$NEXT/api/site && curl -sf -o 
   sleep 0.1
 done
 
+# Cloudflare connects over https; a self-signed certificate is enough for its "Full" mode (replace both files
+# with a Cloudflare origin certificate for "Full (strict)")
+[ -f /etc/nginx/spin-origin.crt ] || openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj /CN=spin-origin \
+  -keyout /etc/nginx/spin-origin.key -out /etc/nginx/spin-origin.crt 2>/dev/null
+
 # switch traffic: nginx finishes requests already in flight on the old copy
 echo "upstream spin { server 127.0.0.1:$NEXT; keepalive 16; }" > $UP.new
 same $R/deploy/spin.nginx /etc/nginx/sites-enabled/spin || { cp /etc/nginx/sites-enabled/spin /etc/nginx/spin.site.prev 2>/dev/null || true; cp $R/deploy/spin.nginx /etc/nginx/sites-enabled/spin; SITE=1; }

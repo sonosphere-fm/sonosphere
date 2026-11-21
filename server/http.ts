@@ -63,6 +63,20 @@ export class Router {
 /** The session token in a request's cookie, or "". */
 export const tokenOf = (req: Request) => /(?:^|;\s*)sid=([a-f0-9]+)/.exec(req.headers.get("cookie") || "")?.[1] || "";
 
+/** The visitor's address. In production nginx sets X-Forwarded-For to the address Cloudflare reports (deploy/spin.nginx). */
+export const ipOf = (req: Request) => req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+
+const hits = new Map<string, number[]>();
+/** Counts an attempt under `key` and refuses with 429 once there have been `max` within `seconds` (at most an hour). */
+export function limit(key: string, max: number, seconds: number, msg = "Too many attempts. Wait a few minutes and try again."): void {
+  const t = Date.now(), recent = (hits.get(key) ?? []).filter(x => x > t - seconds * 1000);
+  if (recent.length >= max) { hits.set(key, recent); fail(429, msg); }
+  recent.push(t); hits.set(key, recent);
+}
+const g = globalThis as { __spinLimits?: ReturnType<typeof setInterval> };
+clearInterval(g.__spinLimits);
+g.__spinLimits = setInterval(() => { const old = Date.now() - 3600_000; for (const [k, v] of hits) if (v[v.length - 1]! < old) hits.delete(k); }, 600_000);
+
 /** Other addresses the site is served from, such as a proxy in front of it (TRUSTED_ORIGINS, comma separated). */
 const trustedHosts = new Set((process.env.TRUSTED_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean).map(s => {
   try { return new URL(s.includes("://") ? s : `https://${s}`).host; } catch { return s; }

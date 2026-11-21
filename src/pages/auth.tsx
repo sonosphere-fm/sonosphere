@@ -17,7 +17,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const submit = (e: FormEvent) => { e.preventDefault(); act.run(async () => { const r = await api<Session>(`/auth/${mode === "login" ? "login" : "signup"}`, { body: f }); setMe(r.user); nav(next); }); };
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">{mode === "login" ? "Log in" : "Join Spin"}</h1>
+      <h1 className="page-title">{mode === "login" ? "Log in" : "Join Sonosphere"}</h1>
       <form className="form card" onSubmit={submit}>
         <label>{mode === "login" ? "Username or email" : "Username"}<Input value={f.username} onChange={set("username")} autoComplete="username" required autoFocus maxLength={mode === "login" ? 200 : 15} /></label>
         {mode === "join" && <label>Email<Input type="email" value={f.email} onChange={set("email")} autoComplete="email" required /></label>}

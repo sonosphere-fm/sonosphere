@@ -1,4 +1,4 @@
-// Finds the YouTube videos that match a track. Spin hosts no audio: the player embeds the matching video.
+// Finds the YouTube videos that match a track. Sonosphere hosts no audio: the player embeds the matching video.
 // With YOUTUBE_API_KEY set the official search API is used; without it, the public results page is read instead.
 import { norm, now } from "../util";
 import * as repo from "./repo";

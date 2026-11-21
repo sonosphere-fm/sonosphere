@@ -133,7 +133,7 @@ export function useParam(name: string, def = ""): [string, (v: string) => void] 
   return [sp.get(name) || def, v => setSp(prev => { const n = new URLSearchParams(prev); if (v && v !== def) n.set(name, v); else n.delete(name); if (name !== "page") n.delete("page"); return n; }, { preventScrollReset: true })];
 }
 export function useTitle(title: string | null | undefined) {
-  useEffect(() => { if (title) document.title = `${title} | Spin`; }, [title]);
+  useEffect(() => { if (title) document.title = `${title} | Sonosphere`; }, [title]);
 }
 
 // ---------- live updates ----------

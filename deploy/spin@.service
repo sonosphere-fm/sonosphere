@@ -1,5 +1,5 @@
 [Unit]
-Description=Spin (port %i)
+Description=Sonosphere (port %i)
 After=network.target
 [Service]
 WorkingDirectory=/opt/spin/slot/%i

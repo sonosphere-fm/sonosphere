@@ -22,7 +22,7 @@ export function Connect() {
       {!apiKey || !token ? <Empty>This link is missing its <code>api_key</code> or <code>token</code>.</Empty> : (
         <Async q={q}>{app => done ? <div className="card"><p className="form-ok"><Ico.Check /> {app.name} is connected.</p><p>You can close this page and return to the application.</p></div> : (
           <div className="card form">
-            <p><b>{app.name}</b> <span className="muted">by <Link to={userUrl(app.owner)}>{app.owner}</Link></span> wants to connect to your Spin account{me && <> (<b>{me.username}</b>)</>}.</p>
+            <p><b>{app.name}</b> <span className="muted">by <Link to={userUrl(app.owner)}>{app.owner}</Link></span> wants to connect to your Sonosphere account{me && <> (<b>{me.username}</b>)</>}.</p>
             {app.description && <p className="muted">{app.description}</p>}
             <p>It will be able to scrobble, update “now playing”, love tracks and add tags on your behalf. You can disconnect it at any time in Settings → Applications.</p>
             {act.note}

@@ -1,4 +1,4 @@
-// Spin's controls. Every button, field, menu, dialog and pager in the app goes through here and is rendered by an
+// Sonosphere's controls. Every button, field, menu, dialog and pager in the app goes through here and is rendered by an
 // Astryx component under the Needle theme (src/themes/needle). The props mirror the DOM so pages stay plain JSX.
 import { isValidElement, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
 import { Link as RouterLink } from "react-router-dom";

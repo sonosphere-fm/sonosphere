@@ -2,6 +2,7 @@
 // the query string or a form (or JSON) body, replies are XML unless format=json is asked for, and failures carry
 // the service's own error numbers. So it reads requests and writes responses itself instead of using Router.
 import { ApiError, call, type Params, type Reply } from "./service";
+import { ipOf, limit } from "../http";
 
 export { COMPAT_METHODS } from "./service";
 
@@ -45,6 +46,10 @@ const FORBIDDEN = [10, 9, 4, 13];
 
 export async function handleCompat(req: Request): Promise<Response> {
   const url = new URL(req.url), p = await params(req, url), json = p.format === "json";
+  // password sign-ins from scrobbler apps get the same per-address limit as the site's own log-in form
+  if (String(p.method ?? "").toLowerCase() === "auth.getmobilesession") {
+    try { limit(`login:${ipOf(req)}`, 10, 300); } catch { return failed(json, 29, "Rate limit exceeded", 429); }
+  }
   try {
     return ok(json, await call(p, url.origin));
   } catch (e) {

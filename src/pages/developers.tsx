@@ -16,10 +16,10 @@ export function Developers() {
   useTitle("API");
   return (
     <div className="wrap page">
-      <h1 className="page-title">Spin API</h1>
+      <h1 className="page-title">Sonosphere API</h1>
       <div className="cols">
         <div className="main prose docs">
-          <p>Spin exposes a web-service API that follows the Last.fm 2.0 protocol, so existing scrobbler code usually works by pointing it at a different root URL.</p>
+          <p>Sonosphere exposes a web-service API that follows the Last.fm 2.0 protocol, so existing scrobbler code usually works by pointing it at a different root URL.</p>
           <h2>Root URL</h2>
           <pre>{origin}/2.0/</pre>
           <p>Send <code>method</code>, <code>api_key</code> and the method's parameters as a query string (reads) or form-encoded POST body (writes). Add <code>format=json</code> for JSON; XML is the default.</p>
