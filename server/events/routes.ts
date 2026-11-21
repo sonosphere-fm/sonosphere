@@ -7,7 +7,7 @@ import { norm, now } from "../util";
 import * as repo from "./repo";
 import { whereFrom } from "./where";
 import { addEvent, eventPage } from "./service";
-import type { AttendResult, EventCreated, EventList, EventOk, EventPage, UserEvents } from "../../shared/events";
+import type { AttendResult, EventCreated, EventList, EventOk, EventPage, EventPlaces, UserEvents } from "../../shared/events";
 
 export const router = new Router();
 
@@ -41,6 +41,10 @@ router.get<EventList>("/api/events", async c => {
   return { items: await repo.listEvents(f, c.user?.id, past ? "desc" : "asc", pg.limit, pg.offset), total: await repo.countEvents(f), near, ...pg };
 });
 
+router.get<EventPlaces>("/api/events/places", async c => {
+  const field = oneOf(c.q.get("field"), ["venue", "city", "country"] as const) ?? fail(400, "Unknown field");
+  return { items: await repo.places(field, norm(c.q.get("q") || "").slice(0, 80)) };
+});
 router.get<EventPage>("/api/event/:id", c => eventPage(Number(c.params[0]), c.user));
 
 router.post<EventCreated>("/api/events", async c => {

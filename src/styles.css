@@ -50,7 +50,7 @@ button { cursor: pointer; }
 .strong { font-weight: 600; } .ok { color: var(--ok); }
 
 /* ---------- header / footer ---------- */
-.site-header { background: var(--bar); color: #fff; position: sticky; top: 0; z-index: 30; }
+.site-header { background: var(--bar); color: #fff; position: sticky; top: 0; z-index: 100; }
 .site-header .wrap { display: flex; align-items: center; gap: 20px; height: 58px; }
 .logo { display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 700; letter-spacing: -.02em; color: #fff; }
 .logo:hover { color: #fff; } .logo svg { width: 28px; height: 28px; }
@@ -810,7 +810,7 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 .dp .dp-trigger .ico { width: 18px; height: 18px; color: var(--muted); flex: none; }
 .dp .dp-trigger .ph { color: var(--muted); }
 .dp .dp-trigger.open { border-color: var(--accent); box-shadow: none, 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
-.dp-pop { position: absolute; z-index: 1000; width: 316px; padding: 12px; background: var(--card); border: 1px solid var(--art-glyph); border-radius: 0; font-size: 15px; color: var(--ink); }
+.dp-pop { position: absolute; z-index: 60; width: 316px; padding: 12px; background: var(--card); border: 1px solid var(--art-glyph); border-radius: 0; font-size: 15px; color: var(--ink); }
 .dp-pop.up { transform: translateY(-100%); }
 .dp-presets { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 12px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
 .dp .dp-presets button { padding: 4px 10px; border-radius: 0; background: var(--panel); font-size: 14px; font-weight: 500; }
@@ -1428,3 +1428,15 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .theme-pick button { padding: 7px 16px; background: none; border: 0; color: var(--ink-2); font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
 .theme-pick button:hover { background: var(--fill-hover); color: var(--ink); }
 .theme-pick button[aria-pressed="true"] { background: var(--card); color: var(--ink); cursor: default; }
+
+/* Place fields: suggestions under the field, with counts on the right */
+.suggest { position: relative; }
+/* the field with an open list sits above the fields after it (focused inputs make their own stacking layers) */
+.suggest:focus-within, .form > :has(.suggest:focus-within), .form .row > :has(.suggest:focus-within) { position: relative; z-index: 40; }
+.suggest-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px 0; list-style: none; max-height: 280px; overflow-y: auto; background: var(--card); border: 1px solid var(--line); box-shadow: 0 6px 18px light-dark(rgba(0, 0, 0, .14), rgba(0, 0, 0, .5)); }
+.suggest-list li { display: flex; align-items: center; gap: 10px; padding: 7px 12px; cursor: pointer; font-weight: 500; color: var(--ink); }
+.suggest-list li.on { background: var(--accent-faint); }
+.suggest-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggest-name small { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: 13px; }
+.suggest-count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.flag { width: 21px; height: 14px; flex: none; display: block; box-shadow: 0 0 0 1px var(--inset); }

@@ -22,12 +22,12 @@ function HomeFeed({ name }: { name: string }) {
         <div className="welcome">
           <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}><Ico.X /></Button>
           <h1>Welcome to Sonosphere, {name}!</h1>
-          <p>The more you scrobble, the better these picks get. Everything below is chosen from the artists you play most and what listeners like you keep on repeat.</p>
+          <p>The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble more music.</p>
         </div>
       )}
       <Async q={q}>{d => d.artists.length
         ? <div className="recs">{mixRecs(d).map(r => <RecCard key={r.kind + r.item.id} {...r} />)}</div>
-        : <Empty>Scrobble a few more tracks and recommendations will appear here.</Empty>}</Async>
+        : <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>}</Async>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { Ico } from "../icons";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { lazy, useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Input, Textarea, useConfirm } from "../kit";
 import { Markdown } from "../md";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -10,6 +10,12 @@ import { EventList } from "../ui/events";
 import { Grid, UserList } from "../ui/lists";
 import { Shoutbox } from "../ui/shoutbox";
 import { DatePicker } from "../datepicker";
+// the place fields carry every flag, so only the add form loads them
+// example line-ups for the placeholder, one picked per page load: acts that would plausibly share a bill, never two at random
+const LINEUPS = ["Jane Remover, underscores", "SpaceGhostPurrp, Metro Zu", "Ruben Slikk, Lofty305", "Nell, Ruben Slikk", "Lana Del Rey, Frank Ocean", "Ariana Grande, Lana Del Rey"];
+const LINEUP_HINT = LINEUPS[Math.floor(Math.random() * LINEUPS.length)];
+const PlaceInput = lazy(() => import("../ui/country").then(m => ({ default: m.PlaceInput })));
+const CountryInput = lazy(() => import("../ui/country").then(m => ({ default: m.CountryInput })));
 import { Hero } from "./music/shared";
 
 // ---------- events ----------
@@ -85,10 +91,13 @@ export function EventAdd() {
     <div className="wrap page narrow">
       <h1 className="page-title">Add an event</h1>
       <form className="form card" onSubmit={submit}>
-        <label>Line-up (comma separated, headliner first)<Input value={f.artists} onChange={set("artists")} required placeholder="Glass Harbor, Paper Lanterns" /></label>
+        <label>Line-up (comma separated, headliner first)<Input value={f.artists} onChange={set("artists")} required placeholder={LINEUP_HINT} /></label>
         <label>Title (optional)<Input value={f.title} onChange={set("title")} maxLength={120} placeholder="Defaults to “Headliner at Venue”" /></label>
-        <label>Venue<Input value={f.venue} onChange={set("venue")} required maxLength={120} /></label>
-        <div className="row"><label className="grow">City<Input value={f.city} onChange={set("city")} required maxLength={80} /></label><label className="grow">Country<Input value={f.country} onChange={set("country")} maxLength={80} /></label></div>
+        <label>Venue<PlaceInput field="venue" value={f.venue} onChange={v => setF(p => ({ ...p, venue: v }))} required maxLength={120}
+          onPick={pl => setF(p => ({ ...p, city: p.city || pl.city || "", country: p.country || pl.country || "" }))} /></label>
+        <div className="row"><label className="grow">City<PlaceInput field="city" value={f.city} onChange={v => setF(p => ({ ...p, city: v }))} required maxLength={80}
+          onPick={pl => setF(p => ({ ...p, country: p.country || pl.country || "" }))} /></label>
+          <label className="grow">Country<CountryInput value={f.country} onChange={v => setF(p => ({ ...p, country: v }))} /></label></div>
         <label>Date and time<DatePicker time label="Date and time" value={f.when} onChange={v => setF({ ...f, when: v })} defaultTime="20:00" /></label>
         <label>Link (optional)<Input type="url" value={f.url} onChange={set("url")} placeholder="https://" /></label>
         <label>Description (optional)<Textarea rows={4} value={f.description} onChange={set("description")} maxLength={3000} /></label>

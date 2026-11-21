@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Ico } from "./icons";
 import { Button } from "./kit";
 import { useLocation } from "react-router-dom";
-import { api, date, useAuth } from "./lib";
+import { api, useAuth } from "./lib";
 import type { SiteInfo } from "../shared/admin";
 import { UNVERIFIED_DAYS, type Ok } from "../shared/auth";
 
@@ -38,11 +38,12 @@ export function VerifyBanner() {
   const [note, setNote] = useState("");
   if (!me || me.emailVerified || hidden || pathname === "/verify") return null;
   const dismiss = () => { setHidden(true); try { sessionStorage.setItem(NAGGED, "1"); } catch { /* private mode */ } };
+  const left = Math.max(1, Math.ceil((me.registeredAt + UNVERIFIED_DAYS * 86400 - Date.now() / 1000) / 86400));
   const resend = () => { setNote("Sending..."); api<Ok>("/me/verify", { body: {} }).then(() => setNote(`Sent. Check ${me.email}.`), e => setNote(e instanceof Error ? e.message : String(e))); };
   return (
     <div className="site-banner warning" role="status">
       <div className="wrap site-banner-in">
-        <span>Confirm your email address using the link we sent to <strong>{me.email}</strong>.{!me.admin && <> Until then you can listen and scrobble but not post, message or follow, and unconfirmed accounts are deleted on <strong>{date(me.registeredAt + UNVERIFIED_DAYS * 86400)}</strong>.</>} {note || <button type="button" className="banner-link" onClick={resend}>Send it again</button>}</span>
+        <span>Please confirm your email address using the link we sent to <strong>{me.email}</strong>.{!me.admin && <> Certain actions such as posting, sending messages, and following users are restricted until you confirm your email address. Your account will be automatically purged if you do not verify your email address within <strong>{left} {left === 1 ? "day" : "days"}</strong>.</>} {note || <button type="button" className="banner-link" onClick={resend}>Resend verification email</button>}</span>
         <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}><Ico.X /></Button>
       </div>
     </div>

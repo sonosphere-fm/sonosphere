@@ -10,18 +10,17 @@ import { bad, fail } from "../http";
 import { send } from "../mail";
 import * as mail from "../mail/templates";
 import { findById, type User } from "../users/repo";
-import { first, now, rid } from "../util";
+import { digest, first, now, rid } from "../util";
 import { deleteSessionsOf, emailTaken } from "./repo";
 
 type Kind = "verify" | "change" | "reset";
 const LIFE: Record<Kind, number> = { verify: 3 * 86400, change: 3 * 86400, reset: 3600 };
-const hashOf = (token: string) => new Bun.CryptoHasher("sha256").update(token).digest("hex");
 
 async function issue(userId: number, kind: Kind, email: string): Promise<string> {
   const token = rid(32);
   await db.transaction(async tx => {
     await tx.delete(emailTokens).where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, kind)));
-    await tx.insert(emailTokens).values({ hash: hashOf(token), userId, kind, email, createdAt: now(), expiresAt: now() + LIFE[kind] });
+    await tx.insert(emailTokens).values({ hash: digest(token), userId, kind, email, createdAt: now(), expiresAt: now() + LIFE[kind] });
   });
   return token;
 }
@@ -29,7 +28,7 @@ async function issue(userId: number, kind: Kind, email: string): Promise<string>
 /** Uses up a token: returns what it was for and deletes it, or null when it is unknown, used or expired. */
 async function take(token: unknown, kinds: Kind[]) {
   if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return null;
-  const [row] = await db.delete(emailTokens).where(eq(emailTokens.hash, hashOf(token))).returning();
+  const [row] = await db.delete(emailTokens).where(eq(emailTokens.hash, digest(token))).returning();
   if (!row || row.expiresAt < now() || !kinds.includes(row.kind as Kind)) return null;
   return row as typeof row & { kind: Kind };
 }

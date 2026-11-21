@@ -305,7 +305,7 @@ export async function recordScrobbles(userId: number, plays: NewScrobble[], sour
     const out: (Scrobbled | null)[] = [];
     for (const play of plays) {
       const ref = await resolveTrackTx(tx, play);
-      const row = (await tx.insert(scrobbles).values({ userId, ...ref, playedAt: play.playedAt, source }).onConflictDoNothing().returning({ id: scrobbles.id }))[0];
+      const row = (await tx.insert(scrobbles).values({ userId, ...ref, playedAt: play.playedAt, source, sentArtist: play.artist, sentTrack: play.track, sentAlbum: play.album || null }).onConflictDoNothing().returning({ id: scrobbles.id }))[0];
       if (!row) { out.push(null); continue; }
       // a finished play ends the matching "now playing"
       await tx.delete(playing).where(and(eq(playing.userId, userId), eq(playing.trackId, ref.trackId)));

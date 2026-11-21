@@ -1,12 +1,21 @@
 // The database schema. Every table the site uses is declared here; queries elsewhere are built from these definitions,
 // so column names and types are checked by the compiler. Changes are applied with migrations (see server/db/migrate.ts).
-import { pgTable, integer, bigint, boolean, text, customType, primaryKey, index, uniqueIndex, unique, real } from "drizzle-orm/pg-core";
+import { pgTable, integer, bigint, boolean, text, customType, primaryKey, index, uniqueIndex, unique, real, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 /** Binary data (pictures, packed vectors), returned as a Buffer. */
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 /** Whole numbers that can pass 2^31 (catalogue play counts, millisecond times), read back as plain numbers. */
 const big = (name: string) => bigint(name, { mode: "number" });
 import { sql } from "drizzle-orm";
+
+/**
+ * A real foreign key for one kind of a type/id pair (a shout on an artist, a tag on a track): the id when the type is `kind`,
+ * else null. The database fills it in, so deleting the item deletes the rows attached to it, and nothing can point at an
+ * item that is not there. Merges move rows by changing the id, which this follows.
+ */
+const kindRef = (typeCol: string, idCol: string, kind: string, target: () => AnyPgColumn) =>
+  integer(`${kind}_ref`).generatedAlwaysAs(sql.raw(`CASE WHEN ${typeCol} = '${kind}' THEN ${idCol} END`)).references(target, { onDelete: "cascade" });
+const kindIndexes = (table: string, cols: Record<string, AnyPgColumn>) => Object.entries(cols).map(([k, c]) => index(`${table}_${k}_ref`).on(c).where(sql`${c} IS NOT NULL`));
 
 /**
  * Pictures, with random ids. The files live in object storage (server/storage): `key` (img/<id>) names them, a full-size WebP at `<key>.webp` and a
@@ -89,6 +98,7 @@ export const outbox = pgTable("outbox", {
 	createdAt: integer("created_at").notNull(),
 }, t => [index("outbox_next").on(t.nextAt)]);
 
+// Sign-in tokens are kept only as their SHA-256 (server/auth/digest.ts): a copy of the database cannot be used to sign in.
 export const sessions = pgTable("sessions", {
 	token: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
@@ -167,6 +177,10 @@ export const scrobbles = pgTable("scrobbles", {
 	albumId: integer("album_id").references(() => albums.id, { onDelete: "set null" } ),
 	playedAt: integer("played_at").notNull(),
 	source: text().default("web").notNull(),
+	// the names as the player sent them, before matching, so a correction or a merge never loses what was played (null on older plays)
+	sentArtist: text("sent_artist"),
+	sentTrack: text("sent_track"),
+	sentAlbum: text("sent_album"),
 },
 (table) => [
 	index("scrobbles_user_artist").on(table.userId, table.artistId, table.playedAt),
@@ -208,11 +222,15 @@ export const taggings = pgTable("taggings", {
 	itemId: integer("item_id").notNull(),
 	createdAt: integer("created_at").notNull(),
 	weight: integer().default(1).notNull(),
+	artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+	albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+	trackRef: kindRef("item_type", "item_id", "track", () => tracks.id),
 },
 (table) => [
 	index("taggings_tag").on(table.tagId, table.itemType),
 	index("taggings_item").on(table.itemType, table.itemId),
 	uniqueIndex("taggings_unique").on(sql`COALESCE(${table.userId}, 0)`, table.tagId, table.itemType, table.itemId),
+	...kindIndexes("taggings", { artist: table.artistRef, album: table.albumRef, track: table.trackRef }),
 ]);
 
 export const wikis = pgTable("wikis", {
@@ -223,9 +241,14 @@ export const wikis = pgTable("wikis", {
 	authorId: integer("author_id").references(() => users.id, { onDelete: "set null" } ),
 	version: integer().notNull(),
 	createdAt: integer("created_at").notNull(),
+	artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+	albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+	trackRef: kindRef("item_type", "item_id", "track", () => tracks.id),
+	tagRef: kindRef("item_type", "item_id", "tag", () => tags.id),
 },
 (table) => [
 	index("wikis_item").on(table.itemType, table.itemId, table.version),
+	...kindIndexes("wikis", { artist: table.artistRef, album: table.albumRef, track: table.trackRef, tag: table.tagRef }),
 ]);
 
 export const shouts = pgTable("shouts", {
@@ -235,9 +258,17 @@ export const shouts = pgTable("shouts", {
 	targetId: integer("target_id").notNull(),
 	body: text().notNull(),
 	createdAt: integer("created_at").notNull(),
+	artistRef: kindRef("target_type", "target_id", "artist", () => artists.id),
+	albumRef: kindRef("target_type", "target_id", "album", () => albums.id),
+	trackRef: kindRef("target_type", "target_id", "track", () => tracks.id),
+	tagRef: kindRef("target_type", "target_id", "tag", () => tags.id),
+	userRef: kindRef("target_type", "target_id", "user", (): AnyPgColumn => users.id),
+	eventRef: kindRef("target_type", "target_id", "event", (): AnyPgColumn => events.id),
+	journalRef: kindRef("target_type", "target_id", "journal", (): AnyPgColumn => journals.id),
 },
 (table) => [
 	index("shouts_target").on(table.targetType, table.targetId, table.createdAt),
+	...kindIndexes("shouts", { artist: table.artistRef, album: table.albumRef, track: table.trackRef, tag: table.tagRef, user: table.userRef, event: table.eventRef, journal: table.journalRef }),
 ]);
 
 export const follows = pgTable("follows", {
@@ -363,11 +394,13 @@ export const apiTokens = pgTable("api_tokens", {
 	createdAt: integer("created_at").notNull(),
 });
 
+// `token` and `key` below hold digests too. A session not used for a year lapses (server/compat/repo.ts).
 export const apiSessions = pgTable("api_sessions", {
 	key: text().primaryKey(),
 	appId: integer("app_id").notNull().references(() => apiApps.id, { onDelete: "cascade" } ),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
+	lastUsedAt: integer("last_used_at").default(0).notNull(),
 });
 
 export const videoCache = pgTable("video_cache", {
@@ -451,9 +484,14 @@ export const wikiLocks = pgTable("wiki_locks", {
 	lockedBy: integer("locked_by").references(() => users.id, { onDelete: "set null" } ),
 	reason: text().default("").notNull(),
 	createdAt: integer("created_at").notNull(),
+	artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+	albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+	trackRef: kindRef("item_type", "item_id", "track", () => tracks.id),
+	tagRef: kindRef("item_type", "item_id", "tag", () => tags.id),
 },
 (table) => [
-	primaryKey({ columns: [table.itemType, table.itemId], name: "wiki_locks_item_type_item_id_pk"})
+	primaryKey({ columns: [table.itemType, table.itemId], name: "wiki_locks_item_type_item_id_pk"}),
+	...kindIndexes("wiki_locks", { artist: table.artistRef, album: table.albumRef, track: table.trackRef, tag: table.tagRef }),
 ]);
 
 export const siteSettings = pgTable("site_settings", {

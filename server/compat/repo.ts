@@ -1,10 +1,10 @@
 // Data access for the scrobbler-compatible API: the applications, tokens and sessions it signs requests with, and
 // the listings whose order and paging its clients expect.
-import { and, count, countDistinct, desc, eq, like, lt, sql } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, gt, like, lt, sql } from "drizzle-orm";
 import { trackImage } from "../catalog/art";
 import { db } from "../db/client";
 import { albumTracks, albums, apiApps, apiSessions, apiTokens, artists, follows, lovedTracks, taggings, tags, tracks, userArtists, userTracks, users } from "../db/schema";
-import { first, now } from "../util";
+import { digest, first, now } from "../util";
 
 const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
 
@@ -13,22 +13,31 @@ export type App = { id: number; name: string; secret: string };
 export const appByKey = (apiKey: string): Promise<App | null> =>
   first(db.select({ id: apiApps.id, name: apiApps.name, secret: apiApps.secret }).from(apiApps).where(eq(apiApps.apiKey, apiKey)).limit(1));
 
-/** Whose session this key is, if the application it was granted to is the one asking. */
-export const sessionUser = async (key: string, appId: number): Promise<number | null> =>
-  (await first(db.select({ userId: apiSessions.userId }).from(apiSessions).where(and(eq(apiSessions.key, key), eq(apiSessions.appId, appId))).limit(1)))?.userId ?? null;
+// Keys and tokens are stored as their digest; callers pass the real ones.
+const DAY = 86400, IDLE = 365 * DAY;
+/** Whose session this key is, if the application it was granted to is the one asking and it was used within the last year. */
+export async function sessionUser(key: string, appId: number): Promise<number | null> {
+  const k = digest(key);
+  const row = await first(db.select({ userId: apiSessions.userId, lastUsedAt: apiSessions.lastUsedAt }).from(apiSessions)
+    .where(and(eq(apiSessions.key, k), eq(apiSessions.appId, appId), gt(apiSessions.lastUsedAt, now() - IDLE))).limit(1));
+  if (!row) return null;
+  // noted at most once a day, so scrobbling doesn't write to the session on every call
+  if (row.lastUsedAt < now() - DAY) await db.update(apiSessions).set({ lastUsedAt: now() }).where(eq(apiSessions.key, k));
+  return row.userId;
+}
 
 export async function createSession(key: string, appId: number, userId: number): Promise<void> {
-  await db.insert(apiSessions).values({ key, appId, userId, createdAt: now() });
+  await db.insert(apiSessions).values({ key: digest(key), appId, userId, createdAt: now(), lastUsedAt: now() });
 }
 export async function createToken(token: string, appId: number): Promise<void> {
-  await db.insert(apiTokens).values({ token, appId, createdAt: now() });
+  await db.insert(apiTokens).values({ token: digest(token), appId, createdAt: now() });
 }
 /** A token this application asked for. `userId` is null until someone approves it. */
-export const findToken = (token: string, appId: number): Promise<{ token: string; userId: number | null; createdAt: number } | null> =>
-  first(db.select({ token: apiTokens.token, userId: apiTokens.userId, createdAt: apiTokens.createdAt }).from(apiTokens)
-    .where(and(eq(apiTokens.token, token), eq(apiTokens.appId, appId))).limit(1));
+export const findToken = (token: string, appId: number): Promise<{ userId: number | null; createdAt: number } | null> =>
+  first(db.select({ userId: apiTokens.userId, createdAt: apiTokens.createdAt }).from(apiTokens)
+    .where(and(eq(apiTokens.token, digest(token)), eq(apiTokens.appId, appId))).limit(1));
 export async function deleteToken(token: string): Promise<void> {
-  await db.delete(apiTokens).where(eq(apiTokens.token, token));
+  await db.delete(apiTokens).where(eq(apiTokens.token, digest(token)));
 }
 
 // ---------- one person's lists ----------
@@ -99,7 +108,8 @@ export function chartTopTags(limit: number, offset: number): Promise<{ name: str
     .groupBy(tags.id).orderBy(desc(uses)).limit(limit).offset(offset);
 }
 
-/** Drops desktop-app sign-in tokens that were never used within the hour they are valid for. */
+/** Drops desktop-app sign-in tokens that were never used within the hour they are valid for, and app sessions idle for a year. */
 export async function dropStaleTokens(): Promise<void> {
   await db.delete(apiTokens).where(lt(apiTokens.createdAt, now() - 3600));
+  await db.delete(apiSessions).where(lt(apiSessions.lastUsedAt, now() - IDLE));
 }

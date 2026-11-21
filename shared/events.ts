@@ -21,3 +21,6 @@ export type EventPage = EventSummary & { attendees: Record<Attendance, PublicUse
 export type EventCreated = { id: number };
 export type EventOk = { ok: true };
 export type AttendResult = { status: Attendance | null };
+/** A venue, city or country events are already held at, with how many; venues say where they are. */
+export type EventPlace = { name: string; count: number; city?: string; country?: string };
+export type EventPlaces = { items: EventPlace[] };

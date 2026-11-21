@@ -19,6 +19,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@stylexjs/stylex": "^0.19.2",
     "@uimaxbai/am-lyrics": "^1.9.2",
+    "country-flag-icons": "^1.6.20",
     "drizzle-orm": "^0.45.4",
     "nodemailer": "^10.6.1",
     "postgres": "^4.1.1",

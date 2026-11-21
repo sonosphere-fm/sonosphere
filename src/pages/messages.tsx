@@ -47,7 +47,7 @@ export function MessagesPage({ view }: { view: "inbox" | "requests" | "thread" |
                   </Link>
                 </li>
               ))}
-              {list.data && !list.data.items.length && <li className="dm-none muted">{requests ? "No message requests." : "No conversations yet. Open someone's profile and choose Message to start one."}</li>}
+              {list.data && !list.data.items.length && <li className="dm-none muted">{requests ? "No message requests." : "No conversations yet. You can start one from someone's profile."}</li>}
             </ul>
           )}
         </aside>

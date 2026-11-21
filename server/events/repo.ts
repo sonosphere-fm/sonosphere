@@ -5,7 +5,7 @@ import { db, transact } from "../db/client";
 import { artists, eventArtists, eventAttendance, events, userArtists, users } from "../db/schema";
 import { publicCols } from "../users/repo";
 import { now } from "../util";
-import type { Attendance, EventArtist, EventSummary } from "../../shared/events";
+import type { Attendance, EventArtist, EventPlace, EventSummary } from "../../shared/events";
 import type { PublicUser } from "../../shared/users";
 
 /** Which events a list covers. Every field narrows it. */
@@ -108,4 +108,16 @@ export async function setAttendance(eventId: number, userId: number, status: Att
     await tx.delete(eventAttendance).where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.userId, userId)));
     if (status) await tx.insert(eventAttendance).values({ eventId, userId, status, createdAt: now() });
   });
+}
+
+/** Places events are already held at, most used first, for the add form's suggestions. Countries come all at once (there are few);
+ *  venues and cities only those containing the typed text. A venue carries its city and country, a city its country. */
+export async function places(field: "venue" | "city" | "country", q: string): Promise<EventPlace[]> {
+  const col = events[field], n = sql<number>`count(*)::int`;
+  const like = `%${q.toLowerCase().replace(/[\\%_]/g, c => "\\" + c)}%`;
+  const where = and(sql`${col} <> ''`, field === "country" || !q ? undefined : sql`lower(${col}) LIKE ${like}`);
+  if (field === "country") return db.select({ name: col, count: n }).from(events).where(where).groupBy(col).orderBy(desc(n));
+  // the most common city and country seen with each name
+  const city = sql<string>`mode() within group (order by ${events.city})`, country = sql<string>`mode() within group (order by ${events.country})`;
+  return db.select({ name: col, count: n, ...(field === "venue" && { city }), country }).from(events).where(where).groupBy(col).orderBy(desc(n), asc(col)).limit(8);
 }

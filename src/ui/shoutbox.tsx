@@ -26,10 +26,10 @@ export function ReportButton({ type, id, label = "Report", open: forced, onClose
           {sent ? <div className="form"><p>Thanks. A moderator will take a look.</p><Button kind="btn" type="button" onClick={close}>Done</Button></div> : (
             <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => { await api<ReportOk>("/reports", { body: { type, id, reason, detail } }); setSent(true); }); }}>
               {type === "dm" && <p className="muted small">Moderators will see the reported message and a few around it. The other person isn't notified.</p>}
-              <label>What's wrong with it?<Select label="Reason" value={reason} onChange={setReason} options={REASONS} /></label>
-              <label>Anything a moderator should know?<Textarea rows={3} placeholder="Optional" value={detail} onChange={e => setDetail(e.target.value)} maxLength={1000} /></label>
+              <label>Reason<Select label="Reason" value={reason} onChange={setReason} options={REASONS} /></label>
+              <label>Additional details<Textarea rows={3} placeholder="Optional" value={detail} onChange={e => setDetail(e.target.value)} maxLength={1000} /></label>
               {act.note}
-              <Button kind="btn" loading={act.busy}>Send report</Button>
+              <Button kind="btn" loading={act.busy}>Submit report</Button>
             </form>
           )}
         </Modal>
@@ -55,7 +55,7 @@ export function Shoutbox({ type, id, limit = 20, word = "post" }: { type: ItemTy
       {act.note}
       <Async q={q}>{d => (
         <>
-          {d.items.length === 0 && <Empty>{word === "post" ? "Nothing on the wall yet." : "No comments yet."} Be the first.</Empty>}
+          {d.items.length === 0 && <Empty>{word === "post" ? "No posts yet." : "No comments yet."} Be the first.</Empty>}
           <ul className="shouts">
             {d.items.map(s => (
               <li key={s.id}>

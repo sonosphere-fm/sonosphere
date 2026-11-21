@@ -2,18 +2,18 @@
 import { and, count, eq, ne, or, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { notifications, reports, sessions, users } from "../db/schema";
-import { first, norm, now } from "../util";
+import { digest, first, norm, now } from "../util";
 import type { User } from "../users/repo";
 
 export async function createSession(token: string, userId: number): Promise<void> {
-  await db.insert(sessions).values({ token, userId, createdAt: now() });
+  await db.insert(sessions).values({ token: digest(token), userId, createdAt: now() });
 }
 export async function deleteSession(token: string): Promise<void> {
-  await db.delete(sessions).where(eq(sessions.token, token));
+  await db.delete(sessions).where(eq(sessions.token, digest(token)));
 }
 /** Signs an account out everywhere, except on the session `keep` if given. */
 export async function deleteSessionsOf(userId: number, keep = ""): Promise<void> {
-  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, keep)));
+  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, keep && digest(keep))));
 }
 
 /** The account that logs in with this (already normalised) username or email address. */

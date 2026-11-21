@@ -278,7 +278,7 @@ function AppSettings() {
       <Services />
       <Section title="Connected applications">
         <Async q={q}>{d => d.sessions.length ? <ul className="plain">{d.sessions.map(s => (
-          <li key={s.key} className="row between"><span><b>{s.app}</b> <span className="muted small">connected {date(s.createdAt)}</span></span><Button kind="btn ghost small" onClick={() => api<AppOk>("/apps/revoke", { body: { key: s.key } }).then(q.reload)}>Disconnect</Button></li>
+          <li key={s.key} className="row between"><span><b>{s.app}</b> <span className="muted small">connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}</span></span><Button kind="btn ghost small" onClick={() => api<AppOk>("/apps/revoke", { body: { key: s.key } }).then(q.reload)}>Disconnect</Button></li>
         ))}</ul> : <p className="muted">No applications can scrobble to your account yet.</p>}</Async>
       </Section>
       <Section title="Your API accounts" more="/developers" moreLabel="API docs">

@@ -133,7 +133,7 @@ const methods: Record<string, Method> = {
     const t = (await repo.findToken(key(c.p.token), c.app.id)) ?? fail(4, "Invalid authentication token supplied");
     if (!t.userId) fail(14, "This token has not been authorized");
     if (t.createdAt < now() - 3600) fail(15, "This token has expired");
-    await repo.deleteToken(t.token);
+    await repo.deleteToken(key(c.p.token));
     return newSession(c, t.userId);
   },
   "auth.getmobilesession": async c => {

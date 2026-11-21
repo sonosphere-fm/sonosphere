@@ -13,4 +13,4 @@ export const adminOnly = (c: Ctx): Viewer => { const u = staff(c); return isAdmi
  * public writing (wiki, shouts, journals, tags, events), messages, pictures and API keys. Staff are trusted.
  */
 export const confirmed = (u: Viewer): Viewer =>
-  u.emailVerifiedAt || isStaff(u) ? u : fail(403, "Confirm your email address first. Use the link we sent you, or send a new one from Settings, under Account.");
+  u.emailVerifiedAt || isStaff(u) ? u : fail(403, "Please confirm your email address first. You should have received a verification email. If you didn't, you can resend it from Settings, under Account.");

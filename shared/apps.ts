@@ -2,7 +2,8 @@
 /** An application the signed-in user registered, with its credentials. */
 export type ApiApp = { id: number; name: string; description: string; apiKey: string; secret: string; callbackUrl: string; createdAt: number };
 /** A session key the user granted to an application. `app` is the application's name. */
-export type ApiSession = { key: string; app: string; createdAt: number };
+/** An application someone signed in to. `key` identifies it for revoking; it is not the session key itself. */
+export type ApiSession = { key: string; app: string; createdAt: number; lastUsedAt: number };
 /** GET /api/apps */
 export type Apps = { items: ApiApp[]; sessions: ApiSession[] };
 /** GET /api/apps/lookup: what the consent page shows about an application. `owner` is a username. */
