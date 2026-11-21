@@ -32,14 +32,17 @@ if [ ! -d $A/deps/$H/node_modules ]; then
 fi
 ln -sfn $A/deps/$H/node_modules $R/node_modules
 cp $R/deploy/backup.sh $A/backup.sh
+cp $R/deploy/autodeploy.sh $A/autodeploy.sh
 
 # a release that changes the database shape gets a backup taken first
 if ! diff -rq $R/server/db/migrations "${OLD:-/nonexistent}/server/db/migrations" >/dev/null 2>&1; then sh $A/backup.sh deploy; fi
 
-for u in spin@.service spin-backup.service spin-backup.timer; do
+for u in spin@.service spin-backup.service spin-backup.timer spin-autodeploy.service spin-autodeploy.timer; do
   same $R/deploy/$u /etc/systemd/system/$u || { cp $R/deploy/$u /etc/systemd/system/$u; RELOAD=1; }
 done
 [ -z "$RELOAD" ] || { systemctl daemon-reload; systemctl enable -q --now spin-backup.timer; echo "units updated"; }
+# deploying on push (deploy/autodeploy.sh) is on once there is a GitHub token to read the repository with
+[ ! -s $A/github.token ] || systemctl is-enabled -q spin-autodeploy.timer || systemctl enable -q --now spin-autodeploy.timer
 
 # start the new release on the idle ports and wait until every process answers
 systemctl stop spin-drain.timer spin-drain.service 2>/dev/null || true
