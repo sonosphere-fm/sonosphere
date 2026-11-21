@@ -10,11 +10,15 @@ export const databaseUrl = process.env.DATABASE_URL || "postgres://localhost/son
 // Postgres sends 64-bit integers and exact decimals (SUM, AVG, big catalogue totals) as text, so they are read back as
 // plain numbers here; nothing the site counts comes near 2^53.
 const asNumber = { to: 0, from: [20, 1700], serialize: (v: number) => String(v), parse: (v: string) => Number(v) };
-export const pg = postgres(databaseUrl, {
+// Each process keeps up to DB_POOL connections and lets idle ones go after a minute, so several processes fit
+// within Postgres's connection limit. The pool survives hot reloads in development instead of a new one per reload.
+const g = globalThis as { __spinPg?: ReturnType<typeof postgres<{ asNumber: typeof asNumber }>> };
+export const pg = (g.__spinPg ??= postgres(databaseUrl, {
   max: Number(process.env.DB_POOL) || 10,
+  idle_timeout: 60,
   onnotice: () => {},
   types: { asNumber },
-});
+}));
 await applyMigrations(databaseUrl);
 
 export const db = drizzle(pg, { schema });

@@ -3,6 +3,7 @@ import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isN
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
+import { getJson, setJson } from "../kv";
 import { albums, artists, lovedTracks, nowPlaying as playing, scrobbles, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx, resolveTrackTx, type TrackNames, type TrackRef } from "../catalog/repo";
 import { first, norm, now } from "../util";
@@ -167,9 +168,11 @@ export function top(kind: Kind, s: Scope, limit = 50, offset = 0): Promise<TopLi
 
 // ---------- site charts, shared by everyone ----------
 // The site-wide rankings scan every play, and every visitor asks for the same ones, so each is computed at most once
-// a minute and the rest are served from memory. A stale copy is served while a fresh one is computed. Only the
-// `loved` flag on tracks depends on who is looking; it is filled in per viewer with one small lookup.
-type SiteEntry = { at: number; v: Promise<TopList<TopArtist | TopAlbum | TopTrack>>; next?: Promise<unknown> };
+// a minute and the rest are served from memory. A stale copy is served while a fresh one is computed. Processes
+// share what they compute through Valkey (server/kv.ts), so one of them does the work and the others reuse it. Only
+// the `loved` flag on tracks depends on who is looking; it is filled in per viewer with one small lookup.
+type SiteList = TopList<TopArtist | TopAlbum | TopTrack>;
+type SiteEntry = { at: number; v: Promise<SiteList>; next?: Promise<unknown> };
 const siteCache = new Map<string, SiteEntry>();
 const SITE_TTL = 60_000;
 export function siteTop(kind: "artists", s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist>>;
@@ -180,16 +183,24 @@ export async function siteTop(kind: Kind, s: Scope, limit = 50, offset = 0): Pro
   // windows like "the last 7 days" move every second; snap them to the minute so they share one entry
   const from = s.from ? s.from - (s.from % 60) : undefined, to = s.to && s.to < FOREVER ? s.to : undefined;
   const key = `${kind}:${from ?? ""}:${to ?? ""}:${limit}:${offset}`;
-  const compute = () => top(kind, { from, to, global: true }, limit, offset);
+  // another process's fresh copy if there is one, otherwise computed here and offered to the others
+  const load = async (): Promise<{ at: number; list: SiteList }> => {
+    const shared = await getJson<{ at: number; list: SiteList }>(`site:${key}`);
+    if (shared && Date.now() - shared.at < SITE_TTL) return shared;
+    const fresh = { at: Date.now(), list: await top(kind, { from, to, global: true }, limit, offset) };
+    await setJson(`site:${key}`, fresh, 10 * SITE_TTL);
+    return fresh;
+  };
   let hit = siteCache.get(key);
-  if (!hit || Date.now() - hit.at > 10 * SITE_TTL) { // nothing, or too old to show: compute it now
+  if (!hit || Date.now() - hit.at > 10 * SITE_TTL) { // nothing, or too old to show: fetch it now
     if (siteCache.size > 500) siteCache.clear();
-    const entry: SiteEntry = { at: Date.now(), v: compute() };
-    entry.v.catch(() => { if (siteCache.get(key) === entry) siteCache.delete(key); });
+    const loading = load();
+    const entry: SiteEntry = { at: Date.now(), v: loading.then(r => r.list) };
+    loading.then(r => { entry.at = r.at; }, () => { if (siteCache.get(key) === entry) siteCache.delete(key); });
     siteCache.set(key, (hit = entry));
   } else if (Date.now() - hit.at > SITE_TTL && !hit.next) { // stale: show it, refresh behind it
-    const old = hit, v = compute();
-    old.next = v.then(() => { siteCache.set(key, { at: Date.now(), v }); }, () => { old.next = undefined; });
+    const old = hit;
+    old.next = load().then(r => { siteCache.set(key, { at: r.at, v: Promise.resolve(r.list) }); }, () => { old.next = undefined; });
   }
   const list = await hit.v;
   if (kind !== "tracks" || !s.viewerId || !list.items.length) return list;

@@ -1,6 +1,6 @@
 // HTTP routes for linking a Spotify account (through the listener's own Spotify app) so its plays are scrobbled.
 import { need } from "../guards";
-import { fail, Router } from "../http";
+import { fail, limit, Router } from "../http";
 import { clean } from "../util";
 import * as spotify from "./service";
 import type { Ok } from "../../shared/auth";
@@ -27,12 +27,9 @@ router.get("/api/spotify/callback", async c => {
   return new Response(null, { status: 302, headers: { Location: `/settings/applications?spotify=${outcome}`, "Cache-Control": "no-store" } });
 });
 
-const lastSync = new Map<number, number>();
 router.post<SpotifySynced>("/api/spotify/sync", async c => {
   const u = need(c);
-  const t = Date.now();
-  if (t - (lastSync.get(u.id) ?? 0) < 30_000) fail(429, "Wait a moment before importing again");
-  lastSync.set(u.id, t);
+  await limit(`spotify-sync:${u.id}`, 1, 30, "Wait a moment before importing again");
   return (await spotify.syncNow(u.id)) ?? fail(404, "Spotify is not connected");
 });
 

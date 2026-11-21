@@ -1,11 +1,11 @@
 [Unit]
 Description=Sonosphere (port %i)
 After=network.target postgresql.service valkey-server.service
-Wants=postgresql.service
+Wants=postgresql.service valkey-server.service
 [Service]
 WorkingDirectory=/opt/spin/slot/%i
 Environment=NODE_ENV=production PORT=%i DATA_DIR=/opt/spin/data
-# DATABASE_URL and site settings live here (optional; see deploy/spin.env.example)
+# DATABASE_URL, VALKEY_URL and site settings live here (optional; see deploy/spin.env.example)
 EnvironmentFile=-/opt/spin/spin.env
 ExecStart=/usr/local/bin/bun server/index.ts
 Restart=always

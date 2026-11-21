@@ -1,6 +1,7 @@
 // Keeps similar artists and neighbours up to date in the background. Nothing here is recomputed wholesale: new
 // scrobbles put the artists and users they touch on a queue, and each run works through a slice of that queue.
 import type { TrainResult } from "./als-worker";
+import { exclusive } from "../kv";
 import { stale } from "./model";
 import * as repo from "./repo";
 
@@ -138,18 +139,24 @@ async function modelDue(): Promise<boolean> {
   return age > RETRAIN_MAX || mark - last >= Math.max(50, last * RETRAIN_GROWTH);
 }
 
-/** Runs the refresh now and then for as long as the server is up: often while there is a backlog, lazily otherwise. */
+/**
+ * Runs the refresh now and then for as long as the server is up: often while there is a backlog, lazily otherwise.
+ * Every process runs the timers; a Valkey lock (server/kv.ts) lets only one of them work at a time.
+ */
 export function startTasteWorker() {
   const g = globalThis as { __spinTaste?: ReturnType<typeof setTimeout>; __spinModel?: ReturnType<typeof setInterval> };
   clearTimeout(g.__spinTaste);
   clearInterval(g.__spinModel);
   const tick = async () => {
     let more = false;
-    try { more = await refreshTaste(); } catch (e) { console.error(e); }
+    try { more = (await exclusive("taste", 60_000, () => refreshTaste())) ?? false; } catch (e) { console.error(e); }
     g.__spinTaste = setTimeout(tick, more ? 500 : 60_000);
   };
   g.__spinTaste = setTimeout(tick, 2000);
-  const model = async () => { try { if (await modelDue()) await trainModel(); } catch (e) { console.error(e); } };
+  // one process trains at a time; the lock outlasts the slowest training run, and others pick the model up from the database
+  const model = async () => {
+    try { await exclusive("taste-model", 30 * 60_000, async () => { if (await modelDue()) await trainModel(); }); } catch (e) { console.error(e); }
+  };
   g.__spinModel = setInterval(model, 5 * 60_000);
   setTimeout(model, 20_000);
 }

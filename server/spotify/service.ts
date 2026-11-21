@@ -9,6 +9,7 @@
 // address is used when that is https or localhost; otherwise Spotify shows as disabled.
 import { createHash } from "node:crypto";
 import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
+import { exclusive, getJson, setJson } from "../kv";
 import { now, rid } from "../util";
 import * as repo from "./repo";
 import { seal, unseal } from "./seal";
@@ -23,9 +24,9 @@ export const validClientId = (id: string) => /^[0-9a-f]{32}$/i.test(id);
 
 /** Spotify said no for good (access revoked, app deleted): the link is marked broken and polling stops. */
 class Revoked extends Error {}
-/** Rate limits apply per Spotify app, so each listener's app is paused separately. */
-const pausedUntil = new Map<string, number>();
-const paused = (clientId: string) => (pausedUntil.get(clientId) ?? 0) > now();
+/** Rate limits apply per Spotify app, so each listener's app is paused separately, in every process (server/kv.ts). */
+const pauseKey = (clientId: string) => `spotify-pause:${clientId}`;
+const paused = async (clientId: string) => (await getJson<number>(pauseKey(clientId))) !== null;
 
 // ---------- small JSON readers (Spotify's replies are untrusted input) ----------
 type Json = Record<string, unknown>;
@@ -133,7 +134,7 @@ async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(API + path, { headers: { Authorization: `Bearer ${await accessToken(link, attempt > 0)}` }, signal: AbortSignal.timeout(15_000) });
     if (res.status === 401 && attempt === 0) continue; // token went stale early: refresh once
-    if (res.status === 429) { pausedUntil.set(link.clientId, now() + Math.max(5, Number(res.headers.get("retry-after")) || 30)); throw new Slowed(); }
+    if (res.status === 429) { await setJson(pauseKey(link.clientId), 1, Math.max(5, Number(res.headers.get("retry-after")) || 30) * 1000); throw new Slowed(); }
     if (res.status === 403) throw new Revoked("Spotify refused access. Check that your Spotify account is listed under User Management in your app, then connect again.");
     if (res.status === 204) return null;
     if (!res.ok) throw new Error(`Spotify ${path} answered ${res.status}`);
@@ -154,7 +155,7 @@ function trackInput(track: unknown): ScrobbleInput | null {
 /** Imports plays since the last import. Returns how many were added. */
 async function importRecent(link: repo.Link): Promise<number> {
   await repo.updateLink(link.userId, { recentAt: now() }); // claimed, so a slow or failing account does not block the queue
-  if (paused(link.clientId)) return 0;
+  if (await paused(link.clientId)) return 0;
   try {
     const reply = await spotifyGet(link, `/me/player/recently-played?limit=50${link.cursor ? `&after=${link.cursor}` : ""}`);
     const plays: { at: number; input: ScrobbleInput }[] = [];
@@ -177,7 +178,7 @@ async function importRecent(link: repo.Link): Promise<number> {
 
 async function mirrorPlaying(link: repo.Link) {
   await repo.updateLink(link.userId, { playingAt: now() });
-  if (paused(link.clientId)) return;
+  if (await paused(link.clientId)) return;
   try {
     const reply = await spotifyGet(link, "/me/player/currently-playing");
     if (!reply || reply.is_playing !== true || reply.currently_playing_type !== "track") return;
@@ -220,9 +221,12 @@ async function tick() {
   if (busy) return;
   busy = true;
   try {
-    for (const link of await repo.dueLinks(now() - RECENT_EVERY, 25)) await importRecent(link);
-    for (const link of await repo.playingDue(now() - PLAYING_EVERY, 50)) await mirrorPlaying(link);
-    await repo.dropStalePending(now() - PENDING_FOR);
+    // one process polls at a time; the lock is generous since a slow round must not overlap the next
+    await exclusive("spotify", 5 * 60_000, async () => {
+      for (const link of await repo.dueLinks(now() - RECENT_EVERY, 25)) await importRecent(link);
+      for (const link of await repo.playingDue(now() - PLAYING_EVERY, 50)) await mirrorPlaying(link);
+      await repo.dropStalePending(now() - PENDING_FOR);
+    });
   } catch (e) { console.error("Spotify loop:", e); }
   finally { busy = false; }
 }

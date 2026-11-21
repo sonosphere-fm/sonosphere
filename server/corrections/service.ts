@@ -1,6 +1,7 @@
 // Community name corrections. They are applied in two places: to every incoming scrobble before it is matched
 // against the catalogue, and as a sweep over the names already stored. The data is downloaded at most once a day
 // (see store.ts). Set CORRECTIONS=0 to switch all of this off.
+import { exclusive } from "../kv";
 import { clean, norm, now } from "../util";
 import * as repo from "./repo";
 import * as store from "./store";
@@ -86,13 +87,16 @@ export async function sweep(): Promise<repo.SweepResult> {
 export async function syncCorrections(force = false): Promise<repo.SweepResult | null> {
   if (!enabled) return null;
   let raw = store.readSaved();
-  if (raw) build(raw);
-  if (force || !raw || now() - raw.at > 86400) {
-    try { raw = await store.download(); store.save(raw); build(raw); }
-    catch (e) { console.error("Corrections: download failed, keeping the saved copy.", String(e)); }
-  }
-  if (!raw) return null;
-  const r = (await sweep());
-  if (r.fixed || r.renamed) console.log(`Corrections: ${r.fixed} capitalisations fixed, ${r.renamed} renamed${r.clashes ? `, ${r.clashes} left for a manual merge` : ""}.`);
-  return r;
+  if (raw) build(raw); // every process applies corrections to incoming scrobbles, so every process loads them
+  // downloading and sweeping the stored names is done by one process at a time
+  return exclusive("corrections", 30 * 60_000, async () => {
+    if (force || !raw || now() - raw.at > 86400) {
+      try { raw = await store.download(); store.save(raw); build(raw); }
+      catch (e) { console.error("Corrections: download failed, keeping the saved copy.", String(e)); }
+    }
+    if (!raw) return null;
+    const r = await sweep();
+    if (r.fixed || r.renamed) console.log(`Corrections: ${r.fixed} capitalisations fixed, ${r.renamed} renamed${r.clashes ? `, ${r.clashes} left for a manual merge` : ""}.`);
+    return r;
+  });
 }

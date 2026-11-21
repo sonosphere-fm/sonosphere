@@ -7,6 +7,7 @@ import { appRoutes } from "./app";
 import { handleCompat } from "./compat/routes";
 import { dropStaleTokens } from "./compat/repo";
 import { syncCorrections } from "./corrections/service";
+import { exclusive } from "./kv";
 import { startDm } from "./dm/service";
 import { dropExpiredNowPlaying, ensureTallies } from "./listening/repo";
 import { upgrade, websocket, type SocketData } from "./realtime";
@@ -54,8 +55,7 @@ const g = globalThis as { __spinHousekeeping?: ReturnType<typeof setInterval> };
 clearInterval(g.__spinHousekeeping);
 const tidy = () => {
   syncCorrections().catch(e => console.error(e)); // re-downloads at most once a day
-  dropExpiredNowPlaying().catch(e => console.error(e));
-  dropStaleTokens().catch(e => console.error(e));
+  exclusive("tidy", 5 * 60_000, () => Promise.all([dropExpiredNowPlaying(), dropStaleTokens()])).catch(e => console.error(e)); // one process is enough
 };
 g.__spinHousekeeping = setInterval(tidy, 10 * 60 * 1000);
 syncCorrections().catch(e => console.error(e));

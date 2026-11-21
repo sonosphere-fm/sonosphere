@@ -48,7 +48,7 @@ export async function handleCompat(req: Request): Promise<Response> {
   const url = new URL(req.url), p = await params(req, url), json = p.format === "json";
   // password sign-ins from scrobbler apps get the same per-address limit as the site's own log-in form
   if (String(p.method ?? "").toLowerCase() === "auth.getmobilesession") {
-    try { limit(`login:${ipOf(req)}`, 10, 300); } catch { return failed(json, 29, "Rate limit exceeded", 429); }
+    try { await limit(`login:${ipOf(req)}`, 10, 300); } catch { return failed(json, 29, "Rate limit exceeded", 429); }
   }
   try {
     return ok(json, await call(p, url.origin));
