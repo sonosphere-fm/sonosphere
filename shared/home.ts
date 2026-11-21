@@ -17,7 +17,7 @@ export type Home = {
   trendingPeriod: "week" | "overall";
   trendingArtists: TopArtist[]; trendingTracks: TopTrack[]; trendingAlbums: TopAlbum[];
   tags: TagCount[]; events: EventSummary[]; stats: SiteTotals;
-  friends?: FriendActivity[]; friendLoves?: FriendLove[]; recommended?: Recommendation[];
+  friends?: FriendActivity[]; friendLoves?: FriendLove[];
   week?: { now: number; before: number };
 };
 export type Recommended = { artists: Recommendation[]; tracks: TopTrack[]; albums: TopAlbum[]; events: EventSummary[] };

@@ -31,6 +31,22 @@ if (!result.success) {
 
 const relative = (path: string) => path.slice(path.indexOf(`/${out}/`) + out.length + 2);
 
+// Bun inlines every font subset into the stylesheet, which blocks the first paint; as files, a browser fetches only
+// the subsets the page's text needs
+const INLINE_FONT = /url\(data:font\/(woff2?);base64,([A-Za-z0-9+/=]+)\)/g;
+for (const file of result.outputs.filter(f => f.path.endsWith(".css"))) {
+  const css = await file.text();
+  const fonts: [string, Buffer][] = [];
+  const rewritten = css.replace(INLINE_FONT, (_, ext: string, data: string) => {
+    const bytes = Buffer.from(data, "base64");
+    const name = `assets/font-${Bun.hash(bytes).toString(36)}.${ext}`;
+    fonts.push([name, bytes]);
+    return `url(/${name})`;
+  });
+  for (const [name, bytes] of fonts) await Bun.write(`${out}/${name}`, bytes);
+  await Bun.write(file.path, rewritten);
+}
+
 const staff: string[] = [];
 const open: string[] = [];
 for (const file of result.outputs) {
