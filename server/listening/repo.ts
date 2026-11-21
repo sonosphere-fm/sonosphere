@@ -457,8 +457,10 @@ export async function saveNowPlaying(userId: number, ref: TrackRef, seconds: num
   await db.insert(playing).values({ userId, ...row }).onConflictDoUpdate({ target: playing.userId, set: row });
 }
 
-export async function clearNowPlaying(userId: number): Promise<void> {
-  const removed = await db.delete(playing).where(eq(playing.userId, userId)).returning({ id: playing.userId });
+/** With `trackId`, only while that track is still the one playing. */
+export async function clearNowPlaying(userId: number, trackId?: number): Promise<void> {
+  const which = trackId === undefined ? eq(playing.userId, userId) : and(eq(playing.userId, userId), eq(playing.trackId, trackId));
+  const removed = await db.delete(playing).where(which).returning({ id: playing.userId });
   if (removed.length) listeningChanged(userId, "nowplaying");
 }
 
