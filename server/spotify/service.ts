@@ -7,6 +7,7 @@ import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
 import { clearNowPlaying } from "../listening/repo";
 import { seal, unseal } from "./seal";
+import { allowed, groupOf, pace, refused, spent, type Group } from "./quota";
 import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
 
 const ACCOUNTS = "https://accounts.spotify.com";
@@ -14,8 +15,13 @@ const API = "https://api.spotify.com/v1";
 const SCOPES = "user-read-recently-played user-read-currently-playing";
 // only asked for when the listener wants in-browser playback, since it needs Premium
 const PLAY_SCOPES = "streaming user-read-email user-read-private user-modify-playback-state";
-const RECENT_EVERY = 5 * 60;
+// recentAt and playingAt hold when each poll is next due; both slow down once nothing has played for a while
+const RECENT_EVERY = 15 * 60;
+const IDLE_RECENT_EVERY = 60 * 60;
 const PLAYING_EVERY = 60;
+const IDLE_PLAYING_EVERY = 4 * 60;
+const IDLE_AFTER = 10 * 60;
+const QUIET_AFTER = 30 * 60;
 const PENDING_FOR = 10 * 60;
 
 const canPlay = (link: repo.Link) => !link.broken && link.scopes.split(" ").includes("streaming");
@@ -26,28 +32,38 @@ export const validClientId = (id: string) => /^[0-9a-f]{32}$/i.test(id);
 class Revoked extends Error {}
 class Slowed extends Error {}
 
-// rate limits apply per Spotify app, so each listener's app is paused separately
-const pauseKey = (clientId: string) => `spotify-pause:${clientId}`;
-const restingUntil = (clientId: string) => getJson<number>(pauseKey(clientId));
-const paused = async (clientId: string) => (await restingUntil(clientId)) !== null;
+// rate limits apply per Spotify app and endpoint group, so each is paused separately
+const pauseKey = (clientId: string, group: Group) => `spotify-pause:${group}:${clientId}`;
+const restingUntil = (clientId: string, group: Group) => getJson<number>(pauseKey(clientId, group));
 const strikeKey = (clientId: string) => `spotify-strikes:${clientId}`;
+const activeKey = (userId: number) => `spotify-active:${userId}`;
 
 const MAX_REST = 3600;
 
 /**
- * Rests the app for at least 30s, 1m, 2m ... for repeat 429s within the hour, and as long as Retry-After asks up to
- * an hour: Spotify sometimes asks development apps to wait most of a day while answering again within minutes.
+ * Rests the app for at least 30s, 1m, 2m ... for repeat 429s within the hour, and as long as Retry-After asks up to an
+ * hour. Only an exhausted daily quota gets its full wait: other long waits have been followed by answers within minutes.
  */
-async function slowDown(clientId: string, retryAfter: string | null, path: string) {
+async function slowDown(clientId: string, group: Group, asked: number, reason: string, path: string) {
   const strikes = ((await getJson<number>(strikeKey(clientId))) ?? 0) + 1;
-  const asked = Number(retryAfter) || 0;
-  const seconds = Math.min(MAX_REST, Math.max(asked, 30 * 2 ** (strikes - 1)));
+  const backoff = Math.max(asked, 30 * 2 ** (strikes - 1));
+  const seconds = reason === "QUOTA_EXCEEDED" ? Math.max(asked, MAX_REST) : Math.min(MAX_REST, backoff);
   await setJson(strikeKey(clientId), strikes, MAX_REST * 1000);
-  await setJson(pauseKey(clientId), now() + seconds, seconds * 1000);
+  await setJson(pauseKey(clientId, group), now() + seconds, seconds * 1000);
   console.warn(
-    `spotify: app ${clientId.slice(0, 6)} rate limited on ${path.split("?")[0]} (Retry-After ${retryAfter ?? "none"}), resting ${seconds}s, strike ${strikes}`,
+    `spotify: app ${clientId.slice(0, 6)} refused ${path.split("?")[0]} (${reason || "no reason"}, Retry-After ${asked}), resting ${group} ${seconds}s, strike ${strikes}`,
   );
 }
+
+/** When the next poll is due: sooner while the listener is playing, later as the app's daily allowance runs low. */
+async function nextPoll(link: repo.Link, every: number, idleEvery: number, idleAfter: number): Promise<number> {
+  const active = await getJson<number>(activeKey(link.userId));
+  const base = active !== null && now() - active < idleAfter ? every : idleEvery;
+  const jitter = 0.85 + Math.random() * 0.3;
+  return now() + Math.round(base * (await pace(link.clientId, "player")) * jitter);
+}
+
+const markActive = (userId: number) => setJson(activeKey(userId), now(), 3600_000);
 
 type Json = Record<string, unknown>;
 const obj = (v: unknown): Json | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : null);
@@ -206,15 +222,28 @@ const authorized = async (link: repo.Link, force = false) => ({
   signal: AbortSignal.timeout(15_000),
 });
 
-/** Null for "nothing to report" (204). */
-async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
+/** Holds back while the app is resting or near a learned ceiling, and learns from every answer. */
+async function request(link: repo.Link, path: string): Promise<Response> {
+  const group = groupOf(path);
+  if ((await restingUntil(link.clientId, group)) !== null || !(await allowed(link.clientId, group))) throw new Slowed();
   let res = await fetch(API + path, await authorized(link));
   // the token went stale early: refresh once
   if (res.status === 401) res = await fetch(API + path, await authorized(link, true));
-  if (res.status === 429) {
-    await slowDown(link.clientId, res.headers.get("retry-after"), path);
-    throw new Slowed();
+  if (res.status !== 429) {
+    await spent(link.clientId, group);
+    return res;
   }
+  const body = obj(await res.json().catch(() => null));
+  const reason = str(obj(body?.error)?.reason) || str(body?.reason);
+  const asked = Number(res.headers.get("retry-after")) || 0;
+  await refused(link.clientId, group, asked, reason);
+  await slowDown(link.clientId, group, asked, reason, path);
+  throw new Slowed();
+}
+
+/** Null for "nothing to report" (204). */
+async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
+  const res = await request(link, path);
   if (res.status === 403) {
     throw new Revoked("Spotify refused access. Check that your Spotify account is listed under User Management in your app, then connect again.");
   }
@@ -236,8 +265,7 @@ function trackInput(track: unknown): ScrobbleInput | null {
 /** Returns how many plays were added. */
 async function importRecent(link: repo.Link): Promise<number> {
   // claimed first, so a slow or failing account does not block the queue
-  await repo.updateLink(link.userId, { recentAt: now() });
-  if (await paused(link.clientId)) return 0;
+  await repo.updateLink(link.userId, { recentAt: await nextPoll(link, RECENT_EVERY, IDLE_RECENT_EVERY, QUIET_AFTER) });
   try {
     const after = link.cursor ? `&after=${link.cursor}` : "";
     const reply = await spotifyGet(link, `/me/player/recently-played?limit=50${after}`);
@@ -254,6 +282,7 @@ async function importRecent(link: repo.Link): Promise<number> {
     plays.sort((a, b) => a.at - b.at);
     const results = await scrobbleMany(link.userId, plays.map(p => p.input), "spotify");
     const added = results.filter(r => r.accepted).length;
+    if (added) await markActive(link.userId);
     link.cursor = plays[plays.length - 1]!.at;
     await repo.updateLink(link.userId, { cursor: link.cursor, imported: link.imported + added, importedAt: now() });
     link.imported += added;
@@ -264,8 +293,7 @@ async function importRecent(link: repo.Link): Promise<number> {
 }
 
 async function mirrorPlaying(link: repo.Link) {
-  await repo.updateLink(link.userId, { playingAt: now() });
-  if (await paused(link.clientId)) return;
+  await repo.updateLink(link.userId, { playingAt: await nextPoll(link, PLAYING_EVERY, IDLE_PLAYING_EVERY, IDLE_AFTER) });
   try {
     const reply = await spotifyGet(link, "/me/player/currently-playing");
     const mirrored = `spotify-playing:${link.userId}`;
@@ -275,6 +303,7 @@ async function mirrorPlaying(link: repo.Link) {
       if (trackId) await clearNowPlaying(link.userId, trackId);
       return;
     }
+    await markActive(link.userId);
     const input = trackInput(reply.item);
     const ref = input && (await setNowPlaying(link.userId, input));
     if (ref) await setJson(mirrored, ref.trackId, 3600_000);
@@ -314,7 +343,7 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
   const tried = new Set<number>();
   for (let i = 0; i < order.length; i++) {
     const link = order[i]!;
-    if (tried.has(link.userId) || (await paused(link.clientId))) continue;
+    if (tried.has(link.userId)) continue;
     if (spare && (await getJson<number>(strikeKey(link.clientId)))) continue;
     if (spare && !(await attempt(`spotify-spare:${link.clientId}`, 1, 2000))) continue;
     if (!(await attempt(`spotify-turn:${link.clientId}`, 1, 400))) {
@@ -328,12 +357,7 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
     tried.add(link.userId);
     await setJson(`spotify-used:${link.clientId}`, Date.now(), 3600_000);
     try {
-      let res = await fetch(API + path, await authorized(link));
-      if (res.status === 401) res = await fetch(API + path, await authorized(link, true));
-      if (res.status === 429) {
-        await slowDown(link.clientId, res.headers.get("retry-after"), path);
-        continue;
-      }
+      const res = await request(link, path);
       // this account can't; the importer marks a link that is really broken
       if (res.status === 401 || res.status === 403) continue;
       if (res.status === 404 || res.status === 400) return null;
@@ -349,7 +373,7 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
 
 async function view(link: repo.Link): Promise<SpotifyLink> {
   return {
-    restingUntil: await restingUntil(link.clientId),
+    restingUntil: await restingUntil(link.clientId, "player"),
     account: { id: link.spotifyId, name: link.displayName },
     clientId: link.clientId,
     connectedAt: link.createdAt,
@@ -396,8 +420,8 @@ async function tick() {
   try {
     // one process polls at a time; the lock is generous since a slow round must not overlap the next
     await exclusive("spotify", 5 * 60_000, async () => {
-      for (const link of await repo.dueLinks(now() - RECENT_EVERY, 25)) await importRecent(link);
-      for (const link of await repo.playingDue(now() - PLAYING_EVERY, 50)) await mirrorPlaying(link);
+      for (const link of await repo.dueLinks(now(), 25)) await importRecent(link);
+      for (const link of await repo.playingDue(now(), 50)) await mirrorPlaying(link);
       await repo.dropStalePending(now() - PENDING_FOR);
     });
   } catch (e) {
