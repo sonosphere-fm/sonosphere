@@ -36,6 +36,7 @@ router.patch<ProfileSaved>("/api/me", async c => {
   const dmPolicy = b.dmPolicy === undefined ? undefined : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
   const emailNotify = b.emailNotify === undefined ? undefined : oneOf(b.emailNotify, EMAIL_MODES.map(m => m[0])) ?? bad("Pick how often to get emails");
   const emailMuted = Array.isArray(b.emailMuted) ? EMAIL_KINDS.map(k => k[0]).filter(k => (b.emailMuted as unknown[]).includes(k)).join(",") : undefined;
+  const theme = b.theme === undefined ? undefined : oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme");
   await repo.updateProfile(u.id, {
     realname, about, country,
     website, hideRecent: !!(b.hideRecent ?? u.hideRecent), privateListening: !!(b.privateListening ?? u.privateListening), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
@@ -43,6 +44,7 @@ router.patch<ProfileSaved>("/api/me", async c => {
     // a digest starts counting from when it was picked, so the first one doesn't cover everything before
     ...(emailNotify && { emailNotify, ...(emailNotify !== u.emailNotify && { digestAt: now() }) }),
     ...(emailMuted !== undefined && { emailMuted }),
+    ...(theme && { theme }),
   });
   return { user: await me((await findById(u.id)) ?? missing("User")) };
 });

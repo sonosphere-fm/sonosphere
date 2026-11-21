@@ -4,7 +4,7 @@ import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { needleTheme } from "./themes/needle/needle.js";
-import { useThemePref } from "./theme";
+import { applyTheme } from "./theme";
 import { Button, RouteLink } from "./kit";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
@@ -312,7 +312,8 @@ const boot = (window as { __ME?: MeResponse }).__ME;
 function App() {
   // the server puts the answer to /api/me in the page (server/app.ts); in development it is fetched
   const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null), [ready, setReady] = useState(!!boot);
-  const themePref = useThemePref();
+  const themePref = me?.theme ?? "light";
+  useEffect(() => { applyTheme(themePref); }, [themePref]);
   // what the API returns depends on who is asking, so a change of viewer refetches everything on screen
   const setMe = useCallback((m: Me | null) => { setMeRaw(prev => { if ((prev?.username ?? null) !== (m?.username ?? null)) invalidateAll(); return m; }); }, []);
   const refresh = useCallback(() => { api<MeResponse>("/me").then(r => setMeRaw(r.user)).catch(() => {}).finally(() => setReady(true)); }, []);

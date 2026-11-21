@@ -15,6 +15,8 @@ export type Me = {
   dm: DmCounts; dmPolicy: string;
   /** Notification emails: how often, and the kinds turned off. */
   emailNotify: string; emailMuted: string[];
+  /** Site theme: "light", "system" or "dark". */
+  theme: "light" | "system" | "dark";
   /** Whether `email` was confirmed by following a link sent to it. */
   emailVerified: boolean;
   /** A new address waiting for its confirmation link to be followed. */

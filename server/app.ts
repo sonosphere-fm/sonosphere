@@ -36,7 +36,9 @@ export async function appRoutes() {
   const shell = async (req: Request) => {
     const viewer = await sessionUser(tokenOf(req)).catch(() => null);
     const data = JSON.stringify({ user: viewer ? await me(viewer) : null }).replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, c => `\\u${c.charCodeAt(0).toString(16)}`);
-    const page = html.replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
+    // the account's theme goes on <html> so the first paint is already right
+    const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
+    const page = html.replace("<html lang=\"en\">", () => `<html lang="en"${scheme}>`).replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
     return new Response(page, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-cache", Vary: "Cookie" } });
   };
   const asset = async (req: Request) => {

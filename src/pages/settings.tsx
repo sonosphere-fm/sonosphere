@@ -13,7 +13,7 @@ import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, Sp
 import { Ico } from "../icons";
 import { Art, Async, Section, useAction } from "../ui/base";
 import { UserList } from "../ui/lists";
-import { setThemePref, useThemePref, type ThemePref } from "../theme";
+import type { ThemePref } from "../theme";
 
 // ---------- settings ----------
 export function Settings() {
@@ -67,20 +67,22 @@ function ProfileSettings() {
     </>
   );
 }
-const THEMES: [ThemePref, string, string][] = [["light", "Light", "Warm paper, the default"], ["system", "Automatic", "Follows your device"], ["dark", "Dark", "Deep ink after hours"]];
+const THEMES: [ThemePref, string][] = [["light", "Light"], ["system", "Automatic"], ["dark", "Dark"]];
 function Appearance() {
-  const pref = useThemePref();
+  const { me, setMe } = useAuth(), act = useAction();
+  // switches straight away; goes back if saving fails
+  const pick = (theme: ThemePref) => {
+    const was = me!; if (theme === (was.theme ?? "light")) return;
+    setMe({ ...was, theme });
+    act.run(async () => { try { setMe((await api<ProfileSaved>("/me", { method: "PATCH", body: { theme } })).user); } catch (e) { setMe(was); throw e; } });
+  };
   return (
     <Section title="Appearance">
       <div className="theme-pick" role="group" aria-label="Theme">
-        {THEMES.map(([v, name, hint]) => (
-          <button key={v} type="button" className={`theme-opt t-${v}`} aria-pressed={pref === v} onClick={() => setThemePref(v)}>
-            <span className="theme-swatch" aria-hidden="true"><i /><b /><b /><em /></span>
-            <strong>{name}</strong><span className="muted small">{hint}</span>
-          </button>
-        ))}
+        {THEMES.map(([v, name]) => <button key={v} type="button" aria-pressed={(me!.theme ?? "light") === v} onClick={() => pick(v)}>{name}</button>)}
       </div>
-      <p className="muted small">Saved on this device.</p>
+      <p className="muted small">Automatic follows your device's light or dark setting.</p>
+      {act.note}
     </Section>
   );
 }

@@ -5,7 +5,7 @@ import type { Session } from "./auth";
 export type ProfileEdit = {
   realname?: string; about?: string; country?: string; website?: string; email?: string;
   hideRecent?: boolean; privateListening?: boolean; shoutsEnabled?: boolean; dmPolicy?: string;
-  emailNotify?: string; emailMuted?: string[];
+  emailNotify?: string; emailMuted?: string[]; theme?: string;
 };
 export type ProfileSaved = Session;
 /** POST /api/me/clear-scrobbles: how many plays were removed. */

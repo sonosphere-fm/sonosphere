@@ -58,6 +58,8 @@ export const users = pgTable("users", {
 	// notification emails: "instant", "daily", "weekly" or "off"; the kinds turned off (comma separated); the last digest
 	emailNotify: text("email_notify").default("instant").notNull(),
 	emailMuted: text("email_muted").default("").notNull(),
+	// site theme: "light" (default), "system" (follow the device) or "dark"
+	theme: text().default("light").notNull(),
 	digestAt: integer("digest_at"),
 });
 

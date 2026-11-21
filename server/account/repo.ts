@@ -4,7 +4,7 @@ import { db } from "../db/client";
 import { journals, modNotes, shouts, users } from "../db/schema";
 
 /** The profile fields an account may change about itself. */
-export type ProfileFields = Partial<Pick<typeof users.$inferInsert, "realname" | "about" | "country" | "website" | "hideRecent" | "privateListening" | "shoutsEnabled" | "dmPolicy" | "emailNotify" | "emailMuted" | "digestAt">>;
+export type ProfileFields = Partial<Pick<typeof users.$inferInsert, "realname" | "about" | "country" | "website" | "hideRecent" | "privateListening" | "shoutsEnabled" | "dmPolicy" | "emailNotify" | "emailMuted" | "digestAt" | "theme">>;
 
 export async function updateProfile(userId: number, fields: ProfileFields): Promise<void> {
   await db.update(users).set(fields).where(eq(users.id, userId));
