@@ -88,7 +88,6 @@ function Header() {
     nav("/");
   });
   const dmCount = me ? me.dm.unread + me.dm.requests : 0;
-  const badge = me ? me.unread + dmCount : 0;
   const menuButton = me && {
     label: `${me.username} menu`,
     variant: "ghost" as const,
@@ -96,7 +95,7 @@ function Header() {
     children: (
       <>
         <span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>
-        {badge > 0 && <b className="dot">{badge}</b>}
+        {me.admin && me.openReports > 0 && <b className="dot">{me.openReports}</b>}
       </>
     ),
   };
@@ -106,9 +105,9 @@ function Header() {
       <div className="wrap sphere-header-layout">
         <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
         <nav className="sphere-primary" aria-label="Main">
-          <NavLink to="/" end>Home <Ico.Right /></NavLink>
-          <NavLink to="/charts">Charts <Ico.Right /></NavLink>
-          <NavLink to="/events">Events <Ico.Right /></NavLink>
+          <NavLink to="/" end>Home</NavLink>
+          <NavLink to="/charts">Charts</NavLink>
+          <NavLink to="/events">Events</NavLink>
         </nav>
         <button type="button" className="sphere-search-toggle" ref={searchToggle}
           aria-label={searchOpen ? "Close search" : "Open search"} aria-expanded={searchOpen}
@@ -125,18 +124,19 @@ function Header() {
         </search>
         <div className="sphere-account-actions">
           {me && menuButton ? (
+            <>
+            <nav className="sphere-quick" aria-label="Your account">
+              <NavLink to={`${userUrl(me.username)}/library`} title="Library"><Ico.Library /><span>Library</span></NavLink>
+              <NavLink to={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"} title="Messages">
+                <Ico.Chat /><span>Messages</span>{dmCount > 0 && <b className="dot">{dmCount}</b>}
+              </NavLink>
+              <NavLink to="/inbox" title="Inbox"><Ico.Inbox /><span>Inbox</span>{me.unread > 0 && <b className="dot">{me.unread}</b>}</NavLink>
+              <NavLink to="/scrobble" title="Scrobble"><Ico.Scrobble /><span>Scrobble</span></NavLink>
+            </nav>
             <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480} button={menuButton}>
               <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
-              <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
               <DropdownMenuItem icon={<Ico.Reports />} label="Listening reports" href={`${userUrl(me.username)}/listening-report/week`} />
               <DropdownMenuItem icon={<Ico.Recommended />} label="Recommended" href="/recommended" />
-              <DropdownMenuItem
-                icon={<Ico.Chat />}
-                label={dmCount > 0 ? `Messages (${dmCount})` : "Messages"}
-                href={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"}
-              />
-              <DropdownMenuItem icon={<Ico.Inbox />} label={me.unread > 0 ? `Inbox (${me.unread})` : "Inbox"} href="/inbox" />
-              <DropdownMenuItem icon={<Ico.Scrobble />} label="Scrobble" href="/scrobble" />
               <DropdownMenuItem icon={<Ico.Settings />} label="Settings" href="/settings" />
               {me.admin && (
                 <DropdownMenuItem
@@ -147,6 +147,7 @@ function Header() {
               )}
               <DropdownMenuItem icon={<Ico.LogOut />} label="Log out" onClick={logout} />
             </DropdownMenu>
+            </>
           ) : (
             <>
               <NavLink className="sphere-login" to="/login">Sign in</NavLink>
