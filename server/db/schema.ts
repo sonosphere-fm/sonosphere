@@ -122,6 +122,16 @@ export const artists = pgTable("artists", {
 	wdAt: integer("wd_at"),
 });
 
+// artist pictures from a copy of Spotify's catalogue, loaded by hand and left out of backups
+export const spotifyArtistPics = pgTable("spotify_artist_pics", {
+	spotifyId: text("spotify_id").primaryKey(),
+	nameNorm: text("name_norm").notNull(),
+	followers: integer().notNull(),
+	url: text().notNull(),
+	width: integer(),
+	height: integer(),
+}, t => [index("spotify_artist_pics_name").on(t.nameNorm, t.followers)]);
+
 export const albums = pgTable("albums", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),

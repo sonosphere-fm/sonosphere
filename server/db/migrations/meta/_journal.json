@@ -134,6 +134,13 @@
       "when": 1795259922655,
       "tag": "0018_dm_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795261230943,
+      "tag": "0019_spotify_artist_pics",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,8 @@
-import { and, asc, eq, inArray, isNotNull, isNull, lt, notInArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or } from "drizzle-orm";
 import { db, transact } from "../db/client";
-import { albums, albumTracks, artists, tracks } from "../db/schema";
+import { albums, albumTracks, artists, spotifyArtistPics, tracks } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx } from "../catalog/repo";
-import { first, now } from "../util";
+import { first, norm, now } from "../util";
 
 type Kind = "artist" | "album" | "track";
 const table = { artist: artists, album: albums, track: tracks } as const;
@@ -120,6 +120,28 @@ export const wikidataDueArtists = (limit: number, due: number) =>
 export async function wikidataAnswered(ids: number[]) {
   if (ids.length) await db.update(artists).set({ wdAt: now() }).where(inArray(artists.id, ids));
 }
+
+const pic = { url: spotifyArtistPics.url, width: spotifyArtistPics.width, height: spotifyArtistPics.height };
+
+/** By Spotify id when known, else the most followed artist of that name. */
+export async function catalogueCopyPicture(spotifyId: string | null, name: string) {
+  const byId = spotifyId
+    ? await first(db.select(pic).from(spotifyArtistPics).where(eq(spotifyArtistPics.spotifyId, spotifyId)))
+    : null;
+  if (byId) return byId;
+  return first(db.select(pic).from(spotifyArtistPics)
+    .where(eq(spotifyArtistPics.nameNorm, norm(name)))
+    .orderBy(desc(spotifyArtistPics.followers))
+    .limit(1));
+}
+
+export const picturelessArtists = (after: number, limit: number) =>
+  db
+    .select({ id: artists.id, name: artists.name, spotifyId: artists.spotifyId })
+    .from(artists)
+    .where(and(isNull(artists.imageId), gt(artists.id, after)))
+    .orderBy(asc(artists.id))
+    .limit(limit);
 
 // Entries looked up elsewhere that still lack something Spotify might have and that Spotify was never asked about.
 // Wikidata goes first for artists it can be asked about.

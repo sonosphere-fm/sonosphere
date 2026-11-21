@@ -13,7 +13,7 @@ TMP="$OUT/.tmp-$STAMP.dump"
 NAME="spin-$STAMP-$LABEL.dump"
 MAX_MB=${BACKUP_S3_MAX_MB:-5000}
 
-pg_dump --format=custom --compress=6 --no-owner --file="$TMP"
+pg_dump --format=custom --compress=6 --no-owner --exclude-table-data=spotify_artist_pics --file="$TMP"
 if ! pg_restore --list "$TMP" > /dev/null; then
   rm -f "$TMP"
   echo "the dump could not be read back"

@@ -143,8 +143,17 @@ async function fillArtist(id: number): Promise<void> {
   if (mbid) await repo.addDiscography(id, await src.mbDiscography(mbid));
 }
 
-/** From Wikidata by MusicBrainz id, else from Spotify (by the Spotify id MusicBrainz links, else by name). */
+/** True when the copy of Spotify's catalogue has a picture; it knows no artist newer than early 2025. */
+async function fromCatalogueCopy(a: { id: number; name: string; spotifyId: string | null }, mbid: string | null) {
+  const spotifyId = a.spotifyId || (mbid && src.mbLocal() ? await src.mbSpotifyId(mbid) : null);
+  const p = await repo.catalogueCopyPicture(spotifyId, a.name);
+  if (p) await repo.setArtist(a.id, { imageId: await showPicture(p) });
+  return !!p;
+}
+
+/** From the catalogue copy, else Wikidata by MusicBrainz id, else Spotify (by the Spotify id MusicBrainz links, else by name). */
 async function artistPhoto(a: { id: number; name: string; spotifyId: string | null; spAt: number | null }, mbid: string | null) {
+  if (await fromCatalogueCopy(a, mbid)) return;
   if (mbid) {
     const found = await src.wikiPhotos([mbid]).then(
       m => m.get(mbid) ?? null,
@@ -562,6 +571,21 @@ async function wikidataBackfill() {
   }
 }
 
+// artists filed before the catalogue copy was loaded; one pass, which only reads our own database
+const COPY_AFTER = "catalogue-copy-after";
+async function catalogueCopyBackfill() {
+  try {
+    await exclusive(COPY_AFTER, 60_000, async () => {
+      const after = (await getJson<number>(COPY_AFTER)) ?? 0;
+      const rows = await repo.picturelessArtists(after, 100);
+      for (const a of rows) await fromCatalogueCopy(a, null);
+      if (rows.length) await setJson(COPY_AFTER, rows[rows.length - 1].id, 365 * DAY);
+    });
+  } catch (e) {
+    quiet("catalogue copy")(e);
+  }
+}
+
 export function startMetadata() {
   // on globalThis so hot reload replaces the interval instead of stacking
   const g = globalThis as { __spinMetadata?: ReturnType<typeof setInterval> };
@@ -571,5 +595,6 @@ export function startMetadata() {
     backfill();
     lastfmBackfill();
     wikidataBackfill();
+    catalogueCopyBackfill();
   }, 20_000);
 }
