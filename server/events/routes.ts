@@ -5,6 +5,7 @@ import { fail, oneOf, paging, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
 import { norm, now } from "../util";
 import * as repo from "./repo";
+import { whereFrom } from "./where";
 import { addEvent, eventPage } from "./service";
 import type { AttendResult, EventCreated, EventList, EventOk, EventPage, UserEvents } from "../../shared/events";
 
@@ -18,12 +19,26 @@ router.get<UserEvents>("/api/user/events", async c => {
 });
 
 router.get<EventList>("/api/events", async c => {
-  const pg = paging(c.q, 30), past = c.q.get("when") === "past";
+  const pg = paging(c.q, 30), when = c.q.get("when"), past = when === "past";
   // upcoming lists keep an event for six hours after it starts
-  const f: repo.Filter = past ? { before: now() } : { from: now() - 6 * 3600 };
+  let f: repo.Filter = past ? { before: now() } : { from: now() - 6 * 3600 };
   f.text = norm(c.q.get("q") || "");
   if (c.q.get("mine") && c.user) f.fanOf = c.user.id;
-  return { items: await repo.listEvents(f, c.user?.id, past ? "desc" : "asc", pg.limit, pg.offset), total: await repo.countEvents(f), ...pg };
+  let near: EventList["near"];
+  if (when === "near") {
+    // within 150 km, else 400 km, else anywhere in the same country
+    const at = whereFrom(c.req.headers);
+    if (at) {
+      const tries: repo.Filter[] = at.lat !== null && at.lon !== null
+        ? [{ ...f, near: { lat: at.lat, lon: at.lon, km: 150 } }, { ...f, near: { lat: at.lat, lon: at.lon, km: 400 } }] : [];
+      tries.push({ ...f, country: at.country });
+      let pick = tries.length - 1;
+      for (let i = 0; i < pick; i++) if (await repo.countEvents(tries[i]!)) { pick = i; break; }
+      f = tries[pick]!;
+      near = { city: at.city, country: at.country, wide: pick > 0 };
+    } else { f = { ...f, id: -1 }; near = null; } // nowhere known: nothing near
+  }
+  return { items: await repo.listEvents(f, c.user?.id, past ? "desc" : "asc", pg.limit, pg.offset), total: await repo.countEvents(f), near, ...pg };
 });
 
 router.get<EventPage>("/api/event/:id", c => eventPage(Number(c.params[0]), c.user));

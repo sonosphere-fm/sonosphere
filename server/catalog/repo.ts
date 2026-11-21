@@ -186,7 +186,7 @@ export async function eventsWithArtist(artistId: number, after: number, viewerId
   const mine = sql<string | null>`(SELECT ${eventAttendance.status} FROM ${eventAttendance} WHERE ${eventAttendance.eventId} = ${events.id} AND ${eventAttendance.userId} = ${viewerId})`;
   const rows = await db.select({
     id: events.id, title: events.title, venue: events.venue, city: events.city, country: events.country, startsAt: events.startsAt,
-    description: events.description, url: events.url, creator: users.username, going: answers("going"), interested: answers("interested"), status: mine,
+    description: events.description, url: events.url, creator: users.username, source: events.source, going: answers("going"), interested: answers("interested"), status: mine,
   }).from(events).leftJoin(users, eq(users.id, events.creatorId))
     .where(and(gt(events.startsAt, after), inArray(events.id, db.select({ id: eventArtists.eventId }).from(eventArtists).where(eq(eventArtists.artistId, artistId)))))
     .orderBy(asc(events.startsAt)).limit(limit);

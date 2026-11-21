@@ -172,3 +172,25 @@ export async function trackList(rgid: string): Promise<ListedTrack[]> {
     ORDER BY md.position, t.position LIMIT 100`;
   return rows.map(r => ({ title: tidy(r.name), seconds: Math.round((r.length || 0) / 1000) })).filter(t => t.title);
 }
+
+// ---------- events ----------
+/** A concert or festival in the copy (event_x, see sonomb's events.sh), with its bill: headliners first. */
+export type MbEvent = {
+  gid: string; name: string; date: string; time: string | null; festival: boolean; venue: string | null; city: string | null;
+  country: string | null; lat: number | null; lon: number | null; lineup: { mbid: string; name: string }[];
+};
+
+/**
+ * Concerts and festivals on dates from `from` to `to` (YYYY-MM-DD), not called off. With `onlyArtists`, just the ones
+ * where one of those artists (MusicBrainz ids) plays.
+ */
+export async function events(from: string, to: string, onlyArtists?: string[]): Promise<MbEvent[]> {
+  const rows = await db()<(Omit<MbEvent, "lineup"> & { lineup: { mbid: string; name: string }[] | null })[]>`
+    SELECT e.gid::text AS gid, e.name, e.date, e.time, e.type = 2 AS festival, e.venue, e.city, e.country, e.lat, e.lon,
+      (SELECT json_agg(json_build_object('mbid', a.gid::text, 'name', a.name) ORDER BY x.role, x.ord, a.name)
+       FROM event_artist_x x JOIN artist a ON a.id = x.artist WHERE x.event = e.id) AS lineup
+    FROM event_x e
+    WHERE e.date BETWEEN ${from} AND ${to} AND e.type IN (1, 2) AND NOT e.cancelled
+      ${onlyArtists ? db()`AND e.id IN (SELECT x.event FROM event_artist_x x JOIN artist a ON a.id = x.artist WHERE a.gid = ANY(${onlyArtists}::uuid[]))` : db()``}`;
+  return rows.map(r => ({ ...r, name: tidy(r.name), venue: r.venue && tidy(r.venue), lineup: (r.lineup ?? []).map(a => ({ mbid: a.mbid, name: tidy(a.name) })) }));
+}

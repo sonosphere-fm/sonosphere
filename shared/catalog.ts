@@ -21,7 +21,7 @@ export type Listener = PublicUser & { playcount: number };
 /** A concert or festival as shown in a list. `status` is the viewer's own answer, if they gave one. */
 export type EventSummary = {
   id: number; title: string; venue: string; city: string; country: string; startsAt: number; description: string; url: string;
-  creator: string | null; going: number; interested: number; status: string | null;
+  creator: string | null; source: string; going: number; interested: number; status: string | null;
   artists: { name: string; image: string | null }[];
 };
 

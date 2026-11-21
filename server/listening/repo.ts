@@ -1,6 +1,7 @@
 // Data access for scrobbles and every statistic drawn from them: rankings, totals, recent plays, charts.
 import { wantBare } from "../metadata/wanted";
 import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isNotNull, lt, ne, notExists, or, sql, type SQL } from "drizzle-orm";
+import { playImage, trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
@@ -36,7 +37,7 @@ const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?
 // ---------- rankings ----------
 const artistCols = { id: artists.id, name: artists.name, image: artists.imageId };
 const albumCols = { id: albums.id, title: albums.title, image: albums.imageId, artist: artists.name };
-const trackCols = { id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId };
+const trackCols = { id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: trackImage() };
 /** 1 when the viewer has loved the track in the row, otherwise 0. */
 const lovedBy = (viewerId: number | undefined) => flag(exists(db.select({ one: sql`1` }).from(lovedTracks)
   .where(and(eq(lovedTracks.userId, viewerId || 0), eq(lovedTracks.trackId, tracks.id)))));
@@ -260,7 +261,7 @@ async function recentRows(s: Scope, limit = 50, offset = 0): Promise<TopList<Rec
   const w = within(s);
   const items = await db.select({
     id: scrobbles.id, playedAt: scrobbles.playedAt, trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name,
-    album: albums.title, image: albums.imageId, user: users.username, userImage: users.imageId, loved: lovedBy(s.viewerId),
+    album: albums.title, image: playImage(), user: users.username, userImage: users.imageId, loved: lovedBy(s.viewerId),
   }).from(scrobbles).innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).innerJoin(artists, eq(artists.id, scrobbles.artistId))
     .leftJoin(albums, eq(albums.id, sql`COALESCE(${scrobbles.albumId}, ${tracks.albumId})`)).innerJoin(users, eq(users.id, scrobbles.userId))
     .where(w).orderBy(desc(scrobbles.playedAt), desc(scrobbles.id)).limit(limit).offset(offset);
@@ -275,7 +276,7 @@ async function recentRows(s: Scope, limit = 50, offset = 0): Promise<TopList<Rec
 /** What someone is listening to right now, or null. */
 export function nowPlaying(userId: number, viewerId = 0): Promise<NowPlaying | null> {
   return first(db.select({
-    trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId,
+    trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: playImage(),
     startedAt: playing.startedAt, loved: lovedBy(viewerId),
   }).from(playing).innerJoin(tracks, eq(tracks.id, playing.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId))
     .leftJoin(albums, eq(albums.id, sql`COALESCE(${playing.albumId}, ${tracks.albumId})`))

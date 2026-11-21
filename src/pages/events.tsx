@@ -17,14 +17,15 @@ export function EventsPage() {
   const [sp] = useSearchParams(), { me } = useAuth();
   const [when, setWhen] = useParam("when", "upcoming"), [mine, setMine] = useParam("mine"), [term, setTerm] = useParam("q");
   const [text, setText] = useState(term);
-  const q = useApi<Events>(`/events${qs({ when: when === "past" ? "past" : undefined, mine, q: term, page: sp.get("page") })}`);
+  const q = useApi<Events>(`/events${qs({ when: when === "upcoming" ? undefined : when, mine, q: term, page: sp.get("page") })}`);
   useTitle("Events");
   return (
     <div className="wrap page">
       <div className="toolbar"><h1 className="page-title">Events</h1><Button kind="btn" href="/events/add"><Ico.Plus /> Add event</Button></div>
       <div className="toolbar">
         <nav className="tabs sub">
-          <Button kind={when !== "past" ? "active" : ""} onClick={() => setWhen("upcoming")}>Upcoming</Button>
+          <Button kind={when !== "past" && when !== "near" ? "active" : ""} onClick={() => setWhen("upcoming")}>Upcoming</Button>
+          <Button kind={when === "near" ? "active" : ""} onClick={() => setWhen("near")}>Near you</Button>
           <Button kind={when === "past" ? "active" : ""} onClick={() => setWhen("past")}>Past</Button>
         </nav>
         <form className="inline-form" onSubmit={e => { e.preventDefault(); setTerm(text.trim()); }}>
@@ -33,7 +34,10 @@ export function EventsPage() {
           {me && <label className="check"><Input type="checkbox" checked={!!mine} onChange={e => setMine(e.target.checked ? "1" : "")} /> Artists I listen to</label>}
         </form>
       </div>
-      <Async q={q}>{d => <><EventList items={d.items} /><Pager total={d.total} limit={d.limit} /></>}</Async>
+      <Async q={q}>{d => <>
+        {when === "near" && <p className="muted small">{d.near ? <>Roughly {d.near.city ? `${d.near.city}, ${d.near.country}` : d.near.country}, going by your connection{d.near.wide && ". Nothing close by yet, so these are a bit further out"}.</> : "We couldn't tell where you are from your connection."}</p>}
+        <EventList items={d.items} /><Pager total={d.total} limit={d.limit} />
+      </>}</Async>
     </div>
   );
 }
@@ -57,13 +61,14 @@ export function EventPage() {
             <div className="main">
               <Section title="Line-up"><Grid kind="artist" cols={4} items={e.artists} /></Section>
               {e.description && <Section title="Details"><Markdown text={e.description} /></Section>}
-              {e.url && <p><a href={e.url} target="_blank" rel="nofollow noopener noreferrer">Tickets and information <Ico.External /></a></p>}
+              {e.url && <p><a href={e.url} target="_blank" rel="nofollow noopener noreferrer">{e.source === "musicbrainz" ? "More on MusicBrainz" : "Tickets and information"} <Ico.External /></a></p>}
               <Section title="Wall"><Shoutbox type="event" id={e.id} /></Section>
             </div>
             <aside className="side">
               <Section title={`Going (${e.going})`}>{e.attendees.going.length ? <UserList items={e.attendees.going} /> : <p className="muted">Nobody yet.</p>}</Section>
               <Section title={`Interested (${e.interested})`}>{e.attendees.interested.length ? <UserList items={e.attendees.interested} /> : <p className="muted">Nobody yet.</p>}</Section>
-              <p className="muted small">Added by {e.creator ? <Link to={userUrl(e.creator)}>{e.creator}</Link> : "a deleted user"}</p>
+              <p className="muted small">{e.source === "musicbrainz" ? "Listed on MusicBrainz" : e.source === "ticketmaster" ? "Listed on Ticketmaster"
+                : <>Added by {e.creator ? <Link to={userUrl(e.creator)}>{e.creator}</Link> : "a deleted user"}</>}</p>
             </aside>
           </div>
         </div>

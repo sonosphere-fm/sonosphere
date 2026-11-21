@@ -272,7 +272,17 @@ export const events = pgTable("events", {
 	url: text().default("").notNull(),
 	creatorId: integer("creator_id").references(() => users.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
-});
+	// where it came from: "user" (added here), "musicbrainz" or "ticketmaster" (server/events/sync.ts), and its id there
+	source: text().default("user").notNull(),
+	sourceId: text("source_id"),
+	// the venue's coordinates, when known, for events near someone
+	lat: real(),
+	lon: real(),
+},
+(table) => [
+	uniqueIndex("events_source").on(table.source, table.sourceId),
+	index("events_starts").on(table.startsAt),
+]);
 
 export const eventArtists = pgTable("event_artists", {
 	eventId: integer("event_id").notNull().references(() => events.id, { onDelete: "cascade" } ),

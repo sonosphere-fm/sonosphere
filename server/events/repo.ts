@@ -21,6 +21,10 @@ export type Filter = {
   attendee?: number;
   /** Events with one of this user's 50 most played artists on the bill. */
   fanOf?: number;
+  /** Events at a venue within `km` of a point. */
+  near?: { lat: number; lon: number; km: number };
+  /** Events in this country (its English name, as stored). */
+  country?: string;
 };
 
 function matching(f: Filter): SQL | undefined {
@@ -38,6 +42,14 @@ function matching(f: Filter): SQL | undefined {
     const favourites = db.select({ id: userArtists.artistId }).from(userArtists).where(eq(userArtists.userId, f.fanOf)).orderBy(desc(userArtists.plays)).limit(50);
     c.push(inArray(events.id, db.select({ id: eventArtists.eventId }).from(eventArtists).where(inArray(eventArtists.artistId, favourites))));
   }
+  if (f.near) {
+    const { lat, lon, km } = f.near, dLat = km / 111, dLon = km / (111 * Math.max(0.1, Math.cos(lat * Math.PI / 180)));
+    // a box first (cheap), then the great-circle distance
+    c.push(sql`${events.lat} BETWEEN ${lat - dLat} AND ${lat + dLat} AND ${events.lon} BETWEEN ${lon - dLon} AND ${lon + dLon}`);
+    c.push(sql`6371 * 2 * asin(sqrt(power(sin(radians(${events.lat} - ${lat}) / 2), 2)
+      + cos(radians(${lat})) * cos(radians(${events.lat})) * power(sin(radians(${events.lon} - ${lon}) / 2), 2))) <= ${km}`);
+  }
+  if (f.country) c.push(sql`lower(${events.country}) = ${f.country.toLowerCase()}`);
   return and(...c);
 }
 
@@ -53,7 +65,7 @@ export async function listEvents(f: Filter, viewerId: number | undefined, order:
   const mine = db.select({ status: eventAttendance.status }).from(eventAttendance).where(and(eq(eventAttendance.eventId, events.id), eq(eventAttendance.userId, viewerId || 0)));
   const rows = await db.select({
     id: events.id, title: events.title, venue: events.venue, city: events.city, country: events.country, startsAt: events.startsAt,
-    description: events.description, url: events.url, creator: users.username,
+    description: events.description, url: events.url, creator: users.username, source: events.source,
     going: sql<number>`${headCount("going")}`, interested: sql<number>`${headCount("interested")}`,
     // the status column only ever holds the two values of Attendance (see setAttendance)
     status: sql<Attendance | null>`${mine}`,

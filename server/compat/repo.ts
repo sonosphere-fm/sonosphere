@@ -1,6 +1,7 @@
 // Data access for the scrobbler-compatible API: the applications, tokens and sessions it signs requests with, and
 // the listings whose order and paging its clients expect.
 import { and, count, countDistinct, desc, eq, like, lt, sql } from "drizzle-orm";
+import { trackImage } from "../catalog/art";
 import { db } from "../db/client";
 import { albumTracks, albums, apiApps, apiSessions, apiTokens, artists, follows, lovedTracks, taggings, tags, tracks, userArtists, userTracks, users } from "../db/schema";
 import { first, now } from "../util";
@@ -34,7 +35,7 @@ export async function deleteToken(token: string): Promise<void> {
 export type LovedRow = { title: string; duration: number; artist: string; image: string | null; at: number };
 /** The tracks someone loves, the latest first. */
 export const lovedPage = (userId: number, limit: number, offset: number): Promise<LovedRow[]> =>
-  db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: albums.imageId, at: lovedTracks.createdAt }).from(lovedTracks)
+  db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: trackImage(), at: lovedTracks.createdAt }).from(lovedTracks)
     .innerJoin(tracks, eq(tracks.id, lovedTracks.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(eq(lovedTracks.userId, userId)).orderBy(desc(lovedTracks.createdAt)).limit(limit).offset(offset);
 
@@ -69,7 +70,7 @@ export type TrackHit = { title: string; duration: number; artist: string; image:
 /** Tracks whose title matches, most listeners first. `artistNorm` narrows it to one artist (normalised name). */
 export function searchTracks(pattern: string, artistNorm: string | null, limit: number, offset: number): Promise<TrackHit[]> {
   const listeners = sql<number>`((SELECT COUNT(*) FROM ${userTracks} WHERE ${userTracks.trackId} = ${tracks.id}) + ${tracks.baseListeners})`.as("listeners");
-  return db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: albums.imageId, listeners }).from(tracks)
+  return db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: trackImage(), listeners }).from(tracks)
     .innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(and(like(tracks.titleNorm, pattern), artistNorm === null ? undefined : eq(artists.nameNorm, artistNorm))).orderBy(desc(listeners)).limit(limit).offset(offset);
 }

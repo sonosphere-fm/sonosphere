@@ -1,5 +1,6 @@
 // Data access for search: names containing what was typed, exact matches first where there can be one, then the most listened to.
 import { and, count, desc, eq, exists, or, sql } from "drizzle-orm";
+import { trackImage } from "../catalog/art";
 import { db } from "../db/client";
 import { flag, matches } from "../db/dialect";
 import { albums, artists, lovedTracks, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
@@ -30,7 +31,7 @@ export function searchTracks({ term, limit, offset }: Query, viewerId: number): 
   const plays = db.select({ c: sql<number>`COALESCE(SUM(${userTracks.plays}), 0)` }).from(userTracks).where(eq(userTracks.trackId, tracks.id));
   const listeners = sql<number>`((${heard}) + ${tracks.baseListeners})`.as("listeners");
   return db.select({
-    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId,
+    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: trackImage(),
     listeners, playcount: sql<number>`((${plays}) + ${tracks.basePlaycount})`.as("playcount"),
     loved: flag(exists(db.select({ one: sql`1` }).from(lovedTracks).where(and(eq(lovedTracks.userId, viewerId), eq(lovedTracks.trackId, tracks.id))))),
   }).from(tracks).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))

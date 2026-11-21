@@ -2,6 +2,7 @@
 // Scores are cosine similarity over log-scaled play counts. Every query here is bounded: it reads a capped sample
 // of listeners or artists, never the whole listening history, so the cost per artist or user stays flat as the site grows.
 import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { trackImage } from "../catalog/art";
 import { db, transact } from "../db/client";
 export { databaseUrl } from "../db/client";
 import { albums, artists, lovedTracks, meta, scrobbles, similarArtists, taggings, tasteFactors, tasteNorms, tasteQueue, tracks, userArtists, userNeighbours, userTracks, users } from "../db/schema";
@@ -255,7 +256,7 @@ export async function unplayedTopTracks(artistIds: number[], userId: number, per
 export async function trackCards(ids: number[], viewerId: number): Promise<TopTrack[]> {
   if (!ids.length) return [];
   return db.select({
-    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId,
+    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: trackImage(),
     playcount: sql<number>`${tracks.basePlaycount} + COALESCE((SELECT SUM(plays) FROM ${userTracks} WHERE track_id = ${tracks.id}), 0)`,
     listeners: sql<number>`${tracks.baseListeners} + (SELECT COUNT(*) FROM ${userTracks} WHERE track_id = ${tracks.id})`,
     loved: flag(sql`EXISTS (SELECT 1 FROM ${lovedTracks} WHERE user_id = ${viewerId} AND track_id = ${tracks.id})`),

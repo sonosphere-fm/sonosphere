@@ -1,5 +1,6 @@
 // Data access for accounts, and the public shape of one.
 import { and, count, desc, eq, exists, inArray, min, or, sql } from "drizzle-orm";
+import { trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { flag } from "../db/dialect";
@@ -92,7 +93,7 @@ export const lovedCount = (userId: number): Promise<number> => total(db.select({
 export function lovedTracksOf(userId: number, viewerId: number | undefined, limit: number, offset: number): Promise<LovedTrack[]> {
   const l = alias(lovedTracks, "l");
   return db.select({
-    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId,
+    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: trackImage(),
     lovedAt: l.createdAt, loved: lovedBy(viewerId),
   }).from(l).innerJoin(tracks, eq(tracks.id, l.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(eq(l.userId, userId)).orderBy(desc(l.createdAt)).limit(limit).offset(offset);

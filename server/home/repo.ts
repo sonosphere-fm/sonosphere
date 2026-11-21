@@ -1,6 +1,7 @@
 // Data access for the site charts and the home page: tag rankings, upcoming events, site totals and what the
 // people you follow have been up to. Rankings of artists, albums and tracks come from server/listening/repo.ts.
 import { and, asc, count, countDistinct, desc, eq, exists, gte, sql } from "drizzle-orm";
+import { trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { flag } from "../db/dialect";
@@ -35,7 +36,7 @@ const answerOf = (viewerId: number) => sql<EventSummary["status"]>`(${db.select(
 export async function upcomingEvents(from: number, viewerId: number | undefined, limit: number): Promise<EventSummary[]> {
   const rows = await db.select({
     id: events.id, title: events.title, venue: events.venue, city: events.city, country: events.country, startsAt: events.startsAt,
-    description: events.description, url: events.url, creator: users.username,
+    description: events.description, url: events.url, creator: users.username, source: events.source,
     going: headCount("going"), interested: headCount("interested"), status: answerOf(viewerId || 0),
   }).from(events).leftJoin(users, eq(users.id, events.creatorId)).where(gte(events.startsAt, from)).orderBy(asc(events.startsAt)).limit(limit);
   const out: EventSummary[] = [];
@@ -64,7 +65,7 @@ export const openFollowees = (userId: number): Promise<PublicUser[]> =>
 export function friendLoves(userId: number, limit: number): Promise<FriendLove[]> {
   const own = alias(lovedTracks, "v");
   return db.select({
-    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId,
+    id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: trackImage(),
     lovedAt: lovedTracks.createdAt, user: users.username, userImage: users.imageId,
     loved: flag(exists(db.select({ one: sql`1` }).from(own).where(and(eq(own.userId, userId), eq(own.trackId, tracks.id))))),
   }).from(lovedTracks).innerJoin(follows, and(eq(follows.followeeId, lovedTracks.userId), eq(follows.followerId, userId)))

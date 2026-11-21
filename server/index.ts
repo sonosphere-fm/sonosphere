@@ -17,6 +17,7 @@ import { dropExpiredNowPlaying, ensureTallies } from "./listening/repo";
 import { upgrade, websocket, type SocketData } from "./realtime";
 import { startTasteWorker } from "./recommend/worker";
 import { startSpotify } from "./spotify/service";
+import { startEventSync } from "./events/sync";
 import { startMetadata } from "./metadata/service";
 import { syncAdmins } from "./site/roles";
 
@@ -38,6 +39,7 @@ startDm();
 startTasteWorker();
 startSpotify();
 startMetadata();
+startEventSync();
 
 // The browser app: built files in production, Bun's bundler (with hot reload) in development.
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };

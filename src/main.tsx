@@ -121,7 +121,7 @@ function Footer() {
         <div className="wrap">
           <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
           <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
-          <span className="footer-legal"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/guidelines">Guidelines</Link></span>
+          <span className="footer-legal"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/guidelines">Guidelines</Link><a href="mailto:support@sonosp.here">Contact</a></span>
         </div>
       </div>
     </footer>
