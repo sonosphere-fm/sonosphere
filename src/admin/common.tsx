@@ -137,13 +137,14 @@ export const FLAG: Record<string, string> = {
   volume: "Volume",
   "new-conversations": "New conversations",
 };
-export function StatusBadges({ u }: { u: { role: Role; banned: boolean; suspended: boolean; unconfirmed?: boolean } }) {
+export function StatusBadges({ u }: { u: { role: Role; banned: boolean; suspended: boolean; unconfirmed?: boolean; probation?: boolean } }) {
   return (
     <>
       {u.role !== "user" && <span className={`adm-badge role-${u.role}`}>{ROLE[u.role]}</span>}
       {u.banned && <span className="adm-badge bad">Banned</span>}
       {u.suspended && !u.banned && <span className="adm-badge warn">Suspended</span>}
       {u.unconfirmed && !u.banned && <span className="adm-badge">Unconfirmed</span>}
+      {u.probation && !u.banned && <span className="adm-badge">Probation</span>}
     </>
   );
 }

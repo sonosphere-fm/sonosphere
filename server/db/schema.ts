@@ -419,6 +419,16 @@ export const videoCache = pgTable("video_cache", {
 	fetchedAt: integer("fetched_at").notNull(),
 });
 
+// Accounts start on probation and leave it once they have earned enough trust. Without a cleared row an account is on probation.
+export const userTrust = pgTable("user_trust", {
+	userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" } ),
+	score: integer().default(0).notNull(),
+	checkedAt: integer("checked_at"),
+	clearedAt: integer("cleared_at"),
+	clearedBy: integer("cleared_by").references((): AnyPgColumn => users.id, { onDelete: "set null" } ),
+	held: boolean().default(false).notNull(),
+});
+
 export const blocks = pgTable("blocks", {
 	blockerId: integer("blocker_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	blockedId: integer("blocked_id").notNull().references(() => users.id, { onDelete: "cascade" } ),

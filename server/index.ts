@@ -5,6 +5,7 @@ import { handleCompat } from "./compat/routes";
 import { dropStaleTokens } from "./compat/repo";
 import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
 import { sendDigests } from "./notifications/email";
+import { reviewProbation } from "./trust/service";
 import { deliver } from "./mail";
 import { syncCorrections } from "./corrections/service";
 import { exclusive, releaseAll } from "./kv";
@@ -69,6 +70,7 @@ const tidy = () => {
     dropExpiredEmailTokens(),
     purgeUnverified(),
     sendDigests(),
+    reviewProbation(),
   ]);
   exclusive("tidy", 5 * 60_000, jobs).catch(e => console.error(e));
 };

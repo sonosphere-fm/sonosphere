@@ -1,9 +1,10 @@
 import { requireItem } from "../catalog/service";
 import { confirmed, poster } from "../guards";
-import { Router, throttle } from "../http";
+import { Router } from "../http";
 import type { WikiHistory, WikiSaved } from "../../shared/wiki";
 import * as repo from "./repo";
 import { edit } from "./service";
+import { limit } from "../trust/service";
 
 const WITH_WIKI = ["artist", "album", "track", "tag"] as const;
 
@@ -18,7 +19,7 @@ router.get<WikiHistory>("/api/wiki", async c => {
 
 router.post<WikiSaved>("/api/wiki", async c => {
   const u = confirmed(poster(c));
-  await throttle(`wiki:${u.id}`, 30, 3600, "That is a lot of wiki edits. Take a break and come back in a while.");
+  await limit(u, `wiki:${u.id}`, 30, 3600, "That is a lot of wiki edits. Take a break and come back in a while.");
   const it = await requireItem(c.body.type, c.body.id, WITH_WIKI);
   return { wiki: await edit(u, it.type, it.row.id, c.body.content) };
 });

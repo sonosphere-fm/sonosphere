@@ -13,6 +13,7 @@ import { snapshotOf } from "../moderation/repo";
 import { auditRows } from "../site/repo";
 import { auditTx } from "../site/audit";
 import { handOffGroupsTx } from "../dm/groups.repo";
+import { probationSql } from "../trust/repo";
 import type { AuditRow, ModNote, ReportBrief, StaffUserPage } from "../../shared/admin";
 
 const DAY = 86400;
@@ -24,7 +25,7 @@ const against = (userId: SQL | typeof users.id, username: SQL | typeof users.use
 const lastLogin = sql<number | null>`(SELECT MAX(${sessions.createdAt}) FROM ${sessions} WHERE ${sessions.userId} = ${users.id})`;
 const openReports = sql<number>`(SELECT COUNT(*) FROM ${reports} WHERE ${reports.status} = 'open' AND ${against(users.id, users.username)})`;
 
-type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported" | "unconfirmed";
+type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported" | "unconfirmed" | "probation";
 type UserSort = "username" | "registered" | "scrobbles" | "reports" | "login";
 const notBanned = eq(users.banned, false);
 const FILTERS: Record<UserFilter, SQL | undefined> = {
@@ -36,6 +37,7 @@ const FILTERS: Record<UserFilter, SQL | undefined> = {
   banned: eq(users.banned, true),
   reported: gt(openReports, 0),
   unconfirmed: and(isNull(users.emailVerifiedAt), notLike(users.email, "%.invalid")),
+  probation: and(probationSql, notBanned),
 };
 type UserQuery = {
   filter: UserFilter;
@@ -46,7 +48,7 @@ type UserQuery = {
   limit: number;
   offset: number;
 };
-type UserListRow = User & { scrobbles: number; openReports: number; lastLogin: number | null };
+type UserListRow = User & { scrobbles: number; openReports: number; lastLogin: number | null; probation: boolean };
 
 export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; total: number }> {
   const plays = db.select({ userId: scrobbles.userId, c: count().as("c") }).from(scrobbles).groupBy(scrobbles.userId).as("s");
@@ -58,7 +60,7 @@ export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; to
   const where = and(FILTERS[q.filter], search);
   const sortKeys = { username: users.usernameNorm, registered: users.registeredAt, scrobbles: played, reports: openReports, login: lastLogin };
   const key = sortKeys[q.sort];
-  const rows = await db.select({ user: users, scrobbles: played, openReports, lastLogin })
+  const rows = await db.select({ user: users, scrobbles: played, openReports, lastLogin, probation: probationSql })
     .from(users)
     .leftJoin(plays, eq(plays.userId, users.id))
     .where(where)
@@ -66,7 +68,7 @@ export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; to
     .limit(q.limit)
     .offset(q.offset);
   return {
-    rows: rows.map(r => ({ ...r.user, scrobbles: r.scrobbles, openReports: r.openReports, lastLogin: r.lastLogin })),
+    rows: rows.map(r => ({ ...r.user, scrobbles: r.scrobbles, openReports: r.openReports, lastLogin: r.lastLogin, probation: r.probation })),
     total: await db.$count(users, where),
   };
 }
