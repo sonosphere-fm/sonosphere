@@ -19,14 +19,17 @@ export async function me(u: User): Promise<Me> {
     unread: await repo.unreadCount(u.id),
     dm: await dmCounts(u.id), dmPolicy: u.dmPolicy || "requests",
     emailNotify: u.emailNotify, emailMuted: u.emailMuted.split(",").filter(Boolean), theme: u.theme === "dark" || u.theme === "system" ? u.theme : "light",
-    emailVerified: !!u.emailVerifiedAt, pendingEmail: await pendingEmail(u.id),
+    emailVerified: !!u.emailVerifiedAt, pendingEmail: await pendingEmail(u.id), hasPassword: !!u.passwordHash,
   };
 }
 
 // ---------- passwords ----------
 export const MIN_PASSWORD = 8;
 export const hashPassword = (password: string): Promise<string> => Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
-export const passwordMatches = (u: User, password: string): Promise<boolean> => Bun.password.verify(password, u.passwordHash);
+export const passwordMatches = async (u: User, password: string): Promise<boolean> => !!u.passwordHash && !!password && Bun.password.verify(password, u.passwordHash);
+/** For dangerous actions: the password, or for an account without one (signed up through another site) its username typed out. */
+export const confirmedBy = (u: User, input: string): Promise<boolean> =>
+  u.passwordHash ? passwordMatches(u, input) : Promise.resolve(norm(input) === u.usernameNorm);
 export const validEmail = (email: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 
 // ---------- sessions ----------
@@ -43,17 +46,28 @@ export async function endSession(headers: Headers, token = ""): Promise<void> {
 }
 
 // ---------- sign-up and log-in ----------
-/** Creates an account after checking everything about it, and returns the stored row. */
-export async function signUp(username: string, email: string, password: string): Promise<User> {
+export const USERNAME = /^[a-zA-Z][a-zA-Z0-9_-]{1,14}$/;
+/** Everything a new account has to pass, however it signs up. */
+export async function checkNewAccount(username: string, email: string): Promise<void> {
   if (!(await setting("registrationsOpen")) && !(await configAdmins()).includes(norm(username))) fail(403, "Registrations are closed at the moment");
-  if (!/^[a-zA-Z][a-zA-Z0-9_-]{1,14}$/.test(username)) bad("Usernames are 2–15 characters: letters, numbers, - and _, starting with a letter");
+  if (!USERNAME.test(username)) bad("Usernames are 2–15 characters: letters, numbers, - and _, starting with a letter");
   if (!validEmail(email)) bad("Enter a valid email address");
-  if (password.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
   if (await repo.usernameTaken(username)) bad("That username is taken");
   if (await repo.emailTaken(email)) bad("An account with that email already exists");
-  const id = await repo.createUser(username, email, await hashPassword(password));
+}
+/** Stores a checked account and returns its row. An empty `passwordHash` makes an account that signs in only through
+ *  another site (server/auth/oauth) until a password is set. */
+export async function createAccount(username: string, email: string, passwordHash: string, emailVerified = false): Promise<User> {
+  const id = await repo.createUser(username, email, passwordHash, emailVerified);
   await syncAdmins(); // an account named in ADMIN_USERS becomes staff the moment it exists
   return (await findById(id)) ?? fail(500, "Something went wrong");
+}
+
+/** Creates an account after checking everything about it, and returns the stored row. */
+export async function signUp(username: string, email: string, password: string): Promise<User> {
+  if (password.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
+  await checkNewAccount(username, email);
+  return createAccount(username, email, await hashPassword(password));
 }
 
 /** The account these credentials belong to. `ident` is a username or an email address. */

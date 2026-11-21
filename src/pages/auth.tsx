@@ -3,7 +3,8 @@ import { Button, Input } from "../kit";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { api, qs, useApi, useAuth, useTitle } from "../lib";
 import { useAction } from "../ui/base";
-import type { AuthConfig, Ok, Session } from "../../shared/auth";
+import type { AuthConfig, OAuthCreated, OAuthPending, Ok, Session } from "../../shared/auth";
+import { OAUTH_ERRORS, OAuthButtons } from "../ui/oauth";
 
 const safeNext = (n: string | null) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/");
 
@@ -58,6 +59,7 @@ export function useTurnstile(action: string) {
 export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const { me, setMe } = useAuth(), nav = useNavigate(), [sp] = useSearchParams(), next = safeNext(sp.get("next"));
   const [f, setF] = useState({ username: "", email: "", password: "" }), act = useAction(), robot = useTurnstile(mode === "login" ? "login" : "signup");
+  const config = useApi<AuthConfig>("/auth/config").data, oauthError = OAUTH_ERRORS[sp.get("oauth") ?? ""];
   useTitle(mode === "login" ? "Log in" : "Join");
   if (me) return <Navigate to={next} replace />;
   const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
@@ -75,6 +77,8 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
     <div className="wrap page narrow">
       <h1 className="page-title">{mode === "login" ? "Log in" : "Join Sonosphere"}</h1>
       <form className="form card" onSubmit={submit}>
+        {oauthError && <p className="form-error" role="alert">{oauthError}</p>}
+        <OAuthButtons providers={config?.oauth ?? []} next={next} />
         <label>{mode === "login" ? "Username or email" : "Username"}<Input value={f.username} onChange={set("username")} autoComplete="username" required autoFocus maxLength={mode === "login" ? 200 : 15} /></label>
         {mode === "join" && <label>Email<Input type="email" value={f.email} onChange={set("email")} autoComplete="email" required /></label>}
         <label>Password<Input type="password" value={f.password} onChange={set("password")} autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={mode === "join" ? 8 : undefined} /></label>
@@ -86,6 +90,32 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
       {mode === "login"
         ? <><p><Link to="/forgot">Forgot your password?</Link></p><p>New here? <Link to={`/join${qs({ next: sp.get("next") })}`}>Create an account</Link>.</p></>
         : <p>Already have an account? <Link to={`/login${qs({ next: sp.get("next") })}`}>Log in</Link>.</p>}
+    </div>
+  );
+}
+
+// ---------- a new account from another site ----------
+/** After signing in with another site for the first time: pick a username, and the account is made. */
+export function OAuthJoinPage() {
+  const { me, setMe } = useAuth(), nav = useNavigate(), q = useApi<OAuthPending>("/auth/oauth/pending");
+  const [name, setName] = useState<string | null>(null), act = useAction();
+  useTitle("Join Sonosphere");
+  if (me) return <Navigate to="/" replace />;
+  const username = name ?? q.data?.username ?? "";
+  const submit = (e: FormEvent) => { e.preventDefault(); act.run(async () => { const r = await api<OAuthCreated>("/auth/oauth/complete", { body: { username } }); setMe(r.user); nav(r.next); }); };
+  return (
+    <div className="wrap page narrow">
+      <h1 className="page-title">Join Sonosphere</h1>
+      {q.error ? <div className="card form"><p className="form-error" role="alert">{q.error.message}</p><p><Link to="/join">Back to the join page</Link></p></div>
+        : !q.data ? null
+        : <form className="form card" onSubmit={submit}>
+          <p>You're signing up with {q.data.provider} as <strong>{q.data.email}</strong>. Pick a username to finish.</p>
+          <label>Username<Input value={username} onChange={e => setName(e.target.value)} autoComplete="username" required autoFocus maxLength={15} /></label>
+          <p className="muted small">2 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in Settings, which some scrobbler apps need.</p>
+          <p className="muted small">By creating an account you agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>, and confirm you are at least 13.</p>
+          {act.note}
+          <Button kind="btn" loading={act.busy}>Create account</Button>
+        </form>}
     </div>
   );
 }

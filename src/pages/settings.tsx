@@ -6,6 +6,8 @@ import { ago, api, copyText, date, num, plural, useApi, useAuth, useTitle, type 
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { ApiApp, AppOk, Apps } from "../../shared/apps";
 import { useTurnstile } from "./auth";
+import { OAUTH_ERRORS, oauthStart } from "../ui/oauth";
+import type { Logins } from "../../shared/auth";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
@@ -135,8 +137,31 @@ function BlockedUsers() {
     </Section>
   );
 }
+/** Other sites that can sign in to this account. The round trip reports back in ?oauth= (a problem) or ?linked=. */
+function SignInMethods() {
+  const { me } = useAuth(), q = useApi<Logins>("/me/logins"), act = useAction(), [sp, setSp] = useSearchParams();
+  const error = OAUTH_ERRORS[sp.get("oauth") ?? ""], linked = sp.get("linked");
+  if (!q.data?.providers.length) return null;
+  const connectedCount = q.data.providers.filter(p => p.connected).length, lastWayIn = !me!.hasPassword && connectedCount === 1;
+  const disconnect = (id: string) => act.run(async () => { await api<Ok>("/me/logins/unlink", { body: { provider: id } }); setSp({}, { replace: true }); q.reload(); });
+  return (
+    <Section title="Sign-in methods">
+      {error && <p className="form-error" role="alert">{error}</p>}
+      {linked && !error && <p className="form-ok">Connected. You can now log in with it.</p>}
+      <ul className="plain">{q.data.providers.map(p => (
+        <li key={p.id} className="row between">
+          <span><b>{p.label}</b> <span className="muted small">{p.connected ? <>{p.connected.name || "connected"}, since {date(p.connected.since)}</> : "not connected"}</span></span>
+          {p.connected
+            ? <Button kind="btn ghost small" disabled={lastWayIn} title={lastWayIn ? "Set a password first" : undefined} onClick={() => disconnect(p.id)}>Disconnect</Button>
+            : <Button kind="btn ghost small" href={oauthStart(p.id, "link")}>Connect</Button>}
+        </li>
+      ))}</ul>
+      {act.note}
+    </Section>
+  );
+}
 function AccountSettings() {
-  const { me, setMe } = useAuth(), nav = useNavigate();
+  const { me, setMe, refresh } = useAuth(), nav = useNavigate();
   const [email, setEmail] = useState(me!.email), [pw, setPw] = useState({ current: "", next: "" }), [del, setDel] = useState("");
   const a0 = useAction(), a1 = useAction(), a2 = useAction(), a3 = useAction(), c = useConfirm();
   return (
@@ -157,16 +182,23 @@ function AccountSettings() {
         </form>
       </Section>
       <Section title="Password">
-        <form className="form" onSubmit={e => { e.preventDefault(); a2.run(async () => { await api<Ok>("/me/password", { body: pw }); setPw({ current: "", next: "" }); return "Password changed. Other devices were signed out."; }); }}>
-          <label>Current password<Input type="password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} required autoComplete="current-password" /></label>
+        <form className="form" onSubmit={e => { e.preventDefault(); a2.run(async () => {
+          const had = me!.hasPassword;
+          await api<Ok>("/me/password", { body: pw }); setPw({ current: "", next: "" });
+          if (!had) { await refresh(); return "Password set. You can now log in with it, and in scrobbler apps that ask for one."; }
+          return "Password changed. Other devices were signed out.";
+        }); }}>
+          {!me!.hasPassword && <p className="muted small">You signed up through another site, so your account has no password yet. Set one to log in without it, or to use scrobbler apps that ask for a username and password.</p>}
+          {me!.hasPassword && <label>Current password<Input type="password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} required autoComplete="current-password" /></label>}
           <label>New password<Input type="password" value={pw.next} onChange={e => setPw({ ...pw, next: e.target.value })} required minLength={8} autoComplete="new-password" /></label>
-          {a2.note}<Button kind="btn" loading={a2.busy}>Change password</Button>
+          {a2.note}<Button kind="btn" loading={a2.busy}>{me!.hasPassword ? "Change password" : "Set password"}</Button>
         </form>
       </Section>
+      <SignInMethods />
       <Section title="Delete account">
         <form className="form" onSubmit={e => { e.preventDefault(); c.ask({ title: "Delete your account?", body: "Your profile, scrobbles, loved tracks, playlists and shouts will be gone for good. This can't be undone.", action: "Delete my account", danger: true, run: () => a3.run(async () => { await api<Ok>("/me/delete", { body: { password: del } }); setMe(null); nav("/"); }) }); }}>
           <p>This permanently removes your profile, scrobbles, loved tracks, playlists and shouts.</p>
-          <label>Confirm with your password<Input type="password" value={del} onChange={e => setDel(e.target.value)} required autoComplete="current-password" /></label>
+          <ConfirmField value={del} onChange={setDel} />
           {a3.note}<Button kind="btn danger" loading={a3.busy}>Delete my account</Button>
         </form>
       </Section>
@@ -320,6 +352,13 @@ function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
     </form>
   );
 }
+/** The confirm field for dangerous actions: the password, or the username for an account that has none. */
+function ConfirmField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { me } = useAuth();
+  return me!.hasPassword
+    ? <label>Confirm with your password<Input type="password" value={value} onChange={e => onChange(e.target.value)} required autoComplete="current-password" /></label>
+    : <label>Type your username ({me!.username}) to confirm<Input value={value} onChange={e => onChange(e.target.value)} required autoComplete="off" /></label>;
+}
 function DataSettings() {
   const [pw, setPw] = useState(""), act = useAction(), c = useConfirm();
   return (
@@ -337,7 +376,7 @@ function DataSettings() {
       <Section title="Clear listening history">
         <form className="form" onSubmit={e => { e.preventDefault(); c.ask({ title: "Delete all of your scrobbles?", body: "Your whole listening history will be removed. This can't be undone.", action: "Delete all scrobbles", danger: true, run: () => act.run(async () => { const r = await api<ScrobblesCleared>("/me/clear-scrobbles", { body: { password: pw } }); setPw(""); return `Deleted ${plural(r.deleted, "scrobble")}.`; }) }); }}>
           <p>Removes every scrobble from your library. Loved tracks, tags and playlists are kept.</p>
-          <label>Confirm with your password<Input type="password" value={pw} onChange={e => setPw(e.target.value)} required autoComplete="current-password" /></label>
+          <ConfirmField value={pw} onChange={setPw} />
           {act.note}<Button kind="btn danger" loading={act.busy}>Delete all scrobbles</Button>
         </form>
       </Section>

@@ -111,6 +111,16 @@ export async function setJson(key: string, value: unknown, ttlMs: number): Promi
   try { await client.send("SET", [PREFIX + key, raw, "PX", String(Math.ceil(ttlMs))]); } catch (e) { warn(e); }
 }
 
+/** Reads a value and deletes it in one step, so only one caller ever gets it (one-time codes). */
+export async function takeJson<T>(key: string): Promise<T | null> {
+  if (!client) { const raw = memGet(key); memory.delete(key); return raw === null ? null : (JSON.parse(raw) as T); }
+  if (ready) await ready;
+  try {
+    const raw = (await client.send("GETDEL", [PREFIX + key])) as string | null;
+    return raw === null ? null : (JSON.parse(raw) as T);
+  } catch (e) { warn(e); return null; }
+}
+
 // ---------- sets (a work queue in no particular order) ----------
 const memSets = new Map<string, Set<string>>();
 /** Adds members to a set that holds at most `cap` (members over it are dropped). */

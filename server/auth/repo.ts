@@ -27,8 +27,8 @@ export const emailTaken = async (email: string, exceptId = 0): Promise<boolean> 
   !!(await first(db.select({ one: sql`1` }).from(users).where(and(eq(users.email, email), ne(users.id, exceptId))).limit(1)));
 
 /** Adds an account and returns its id. */
-export async function createUser(username: string, email: string, passwordHash: string): Promise<number> {
-  const [row] = await db.insert(users).values({ username, usernameNorm: norm(username), email, passwordHash, registeredAt: now() }).returning({ id: users.id });
+export async function createUser(username: string, email: string, passwordHash: string, emailVerified = false): Promise<number> {
+  const [row] = await db.insert(users).values({ username, usernameNorm: norm(username), email, passwordHash, registeredAt: now(), emailVerifiedAt: emailVerified ? now() : null }).returning({ id: users.id });
   if (!row) throw new Error("The new account was not stored");
   return row.id;
 }

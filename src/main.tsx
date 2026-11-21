@@ -33,6 +33,7 @@ const EventPage = lazy(() => import("./pages/events").then(m => ({ default: m.Ev
 const EventAdd = lazy(() => import("./pages/events").then(m => ({ default: m.EventAdd })));
 const PlaylistPage = lazy(() => import("./pages/playlist").then(m => ({ default: m.PlaylistPage })));
 const AuthPage = lazy(() => import("./pages/auth").then(m => ({ default: m.AuthPage })));
+const OAuthJoinPage = lazy(() => import("./pages/auth").then(m => ({ default: m.OAuthJoinPage })));
 const ForgotPage = lazy(() => import("./pages/auth").then(m => ({ default: m.ForgotPage })));
 const ResetPage = lazy(() => import("./pages/auth").then(m => ({ default: m.ResetPage })));
 const VerifyPage = lazy(() => import("./pages/auth").then(m => ({ default: m.VerifyPage })));
@@ -227,6 +228,7 @@ function Pages() {
       <Route path="/playlist/:id" element={<PlaylistPage />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/join" element={<AuthPage mode="join" />} />
+      <Route path="/join/oauth" element={<OAuthJoinPage />} />
       <Route path="/forgot" element={<ForgotPage />} />
       <Route path="/reset" element={<ResetPage />} />
       <Route path="/verify" element={<VerifyPage />} />

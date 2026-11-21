@@ -74,6 +74,13 @@ export const passwordChangedMail = (to: string, username: string) => build(to, "
   { button: "Reset password", url: `${SITE_URL}/forgot` },
 ]);
 
+/** The first password on an account made through another site (Discord and the like). */
+export const passwordSetMail = (to: string, username: string) => build(to, "You set a password on Sonosphere", "You set a password", [
+  { p: `${username} on Sonosphere now has a password. You can log in with it, and use it in scrobbler apps that ask for one. Signing in with your other sites still works too.` },
+  { p: "If this was not you, reset your password right away from the log-in page." },
+  { button: "Reset password", url: `${SITE_URL}/forgot` },
+]);
+
 /** One thing that happened, as a notification email or a digest line shows it. */
 export type NoticeLine = { line: string; url: string; quote?: string };
 

@@ -1440,3 +1440,9 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .suggest-name small { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: 13px; }
 .suggest-count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .flag { width: 21px; height: 14px; flex: none; display: block; box-shadow: 0 0 0 1px var(--inset); }
+
+/* signing in with another site: full-width buttons above the form, then a ruled "or" */
+.oauth { display: flex; flex-direction: column; gap: 8px; }
+.oauth .oauth-btn { width: 100%; justify-content: center; }
+.oauth-or { display: flex; align-items: center; gap: 10px; margin: 6px 0 0; }
+.oauth-or::before, .oauth-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }

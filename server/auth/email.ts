@@ -92,6 +92,7 @@ export async function resetPassword(token: unknown, passwordHash: string): Promi
 
 /** Tells an account its password changed (from settings). */
 export const passwordChanged = (u: User) => send(mail.passwordChangedMail(u.email, u.username));
+export const passwordSet = (u: User) => send(mail.passwordSetMail(u.email, u.username));
 
 /** Clears away links nobody used. */
 export async function dropExpiredEmailTokens(): Promise<void> {

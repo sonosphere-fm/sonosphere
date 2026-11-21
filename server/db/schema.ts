@@ -98,7 +98,23 @@ export const outbox = pgTable("outbox", {
 	createdAt: integer("created_at").notNull(),
 }, t => [index("outbox_next").on(t.nextAt)]);
 
-// Sign-in tokens are kept only as their SHA-256 (server/auth/digest.ts): a copy of the database cannot be used to sign in.
+/**
+ * Accounts at other sites (Discord, and later others) that can sign in to a Sonosphere account. `provider` names the site
+ * (server/auth/oauth/providers.ts), `subject` is that site's stable id for the person; `name` is their handle there, for display.
+ */
+export const oauthAccounts = pgTable("oauth_accounts", {
+	provider: text().notNull(),
+	subject: text().notNull(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	name: text().default("").notNull(),
+	createdAt: integer("created_at").notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.provider, table.subject], name: "oauth_accounts_provider_subject_pk" }),
+	unique("oauth_accounts_user_provider").on(table.userId, table.provider),
+]);
+
+// Sign-in tokens are kept only as their SHA-256 (digest in server/util.ts): a copy of the database cannot be used to sign in.
 export const sessions = pgTable("sessions", {
 	token: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),

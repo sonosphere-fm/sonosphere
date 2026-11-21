@@ -6,6 +6,7 @@ import { clean } from "../util";
 import { confirmEmail, requestReset, resetPassword, sendVerification } from "./email";
 import { endSession, hashPassword, logIn, me, MIN_PASSWORD, signUp, startSession, validEmail } from "./service";
 import { checkTurnstile, turnstileSiteKey } from "./turnstile";
+import { oauthProviders } from "./oauth/routes";
 import type { AuthConfig, MeResponse, Ok, Session } from "../../shared/auth";
 
 export const router = new Router();
@@ -17,7 +18,7 @@ router.get("/api/auth/", toConsent);
 
 router.get<MeResponse>("/api/me", async c => ({ user: c.user ? await me(c.user) : null }));
 
-router.get<AuthConfig>("/api/auth/config", () => ({ turnstile: turnstileSiteKey() }));
+router.get<AuthConfig>("/api/auth/config", () => ({ turnstile: turnstileSiteKey(), oauth: oauthProviders() }));
 
 router.post<Session>("/api/auth/signup", async c => {
   await limit(`signup:${ipOf(c.req)}`, 5, 3600, "Too many sign-ups from here. Try again later.");

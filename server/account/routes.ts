@@ -1,7 +1,7 @@
 // HTTP routes for account settings: editing the profile, changing the password, exporting or clearing plays, and deleting the account.
-import { passwordChanged, startEmailChange } from "../auth/email";
+import { passwordChanged, passwordSet, startEmailChange } from "../auth/email";
 import { deleteSessionsOf, emailTaken } from "../auth/repo";
-import { endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
+import { confirmedBy, endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
 import { confirmed, need } from "../guards";
 import { bad, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
@@ -51,17 +51,18 @@ router.patch<ProfileSaved>("/api/me", async c => {
 
 router.post<Ok>("/api/me/password", async c => {
   const u = need(c), next = String(c.body.next || "");
-  if (!(await passwordMatches(u, String(c.body.current || "")))) bad("Current password is incorrect");
+  // an account made through another site sets its first password without one
+  if (u.passwordHash && !(await passwordMatches(u, String(c.body.current || "")))) bad("Current password is incorrect");
   if (next.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
   await repo.setPasswordHash(u.id, await hashPassword(next));
   await deleteSessionsOf(u.id, tokenOf(c.req)); // anyone else signed in with the old password is signed out
-  await passwordChanged(u);
+  await (u.passwordHash ? passwordChanged(u) : passwordSet(u));
   return { ok: true };
 });
 
 router.post<Ok>("/api/me/delete", async c => {
   const u = need(c);
-  if (!(await passwordMatches(u, String(c.body.password || "")))) bad("Password is incorrect");
+  if (!(await confirmedBy(u, String(c.body.password || "")))) bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
   await repo.deleteAccount(u.id);
   await endSession(c.headers); // the sessions went with the account; this clears the cookie
   return { ok: true };
@@ -69,7 +70,7 @@ router.post<Ok>("/api/me/delete", async c => {
 
 router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async c => {
   const u = need(c);
-  if (!(await passwordMatches(u, String(c.body.password || "")))) bad("Password is incorrect");
+  if (!(await confirmedBy(u, String(c.body.password || "")))) bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
   return { deleted: await deleteAllScrobbles(u.id) };
 });
 
