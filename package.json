@@ -1,5 +1,6 @@
 {
   "name": "sonosphere",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,6 +18,8 @@
     "@fontsource-variable/radio-canada": "^5.3.0",
     "@fontsource-variable/source-sans-3": "^5.3.1",
     "@phosphor-icons/react": "^2.1.10",
+    "@sentry/bun": "^11.16.0",
+    "@sentry/react": "^11.16.0",
     "@stylexjs/stylex": "^0.19.2",
     "@uimaxbai/am-lyrics": "^1.9.2",
     "country-flag-icons": "^1.6.20",

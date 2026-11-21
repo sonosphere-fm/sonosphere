@@ -6,9 +6,12 @@ import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, userUrl, us
 import { Async, Avatar, Empty, Pager, Section, Stat } from "../ui/base";
 import { type Role, REASON, TYPE, ROLE, adminUrl, useQuery, useRole, useConfirm, useFlash, StatusBadges } from "./common";
 import { AuditList } from "./audit";
-import type { BanResult, DmMuteResult, NoteAdded, Ok, ReportBrief, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult } from "../../shared/admin";
+import { ManageUserLabels } from "./user-labels";
+import type {
+  BanResult, DmMuteResult, NoteAdded, Ok, ProbationResult, ReportBrief, RoleResult, SessionsResult, StaffTrust, StaffUserList, StaffUserPage, SuspendResult,
+} from "../../shared/admin";
 
-type AccountReply = NoteAdded | DmMuteResult | SuspendResult | BanResult | SessionsResult | RoleResult;
+type AccountReply = NoteAdded | DmMuteResult | SuspendResult | BanResult | SessionsResult | RoleResult | ProbationResult;
 const ROLES: Role[] = ["user", "moderator", "admin"];
 
 const USER_FILTERS: [string, string][] = [
@@ -17,6 +20,7 @@ const USER_FILTERS: [string, string][] = [
   ["suspended", "Suspended"],
   ["banned", "Banned"],
   ["unconfirmed", "Email not confirmed"],
+  ["probation", "On probation"],
   ["staff", "All staff"],
   ["admins", "Admins"],
   ["moderators", "Moderators"],
@@ -229,6 +233,18 @@ export function UserDetail() {
           ),
           run: note => post("verify", { note }),
         });
+        const endProbation = () => ask({
+          title: "End probation",
+          action: "End probation",
+          body: <p>{u.username} gets the usual limits from now on.</p>,
+          run: note => post("probation", { probation: false, note }),
+        });
+        const holdProbation = () => ask({
+          title: "Put on probation",
+          action: "Put on probation",
+          body: <p>{u.username} gets the tighter limits again and stays on probation until staff end it. They aren't told.</p>,
+          run: note => post("probation", { probation: true, note }),
+        });
         const revokeSessions = () => ask({
           title: "Sign out everywhere",
           action: "Revoke sessions",
@@ -261,7 +277,7 @@ export function UserDetail() {
             <div className="adm-user-head">
               <Avatar user={u} size={64} />
               <div className="grow">
-                <h2>{u.username} <StatusBadges u={u} /></h2>
+                <h2>{u.username} <StatusBadges u={{ ...u, probation: d.trust.probation }} /></h2>
                 <p className="muted">{[u.realname, u.country].filter(Boolean).join(" · ") || "No name or country set"}</p>
               </div>
               {!u.banned && <Button kind="btn ghost small" href={userUrl(u.username)}>View profile <Ico.Right /></Button>}
@@ -286,6 +302,7 @@ export function UserDetail() {
             </div>
             <div className="cols">
               <div className="main">
+                {role === "admin" && <ManageUserLabels name={u.username} />}
                 <Section title="Internal notes">
                   <p className="muted small">Only staff can see these.</p>
                   <form className="adm-note-form" onSubmit={addNote}>
@@ -347,6 +364,18 @@ export function UserDetail() {
                     </dd>
                     <dt>Library</dt><dd>{num(d.counts.loved)} loved, {num(d.counts.playlists)} playlists, {num(d.counts.tags)} tags</dd>
                   </dl>
+                </Section>
+                <Section title="Probation">
+                  <Probation t={d.trust} />
+                  {!d.trust.staff && !u.banned && (
+                    <div className="adm-actions adm-dm-act">
+                      {d.trust.probation ? (
+                        <Button kind="btn ghost" type="button" onClick={endProbation}>End probation</Button>
+                      ) : (
+                        <Button kind="btn ghost" type="button" onClick={holdProbation}>Put on probation</Button>
+                      )}
+                    </div>
+                  )}
                 </Section>
                 <Section title="Direct messages">
                   {d.dm.muted && <p className="notice small">Messaging is turned off. They can read their conversations but can't send.</p>}
@@ -418,6 +447,35 @@ export function UserDetail() {
           </>
         );
       }}</Async>
+    </>
+  );
+}
+
+function Probation({ t }: { t: StaffTrust }) {
+  if (t.staff) return <p className="muted small">Staff are never on probation.</p>;
+  let state = "Joined before probation started.";
+  if (t.probation) {
+    state = "Tighter limits on messages, new conversations, groups, follows, wall posts, journal posts, tags, wiki edits and reports. They aren't told.";
+  } else if (t.clearedBy) state = `Ended by ${t.clearedBy} ${ago(t.clearedAt ?? 0)}.`;
+  else if (t.checkedAt) state = `Left probation ${ago(t.clearedAt ?? 0)}.`;
+  let exit = "As soon as the score is reached";
+  if (t.held) exit = "Held by staff";
+  else if (t.eligibleAt * 1000 > Date.now()) exit = dateTime(t.eligibleAt);
+  return (
+    <>
+      <p className="muted small">{state}</p>
+      <dl className="adm-facts">
+        <dt>Score</dt><dd>{t.score} of {t.needed}</dd>
+        {t.probation && <><dt>Earliest exit</dt><dd>{exit}</dd></>}
+        {t.checkedAt && <><dt>Last checked</dt><dd>{ago(t.checkedAt)}</dd></>}
+      </dl>
+      {t.points.length > 0 && (
+        <ul className="adm-points">
+          {t.points.map(p => (
+            <li key={p.label}><span>{p.label}</span>{p.points > 0 ? <b>+{p.points}</b> : <b className="adm-red">{p.points}</b>}</li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

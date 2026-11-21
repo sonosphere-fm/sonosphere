@@ -1,9 +1,10 @@
 import { Ico } from "../../icons";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
-import { artistUrl, date, num, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Async, Avatar, Empty, Section } from "../../ui/base";
+import { artistUrl, date, num, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
+import { Async, Avatar, Empty, Pane, Section } from "../../ui/base";
+import { UserLabels } from "../../ui/user-labels";
 import { RecCard, Grid, TrackList } from "../../ui/lists";
 import { EventList } from "../../ui/events";
 import { TagChips } from "../../ui/tags";
@@ -25,8 +26,21 @@ function welcomeHidden() {
   }
 }
 
+const RECOMMENDED = "/recommended";
+const recentOf = (name: string) => `/user/recent${qs({ name, limit: 5 })}`;
+
+function Recs() {
+  const q = useApi<Recommended>(RECOMMENDED);
+  return (
+    <Async q={q}>
+      {d => d.artists.length
+        ? <div className="recs">{mixRecs(d).map(r => <RecCard key={r.kind + r.item.id} {...r} />)}</div>
+        : <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>}
+    </Async>
+  );
+}
+
 function HomeFeed({ name }: { name: string }) {
-  const q = useApi<Recommended>("/recommended");
   const [hidden, setHidden] = useState(welcomeHidden);
 
   const dismiss = () => {
@@ -45,11 +59,7 @@ function HomeFeed({ name }: { name: string }) {
           <p>The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble more music.</p>
         </div>
       )}
-      <Async q={q}>
-        {d => d.artists.length
-          ? <div className="recs">{mixRecs(d).map(r => <RecCard key={r.kind + r.item.id} {...r} />)}</div>
-          : <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>}
-      </Async>
+      <Pane><Recs /></Pane>
     </>
   );
 }
@@ -91,7 +101,7 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
           <li key={f.user.username}>
             <Avatar user={f.user} />
             <div className="grow">
-              <Link className="strong" to={userUrl(f.user.username)}>{f.user.username}</Link>
+              <Link className="strong" to={userUrl(f.user.username)}>{f.user.username}</Link> <UserLabels name={f.user.username} />
               <span>
                 <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link> <span className="muted">by</span>{" "}
                 <Link to={artistUrl(f.track.artist)}>{f.track.artist}</Link>
@@ -125,6 +135,10 @@ function FriendLoves({ items }: { items: FriendLove[] }) {
 
 export function Home() {
   const { me } = useAuth();
+  if (me) {
+    prefetch(RECOMMENDED);
+    prefetch(recentOf(me.username));
+  }
   const q = useApi<HomeData>("/home");
   useTitle(me ? "Home" : "There's a sphere just for you");
   return (
@@ -140,7 +154,7 @@ export function Home() {
                 {me && (
                   <>
                     <HomeFeed name={me.username} />
-                    <HomeRecent name={me.username} />
+                    <Suspense fallback={null}><HomeRecent name={me.username} /></Suspense>
                     {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={me.username} />}
                     <div className="album-sphere-member"><FeaturedSphere feature={d.featuredSphere} chartAlbums={d.sphereAlbums} /></div>
                   </>
@@ -170,7 +184,7 @@ export function Home() {
 }
 
 function HomeRecent({ name }: { name: string }) {
-  const q = useApi<UserRecent>(`/user/recent${qs({ name, limit: 5 })}`);
+  const q = useApi<UserRecent>(recentOf(name));
   if (!q.data?.items.length) return null;
   const nowPlaying = "nowPlaying" in q.data ? q.data.nowPlaying : null;
   return (

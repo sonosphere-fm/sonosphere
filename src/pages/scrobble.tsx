@@ -373,13 +373,9 @@ export function ScrobblePage() {
                       Last.fm username
                       <Input value={lfm} onChange={e => setLfm(e.target.value)} placeholder="Your Last.fm username" autoComplete="off" maxLength={40} />
                     </label>
-                    <Button kind="btn" loading={lfmAct.busy} disabled={!lfm.trim()}>Import from Last.fm</Button>
+                    <Button kind="btn" loading={lfmAct.busy} disabled={!lfm.trim()}>Import</Button>
                   </form>
                   {lfmAct.note}
-                  <p className="muted small">
-                    Scrobbles and loved tracks are imported to your profile. Large imports may take a while but you are free to close the page
-                    once the import starts.
-                  </p>
                   <p>
                     Or import scrobbles or loved tracks from a CSV/JSON file. CSV columns: <code>artist, album, track, timestamp</code> (Unix
                     seconds or ISO date; only artist and track are required).

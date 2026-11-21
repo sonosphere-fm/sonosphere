@@ -1,5 +1,5 @@
 import { Arrow, Ico } from "../../icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Button } from "../../kit";
 import { Markdown } from "../../md";
@@ -11,6 +11,7 @@ import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
+import { UserLabels } from "../../ui/user-labels";
 import type { BlockResult } from "../../../shared/blocks";
 import type { UserEvents as UserEventList } from "../../../shared/events";
 import type { TopAlbum, TopArtist, TopTrack } from "../../../shared/listening";
@@ -102,9 +103,10 @@ export function UserPage({ tab }: { tab: Tab }) {
           <Hero
             tabs={<Tabs items={profileTabs(u, base, locked)} />}
             image={u.image}
+            banner={u.banner}
             art={<Art image={u.image} kind="user" />}
             kicker={u.followsYou ? "Follows you" : "Listener"}
-            title={u.username}
+            title={<>{u.username}<UserLabels name={u.username} all /></>}
             sub={sub}
             stats={<ProfileStats u={u} base={base} locked={locked} />}
             actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}
@@ -204,10 +206,12 @@ function About({ u }: { u: Profile }) {
   if (!u.about && !u.website) return null;
   return (
     <Section title="About">
-      <Markdown text={u.about} />
-      {u.website && (
-        <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>
-      )}
+      <div className="profile-about">
+        <Markdown text={u.about} />
+        {u.website && (
+          <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>
+        )}
+      </div>
     </Section>
   );
 }
@@ -272,12 +276,6 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   const artists = useApi<UserTop<TopArtist>>(paths[1]);
   const albums = useApi<UserTop<TopAlbum>>(paths[2]);
   const tracks = useApi<UserTop<TopTrack>>(paths[3]);
-
-  useEffect(() => {
-    const h = () => recent.reload();
-    window.addEventListener("spin:scrobble", h);
-    return () => window.removeEventListener("spin:scrobble", h);
-  }, [recent.reload]);
 
   return (
     <div className="cols">

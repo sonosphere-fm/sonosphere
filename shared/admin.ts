@@ -26,7 +26,11 @@ export type Dashboard = {
 
 export type StaffUserRow = {
   id: number; username: string; realname: string; image: string | null; email?: string; registeredAt: number; role: Role; suspended: boolean; banned: boolean;
-  unconfirmed: boolean; scrobbles: number; openReports: number; lastLogin: number | null;
+  unconfirmed: boolean; probation: boolean; scrobbles: number; openReports: number; lastLogin: number | null;
+};
+export type StaffTrust = {
+  staff: boolean; probation: boolean; held: boolean; score: number; needed: number; eligibleAt: number; checkedAt: number | null; clearedAt: number | null;
+  clearedBy: string | null; points: { label: string; points: number }[];
 };
 export type StaffUserList = { items: StaffUserRow[]; total: number } & Paged;
 export type ReportBrief = {
@@ -51,10 +55,12 @@ export type StaffUserPage = {
   recentShouts: { id: number; body: string; createdAt: number; where: PageRef | null }[];
   history: AuditRow[];
   dm: { muted: boolean; policy: string; threads: number; startedDay: number; startedWeek: number; sent: number; sentWeek: number; openFlags: number; openReports: number };
+  trust: StaffTrust;
   notes: ModNote[];
 };
 export type SuspendResult = { suspended: boolean };
 export type BanResult = { banned: boolean };
+export type ProbationResult = { probation: boolean };
 export type RoleResult = { role: Role };
 export type SessionsResult = { revoked: number };
 export type VerifyResult = { verifiedAt: number };

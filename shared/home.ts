@@ -20,7 +20,7 @@ export type Home = {
   tags: TagCount[]; events: EventSummary[]; stats: SiteTotals;
   featuredSphere: FeaturedSphere | null;
   sphereAlbums: TopAlbum[];
-  friends?: FriendActivity[]; friendLoves?: FriendLove[]; recommended?: Recommendation[];
+  friends?: FriendActivity[]; friendLoves?: FriendLove[];
   week?: { now: number; before: number };
 };
 export type Recommended = { artists: Recommendation[]; tracks: TopTrack[]; albums: TopAlbum[]; events: EventSummary[] };

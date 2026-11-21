@@ -3,7 +3,7 @@ import { Suspense, type ReactNode } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { Ico } from "../icons";
 import { useAuth, useTitle } from "../lib";
-import { Empty } from "../ui/base";
+import { Empty, Pane } from "../ui/base";
 import { ROLE, useRole } from "./common";
 import { Dashboard } from "./dashboard";
 import { Reports } from "./reports";
@@ -50,19 +50,21 @@ export function AdminPage() {
           ))}
         </nav>
         <div className="adm-body">
-          <Routes>
-            <Route index element={<Dashboard />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="messages/:id" element={role === "admin" ? <Transcript /> : transcriptDenied} />
-            <Route path="users" element={<Users />} />
-            <Route path="users/:name" element={<UserDetail />} />
-            <Route path="content" element={<Content />} />
-            <Route path="catalogue" element={adminOnly(<Catalogue />)} />
-            <Route path="audit" element={<Audit />} />
-            <Route path="settings" element={adminOnly(<SiteSettings />)} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          <Pane>
+            <Routes>
+              <Route index element={<Dashboard />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="messages/:id" element={role === "admin" ? <Transcript /> : transcriptDenied} />
+              <Route path="users" element={<Users />} />
+              <Route path="users/:name" element={<UserDetail />} />
+              <Route path="content" element={<Content />} />
+              <Route path="catalogue" element={adminOnly(<Catalogue />)} />
+              <Route path="audit" element={<Audit />} />
+              <Route path="settings" element={adminOnly(<SiteSettings />)} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Routes>
+          </Pane>
         </div>
       </div>
     </div>

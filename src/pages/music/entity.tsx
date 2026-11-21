@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { artistUrl, date, imageUrl, num, short, trackUrl, useApi, useAuth } from "../../lib";
 import { Art, Avatar, Section } from "../../ui/base";
+import { ImageWithFallback } from "../../ui/image";
 import { BarChart, weekTrend } from "../../ui/charts";
 import { UserList } from "../../ui/lists";
 import { WikiSummary } from "../../ui/wiki";
@@ -25,7 +26,7 @@ type MusicHeroProps = {
 export function MusicHero({ image, soft, over, title, actions, stats, cards, tabs, children }: MusicHeroProps) {
   return (
     <div className="hero mhero">
-      {image ? <div className={soft ? "mhero-img soft" : "mhero-img"} style={{ backgroundImage: `url(${imageUrl(image)})` }} /> : null}
+      {image ? <ImageWithFallback className={soft ? "mhero-img soft" : "mhero-img"} src={imageUrl(image)} alt="" loading="eager" /> : null}
       <div className="wrap mhero-inner">
         {over && <div className="mhero-over">{over}</div>}
         <h1>{title}</h1>

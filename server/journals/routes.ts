@@ -5,6 +5,7 @@ import { requireUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
 import type { JournalDeleted, JournalList, JournalPost, JournalSaved, JournalSummary } from "../../shared/journals";
+import { limit } from "../trust/service";
 
 export const router = new Router();
 
@@ -53,7 +54,7 @@ router.get<JournalPost>("/api/journal/:id", async c => {
 
 router.post<JournalSaved>("/api/journal", async c => {
   const u = confirmed(poster(c));
-  await throttle(`journal:${u.id}`, 10, 86_400, "You have written a lot of posts today. Try again tomorrow.");
+  await limit(u, `journal:${u.id}`, 10, 86_400, "You have written a lot of posts today. Try again tomorrow.");
   return { id: await repo.createJournal(u.id, textOf(c.body)) };
 });
 

@@ -16,6 +16,8 @@ const ACTION: Record<string, string> = {
   "user.role": "Changed role",
   "user.sessions": "Signed out everywhere",
   "user.verify": "Confirmed email",
+  "user.probation": "Put on probation",
+  "user.release": "Ended probation",
   "user.delete": "Deleted account",
   "note.add": "Added note",
   "note.delete": "Deleted note",
