@@ -106,7 +106,8 @@ async function budget(req: Request, url: URL, user: Viewer | null): Promise<void
   if (user && isStaff(user)) return;
   if (req.method === "GET" && url.pathname.startsWith("/api/image/")) return;
   const ip = ipOf(req), who = user ? `u${user.id}` : `ip${ip}`;
-  const rules = req.method === "GET" ? READS[user ? "member" : "visitor"] : WRITES;
+  // imports upload in big chunks and have their own limits (server/listening/imports.ts), so a huge one isn't cut off
+  const rules = req.method === "GET" ? READS[user ? "member" : "visitor"] : user && url.pathname.startsWith("/api/import") ? [] : WRITES;
   const kind = req.method === "GET" ? "r" : "w";
   const waits = await Promise.all([
     ...rules.map(([max, secs]) => hits(`api-${kind}:${who}`, max, secs)),

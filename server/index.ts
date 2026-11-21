@@ -18,6 +18,7 @@ import { upgrade, websocket, type SocketData } from "./realtime";
 import { startTasteWorker } from "./recommend/worker";
 import { startSpotify } from "./spotify/service";
 import { startEventSync } from "./events/sync";
+import { startImports } from "./listening/imports";
 import { startMetadata } from "./metadata/service";
 import { syncAdmins } from "./site/roles";
 
@@ -40,6 +41,7 @@ startTasteWorker();
 startSpotify();
 startMetadata();
 startEventSync();
+startImports();
 
 // The browser app: built files in production, Bun's bundler (with hot reload) in development.
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };

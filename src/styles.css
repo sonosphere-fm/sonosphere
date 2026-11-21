@@ -1389,3 +1389,13 @@ html { scrollbar-color: #bdb4a2 var(--bg); }
   --lyplus-font-size-base: 22px; --am-lyrics-line-spacing: 14px; --am-lyrics-wide-font-size: 24px; --am-lyrics-wide-line-spacing: 16px;
   --am-lyrics-glow-radius: 0px;
 }
+
+/* imports running on the server */
+.import-progress { display: grid; gap: 10px; }
+.import-head { display: flex; align-items: center; gap: 10px; }
+.import-head .spinner svg { width: 18px; height: 18px; color: var(--accent); }
+.import-track { height: 8px; border-radius: 4px; background: var(--panel); overflow: hidden; }
+.import-track > span { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width .6s ease; }
+.import-progress .btn { justify-self: start; }
+.lastfm-import { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.lastfm-import label { flex: 1 1 220px; }

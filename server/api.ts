@@ -13,6 +13,7 @@ import { router as home } from "./home/routes";
 import { router as images } from "./images/routes";
 import { router as journals } from "./journals/routes";
 import { router as listening } from "./listening/routes";
+import { router as imports } from "./listening/imports";
 import { router as notifications } from "./notifications/routes";
 import { router as obsessions } from "./obsessions/routes";
 import { router as playlists } from "./playlists/routes";
@@ -37,6 +38,6 @@ import { router as adminUsers } from "./admin/users";
 export const api = new Router().include(
   auth, account, images, site,
   home, search, catalog, tags, wiki, shouts, video, stations,
-  listening, users, obsessions, playlists, events, journals, notifications, blocks, apps, reports, dm, spotify,
+  listening, imports, users, obsessions, playlists, events, journals, notifications, blocks, apps, reports, dm, spotify,
   adminDashboard, adminUsers, adminReports, adminMessages, adminContent, adminCatalogue, adminAudit, adminSettings,
 );

@@ -618,3 +618,41 @@ export const spotifyAuth = pgTable("spotify_auth", {
 	redirectUri: text("redirect_uri").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
+
+// Imports of past listening (server/listening/imports.ts), worked through in the background.
+// kind: "scrobbles" or "loved" (from a file), or "lastfm" (read from a Last.fm profile, plays then loved tracks).
+// status: "uploading" (file chunks still arriving), "queued", "running", "done", "failed" or "cancelled".
+// cursor: how many rows have been worked through (files), or Last.fm pages read in the current phase.
+export const importJobs = pgTable("import_jobs", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	kind: text().notNull(),
+	status: text().notNull(),
+	lastfmUser: text("lastfm_user"),
+	// Last.fm: "scrobbles" then "loved"; plays after `lastfmTo` are left out so pages don't shift while reading
+	phase: text().default("scrobbles").notNull(),
+	lastfmTo: integer("lastfm_to"),
+	pages: integer().default(0).notNull(),
+	cursor: integer().default(0).notNull(),
+	total: integer().default(0).notNull(),
+	done: integer().default(0).notNull(),
+	accepted: integer().default(0).notNull(),
+	failures: integer().default(0).notNull(),
+	error: text(),
+	createdAt: integer("created_at").notNull(),
+	updatedAt: integer("updated_at").notNull(),
+},
+(table) => [
+	index("import_jobs_user").on(table.userId, table.createdAt),
+	index("import_jobs_status").on(table.status),
+]);
+
+// An uploaded file's rows, 20,000 to a chunk (JSON), dropped once worked through.
+export const importChunks = pgTable("import_chunks", {
+	jobId: integer("job_id").notNull().references(() => importJobs.id, { onDelete: "cascade" } ),
+	n: integer().notNull(),
+	rows: text().notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.jobId, table.n], name: "import_chunks_pk" }),
+]);
