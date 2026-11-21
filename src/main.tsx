@@ -143,6 +143,36 @@ function apiFor(pathname: string): string | null {
   if ((p[0] === "event" || p[0] === "playlist") && p[1]) return `/${p[0]}/${p[1]}`;
   return null;
 }
+/** What a profile tab asks for once the profile itself has arrived, so both requests can go out together.
+ *  Keys must match the ones the tab builds (src/pages/user/); a mismatch only costs a wasted request. */
+function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
+  const page = Number(sp.get("page")) || 1, period = sp.get("period");
+  switch (p[2]) {
+    case undefined: return [`/user/recent${qs({ name, limit: 10 })}`, ...["artists", "albums", "tracks"].map(kind => `/user/top${qs({ name, kind, period: period || "7day", limit: kind === "tracks" ? 10 : 8 })}`)];
+    case "library": {
+      if (p[3] === "music" || sp.get("from") || sp.get("to")) return [];
+      const params = { name, page, limit: 50, period: period || "overall" };
+      return [!p[3] || p[3] === "scrobbles" ? `/user/recent${qs(params)}` : `/user/top${qs({ ...params, kind: p[3] })}`];
+    }
+    case "listening-report": { const type = p[3] === "year" ? "year" : "week"; return [`/user/report${qs({ name, type, offset: Number(sp.get("offset") || (type === "week" ? "1" : "0")), tz: -new Date().getTimezoneOffset() })}`]; }
+    case "loved": return [`/user/loved${qs({ name, page })}`];
+    case "journal": return p[3] ? [] : [`/user/journal${qs({ name, page })}`];
+    case "following": case "followers": return [`/user/${p[2]}${qs({ name })}`];
+    case "earworms": return [`/user/obsessions${qs({ name })}`];
+    case "soundalikes": return [`/user/neighbours${qs({ name })}`];
+    case "tags": return [`/user/tags${qs({ name, tag: sp.get("tag") })}`];
+    case "playlists": case "events": return [`/user/${p[2]}${qs({ name })}`];
+    default: return [];
+  }
+}
+/** Every request a page will make that can be known from its address alone. */
+function apisFor(url: string): string[] {
+  const at = new URL(url, location.origin), first = apiFor(at.pathname);
+  if (!first) return [];
+  const p = at.pathname.split("/").filter(Boolean);
+  if (p[0] !== "user" || !p[1]) return [first];
+  return [first, ...userTabApi(p, at.searchParams, dec(p[1]))];
+}
 /** The staff portal, for staff. Everyone else gets a short notice and the portal's code is never requested. */
 function Staff() {
   const { me } = useAuth();
@@ -222,7 +252,7 @@ const inApp = (e: Event) => {
   return a && a.origin === location.origin && !a.target && !a.hasAttribute("download") && !a.pathname.startsWith("/api/") ? a : null;
 };
 let ahead: (url: string) => void = () => {};
-for (const type of ["mouseover", "touchstart", "focusin"]) document.addEventListener(type, e => { const a = inApp(e); if (a) ahead(a.pathname + a.search); }, { passive: true });
+for (const type of ["mouseover", "touchstart", "focusin"]) document.addEventListener(type, e => { const a = inApp(e); if (a) { const url = a.pathname + a.search; for (const path of apisFor(url)) prefetch(path); ahead(url); } }, { passive: true });
 const never = new Promise<void>(() => {});
 function Never(): null { throw never; } // keeps the look-ahead from ever being committed: no DOM, no effects
 function LookAhead() {
@@ -259,7 +289,7 @@ function LookAhead() {
 }
 
 // the first page's data is requested straight away, alongside the session check, rather than after it
-{ const first = apiFor(location.pathname); if (first) prefetch(first); }
+for (const path of apisFor(location.pathname + location.search)) prefetch(path);
 
 // A click shows the next page at once. If its code or data has not arrived yet (nothing preloaded it on hover),
 // the old page gives way to a spinner rather than sitting there as if the click did nothing. Keying on the path

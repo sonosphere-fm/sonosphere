@@ -1,6 +1,6 @@
 // Users API: profiles and everything hanging off one (recent plays, charts, library, loved tracks, people, reports, tags), plus following.
 import { requireArtist, requireTag } from "../catalog/service";
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { bad, fail, missing, oneOf, paging, Router, throttle } from "../http";
 import { range } from "../listening/period";
 import * as listening from "../listening/repo";
@@ -79,6 +79,7 @@ router.post<FollowResult>("/api/follow", async c => {
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
   const follow = c.body.follow !== false;
   if (t.id === u.id) bad("You can't follow yourself");
+  if (follow) confirmed(u); // unfollowing is always allowed
   if (follow && await repo.blockedEither(u.id, t.id)) fail(403, "You can't follow this user");
   if (!follow) await repo.unfollow(u.id, t.id);
   else if (await repo.follow(u.id, t.id)) await notify(t.id, "follow", u.id);

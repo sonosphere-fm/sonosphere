@@ -26,3 +26,5 @@ export type Session = { user: Me };
 /** What the sign-up and log-in forms need: the Turnstile site key, or null when the robot check is off. */
 export type AuthConfig = { turnstile: string | null };
 export type Ok = { ok: true };
+/** An account whose email is still unconfirmed this many days after sign-up is deleted (staff and imported profiles excepted). */
+export const UNVERIFIED_DAYS = 14;

@@ -5,8 +5,8 @@ import { Button } from "../../kit";
 import { Markdown } from "../../md";
 import { StationButton } from "../../player";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { api, artistUrl, date, invalidateAll, dec, num, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Art, Async, Empty, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
+import { api, artistUrl, date, invalidateAll, dec, num, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
+import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
@@ -45,6 +45,7 @@ export function UserPage({ tab }: { tab: Tab }) {
           <div className="wrap page">
             {u.blocked && <p className="notice">You've blocked {u.username}. They can't follow you or post on your profile, and you won't see their wall posts. <Button kind="link" type="button" onClick={() => api<BlockResult>("/block", { body: { username: u.username, block: false } }).then(q.reload)}>Unblock</Button></p>}
             {u.suspended && (mine || me?.admin) && <p className="notice">{mine ? "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work." : `${u.username} is suspended from posting.`}</p>}
+            <Pane>
             {tab === "journal" && <Journal name={u.username} mine={mine} />}
             {tab === "journal-post" && <JournalPost name={u.username} id={Number(p.post)} mine={mine} />}
             {tab === "journal-new" && (mine ? <JournalEditor name={u.username} /> : <Empty>Only {u.username} can write here.</Empty>)}
@@ -63,6 +64,7 @@ export function UserPage({ tab }: { tab: Tab }) {
             {tab === "neighbours" && !locked && <Neighbours name={u.username} />}
             {tab === "tags" && <UserTags name={u.username} />}
             {tab === "shoutbox" && <Shoutbox type="user" id={u.id} />}
+            </Pane>
           </div>
         </>
       );
@@ -114,10 +116,13 @@ function Earworm({ u }: { u: Profile }) {
 }
 function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   const base = userUrl(u.username), [sp] = useSearchParams(), period = sp.get("period") || "7day";
-  const recent = useApi<UserRecent>(`/user/recent${qs({ name: u.username, limit: 10 })}`);
-  const artists = useApi<UserTop<TopArtist>>(`/user/top${qs({ name: u.username, kind: "artists", period, limit: 8 })}`);
-  const albums = useApi<UserTop<TopAlbum>>(`/user/top${qs({ name: u.username, kind: "albums", period, limit: 8 })}`);
-  const tracks = useApi<UserTop<TopTrack>>(`/user/top${qs({ name: u.username, kind: "tracks", period, limit: 10 })}`);
+  const paths = [`/user/recent${qs({ name: u.username, limit: 10 })}`, ...(["artists", "albums", "tracks"] as const).map(kind => `/user/top${qs({ name: u.username, kind, period, limit: kind === "tracks" ? 10 : 8 })}`)];
+  // each useApi waits for its own reply before the next one runs, so ask for all of them (and the wall) up front
+  for (const p of [...paths, `/shouts${qs({ type: "user", id: u.id, page: 1, limit: 5 })}`]) prefetch(p);
+  const recent = useApi<UserRecent>(paths[0]);
+  const artists = useApi<UserTop<TopArtist>>(paths[1]);
+  const albums = useApi<UserTop<TopAlbum>>(paths[2]);
+  const tracks = useApi<UserTop<TopTrack>>(paths[3]);
   useEffect(() => { const h = () => recent.reload(); window.addEventListener("spin:scrobble", h); return () => window.removeEventListener("spin:scrobble", h); }, [recent.reload]);
   return (
     <div className="cols">

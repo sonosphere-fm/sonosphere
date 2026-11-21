@@ -1,6 +1,7 @@
 // The messages the site sends. Each has a plain-text version and a simple HTML one built from table layout and inline
 // styles, which is what mail programs reliably show. Everything put into the HTML is escaped.
 import { SITE_URL, type Mail } from ".";
+import { UNVERIFIED_DAYS } from "../../shared/auth";
 
 const BLUE = "#2438d6", YELLOW = "#ffcf33", INK = "#171717", MUTED = "#4a4a4a", PAPER = "#f7f3ee";
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -35,7 +36,7 @@ const link = (path: string, token: string) => `${SITE_URL}${path}?token=${token}
 export const verifyMail = (to: string, username: string, token: string) => build(to, "Confirm your email for Sonosphere", `Hi ${username}, confirm your email`, [
   { p: "Thanks for joining Sonosphere. Confirm this is your email address so you can get back into your account if you ever forget your password." },
   { button: "Confirm email", url: link("/verify", token) },
-  { small: "The link works for 3 days. If you did not sign up, ignore this message and nothing will happen." },
+  { small: `The link works for 3 days; you can ask for a new one from Settings. Accounts that are not confirmed within ${UNVERIFIED_DAYS} days are deleted. If you did not sign up, ignore this message and the account will be removed.` },
 ]);
 
 export const welcomeMail = (to: string, username: string) => build(to, "Welcome to Sonosphere", `Welcome, ${username}`, [

@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../icons";
 import { Button } from "../kit";
+import { useTurnstile } from "./auth";
 import { ago, api, date, invalidateAll, liveSend, mutate, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
 import type { BlockResult } from "../../shared/blocks";
 import type { DmAccepted, DmCounts, DmDone, DmSent, DmUnsent, DmWith } from "../../shared/dm";
@@ -61,7 +62,7 @@ export function MessagesPage({ view }: { view: "inbox" | "requests" | "thread" |
     </div>
   );
 }
-function Composer({ onSend, max, threadId, placeholder }: { onSend: (body: string) => Promise<void>; max: number; threadId?: number; placeholder: string }) {
+function Composer({ onSend, max, threadId, placeholder, above }: { onSend: (body: string) => Promise<void>; max: number; threadId?: number; placeholder: string; above?: ReactNode }) {
   const [text, setText] = useState(""), [error, setError] = useState(""), busy = useRef(false), typed = useRef(0), box = useRef<HTMLTextAreaElement>(null);
   const send = async () => {
     const body = text.trim();
@@ -74,6 +75,7 @@ function Composer({ onSend, max, threadId, placeholder }: { onSend: (body: strin
   return (
     <form className="dm-composer" onSubmit={e => { e.preventDefault(); send(); }}>
       {error && <p className="form-error" role="alert">{error}</p>}
+      {above}
       <div className="dm-composer-row">
         <textarea ref={box} className="native-input" rows={1} value={text} maxLength={max} placeholder={placeholder} aria-label="Message" name="message" autoFocus onKeyDown={key}
           onChange={e => {
@@ -217,8 +219,8 @@ function NewConversation({ name }: { name: string }) {
   if (q.error) return <div className="dm-blank muted"><p>{q.error.message}</p><Link to="/messages">Back to messages</Link></div>;
   const d = q.data; if (!d) return null;
   if (d.threadId) return <Navigate to={`/messages/${d.threadId}`} replace />;
-  const send = async (body: string) => {
-    const r = await api<DmSent>("/dm/send", { body: { to: d.user.username, body } });
+  const send = async (body: string, turnstile?: string) => {
+    const r = await api<DmSent>("/dm/send", { body: { to: d.user.username, body, turnstile } });
     mutate<DmWith>(`/dm/with?name=${encodeURIComponent(name)}`, x => ({ ...x, threadId: r.thread.id }));
     place(r.thread); nav(`/messages/${r.thread.id}`, { replace: true });
   };
@@ -229,7 +231,16 @@ function NewConversation({ name }: { name: string }) {
         ? d.request ? `${d.user.username} doesn't follow you, so your message will arrive as a request. You can send up to 3 messages, without links, until they reply.` : `Say hello to ${d.user.username}.`
         : d.why}</p>}</div>
       {d.blocked && <Blocked name={d.user.username} onUnblock={() => api<BlockResult>("/block", { body: { username: d.user.username, block: false } }).then(() => { invalidateAll(); q.reload(); })} />}
-      {d.can && <Composer onSend={send} max={2000} placeholder={`Message ${d.user.username}`} />}
+      {d.can && (d.human ? <HumanComposer onSend={send} name={d.user.username} /> : <Composer onSend={send} max={2000} placeholder={`Message ${d.user.username}`} />)}
     </>
   );
+}
+/** The composer for a first message to someone who doesn't follow you, which needs the robot check (when the site has it on). */
+function HumanComposer({ onSend, name }: { onSend: (body: string, turnstile?: string) => Promise<void>; name: string }) {
+  const robot = useTurnstile("dm");
+  const send = async (body: string) => {
+    if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot first.");
+    try { await onSend(body, robot.token || undefined); } catch (e) { robot.reset(); throw e; }
+  };
+  return <Composer onSend={send} max={2000} placeholder={`Message ${name}`} above={robot.view && <div className="dm-human">{robot.view}</div>} />;
 }

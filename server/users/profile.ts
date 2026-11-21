@@ -12,19 +12,22 @@ import type { Person, Profile, PublicUser, UserArtistLibrary, WeekCount } from "
 /** Everything on a profile page, as `viewer` (null when signed out) may see it. */
 export async function profile(u: repo.User, viewer: Viewer | null): Promise<Profile> {
   const visible = canSee(u, viewer), open = canSeeCharts(u, viewer);
-  // a private listener's numbers are left at zero for others (the page shows none of them)
-  const stats = open ? await listening.counts({ userId: u.id }) : { playcount: 0, artists: 0, albums: 0, tracks: 0 };
+  // independent lookups: run them side by side rather than one after another
+  const [stats, lovedCount, followers, following, isFollowing, followsYou, nowPlaying, tasteMatch, obsessions, shouts, journalCount, blocked] = await Promise.all([
+    // a private listener's numbers are left at zero for others (the page shows none of them)
+    open ? listening.counts({ userId: u.id }) : { playcount: 0, artists: 0, albums: 0, tracks: 0 },
+    open ? repo.lovedCount(u.id) : 0, repo.followerCount(u.id), repo.followingCount(u.id),
+    !!viewer && repo.isFollowing(viewer.id, u.id), !!viewer && repo.isFollowing(u.id, viewer.id),
+    visible ? listening.nowPlaying(u.id, viewer?.id) : null,
+    viewer && viewer.id !== u.id && open ? taste(viewer.id, u.id) : null,
+    obsessionsOf(u.id, viewer?.id, 1), shoutCount("user", u.id), repo.journalCount(u.id),
+    !!viewer && repo.hasBlocked(viewer.id, u.id),
+  ]);
   return {
     ...repo.publicUser(u), about: u.about, website: u.website, registeredAt: u.registeredAt, hidden: !visible, locked: !open, shoutsEnabled: u.shoutsEnabled,
     playcount: stats.playcount, artistCount: stats.artists, albumCount: stats.albums, trackCount: stats.tracks,
-    lovedCount: open ? await repo.lovedCount(u.id) : 0, followers: await repo.followerCount(u.id), following: await repo.followingCount(u.id),
-    isFollowing: !!viewer && await repo.isFollowing(viewer.id, u.id),
-    followsYou: !!viewer && await repo.isFollowing(u.id, viewer.id),
-    nowPlaying: visible ? await listening.nowPlaying(u.id, viewer?.id) : null,
-    taste: viewer && viewer.id !== u.id && open ? await taste(viewer.id, u.id) : null,
-    obsession: (await obsessionsOf(u.id, viewer?.id, 1))[0] ?? null,
-    shoutCount: await shoutCount("user", u.id), journalCount: await repo.journalCount(u.id),
-    blocked: !!viewer && await repo.hasBlocked(viewer.id, u.id),
+    lovedCount, followers, following, isFollowing: !!isFollowing, followsYou: !!followsYou, nowPlaying, taste: tasteMatch,
+    obsession: obsessions[0] ?? null, shoutCount: shouts, journalCount, blocked: !!blocked,
     suspended: u.suspended, banned: u.banned,
   };
 }

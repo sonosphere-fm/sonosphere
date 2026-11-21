@@ -34,6 +34,12 @@ server {
   ssl_certificate /etc/nginx/spin-origin.crt;
   ssl_certificate_key /etc/nginx/spin-origin.key;
   http2 on;
+  # Cloudflare's edge can be an ocean away, so every fresh connection costs several round trips. Let it resume TLS
+  # sessions and keep idle connections open as long as it does (about 15 minutes) instead of nginx's default 65s.
+  ssl_session_cache shared:spin_tls:10m;
+  ssl_session_timeout 1d;
+  keepalive_timeout 900s;
+  keepalive_requests 100000;
 
   if ($via_cloudflare = 0) { return 444; }
   if ($visitor_proto = http) { return 301 https://$host$request_uri; }

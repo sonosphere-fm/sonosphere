@@ -172,12 +172,18 @@ export async function list(me: User, box: "inbox" | "requests"): Promise<DmList>
   return { items, counts: await dmCounts(me.id), policy: policyOf(me) };
 }
 
+/** A first message to a stranger: no conversation between the two yet, and `to` doesn't follow `from`. Those need the robot check. */
+export async function firstContact(from: User, to: User): Promise<boolean> {
+  if (from.isAdmin || from.id === to.id) return false;
+  return !(await repo.threadOf(from.id, to.id)) && !(await repo.isFollowing(to.id, from.id));
+}
+
 /** Opening a conversation from a profile: the existing thread if there is one, and whether a message would be allowed. */
 export async function withUser(me: User, to: User): Promise<DmWith> {
   const t = await repo.threadOf(me.id, to.id);
   const visible = t && !(t.status === "declined" && t.requesterId !== me.id) ? t : null;
   const { can, why, blocked, opens } = await allowed(me, to);
-  return { user: (await repo.person(to.id)) ?? fail(404, "User not found"), threadId: visible?.id ?? null, can, why, blocked, request: !visible && opens === "request" };
+  return { user: (await repo.person(to.id)) ?? fail(404, "User not found"), threadId: visible?.id ?? null, can, why, blocked, request: !visible && opens === "request", human: await firstContact(me, to) };
 }
 
 /** One page of a conversation: up to 50 messages older than `before`, oldest first. */

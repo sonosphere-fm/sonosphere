@@ -1,5 +1,5 @@
 // Playlists API: a user's playlists, one playlist with its tracks, and the owner's edits.
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { bad, missing, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
 import { clean } from "../util";
@@ -20,13 +20,13 @@ router.get<PlaylistPage>("/api/playlist/:id", async c => {
 });
 
 router.post<PlaylistCreated>("/api/playlists", async c => {
-  const u = need(c), title = clean(c.body.title, 100) || bad("Give the playlist a title");
+  const u = confirmed(need(c)), title = clean(c.body.title, 100) || bad("Give the playlist a title");
   await throttle(`playlist:${u.id}`, 30, 86_400, "You can make up to 30 playlists a day.");
   return { id: await repo.createPlaylist(u.id, title, String(c.body.description || "").trim().slice(0, 500)) };
 });
 
 router.patch<PlaylistOk>("/api/playlist/:id", async c => {
-  const p = await requireOwn(Number(c.params[0]), need(c).id);
+  const p = await requireOwn(Number(c.params[0]), confirmed(need(c)).id);
   await repo.updatePlaylist(p.id, clean(c.body.title ?? p.title, 100) || p.title, String(c.body.description ?? p.description).trim().slice(0, 500));
   return { ok: true };
 });
@@ -37,7 +37,7 @@ router.delete<PlaylistOk>("/api/playlist/:id", async c => {
 });
 
 router.post<PlaylistOk>("/api/playlist/:id/tracks", async c => {
-  const p = await requireOwn(Number(c.params[0]), need(c).id);
+  const p = await requireOwn(Number(c.params[0]), confirmed(need(c)).id);
   await repo.appendTrack(p.id, await trackToAdd(c.body));
   return { ok: true };
 });

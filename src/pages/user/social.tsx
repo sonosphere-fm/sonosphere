@@ -58,8 +58,8 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
     <>
       {mine && <form className="inline-form" onSubmit={create}><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="New playlist title" aria-label="New playlist title" maxLength={100} /><Button kind="btn" loading={act.busy} disabled={!title.trim()}>Create playlist</Button>{act.note}</form>}
       <Async q={q}>{d => d.items.length ? (
-        <div className="grid" data-cols={6} style={sixCols}>{d.items.map(p => (
-          <div className="tile" key={p.id}><Link to={`/playlist/${p.id}`}><Art image={p.image} /></Link><Link className="strong" to={`/playlist/${p.id}`}>{p.title}</Link><span className="muted small">{plural(p.trackCount, "track")}</span></div>
+        <div className="grid below" data-cols={6} style={sixCols}>{d.items.map(p => (
+          <Link className="mcard album" key={p.id} to={`/playlist/${p.id}`}><Art image={p.image} /><strong>{p.title}</strong><span>{plural(p.trackCount, "track")}</span></Link>
         ))}</div>
       ) : <Empty>No playlists yet.</Empty>}</Async>
     </>

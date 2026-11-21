@@ -1,6 +1,7 @@
 // HTTP routes for direct messages. Every one needs a signed-in user; the rules live in ./service.
 import { confirmed, need } from "../guards";
-import { Router } from "../http";
+import { ipOf, Router } from "../http";
+import { checkTurnstile } from "../auth/turnstile";
 import { requireUser } from "../users/service";
 import * as dm from "./service";
 import type { DmAccepted, DmDone, DmList, DmSent, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
@@ -13,11 +14,14 @@ router.get<DmWith>("/api/dm/with", async c => { const me = need(c); return dm.wi
 
 router.get<DmThreadPage>("/api/dm/thread/:id", c => dm.page(need(c), c.params[0], Number(c.q.get("before")) || 2 ** 31 - 1));
 
-/** Into an existing conversation (`thread`) or to a username (`to`), which may start one. */
+/** Into an existing conversation (`thread`) or to a username (`to`), which may start one. A first message to someone
+ *  who doesn't follow you also needs a robot-check token (`turnstile`). */
 router.post<DmSent>("/api/dm/send", async c => {
   const me = confirmed(need(c));
   if (c.body.thread != null) return dm.sendToThread(me, c.body.thread, c.body.body);
-  return dm.send(me, await requireUser(String(c.body.to ?? "")), c.body.body);
+  const to = await requireUser(String(c.body.to ?? ""));
+  if (await dm.firstContact(me, to)) await checkTurnstile(c.body.turnstile, ipOf(c.req), "dm");
+  return dm.send(me, to, c.body.body);
 });
 
 router.post<DmDone>("/api/dm/thread/:id/read", c => dm.read(need(c), c.params[0]));

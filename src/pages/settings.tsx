@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { Button, Input, Select } from "../kit";
+import { Button, Input, Select, useConfirm } from "../kit";
 import { MdEditor } from "../md";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ago, api, copyText, date, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
@@ -87,9 +87,10 @@ function BlockedUsers() {
 function AccountSettings() {
   const { me, setMe } = useAuth(), nav = useNavigate();
   const [email, setEmail] = useState(me!.email), [pw, setPw] = useState({ current: "", next: "" }), [del, setDel] = useState("");
-  const a0 = useAction(), a1 = useAction(), a2 = useAction(), a3 = useAction();
+  const a0 = useAction(), a1 = useAction(), a2 = useAction(), a3 = useAction(), c = useConfirm();
   return (
     <>
+      {c.dialog}
       <Section title="Email">
         <form className="form" onSubmit={e => { e.preventDefault(); a1.run(async () => {
           if (email.trim().toLowerCase() === me!.email) return "That is already your email.";
@@ -112,7 +113,7 @@ function AccountSettings() {
         </form>
       </Section>
       <Section title="Delete account">
-        <form className="form" onSubmit={e => { e.preventDefault(); if (!window.confirm("Delete your account and all of your scrobbles? This cannot be undone.")) return; a3.run(async () => { await api<Ok>("/me/delete", { body: { password: del } }); setMe(null); nav("/"); }); }}>
+        <form className="form" onSubmit={e => { e.preventDefault(); c.ask({ title: "Delete your account?", body: "Your profile, scrobbles, loved tracks, playlists and shouts will be gone for good. This can't be undone.", action: "Delete my account", danger: true, run: () => a3.run(async () => { await api<Ok>("/me/delete", { body: { password: del } }); setMe(null); nav("/"); }) }); }}>
           <p>This permanently removes your profile, scrobbles, loved tracks, playlists and shouts.</p>
           <label>Confirm with your password<Input type="password" value={del} onChange={e => setDel(e.target.value)} required autoComplete="current-password" /></label>
           {a3.note}<Button kind="btn danger" loading={a3.busy}>Delete my account</Button>
@@ -217,9 +218,10 @@ function Services() {
 }
 
 function AppSettings() {
-  const q = useApi<Apps>("/apps"), [f, setF] = useState({ name: "", description: "" }), act = useAction();
+  const q = useApi<Apps>("/apps"), [f, setF] = useState({ name: "", description: "" }), act = useAction(), c = useConfirm();
   return (
     <>
+      {c.dialog}
       <Services />
       <Section title="Connected applications">
         <Async q={q}>{d => d.sessions.length ? <ul className="plain">{d.sessions.map(s => (
@@ -229,7 +231,7 @@ function AppSettings() {
       <Section title="Your API accounts" more="/developers" moreLabel="API docs">
         <Async q={q}>{d => d.items.length ? <ul className="plain">{d.items.map(a => (
           <li key={a.id} className="card">
-            <div className="row between"><b>{a.name}</b><Button kind="link small" onClick={() => { if (window.confirm(`Delete “${a.name}”? Apps using this key will stop working.`)) api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload); }}>Delete</Button></div>
+            <div className="row between"><b>{a.name}</b><Button kind="link small" onClick={() => c.ask({ title: `Delete “${a.name}”?`, body: "Apps using this key will stop working.", action: "Delete", danger: true, run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload) })}>Delete</Button></div>
             {a.description && <p className="muted small">{a.description}</p>}
             <dl className="keys"><dt>API key</dt><dd><code>{a.apiKey}</code></dd><dt>Shared secret</dt><dd><code>{a.secret}</code></dd></dl>
           </li>
@@ -244,9 +246,10 @@ function AppSettings() {
   );
 }
 function DataSettings() {
-  const [pw, setPw] = useState(""), act = useAction();
+  const [pw, setPw] = useState(""), act = useAction(), c = useConfirm();
   return (
     <>
+      {c.dialog}
       <Section title="Export your scrobbles">
         <p>Download every scrobble with artist, album, track and timestamp.</p>
         <div className="row"><Button kind="btn" href="/api/me/export?format=csv" download>Download CSV</Button><Button kind="btn ghost" href="/api/me/export?format=json" download>Download JSON</Button></div>
@@ -257,7 +260,7 @@ function DataSettings() {
       </Section>
       <Section title="Import"><p>Bring scrobbles or loved tracks in from a CSV or JSON file on the <Link to="/scrobble">Scrobble page</Link>.</p></Section>
       <Section title="Clear listening history">
-        <form className="form" onSubmit={e => { e.preventDefault(); if (!window.confirm("Delete all of your scrobbles? This cannot be undone.")) return; act.run(async () => { const r = await api<ScrobblesCleared>("/me/clear-scrobbles", { body: { password: pw } }); setPw(""); return `Deleted ${plural(r.deleted, "scrobble")}.`; }); }}>
+        <form className="form" onSubmit={e => { e.preventDefault(); c.ask({ title: "Delete all of your scrobbles?", body: "Your whole listening history will be removed. This can't be undone.", action: "Delete all scrobbles", danger: true, run: () => act.run(async () => { const r = await api<ScrobblesCleared>("/me/clear-scrobbles", { body: { password: pw } }); setPw(""); return `Deleted ${plural(r.deleted, "scrobble")}.`; }) }); }}>
           <p>Removes every scrobble from your library. Loved tracks, tags and playlists are kept.</p>
           <label>Confirm with your password<Input type="password" value={pw} onChange={e => setPw(e.target.value)} required autoComplete="current-password" /></label>
           {act.note}<Button kind="btn danger" loading={act.busy}>Delete all scrobbles</Button>

@@ -1,6 +1,6 @@
 import { Lockup, Mark } from "./brand";
-import { Ico } from "../icons";
-import { useRef, useState, type ReactNode } from "react";
+import { Ico, Spinner } from "../icons";
+import { Suspense, useRef, useState, type ReactNode } from "react";
 import { Pages, Select } from "../kit";
 import { Link, NavLink } from "react-router-dom";
 import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
@@ -85,3 +85,5 @@ export const Avatar = ({ user, size = 40, plain }: { user: { username: string; i
 
 // The wordmark: heavy italic type with a corner of a record (spindle and two grooves) spinning off the end.
 export const Logo = () => <span className="wordmark" role="img" aria-label="sonosphere"><Lockup /><Mark className="brand-mark logo-small" /></span>;
+/** The part of a tabbed page that changes from tab to tab. While a tab's data loads, only this part shows the spinner; the header stays put. */
+export const Pane = ({ children }: { children: ReactNode }) => <Suspense fallback={<Spinner page />}>{children}</Suspense>;

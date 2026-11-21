@@ -135,9 +135,10 @@ td .adm-badge:first-child { margin-left: 0; }
 }
 
 /* announcement banner, on every page */
-.site-banner { background: #e8eefc; color: #1a2f63; border-bottom: 1px solid #c9d6f5; font-size: 14px; }
+.site-banner { background: #e8eefc; color: #1a2f63; border-bottom: 1px solid #c9d6f5; font-size: 16px; line-height: 1.45; }
 .site-banner.warning { background: #fff2d9; color: #5c3900; border-bottom-color: #f0d9a8; }
-.site-banner-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; padding-bottom: 8px; }
+.site-banner-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.site-banner .site-banner-in { padding-top: 12px; padding-bottom: 12px; }
 .site-banner-in > span { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .site-banner .site-banner-x, .site-banner button { flex: none; background: none; border: 0; color: inherit; padding: 4px; cursor: pointer; opacity: .75; }
 .site-banner button:hover { opacity: 1; }

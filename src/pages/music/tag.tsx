@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { dec, num, qs, tagUrl, useApi, useTitle } from "../../lib";
-import { Async, Section, Stat, Tabs } from "../../ui/base";
+import { Async, Section, Stat, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
 import { TagChips } from "../../ui/tags";
@@ -20,6 +20,7 @@ export function TagPage({ tab }: { tab: "overview" | "wiki" }) {
         <Hero tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />} kicker="Tag" title={t.name} stats={<><Stat label="Times used" value={num(t.taggings)} /><Stat label="Taggers" value={num(t.taggers)} /><Stat label="Artists" value={num(t.artists.length)} /></>}
           actions={<><PlayButton queue={t.tracks} label={`Play ${t.name}`} /><StationButton type="tag" name={t.name} label="Tag radio" ghost /></>} />
         <div className="wrap page">
+          <Pane>
           {tab === "wiki" ? <WikiPage type="tag" id={t.id} title={t.name} /> : (
             <div className="cols">
               <div className="main">
@@ -32,6 +33,7 @@ export function TagPage({ tab }: { tab: "overview" | "wiki" }) {
               <aside className="side"><Section title="Related tags">{t.related.length ? <TagChips tags={t.related} /> : <p className="muted">None yet.</p>}</Section></aside>
             </div>
           )}
+          </Pane>
         </div>
       </>
     )}</Async>

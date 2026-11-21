@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { Ico } from "./icons";
 import { Button } from "./kit";
 import { useLocation } from "react-router-dom";
-import { api, useAuth } from "./lib";
+import { api, date, useAuth } from "./lib";
 import type { SiteInfo } from "../shared/admin";
-import type { Ok } from "../shared/auth";
+import { UNVERIFIED_DAYS, type Ok } from "../shared/auth";
 
 const DISMISSED = "spin.announcement.dismissed";
 export function SiteBanner() {
@@ -42,7 +42,7 @@ export function VerifyBanner() {
   return (
     <div className="site-banner warning" role="status">
       <div className="wrap site-banner-in">
-        <span>Confirm your email address using the link we sent to <strong>{me.email}</strong>. {note || <button type="button" className="banner-link" onClick={resend}>Send it again</button>}</span>
+        <span>Confirm your email address using the link we sent to <strong>{me.email}</strong>.{!me.admin && <> Until then you can listen and scrobble but not post, message or follow, and unconfirmed accounts are deleted on <strong>{date(me.registeredAt + UNVERIFIED_DAYS * 86400)}</strong>.</>} {note || <button type="button" className="banner-link" onClick={resend}>Send it again</button>}</span>
         <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}><Ico.X /></Button>
       </div>
     </div>

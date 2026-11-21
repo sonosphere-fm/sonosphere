@@ -1,9 +1,11 @@
 // Everything an account does by email: confirming the address after sign-up, moving to a new address (the old one
 // stays until the new one is confirmed), and resetting a forgotten password. Links carry a random token; only its
 // SHA-256 is stored, each works once, and asking again replaces the previous one.
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, isNull, lt, notLike } from "drizzle-orm";
+import { UNVERIFIED_DAYS } from "../../shared/auth";
 import { db } from "../db/client";
 import { emailTokens, users } from "../db/schema";
+import { deleteAccount } from "../account/repo";
 import { bad, fail } from "../http";
 import { send } from "../mail";
 import * as mail from "../mail/templates";
@@ -95,4 +97,17 @@ export const passwordChanged = (u: User) => send(mail.passwordChangedMail(u.emai
 /** Clears away links nobody used. */
 export async function dropExpiredEmailTokens(): Promise<void> {
   await db.delete(emailTokens).where(lt(emailTokens.expiresAt, now()));
+}
+/**
+ * Deletes accounts still unconfirmed UNVERIFIED_DAYS after sign-up, with everything they own. Staff are kept, and
+ * so are profiles brought in by an import, whose placeholder addresses (…@x.invalid) can never be confirmed.
+ */
+export async function purgeUnverified(): Promise<void> {
+  const due = await db.select({ id: users.id, username: users.username }).from(users).where(and(
+    isNull(users.emailVerifiedAt), lt(users.registeredAt, now() - UNVERIFIED_DAYS * 86400),
+    eq(users.isAdmin, false), notLike(users.email, "%.invalid"),
+  )).limit(200);
+  const purged: string[] = [];
+  for (const u of due) if (await deleteAccount(u.id, isNull(users.emailVerifiedAt))) purged.push(u.username); // not if they confirmed just now
+  if (purged.length) console.log(`purged ${purged.length} unconfirmed account(s): ${purged.join(", ")}`);
 }

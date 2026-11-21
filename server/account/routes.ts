@@ -3,7 +3,7 @@ import { passwordChanged, startEmailChange } from "../auth/email";
 import { deleteSessionsOf, emailTaken } from "../auth/repo";
 import { endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
-import { need } from "../guards";
+import { confirmed, need } from "../guards";
 import { bad, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
 import { deleteAllScrobbles, exportLoved, exportScrobbles } from "../listening/repo";
 import { findById } from "../users/repo";
@@ -29,9 +29,12 @@ router.patch<ProfileSaved>("/api/me", async c => {
       await startEmailChange(u, email);
     }
   }
+  // what others read on the profile waits for a confirmed address; privacy settings and a new email never do
+  const realname = clean(b.realname ?? u.realname, 60), about = String(b.about ?? u.about).trim().slice(0, 2000), country = clean(b.country ?? u.country, 60);
+  if (realname !== u.realname || about !== u.about || country !== u.country || website !== u.website) confirmed(u);
   const dmPolicy = b.dmPolicy === undefined ? undefined : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
   await repo.updateProfile(u.id, {
-    realname: clean(b.realname ?? u.realname, 60), about: String(b.about ?? u.about).trim().slice(0, 2000), country: clean(b.country ?? u.country, 60),
+    realname, about, country,
     website, hideRecent: !!(b.hideRecent ?? u.hideRecent), privateListening: !!(b.privateListening ?? u.privateListening), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
     ...(dmPolicy && { dmPolicy }),
   });

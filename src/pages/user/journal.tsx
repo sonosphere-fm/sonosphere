@@ -66,7 +66,6 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
       <h2>{id ? "Edit post" : "New journal post"}</h2>
       <label>Title<Input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} maxLength={120} required autoFocus={!id} /></label>
       <div className="field-block"><span className="field-label">Post</span><MdEditor label="Post" rows={16} value={f.body} onChange={body => setF(f => ({ ...f!, body }))} maxLength={20000} /></div>
-      <p className="muted small">Plain text; blank lines separate paragraphs. Journal posts are public.</p>
       {act.note}
       <div className="row"><Button kind="btn" loading={act.busy}>{id ? "Save changes" : "Publish"}</Button><Button kind="btn ghost" href={id ? `${base}/${id}` : base}>Cancel</Button></div>
     </form>

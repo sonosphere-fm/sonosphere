@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, dur, plural, qs, useApi, useAuth, useTitle } from "../../lib";
-import { Async, Section, Tabs } from "../../ui/base";
+import { Async, Section, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
@@ -25,6 +25,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
           actions={<><PlayButton queue={a.tracks} label="Play album" />{me && <UploadImage type="album" id={a.id} onDone={q.reload} />}</>}
           stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>} />
         <div className="wrap page mpage">
+          <Pane>
           {tab === "wiki" ? <WikiPage type="album" id={a.id} title={a.title} /> : (
             <div className="cols">
               <div className="main">
@@ -44,6 +45,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
               </aside>
             </div>
           )}
+          </Pane>
         </div>
         {tab === "overview" && <TrendingBand />}
       </>

@@ -1,6 +1,6 @@
 import { Ico } from "../icons";
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Button, Input, Textarea } from "../kit";
+import { Button, Input, Textarea, useConfirm } from "../kit";
 import { Markdown } from "../md";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, dateTime, num, qs, useApi, useAuth, useParam, userUrl, useTitle } from "../lib";
@@ -38,18 +38,19 @@ export function EventsPage() {
   );
 }
 export function EventPage() {
-  const id = useParams().id, q = useApi<EventData>(`/event/${id}`), { me } = useAuth(), nav = useNavigate();
+  const id = useParams().id, q = useApi<EventData>(`/event/${id}`), { me } = useAuth(), nav = useNavigate(), c = useConfirm();
   useTitle(q.data?.title);
   const attend = (status: Attendance | null) => { if (!me) return nav("/login"); api<AttendResult>(`/event/${id}/attend`, { body: { status } }).then(q.reload); };
   return (
     <Async q={q}>{e => (
       <>
+        {c.dialog}
         <Hero kicker="Event" title={e.title} sub={<>{dateTime(e.startsAt)} · {e.venue}, {e.city}{e.country && `, ${e.country}`}</>}
           stats={<><Stat label="Going" value={num(e.going)} /><Stat label="Interested" value={num(e.interested)} /></>}
           actions={<>
             <Button kind={e.status === "going" ? "btn" : "btn ghost"} onClick={() => attend(e.status === "going" ? null : "going")}>{e.status === "going" ? <><Ico.Check /> Going</> : "I'm going"}</Button>
             <Button kind={e.status === "interested" ? "btn" : "btn ghost"} onClick={() => attend(e.status === "interested" ? null : "interested")}>{e.status === "interested" ? <><Ico.Check /> Interested</> : "Interested"}</Button>
-            {e.mine && <Button kind="btn ghost" onClick={() => { if (window.confirm("Delete this event?")) api<EventOk>(`/event/${id}`, { method: "DELETE" }).then(() => nav("/events")); }}>Delete event</Button>}
+            {e.mine && <Button kind="btn ghost" onClick={() => c.ask({ title: "Delete this event?", action: "Delete event", danger: true, run: () => api<EventOk>(`/event/${id}`, { method: "DELETE" }).then(() => nav("/events")) })}>Delete event</Button>}
           </>} />
         <div className="wrap page">
           <div className="cols">
@@ -62,7 +63,7 @@ export function EventPage() {
             <aside className="side">
               <Section title={`Going (${e.going})`}>{e.attendees.going.length ? <UserList items={e.attendees.going} /> : <p className="muted">Nobody yet.</p>}</Section>
               <Section title={`Interested (${e.interested})`}>{e.attendees.interested.length ? <UserList items={e.attendees.interested} /> : <p className="muted">Nobody yet.</p>}</Section>
-              {e.creator && <p className="muted small">Added by <Link to={userUrl(e.creator)}>{e.creator}</Link></p>}
+              <p className="muted small">Added by {e.creator ? <Link to={userUrl(e.creator)}>{e.creator}</Link> : "a deleted user"}</p>
             </aside>
           </div>
         </div>

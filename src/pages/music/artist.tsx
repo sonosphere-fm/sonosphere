@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Select } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, enc, num, PERIODS, plural, qs, short, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Art, Async, Empty, Pager, PeriodPicker, Section, Tabs } from "../../ui/base";
+import { Art, Async, Empty, Pager, PeriodPicker, Section, Tabs, Pane } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { Grid, TrackList, UserList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
@@ -33,6 +33,7 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
             {top && <FeatureCard label={a.weekTrack ? "Popular this week" : "Most popular track"} to={trackUrl(a.name, top.title)} image={top.image} title={top.title} sub={`${num(top.listeners)} listeners`} />}
           </> : null} />
         <div className="wrap page mpage">
+          <Pane>
           {tab === "overview" && (
             <div className="cols">
               <div className="main">
@@ -63,6 +64,7 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
           {tab === "wiki" && <WikiPage type="artist" id={a.id} title={a.name} />}
           {tab === "listeners" && <ArtistListeners name={a.name} />}
           {tab === "shoutbox" && <Shoutbox type="artist" id={a.id} />}
+          </Pane>
         </div>
         {tab === "overview" && <TrendingBand />}
       </>

@@ -3,7 +3,7 @@ import { useState, type FormEvent, Suspense } from "react";
 import { Button, Input, Modal } from "../../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { albumUrl, api, artistUrl, dec, dur, plural, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Async, Section, Tabs, useAction } from "../../ui/base";
+import { Async, Section, Tabs, useAction, Pane } from "../../ui/base";
 import { Grid, LoveButton, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
@@ -66,6 +66,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
         {modal === "playlist" && <Suspense fallback={null}><AddToPlaylist track={t} onClose={() => setModal(null)} /></Suspense>}
         {modal === "obsession" && <SetObsession track={t} onClose={() => setModal(null)} />}
         <div className="wrap page mpage">
+          <Pane>
           {tab === "wiki" ? <WikiPage type="track" id={t.id} title={t.title} /> : (
             <div className="cols">
               <div className="main">
@@ -84,6 +85,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
               </aside>
             </div>
           )}
+          </Pane>
         </div>
         {tab === "overview" && <TrendingBand />}
       </>
