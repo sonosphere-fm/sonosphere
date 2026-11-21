@@ -34,6 +34,7 @@ export function Developers() {
           <pre>{origin}/2.0/</pre>
           <p>Send <code>method</code>, <code>api_key</code> and the method's parameters as a query string (reads) or form-encoded POST body (writes). Add <code>format=json</code> for JSON; XML is the default.</p>
           <h2>1. Get an API key</h2>
+          <p>Using Pano Scrobbler? Follow the <a href="#pano-scrobbler">Pano setup instructions</a> below; it has a built-in application registration.</p>
           <p>Create an API account under <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link>. You receive an API key and a shared secret.</p>
           <h2>2. Authenticate a user</h2>
           <h3>Web applications</h3>
@@ -65,6 +66,14 @@ curl -X POST ${origin}/2.0/ \\
           <pre>{`curl "${origin}/2.0/?method=user.getRecentTracks&user=USERNAME&api_key=KEY&format=json"`}</pre>
           <h2>Errors</h2>
           <p>Failures return <code>{`{"error": code, "message": "…"}`}</code> using the familiar codes: 3 invalid method, 4 authentication failed, 6 invalid parameters, 9 invalid session key, 10 invalid API key, 13 invalid signature, 14 unauthorised token.</p>
+          <h2 id="pano-scrobbler">Pano Scrobbler setup</h2>
+          <p>Choose Pano's custom Last.fm-compatible (GNU FM) server option and fill in these three fields:</p>
+          <ul>
+            <li>API URL: <code>{origin}/2.0/</code></li>
+            <li>Username: your Sonosphere username.</li>
+            <li>Password: your Sonosphere password. If you signed up through another service, set a password in <Link to="/settings/account">Settings → Account</Link> first.</li>
+          </ul>
+          <p>You do not need to create an API account. Pano uses the built-in, case-sensitive application key and signing secret <code>panoScrobbler</code>. Sonosphere verifies its signatures and your password, then issues a session for subsequent requests. You can revoke that session under <Link to="/settings/applications">Settings → Applications</Link>.</p>
           <h2 id="public-now-playing">Public now-playing API</h2>
           <p>Display a listener's current song on your website or in an application. These read-only endpoints require no API key, signature, session or login. They always use public listening visibility, even when the visitor is signed in as the listener.</p>
           <table>

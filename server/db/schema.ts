@@ -388,7 +388,8 @@ export const notifications = pgTable("notifications", {
 
 export const apiApps = pgTable("api_apps", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	// Null for built-in scrobbler applications managed by the service.
+	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
 	name: text().notNull(),
 	description: text().default("").notNull(),
 	apiKey: text("api_key").notNull().unique(),
