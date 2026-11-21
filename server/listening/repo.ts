@@ -41,6 +41,11 @@ const lovedBy = (viewerId: number | undefined) => flag(exists(db.select({ one: s
 
 // Counted from the scrobble log: used whenever a time span or a single album or track is involved.
 const played = count().as("playcount"), heardBy = countDistinct(scrobbles.userId).as("listeners");
+// With a time window, SQLite would rather walk an index sorted by item (every play ever) than the time index (only the
+// plays in the window). A unary + on the item column takes the item index out of the running.
+type ItemCol = typeof scrobbles.artistId | typeof scrobbles.albumId | typeof scrobbles.trackId;
+const byItem = (col: ItemCol, s: Scope) => (s.from ? sql`+${col}` : col);
+const itemsIn = (col: ItemCol, s: Scope) => (s.from ? sql<number>`count(distinct +${col})` : countDistinct(col));
 const ranked = (s: Scope) => (s.global ? [desc(heardBy), desc(played)] : [desc(played), desc(heardBy)]);
 
 // Site-wide, all-time rankings start from the catalogue so imported base totals count alongside local scrobbles.
@@ -91,8 +96,8 @@ export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopL
   const w = within(s);
   return {
     items: await db.select({ ...artistCols, playcount: played, listeners: heardBy }).from(scrobbles).innerJoin(artists, eq(artists.id, scrobbles.artistId))
-      .where(w).groupBy(scrobbles.artistId).orderBy(...ranked(s), artists.name).limit(limit).offset(offset),
-    total: await total(db.select({ c: countDistinct(scrobbles.artistId) }).from(scrobbles).where(w)),
+      .where(w).groupBy(byItem(scrobbles.artistId, s)).orderBy(...ranked(s), artists.name).limit(limit).offset(offset),
+    total: await total(db.select({ c: itemsIn(scrobbles.artistId, s) }).from(scrobbles).where(w)),
   };
 }
 
@@ -119,8 +124,8 @@ export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return {
     items: await db.select({ ...albumCols, playcount: played, listeners: heardBy }).from(scrobbles)
       .innerJoin(albums, eq(albums.id, scrobbles.albumId)).innerJoin(artists, eq(artists.id, albums.artistId))
-      .where(w).groupBy(scrobbles.albumId).orderBy(...ranked(s), albums.title).limit(limit).offset(offset),
-    total: await total(db.select({ c: countDistinct(scrobbles.albumId) }).from(scrobbles).where(w)),
+      .where(w).groupBy(byItem(scrobbles.albumId, s)).orderBy(...ranked(s), albums.title).limit(limit).offset(offset),
+    total: await total(db.select({ c: itemsIn(scrobbles.albumId, s) }).from(scrobbles).where(w)),
   };
 }
 
@@ -151,8 +156,8 @@ export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return {
     items: await db.select({ ...trackCols, playcount: played, listeners: heardBy, loved }).from(scrobbles)
       .innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
-      .where(w).groupBy(scrobbles.trackId).orderBy(...ranked(s), tracks.title).limit(limit).offset(offset),
-    total: await total(db.select({ c: countDistinct(scrobbles.trackId) }).from(scrobbles).where(w)),
+      .where(w).groupBy(byItem(scrobbles.trackId, s)).orderBy(...ranked(s), tracks.title).limit(limit).offset(offset),
+    total: await total(db.select({ c: itemsIn(scrobbles.trackId, s) }).from(scrobbles).where(w)),
   };
 }
 
@@ -163,6 +168,40 @@ export function top(kind: "tracks", s: Scope, limit?: number, offset?: number): 
 export function top(kind: Kind, s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist | TopAlbum | TopTrack>>;
 export function top(kind: Kind, s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist | TopAlbum | TopTrack>> {
   return kind === "artists" ? topArtists(s, limit, offset) : kind === "albums" ? topAlbums(s, limit, offset) : topTracks(s, limit, offset);
+}
+
+// ---------- site charts, shared by everyone ----------
+// The site-wide rankings scan every play, and every visitor asks for the same ones, so each is computed at most once
+// a minute and the rest are served from memory. A stale copy is served while a fresh one is computed. Only the
+// `loved` flag on tracks depends on who is looking; it is filled in per viewer with one small lookup.
+type SiteEntry = { at: number; v: Promise<TopList<TopArtist | TopAlbum | TopTrack>>; next?: Promise<unknown> };
+const siteCache = new Map<string, SiteEntry>();
+const SITE_TTL = 60_000;
+export function siteTop(kind: "artists", s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist>>;
+export function siteTop(kind: "albums", s: Scope, limit?: number, offset?: number): Promise<TopList<TopAlbum>>;
+export function siteTop(kind: "tracks", s: Scope, limit?: number, offset?: number): Promise<TopList<TopTrack>>;
+export function siteTop(kind: Kind, s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist | TopAlbum | TopTrack>>;
+export async function siteTop(kind: Kind, s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist | TopAlbum | TopTrack>> {
+  // windows like "the last 7 days" move every second; snap them to the minute so they share one entry
+  const from = s.from ? s.from - (s.from % 60) : undefined, to = s.to && s.to < FOREVER ? s.to : undefined;
+  const key = `${kind}:${from ?? ""}:${to ?? ""}:${limit}:${offset}`;
+  const compute = () => top(kind, { from, to, global: true }, limit, offset);
+  let hit = siteCache.get(key);
+  if (!hit || Date.now() - hit.at > 10 * SITE_TTL) { // nothing, or too old to show: compute it now
+    if (siteCache.size > 500) siteCache.clear();
+    const entry: SiteEntry = { at: Date.now(), v: compute() };
+    entry.v.catch(() => { if (siteCache.get(key) === entry) siteCache.delete(key); });
+    siteCache.set(key, (hit = entry));
+  } else if (Date.now() - hit.at > SITE_TTL && !hit.next) { // stale: show it, refresh behind it
+    const old = hit, v = compute();
+    old.next = v.then(() => { siteCache.set(key, { at: Date.now(), v }); }, () => { old.next = undefined; });
+  }
+  const list = await hit.v;
+  if (kind !== "tracks" || !s.viewerId || !list.items.length) return list;
+  const ids = list.items.map(i => i.id);
+  const mine = new Set((await db.select({ id: lovedTracks.trackId }).from(lovedTracks)
+    .where(and(eq(lovedTracks.userId, s.viewerId), inArray(lovedTracks.trackId, ids)))).map(r => r.id));
+  return { ...list, items: list.items.map(i => ({ ...i, loved: mine.has(i.id) ? 1 : 0 })) };
 }
 
 // ---------- totals ----------

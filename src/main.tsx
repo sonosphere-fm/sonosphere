@@ -255,6 +255,14 @@ function LookAhead() {
 // the first page's data is requested straight away, alongside the session check, rather than after it
 { const first = apiFor(location.pathname); if (first) prefetch(first); }
 
+// A click shows the next page at once. If its code or data has not arrived yet (nothing preloaded it on hover),
+// the old page gives way to a spinner rather than sitting there as if the click did nothing. Keying on the path
+// remounts the page so it cannot hold on to the previous one; changes to the query string (period, page) stay in place.
+function Routed() {
+  const { pathname } = useLocation();
+  return <Suspense key={pathname} fallback={<Spinner page />}><Pages /></Suspense>;
+}
+
 function App() {
   const [me, setMeRaw] = useState<Me | null>(null), [ready, setReady] = useState(false);
   // what the API returns depends on who is asking, so a change of viewer refetches everything on screen
@@ -273,16 +281,14 @@ function App() {
     <Theme theme={needleTheme} mode="light">
     <LinkProvider component={RouteLink}>
     <AuthContext.Provider value={{ me, setMe, refresh }}>
-      <BrowserRouter future={{ v7_startTransition: true }}>
+      <BrowserRouter>
         <PlayerProvider>
           <ScrollTop />
           <LookAhead />
           <Header />
           <SiteBanner />
           <main>
-            <Suspense fallback={<Spinner page />}>
-            <Pages />
-            </Suspense>
+            <Routed />
           </main>
           <Footer />
         </PlayerProvider>
