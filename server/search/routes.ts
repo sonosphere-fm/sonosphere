@@ -27,9 +27,9 @@ router.get<SearchResults>("/api/search", async c => {
   };
 });
 
-// MusicBrainz gets 400ms; past that the page shows ours alone.
+// MusicBrainz gets 800ms (a fresh connection through the tunnel takes most of that); past that the page shows ours alone.
 const inTime = <T>(ask: () => Promise<T[]>): Promise<T[]> =>
-  Promise.race([ask().catch(() => []), new Promise<T[]>(r => setTimeout(() => r([]), 400))]);
+  Promise.race([ask().catch(() => []), new Promise<T[]>(r => setTimeout(() => r([]), 800))]);
 const askable = (offset: number) => mbdb.mbdbOn && offset === 0;
 
 async function withMusicBrainz(found: FoundArtist[], term: string, limit: number, offset: number): Promise<FoundArtist[]> {
