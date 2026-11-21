@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, ty
 import { Button, Input, Select, useConfirm } from "../kit";
 import { MdEditor } from "../md";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ago, api, copyText, date, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
+import { ago, api, copyText, date, imageUrl, invalidateAll, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { ApiApp, AppOk, Apps } from "../../shared/apps";
 import { useTurnstile } from "./auth";
@@ -13,7 +13,8 @@ import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
 import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
 import { Ico } from "../icons";
-import { Art, Async, Section, useAction } from "../ui/base";
+import { Art, Async, Pane, Section, useAction } from "../ui/base";
+import { ImageWithFallback } from "../ui/image";
 import { UserList } from "../ui/lists";
 import type { ThemePref } from "../theme";
 
@@ -38,12 +39,14 @@ export function Settings() {
         {TABS.map(([p, l]) => <NavLink key={p} to={`/settings${p}`} end>{l}</NavLink>)}
       </nav>
       <div className="narrow-col">
-        {tab === "profile" && <ProfileSettings />}
-        {tab === "privacy" && <PrivacySettings />}
-        {tab === "notifications" && <NotificationSettings />}
-        {tab === "account" && <AccountSettings />}
-        {tab === "applications" && <AppSettings />}
-        {tab === "data" && <DataSettings />}
+        <Pane>
+          {tab === "profile" && <ProfileSettings />}
+          {tab === "privacy" && <PrivacySettings />}
+          {tab === "notifications" && <NotificationSettings />}
+          {tab === "account" && <AccountSettings />}
+          {tab === "applications" && <AppSettings />}
+          {tab === "data" && <DataSettings />}
+        </Pane>
       </div>
     </div>
   );
@@ -120,6 +123,7 @@ function ProfileSettings() {
           </div>
         </div>
       </Section>
+      <BannerSettings />
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
           <label>Display name<Input value={f.realname} onChange={set("realname")} maxLength={60} /></label>
@@ -136,6 +140,56 @@ function ProfileSettings() {
       </Section>
       <Appearance />
     </>
+  );
+}
+
+function BannerSettings() {
+  const { me, refresh } = useAuth();
+  const act = useAction();
+  const file = useRef<HTMLInputElement>(null);
+
+  const upload = (e: ChangeEvent<HTMLInputElement>) => {
+    const image = e.target.files?.[0];
+    e.target.value = "";
+    if (!image) return;
+    act.run(async () => {
+      await api<ImageSaved>("/image?type=banner", { raw: image, headers: { "Content-Type": image.type } });
+      refresh();
+      invalidateAll();
+      return "Banner updated.";
+    });
+  };
+
+  const remove = () => act.run(async () => {
+    await api<Ok>("/image?type=banner", { method: "DELETE" });
+    refresh();
+    invalidateAll();
+    return "Banner removed.";
+  });
+
+  return (
+    <Section title="Banner">
+      <div className="banner-edit">
+        {me!.banner && (
+          <ImageWithFallback
+            className="banner-preview"
+            src={imageUrl(me!.banner)}
+            alt="Your profile banner"
+            fallback={<span className="image-placeholder">Loading banner…</span>}
+            errorFallback={<span className="image-placeholder">Image unavailable</span>}
+          />
+        )}
+        <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} disabled={act.busy} />
+        <div className="avatar-actions">
+          <Button kind="btn small" type="button" loading={act.busy} onClick={() => file.current?.click()}>
+            {me!.banner ? "Change banner" : "Upload banner"}
+          </Button>
+          {me!.banner && <button type="button" className="linklike muted" disabled={act.busy} onClick={remove}>Remove banner</button>}
+        </div>
+        <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to fit.</p>
+        {act.note}
+      </div>
+    </Section>
   );
 }
 
@@ -581,10 +635,9 @@ function SpotifySettings() {
         <p className="form-error">{l.broken}</p>
       ) : (
         <>
-          {!s.pulling && <p className="muted small">Importing from Spotify is paused for now.</p>}
           <p className="muted small">
             {l.lastImport ? <>Last import {ago(l.lastImport)} · {num(l.imported)} plays imported</> : "Importing your recent plays..."}.
-            {s.pulling && " New plays are picked up every few minutes."}
+            New plays are picked up every few minutes.
           </p>
           {l.restingUntil && (
             <p className="muted small">Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.</p>
@@ -602,7 +655,7 @@ function SpotifySettings() {
       <div className="row">
         {!l.broken && !redo && (
           <>
-            {s.pulling && <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>}
+            <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>
             <Button kind="btn ghost" onClick={() => setRedo(true)}>Change app</Button>
           </>
         )}
@@ -698,6 +751,7 @@ function AppSettings() {
         <div className="services"><SpotifySettings /></div>
       </Section>
       <Section title="Connected applications">
+        <p>To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed. <Link to="/developers#pano-scrobbler">Setup details</Link>.</p>
         <Async q={q}>
           {d => d.sessions.length ? (
             <ul className="plain">

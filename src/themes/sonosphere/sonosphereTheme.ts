@@ -5,8 +5,8 @@ const FONT = { family: "Source Sans 3 Variable", fallbacks: '"Helvetica Neue", A
 const NONE = "0 0 0 transparent";
 const OFF = "0ms";
 
-export const needleTheme = defineTheme({
-  name: "needle",
+export const sonosphereTheme = defineTheme({
+  name: "sonosphere",
   extends: neutralTheme,
   typography: { scale: { base: 16, ratio: 1.2 }, body: FONT, heading: FONT },
   radius: { base: 0, multiplier: 0 },

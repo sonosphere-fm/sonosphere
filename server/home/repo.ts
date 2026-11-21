@@ -2,6 +2,7 @@ import { and, asc, count, countDistinct, desc, eq, exists, gte, inArray, sql } f
 import { trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
+import { getJson, setJson } from "../kv";
 import { flag } from "../db/dialect";
 import { albums, artists, eventArtists, eventAttendance, events, follows, lovedTracks, scrobbles, taggings, tags, tracks, users } from "../db/schema";
 import { openListener, publicCols } from "../users/repo";
@@ -76,20 +77,18 @@ export async function upcomingEvents(from: number, viewerId: number | undefined,
     .where(gte(events.startsAt, from))
     .orderBy(asc(events.startsAt))
     .limit(limit);
-  const out: EventSummary[] = [];
-  for (const e of rows) {
-    out.push({ ...e, artists: await lineupOf(e.id) });
-  }
-  return out;
+  return Promise.all(rows.map(async e => ({ ...e, artists: await lineupOf(e.id) })));
 }
 
+// whole-table counts are slow and only shown rounded down, so a few minutes old is fine
 export async function siteTotals(): Promise<SiteTotals> {
-  return {
-    scrobbles: await total(db.select({ c: count() }).from(scrobbles)),
-    users: await total(db.select({ c: count() }).from(users)),
-    artists: await total(db.select({ c: count() }).from(artists)),
-    tracks: await total(db.select({ c: count() }).from(tracks)),
-  };
+  const cached = await getJson<SiteTotals>("site-totals");
+  if (cached) return cached;
+  const rows = (table: typeof scrobbles | typeof users | typeof artists | typeof tracks) => total(db.select({ c: count() }).from(table));
+  const [s, u, a, t] = await Promise.all([rows(scrobbles), rows(users), rows(artists), rows(tracks)]);
+  const totals = { scrobbles: s, users: u, artists: a, tracks: t };
+  await setJson("site-totals", totals, 300_000);
+  return totals;
 }
 
 export const openFollowees = (userId: number): Promise<PublicUser[]> =>

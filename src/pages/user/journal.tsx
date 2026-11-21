@@ -5,6 +5,7 @@ import { Markdown, MdEditor, plainMd } from "../../md";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ago, api, date, dateTime, invalidateAll, plural, qs, useApi, userUrl } from "../../lib";
 import { Async, Avatar, Empty, Pager, Section, useAction } from "../../ui/base";
+import { UserLabels } from "../../ui/user-labels";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import type { JournalDeleted, JournalList, JournalPost as JournalPostData, JournalSaved } from "../../../shared/journals";
 
@@ -78,7 +79,7 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
         <p><Link to={base}><Ico.Left /> {name}'s journal</Link></p>
         <h1 className="page-title">{j.title}</h1>
         <p className="muted small journal-by">
-          <Avatar user={j.author} size={28} /> <Link to={userUrl(j.author.username)}>{j.author.username}</Link> ·{" "}
+          <Avatar user={j.author} size={28} /> <Link to={userUrl(j.author.username)}>{j.author.username}</Link> <UserLabels name={j.author.username} /> ·{" "}
           <span title={dateTime(j.createdAt)}>{date(j.createdAt)}</span>
           {j.updatedAt > j.createdAt + 60 && <> · edited {ago(j.updatedAt)}</>}
         </p>

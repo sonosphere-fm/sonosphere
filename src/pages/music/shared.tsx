@@ -3,6 +3,7 @@ import { Button } from "../../kit";
 import { Link } from "react-router-dom";
 import { api, imageUrl, qs } from "../../lib";
 import { useAction } from "../../ui/base";
+import { ImageWithFallback } from "../../ui/image";
 import type { Recommended } from "../../../shared/home";
 import type { ImageSaved } from "../../../shared/images";
 import type { TopAlbum, TopTrack } from "../../../shared/listening";
@@ -18,12 +19,15 @@ type HeroProps = {
   children?: ReactNode;
   tabs?: ReactNode;
   image?: string | null;
+  banner?: string | null;
 };
 
-export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image }: HeroProps) {
+export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image, banner }: HeroProps) {
   return (
     <div className="hero">
-      {image ? <div className="hero-bg" style={{ backgroundImage: `url(${imageUrl(image)})` }} /> : null}
+      {banner
+        ? <ImageWithFallback className="hero-banner" src={imageUrl(banner)} alt="" loading="eager" />
+        : image ? <ImageWithFallback className="hero-bg" src={imageUrl(image)} alt="" loading="eager" /> : null}
       <div className="wrap hero-inner">
         {art && <div className="hero-art">{art}</div>}
         <div className="hero-body">

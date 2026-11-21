@@ -3,6 +3,8 @@ import { sessionUser } from "./auth/session";
 import { me } from "./auth/service";
 import { tokenOf } from "./http";
 import { isStaff } from "./site/roles";
+import { pageSeo, seoContent, seoHead } from "./seo";
+import { crawlerRoutes } from "./sitemap";
 
 type Asset = { body: ArrayBuffer; type: string; staff: boolean };
 const DIST = "dist";
@@ -36,14 +38,25 @@ export async function appRoutes() {
 
   // the page embeds the viewer's account, so no shared cache may keep it
   const shell = async (req: Request) => {
-    const viewer = await sessionUser(tokenOf(req)).catch(() => null);
+    const [viewer, seo] = await Promise.all([sessionUser(tokenOf(req)).catch(() => null), pageSeo(new URL(req.url))]);
     const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer) : null }));
     const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
     const page = html
       .replace("<html lang=\"en\">", () => `<html lang="en"${scheme}>`)
+      .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))
+      .replace(/<div id=["']?root["']?>/, root => root + seoContent(seo))
       .replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
     const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-cache", Vary: "Cookie" };
-    return new Response(page, { headers });
+    return new Response(page, { headers, status: seo.status ?? 200 });
+  };
+
+  const metadata = async (req: Request) => {
+    const target = new URL(req.url).searchParams.get("path") || "/";
+    const url = new URL(req.url);
+    const path = target.startsWith("/") ? new URL(url.origin + target) : new URL(url.origin);
+    return new Response(seoHead(await pageSeo(path)), {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+    });
   };
 
   const asset = async (req: Request) => {
@@ -51,7 +64,7 @@ export async function appRoutes() {
     const found = assets.get(path);
     if (!found) return missing();
     if (!found.staff) {
-      return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": `public, ${FOREVER}` } });
+      return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": path === "/assets/social-card.png" ? "public, max-age=86400" : `public, ${FOREVER}` } });
     }
     const viewer = await sessionUser(tokenOf(req));
     if (!viewer || !isStaff(viewer)) return missing();
@@ -59,5 +72,5 @@ export async function appRoutes() {
     return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": cache, Vary: "Cookie" } });
   };
 
-  return { "/assets/*": asset, "/*": shell };
+  return { ...crawlerRoutes, "/page-metadata": metadata, "/assets/*": asset, "/*": shell };
 }

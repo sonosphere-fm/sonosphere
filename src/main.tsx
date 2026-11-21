@@ -3,13 +3,17 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, type Componen
 import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
-import { needleTheme } from "./themes/needle/needle.js";
+import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, startingTheme } from "./theme";
+import { ThemeToggle } from "./ui/theme-toggle";
 import { RouteLink } from "./kit";
 import { flushSync } from "react-dom";
+import "./sentry";
 import { createRoot } from "react-dom/client";
+import { PageMetadata } from "./page-metadata";
+import * as Sentry from "@sentry/react";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
-import { api, AuthContext, dec, invalidateAll, liveConnect, prefetch, qs, useAuth, useLive, userUrl, type Me, type Ok } from "./lib";
+import { api, AuthContext, dec, invalidateAll, liveConnect, prefetch, qs, refreshListening, useAuth, useLive, userUrl, type Me, type Ok } from "./lib";
 import type { MeResponse } from "../shared/auth";
 import { applyDmEvent } from "./dm";
 import { PlayerProvider } from "./player";
@@ -191,6 +195,7 @@ function Footer() {
       </div>
       <div className="footer-base">
         <div className="wrap">
+          <ThemeToggle />
           <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
           <span className="footer-legal">
             <Link to="/terms">Terms</Link>
@@ -445,7 +450,7 @@ const boot = (window as { __ME?: MeResponse }).__ME;
 function App() {
   const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null);
   const [ready, setReady] = useState(!!boot);
-  const themePref = me?.theme ?? (ready ? "light" : startingTheme());
+  const themePref = me?.theme ?? startingTheme();
   // Wait for the session check, or a signed-in reload would forget the remembered theme.
   useEffect(() => { if (ready) applyTheme(themePref); }, [themePref, ready]);
 
@@ -465,6 +470,11 @@ function App() {
   useEffect(() => { if (!boot) refresh(); }, [refresh]);
 
   useEffect(() => { liveConnect(!!me?.id); }, [me?.id]);
+  useEffect(() => {
+    const onScrobble = () => { if (me) refreshListening(me.username); };
+    window.addEventListener("spin:scrobble", onScrobble);
+    return () => window.removeEventListener("spin:scrobble", onScrobble);
+  }, [me?.username]);
   useLive(e => {
     if (e.t === "open" && e.again) {
       invalidateAll();
@@ -485,10 +495,11 @@ function App() {
     </>
   );
   return (
-    <Theme theme={needleTheme} mode={themePref}>
+    <Theme theme={sonosphereTheme} mode={themePref}>
     <LinkProvider component={RouteLink}>
     <AuthContext.Provider value={{ me, setMe, refresh }}>
       <BrowserRouter>
+        <PageMetadata />
         <PlayerProvider>
           <ScrollTop />
           <LookAhead />
@@ -507,4 +518,15 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <Sentry.ErrorBoundary
+    fallback={({ resetError }) => (
+      <div style={{ padding: 24 }}>
+        <p>Something went wrong.</p>
+        <button onClick={() => resetError()}>Try again</button>
+      </div>
+    )}
+  >
+    <App />
+  </Sentry.ErrorBoundary>,
+);

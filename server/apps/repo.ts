@@ -1,4 +1,4 @@
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { apiApps, apiSessions, apiTokens, users } from "../db/schema";
 import { digest, first, now } from "../util";
@@ -34,8 +34,8 @@ export async function revokeSession(key: string, userId: number): Promise<void> 
 }
 
 export const appByKey = (apiKey: string): Promise<AppInfo | null> =>
-  first(db.select({ name: apiApps.name, description: apiApps.description, owner: users.username, callbackUrl: apiApps.callbackUrl }).from(apiApps)
-    .innerJoin(users, eq(users.id, apiApps.userId)).where(eq(apiApps.apiKey, apiKey)).limit(1));
+  first(db.select({ name: apiApps.name, description: apiApps.description, owner: sql<string>`COALESCE(${users.username}, 'Sonosphere')`, callbackUrl: apiApps.callbackUrl }).from(apiApps)
+    .leftJoin(users, eq(users.id, apiApps.userId)).where(eq(apiApps.apiKey, apiKey)).limit(1));
 
 export async function tokenIssued(token: string, apiKey: string, since: number): Promise<boolean> {
   const row = await first(db.select({ token: apiTokens.token }).from(apiTokens)

@@ -218,7 +218,7 @@ const methods: Record<string, Method> = {
   "auth.getmobilesession": async c => {
     signed(c);
     const u = await findByName(text(c.p.username));
-    const ok = u && !u.banned && (await Bun.password.verify(text(c.p.password), u.passwordHash));
+    const ok = u && !u.banned && !!u.passwordHash && (await Bun.password.verify(text(c.p.password), u.passwordHash));
     if (!ok) fail(4, "Authentication Failed - You do not have permissions to access the service");
     return newSession(c, u.id);
   },

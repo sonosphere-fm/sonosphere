@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ago, api, useApi, useAuth, userUrl, useTitle } from "../lib";
 import type { Notification, Notifications, NotificationsRead } from "../../shared/notifications";
 import { Async, Avatar, Empty } from "../ui/base";
+import { UserLabels } from "../ui/user-labels";
 
 // `data` is free-form JSON, so anything that isn't a string reads as empty.
 const text = (v: unknown) => (typeof v === "string" ? v : "");
@@ -14,9 +15,9 @@ function Quote({ body }: { body: string }) {
 
 function Message({ n, me }: { n: Notification; me: string }) {
   const actor = (
-    <Link className="strong inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
+    <><Link className="strong inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
       {n.type === "follow" ? n.actor.username : n.actor.username || "Someone"}
-    </Link>
+    </Link>{n.actor.username && <UserLabels name={n.actor.username} />}</>
   );
   if (n.type === "comment") {
     return (

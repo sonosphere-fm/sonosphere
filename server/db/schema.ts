@@ -42,6 +42,7 @@ export const users = pgTable("users", {
 	country: text().default("").notNull(),
 	website: text().default("").notNull(),
 	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
+	bannerId: text("banner_id").references(() => images.id, { onDelete: "set null" } ),
 	hideRecent: boolean("hide_recent").default(false).notNull(),
 	privateListening: boolean("private_listening").default(false).notNull(),
 	shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),
@@ -65,6 +66,18 @@ export const users = pgTable("users", {
 });
 
 // kind: "verify", "change" (a new address, replaces users.email once confirmed) or "reset"
+export const userLabels = pgTable("user_labels", {
+  id: integer().primaryKey().generatedByDefaultAsIdentity(),
+  text: text().notNull(),
+  icon: text().notNull(),
+  color: text().notNull(),
+});
+export const userLabelAssignments = pgTable("user_label_assignments", {
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  labelId: integer("label_id").notNull().references(() => userLabels.id, { onDelete: "cascade" }),
+  position: integer().notNull(),
+}, t => [primaryKey({ columns: [t.userId, t.labelId] })]);
+
 export const emailTokens = pgTable("email_tokens", {
 	hash: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
@@ -387,7 +400,8 @@ export const notifications = pgTable("notifications", {
 
 export const apiApps = pgTable("api_apps", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	// Null for built-in scrobbler applications managed by the service.
+	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
 	name: text().notNull(),
 	description: text().default("").notNull(),
 	apiKey: text("api_key").notNull().unique(),
@@ -417,6 +431,16 @@ export const videoCache = pgTable("video_cache", {
 	key: text().primaryKey(),
 	videoId: text("video_id"),
 	fetchedAt: integer("fetched_at").notNull(),
+});
+
+// Accounts start on probation and leave it once they have earned enough trust. Without a cleared row an account is on probation.
+export const userTrust = pgTable("user_trust", {
+	userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" } ),
+	score: integer().default(0).notNull(),
+	checkedAt: integer("checked_at"),
+	clearedAt: integer("cleared_at"),
+	clearedBy: integer("cleared_by").references((): AnyPgColumn => users.id, { onDelete: "set null" } ),
+	held: boolean().default(false).notNull(),
 });
 
 export const blocks = pgTable("blocks", {

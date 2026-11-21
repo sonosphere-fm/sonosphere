@@ -2,6 +2,7 @@ import type { TopTrack } from "../../shared/listening";
 import type { Neighbour, Recommendation, SimilarArtist, Taste, TasteLabel } from "../../shared/recommend";
 import { topTracks } from "../listening/repo";
 import { topTags } from "../tags/repo";
+import { getJson, setJson } from "../kv";
 import { now } from "../util";
 import { scoresFor } from "./model";
 import * as repo from "./repo";
@@ -58,8 +59,7 @@ const LATELY = 0.5;
 type Seed = { id: number; name: string; w: number };
 
 // part all-time, part recent (plays fade over about six weeks), so a change in taste shows within days
-async function seedsFor(userId: number, mine: { id: number; name: string; c: number }[]): Promise<Seed[]> {
-  const recent = await repo.recentWeights(userId, now() - 180 * DAY, 45 * DAY, 5000);
+function seedsFor(mine: { id: number; name: string; c: number }[], recent: { id: number; w: number }[]): Seed[] {
   const lately = recent.length ? LATELY : 0;
   const maxAll = Math.log1p(mine[0]?.c ?? 1);
   const maxRecent = Math.log1p(Math.max(...recent.map(r => r.w), 0));
@@ -90,18 +90,39 @@ const popularity = (listeners: number) => 1 / (1 + 0.15 * Math.log1p(listeners))
 type Ranked = { recommendations: Recommendation[]; seeds: Seed[] };
 type Via = Recommendation["via"];
 
+// cheap enough to redo every few minutes, too slow to redo on every page view
+const RANKED_FOR = 10 * 60_000;
+
 async function rankArtists(userId: number, limit: number): Promise<Ranked> {
-  const mine = await repo.library(userId);
+  const key = `recs:${userId}:${limit}`;
+  const cached = await getJson<Ranked>(key);
+  if (cached) return cached;
+  const ranked = await rankFresh(userId, limit);
+  await setJson(key, ranked, RANKED_FOR);
+  return ranked;
+}
+
+async function rankFresh(userId: number, limit: number): Promise<Ranked> {
+  const [mine, recent] = await Promise.all([
+    repo.library(userId),
+    repo.recentWeights(userId, now() - 180 * DAY, 45 * DAY, 5000),
+  ]);
   if (!mine.length) return { recommendations: [], seeds: [] };
   const known = new Map(mine.map(r => [r.id, r.c]));
   const fresh = (id: number) => (known.get(id) ?? 0) < KNOWN;
-  const seeds = await seedsFor(userId, mine);
+  const seeds = seedsFor(mine, recent);
   const seedById = new Map(seeds.map(s => [s.id, s]));
+  const [similar, nbRows, nbCount, learned] = await Promise.all([
+    repo.similarFor(seeds.map(s => s.id)),
+    repo.neighbourArtists(userId, 30, 100),
+    repo.neighbourCount(userId),
+    scoresFor(userId),
+  ]);
 
   // artists like yours
   const item = new Map<number, number>();
   const because = new Map<number, Map<string, number>>();
-  for (const m of await repo.similarFor(seeds.map(s => s.id))) {
+  for (const m of similar) {
     const seed = seedById.get(m.from);
     if (!seed || !fresh(m.id)) continue;
     const gain = seed.w * m.score;
@@ -115,12 +136,10 @@ async function rankArtists(userId: number, limit: number): Promise<Ranked> {
   }
 
   // listeners like you
-  const [nbRows, nbCount] = await Promise.all([repo.neighbourArtists(userId, 30, 100), repo.neighbourCount(userId)]);
   const nb = new Map(nbRows.filter(r => fresh(r.id)).map(r => [r.id, r.w]));
 
   // the learned model: its own top picks, and its view of everything the other two suggested
   const als = new Map<number, number>();
-  const learned = await scoresFor(userId);
   if (learned) {
     const { model, scores } = learned;
     const order: number[] = [];
@@ -194,12 +213,10 @@ async function rankArtists(userId: number, limit: number): Promise<Ranked> {
     picked.push(best);
   }
 
-  const recommendations: Recommendation[] = [];
-  for (const id of picked) {
-    const card = cards.get(id)!;
+  const recommendations = await Promise.all(picked.map(async (id): Promise<Recommendation> => {
     const tags = (await topTags("artist", id, 3)).map(t => t.name);
-    recommendations.push({ ...card, because: topSeeds(id).slice(0, 2), tags, via: blend.get(id)!.via });
-  }
+    return { ...cards.get(id)!, because: topSeeds(id).slice(0, 2), tags, via: blend.get(id)!.via };
+  }));
   return { recommendations, seeds };
 }
 
@@ -225,20 +242,25 @@ export async function recommendations(userId: number, viewerId: number, artistLi
 
   const recIds = artists.slice(0, 20).map(a => a.id);
   const recRank = new Map(recIds.map((id, i) => [id, 1 - i / Math.max(1, recIds.length)]));
-  for (const t of await repo.unplayedTopTracks(recIds, userId, 3)) {
+  const favs = seeds.slice(0, 10);
+  const [recTop, nbTracks, nbCount, favTop] = await Promise.all([
+    repo.unplayedTopTracks(recIds, userId, 3),
+    repo.neighbourTracks(userId, 30, 50),
+    repo.neighbourCount(userId),
+    repo.unplayedTopTracks(favs.map(s => s.id), userId, 2),
+  ]);
+  for (const t of recTop) {
     add(t.id, t.artist, (recRank.get(t.artist) ?? 0) * byRank(t.r));
   }
 
-  const [nbTracks, nbCount] = await Promise.all([repo.neighbourTracks(userId, 30, 50), repo.neighbourCount(userId)]);
   const nbTop = Math.max(0, ...nbTracks.map(t => t.w));
   const wNb = 0.9 * Math.min(1, nbCount / NEIGHBOURS_TRUSTED);
   if (nbTop > 0) {
     for (const t of nbTracks) add(t.id, t.artist, wNb * t.w / nbTop);
   }
 
-  const favs = seeds.slice(0, 10);
   const favW = new Map(favs.map(s => [s.id, s.w]));
-  for (const t of await repo.unplayedTopTracks(favs.map(s => s.id), userId, 2)) {
+  for (const t of favTop) {
     add(t.id, t.artist, 0.35 * (favW.get(t.artist) ?? 0) * byRank(t.r));
   }
 

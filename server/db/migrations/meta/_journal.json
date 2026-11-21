@@ -141,6 +141,34 @@
       "when": 1795261230943,
       "tag": "0019_spotify_artist_pics",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795262328030,
+      "tag": "0020_user_trust",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795265010415,
+      "tag": "0021_user_banners",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795271950727,
+      "tag": "0022_pano_scrobbler",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795274820488,
+      "tag": "0023_user_labels",
+      "breakpoints": true
     }
   ]
 }

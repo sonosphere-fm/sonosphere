@@ -5,6 +5,7 @@ import { push } from "../realtime";
 import { blockedEither, findById, hasBlocked, type User } from "../users/repo";
 import { now } from "../util";
 import { mailMessage } from "../notifications/email";
+import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./repo";
 import { softDeleteTx as softDeleteGroupTx, unreadGroups, memberIds, type GroupRemoved } from "./groups.repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
@@ -17,7 +18,6 @@ export const DM = {
   PER_MINUTE: 20,
   PER_DAY: 500,
   NEW_THREADS_PER_DAY: 15,
-  NEW_THREADS_NEW_ACCOUNT: 4,
   COPIES: 4,
 };
 
@@ -85,30 +85,37 @@ async function allowed(from: User, to: User | null): Promise<Allowed> {
   }
 }
 
+export async function dmLimits(from: User) {
+  if (await onProbation(from)) {
+    return { perMinute: PROBATION.DM_PER_MINUTE, perDay: PROBATION.DM_PER_DAY, newThreads: PROBATION.NEW_THREADS_PER_DAY, copies: PROBATION.COPIES };
+  }
+  return { perMinute: DM.PER_MINUTE, perDay: DM.PER_DAY, newThreads: DM.NEW_THREADS_PER_DAY, copies: DM.COPIES };
+}
+
 // The refusal rolls the transaction back, so flags are collected here and written by the caller afterwards.
 async function throttle(tx: Tx, from: User, body: string, startsThread: boolean, flags: Flag[]): Promise<void> {
   const t = now();
   const flag = (kind: string, detail: string) => {
     flags.push({ userId: from.id, kind, detail, sample: body });
   };
-  if ((await repo.sentSinceTx(tx, from.id, t - 60)) >= DM.PER_MINUTE) {
+  const lim = await dmLimits(from);
+  if ((await repo.sentSinceTx(tx, from.id, t - 60)) >= lim.perMinute) {
     fail(429, "You're sending messages too quickly. Wait a moment and try again.");
   }
-  if ((await repo.sentSinceTx(tx, from.id, t - 86400)) >= DM.PER_DAY) {
-    flag("volume", `${DM.PER_DAY} messages in a day`);
+  if ((await repo.sentSinceTx(tx, from.id, t - 86400)) >= lim.perDay) {
+    flag("volume", `${lim.perDay} messages in a day`);
     fail(429, "You've reached today's message limit.");
   }
   if (startsThread && !from.isAdmin) {
-    const limit = t - from.registeredAt < 86400 ? DM.NEW_THREADS_NEW_ACCOUNT : DM.NEW_THREADS_PER_DAY;
     const started = await repo.startedSinceTx(tx, from.id, t - 86400);
-    if (started >= limit) {
+    if (started >= lim.newThreads) {
       flag("new-conversations", `${started} new conversations in a day`);
       fail(429, "You've started a lot of new conversations today. Try again tomorrow.");
     }
   }
   if (body.length >= 20 && !from.isAdmin) {
     const copies = await repo.copiesSinceTx(tx, from.id, t - 3600, body);
-    if (copies >= DM.COPIES) {
+    if (copies >= lim.copies) {
       flag("copy-paste", `The same message to ${copies} people within an hour`);
       fail(429, "That looks like the same message sent to many people. It wasn't sent.");
     }

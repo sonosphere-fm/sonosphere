@@ -173,6 +173,19 @@ export async function discography(mbid: string): Promise<MbAlbum[]> {
   return rows.map(albumOf).filter(a => a.title);
 }
 
+/** The names as MusicBrainz credits them, when the artist has a recording with that title. */
+export async function recorded(artistName: string, title: string): Promise<{ artist: string; title: string } | null> {
+  const [r] = await db()<{ artist: string; title: string }[]>`
+    WITH k AS (SELECT mbkey(${artistName}) AS a, mbkey(${title}) AS t),
+    who AS (SELECT id FROM artist, k WHERE key = k.a UNION SELECT artist FROM artist_alias, k WHERE key = k.a)
+    SELECT acn.name AS artist, r.name AS title
+    FROM recording_top rt CROSS JOIN k JOIN recording r ON r.id = rt.id
+    JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
+    WHERE k.a <> '' AND k.t <> '' AND rt.key = k.t AND acn.artist IN (SELECT id FROM who)
+    ORDER BY rt.n DESC LIMIT 1`;
+  return r ? { artist: tidy(r.artist), title: tidy(r.title) } : null;
+}
+
 export const track = (artistName: string, title: string) => orUnfeat(title, t => trackAs(artistName, t));
 async function trackAs(artistName: string, title: string): Promise<MbTrack | null> {
   type Rec = { id: number; name: string; length: number | null; comment: string; video: boolean; artist: string };

@@ -1,12 +1,13 @@
 // Spotify caps development-mode apps at a few users, so each listener links their own app with PKCE.
 import { createHash } from "node:crypto";
 import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
-import { attempt, exclusive, getJson, setJson } from "../kv";
+import { attempt, exclusive, getJson, setJson, takeJson } from "../kv";
 import { now, rid } from "../util";
+import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
+import { clearNowPlaying } from "../listening/repo";
 import { seal, unseal } from "./seal";
 import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
-import { spotifyPulling } from "./pulling";
 
 const ACCOUNTS = "https://accounts.spotify.com";
 const API = "https://api.spotify.com/v1";
@@ -157,10 +158,11 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
       createdAt: now(),
     });
     const link = await repo.findLink(pending.userId);
-    if (link) importRecent(link).catch(e => console.error("Spotify import:", e));
+    if (link) importRecent(link).catch(e => { console.error("Spotify import:", e); Sentry.captureException(e); });
     return "connected";
   } catch (e) {
     console.error("Spotify sign-in:", e);
+    Sentry.captureException(e);
     return "failed";
   }
 }
@@ -266,9 +268,16 @@ async function mirrorPlaying(link: repo.Link) {
   if (await paused(link.clientId)) return;
   try {
     const reply = await spotifyGet(link, "/me/player/currently-playing");
-    if (!reply || reply.is_playing !== true || reply.currently_playing_type !== "track") return;
+    const mirrored = `spotify-playing:${link.userId}`;
+    if (!reply || reply.is_playing !== true || reply.currently_playing_type !== "track") {
+      // only what Spotify put there: another scrobbler's now playing stays
+      const trackId = await takeJson<number>(mirrored);
+      if (trackId) await clearNowPlaying(link.userId, trackId);
+      return;
+    }
     const input = trackInput(reply.item);
-    if (input) await setNowPlaying(link.userId, input);
+    const ref = input && (await setNowPlaying(link.userId, input));
+    if (ref) await setJson(mirrored, ref.trackId, 3600_000);
   } catch (e) {
     failed(link, e);
   }
@@ -276,10 +285,10 @@ async function mirrorPlaying(link: repo.Link) {
 
 function failed(link: repo.Link, e: unknown): number {
   if (e instanceof Revoked) {
-    repo.updateLink(link.userId, { broken: e.message }).catch(err => console.error(err));
+    repo.updateLink(link.userId, { broken: e.message }).catch(err => { console.error(err); Sentry.captureException(err); });
     return 0;
   }
-  if (!(e instanceof Slowed)) console.error(`Spotify (user ${link.userId}):`, e);
+  if (!(e instanceof Slowed)) { console.error(`Spotify (user ${link.userId}):`, e); Sentry.captureException(e); }
   return 0;
 }
 
@@ -355,14 +364,14 @@ export async function status(userId: number, req: Request): Promise<SpotifyStatu
   const redirectUri = redirectFor(req);
   if (!redirectUri) return { enabled: false };
   const link = await repo.findLink(userId);
-  return { enabled: true, redirectUri, pulling: spotifyPulling(), link: link && (await view(link)) };
+  return { enabled: true, redirectUri, link: link && (await view(link)) };
 }
 
 /** Imports now instead of waiting for the next round. */
 export async function syncNow(userId: number): Promise<{ imported: number; link: SpotifyLink } | null> {
   const link = await repo.findLink(userId);
   if (!link) return null;
-  const imported = link.broken || !spotifyPulling() ? 0 : await importRecent(link);
+  const imported = link.broken ? 0 : await importRecent(link);
   return { imported, link: await view((await repo.findLink(userId)) ?? link) };
 }
 
@@ -382,7 +391,7 @@ export async function playerToken(userId: number): Promise<{ token: string | nul
 
 let busy = false;
 async function tick() {
-  if (busy || !spotifyPulling()) return;
+  if (busy) return;
   busy = true;
   try {
     // one process polls at a time; the lock is generous since a slow round must not overlap the next
@@ -393,6 +402,7 @@ async function tick() {
     });
   } catch (e) {
     console.error("Spotify loop:", e);
+    Sentry.captureException(e);
   } finally {
     busy = false;
   }

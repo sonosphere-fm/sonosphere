@@ -7,6 +7,7 @@ import * as mbdb from "../metadata/mbdb";
 import { want } from "../metadata/wanted";
 import { looseKey } from "../search/rank";
 import { clean, now } from "../util";
+import * as Sentry from "@sentry/bun";
 
 type Act = { name: string; mbid?: string };
 type Found = {
@@ -222,7 +223,11 @@ export function startEventSync() {
       console.log("events: musicbrainz", JSON.stringify(r));
     });
   };
-  const quiet = (e: unknown) => console.error("events:", e);
+  const quiet = (e: unknown) => {
+    console.error("events:", e);
+    const isNetwork = e instanceof TypeError || (e instanceof Error && /fetch|network|aborted|timeout/i.test(e.message));
+    if (!isNetwork) Sentry.captureException(e);
+  };
   const runDaily = () => {
     daily().catch(quiet);
   };

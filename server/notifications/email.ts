@@ -8,6 +8,7 @@ import { send, SITE_URL } from "../mail";
 import { digestMail, noticeMail, type NoticeLine } from "../mail/templates";
 import { findById, type User } from "../users/repo";
 import { now } from "../util";
+import * as Sentry from "@sentry/bun";
 import type { EmailKind } from "../../shared/notifications";
 
 const userPage = (name: string) => `${SITE_URL}/user/${encodeURIComponent(name)}`;
@@ -43,6 +44,7 @@ export async function mailNotice(userId: number, type: string, actorId: number, 
     if (n && (await attempt(`mail-notice:${userId}`, 10, 3600_000))) await send(noticeMail(to.email, n));
   } catch (e) {
     console.error("notification mail:", e);
+    Sentry.captureException(e);
   }
 }
 
@@ -59,6 +61,7 @@ export async function mailMessage(to: User, from: string, threadId: number | str
     }
   } catch (e) {
     console.error("message mail:", e);
+    Sentry.captureException(e);
   }
 }
 

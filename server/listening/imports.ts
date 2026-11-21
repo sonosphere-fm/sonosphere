@@ -6,6 +6,7 @@ import { bad, fail, int, missing, Router, throttle } from "../http";
 import { exclusive } from "../kv";
 import { lastfmCall } from "../metadata/sources";
 import { clean, now } from "../util";
+import * as Sentry from "@sentry/bun";
 import { importLoved, scrobbleMany } from "./service";
 import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportKind, type ImportState } from "../../shared/imports";
 
@@ -155,7 +156,7 @@ async function step(j: Job) {
   } catch (e) {
     // a lasting problem ends it; anything else (Last.fm busy, a name added by another process meanwhile) is tried again
     const lasting = e instanceof LastfmError && e.lasting;
-    if (!lasting) console.error(`import ${j.id}:`, e);
+    if (!lasting) { console.error(`import ${j.id}:`, e); Sentry.captureException(e); }
     const failures = j.failures + 1;
     if (!lasting && failures < 30) {
       await advance(j.id, { failures });
@@ -188,7 +189,7 @@ export function startImports() {
   clearInterval(g.__spinImports);
   // a round can take a while; the lock keeps rounds from overlapping, across processes too
   g.__spinImports = setInterval(() => {
-    exclusive("imports", 5 * 60_000, tick).catch(e => console.error("imports:", e));
+    exclusive("imports", 5 * 60_000, tick).catch(e => { console.error("imports:", e); Sentry.captureException(e); });
   }, 2000);
 }
 
