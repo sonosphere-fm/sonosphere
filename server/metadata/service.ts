@@ -5,18 +5,23 @@
 //   looked up and filed, so the page can show. Names nobody has heard of are remembered for a day and not looked up again.
 // - An entry those accounts open that was never looked up (or not for a month) is filled in the background: the
 //   artist's photo and albums, the album's cover, date and track list, the track's length and album.
-// - A background loop slowly finds covers for albums filed this way.
+// - A background loop slowly finds covers for albums filed this way, and another fills in entries never looked up:
+//   first those shown somewhere as a card without a picture (want()), then the rest in order. It runs in "spare time":
+//   its Spotify lookups wait for capacity visitors' page lookups don't need (sources.ts).
+// - Spotify is asked about an entry once. A real answer, found or not, is remembered (spAt) and never asked again; a
+//   lookup that couldn't be made (rate limited) leaves it unasked, and the background loop asks again later.
 // Only matches by name are taken, so a lookup never renames or merges anything already filed.
 import { correct, mbidOfAlbum, mbidOfArtist } from "../corrections/service";
 import { HttpError, type Viewer } from "../http";
 import { saveImage, saveRemoteImage } from "../images/repo";
 import { convert } from "../images/process";
-import { attempt, exclusive, getJson, setJson } from "../kv";
+import { attempt, exclusive, getJson, setAdd, setJson, setTake } from "../kv";
 import { isStaff } from "../site/roles";
 import { norm, now } from "../util";
 import { findAlbum, findArtist, findTrack, type AlbumWithArtist, type Artist, type TrackWithArtist } from "../catalog/repo";
 import * as repo from "./repo";
 import * as src from "./sources";
+import { WANTED } from "./wanted";
 
 const MONTH = 30 * 86400, DAY = 86400_000;
 
@@ -50,19 +55,46 @@ async function storeCover(albumId: number, rgid: string): Promise<boolean> {
     await repo.setAlbum(albumId, { imageId: id });
     return true;
   } catch (e) {
-    if (e instanceof HttpError) return false; // not a usable picture, or today's storage allowance is used up
+    if (e instanceof HttpError && e.status === 503) throw new src.Busy("storage"); // today's storage allowance is used up
+    if (e instanceof HttpError) return false; // not a usable picture
     throw e;
   }
 }
 const showPicture = (p: src.Picture) => saveRemoteImage(p.url, p.width, p.height);
 
+/**
+ * Asks Spotify about an entry unless it already answered for it. Undefined when it couldn't be asked now (every app
+ * rate limited, or an error): the entry stays unasked and is asked again later.
+ */
+async function askSpotify<T>(kind: "artist" | "album" | "track", id: number, spAt: number | null, ask: () => Promise<T | null>): Promise<T | null | undefined> {
+  if (spAt) return null;
+  try {
+    const r = await ask();
+    await repo.spotifyAnswered(kind, id);
+    return r;
+  } catch (e) { quiet(`spotify ${kind} ${id}`)(e); return undefined; }
+}
+/** One Spotify album lookup per album however many steps need it. */
+function albumOnSpotify(id: number, spAt: number | null, artist: string, title: string) {
+  let asked: Promise<src.SpAlbum | null> | null = null;
+  return () => (asked ??= askSpotify("album", id, spAt, () => src.spAlbum(artist, title)).then(r => r ?? null));
+}
+
 /** Finds an album a cover: the Cover Art Archive first, then Spotify (shown from there). */
-async function findCover(albumId: number, artist: string, title: string, mbid: string | null, sp?: src.SpAlbum | null): Promise<void> {
+async function findCover(albumId: number, mbid: string | null, spotify: () => Promise<src.SpAlbum | null>): Promise<void> {
+  if (await getJson<number>(COVERS_PAUSED)) return;
   await repo.setAlbum(albumId, { coverAt: now() });
-  if (mbid && (await storeCover(albumId, mbid))) return;
-  const s = sp !== undefined ? sp : await src.spAlbum(artist, title);
+  try {
+    if (mbid && (await storeCover(albumId, mbid))) return;
+  } catch (e) {
+    // out of storage for today: covers wait an hour, and this album is searched again then
+    if (e instanceof src.Busy && e.message === "storage") { await repo.setAlbum(albumId, { coverAt: null }); await setJson(COVERS_PAUSED, 1, 3600_000); return; }
+    throw e;
+  }
+  const s = await spotify();
   if (s?.picture) await repo.setAlbum(albumId, { imageId: await showPicture(s.picture) });
 }
+const COVERS_PAUSED = "meta-pause:covers";
 
 // ---------- filling in ----------
 async function fillArtist(id: number): Promise<void> {
@@ -70,12 +102,14 @@ async function fillArtist(id: number): Promise<void> {
   if (!a) return;
   const mbid = a.mbid || mbidOfArtist(a.name) || (await src.mbArtist(a.name))?.mbid || null;
   if (mbid && mbid !== a.mbid) await repo.setArtist(id, { mbid });
-  if (!a.imageId) {
-    const spId = a.spotifyId || (mbid ? await src.mbSpotifyId(mbid) : null);
-    const s = await src.spArtist(a.name, spId);
-    if (s) await repo.setArtist(id, { spotifyId: s.id, ...(s.picture ? { imageId: await showPicture(s.picture) } : {}) });
-  }
+  if (!a.imageId) await artistPhoto(a, mbid);
   if (mbid) await repo.addDiscography(id, await src.mbDiscography(mbid)); // their covers come from the background loop
+}
+
+/** The artist's photo from Spotify (by the Spotify id MusicBrainz links, else by name). */
+async function artistPhoto(a: { id: number; name: string; spotifyId: string | null; spAt: number | null }, mbid: string | null) {
+  const s = await askSpotify("artist", a.id, a.spAt, async () => src.spArtist(a.name, a.spotifyId || (mbid ? await src.mbSpotifyId(mbid) : null)));
+  if (s) await repo.setArtist(a.id, { spotifyId: s.id, ...(s.picture ? { imageId: await showPicture(s.picture) } : {}) });
 }
 
 async function fillAlbum(id: number, artist: string, hint?: src.MbAlbum | null): Promise<void> {
@@ -85,20 +119,22 @@ async function fillAlbum(id: number, artist: string, hint?: src.MbAlbum | null):
   const mbid = al.mbid || mbidOfAlbum(artist, al.title) || found?.mbid || null;
   const date = al.releaseDate || found?.date || undefined;
   await repo.setAlbum(id, { ...(mbid && mbid !== al.mbid ? { mbid } : {}), ...(date && date !== al.releaseDate ? { releaseDate: date } : {}) });
-  let sp: src.SpAlbum | null | undefined;
+  const spotify = albumOnSpotify(id, al.spAt, artist, al.title);
   if ((await repo.trackListSize(id)) < 2) {
     let list = mbid ? await src.mbTrackList(mbid) : [];
-    if (!list.length) { sp = await src.spAlbum(artist, al.title); if (sp) list = await src.spTrackList(sp.id); }
+    if (!list.length) { const sp = await spotify(); if (sp) list = await src.spTrackList(sp.id).catch(e => { quiet(`album ${id} tracks`)(e); return []; }); }
     if (list.length) await repo.setTrackList(id, al.artistId, list);
   }
-  if (!al.imageId) await findCover(id, artist, al.title, mbid, sp);
+  if (!al.imageId) await findCover(id, mbid, spotify);
 }
 
 async function fillTrack(id: number, artist: string): Promise<void> {
   const t = await repo.trackRow(id);
+  // a track filed with its album (from a scrobble) shows that album's cover: fill the album if nobody has
+  if (t?.albumId && (await repo.claim("album", t.albumId, now() - MONTH))) await fillAlbum(t.albumId, artist);
   if (!t || (t.duration && t.albumId)) return;
   const mb = await src.mbTrack(artist, t.title);
-  const sp = !mb ? await src.spTrack(artist, t.title) : null;
+  const sp = !mb ? ((await askSpotify("track", id, t.spAt, () => src.spTrack(artist, t.title))) ?? null) : null;
   const seconds = mb?.seconds || sp?.seconds || 0;
   if (!t.duration && seconds) await repo.setTrack(id, { duration: seconds });
   if (!t.albumId) {
@@ -119,7 +155,7 @@ async function fileAlbum(artistId: number, artist: string, mb: src.MbAlbum | nul
     if (await repo.claim("album", id, now() - MONTH)) {
       const al = await repo.albumRow(id);
       if (al && (await repo.trackListSize(id)) < 2) { const list = await src.spTrackList(sp.id); if (list.length) await repo.setTrackList(id, artistId, list); }
-      if (al && !al.imageId) await findCover(id, artist, sp.title, null, sp);
+      if (al && !al.imageId) await findCover(id, null, async () => sp);
     }
     return id;
   }
@@ -234,15 +270,100 @@ async function tick() {
     await exclusive("metadata-covers", 5 * 60_000, async () => {
       const rows = await repo.coverless(5);
       const names = await repo.artistNames([...new Set(rows.map(r => r.artistId))]);
-      for (const r of rows) await findCover(r.id, names.get(r.artistId) ?? "", r.title, r.mbid).catch(quiet(`cover ${r.id}`));
+      for (const r of rows) await findCover(r.id, r.mbid, albumOnSpotify(r.id, r.spAt, names.get(r.artistId) ?? "", r.title)).catch(quiet(`cover ${r.id}`));
     });
   } catch (e) { quiet("cover loop")(e); }
   finally { busy = false; }
+}
+
+export { want } from "./wanted";
+
+// Entries filed before lookups existed (or by scrobbles, which never trigger one) are filled in slowly, a batch every
+// 20 seconds, while our own copy of MusicBrainz answers; through musicbrainz.org's one-a-second limit it would crowd
+// out the lookups visitors are waiting for. Then Spotify is asked about whatever is still missing a picture (or an
+// album or length, for tracks) and was never asked, while it has capacity to spare.
+let filling = false;
+async function backfill() {
+  if (filling) return;
+  filling = true;
+  try {
+    await exclusive("metadata-backfill", 10 * 60_000, () => src.inSpareTime(async () => {
+      const until = Date.now() + 18_000, due = now() - MONTH;
+      if (src.mbLocal()) {
+        // the wanted first, then everything never looked up
+        for (const w of await setTake(WANTED, 40)) {
+          if (Date.now() > until) { await setAdd(WANTED, [w], 20_000); continue; }
+          const [kind, n] = w.split(":"), id = Number(n);
+          await fillWanted(kind as "artist" | "album" | "track", id, due).catch(quiet(`wanted ${w}`));
+        }
+        for (const r of await repo.unlookedArtists(15)) if (await repo.claim("artist", r.id, due)) await fillArtist(r.id).catch(quiet(`artist ${r.id}`));
+        const albums = await repo.unlookedAlbums(15), tracks = await repo.unlookedTracks(25);
+        const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
+        for (const r of albums) if (await repo.claim("album", r.id, due)) await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`));
+        for (const r of tracks) if (await repo.claim("track", r.id, due)) await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
+      }
+      await spotifyBackfill(until);
+    }));
+  } catch (e) { quiet("backfill")(e); }
+  finally { filling = false; }
+}
+
+/** A wanted entry: looked up in full if it never was, else just asked of Spotify if it wasn't yet. */
+async function fillWanted(kind: "artist" | "album" | "track", id: number, due: number) {
+  if (kind === "artist") {
+    if (await repo.claim("artist", id, due)) return fillArtist(id);
+    const a = await repo.artistRow(id);
+    if (a && !a.imageId && !a.spAt) await artistPhoto(a, a.mbid);
+    return;
+  }
+  if (kind === "album") {
+    const al = await repo.albumRow(id);
+    if (!al || al.imageId) return;
+    const artist = (await repo.artistNames([al.artistId])).get(al.artistId) ?? "";
+    if (await repo.claim("album", id, due)) return fillAlbum(id, artist);
+    if (!al.spAt) await findCover(id, null, albumOnSpotify(id, al.spAt, artist, al.title));
+    return;
+  }
+  const t = await repo.trackRow(id);
+  if (!t) return;
+  const artist = (await repo.artistNames([t.artistId])).get(t.artistId) ?? "";
+  if (await repo.claim("track", id, due)) return fillTrack(id, artist);
+  if (t.albumId) await fillWanted("album", t.albumId, due);
+  else if (!t.spAt) await spotifyTrack(t, artist);
+}
+
+/** A track MusicBrainz didn't place: its length and album from Spotify. */
+async function spotifyTrack(t: { id: number; artistId: number; title: string; duration: number; albumId: number | null; spAt: number | null }, artist: string) {
+  const sp = await askSpotify("track", t.id, t.spAt, () => src.spTrack(artist, t.title));
+  if (!sp) return;
+  if (!t.duration && sp.seconds) await repo.setTrack(t.id, { duration: sp.seconds });
+  if (!t.albumId) { const albumId = await fileAlbum(t.artistId, artist, null, sp.album); if (albumId) await repo.setTrack(t.id, { albumId }); }
+}
+
+/** Asks Spotify about entries looked up elsewhere that still lack something, until it has no capacity to spare. */
+async function spotifyBackfill(until: number) {
+  const going = async () => Date.now() < until && !(await src.spotifyResting());
+  for (const r of await repo.spotifyDueArtists(10)) {
+    if (!(await going())) return;
+    const a = await repo.artistRow(r.id);
+    if (a && !a.imageId && !a.spAt) await artistPhoto(a, a.mbid).catch(quiet(`artist ${r.id}`));
+  }
+  const albums = await repo.spotifyDueAlbums(10), tracks = await repo.spotifyDueTracks(10);
+  const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
+  for (const r of albums) {
+    if (!(await going())) return;
+    await findCover(r.id, null, albumOnSpotify(r.id, null, names.get(r.artistId) ?? "", r.title)).catch(quiet(`album ${r.id}`));
+  }
+  for (const r of tracks) {
+    if (!(await going())) return;
+    const t = await repo.trackRow(r.id);
+    if (t) await spotifyTrack(t, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
+  }
 }
 
 /** Started once at boot (server/index.ts). */
 export function startMetadata() {
   const g = globalThis as { __spinMetadata?: ReturnType<typeof setInterval> }; // survives hot reloads in development
   clearInterval(g.__spinMetadata);
-  g.__spinMetadata = setInterval(tick, 20_000);
+  g.__spinMetadata = setInterval(() => { src.inSpareTime(tick); backfill(); }, 20_000);
 }

@@ -54,7 +54,9 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
                 <Trend data={a.trend} />
                 <Section title="Upcoming events">{a.events.length ? <EventList items={a.events} /> : <p className="muted">We don't have any upcoming events for this artist right now.</p>}
                   <p className="side-links"><Link to="/events/add"><Ico.Plus /> Add event</Link><Link to="/events">View all events</Link></p></Section>
-                {a.mbid && <Section title="Elsewhere"><p className="side-links"><a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a></p></Section>}
+                {(a.mbid || a.spotifyId) && <Section title="Elsewhere"><p className="side-links">
+                  {a.mbid && <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a>}
+                  {a.spotifyId && <a href={`https://open.spotify.com/artist/${a.spotifyId}`} target="_blank" rel="noreferrer">Spotify</a>}</p></Section>}
               </aside>
             </div>
           )}

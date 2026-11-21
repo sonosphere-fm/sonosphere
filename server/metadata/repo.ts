@@ -25,7 +25,7 @@ export const addTrack = (artistId: number, title: string, seconds: number) => tr
 export async function setArtist(id: number, set: { mbid?: string; spotifyId?: string; imageId?: string; metaAt?: number }) {
   if (Object.keys(set).length) await db.update(artists).set(set).where(eq(artists.id, id));
 }
-export async function setAlbum(id: number, set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number; metaAt?: number }) {
+export async function setAlbum(id: number, set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number | null; metaAt?: number }) {
   if (Object.keys(set).length) await db.update(albums).set(set).where(eq(albums.id, id));
 }
 export async function setTrack(id: number, set: { duration?: number; albumId?: number; metaAt?: number }) {
@@ -75,8 +75,35 @@ export async function addDiscography(artistId: number, list: { mbid: string; tit
 
 /** Albums with a MusicBrainz id but no cover that were never searched for one, oldest first. */
 export const coverless = (limit: number) =>
-  db.select({ id: albums.id, mbid: albums.mbid, title: albums.title, artistId: albums.artistId }).from(albums)
+  db.select({ id: albums.id, mbid: albums.mbid, title: albums.title, artistId: albums.artistId, spAt: albums.spAt }).from(albums)
     .where(and(isNotNull(albums.mbid), isNull(albums.imageId), isNull(albums.coverAt))).orderBy(asc(albums.id)).limit(limit);
 
 export const artistNames = async (ids: number[]) =>
   new Map((ids.length ? await db.select({ id: artists.id, name: artists.name }).from(artists).where(inArray(artists.id, ids)) : []).map(r => [r.id, r.name]));
+
+/**
+ * Entries never looked up, oldest first, for the background backfill: artists; albums someone filed (ones added from a
+ * discography already carry a MusicBrainz id); tracks missing a length or an album.
+ */
+/** Spotify answered for an entry (found or not): it isn't asked again. */
+export async function spotifyAnswered(kind: Kind, id: number) {
+  const t = table[kind];
+  await db.update(t).set({ spAt: now() }).where(eq(t.id, id));
+}
+/** Entries looked up elsewhere that still lack something Spotify might have and that Spotify was never asked about. */
+export const spotifyDueArtists = (limit: number) =>
+  db.select({ id: artists.id }).from(artists).where(and(isNull(artists.imageId), isNull(artists.spAt), isNotNull(artists.metaAt))).orderBy(asc(artists.id)).limit(limit);
+export const spotifyDueAlbums = (limit: number) =>
+  db.select({ id: albums.id, artistId: albums.artistId, title: albums.title }).from(albums)
+    .where(and(isNull(albums.imageId), isNull(albums.spAt), or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt))))).orderBy(asc(albums.id)).limit(limit);
+export const spotifyDueTracks = (limit: number) =>
+  db.select({ id: tracks.id, artistId: tracks.artistId }).from(tracks)
+    .where(and(isNull(tracks.spAt), isNotNull(tracks.metaAt), or(isNull(tracks.albumId), eq(tracks.duration, 0)))).orderBy(asc(tracks.id)).limit(limit);
+
+export const unlookedArtists = (limit: number) =>
+  db.select({ id: artists.id }).from(artists).where(isNull(artists.metaAt)).orderBy(asc(artists.id)).limit(limit);
+export const unlookedAlbums = (limit: number) =>
+  db.select({ id: albums.id, artistId: albums.artistId }).from(albums).where(and(isNull(albums.metaAt), isNull(albums.mbid))).orderBy(asc(albums.id)).limit(limit);
+export const unlookedTracks = (limit: number) =>
+  db.select({ id: tracks.id, artistId: tracks.artistId }).from(tracks)
+    .where(and(isNull(tracks.metaAt), or(isNull(tracks.albumId), eq(tracks.duration, 0)))).orderBy(asc(tracks.id)).limit(limit);

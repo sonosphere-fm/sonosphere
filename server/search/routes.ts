@@ -2,6 +2,9 @@
 import { ipOf, paging, Router, throttle } from "../http";
 import { norm } from "../util";
 import * as repo from "./repo";
+import * as mbdb from "../metadata/mbdb";
+import type { FoundArtist } from "../../shared/search";
+import { rankArtists } from "./rank";
 import type { SearchResults } from "../../shared/search";
 
 export const router = new Router();
@@ -15,7 +18,7 @@ router.get<SearchResults>("/api/search", async c => {
   await throttle(`search-h:${who}`, 1000, 3600, "Too many searches. Try again later.");
   const query = { term, limit: pg.limit, offset: pg.offset }, want = (t: string) => type === "all" || type === t;
   return {
-    artists: want("artists") ? await repo.searchArtists(query) : [],
+    artists: want("artists") ? await withMusicBrainz(await repo.searchArtists(query), term, pg.limit, pg.offset) : [],
     albums: want("albums") ? await repo.searchAlbums(query) : [],
     tracks: want("tracks") ? await repo.searchTracks(query, c.user?.id ?? 0) : [],
     tags: want("tags") ? await repo.searchTags(query) : [],
@@ -23,3 +26,16 @@ router.get<SearchResults>("/api/search", async c => {
     ...pg,
   };
 });
+
+/**
+ * The first page of artists, with the ones MusicBrainz knows that aren't filed here yet, ranked together (rank.ts).
+ * MusicBrainz gets 400ms; past that the page shows ours alone.
+ */
+async function withMusicBrainz(found: FoundArtist[], term: string, limit: number, offset: number): Promise<FoundArtist[]> {
+  if (!mbdb.mbdbOn || offset > 0) return found;
+  const theirs = await Promise.race([
+    mbdb.searchArtists(term).catch(() => []),
+    new Promise<mbdb.ArtistHit[]>(r => setTimeout(() => r([]), 400)),
+  ]);
+  return rankArtists(found, theirs, term, limit);
+}

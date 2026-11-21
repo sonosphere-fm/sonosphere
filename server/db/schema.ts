@@ -105,6 +105,8 @@ export const artists = pgTable("artists", {
 	mbid: text(),
 	spotifyId: text("spotify_id"),
 	metaAt: integer("meta_at"),
+	// when Spotify answered for this entry (found or not): it is asked once, never again after a real answer
+	spAt: integer("sp_at"),
 });
 
 export const albums = pgTable("albums", {
@@ -121,6 +123,7 @@ export const albums = pgTable("albums", {
 	mbid: text(),
 	metaAt: integer("meta_at"),
 	coverAt: integer("cover_at"),
+	spAt: integer("sp_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),
@@ -137,6 +140,7 @@ export const tracks = pgTable("tracks", {
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
 	metaAt: integer("meta_at"),
+	spAt: integer("sp_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),

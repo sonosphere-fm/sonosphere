@@ -111,6 +111,26 @@ export async function setJson(key: string, value: unknown, ttlMs: number): Promi
   try { await client.send("SET", [PREFIX + key, raw, "PX", String(Math.ceil(ttlMs))]); } catch (e) { warn(e); }
 }
 
+// ---------- sets (a work queue in no particular order) ----------
+const memSets = new Map<string, Set<string>>();
+/** Adds members to a set that holds at most `cap` (members over it are dropped). */
+export async function setAdd(key: string, members: string[], cap: number): Promise<void> {
+  if (!members.length) return;
+  if (!client) { const set = memSets.get(key) ?? new Set(); memSets.set(key, set); for (const m of members) if (set.size < cap) set.add(m); return; }
+  if (ready) await ready;
+  try {
+    if (Number(await client.send("SCARD", [PREFIX + "s:" + key])) >= cap) return;
+    await client.send("SADD", [PREFIX + "s:" + key, ...members]);
+  } catch (e) { warn(e); }
+}
+/** Takes up to `n` members out of a set. */
+export async function setTake(key: string, n: number): Promise<string[]> {
+  if (!client) { const set = memSets.get(key); const out = set ? [...set].slice(0, n) : []; for (const m of out) set!.delete(m); return out; }
+  if (ready) await ready;
+  try { const r = await client.send("SPOP", [PREFIX + "s:" + key, String(n)]); return Array.isArray(r) ? r.map(String) : []; }
+  catch (e) { warn(e); return []; }
+}
+
 // ---------- locks ----------
 const RELEASE = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end`;
 

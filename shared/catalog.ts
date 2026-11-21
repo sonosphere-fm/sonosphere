@@ -32,7 +32,7 @@ export type LatestAlbum = { id: number; title: string; image: string | null; rel
 
 /** GET /api/artist */
 export type ArtistPage = {
-  id: number; name: string; mbid: string; image: string | null; listeners: number; playcount: number; userPlaycount: number;
+  id: number; name: string; mbid: string; spotifyId: string; image: string | null; listeners: number; playcount: number; userPlaycount: number;
   tags: TagCount[]; myTags: string[]; wiki: WikiVersion | null;
   similar: SimilarArtist[]; topTracks: TopTrack[]; topAlbums: ArtistAlbum[]; latestAlbum: LatestAlbum | null; weekTrack: TopTrack | null;
   albumCount: number; trackCount: number;

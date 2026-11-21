@@ -4,9 +4,12 @@
 // from Spotify are shown from Spotify's servers, never copied here.
 //
 // MusicBrainz allows one request a second per site, so calls queue on a limit shared by every process (server/kv.ts).
-// When musicbrainz.org is busy, VideoLAN's mirror (same interface) is asked instead.
+// When musicbrainz.org is busy, VideoLAN's mirror (same interface) is asked instead. Our own copy of MusicBrainz
+// (./mbdb, when MBDB_URL is set) is asked before either.
 import { attempt, getJson, setJson } from "../kv";
-import { catalogueGet } from "../spotify/service";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { catalogueGet, NoCapacity } from "../spotify/service";
+import * as mbdb from "./mbdb";
 
 // ---------- small JSON readers (every reply is untrusted input) ----------
 type Json = Record<string, unknown>;
@@ -73,7 +76,7 @@ const credit = (v: unknown) => objs(v).map(c => tidy(c.name) + str(c.joinphrase)
 const firstArtist = (v: unknown) => tidy(objs(v)[0]?.name);
 
 export type MbArtist = { mbid: string; name: string };
-export async function mbArtist(name: string): Promise<MbArtist | null> {
+async function apiArtist(name: string): Promise<MbArtist | null> {
   const r = await mb("/artist", { query: `artist:${phrase(name)}`, limit: "8" });
   // the best-scoring name match; ties go to the first, which MusicBrainz ranks as the better known
   const hit = objs(r?.artists).find(a => same(str(a.name), name) && num(a.score) >= 90);
@@ -81,7 +84,7 @@ export async function mbArtist(name: string): Promise<MbArtist | null> {
 }
 
 /** The artist's Spotify id, when MusicBrainz links one. */
-export async function mbSpotifyId(mbid: string): Promise<string | null> {
+async function apiSpotifyId(mbid: string): Promise<string | null> {
   const r = await mb(`/artist/${mbid}`, { inc: "url-rels" });
   for (const rel of objs(r?.relations)) {
     const m = /open\.spotify\.com\/artist\/([A-Za-z0-9]{22})/.exec(str(obj(rel.url)?.resource));
@@ -98,7 +101,7 @@ const album = (g: Json): MbAlbum => ({
 /** Studio albums, EPs and singles; compilations, live recordings, remixes and the like are left out. */
 const plain = (g: Json) => ["Album", "EP", "Single"].includes(str(g["primary-type"])) && list(g["secondary-types"]).length === 0;
 
-export async function mbAlbum(artist: string, title: string): Promise<MbAlbum | null> {
+async function apiAlbum(artist: string, title: string): Promise<MbAlbum | null> {
   const r = await mb("/release-group", { query: `releasegroup:${phrase(title)} AND artist:${phrase(artist)}`, limit: "10" });
   const hits = objs(r?.["release-groups"]).filter(g => same(str(g.title), title) && same(firstArtist(g["artist-credit"]), artist));
   const hit = hits.find(plain) ?? hits[0];
@@ -106,14 +109,14 @@ export async function mbAlbum(artist: string, title: string): Promise<MbAlbum | 
 }
 
 /** An artist's albums and EPs (singles would swamp the list), oldest first. */
-export async function mbDiscography(mbid: string): Promise<MbAlbum[]> {
+async function apiDiscography(mbid: string): Promise<MbAlbum[]> {
   const r = await mb("/release-group", { artist: mbid, type: "album|ep", limit: "100" });
   return objs(r?.["release-groups"]).filter(plain).map(album).filter(a => a.title)
     .sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999"));
 }
 
 export type MbTrack = { title: string; artist: string; seconds: number; album: MbAlbum | null };
-export async function mbTrack(artist: string, title: string): Promise<MbTrack | null> {
+async function apiTrack(artist: string, title: string): Promise<MbTrack | null> {
   const base = `recording:${phrase(title)} AND artist:${phrase(artist)}`;
   const find = async (q: string) => objs((await mb("/recording", { query: q, limit: "25" }))?.recordings)
     .filter(x => same(str(x.title), title) && same(firstArtist(x["artist-credit"]), artist) && num(x.score) >= 80);
@@ -142,7 +145,7 @@ export async function mbTrack(artist: string, title: string): Promise<MbTrack | 
 
 export type ListedTrack = { title: string; seconds: number };
 /** The track list of an album's first official release (discs in order, video discs left out). */
-export async function mbTrackList(rgid: string): Promise<ListedTrack[]> {
+async function apiTrackList(rgid: string): Promise<ListedTrack[]> {
   const r = await mb("/release", { "release-group": rgid, status: "official", inc: "recordings+media", limit: "50" });
   const pref = (c: string) => (c === "XW" ? 0 : c === "US" || c === "GB" ? 1 : 2);
   const releases = objs(r?.releases).filter(x => objs(x.media).some(m => objs(m.tracks).length))
@@ -160,6 +163,26 @@ export async function mbTrackList(rgid: string): Promise<ListedTrack[]> {
   return out.slice(0, 100);
 }
 
+// Our own copy of MusicBrainz (./mbdb) answers first when there is one; musicbrainz.org when it can't be reached.
+let ownDownAt = 0;
+async function own<T>(local: () => Promise<T>, api: () => Promise<T>): Promise<T> {
+  if (mbdb.mbdbOn && Date.now() - ownDownAt > 60_000) {
+    try { return await local(); } catch (e) {
+      ownDownAt = Date.now();
+      console.error("MusicBrainz copy unavailable, asking musicbrainz.org for a minute:", e instanceof Error ? e.message : e);
+    }
+  }
+  return api();
+}
+export const mbArtist = (name: string) => own(() => mbdb.artist(name), () => apiArtist(name));
+export const mbSpotifyId = (mbid: string) => own(() => mbdb.spotifyId(mbid), () => apiSpotifyId(mbid));
+export const mbAlbum = (artist: string, title: string) => own(() => mbdb.album(artist, title), () => apiAlbum(artist, title));
+export const mbDiscography = (mbid: string) => own(() => mbdb.discography(mbid), () => apiDiscography(mbid));
+export const mbTrack = (artist: string, title: string) => own(() => mbdb.track(artist, title), () => apiTrack(artist, title));
+export const mbTrackList = (rgid: string) => own(() => mbdb.trackList(rgid), () => apiTrackList(rgid));
+/** Whether lookups are cheap (our own copy) rather than limited to one a second. */
+export const mbLocal = () => mbdb.mbdbOn && Date.now() - ownDownAt > 60_000;
+
 // ---------- Cover Art Archive ----------
 /** The front cover of an album (500px), or null when the archive has none. */
 export async function coverArt(rgid: string): Promise<Uint8Array | null> {
@@ -173,11 +196,25 @@ export async function coverArt(rgid: string): Promise<Uint8Array | null> {
 }
 
 // ---------- Spotify (through a connected listener's token, server/spotify) ----------
+// Two lanes: lookups for a page someone opened go first; background filling ("spare time", see inSpareTime()) only uses
+// Spotify while visitors aren't and the apps have room, one call a second at most, and gives up rather than waits.
+const lane = new AsyncLocalStorage<"spare">();
+/** Runs a job whose Spotify lookups only use spare capacity. */
+export const inSpareTime = <T>(job: () => Promise<T>) => lane.run("spare", job);
+
 async function sp(path: string): Promise<Json | null> {
+  const spare = lane.getStore() === "spare";
   await pausedFor("spotify");
-  await turn("spotify", 150);
-  return catalogueGet(path);
+  if (spare) await turn("spotify-spare", 1000, 2000); else await turn("spotify", 150);
+  try { return await catalogueGet(path, spare); } catch (e) {
+    if (!(e instanceof NoCapacity)) throw e;
+    // every connected app is resting after a 429 (or none is connected): page lookups wait a little; nothing counts as "not found"
+    if (!spare) await pause("spotify", 15);
+    throw new Busy("spotify");
+  }
 }
+/** Whether Spotify lookups are waiting (see sp()). */
+export const spotifyResting = async () => !!(await getJson<number>(pauseKey("spotify")));
 const search = (type: string, q: string) => sp(`/search?${new URLSearchParams({ q, type, limit: "10" })}`);
 const quoted = (s: string) => s.replace(/"/g, "");
 

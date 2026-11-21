@@ -9,7 +9,7 @@
 // address is used when that is https or localhost; otherwise Spotify shows as disabled.
 import { createHash } from "node:crypto";
 import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
-import { exclusive, getJson, setJson } from "../kv";
+import { attempt, exclusive, getJson, setJson } from "../kv";
 import { now, rid } from "../util";
 import * as repo from "./repo";
 import { seal, unseal } from "./seal";
@@ -30,6 +30,17 @@ class Revoked extends Error {}
 /** Rate limits apply per Spotify app, so each listener's app is paused separately, in every process (server/kv.ts). */
 const pauseKey = (clientId: string) => `spotify-pause:${clientId}`;
 const paused = async (clientId: string) => (await getJson<number>(pauseKey(clientId))) !== null;
+const strikeKey = (clientId: string) => `spotify-strikes:${clientId}`;
+/**
+ * Spotify said 429: the app rests for as long as Spotify asks, and longer each time it happens again within the hour
+ * (30s, 1m, 2m ... up to an hour), so an app near its limit isn't pushed straight back into it.
+ */
+async function slowDown(clientId: string, retryAfter: string | null) {
+  const strikes = ((await getJson<number>(strikeKey(clientId))) ?? 0) + 1;
+  await setJson(strikeKey(clientId), strikes, 3600_000);
+  const seconds = Math.min(3600, Math.max(Number(retryAfter) || 0, 30 * 2 ** (strikes - 1)));
+  await setJson(pauseKey(clientId), 1, seconds * 1000);
+}
 
 // ---------- small JSON readers (Spotify's replies are untrusted input) ----------
 type Json = Record<string, unknown>;
@@ -154,7 +165,7 @@ async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(API + path, { headers: { Authorization: `Bearer ${await accessToken(link, attempt > 0)}` }, signal: AbortSignal.timeout(15_000) });
     if (res.status === 401 && attempt === 0) continue; // token went stale early: refresh once
-    if (res.status === 429) { await setJson(pauseKey(link.clientId), 1, Math.max(5, Number(res.headers.get("retry-after")) || 30) * 1000); throw new Slowed(); }
+    if (res.status === 429) { await slowDown(link.clientId, res.headers.get("retry-after")); throw new Slowed(); }
     if (res.status === 403) throw new Revoked("Spotify refused access. Check that your Spotify account is listed under User Management in your app, then connect again.");
     if (res.status === 204) return null;
     if (!res.ok) throw new Error(`Spotify ${path} answered ${res.status}`);
@@ -219,14 +230,39 @@ function failed(link: repo.Link, e: unknown): number {
  * load spreads over every linked account (and the Spotify app behind each). Falls through to the next account when
  * one is rate limited or refused. Null when no account can answer or Spotify has nothing.
  */
-export async function catalogueGet(path: string): Promise<Json | null> {
-  const links = (await repo.workingLinks()).sort(() => Math.random() - 0.5);
-  for (const link of links) {
-    if (await paused(link.clientId)) continue;
+/** No connected app could answer just now (all resting after a 429, or none connected): not the same as "not found". */
+export class NoCapacity extends Error {}
+
+/**
+ * GET from the Web API for the catalogue, with whichever connected listener's app is free: each app takes at most one
+ * call every 400ms, and the one used longest ago goes first, so the load spreads over all of them. Null only when
+ * Spotify itself answered "no such thing"; NoCapacity when no app could ask.
+ */
+export async function catalogueGet(path: string, spare = false): Promise<Json | null> {
+  // background lookups ("spare") wait while visitors are looking things up and never use an app that was rate limited
+  // within the hour, one call per app every two seconds at most
+  if (spare && (await getJson<number>("spotify-busy"))) throw new NoCapacity();
+  if (!spare) await setJson("spotify-busy", 1, 3000);
+  const links = await repo.workingLinks();
+  const used = await Promise.all(links.map(l => getJson<number>(`spotify-used:${l.clientId}`)));
+  const order = links.map((l, i) => ({ l, at: used[i] ?? 0, r: Math.random() })).sort((a, b) => a.at - b.at || a.r - b.r).map(x => x.l);
+  const until = Date.now() + 5000, tried = new Set<string>();
+  for (let i = 0; i < order.length; i++) {
+    const link = order[i]!;
+    if (tried.has(link.userId + "") || (await paused(link.clientId))) continue;
+    if (spare && (await getJson<number>(strikeKey(link.clientId)))) continue;
+    if (spare && !(await attempt(`spotify-spare:${link.clientId}`, 1, 2000))) continue;
+    if (!(await attempt(`spotify-turn:${link.clientId}`, 1, 400))) {
+      // every free app was just used: wait for the next turn (a few seconds at most)
+      if (!spare && i === order.length - 1 && Date.now() < until) { await new Promise(r => setTimeout(r, 150)); i = -1; }
+      continue;
+    }
+    tried.add(link.userId + "");
+    await setJson(`spotify-used:${link.clientId}`, Date.now(), 3600_000);
     try {
       let res = await fetch(API + path, { headers: { Authorization: `Bearer ${await accessToken(link)}` }, signal: AbortSignal.timeout(15_000) });
       if (res.status === 401) res = await fetch(API + path, { headers: { Authorization: `Bearer ${await accessToken(link, true)}` }, signal: AbortSignal.timeout(15_000) });
-      if (res.status === 429) { await setJson(pauseKey(link.clientId), 1, Math.max(5, Number(res.headers.get("retry-after")) || 30) * 1000); continue; }
+      if (res.status === 429) { await slowDown(link.clientId, res.headers.get("retry-after")); continue; }
       if (res.status === 401 || res.status === 403) continue; // this account can't; the importer marks a link that is really broken
       if (res.status === 404 || res.status === 400) return null;
       if (!res.ok) throw new Error(`Spotify ${path.split("?")[0]} answered ${res.status}`);
@@ -236,7 +272,7 @@ export async function catalogueGet(path: string): Promise<Json | null> {
       throw e;
     }
   }
-  return null;
+  throw new NoCapacity();
 }
 
 // ---------- for the routes ----------

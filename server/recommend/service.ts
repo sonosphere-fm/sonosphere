@@ -8,8 +8,9 @@ import { topTags } from "../tags/repo";
 import { now } from "../util";
 import { scoresFor } from "./model";
 import * as repo from "./repo";
+import { wantBare } from "../metadata/wanted";
 
-export const similarArtists = (artistId: number, limit = 12): Promise<SimilarArtist[]> => repo.similarArtistRows(artistId, limit);
+export const similarArtists = async (artistId: number, limit = 12): Promise<SimilarArtist[]> => wantBare("artist", await repo.similarArtistRows(artistId, limit), r => r.id);
 
 /** Tracks to play next to one track: more by the same artist, then the top tracks of the artists closest to them. */
 export async function similarTracks(trackId: number, artistId: number, viewerId = 0, limit = 10): Promise<TopTrack[]> {
@@ -20,7 +21,7 @@ export async function similarTracks(trackId: number, artistId: number, viewerId 
     const { items } = await topTracks({ artistId: id, viewerId, global: true }, take + 1);
     out.push(...items.filter(t => t.id !== trackId).slice(0, take));
   }
-  return out.slice(0, limit);
+  return wantBare("track", out.slice(0, limit), t => t.id);
 }
 
 export async function neighbours(userId: number, limit = 20): Promise<Neighbour[]> {
@@ -154,7 +155,7 @@ async function rankArtists(userId: number, limit: number): Promise<Ranked> {
 
 /** Artists a user has not really heard yet, best first. */
 export async function recommendedArtists(userId: number, limit = 24): Promise<Recommendation[]> {
-  return (await rankArtists(userId, limit)).recommendations;
+  return wantBare("artist", (await rankArtists(userId, limit)).recommendations, r => r.id);
 }
 
 /**
@@ -163,7 +164,7 @@ export async function recommendedArtists(userId: number, limit = 24): Promise<Re
  */
 export async function recommendations(userId: number, viewerId: number, artistLimit = 30, trackLimit = 30): Promise<{ artists: Recommendation[]; tracks: TopTrack[] }> {
   const { recommendations: artists, seeds } = await rankArtists(userId, artistLimit);
-  if (!artists.length && !seeds.length) return { artists, tracks: [] };
+  if (!artists.length && !seeds.length) return { artists: wantBare("artist", artists, a => a.id), tracks: [] };
   const score = new Map<number, number>(), artistOf = new Map<number, number>();
   const add = (id: number, artist: number, s: number) => { score.set(id, (score.get(id) ?? 0) + s); artistOf.set(id, artist); };
   const rankWeight = [1, 0.75, 0.55];
@@ -184,5 +185,6 @@ export async function recommendations(userId: number, viewerId: number, artistLi
     if (chosen.length >= trackLimit) break;
   }
   const cards = new Map((await repo.trackCards(chosen, viewerId)).map(c => [c.id, c]));
-  return { artists, tracks: chosen.map(id => cards.get(id)).filter((t): t is TopTrack => !!t) };
+  const tracks = chosen.map(id => cards.get(id)).filter((t): t is TopTrack => !!t);
+  return { artists: wantBare("artist", artists, a => a.id), tracks: wantBare("track", tracks, t => t.id) };
 }

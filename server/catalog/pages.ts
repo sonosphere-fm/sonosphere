@@ -24,7 +24,7 @@ async function trend(scope: Scope, weeks = 26): Promise<TrendPoint[]> {
 export async function artistPage(a: repo.Artist, viewerId: number | undefined): Promise<ArtistPage> {
   const stats = await counts({ artistId: a.id });
   return {
-    id: a.id, name: a.name, mbid: mbidOfArtist(a.name) || a.mbid || "", image: a.imageId, listeners: stats.listeners, playcount: stats.playcount,
+    id: a.id, name: a.name, mbid: mbidOfArtist(a.name) || a.mbid || "", spotifyId: a.spotifyId || "", image: a.imageId, listeners: stats.listeners, playcount: stats.playcount,
     userPlaycount: viewerId ? (await counts({ artistId: a.id, userId: viewerId })).playcount : 0,
     tags: await topTags("artist", a.id, 8), myTags: await myTags(viewerId, "artist", a.id), wiki: await latestWiki("artist", a.id),
     similar: await similarArtists(a.id, 6),

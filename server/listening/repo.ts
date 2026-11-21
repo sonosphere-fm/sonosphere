@@ -1,4 +1,5 @@
 // Data access for scrobbles and every statistic drawn from them: rankings, totals, recent plays, charts.
+import { wantBare } from "../metadata/wanted";
 import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isNotNull, lt, ne, notExists, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
@@ -72,7 +73,7 @@ function catalogued(base: Base, artistId: typeof artists.id | typeof albums.arti
   };
 }
 
-export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
+async function topArtistsRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
   if (wholeSite(s)) {
     const x = tallies("artists", s), c = catalogued(artists, artists.id, x, s);
     return {
@@ -97,7 +98,7 @@ export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopL
   };
 }
 
-export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
+async function topAlbumsRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
   if (wholeSite(s)) {
     const x = tallies("albums", s), c = catalogued(albums, albums.artistId, x, s);
     return {
@@ -125,7 +126,7 @@ export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopLi
   };
 }
 
-export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
+async function topTracksRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
   const loved = lovedBy(s.viewerId);
   if (wholeSite(s)) {
     const x = tallies("tracks", s), c = catalogued(tracks, tracks.artistId, x, s);
@@ -255,7 +256,7 @@ export async function counts(s: Scope): Promise<Counts> {
 
 // ---------- recent plays ----------
 /** Plays in a scope, newest first. */
-export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
+async function recentRows(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
   const w = within(s);
   const items = await db.select({
     id: scrobbles.id, playedAt: scrobbles.playedAt, trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name,
@@ -491,4 +492,28 @@ export const exportLoved = (userId: number): Promise<ExportRow[]> =>
 /** Drops "now playing" entries whose time is up. */
 export async function dropExpiredNowPlaying(): Promise<void> {
   await db.delete(playing).where(lt(playing.expiresAt, now()));
+}
+
+export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
+  const r = await topArtistsRows(s, limit, offset);
+  wantBare("artist", r.items, r => r.id);
+  return r;
+}
+
+export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
+  const r = await topAlbumsRows(s, limit, offset);
+  wantBare("album", r.items, r => r.id);
+  return r;
+}
+
+export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
+  const r = await topTracksRows(s, limit, offset);
+  wantBare("track", r.items, r => r.id);
+  return r;
+}
+
+export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
+  const r = await recentRows(s, limit, offset);
+  wantBare("track", r.items, r => r.trackId);
+  return r;
 }
