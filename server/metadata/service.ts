@@ -22,6 +22,7 @@ import { norm, now } from "../util";
 import { findAlbum, findArtist, findTrack, type AlbumWithArtist, type Artist, type TrackWithArtist } from "../catalog/repo";
 import * as repo from "./repo";
 import * as src from "./sources";
+import * as mbdb from "./mbdb";
 import { WANTED } from "./wanted";
 
 const MONTH = 30 * 86400, DAY = 86400_000;
@@ -48,8 +49,8 @@ const later = (what: string, job: () => Promise<unknown>) => { job().catch(quiet
 
 // ---------- pictures ----------
 /** Stores an album cover from the Cover Art Archive. False when there is none (or storage refused it). */
-async function storeCover(albumId: number, rgid: string): Promise<boolean> {
-  const bytes = await src.coverArt(rgid);
+async function storeCover(albumId: number, mbid: string, of: "release-group" | "release" = "release-group"): Promise<boolean> {
+  const bytes = await src.coverArt(mbid, of);
   if (!bytes) return false;
   try {
     const id = await saveImage(await convert(bytes), null);
@@ -96,12 +97,16 @@ function albumOnSpotify(id: number, spAt: number | null, artist: string, title: 
   return () => (asked ??= askSpotify("album", id, spAt, () => src.spAlbum(artist, title)).then(r => r ?? null));
 }
 
-/** Finds an album a cover: the Cover Art Archive first, then Last.fm, then Spotify (both shown from there). */
+/**
+ * Finds an album a cover: the Cover Art Archive first (by the album's MusicBrainz id, else by the release Last.fm
+ * links it to), then Last.fm's own picture, then Spotify's (both shown from there).
+ */
 async function findCover(albumId: number, mbid: string | null, spotify: () => Promise<src.SpAlbum | null>, lastfm: () => Promise<src.LfAlbum | null>): Promise<void> {
   if (await getJson<number>(COVERS_PAUSED)) return;
   await repo.setAlbum(albumId, { coverAt: now() });
   try {
     if (mbid && (await storeCover(albumId, mbid))) return;
+    if (!mbid && (await viaLastfmRelease(albumId, await lastfm()))) return;
   } catch (e) {
     // out of storage for today: covers wait an hour, and this album is searched again then
     if (e instanceof src.Busy && e.message === "storage") { await repo.setAlbum(albumId, { coverAt: null }); await setJson(COVERS_PAUSED, 1, 3600_000); return; }
@@ -113,6 +118,20 @@ async function findCover(albumId: number, mbid: string | null, spotify: () => Pr
   if (s?.picture) await repo.setAlbum(albumId, { imageId: await showPicture(s.picture) });
 }
 const COVERS_PAUSED = "meta-pause:covers";
+
+/**
+ * An album MusicBrainz didn't match by name, found through the release Last.fm links it to: its album's id is noted
+ * (so its date and track list can come from MusicBrainz next time) and its cover taken from the Cover Art Archive.
+ */
+async function viaLastfmRelease(albumId: number, lf: src.LfAlbum | null): Promise<boolean> {
+  if (!lf?.mbid) return false;
+  const rg = src.mbLocal() ? await mbdb.releaseGroupOf(lf.mbid).catch(() => null) : null;
+  if (rg) {
+    await repo.setAlbum(albumId, { mbid: rg });
+    if (await storeCover(albumId, rg)) return true;
+  }
+  return storeCover(albumId, lf.mbid, "release");
+}
 
 // ---------- filling in ----------
 async function fillArtist(id: number): Promise<void> {
@@ -325,11 +344,15 @@ async function backfill() {
           const [kind, n] = w.split(":"), id = Number(n);
           await fillWanted(kind as "artist" | "album" | "track", id, due).catch(quiet(`wanted ${w}`));
         }
-        for (const r of await repo.unlookedArtists(15)) if (await repo.claim("artist", r.id, due)) await fillArtist(r.id).catch(quiet(`artist ${r.id}`));
-        const albums = await repo.unlookedAlbums(15), tracks = await repo.unlookedTracks(25);
-        const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
-        for (const r of albums) if (await repo.claim("album", r.id, due)) await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`));
-        for (const r of tracks) if (await repo.claim("track", r.id, due)) await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
+        // then batches of everything never looked up, until the time is up or nothing is left
+        while (Date.now() < until) {
+          const artists = await repo.unlookedArtists(10), albums = await repo.unlookedAlbums(10), tracks = await repo.unlookedTracks(10);
+          if (!artists.length && !albums.length && !tracks.length) break;
+          for (const r of artists) if (await repo.claim("artist", r.id, due)) await fillArtist(r.id).catch(quiet(`artist ${r.id}`));
+          const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
+          for (const r of albums) if (await repo.claim("album", r.id, due)) await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`));
+          for (const r of tracks) if (await repo.claim("track", r.id, due)) await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
+        }
       }
       await spotifyBackfill(until);
     }));

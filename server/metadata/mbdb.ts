@@ -106,6 +106,12 @@ async function albumAs(artistName: string, title: string): Promise<MbAlbum | nul
 }
 
 /** An artist's albums and EPs, oldest first. */
+/** The album (release group id) a release belongs to. */
+export async function releaseGroupOf(releaseMbid: string): Promise<string | null> {
+  const [r] = await db()<{ gid: string }[]>`SELECT rg.gid::text AS gid FROM release r JOIN release_group rg ON rg.id = r.release_group WHERE r.gid = ${releaseMbid}::uuid`;
+  return r?.gid ?? null;
+}
+
 export async function discography(mbid: string): Promise<MbAlbum[]> {
   const rows = await db().unsafe<AlbumRow[]>(`SELECT * FROM (${ALBUM}
     JOIN artist a ON a.id = acn.artist

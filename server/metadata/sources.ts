@@ -184,10 +184,10 @@ export const mbTrackList = (rgid: string) => own(() => mbdb.trackList(rgid), () 
 export const mbLocal = () => mbdb.mbdbOn && Date.now() - ownDownAt > 60_000;
 
 // ---------- Cover Art Archive ----------
-/** The front cover of an album (500px), or null when the archive has none. */
-export async function coverArt(rgid: string): Promise<Uint8Array | null> {
-  await turn("caa", 500);
-  const res = await fetch(`https://coverartarchive.org/release-group/${rgid}/front-500`, { headers: { "User-Agent": agent() }, signal: AbortSignal.timeout(30_000) });
+/** The front cover of an album (500px) by its release group's id, or of one release of it; null when the archive has none. */
+export async function coverArt(mbid: string, of: "release-group" | "release" = "release-group"): Promise<Uint8Array | null> {
+  await turn("caa", 250);
+  const res = await fetch(`https://coverartarchive.org/${of}/${mbid}/front-500`, { headers: { "User-Agent": agent() }, signal: AbortSignal.timeout(30_000) });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Cover Art Archive answered ${res.status}`);
   if (Number(res.headers.get("content-length")) > 15_000_000) return null;
@@ -261,27 +261,44 @@ export async function spTrack(artist: string, title: string): Promise<SpTrack | 
 // ---------- Last.fm ----------
 // Fills what MusicBrainz and Spotify lack: album covers (shown from Last.fm's servers), track lengths, the album a
 // track is on, album track lists, MusicBrainz ids. Its artist pictures are all one placeholder, so none are taken.
-// Last.fm allows a few calls a second per key; one every 250ms, shared by every process.
-export const LASTFM_KEY = "65fb65f79427db8ce5626269c0d7fa2b";
+// Last.fm allows a few calls a second per key; one every 250ms, shared by every process. Calls go through a pool of
+// keys: one that is refused (rate limited, suspended, invalid) or whose call fails rests and the next is tried.
+const LASTFM_KEYS = ["65fb65f79427db8ce5626269c0d7fa2b", "b78b45822bf96da886e41623cd85a280", "ad74f41f756691160923dbb55219c7cb", "63ee7f19c3ed5f781dcf7c810e5e6913"];
+const keyRest = (i: number) => `lastfm-key-rest:${i}`;
+
+/**
+ * A Last.fm API call through the key pool: the first key not resting that gets an answer. Answers about the request
+ * itself (no such user, private profile) come back as they are; null when no key could get through.
+ */
+export async function lastfmCall(params: Record<string, string>, timeoutMs = 15_000): Promise<{ status: number; body: Json | null } | null> {
+  for (const [i, key] of LASTFM_KEYS.entries()) {
+    if (await getJson<number>(keyRest(i))) continue;
+    let res: Response | null = null;
+    try {
+      res = await fetch(`https://ws.audioscrobbler.com/2.0/?${new URLSearchParams({ ...params, api_key: key, format: "json" })}`,
+        { headers: { "User-Agent": agent() }, signal: AbortSignal.timeout(timeoutMs) });
+    } catch { /* no connection or too slow: the next key */ }
+    const body = res ? obj(await res.json().catch(() => null)) : null, code = num(body?.error);
+    // 10 invalid key, 26 suspended key: rest an hour; 29 rate limited: a minute; 11, 16, server errors, no answer: 15s
+    const rest = code === 10 || code === 26 ? 3600 : code === 29 || res?.status === 429 ? 60 : !res || code === 11 || code === 16 || res.status >= 500 || (!body && !res.ok) ? 15 : 0;
+    if (rest) { await setJson(keyRest(i), 1, rest * 1000); continue; }
+    return { status: res!.status, body };
+  }
+  return null;
+}
 const LF_BLANK = "2a96cbd8b46e442fc41c2b86b821562f"; // the grey star Last.fm shows for "no picture"
 
 /** A call to Last.fm's API: null when it has nothing by that name. */
 export async function lastfm(method: string, params: Record<string, string>): Promise<Json | null> {
   await pausedFor("lastfm");
   await turn("lastfm", 250);
-  let res: Response;
-  try {
-    res = await fetch(`https://ws.audioscrobbler.com/2.0/?${new URLSearchParams({ ...params, method, api_key: LASTFM_KEY, format: "json", autocorrect: "0" })}`,
-      { headers: { "User-Agent": agent() }, signal: AbortSignal.timeout(15_000) });
-  } catch { throw new Busy("lastfm"); }
-  const body = obj(await res.json().catch(() => null));
-  const code = num(body?.error);
+  const r = await lastfmCall({ ...params, method, autocorrect: "0" });
+  if (!r) { await pause("lastfm", 15); throw new Busy("lastfm"); } // every key resting or failing
+  const code = num(r.body?.error);
   if (code === 6) return null; // no such artist, album or track
-  if (code === 29 || res.status === 429) { await pause("lastfm", 60); throw new Busy("lastfm"); } // too many calls
-  if (code === 11 || code === 16 || res.status >= 500) { await pause("lastfm", 15); throw new Busy("lastfm"); } // down for a moment
   if (code) throw new Error(`Last.fm ${method} answered error ${code}`);
-  if (!res.ok) throw new Error(`Last.fm ${method} answered ${res.status}`);
-  return body;
+  if (r.status >= 400 || !r.body) throw new Error(`Last.fm ${method} answered ${r.status}`);
+  return r.body;
 }
 
 /** The largest picture Last.fm lists (300px), unless it is the placeholder. */

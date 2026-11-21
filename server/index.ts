@@ -10,7 +10,7 @@ import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
 import { sendDigests } from "./notifications/email";
 import { deliver } from "./mail";
 import { syncCorrections } from "./corrections/service";
-import { exclusive } from "./kv";
+import { exclusive, releaseAll } from "./kv";
 import { sweepUnused } from "./images/repo";
 import { startDm } from "./dm/service";
 import { dropExpiredNowPlaying, ensureTallies } from "./listening/repo";
@@ -77,6 +77,7 @@ syncCorrections().catch(e => console.error(e));
 // A rolling deploy stops the old process with SIGTERM once the new one is serving: finish what is in flight, then exit.
 process.once("SIGTERM", () => {
   const forced = setTimeout(() => process.exit(0), 10_000);
+  releaseAll().catch(() => {});
   server.stop().then(() => { clearTimeout(forced); process.exit(0); }, () => process.exit(0));
 });
 

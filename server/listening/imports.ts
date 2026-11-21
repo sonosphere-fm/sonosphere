@@ -9,7 +9,7 @@ import { importChunks, importJobs } from "../db/schema";
 import { need } from "../guards";
 import { bad, fail, int, missing, Router, throttle } from "../http";
 import { exclusive } from "../kv";
-import { LASTFM_KEY } from "../metadata/sources";
+import { lastfmCall } from "../metadata/sources";
 import { clean, now } from "../util";
 import { importLoved, scrobbleMany } from "./service";
 import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportKind, type ImportState } from "../../shared/imports";
@@ -59,10 +59,9 @@ type LfmPage = { track?: LfmTrack[] | LfmTrack; "@attr"?: { totalPages?: string;
 class LastfmError extends Error { constructor(msg: string, public lasting: boolean) { super(msg); } }
 
 async function lastfm<T>(params: Record<string, string>): Promise<T> {
-  const q = new URLSearchParams({ ...params, api_key: LASTFM_KEY, format: "json" });
-  const res = await fetch(`https://ws.audioscrobbler.com/2.0/?${q}`, { signal: AbortSignal.timeout(20_000), headers: { "User-Agent": "Sonosphere/1.0" } })
-    .catch(() => null);
-  const body = res ? await res.json().catch(() => null) as ({ error?: number; message?: string } & T) | null : null;
+  const r = await lastfmCall(params, 20_000);
+  if (!r) throw new LastfmError("Last.fm isn't answering right now. The import will keep trying.", false);
+  const body = r.body as ({ error?: number; message?: string } & T) | null, res = { ok: r.status < 400, status: r.status };
   if (body?.error === 6) throw new LastfmError("There is no Last.fm profile by that name.", true);
   if (body?.error === 17) throw new LastfmError("That Last.fm profile keeps its listening private. Turn off \"Hide recent listening\" in Last.fm's privacy settings, then try again.", true);
   if (!res?.ok || !body || body.error) throw new LastfmError(body?.message || `Last.fm didn't answer (${res?.status ?? "no connection"})`, false);

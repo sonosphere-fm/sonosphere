@@ -40,11 +40,18 @@ function ProfileSettings() {
   return (
     <>
       <Section title="Avatar">
-        <div className="row"><span className="avatar" style={{ width: 96, height: 96 }}><Art image={me!.image} kind="user" /></span>
+        <div className="avatar-edit">
+          <button type="button" className="avatar avatar-pick" aria-label="Change avatar" onClick={() => file.current?.click()} disabled={img.busy}><Art image={me!.image} kind="user" /></button>
           <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={e => { const x = e.target.files?.[0]; if (x) img.run(async () => { await api<ImageSaved>("/image?type=user", { raw: x, headers: { "Content-Type": x.type } }); refresh(); return "Avatar updated."; }); e.target.value = ""; }} />
-          <Button kind="btn" loading={img.busy} onClick={() => file.current?.click()}>Upload image</Button>
-          {me!.image && <Button kind="btn ghost" onClick={() => img.run(async () => { await api<Ok>("/image", { method: "DELETE" }); refresh(); })}>Remove</Button>}
-        </div>{img.note}<p className="muted small">PNG, JPEG, WebP or GIF, up to 8 MB. Animated GIFs keep their first frame.</p>
+          <div className="avatar-side">
+            <div className="avatar-actions">
+              <Button kind="btn small" loading={img.busy} onClick={() => file.current?.click()}>{me!.image ? "Change picture" : "Upload picture"}</Button>
+              {me!.image && <button type="button" className="linklike muted" onClick={() => img.run(async () => { await api<Ok>("/image", { method: "DELETE" }); refresh(); })}>Remove</button>}
+            </div>
+            <p className="muted small">PNG, JPEG, WebP or GIF, up to 8 MB. Animated GIFs keep their first frame.</p>
+            {img.note}
+          </div>
+        </div>
       </Section>
       <Section title="Profile">
         <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => { setMe((await api<ProfileSaved>("/me", { method: "PATCH", body: f })).user); return "Profile saved."; }); }}>
