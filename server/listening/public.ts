@@ -6,6 +6,7 @@ import { findById, findByName, type User } from "../users/repo";
 import { canSee } from "../users/service";
 import { nowPlaying } from "./repo";
 import type { PublicNowPlaying } from "../../shared/live";
+import * as Sentry from "@sentry/bun";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +27,7 @@ const connections = new Map<number, Set<Connection>>();
 const socketConnections = new Map<ServerWebSocket<SocketData>, Connection>();
 
 function errorResponse(error: unknown) {
-  if (!(error instanceof HttpError)) console.error("public now playing:", error);
+  if (!(error instanceof HttpError)) { console.error("public now playing:", error); Sentry.captureException(error); }
   return Response.json({ error: error instanceof HttpError ? error.message : "Something went wrong" }, {
     status: error instanceof HttpError ? error.status : 500,
     headers: { ...CORS, ...(error instanceof HttpError && error.retryAfter ? { "Retry-After": String(error.retryAfter) } : {}) },
@@ -111,7 +112,7 @@ async function refresh(c: Connection) {
         c.close();
       }
     }
-    if (!(e instanceof HttpError)) console.error("public now playing stream:", e);
+    if (!(e instanceof HttpError)) { console.error("public now playing stream:", e); Sentry.captureException(e); }
   } finally {
     c.busy = false;
     if (c.dirty) { c.dirty = false; void refresh(c); }

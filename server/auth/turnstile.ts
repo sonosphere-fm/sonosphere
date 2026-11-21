@@ -1,4 +1,5 @@
 import { fail } from "../http";
+import * as Sentry from "@sentry/bun";
 
 // Without keys in development, Cloudflare's published test keys: the widget shows and always passes.
 const DEV = process.env.NODE_ENV !== "production" && !process.env.TURNSTILE_SITE_KEY;
@@ -19,6 +20,7 @@ export async function checkTurnstile(token: unknown, ip: string, action: string)
     out = await r.json() as typeof out;
   } catch (e) {
     console.error("turnstile check failed:", e instanceof Error ? e.message : e);
+    Sentry.captureException(e);
     return fail(503, "Could not confirm you are not a robot. Try again in a moment.");
   }
   if (!out.success || (out.action && out.action !== action)) fail(400, "The robot check expired or failed. Try it again.");

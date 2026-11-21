@@ -1,5 +1,6 @@
 import type { TrainResult } from "./als-worker";
 import { exclusive } from "../kv";
+import * as Sentry from "@sentry/bun";
 import { stale } from "./model";
 import * as repo from "./repo";
 
@@ -158,6 +159,7 @@ function trainModel(): Promise<TrainResult | null> {
       });
       if (!reply.ok || !reply.result) {
         console.error("taste model:", reply.error);
+        Sentry.captureException(new Error(reply.error || "taste model failed"));
         return null;
       }
       await repo.saveMeta(MODEL_MARK, String(mark));
@@ -165,6 +167,7 @@ function trainModel(): Promise<TrainResult | null> {
       return reply.result;
     } catch (e) {
       console.error("taste model:", e);
+      Sentry.captureException(e);
       return null;
     } finally {
       worker.terminate();
@@ -195,6 +198,7 @@ export function startTasteWorker() {
       more = (await exclusive("taste", 60_000, () => refreshTaste())) ?? false;
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
     g.__spinTaste = setTimeout(tick, more ? 500 : 60_000);
   };
@@ -207,6 +211,7 @@ export function startTasteWorker() {
       });
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
   };
   g.__spinModel = setInterval(model, 5 * 60_000);

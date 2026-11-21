@@ -7,8 +7,10 @@ import { needleTheme } from "./themes/needle/needle.js";
 import { applyTheme, startingTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { Button, RouteLink } from "./kit";
+import "./sentry";
 import { createRoot } from "react-dom/client";
 import { PageMetadata } from "./page-metadata";
+import * as Sentry from "@sentry/react";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
 import { api, AuthContext, dec, invalidateAll, liveConnect, prefetch, qs, refreshListening, useAuth, useLive, userUrl, type Me, type Ok } from "./lib";
 import type { MeResponse } from "../shared/auth";
@@ -496,4 +498,15 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <Sentry.ErrorBoundary
+    fallback={({ resetError }) => (
+      <div style={{ padding: 24 }}>
+        <p>Something went wrong.</p>
+        <button onClick={() => resetError()}>Try again</button>
+      </div>
+    )}
+  >
+    <App />
+  </Sentry.ErrorBoundary>,
+);

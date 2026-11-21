@@ -5,6 +5,7 @@ import { hits, publish, subscribe } from "./kv";
 import { findById, findByName } from "./users/repo";
 import { canSee } from "./users/service";
 import type { ListeningEvent } from "../shared/live";
+import * as Sentry from "@sentry/bun";
 
 export type SocketData = { userId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number; publicUserId?: number; publicOrigin?: string };
 type Sock = ServerWebSocket<SocketData>;
@@ -92,8 +93,8 @@ export const websocket = {
         if (version !== d.listenVersion) return;
         d.listening = new Set(users.filter(u => u && !u.banned).map(u => u!.id));
         // Refresh after subscribing as well, closing the gap between the initial GET and subscription.
-        for (const id of d.listening) deliverListening(ws, id, "scrobbles").catch(e => console.error("live listening:", e));
-      }).catch(e => console.error("live subscriptions:", e));
+        for (const id of d.listening) deliverListening(ws, id, "scrobbles").catch(e => { console.error("live listening:", e); Sentry.captureException(e); });
+      }).catch(e => { console.error("live subscriptions:", e); Sentry.captureException(e); });
       return;
     }
     if (!d.userId) return;
@@ -105,6 +106,7 @@ export const websocket = {
       onClient(d.userId, msg);
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
   },
   close(ws: Sock) {
@@ -132,7 +134,7 @@ subscribe("live", raw => {
   if ("listening" in m) {
     for (const fn of listeningSubscribers) fn(m.listening);
     for (const set of sockets.values()) for (const ws of set) {
-      if (ws.data.listening.has(m.listening)) deliverListening(ws, m.listening, m.change).catch(e => console.error("live listening:", e));
+      if (ws.data.listening.has(m.listening)) deliverListening(ws, m.listening, m.change).catch(e => { console.error("live listening:", e); Sentry.captureException(e); });
     }
     return;
   }
@@ -150,7 +152,7 @@ subscribe("live", raw => {
   }
 });
 const send = (m: Fanout) => {
-  publish("live", JSON.stringify(m)).catch(e => console.error("live update:", e));
+  publish("live", JSON.stringify(m)).catch(e => { console.error("live update:", e); Sentry.captureException(e); });
 };
 
 export function push(userId: number, event: object) {

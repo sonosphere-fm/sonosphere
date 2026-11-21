@@ -1,5 +1,9 @@
 import { rm } from "node:fs/promises";
+import { execSync } from "node:child_process";
 import { STAFF_BUNDLE_MARK } from "../src/admin/index";
+
+let gitSha = process.env.SENTRY_RELEASE || process.env.GIT_SHA || "unknown";
+try { if (gitSha === "unknown") gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim(); } catch {}
 
 const out = "dist";
 await rm(out, { recursive: true, force: true });
@@ -12,7 +16,7 @@ const result = await Bun.build({
   sourcemap: "none",
   publicPath: "/",
   naming: { entry: "[name].[ext]", chunk: "assets/[name]-[hash].[ext]", asset: "assets/[name]-[hash].[ext]" },
-  define: { "process.env.NODE_ENV": '"production"' },
+  define: { "process.env.NODE_ENV": '"production"', "process.env.SENTRY_RELEASE": JSON.stringify(gitSha) },
 });
 
 function die(message: string): never {

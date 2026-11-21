@@ -1,6 +1,7 @@
 import { ApiError, call, type Params, type Reply } from "./service";
 import { ipOf, limit } from "../http";
 import { hits } from "../kv";
+import * as Sentry from "@sentry/bun";
 
 // A body that cannot be read is ignored.
 async function params(req: Request, url: URL): Promise<Params> {
@@ -93,6 +94,7 @@ export async function handleCompat(req: Request): Promise<Response> {
   } catch (e) {
     if (e instanceof ApiError) return failed(json, e.code, e.message, FORBIDDEN.includes(e.code) ? 403 : 400);
     console.error(e);
+    Sentry.captureException(e);
     return failed(json, 16, "There was a temporary error processing your request. Please try again", 500);
   }
 }
