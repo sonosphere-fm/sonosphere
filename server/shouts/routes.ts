@@ -1,9 +1,10 @@
 import { requireItem } from "../catalog/service";
 import { confirmed, need, poster } from "../guards";
-import { missing, paging, Router, throttle } from "../http";
+import { missing, paging, Router } from "../http";
 import type { ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
 import * as repo from "./repo";
 import { ownerOf, post, remove, wallOpen } from "./service";
+import { limit } from "../trust/service";
 
 export const router = new Router();
 
@@ -22,8 +23,8 @@ router.get<ShoutList>("/api/shouts", async c => {
 
 router.post<ShoutPosted>("/api/shouts", async c => {
   const u = confirmed(poster(c));
-  await throttle(`shout:${u.id}`, 10, 300, "Slow down a little before posting again.");
-  await throttle(`shout-h:${u.id}`, 60, 3600, "You have posted a lot in the last hour. Try again later.");
+  await limit(u, `shout:${u.id}`, 10, 300, "Slow down a little before posting again.");
+  await limit(u, `shout-h:${u.id}`, 60, 3600, "You have posted a lot in the last hour. Try again later.");
   const it = await requireItem(c.body.type, c.body.id);
   return { id: await post(u, it, c.body.body) };
 });

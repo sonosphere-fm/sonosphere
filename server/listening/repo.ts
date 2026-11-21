@@ -9,6 +9,7 @@ import { albums, artists, images, lovedTracks, nowPlaying as playing, scrobbles,
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx, resolveTrackTx, type TrackNames, type TrackRef } from "../catalog/repo";
 import { first, norm, now } from "../util";
 import { FOREVER } from "./period";
+import { listeningChanged } from "../realtime";
 import type { Counts, EditScope, ExportRow, NowPlaying, RecentTrack, ScopeCounts, SeriesPoint, TopAlbum, TopArtist, TopList, TopTrack } from "../../shared/listening";
 
 /**
@@ -475,8 +476,11 @@ export async function saveNowPlaying(userId: number, ref: TrackRef, seconds: num
   await db.insert(playing).values({ userId, ...row }).onConflictDoUpdate({ target: playing.userId, set: row });
 }
 
-export async function clearNowPlaying(userId: number): Promise<void> {
-  await db.delete(playing).where(eq(playing.userId, userId));
+/** With `trackId`, only while that track is still the one playing. */
+export async function clearNowPlaying(userId: number, trackId?: number): Promise<void> {
+  const which = trackId === undefined ? eq(playing.userId, userId) : and(eq(playing.userId, userId), eq(playing.trackId, trackId));
+  const removed = await db.delete(playing).where(which).returning({ id: playing.userId });
+  if (removed.length) listeningChanged(userId, "nowplaying");
 }
 
 type NewScrobble = TrackNames & { playedAt: number };
@@ -752,7 +756,8 @@ export const exportLoved = (userId: number): Promise<ExportRow[]> =>
     .orderBy(desc(lovedTracks.createdAt));
 
 export async function dropExpiredNowPlaying(): Promise<void> {
-  await db.delete(playing).where(lt(playing.expiresAt, now()));
+  const expired = await db.delete(playing).where(lt(playing.expiresAt, now())).returning({ userId: playing.userId });
+  for (const { userId } of expired) listeningChanged(userId, "nowplaying");
 }
 
 export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {

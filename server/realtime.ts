@@ -2,8 +2,12 @@ import type { Server, ServerWebSocket } from "bun";
 import { sessionUser } from "./auth/session";
 import { ipOf, tokenOf } from "./http";
 import { hits, publish, subscribe } from "./kv";
+import { findById, findByName } from "./users/repo";
+import { canSee } from "./users/service";
+import type { ListeningEvent } from "../shared/live";
+import * as Sentry from "@sentry/bun";
 
-export type SocketData = { userId: number; token: string; typedAt: number; msgs: number; windowAt: number };
+export type SocketData = { userId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number; publicUserId?: number; publicOrigin?: string };
 type Sock = ServerWebSocket<SocketData>;
 const sockets = new Map<number, Set<Sock>>();
 const MAX_PER_USER = 6;
@@ -32,9 +36,11 @@ export async function upgrade(req: Request, server: Server<SocketData>): Promise
   if (wait) return new Response("Too many connections", { status: 429, headers: { "Retry-After": String(wait) } });
   const token = tokenOf(req);
   const user = await sessionUser(token);
-  if (!user) return new Response("Unauthorized", { status: 401 });
-  if ((sockets.get(user.id)?.size ?? 0) >= MAX_PER_USER) return new Response("Too many connections", { status: 429 });
-  const data: SocketData = { userId: user.id, token, typedAt: 0, msgs: 0, windowAt: Date.now() };
+  if (token && !user) return new Response("Unauthorized", { status: 401 });
+  const ip = ipOf(req);
+  const connections = user ? sockets.get(user.id)?.size ?? 0 : [...sockets.get(0) ?? []].filter(ws => ws.data.ip === ip).length;
+  if (connections >= MAX_PER_USER) return new Response("Too many connections", { status: 429 });
+  const data: SocketData = { userId: user?.id ?? 0, token, ip, listening: new Set(), listenVersion: 0, typedAt: 0, msgs: 0, windowAt: Date.now() };
   return server.upgrade(req, { data }) ? undefined : new Response("Expected a WebSocket", { status: 426 });
 }
 
@@ -79,6 +85,19 @@ export const websocket = {
       ws.send('{"t":"pong"}');
       return;
     }
+    if (msg.t === "listen") {
+      if (!Array.isArray(msg.names) || msg.names.length > 8 || msg.names.some(n => typeof n !== "string" || n.length > 60)) return;
+      const version = ++d.listenVersion;
+      d.listening.clear();
+      Promise.all(msg.names.map(name => findByName(name as string))).then(users => {
+        if (version !== d.listenVersion) return;
+        d.listening = new Set(users.filter(u => u && !u.banned).map(u => u!.id));
+        // Refresh after subscribing as well, closing the gap between the initial GET and subscription.
+        for (const id of d.listening) deliverListening(ws, id, "scrobbles").catch(e => { console.error("live listening:", e); Sentry.captureException(e); });
+      }).catch(e => { console.error("live subscriptions:", e); Sentry.captureException(e); });
+      return;
+    }
+    if (!d.userId) return;
     if (msg.t === "typing") {
       if (t - d.typedAt < 1500) return;
       d.typedAt = t;
@@ -87,6 +106,7 @@ export const websocket = {
       onClient(d.userId, msg);
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
   },
   close(ws: Sock) {
@@ -98,12 +118,24 @@ export const websocket = {
 };
 
 // a user's tabs may be connected to different processes, so events fan out through Valkey
-type Fanout = { u: number; e?: object; bye?: true };
+type Fanout = { u: number; e?: object; bye?: true } | { listening: number; change: ListeningEvent["change"] };
+const listeningSubscribers = new Set<(userId: number) => void>();
+export function onListeningChange(fn: (userId: number) => void) {
+  listeningSubscribers.add(fn);
+  return () => { listeningSubscribers.delete(fn); };
+}
 subscribe("live", raw => {
   let m: Fanout;
   try {
     m = JSON.parse(raw) as Fanout;
   } catch {
+    return;
+  }
+  if ("listening" in m) {
+    for (const fn of listeningSubscribers) fn(m.listening);
+    for (const set of sockets.values()) for (const ws of set) {
+      if (ws.data.listening.has(m.listening)) deliverListening(ws, m.listening, m.change).catch(e => { console.error("live listening:", e); Sentry.captureException(e); });
+    }
     return;
   }
   const set = sockets.get(m.u);
@@ -120,11 +152,22 @@ subscribe("live", raw => {
   }
 });
 const send = (m: Fanout) => {
-  publish("live", JSON.stringify(m)).catch(e => console.error("live update:", e));
+  publish("live", JSON.stringify(m)).catch(e => { console.error("live update:", e); Sentry.captureException(e); });
 };
 
 export function push(userId: number, event: object) {
   send({ u: userId, e: event });
+}
+
+async function deliverListening(ws: Sock, userId: number, change: ListeningEvent["change"]) {
+  const [target, viewer] = await Promise.all([findById(userId), ws.data.userId ? sessionUser(ws.data.token) : null]);
+  if (!target || target.banned || (ws.data.userId && viewer?.id !== ws.data.userId) || !canSee(target, viewer) || !ws.data.listening.has(userId)) return;
+  const event: ListeningEvent = { t: "listening", userId, name: target.username, change };
+  try { ws.send(JSON.stringify(event)); } catch {}
+}
+
+export function listeningChanged(userId: number, change: ListeningEvent["change"]) {
+  send({ listening: userId, change });
 }
 
 export function disconnect(userId: number) {
@@ -136,6 +179,7 @@ clearInterval(sweep.__spinSocketSweep);
 sweep.__spinSocketSweep = setInterval(async () => {
   for (const set of [...sockets.values()]) {
     for (const ws of [...set]) {
+      if (!ws.data.userId) continue;
       const user = await sessionUser(ws.data.token).catch(() => null);
       if (user?.id !== ws.data.userId) closeQuietly(ws, "Session ended");
     }

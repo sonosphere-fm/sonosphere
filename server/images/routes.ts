@@ -75,9 +75,10 @@ router.get("/api/image/:id", async c => {
 router.post<ImageSaved>("/api/image", async c => {
   const u = confirmed(need(c));
   const type = c.q.get("type");
-  if (type === "user") {
+  if (type === "user" || type === "banner") {
     const image = await storeImage(c, u.id);
-    await repo.setUserImage(u.id, image);
+    if (type === "banner") await repo.setUserBanner(u.id, image);
+    else await repo.setUserImage(u.id, image);
     return { image };
   }
   const item = await requireItem(type, c.q.get("id"), ["artist", "album"]);
@@ -87,6 +88,10 @@ router.post<ImageSaved>("/api/image", async c => {
 });
 
 router.delete<Ok>("/api/image", async c => {
-  await repo.setUserImage(need(c).id, null);
+  const u = need(c);
+  const type = c.q.get("type") ?? "user";
+  if (type === "banner") await repo.setUserBanner(u.id, null);
+  else if (type === "user") await repo.setUserImage(u.id, null);
+  else bad("type must be user or banner");
   return { ok: true };
 });

@@ -2,6 +2,7 @@ import { createContext, useContext, useDeferredValue, useEffect, useReducer, use
 import { useSearchParams } from "react-router-dom";
 import type { DmClientMessage, DmEvent } from "../shared/dm";
 import type { Me } from "../shared/auth";
+import type { ListenMessage, ListeningEvent } from "../shared/live";
 export type { Ok, Me } from "../shared/auth";
 
 type ApiOptions = { method?: string; body?: unknown; raw?: BodyInit; headers?: Record<string, string> };
@@ -36,7 +37,7 @@ export const qs = (o: Record<string, string | number | boolean | null | undefine
 // Every GET is cached by path. React keeps the old tree while the next one suspends, so views never drop
 // to a loading state.
 export type ApiError = Error & { status?: number };
-type Entry = { data?: unknown; error?: ApiError; promise?: Promise<void>; at: number; subs: Set<() => void> };
+type Entry = { data?: unknown; error?: ApiError; promise?: Promise<void>; dirty?: boolean; at: number; subs: Set<() => void> };
 const cache = new Map<string, Entry>();
 
 // Preloads the pictures a prefetched reply refers to, so the page arrives with its artwork.
@@ -77,6 +78,10 @@ function load(path: string): Entry {
     e.at = Date.now();
     if (e.promise === p) e.promise = undefined;
     e.subs.forEach(f => f());
+    if (e.dirty) {
+      e.dirty = false;
+      load(path);
+    }
   });
   e.promise = p;
   return e;
@@ -108,11 +113,14 @@ export function useApi<T>(path: string | null) {
   if (shown && (!entry || (entry.data === undefined && entry.error === undefined))) throw load(shown).promise;
   useEffect(() => {
     if (!shown) return;
-    const e = cache.get(shown)!;
+    // The entry may have been evicted (e.g. by invalidateAll or refreshListening)
+    // since the last render; recreate it so subscribing can't throw.
+    const e = cache.get(shown) ?? load(shown);
     e.subs.add(bump);
+    scheduleSubscriptions();
     // Revisits show the cached copy at once, then refresh quietly unless it was just fetched on hover.
     if (!e.promise && Date.now() - e.at > 10000) load(shown);
-    return () => { e.subs.delete(bump); };
+    return () => { e.subs.delete(bump); scheduleSubscriptions(); };
   }, [shown]);
 
   const reload = () => {
@@ -139,20 +147,7 @@ type Auth = { me: Me | null; setMe: (m: Me | null) => void; refresh: () => void 
 export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, refresh: () => {} });
 export const useAuth = () => useContext(AuthContext);
 
-export const enc = (s: string) => encodeURIComponent(s.replace(/[%+]/g, c => encodeURIComponent(c))).replace(/%20/g, "+");
-export const dec = (s: string | undefined) => {
-  const t = (s || "").replace(/\+/g, " ");
-  try {
-    return decodeURIComponent(t);
-  } catch {
-    return t;
-  }
-};
-export const artistUrl = (artist: string) => `/music/${enc(artist)}`;
-export const albumUrl = (artist: string, album: string) => `/music/${enc(artist)}/${enc(album)}`;
-export const trackUrl = (artist: string, track: string) => `/music/${enc(artist)}/_/${enc(track)}`;
-export const userUrl = (name: string) => `/user/${encodeURIComponent(name)}`;
-export const tagUrl = (tag: string) => `/tag/${enc(tag)}`;
+export { enc, dec, artistUrl, albumUrl, trackUrl, userUrl, tagUrl } from "../shared/paths";
 export const imageUrl = (id: string, size: "large" | "small" = "large") => `/api/image/${id}${size === "small" ? "?s=small" : ""}`;
 
 // The clipboard API only exists on https pages, so plain http falls back to a selected text field.
@@ -226,15 +221,72 @@ export function useTitle(title: string | null | undefined) {
   useEffect(() => { if (title) document.title = `${title} | Sonosphere`; }, [title]);
 }
 
-// One WebSocket per tab while signed in. "open" is emitted locally on every (re)connect.
-export type LiveEvent = DmEvent | { t: "open"; again: boolean };
-type Outgoing = DmClientMessage | { t: "ping" };
+// One WebSocket per tab while signed in or viewing listening data.
+export type LiveEvent = DmEvent | ListeningEvent | { t: "open"; again: boolean };
+type Outgoing = DmClientMessage | ListenMessage | { t: "ping" };
 const liveListeners = new Set<(e: LiveEvent) => void>();
 let sock: WebSocket | null = null;
 let liveWanted = false;
 let liveTries = 0;
 let liveTimer: ReturnType<typeof setTimeout> | undefined;
 let livePing: ReturnType<typeof setInterval> | undefined;
+let subscriptionTimer: ReturnType<typeof setTimeout> | undefined;
+let listeningNames: string[] = [];
+const listeningPaths = /^\/user(?:\/recent|\/top|\/report|\/library\/artist)?$/;
+
+function scheduleSubscriptions() {
+  clearTimeout(subscriptionTimer);
+  subscriptionTimer = setTimeout(() => {
+    const names = new Set<string>();
+    for (const [path, entry] of cache) {
+      if (!entry.subs.size) continue;
+      const url = new URL(path, location.origin);
+      const name = url.searchParams.get("name");
+      if (name && listeningPaths.test(url.pathname)) names.add(name.toLowerCase());
+    }
+    const next = [...names].sort().slice(0, 8);
+    if (JSON.stringify(next) === JSON.stringify(listeningNames)) return;
+    listeningNames = next;
+    liveSend({ t: "listen", names: listeningNames });
+    reconcileLive();
+  }, 0);
+}
+
+const pendingListening = new Map<string, ListeningEvent["change"]>();
+let listeningTimer: ReturnType<typeof setTimeout> | undefined;
+export function refreshListening(name: string, change: ListeningEvent["change"] = "scrobbles") {
+  const key = name.toLowerCase();
+  if (pendingListening.get(key) !== "scrobbles") pendingListening.set(key, change);
+  if (listeningTimer) return;
+  listeningTimer = setTimeout(() => {
+    listeningTimer = undefined;
+    const changes = new Map(pendingListening);
+    pendingListening.clear();
+    for (const [path, entry] of cache) {
+      const url = new URL(path, location.origin);
+      const change = changes.get((url.searchParams.get("name") ?? "").toLowerCase());
+      if (!change || !listeningPaths.test(url.pathname)) continue;
+      if (change === "nowplaying" && !["/user", "/user/recent"].includes(url.pathname)) continue;
+      if (!entry.subs.size) cache.delete(path);
+      else if (entry.promise) entry.dirty = true;
+      else load(path);
+    }
+  }, 150);
+}
+
+function reconcileLive() {
+  clearInterval(livePing);
+  if (liveWanted || listeningNames.length) {
+    liveOpen();
+    livePing = setInterval(() => liveSend({ t: "ping" }), 50_000);
+  } else {
+    clearTimeout(liveTimer);
+    const previous = sock;
+    sock = null;
+    previous?.close();
+    liveTries = 0;
+  }
+}
 
 const liveEmit = (e: LiveEvent) => {
   for (const l of [...liveListeners]) {
@@ -248,43 +300,46 @@ const liveEmit = (e: LiveEvent) => {
 
 function liveOpen() {
   clearTimeout(liveTimer);
-  if (!liveWanted || sock) return;
+  if ((!liveWanted && !listeningNames.length) || sock) return;
   const s = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/api/ws`);
   sock = s;
   s.onopen = () => {
+    if (sock !== s) return;
     const again = liveTries > 0;
     liveTries = 0;
+    liveSend({ t: "listen", names: listeningNames });
     liveEmit({ t: "open", again });
   };
   s.onmessage = ev => {
+    if (sock !== s) return;
     let m: unknown;
     try {
       m = JSON.parse(String(ev.data));
     } catch {
       return;
     }
-    if (m && typeof m === "object" && "t" in m && typeof m.t === "string") liveEmit(m as LiveEvent);
+    if (m && typeof m === "object" && "t" in m && typeof m.t === "string") {
+      if (m.t === "listening" && "name" in m && typeof m.name === "string" && "change" in m && (m.change === "scrobbles" || m.change === "nowplaying")) refreshListening(m.name, m.change);
+      liveEmit(m as LiveEvent);
+    }
   };
   s.onclose = () => {
-    if (sock === s) sock = null;
-    if (!liveWanted) return;
+    if (sock !== s) return;
+    sock = null;
+    if (!liveWanted && !listeningNames.length) return;
     const backoff = Math.min(60_000, 1000 * 2 ** liveTries++) + Math.random() * 500;
     liveTimer = setTimeout(liveOpen, backoff);
   };
 }
 
 export function liveConnect(on: boolean) {
-  liveWanted = on;
-  clearInterval(livePing);
-  if (on) {
-    liveOpen();
-    livePing = setInterval(() => liveSend({ t: "ping" }), 50_000);
-  } else {
-    clearTimeout(liveTimer);
-    liveTries = 0;
-    sock?.close();
+  if (on !== liveWanted) {
+    const previous = sock;
     sock = null;
+    previous?.close();
   }
+  liveWanted = on;
+  reconcileLive();
 }
 
 export const liveSend = (m: Outgoing) => {

@@ -8,6 +8,7 @@ export type PublicUser = { id: number; username: string; realname: string; count
 export type Paging = { limit: number; page: number; offset: number };
 
 export type Profile = PublicUser & {
+  banner: string | null;
   about: string; pronouns: string; website: string; registeredAt: number; hidden: boolean; locked: boolean; shoutsEnabled: boolean;
   playcount: number; artistCount: number; albumCount: number; trackCount: number;
   lovedCount: number; followers: number; following: number; isFollowing: boolean; followsYou: boolean;

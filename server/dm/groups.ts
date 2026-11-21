@@ -3,7 +3,8 @@ import { push } from "../realtime";
 import { blockedEither, findById, type User } from "../users/repo";
 import { now } from "../util";
 import { mailMessage } from "../notifications/email";
-import { announceRemoved, canPost, DM, dmCounts, gate, tidy } from "./service";
+import { announceRemoved, canPost, DM, dmCounts, dmLimits, gate, tidy } from "./service";
+import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./groups.repo";
 import { atomically, connection, sentSinceTx } from "./repo";
 import type { Group, GroupMessage, Member } from "./groups.repo";
@@ -130,9 +131,10 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
   if (ids.length + 1 > GROUP.MAX_MEMBERS) fail(400, `Groups can have up to ${GROUP.MAX_MEMBERS} people`);
   const people: User[] = [];
   for (const id of ids) people.push(await checkAddable(me, await findById(id), people.map(p => p.id)));
+  const newGroups = (await onProbation(me)) ? PROBATION.NEW_GROUPS_PER_DAY : GROUP.NEW_PER_DAY;
   const { groupId, id } = await atomically(async tx => {
     const t = now();
-    if (!me.isAdmin && (await repo.createdSinceTx(tx, me.id, t - 86400)) >= GROUP.NEW_PER_DAY) {
+    if (!me.isAdmin && (await repo.createdSinceTx(tx, me.id, t - 86400)) >= newGroups) {
       fail(429, "You've started a lot of groups today. Try again tomorrow.");
     }
     const group = await repo.createTx(tx, me.id, title, t);
@@ -168,11 +170,12 @@ export async function send(me: User, groupId: unknown, rawBody: unknown): Promis
   const body = tidy(rawBody);
   if (!body) fail(400, "Write a message first");
   if (body.length > DM.MAX_LENGTH) fail(400, `Messages can be up to ${DM.MAX_LENGTH} characters`);
+  const lim = await dmLimits(me);
   const id = await atomically(async tx => {
     const t = now();
     const sent = async (since: number) => (await sentSinceTx(tx, me.id, since)) + (await repo.sentSinceTx(tx, me.id, since));
-    if ((await sent(t - 60)) >= DM.PER_MINUTE) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
-    if ((await sent(t - 86400)) >= DM.PER_DAY) fail(429, "You've reached today's message limit.");
+    if ((await sent(t - 60)) >= lim.perMinute) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
+    if ((await sent(t - 86400)) >= lim.perDay) fail(429, "You've reached today's message limit.");
     return repo.addMessageTx(tx, group.id, me.id, body, null, t);
   });
   const out = await announced(me, group.id, id);

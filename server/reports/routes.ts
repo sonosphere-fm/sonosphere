@@ -1,8 +1,9 @@
 import { confirmed, need } from "../guards";
-import { fail, Router, throttle, type Ctx, type Viewer } from "../http";
+import { fail, Router, type Ctx, type Viewer } from "../http";
 import { requireUser } from "../users/service";
 import * as service from "./service";
 import type { ReportOk, SuspendResult } from "../../shared/reports";
+import { limit } from "../trust/service";
 
 export const router = new Router();
 
@@ -13,7 +14,7 @@ function moderator(c: Ctx): Viewer {
 
 router.post<ReportOk>("/api/reports", async c => {
   const u = confirmed(need(c));
-  await throttle(`report:${u.id}`, 20, 3600, "You have sent a lot of reports. The team will get to them; try again later.");
+  await limit(u, `report:${u.id}`, 20, 3600, "You have sent a lot of reports. The team will get to them; try again later.");
   await service.fileReport(u, {
     type: String(c.body.type),
     id: Number(c.body.id),

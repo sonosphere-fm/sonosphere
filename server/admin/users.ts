@@ -1,20 +1,23 @@
 import { bad, fail, missing, oneOf, Router } from "../http";
 import { adminOnly, staff } from "../guards";
-import { adminCount, configAdmins, isAdmin, roleOf, setRole } from "../site/roles";
+import { adminCount, configAdmins, isAdmin, isStaff, roleOf, setRole } from "../site/roles";
 import { audit } from "../site/audit";
 import { like, norm, now } from "../util";
 import { disconnect } from "../realtime";
 import { canAct, note, paging, targetUser } from "./common";
 import { pageOf } from "../moderation/repo";
 import * as repo from "./users.repo";
-import type { BanResult, NoteAdded, Ok, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult, VerifyResult } from "../../shared/admin";
+import { setProbation, standing } from "../trust/service";
+import type {
+  BanResult, NoteAdded, Ok, ProbationResult, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult, VerifyResult,
+} from "../../shared/admin";
 
 export const router = new Router({ jsonOnly: true });
 
 const placeholder = (u: { email: string }) => u.email.endsWith(".invalid");
 const unconfirmed = (u: { email: string; emailVerifiedAt: number | null }) => !u.emailVerifiedAt && !placeholder(u);
 
-const FILTERS = ["all", "staff", "admins", "moderators", "suspended", "banned", "reported", "unconfirmed"] as const;
+const FILTERS = ["all", "staff", "admins", "moderators", "suspended", "banned", "reported", "unconfirmed", "probation"] as const;
 const SORTS = ["username", "registered", "scrobbles", "reports", "login"] as const;
 const ROLES = ["user", "moderator", "admin"] as const;
 
@@ -53,6 +56,7 @@ router.get<StaffUserList>("/api/admin/users", async c => {
     suspended: u.suspended,
     banned: u.banned,
     unconfirmed: unconfirmed(u),
+    probation: u.probation,
     scrobbles: u.scrobbles,
     openReports: u.openReports,
     lastLogin: u.lastLogin,
@@ -102,6 +106,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async c => {
     recentShouts,
     history: await repo.userHistory(id, 50),
     dm: await repo.dmActivity(u, now()),
+    trust: await standing(u),
     notes: await repo.notesOn(id),
   };
 });
@@ -127,6 +132,16 @@ router.post<BanResult>("/api/admin/users/:name/ban", async c => {
   // live sockets close now, not at the next session sweep
   if (banned) disconnect(t.id);
   return { banned };
+});
+
+router.post<ProbationResult>("/api/admin/users/:name/probation", async c => {
+  const me = staff(c);
+  const t = await targetUser(c.params[0]!);
+  const probation = c.body.probation !== false;
+  if (isStaff(t)) bad("Staff are never on probation");
+  await setProbation(t, probation, me);
+  await audit(me, userAction(probation ? "user.probation" : "user.release", t, note(c)));
+  return { probation };
 });
 
 router.post<RoleResult>("/api/admin/users/:name/role", async c => {

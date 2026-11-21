@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, artistUrl, qs, trackUrl, useAuth } from "./lib";
 import { errorText } from "./ui/base";
 import { Mark } from "./ui/brand";
+import { ImageWithFallback } from "./ui/image";
 import type { Ok } from "../shared/auth";
 import type { ScrobbleResponse } from "../shared/listening";
 import type { Station as StationReply } from "../shared/stations";
@@ -497,9 +498,7 @@ const SpotifyMark = () => (
 
 /** The track's cover, or the logo when there is none or it fails to load. */
 function Cover({ src }: { src: string | null }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) return <div className="vplayer-blank"><Mark /></div>;
-  return <img className="vplayer-art" src={src} alt="" onError={() => setFailed(true)} />;
+  return <ImageWithFallback className="vplayer-art" src={src} alt="" loading="eager" fallback={<span className="vplayer-blank"><Mark /></span>} />;
 }
 
 function SeekBar({ position, length, onSeek }: { position: number; length: number; onSeek: (sec: number) => void }) {
