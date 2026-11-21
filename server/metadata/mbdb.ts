@@ -73,6 +73,45 @@ export async function searchArtists(term: string): Promise<ArtistHit[]> {
     });
 }
 
+export type TitleHit = { title: string; artist: string; n: number; seconds: number };
+
+// Exact titles always come back; a prefix of three letters or more adds the best known of a few thousand others.
+const titleHits = (table: string, term: string) => db()`
+  (SELECT id, n FROM ${db()(table)} WHERE key = mbkey(${term}) ORDER BY n DESC LIMIT 40)
+  UNION
+  (SELECT id, n FROM (SELECT id, n FROM ${db()(table)} WHERE key LIKE mbkey(${term}) || '%' AND length(mbkey(${term})) >= 3 LIMIT 3000) p
+    ORDER BY n DESC LIMIT 40)`;
+
+/** Songs titled like the search, each once per artist, with how many releases carry them. */
+export async function searchTracks(term: string): Promise<TitleHit[]> {
+  const rows = await db()<{ title: string; artist: string; n: number; length: number | null }[]>`
+    WITH hits AS (${titleHits("recording_top", term)})
+    SELECT r.name AS title, a.name AS artist, h.n, r.length
+    FROM hits h JOIN recording r ON r.id = h.id
+    JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
+    JOIN artist a ON a.id = acn.artist
+    ORDER BY h.n DESC`;
+  return rows.map(r => ({ title: tidy(r.title), artist: tidy(r.artist), n: r.n, seconds: Math.round((r.length ?? 0) / 1000) }));
+}
+
+/** Albums, EPs and singles titled like the search, with how many releases each has had. */
+export async function searchAlbums(term: string): Promise<TitleHit[]> {
+  const rows = await db()<{ title: string; artist: string; n: number }[]>`
+    WITH hits AS (
+      (SELECT id FROM release_group WHERE key = mbkey(${term}) LIMIT 300)
+      UNION
+      (SELECT id FROM release_group WHERE key LIKE mbkey(${term}) || '%' AND length(mbkey(${term})) >= 3 LIMIT 3000))
+    SELECT rg.name AS title, a.name AS artist, coalesce(m.release_count, 0) AS n
+    FROM hits h JOIN release_group rg ON rg.id = h.id
+    JOIN rg_type t ON t.id = rg.type AND t.name IN ('Album', 'EP', 'Single')
+    JOIN artist_credit_name acn ON acn.artist_credit = rg.artist_credit AND acn.position = 0
+    JOIN artist a ON a.id = acn.artist
+    LEFT JOIN release_group_meta m ON m.id = rg.id
+    ORDER BY rg.key = mbkey(${term}) DESC, n DESC
+    LIMIT 60`;
+  return rows.map(r => ({ title: tidy(r.title), artist: tidy(r.artist), n: r.n, seconds: 0 }));
+}
+
 export async function spotifyId(mbid: string): Promise<string | null> {
   const [r] = await db()`SELECT s.spotify FROM artist a JOIN artist_spotify s ON s.artist = a.id WHERE a.gid = ${mbid}::uuid LIMIT 1`;
   return r?.spotify ?? null;

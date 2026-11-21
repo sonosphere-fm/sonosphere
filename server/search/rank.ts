@@ -1,4 +1,4 @@
-import type { ArtistHit } from "../metadata/mbdb";
+import type { ArtistHit, TitleHit } from "../metadata/mbdb";
 import type { FoundArtist } from "../../shared/search";
 
 // Must match mbkey() in the MusicBrainz copy.
@@ -83,4 +83,31 @@ export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: str
   }
   // artists only MusicBrainz knows have no id here: they carry a negative one (opening one files it, see server/metadata)
   return kept.slice(0, limit).map((s, i) => (s.a.id ? s.a : { ...s.a, id: -(i + 1) }));
+}
+
+type Titled = { id: number; title: string; artist: string; image: string | null; listeners: number };
+
+/** Ours and MusicBrainz's albums or tracks in one list; ones only MusicBrainz knows get negative ids like artists. */
+export function rankTitles<T extends Titled>(ours: T[], theirs: TitleHit[], typed: string, limit: number, stub: (h: TitleHit) => T): T[] {
+  const q = looseKey(typed);
+  const both = (title: string, artist: string) => `${looseKey(title)}\n${looseKey(artist)}`;
+  const known = new Map<string, TitleHit>();
+  for (const h of theirs) {
+    const k = both(h.title, h.artist);
+    if (!known.has(k)) known.set(k, h);
+  }
+  const text = (title: string) => {
+    const key = looseKey(title);
+    return textScore(key, q) - lengthPenalty(key, q);
+  };
+  const fame = (h: TitleHit | undefined) => (h ? 10 * Math.log10(1 + h.n) : 0);
+  const scored = ours.map(t => {
+    const k = both(t.title, t.artist);
+    const mb = known.get(k);
+    known.delete(k);
+    return { t, score: text(t.title) + 8 + 14 * Math.log10(1 + t.listeners) + (t.image ? 4 : 0) + fame(mb) };
+  });
+  for (const h of known.values()) scored.push({ t: stub(h), score: text(h.title) + fame(h) });
+  scored.sort((x, y) => y.score - x.score);
+  return scored.slice(0, limit).map((s, i) => (s.t.id ? s.t : { ...s.t, id: -(i + 1) }));
 }
