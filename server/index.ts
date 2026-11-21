@@ -13,6 +13,7 @@ import { sweepUnused } from "./images/repo";
 import { startDm } from "./dm/routes";
 import { dropExpiredNowPlaying, ensureTallies } from "./listening/repo";
 import { upgrade, websocket, type SocketData } from "./realtime";
+import { publicNowPlaying, publicPlayingWebsocket } from "./listening/public";
 import { startTasteWorker } from "./recommend/worker";
 import { startSpotify } from "./spotify/service";
 import { startEventSync } from "./events/sync";
@@ -50,12 +51,20 @@ const server = Bun.serve<SocketData>({
   development: production ? false : { hmr: true, console: false },
   routes: {
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv),
+    "/api/user/nowplaying": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
+    "/api/user/nowplaying/stream": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
+    "/api/user/nowplaying/ws": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
     "/api/*": api.handle,
     "/2.0": handleCompat,
     "/2.0/": handleCompat,
     ...app,
   },
-  websocket,
+  websocket: {
+    ...websocket,
+    open(ws) { (ws.data.publicUserId ? publicPlayingWebsocket : websocket).open(ws); },
+    message(ws, raw) { (ws.data.publicUserId ? publicPlayingWebsocket : websocket).message(ws, raw); },
+    close(ws) { (ws.data.publicUserId ? publicPlayingWebsocket : websocket).close(ws); },
+  },
 });
 
 // intervals live on globalThis so hot reload replaces them instead of stacking

@@ -6,7 +6,7 @@ import { findById, findByName } from "./users/repo";
 import { canSee } from "./users/service";
 import type { ListeningEvent } from "../shared/live";
 
-export type SocketData = { userId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number };
+export type SocketData = { userId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number; publicUserId?: number; publicOrigin?: string };
 type Sock = ServerWebSocket<SocketData>;
 const sockets = new Map<number, Set<Sock>>();
 const MAX_PER_USER = 6;
@@ -117,6 +117,11 @@ export const websocket = {
 
 // a user's tabs may be connected to different processes, so events fan out through Valkey
 type Fanout = { u: number; e?: object; bye?: true } | { listening: number; change: ListeningEvent["change"] };
+const listeningSubscribers = new Set<(userId: number) => void>();
+export function onListeningChange(fn: (userId: number) => void) {
+  listeningSubscribers.add(fn);
+  return () => { listeningSubscribers.delete(fn); };
+}
 subscribe("live", raw => {
   let m: Fanout;
   try {
@@ -125,6 +130,7 @@ subscribe("live", raw => {
     return;
   }
   if ("listening" in m) {
+    for (const fn of listeningSubscribers) fn(m.listening);
     for (const set of sockets.values()) for (const ws of set) {
       if (ws.data.listening.has(m.listening)) deliverListening(ws, m.listening, m.change).catch(e => console.error("live listening:", e));
     }
