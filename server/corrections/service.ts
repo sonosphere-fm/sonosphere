@@ -1,5 +1,6 @@
 import { exclusive } from "../kv";
 import { clean, norm, now } from "../util";
+import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
 import * as store from "./store";
 
@@ -151,6 +152,7 @@ export async function syncCorrections(): Promise<repo.SweepResult | null> {
         load(raw);
       } catch (e) {
         console.error("Corrections: download failed, keeping the saved copy.", String(e));
+        Sentry.captureException(e);
       }
     }
     if (!raw) return null;

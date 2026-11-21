@@ -2,6 +2,7 @@ import { findItem, resolveTrack, type TrackNames, type TrackRef } from "../catal
 import { correct } from "../corrections/service";
 import { bad } from "../http";
 import { clean, norm, now } from "../util";
+import * as Sentry from "@sentry/bun";
 import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import { listeningChanged } from "../realtime";
@@ -30,6 +31,7 @@ export async function unscramble(artist: string, track: string): Promise<{ artis
     if (real && !(await mbdb.recorded(artist, track))) found = { artist: real.artist, track: real.title };
   } catch (e) {
     console.error("unscramble:", e);
+    Sentry.captureException(e);
     return null;
   }
   if (uploads.size >= 5000) uploads.clear();
