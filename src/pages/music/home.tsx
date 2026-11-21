@@ -10,10 +10,12 @@ import { EventList } from "../../ui/events";
 import { TagChips } from "../../ui/tags";
 import { StationRow } from "../../player";
 import { HomeTabs, mixRecs } from "./shared";
-import type { FriendActivity, FriendLove, Home as HomeData, Recommended } from "../../../shared/home";
+import { FeaturedSphere } from "./featured-sphere";
+import type { FriendActivity, FriendLove, Home as HomeData, Recommended, Sphere } from "../../../shared/home";
 import type { UserRecent } from "../../../shared/users";
 
 const WELCOME_KEY = "spin:welcome";
+const noSpheres: Sphere[] = [];
 
 function welcomeHidden() {
   try {
@@ -73,28 +75,18 @@ function PlayRows() {
 
 function Banner({ d }: { d: HomeData | null }) {
   return (
-    <div className="banner">
+    <div className="banner cover-sphere-hero">
       <div className="wrap banner-inner">
         <div className="banner-copy">
-          <h1>Track what you love.</h1>
-          <p>Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
+          <h1>There's a sphere just for you.</h1>
+          <p>Import from Last.FM in just two clicks, except this time there's no strings attached.</p>
           <div className="row">
-            <Button kind="btn invert" href="/join">Join free</Button>
-            <Button kind="btn outline-invert" href="/login">Log in</Button>
+            <Button kind="btn invert" href="/join">Join now</Button>
+            <Button kind="btn ghost" href="/login">Sign in</Button>
           </div>
           {d && d.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(d.stats.users))}+ users scrobbling on Sonosphere</p>}
         </div>
-        {d && d.trendingTracks.length > 0 && (
-          <ol className="banner-chart">
-            <li className="banner-chart-head">Top tracks right now</li>
-            {d.trendingTracks.slice(0, 5).map((t, i) => (
-              <li key={t.id}>
-                <b>{i + 1}</b>
-                <Link to={trackUrl(t.artist, t.title)}><strong>{t.title}</strong><span>{t.artist}</span></Link>
-              </li>
-            ))}
-          </ol>
-        )}
+        <FeaturedSphere spheres={d?.spheres ?? noSpheres} />
       </div>
     </div>
   );
@@ -147,7 +139,7 @@ export function Home() {
     prefetch(recentOf(me.username));
   }
   const q = useApi<HomeData>("/home");
-  useTitle(me ? "Home" : "Track what you love");
+  useTitle(me ? "Home" : "There's a sphere just for you");
   return (
     <>
       {!me && <Banner d={q.data} />}

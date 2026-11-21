@@ -5,6 +5,7 @@ import { counts, nowPlaying, recent, siteTop, topAlbums } from "../listening/rep
 import { recommendations } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
+import { homeSpheres } from "./sphere";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
 import type { TopAlbum } from "../../shared/listening";
 
@@ -44,13 +45,14 @@ router.get<Home>("/api/home", async c => {
   const since = now() - WEEK;
   const busy = (await counts({ from: since })).listeners >= 3;
   const week = busy ? since : undefined;
-  const [trendingArtists, trendingTracks, trendingAlbums, tags, events, stats] = await Promise.all([
+  const [trendingArtists, trendingTracks, trendingAlbums, tags, events, stats, spheres] = await Promise.all([
     siteTop("artists", { from: week }, 12),
     siteTop("tracks", { from: week, viewerId }, 10),
     siteTop("albums", { from: week }, 6),
     repo.popularTags(18),
     repo.upcomingEvents(now(), viewerId, 4),
     repo.siteTotals(),
+    viewerId ? [] : homeSpheres(),
   ]);
   const out: Home = {
     trendingPeriod: busy ? "week" : "overall",
@@ -60,6 +62,7 @@ router.get<Home>("/api/home", async c => {
     tags,
     events,
     stats,
+    spheres,
   };
   if (viewerId) {
     const [friends, friendLoves, thisWeek, lastWeek] = await Promise.all([
