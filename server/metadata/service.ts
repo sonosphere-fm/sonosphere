@@ -1,4 +1,5 @@
-// Filling in the catalogue from MusicBrainz, the Cover Art Archive and Spotify (server/metadata/sources.ts).
+// Filling in the catalogue from MusicBrainz, the Cover Art Archive, Last.fm and Spotify (server/metadata/sources.ts).
+// Each fills what the ones before it lack: MusicBrainz first, then Last.fm (generous limits), then Spotify (scarce).
 //
 // Spotify lookups borrow a connected listener's token (server/spotify).
 // - An artist, album or track page we have nothing for, opened by a signed-in account with a confirmed email, is
@@ -74,14 +75,29 @@ async function askSpotify<T>(kind: "artist" | "album" | "track", id: number, spA
     return r;
   } catch (e) { quiet(`spotify ${kind} ${id}`)(e); return undefined; }
 }
+/** Asks Last.fm about an album or track once, like askSpotify(). */
+async function askLastfm<T>(kind: "album" | "track", id: number, lfAt: number | null, ask: () => Promise<T | null>): Promise<T | null | undefined> {
+  if (lfAt) return null;
+  try {
+    const r = await ask();
+    await repo.lastfmAnswered(kind, id);
+    return r;
+  } catch (e) { quiet(`lastfm ${kind} ${id}`)(e); return undefined; }
+}
+/** One Last.fm album lookup per album however many steps need it. */
+function albumOnLastfm(id: number, lfAt: number | null, artist: string, title: string) {
+  let asked: Promise<src.LfAlbum | null> | null = null;
+  return () => (asked ??= askLastfm("album", id, lfAt, () => src.lfAlbum(artist, title)).then(r => r ?? null));
+}
+const noLastfm = async () => null;
 /** One Spotify album lookup per album however many steps need it. */
 function albumOnSpotify(id: number, spAt: number | null, artist: string, title: string) {
   let asked: Promise<src.SpAlbum | null> | null = null;
   return () => (asked ??= askSpotify("album", id, spAt, () => src.spAlbum(artist, title)).then(r => r ?? null));
 }
 
-/** Finds an album a cover: the Cover Art Archive first, then Spotify (shown from there). */
-async function findCover(albumId: number, mbid: string | null, spotify: () => Promise<src.SpAlbum | null>): Promise<void> {
+/** Finds an album a cover: the Cover Art Archive first, then Last.fm, then Spotify (both shown from there). */
+async function findCover(albumId: number, mbid: string | null, spotify: () => Promise<src.SpAlbum | null>, lastfm: () => Promise<src.LfAlbum | null>): Promise<void> {
   if (await getJson<number>(COVERS_PAUSED)) return;
   await repo.setAlbum(albumId, { coverAt: now() });
   try {
@@ -91,6 +107,8 @@ async function findCover(albumId: number, mbid: string | null, spotify: () => Pr
     if (e instanceof src.Busy && e.message === "storage") { await repo.setAlbum(albumId, { coverAt: null }); await setJson(COVERS_PAUSED, 1, 3600_000); return; }
     throw e;
   }
+  const lf = await lastfm();
+  if (lf?.picture) { await repo.setAlbum(albumId, { imageId: await showPicture(lf.picture) }); return; }
   const s = await spotify();
   if (s?.picture) await repo.setAlbum(albumId, { imageId: await showPicture(s.picture) });
 }
@@ -100,7 +118,7 @@ const COVERS_PAUSED = "meta-pause:covers";
 async function fillArtist(id: number): Promise<void> {
   const a = await repo.artistRow(id);
   if (!a) return;
-  const mbid = a.mbid || mbidOfArtist(a.name) || (await src.mbArtist(a.name))?.mbid || null;
+  const mbid = a.mbid || mbidOfArtist(a.name) || (await src.mbArtist(a.name))?.mbid || (await src.lfArtist(a.name).catch(() => null))?.mbid || null;
   if (mbid && mbid !== a.mbid) await repo.setArtist(id, { mbid });
   if (!a.imageId) await artistPhoto(a, mbid);
   if (mbid) await repo.addDiscography(id, await src.mbDiscography(mbid)); // their covers come from the background loop
@@ -119,13 +137,14 @@ async function fillAlbum(id: number, artist: string, hint?: src.MbAlbum | null):
   const mbid = al.mbid || mbidOfAlbum(artist, al.title) || found?.mbid || null;
   const date = al.releaseDate || found?.date || undefined;
   await repo.setAlbum(id, { ...(mbid && mbid !== al.mbid ? { mbid } : {}), ...(date && date !== al.releaseDate ? { releaseDate: date } : {}) });
-  const spotify = albumOnSpotify(id, al.spAt, artist, al.title);
+  const spotify = albumOnSpotify(id, al.spAt, artist, al.title), lastfm = albumOnLastfm(id, al.lfAt, artist, al.title);
   if ((await repo.trackListSize(id)) < 2) {
     let list = mbid ? await src.mbTrackList(mbid) : [];
+    if (!list.length) list = (await lastfm())?.tracks ?? [];
     if (!list.length) { const sp = await spotify(); if (sp) list = await src.spTrackList(sp.id).catch(e => { quiet(`album ${id} tracks`)(e); return []; }); }
     if (list.length) await repo.setTrackList(id, al.artistId, list);
   }
-  if (!al.imageId) await findCover(id, mbid, spotify);
+  if (!al.imageId) await findCover(id, mbid, spotify, lastfm);
 }
 
 async function fillTrack(id: number, artist: string): Promise<void> {
@@ -134,13 +153,23 @@ async function fillTrack(id: number, artist: string): Promise<void> {
   if (t?.albumId && (await repo.claim("album", t.albumId, now() - MONTH))) await fillAlbum(t.albumId, artist);
   if (!t || (t.duration && t.albumId)) return;
   const mb = await src.mbTrack(artist, t.title);
-  const sp = !mb ? ((await askSpotify("track", id, t.spAt, () => src.spTrack(artist, t.title))) ?? null) : null;
-  const seconds = mb?.seconds || sp?.seconds || 0;
+  const lf = !mb?.album || !mb.seconds ? ((await askLastfm("track", id, t.lfAt, () => src.lfTrack(artist, t.title))) ?? null) : null;
+  const sp = !mb && !lf?.album ? ((await askSpotify("track", id, t.spAt, () => src.spTrack(artist, t.title))) ?? null) : null;
+  const seconds = mb?.seconds || lf?.seconds || sp?.seconds || 0;
   if (!t.duration && seconds) await repo.setTrack(id, { duration: seconds });
   if (!t.albumId) {
-    const albumId = await fileAlbum(t.artistId, artist, mb?.album ?? null, sp?.album ?? null);
+    const albumId = mb?.album || !lf?.album ? await fileAlbum(t.artistId, artist, mb?.album ?? null, sp?.album ?? null) : await lastfmAlbum(t.artistId, artist, lf.album);
     if (albumId) await repo.setTrack(id, { albumId });
   }
+}
+
+/** Files the album Last.fm says a track is on, with its cover when Last.fm has one. Returns its id. */
+async function lastfmAlbum(artistId: number, artist: string, al: NonNullable<src.LfTrack["album"]>): Promise<number> {
+  const id = await repo.addAlbum(artistId, al.title, null);
+  const row = await repo.albumRow(id);
+  if (row && !row.imageId && al.picture) await repo.setAlbum(id, { imageId: await showPicture(al.picture), coverAt: now() });
+  if (await repo.claim("album", id, now() - MONTH)) await fillAlbum(id, artist);
+  return id;
 }
 
 /** Files the album a track was found on, with its track list and cover. Returns its id. */
@@ -155,7 +184,7 @@ async function fileAlbum(artistId: number, artist: string, mb: src.MbAlbum | nul
     if (await repo.claim("album", id, now() - MONTH)) {
       const al = await repo.albumRow(id);
       if (al && (await repo.trackListSize(id)) < 2) { const list = await src.spTrackList(sp.id); if (list.length) await repo.setTrackList(id, artistId, list); }
-      if (al && !al.imageId) await findCover(id, null, async () => sp);
+      if (al && !al.imageId) await findCover(id, null, async () => sp, albumOnLastfm(id, al.lfAt, artist, sp.title));
     }
     return id;
   }
@@ -270,7 +299,7 @@ async function tick() {
     await exclusive("metadata-covers", 5 * 60_000, async () => {
       const rows = await repo.coverless(5);
       const names = await repo.artistNames([...new Set(rows.map(r => r.artistId))]);
-      for (const r of rows) await findCover(r.id, r.mbid, albumOnSpotify(r.id, r.spAt, names.get(r.artistId) ?? "", r.title)).catch(quiet(`cover ${r.id}`));
+      for (const r of rows) await findCover(r.id, r.mbid, albumOnSpotify(r.id, r.spAt, names.get(r.artistId) ?? "", r.title), albumOnLastfm(r.id, r.lfAt, names.get(r.artistId) ?? "", r.title)).catch(quiet(`cover ${r.id}`));
     });
   } catch (e) { quiet("cover loop")(e); }
   finally { busy = false; }
@@ -321,7 +350,7 @@ async function fillWanted(kind: "artist" | "album" | "track", id: number, due: n
     if (!al || al.imageId) return;
     const artist = (await repo.artistNames([al.artistId])).get(al.artistId) ?? "";
     if (await repo.claim("album", id, due)) return fillAlbum(id, artist);
-    if (!al.spAt) await findCover(id, null, albumOnSpotify(id, al.spAt, artist, al.title));
+    if (!al.spAt || !al.lfAt) await findCover(id, null, albumOnSpotify(id, al.spAt, artist, al.title), albumOnLastfm(id, al.lfAt, artist, al.title));
     return;
   }
   const t = await repo.trackRow(id);
@@ -329,7 +358,16 @@ async function fillWanted(kind: "artist" | "album" | "track", id: number, due: n
   const artist = (await repo.artistNames([t.artistId])).get(t.artistId) ?? "";
   if (await repo.claim("track", id, due)) return fillTrack(id, artist);
   if (t.albumId) await fillWanted("album", t.albumId, due);
+  else if (!t.lfAt) await lastfmTrack(t, artist);
   else if (!t.spAt) await spotifyTrack(t, artist);
+}
+
+/** A track MusicBrainz didn't place: its length and album from Last.fm. */
+async function lastfmTrack(t: { id: number; artistId: number; title: string; duration: number; albumId: number | null; lfAt: number | null }, artist: string) {
+  const lf = await askLastfm("track", t.id, t.lfAt, () => src.lfTrack(artist, t.title));
+  if (!lf) return;
+  if (!t.duration && lf.seconds) await repo.setTrack(t.id, { duration: lf.seconds });
+  if (!t.albumId && lf.album) await repo.setTrack(t.id, { albumId: await lastfmAlbum(t.artistId, artist, lf.album) });
 }
 
 /** A track MusicBrainz didn't place: its length and album from Spotify. */
@@ -352,7 +390,7 @@ async function spotifyBackfill(until: number) {
   const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
   for (const r of albums) {
     if (!(await going())) return;
-    await findCover(r.id, null, albumOnSpotify(r.id, null, names.get(r.artistId) ?? "", r.title)).catch(quiet(`album ${r.id}`));
+    await findCover(r.id, null, albumOnSpotify(r.id, null, names.get(r.artistId) ?? "", r.title), noLastfm).catch(quiet(`album ${r.id}`));
   }
   for (const r of tracks) {
     if (!(await going())) return;
@@ -361,9 +399,33 @@ async function spotifyBackfill(until: number) {
   }
 }
 
+/**
+ * Asks Last.fm about albums and tracks looked up elsewhere that still lack a cover, length or album, a batch every 20
+ * seconds (about 40 calls, well within its limit).
+ */
+let lfFilling = false;
+async function lastfmBackfill() {
+  if (lfFilling) return;
+  lfFilling = true;
+  try {
+    await exclusive("metadata-lastfm", 5 * 60_000, async () => {
+      if (await getJson<number>("meta-pause:lastfm")) return;
+      const albums = await repo.lastfmDueAlbums(15), tracks = await repo.lastfmDueTracks(25);
+      const names = await repo.artistNames([...new Set([...albums, ...tracks].map(r => r.artistId))]);
+      for (const r of albums) await findCover(r.id, null, noSpotify, albumOnLastfm(r.id, null, names.get(r.artistId) ?? "", r.title)).catch(quiet(`lastfm album ${r.id}`));
+      for (const r of tracks) {
+        const t = await repo.trackRow(r.id);
+        if (t) await lastfmTrack(t, names.get(r.artistId) ?? "").catch(quiet(`lastfm track ${r.id}`));
+      }
+    });
+  } catch (e) { quiet("lastfm backfill")(e); }
+  finally { lfFilling = false; }
+}
+const noSpotify = async () => null;
+
 /** Started once at boot (server/index.ts). */
 export function startMetadata() {
   const g = globalThis as { __spinMetadata?: ReturnType<typeof setInterval> }; // survives hot reloads in development
   clearInterval(g.__spinMetadata);
-  g.__spinMetadata = setInterval(() => { src.inSpareTime(tick); backfill(); }, 20_000);
+  g.__spinMetadata = setInterval(() => { src.inSpareTime(tick); backfill(); lastfmBackfill(); }, 20_000);
 }

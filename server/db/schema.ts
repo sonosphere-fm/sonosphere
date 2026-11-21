@@ -124,6 +124,7 @@ export const albums = pgTable("albums", {
 	metaAt: integer("meta_at"),
 	coverAt: integer("cover_at"),
 	spAt: integer("sp_at"),
+	lfAt: integer("lf_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),
@@ -141,6 +142,7 @@ export const tracks = pgTable("tracks", {
 	basePlaycount: big("base_playcount").default(0).notNull(),
 	metaAt: integer("meta_at"),
 	spAt: integer("sp_at"),
+	lfAt: integer("lf_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),

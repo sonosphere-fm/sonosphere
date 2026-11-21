@@ -257,3 +257,65 @@ export async function spTrack(artist: string, title: string): Promise<SpTrack | 
   const al = obj(hit.album);
   return { title: tidy(hit.name), artist: firstArtist(hit.artists), seconds: Math.round(num(hit.duration_ms) / 1000), album: al && str(al.album_type) !== "compilation" ? spAlbumOf(al) : null };
 }
+
+// ---------- Last.fm ----------
+// Fills what MusicBrainz and Spotify lack: album covers (shown from Last.fm's servers), track lengths, the album a
+// track is on, album track lists, MusicBrainz ids. Its artist pictures are all one placeholder, so none are taken.
+// Last.fm allows a few calls a second per key; one every 250ms, shared by every process.
+export const LASTFM_KEY = "65fb65f79427db8ce5626269c0d7fa2b";
+const LF_BLANK = "2a96cbd8b46e442fc41c2b86b821562f"; // the grey star Last.fm shows for "no picture"
+
+/** A call to Last.fm's API: null when it has nothing by that name. */
+export async function lastfm(method: string, params: Record<string, string>): Promise<Json | null> {
+  await pausedFor("lastfm");
+  await turn("lastfm", 250);
+  let res: Response;
+  try {
+    res = await fetch(`https://ws.audioscrobbler.com/2.0/?${new URLSearchParams({ ...params, method, api_key: LASTFM_KEY, format: "json", autocorrect: "0" })}`,
+      { headers: { "User-Agent": agent() }, signal: AbortSignal.timeout(15_000) });
+  } catch { throw new Busy("lastfm"); }
+  const body = obj(await res.json().catch(() => null));
+  const code = num(body?.error);
+  if (code === 6) return null; // no such artist, album or track
+  if (code === 29 || res.status === 429) { await pause("lastfm", 60); throw new Busy("lastfm"); } // too many calls
+  if (code === 11 || code === 16 || res.status >= 500) { await pause("lastfm", 15); throw new Busy("lastfm"); } // down for a moment
+  if (code) throw new Error(`Last.fm ${method} answered error ${code}`);
+  if (!res.ok) throw new Error(`Last.fm ${method} answered ${res.status}`);
+  return body;
+}
+
+/** The largest picture Last.fm lists (300px), unless it is the placeholder. */
+const lfPicture = (v: unknown): Picture | null => {
+  const imgs = objs(v), big = ["mega", "extralarge", "large", "medium"];
+  for (const size of big) {
+    const url = str(imgs.find(i => str(i.size) === size)?.["#text"]);
+    if (url.startsWith("https://") && !url.includes(LF_BLANK)) return { url, width: size === "mega" || size === "extralarge" ? 300 : null, height: size === "mega" || size === "extralarge" ? 300 : null };
+  }
+  return null;
+};
+const lfMbid = (v: unknown) => /^[0-9a-f-]{36}$/.test(str(v)) ? str(v) : null;
+
+export type LfArtist = { name: string; mbid: string | null };
+export async function lfArtist(name: string): Promise<LfArtist | null> {
+  const a = obj((await lastfm("artist.getinfo", { artist: name }))?.artist);
+  return a && same(str(a.name), name) ? { name: tidy(a.name), mbid: lfMbid(a.mbid) } : null;
+}
+
+export type LfAlbum = { title: string; artist: string; mbid: string | null; picture: Picture | null; tracks: ListedTrack[] };
+export async function lfAlbum(artist: string, title: string): Promise<LfAlbum | null> {
+  const a = obj((await lastfm("album.getinfo", { artist, album: title }))?.album);
+  if (!a || !same(str(a.name), title) || !same(str(a.artist), artist)) return null;
+  // a one-track album comes as an object rather than a list
+  const raw = obj(a.tracks)?.track, tracks = (Array.isArray(raw) ? objs(raw) : obj(raw) ? [obj(raw)!] : [])
+    .map(t => ({ title: tidy(t.name), seconds: Math.round(Number(t.duration) || 0) })).filter(t => t.title);
+  return { title: tidy(a.name), artist: tidy(a.artist), mbid: lfMbid(a.mbid), picture: lfPicture(a.image), tracks };
+}
+
+export type LfTrack = { title: string; artist: string; seconds: number; album: { title: string; mbid: string | null; picture: Picture | null } | null };
+export async function lfTrack(artist: string, title: string): Promise<LfTrack | null> {
+  const t = obj((await lastfm("track.getinfo", { artist, track: title }))?.track);
+  if (!t || !same(str(t.name), title) || !same(str(obj(t.artist)?.name), artist)) return null;
+  const al = obj(t.album), alTitle = tidy(al?.title);
+  return { title: tidy(t.name), artist: tidy(obj(t.artist)?.name), seconds: Math.round((Number(t.duration) || 0) / 1000),
+    album: al && alTitle ? { title: alTitle, mbid: lfMbid(al.mbid), picture: lfPicture(al.image) } : null };
+}

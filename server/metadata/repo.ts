@@ -75,7 +75,7 @@ export async function addDiscography(artistId: number, list: { mbid: string; tit
 
 /** Albums with a MusicBrainz id but no cover that were never searched for one, oldest first. */
 export const coverless = (limit: number) =>
-  db.select({ id: albums.id, mbid: albums.mbid, title: albums.title, artistId: albums.artistId, spAt: albums.spAt }).from(albums)
+  db.select({ id: albums.id, mbid: albums.mbid, title: albums.title, artistId: albums.artistId, spAt: albums.spAt, lfAt: albums.lfAt }).from(albums)
     .where(and(isNotNull(albums.mbid), isNull(albums.imageId), isNull(albums.coverAt))).orderBy(asc(albums.id)).limit(limit);
 
 export const artistNames = async (ids: number[]) =>
@@ -99,6 +99,19 @@ export const spotifyDueAlbums = (limit: number) =>
 export const spotifyDueTracks = (limit: number) =>
   db.select({ id: tracks.id, artistId: tracks.artistId }).from(tracks)
     .where(and(isNull(tracks.spAt), isNotNull(tracks.metaAt), or(isNull(tracks.albumId), eq(tracks.duration, 0)))).orderBy(asc(tracks.id)).limit(limit);
+
+/** Last.fm answered for an album or track (found or not): it isn't asked again. */
+export async function lastfmAnswered(kind: "album" | "track", id: number) {
+  const t = table[kind];
+  await db.update(t).set({ lfAt: now() }).where(eq(t.id, id));
+}
+/** Albums and tracks looked up elsewhere that still lack a cover (or a length or album) and Last.fm was never asked about. */
+export const lastfmDueAlbums = (limit: number) =>
+  db.select({ id: albums.id, artistId: albums.artistId, title: albums.title }).from(albums)
+    .where(and(isNull(albums.imageId), isNull(albums.lfAt), or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt))))).orderBy(asc(albums.id)).limit(limit);
+export const lastfmDueTracks = (limit: number) =>
+  db.select({ id: tracks.id, artistId: tracks.artistId }).from(tracks)
+    .where(and(isNull(tracks.lfAt), isNotNull(tracks.metaAt), or(isNull(tracks.albumId), eq(tracks.duration, 0)))).orderBy(asc(tracks.id)).limit(limit);
 
 export const unlookedArtists = (limit: number) =>
   db.select({ id: artists.id }).from(artists).where(isNull(artists.metaAt)).orderBy(asc(artists.id)).limit(limit);

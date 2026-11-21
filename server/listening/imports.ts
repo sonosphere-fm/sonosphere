@@ -9,12 +9,12 @@ import { importChunks, importJobs } from "../db/schema";
 import { need } from "../guards";
 import { bad, fail, int, missing, Router, throttle } from "../http";
 import { exclusive } from "../kv";
+import { LASTFM_KEY } from "../metadata/sources";
 import { clean, now } from "../util";
 import { importLoved, scrobbleMany } from "./service";
 import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportKind, type ImportState } from "../../shared/imports";
 
 // The site's own Last.fm API key, for reading public profiles.
-const LASTFM_KEY = "65fb65f79427db8ce5626269c0d7fa2b";
 const SLICE = 1000;
 const ACTIVE = ["uploading", "queued", "running"];
 
