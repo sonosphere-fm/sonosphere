@@ -2,7 +2,7 @@ import { need } from "../guards";
 import { bad, oneOf, paging, Router } from "../http";
 import { range } from "../listening/period";
 import { counts, nowPlaying, recent, siteTop, topAlbums } from "../listening/repo";
-import { recommendations, recommendedArtists } from "../recommend/service";
+import { recommendations } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
@@ -27,12 +27,12 @@ router.get<Charts>("/api/charts", async c => {
 
 // Those playing now first, then the most recent.
 async function friendActivity(viewerId: number): Promise<FriendActivity[]> {
-  const out: FriendActivity[] = [];
-  for (const user of await repo.openFollowees(viewerId)) {
+  const found = await Promise.all((await repo.openFollowees(viewerId)).map(async (user): Promise<FriendActivity | null> => {
     const playing = await nowPlaying(user.id, viewerId);
     const track = playing ?? (await recent({ userId: user.id, viewerId }, 1)).items[0];
-    if (track) out.push({ user, track, nowPlaying: !!playing });
-  }
+    return track ? { user, track, nowPlaying: !!playing } : null;
+  }));
+  const out = found.filter(f => f !== null);
   return out.sort((a, b) => {
     return Number(b.nowPlaying) - Number(a.nowPlaying) || playedAt(b) - playedAt(a);
   });
@@ -44,21 +44,32 @@ router.get<Home>("/api/home", async c => {
   const since = now() - WEEK;
   const busy = (await counts({ from: since })).listeners >= 3;
   const week = busy ? since : undefined;
+  const [trendingArtists, trendingTracks, trendingAlbums, tags, events, stats] = await Promise.all([
+    siteTop("artists", { from: week }, 12),
+    siteTop("tracks", { from: week, viewerId }, 10),
+    siteTop("albums", { from: week }, 6),
+    repo.popularTags(18),
+    repo.upcomingEvents(now(), viewerId, 4),
+    repo.siteTotals(),
+  ]);
   const out: Home = {
     trendingPeriod: busy ? "week" : "overall",
-    trendingArtists: (await siteTop("artists", { from: week }, 12)).items,
-    trendingTracks: (await siteTop("tracks", { from: week, viewerId }, 10)).items,
-    trendingAlbums: (await siteTop("albums", { from: week }, 6)).items,
-    tags: await repo.popularTags(18),
-    events: await repo.upcomingEvents(now(), viewerId, 4),
-    stats: await repo.siteTotals(),
+    trendingArtists: trendingArtists.items,
+    trendingTracks: trendingTracks.items,
+    trendingAlbums: trendingAlbums.items,
+    tags,
+    events,
+    stats,
   };
   if (viewerId) {
-    out.friends = await friendActivity(viewerId);
-    out.friendLoves = await repo.friendLoves(viewerId, 8);
-    out.recommended = await recommendedArtists(viewerId, 6);
-    const thisWeek = await counts({ userId: viewerId, from: since });
-    const lastWeek = await counts({ userId: viewerId, from: since - WEEK, to: since });
+    const [friends, friendLoves, thisWeek, lastWeek] = await Promise.all([
+      friendActivity(viewerId),
+      repo.friendLoves(viewerId, 8),
+      counts({ userId: viewerId, from: since }),
+      counts({ userId: viewerId, from: since - WEEK, to: since }),
+    ]);
+    out.friends = friends;
+    out.friendLoves = friendLoves;
     out.week = { now: thisWeek.playcount, before: lastWeek.playcount };
   }
   return out;
@@ -66,11 +77,11 @@ router.get<Home>("/api/home", async c => {
 
 router.get<Recommended>("/api/recommended", async c => {
   const u = need(c);
-  const { artists, tracks } = await recommendations(u.id, u.id, 30, 30);
-  const albums: TopAlbum[] = [];
-  for (const a of artists.slice(0, 18)) {
-    const top = await topAlbums({ artistId: a.id, global: true }, 1);
-    albums.push(...top.items);
-  }
-  return { artists, tracks, albums, events: await repo.upcomingEvents(now(), u.id, 20) };
+  const [{ artists, tracks }, events] = await Promise.all([
+    recommendations(u.id, u.id, 30, 30),
+    repo.upcomingEvents(now(), u.id, 20),
+  ]);
+  const tops = await Promise.all(artists.slice(0, 18).map(a => topAlbums({ artistId: a.id, global: true }, 1)));
+  const albums: TopAlbum[] = tops.flatMap(t => t.items);
+  return { artists, tracks, albums, events };
 });
