@@ -13,6 +13,10 @@ export type Me = {
   /** Unread notifications. */
   unread: number;
   dm: DmCounts; dmPolicy: string;
+  /** Whether `email` was confirmed by following a link sent to it. */
+  emailVerified: boolean;
+  /** A new address waiting for its confirmation link to be followed. */
+  pendingEmail: string | null;
 };
 
 /** GET /api/me: `user` is null when nobody is signed in. */

@@ -5,6 +5,7 @@ import { configAdmins, roleOf, syncAdmins } from "../site/roles";
 import { setting } from "../site/settings";
 import { findById, type User } from "../users/repo";
 import { norm, rid } from "../util";
+import { pendingEmail } from "./email";
 import * as repo from "./repo";
 import { sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
@@ -17,6 +18,7 @@ export async function me(u: User): Promise<Me> {
     openReports: u.isAdmin ? await repo.openReportCount() : 0,
     unread: await repo.unreadCount(u.id),
     dm: await dmCounts(u.id), dmPolicy: u.dmPolicy || "requests",
+    emailVerified: !!u.emailVerifiedAt, pendingEmail: await pendingEmail(u.id),
   };
 }
 

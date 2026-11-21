@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { Ico } from "./icons";
 import { Button } from "./kit";
-import { api } from "./lib";
+import { useLocation } from "react-router-dom";
+import { api, useAuth } from "./lib";
 import type { SiteInfo } from "../shared/admin";
+import type { Ok } from "../shared/auth";
 
 const DISMISSED = "spin.announcement.dismissed";
 export function SiteBanner() {
@@ -23,6 +25,25 @@ export function SiteBanner() {
       <div className="wrap site-banner-in">
         <span>{a.text}</span>
         <Button kind="site-banner-x" type="button" aria-label="Dismiss announcement" onClick={dismiss}><Ico.X /></Button>
+      </div>
+    </div>
+  );
+}
+
+// A reminder for accounts whose email is not confirmed yet, with a way to get the link again. Hidden for the visit once dismissed.
+const NAGGED = "spin.verify.dismissed";
+export function VerifyBanner() {
+  const { me } = useAuth(), { pathname } = useLocation();
+  const [hidden, setHidden] = useState(() => { try { return sessionStorage.getItem(NAGGED) === "1"; } catch { return false; } });
+  const [note, setNote] = useState("");
+  if (!me || me.emailVerified || hidden || pathname === "/verify") return null;
+  const dismiss = () => { setHidden(true); try { sessionStorage.setItem(NAGGED, "1"); } catch { /* private mode */ } };
+  const resend = () => { setNote("Sending..."); api<Ok>("/me/verify", { body: {} }).then(() => setNote(`Sent. Check ${me.email}.`), e => setNote(e instanceof Error ? e.message : String(e))); };
+  return (
+    <div className="site-banner warning" role="status">
+      <div className="wrap site-banner-in">
+        <span>Confirm your email address using the link we sent to <strong>{me.email}</strong>. {note || <button type="button" className="banner-link" onClick={resend}>Send it again</button>}</span>
+        <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}><Ico.X /></Button>
       </div>
     </div>
   );

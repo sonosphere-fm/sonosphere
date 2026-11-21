@@ -11,6 +11,10 @@ export async function createSession(token: string, userId: number): Promise<void
 export async function deleteSession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, token));
 }
+/** Signs an account out everywhere, except on the session `keep` if given. */
+export async function deleteSessionsOf(userId: number, keep = ""): Promise<void> {
+  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, keep)));
+}
 
 /** The account that logs in with this (already normalised) username or email address. */
 export const findByLogin = (ident: string): Promise<User | null> =>

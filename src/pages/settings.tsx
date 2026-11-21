@@ -86,16 +86,25 @@ function BlockedUsers() {
 function AccountSettings() {
   const { me, setMe } = useAuth(), nav = useNavigate();
   const [email, setEmail] = useState(me!.email), [pw, setPw] = useState({ current: "", next: "" }), [del, setDel] = useState("");
-  const a1 = useAction(), a2 = useAction(), a3 = useAction();
+  const a0 = useAction(), a1 = useAction(), a2 = useAction(), a3 = useAction();
   return (
     <>
       <Section title="Email">
-        <form className="form" onSubmit={e => { e.preventDefault(); a1.run(async () => { setMe((await api<ProfileSaved>("/me", { method: "PATCH", body: { email } })).user); return "Email updated."; }); }}>
+        <form className="form" onSubmit={e => { e.preventDefault(); a1.run(async () => {
+          if (email.trim().toLowerCase() === me!.email) return "That is already your email.";
+          const u = (await api<ProfileSaved>("/me", { method: "PATCH", body: { email } })).user; setMe(u); setEmail(u.email);
+          return `We sent a link to ${u.pendingEmail ?? email}. Your email changes once you follow it.`;
+        }); }}>
+          <p className="muted small">
+            {me!.emailVerified ? <>{me!.email} is confirmed.</> : <>{me!.email} is not confirmed yet. <Button kind="link small" type="button" onClick={() => a0.run(async () => { await api<Ok>("/me/verify", { body: {} }); return `Sent a new link to ${me!.email}.`; })}>Send the link again</Button></>}
+            {me!.pendingEmail && <> Waiting for you to confirm {me!.pendingEmail}.</>}
+          </p>
+          {a0.note}
           <label>Email address<Input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>{a1.note}<Button kind="btn" loading={a1.busy}>Update email</Button>
         </form>
       </Section>
       <Section title="Password">
-        <form className="form" onSubmit={e => { e.preventDefault(); a2.run(async () => { await api<Ok>("/me/password", { body: pw }); setPw({ current: "", next: "" }); return "Password changed."; }); }}>
+        <form className="form" onSubmit={e => { e.preventDefault(); a2.run(async () => { await api<Ok>("/me/password", { body: pw }); setPw({ current: "", next: "" }); return "Password changed. Other devices were signed out."; }); }}>
           <label>Current password<Input type="password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} required autoComplete="current-password" /></label>
           <label>New password<Input type="password" value={pw.next} onChange={e => setPw({ ...pw, next: e.target.value })} required minLength={8} autoComplete="new-password" /></label>
           {a2.note}<Button kind="btn" loading={a2.busy}>Change password</Button>

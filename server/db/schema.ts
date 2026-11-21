@@ -11,7 +11,7 @@ import { sql } from "drizzle-orm";
 /**
  * Pictures, with random ids. The files live in object storage (server/storage): `key` (img/<id>) names them, a full-size WebP at `<key>.webp` and a
  * small one at `<key>-s.webp`, and `size` is both together in bytes. `data` holds the original upload of pictures from
- * before object storage, kept until they have been moved (scripts/images-to-storage.ts).
+ * before object storage, kept as a fallback until it is cleared.
  */
 export const images = pgTable("images", {
 	// random, so links to pictures cannot be counted through
@@ -50,7 +50,35 @@ export const users = pgTable("users", {
 	banReason: text("ban_reason").default("").notNull(),
 	dmPolicy: text("dm_policy").default("requests").notNull(),
 	dmMuted: boolean("dm_muted").default(false).notNull(),
+	// when the address in `email` was confirmed by following an emailed link; null until then
+	emailVerifiedAt: integer("email_verified_at"),
 });
+
+/**
+ * Single-use links sent by email: confirming an address (`verify`, and `change` for a new address, which only replaces
+ * `users.email` once confirmed) and resetting a password (`reset`). Only a hash of the token is kept.
+ */
+export const emailTokens = pgTable("email_tokens", {
+	hash: text().primaryKey(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	kind: text().notNull(),
+	email: text().notNull(),
+	createdAt: integer("created_at").notNull(),
+	expiresAt: integer("expires_at").notNull(),
+}, t => [index("email_tokens_user").on(t.userId, t.kind)]);
+
+/** Mail waiting to go out (server/mail). Rows are deleted once sent, or after giving up. */
+export const outbox = pgTable("outbox", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	to: text().notNull(),
+	subject: text().notNull(),
+	text: text().notNull(),
+	html: text().notNull(),
+	attempts: integer().default(0).notNull(),
+	nextAt: integer("next_at").notNull(),
+	error: text().default("").notNull(),
+	createdAt: integer("created_at").notNull(),
+}, t => [index("outbox_next").on(t.nextAt)]);
 
 export const sessions = pgTable("sessions", {
 	token: text().primaryKey(),

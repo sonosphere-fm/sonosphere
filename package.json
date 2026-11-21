@@ -19,6 +19,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@stylexjs/stylex": "^0.19.2",
     "drizzle-orm": "^0.45.4",
+    "nodemailer": "^10.6.1",
     "postgres": "^4.1.1",
     "react": "19",
     "react-dom": "19",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@astryxdesign/cli": "^0.7.16",
     "@types/bun": "^1.4.4",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "19",
     "@types/react-dom": "19",
     "cheerio": "^1.2.0",

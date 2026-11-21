@@ -22,6 +22,13 @@
       "when": 1795223726010,
       "tag": "0002_image_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795224403001,
+      "tag": "0003_email",
+      "breakpoints": true
     }
   ]
 }

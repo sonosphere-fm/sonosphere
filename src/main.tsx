@@ -15,7 +15,7 @@ import { Art, Empty, Logo } from "./ui/base";
 import { Home } from "./pages/music/home";
 import { NotFound } from "./pages/notfound";
 import { Private } from "./pages/private";
-import { SiteBanner } from "./banner";
+import { SiteBanner, VerifyBanner } from "./banner";
 
 // Every page but the home page is its own download, fetched the first time it is needed. Pointing at a link
 // renders its page out of sight (see LookAhead below), which also starts that download before the click.
@@ -32,6 +32,9 @@ const EventPage = lazy(() => import("./pages/events").then(m => ({ default: m.Ev
 const EventAdd = lazy(() => import("./pages/events").then(m => ({ default: m.EventAdd })));
 const PlaylistPage = lazy(() => import("./pages/playlist").then(m => ({ default: m.PlaylistPage })));
 const AuthPage = lazy(() => import("./pages/auth").then(m => ({ default: m.AuthPage })));
+const ForgotPage = lazy(() => import("./pages/auth").then(m => ({ default: m.ForgotPage })));
+const ResetPage = lazy(() => import("./pages/auth").then(m => ({ default: m.ResetPage })));
+const VerifyPage = lazy(() => import("./pages/auth").then(m => ({ default: m.VerifyPage })));
 const Settings = lazy(() => import("./pages/settings").then(m => ({ default: m.Settings })));
 const Inbox = lazy(() => import("./pages/inbox").then(m => ({ default: m.Inbox })));
 const Recommended = lazy(() => import("./pages/recommended").then(m => ({ default: m.Recommended })));
@@ -189,6 +192,9 @@ function Pages() {
       <Route path="/playlist/:id" element={<PlaylistPage />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/join" element={<AuthPage mode="join" />} />
+      <Route path="/forgot" element={<ForgotPage />} />
+      <Route path="/reset" element={<ResetPage />} />
+      <Route path="/verify" element={<VerifyPage />} />
       <Route path="/settings" element={<Private><Settings /></Private>} />
       <Route path="/settings/:tab" element={<Private><Settings /></Private>} />
       <Route path="/moderation" element={<Navigate to="/admin/reports" replace />} />
@@ -287,6 +293,7 @@ function App() {
           <LookAhead />
           <Header />
           <SiteBanner />
+          <VerifyBanner />
           <main>
             <Routed />
           </main>

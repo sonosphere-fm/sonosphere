@@ -3,7 +3,7 @@ import { Button, Input } from "../kit";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { api, qs, useApi, useAuth, useTitle } from "../lib";
 import { useAction } from "../ui/base";
-import type { AuthConfig, Session } from "../../shared/auth";
+import type { AuthConfig, Ok, Session } from "../../shared/auth";
 
 const safeNext = (n: string | null) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/");
 
@@ -25,7 +25,7 @@ const loadTurnstile = () => script ??= new Promise<Turnstile>((ok, no) => {
 
 /** Cloudflare's robot check, when the site has it on. `token` is empty until it passes; `reset` asks for a new one
  *  (each token works once, so after a refused submit). */
-function useTurnstile(action: string) {
+export function useTurnstile(action: string) {
   const { data } = useApi<AuthConfig>("/auth/config");
   const key = data?.turnstile ?? null;
   const box = useRef<HTMLDivElement>(null), widget = useRef<{ t: Turnstile; id: string } | null>(null);
@@ -83,8 +83,79 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
         <Button kind="btn" loading={act.busy}>{mode === "login" ? "Log in" : "Create account"}</Button>
       </form>
       {mode === "login"
-        ? <><p>New here? <Link to={`/join${qs({ next: sp.get("next") })}`}>Create an account</Link>.</p></>
+        ? <><p><Link to="/forgot">Forgot your password?</Link></p><p>New here? <Link to={`/join${qs({ next: sp.get("next") })}`}>Create an account</Link>.</p></>
         : <p>Already have an account? <Link to={`/login${qs({ next: sp.get("next") })}`}>Log in</Link>.</p>}
+    </div>
+  );
+}
+
+// ---------- forgotten passwords ----------
+export function ForgotPage() {
+  const [email, setEmail] = useState(""), [sent, setSent] = useState(""), act = useAction(), robot = useTurnstile("forgot");
+  useTitle("Reset your password");
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    act.run(async () => {
+      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      try { await api<Ok>("/auth/forgot", { body: { email, turnstile: robot.token } }); setSent(email); } catch (err) { robot.reset(); throw err; }
+    });
+  };
+  return (
+    <div className="wrap page narrow">
+      <h1 className="page-title">Reset your password</h1>
+      {sent
+        ? <div className="card form"><p>If an account uses <strong>{sent}</strong>, a link to choose a new password is on its way. It works for one hour.</p><p className="muted small">Nothing after a few minutes? Check your spam folder, or make sure you used the address you signed up with.</p></div>
+        : <form className="form card" onSubmit={submit}>
+          <p>Enter the email address on your account and we will send you a link to choose a new password.</p>
+          <label>Email<Input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required autoFocus /></label>
+          {robot.view}
+          {act.note}
+          <Button kind="btn" loading={act.busy}>Send reset link</Button>
+        </form>}
+      <p><Link to="/login">Back to log in</Link></p>
+    </div>
+  );
+}
+
+export function ResetPage() {
+  const [sp] = useSearchParams(), token = sp.get("token") || "", { setMe } = useAuth(), nav = useNavigate();
+  const [pw, setPw] = useState(""), act = useAction();
+  useTitle("Choose a new password");
+  const submit = (e: FormEvent) => { e.preventDefault(); act.run(async () => { const r = await api<Session>("/auth/reset", { body: { token, password: pw } }); setMe(r.user); nav("/"); }); };
+  return (
+    <div className="wrap page narrow">
+      <h1 className="page-title">Choose a new password</h1>
+      {token
+        ? <form className="form card" onSubmit={submit}>
+          <label>New password<Input type="password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="new-password" required minLength={8} autoFocus /></label>
+          <p className="muted small">At least 8 characters. You will be signed out everywhere else.</p>
+          {act.note}
+          <Button kind="btn" loading={act.busy}>Save password</Button>
+        </form>
+        : <div className="card form"><p>This link is missing its code. Open the link from the email again, or <Link to="/forgot">ask for a new one</Link>.</p></div>}
+    </div>
+  );
+}
+
+// ---------- confirming an address ----------
+export function VerifyPage() {
+  const [sp] = useSearchParams(), token = sp.get("token") || "", { me, refresh } = useAuth();
+  const [state, setState] = useState<"working" | "done" | string>(token ? "working" : "This link is missing its code. Open the link from the email again.");
+  useTitle("Confirm your email");
+  const started = useRef(false);
+  useEffect(() => {
+    if (!token || started.current) return;
+    started.current = true;
+    api<Ok>("/auth/verify", { body: { token } }).then(() => { setState("done"); refresh(); }, e => setState(e instanceof Error ? e.message : String(e)));
+  }, [token]);
+  return (
+    <div className="wrap page narrow">
+      <h1 className="page-title">Confirm your email</h1>
+      <div className="card form">
+        {state === "working" ? <p>Confirming...</p>
+          : state === "done" ? <><p>Your email is confirmed. Thanks!</p><p>{me ? <Link to="/">Go to your home page</Link> : <Link to="/login">Log in</Link>}</p></>
+          : <><p className="form-error" role="alert">{state}</p><p>{me ? <>You can send a new link from <Link to="/settings/account">your account settings</Link>.</> : <Link to="/login">Log in</Link>}</p></>}
+      </div>
     </div>
   );
 }

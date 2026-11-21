@@ -6,6 +6,8 @@ import { api } from "./api";
 import { appRoutes } from "./app";
 import { handleCompat } from "./compat/routes";
 import { dropStaleTokens } from "./compat/repo";
+import { dropExpiredEmailTokens } from "./auth/email";
+import { deliver } from "./mail";
 import { syncCorrections } from "./corrections/service";
 import { exclusive } from "./kv";
 import { sweepUnused } from "./images/repo";
@@ -56,9 +58,13 @@ const g = globalThis as { __spinHousekeeping?: ReturnType<typeof setInterval> };
 clearInterval(g.__spinHousekeeping);
 const tidy = () => {
   syncCorrections().catch(e => console.error(e)); // re-downloads at most once a day
-  exclusive("tidy", 5 * 60_000, () => Promise.all([dropExpiredNowPlaying(), dropStaleTokens(), sweepUnused()])).catch(e => console.error(e)); // one process is enough
+  exclusive("tidy", 5 * 60_000, () => Promise.all([dropExpiredNowPlaying(), dropStaleTokens(), sweepUnused(), dropExpiredEmailTokens()])).catch(e => console.error(e)); // one process is enough
 };
 g.__spinHousekeeping = setInterval(tidy, 10 * 60 * 1000);
+// Mail that failed to send, or was queued while another process was busy sending, goes out on the next pass.
+const m = globalThis as { __spinMail?: ReturnType<typeof setInterval> };
+clearInterval(m.__spinMail);
+m.__spinMail = setInterval(() => { deliver().catch(e => console.error("mail:", e)); }, 30_000);
 syncCorrections().catch(e => console.error(e));
 
 // A rolling deploy stops the old process with SIGTERM once the new one is serving: finish what is in flight, then exit.

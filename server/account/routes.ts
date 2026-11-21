@@ -1,9 +1,10 @@
 // HTTP routes for account settings: editing the profile, changing the password, exporting or clearing plays, and deleting the account.
-import { emailTaken } from "../auth/repo";
+import { passwordChanged, startEmailChange } from "../auth/email";
+import { deleteSessionsOf, emailTaken } from "../auth/repo";
 import { endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
 import { need } from "../guards";
-import { bad, missing, oneOf, Router } from "../http";
+import { bad, limit, missing, oneOf, Router, tokenOf } from "../http";
 import { deleteAllScrobbles, exportLoved, exportScrobbles } from "../listening/repo";
 import { findById } from "../users/repo";
 import { clean } from "../util";
@@ -17,16 +18,20 @@ router.patch<ProfileSaved>("/api/me", async c => {
   const u = need(c), b = c.body;
   const website = clean(b.website ?? u.website, 200);
   if (website && !/^https?:\/\//i.test(website)) bad("Website must start with http:// or https://");
-  let email = u.email;
+  // a new address only takes over once a link sent to it is followed (server/auth/email.ts)
   if (b.email !== undefined) {
-    email = clean(b.email, 200).toLowerCase();
+    const email = clean(b.email, 200).toLowerCase();
     if (!validEmail(email)) bad("Enter a valid email address");
-    if (await emailTaken(email, u.id)) bad("That email is already in use");
+    if (email !== u.email) {
+      if (await emailTaken(email, u.id)) bad("That email is already in use");
+      await limit(`email-change:${u.id}`, 5, 86400, "Too many email changes today. Try again tomorrow.");
+      await startEmailChange(u, email);
+    }
   }
   const dmPolicy = b.dmPolicy === undefined ? undefined : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
   await repo.updateProfile(u.id, {
     realname: clean(b.realname ?? u.realname, 60), about: String(b.about ?? u.about).trim().slice(0, 2000), country: clean(b.country ?? u.country, 60),
-    website, email, hideRecent: !!(b.hideRecent ?? u.hideRecent), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
+    website, hideRecent: !!(b.hideRecent ?? u.hideRecent), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
     ...(dmPolicy && { dmPolicy }),
   });
   return { user: await me((await findById(u.id)) ?? missing("User")) };
@@ -37,6 +42,8 @@ router.post<Ok>("/api/me/password", async c => {
   if (!(await passwordMatches(u, String(c.body.current || "")))) bad("Current password is incorrect");
   if (next.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
   await repo.setPasswordHash(u.id, await hashPassword(next));
+  await deleteSessionsOf(u.id, tokenOf(c.req)); // anyone else signed in with the old password is signed out
+  await passwordChanged(u);
   return { ok: true };
 });
 
