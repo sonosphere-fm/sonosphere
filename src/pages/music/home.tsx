@@ -11,12 +11,11 @@ import { TagChips } from "../../ui/tags";
 import { StationRow } from "../../player";
 import { HomeTabs, mixRecs } from "./shared";
 import { FeaturedSphere } from "./featured-sphere";
-import type { FriendActivity, FriendLove, Home as HomeData, Recommended } from "../../../shared/home";
-import type { TopAlbum } from "../../../shared/listening";
+import type { FriendActivity, FriendLove, Home as HomeData, Recommended, Sphere } from "../../../shared/home";
 import type { UserRecent } from "../../../shared/users";
 
 const WELCOME_KEY = "spin:welcome";
-const noAlbums: TopAlbum[] = [];
+const noSpheres: Sphere[] = [];
 
 function welcomeHidden() {
   try {
@@ -81,13 +80,13 @@ function Banner({ d }: { d: HomeData | null }) {
         <div className="banner-copy">
           <h1>There's a sphere just for you.</h1>
           <p>Import from Last.FM in just two clicks, except this time there's no strings attached.</p>
-          <div className="hero-actions">
-            <Link className="hero-action hero-action-join" to="/join">Join now <Ico.Right /></Link>
-            <Link className="hero-action hero-action-login" to="/login">Sign in <Ico.User /></Link>
+          <div className="row">
+            <Button kind="btn invert" href="/join">Join now</Button>
+            <Button kind="btn ghost" href="/login">Sign in</Button>
           </div>
           {d && d.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(d.stats.users))}+ users scrobbling on Sonosphere</p>}
         </div>
-        <FeaturedSphere feature={d?.featuredSphere ?? null} chartAlbums={d?.sphereAlbums ?? noAlbums} />
+        <FeaturedSphere spheres={d?.spheres ?? noSpheres} />
       </div>
     </div>
   );
@@ -156,7 +155,6 @@ export function Home() {
                     <HomeFeed name={me.username} />
                     <Suspense fallback={null}><HomeRecent name={me.username} /></Suspense>
                     {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={me.username} />}
-                    <div className="album-sphere-member"><FeaturedSphere feature={d.featuredSphere} chartAlbums={d.sphereAlbums} /></div>
                   </>
                 )}
                 <Section title={week ? "Trending artists" : "Top artists"} more="/charts">

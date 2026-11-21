@@ -52,7 +52,7 @@ router.get<Home>("/api/home", async c => {
     repo.popularTags(18),
     repo.upcomingEvents(now(), viewerId, 4),
     repo.siteTotals(),
-    homeSpheres(),
+    viewerId ? [] : homeSpheres(),
   ]);
   const out: Home = {
     trendingPeriod: busy ? "week" : "overall",
@@ -62,7 +62,7 @@ router.get<Home>("/api/home", async c => {
     tags,
     events,
     stats,
-    ...spheres,
+    spheres,
   };
   if (viewerId) {
     const [friends, friendLoves, thisWeek, lastWeek] = await Promise.all([

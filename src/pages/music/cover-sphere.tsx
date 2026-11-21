@@ -1,14 +1,10 @@
 import { useEffect, useRef } from "react";
 import {
-  AmbientLight, BufferGeometry, DirectionalLight, Float32BufferAttribute, Group, Mesh, MeshPhongMaterial,
-  PerspectiveCamera, Quaternion, Raycaster, Scene, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderer,
+  AmbientLight, BufferGeometry, DirectionalLight, Euler, Float32BufferAttribute, Group, Mesh, MeshPhongMaterial,
+  PerspectiveCamera, Quaternion, Scene, SRGBColorSpace, Texture, Vector3, WebGLRenderer,
 } from "three";
-import type { SphereCover } from "./featured-sphere";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-type Tile = { mesh: Mesh; normal: Vector3 };
-
-const previewOrder = [0, 6, 2, 9, 5, 11, 3, 8, 10, 4, 7, 1];
-const forward = new Vector3(0, 0, 1);
 const vertical = new Vector3(0, 1, 0);
 const cellsPerSide = 5;
 const columns = 10;
@@ -16,6 +12,8 @@ const cornerRadius = .16;
 const gutter = .022;
 const curvature = 2.25;
 const idleSpeed = 2 * Math.PI / 90_000;
+const maxSpeed = idleSpeed * 120;
+const friction = 900;
 
 const faces = [
   [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
@@ -32,7 +30,7 @@ const panels = faces.flatMap((face, faceIndex) => {
   return cellCenters.flatMap((y, row) => cellCenters.map((x, column) => {
     const center = normal.clone().addScaledVector(right, x).addScaledVector(up, y);
     const coverSlot = faceIndex * 5 + row * cellsPerSide + column;
-    return { center, right, up, coverSlot, normal: center.clone().normalize() };
+    return { center, right, up, coverSlot };
   }));
 });
 
@@ -50,7 +48,7 @@ const rows = [
   ...arc,
 ];
 
-function tileGeometry({ center, right, up }: typeof panels[number], { image, atlasIndex }: SphereCover) {
+function tileGeometry({ center, right, up }: typeof panels[number], image: HTMLImageElement) {
   const positions: number[] = [], normals: number[] = [], uv: number[] = [], indices: number[] = [];
   const vector = new Vector3();
   const surfaceNormal = new Vector3();
@@ -71,8 +69,7 @@ function tileGeometry({ center, right, up }: typeof panels[number], { image, atl
       vector.multiplyScalar(.97 / (x ** curvature + y ** curvature + z ** curvature) ** (1 / curvature));
       positions.push(vector.x, vector.y, vector.z);
       normals.push(surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-      if (atlasIndex === null) uv.push(.5 + (s - .5) * cropX, .5 + (t - .5) * cropY);
-      else uv.push((atlasIndex % 4 + .018 + .964 * s) / 4, (2 - Math.floor(atlasIndex / 4) + .018 + .964 * t) / 3);
+      uv.push(.5 + (s - .5) * cropX, .5 + (t - .5) * cropY);
       if (column < columns && row < rows.length - 1) {
         const i = row * (columns + 1) + column;
         indices.push(i, i + 1, i + columns + 1, i + 1, i + columns + 2, i + columns + 1);
@@ -88,24 +85,23 @@ function tileGeometry({ center, right, up }: typeof panels[number], { image, atl
 }
 
 export default function CoverSphere({ covers, onReady }: {
-  covers: SphereCover[];
+  covers: HTMLImageElement[];
   onReady: (ready: boolean) => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const replaceCovers = useRef<((covers: SphereCover[]) => void) | null>(null);
+  const replaceCovers = useRef<((covers: HTMLImageElement[]) => void) | null>(null);
 
   useEffect(() => {
     const surface = canvas.current!;
     let renderer: WebGLRenderer;
     try {
-      renderer = new WebGLRenderer({ canvas: surface, alpha: true, antialias: true });
+      renderer = new WebGLRenderer({ canvas: surface, alpha: true, antialias: true, powerPreference: "high-performance" });
     } catch {
       return;
     }
 
     const scene = new Scene();
     const group = new Group();
-    group.rotation.set(-.26, -.35, -.12);
     scene.add(group, new AmbientLight(0xffffff, 1.18));
     const keyLight = new DirectionalLight(0xfff4e6, 1.7);
     keyLight.position.set(-2, 3, 4);
@@ -114,7 +110,6 @@ export default function CoverSphere({ covers, onReady }: {
     scene.add(keyLight, rimLight);
     const camera = new PerspectiveCamera(31, 1, .1, 15);
     camera.position.z = 4.1;
-    const ray = new Raycaster();
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const materials = new Map<HTMLImageElement, MeshPhongMaterial>();
 
@@ -129,72 +124,61 @@ export default function CoverSphere({ covers, onReady }: {
       return value;
     }
 
-    let tiles: Tile[] = [];
     let meshes: Mesh[] = [];
-    const correction = new Quaternion(), pose = new Quaternion();
-    const vector = new Vector3();
-    const section = surface.closest<HTMLElement>(".album-sphere");
-    let animation = 0, aim: Quaternion | null = null, disposed = false, ready = false;
-    let visible = false, hovering = false, focused = false, previousFrame = 0, resumeTimer = 0;
-    let drag: { id: number; x: number; y: number; moving: boolean; start: Quaternion } | null = null;
+    const tilt = new Quaternion().setFromEuler(new Euler(-.26, -.35, -.12));
+    const spin = new Quaternion();
+    let angle = 0, velocity = idleSpeed;
+    let animation = 0, disposed = false, ready = false, visible = false, previousFrame = 0;
+    let drag: { id: number; x: number; y: number; moving: boolean; angle: number; at: number; last: number } | null = null;
 
+    // one mesh per picture, so the whole sphere takes a draw call or two rather than one per tile
     replaceCovers.current = next => {
       group.clear();
-      for (const tile of tiles) tile.mesh.geometry.dispose();
-      const images = new Set(next.map(cover => cover.image));
+      for (const mesh of meshes) mesh.geometry.dispose();
+      const images = new Set(next);
       for (const [image, material] of materials) {
         if (images.has(image)) continue;
         material.map?.dispose();
         material.dispose();
         materials.delete(image);
       }
-      tiles = panels.map(panel => {
-        const slot = panel.coverSlot % next.length;
-        const cover = next[next.length === previewOrder.length ? previewOrder[slot] : slot];
-        const mesh = new Mesh(tileGeometry(panel, cover), material(cover.image));
+      const byImage = new Map<HTMLImageElement, BufferGeometry[]>();
+      for (const panel of panels) {
+        const image = next[panel.coverSlot % next.length]!;
+        const parts = byImage.get(image) ?? [];
+        parts.push(tileGeometry(panel, image));
+        byImage.set(image, parts);
+      }
+      meshes = [...byImage].map(([image, parts]) => {
+        const mesh = new Mesh(mergeGeometries(parts), material(image));
+        for (const part of parts) part.dispose();
         group.add(mesh);
-        return { mesh, normal: panel.normal };
+        return mesh;
       });
-      meshes = tiles.map(tile => tile.mesh);
-      previousFrame = 0;
       schedule();
     };
 
-    function canRotate() {
-      return visible && !document.hidden && !reduced.matches && !hovering && !focused && !drag && !resumeTimer
-        && !section?.hasAttribute("data-changing");
-    }
-
-    function holdRotation() {
-      window.clearTimeout(resumeTimer);
-      previousFrame = 0;
-      resumeTimer = window.setTimeout(() => { resumeTimer = 0; schedule(); }, 4500);
-    }
+    const spinning = () => visible && !document.hidden && !reduced.matches;
 
     function draw(now: number) {
       animation = 0;
-      if (disposed || !tiles.length || renderer.getContext().isContextLost()) return;
-      const rotating = canRotate();
-      if (rotating && !aim && previousFrame && now - previousFrame < 31) {
-        schedule();
-        return;
+      if (disposed || !meshes.length || renderer.getContext().isContextLost()) return;
+      const step = previousFrame ? Math.min(now - previousFrame, 50) : 0;
+      if (!drag && spinning()) {
+        // a fling eases back to the idle pace in the direction it was thrown, and never stops
+        const target = Math.sign(velocity || 1) * idleSpeed;
+        velocity += (target - velocity) * (1 - Math.exp(-step / friction));
+        angle += velocity * step;
       }
-      if (aim) {
-        if (group.quaternion.angleTo(aim) < .008 || reduced.matches) {
-          group.quaternion.copy(aim);
-          aim = null;
-        } else group.quaternion.slerp(aim, .22);
-      } else if (rotating && previousFrame) {
-        correction.setFromAxisAngle(vertical, Math.min(now - previousFrame, 50) * idleSpeed);
-        group.quaternion.premultiply(correction);
-      }
-      previousFrame = rotating ? now : 0;
+      group.quaternion.copy(spin.setFromAxisAngle(vertical, angle)).multiply(tilt);
+      previousFrame = now;
       renderer.render(scene, camera);
       if (!ready) {
         ready = true;
         onReady(true);
       }
-      if (aim || rotating) schedule();
+      if (spinning()) schedule();
+      else previousFrame = 0;
     }
 
     function schedule() {
@@ -210,17 +194,10 @@ export default function CoverSphere({ covers, onReady }: {
     document.addEventListener("visibilitychange", updateMotion);
     reduced.addEventListener("change", updateMotion);
 
-    function focus(tile: Tile) {
-      holdRotation();
-      const direction = vector.copy(tile.normal).applyQuaternion(group.quaternion);
-      aim = pose.setFromUnitVectors(direction, forward).multiply(group.quaternion).clone();
-      schedule();
-    }
-
     function resize() {
       const width = surface.clientWidth, height = surface.clientHeight;
       if (!width || !height) return;
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -230,92 +207,46 @@ export default function CoverSphere({ covers, onReady }: {
     const observer = new ResizeObserver(resize);
     observer.observe(surface);
     resize();
+
     const start = (e: PointerEvent) => {
       if (!e.isPrimary || e.button !== 0) return;
-      aim = null;
-      holdRotation();
-      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moving: false, start: group.quaternion.clone() };
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moving: false, angle, at: performance.now(), last: angle };
     };
 
     const move = (e: PointerEvent) => {
       if (drag?.id !== e.pointerId) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       if (!drag.moving) {
-        const horizontal = e.pointerType === "touch";
-        if (horizontal ? Math.abs(dx) < 8 || Math.abs(dx) <= Math.abs(dy) : Math.hypot(dx, dy) < 8) return;
+        if (Math.abs(dx) < 8 || Math.abs(dx) <= Math.abs(dy)) return;
         drag.moving = true;
         surface.setPointerCapture(e.pointerId);
         surface.dataset.dragging = "";
       }
-      const scale = 3.2 / Math.min(surface.clientWidth, surface.clientHeight);
-      pose.setFromAxisAngle(vector.set(0, 1, 0), dx * scale);
-      correction.setFromAxisAngle(vector.set(1, 0, 0), dy * scale);
-      group.quaternion.copy(drag.start).premultiply(pose).premultiply(correction);
-      if (!reduced.matches) schedule();
+      angle = drag.angle + dx * 3.2 / Math.min(surface.clientWidth, surface.clientHeight);
+      const at = performance.now();
+      if (at > drag.at) velocity = velocity * .5 + (angle - drag.last) / (at - drag.at) * .5;
+      drag.at = at;
+      drag.last = angle;
+      schedule();
     };
 
     const stop = (e: PointerEvent) => {
       if (drag?.id !== e.pointerId) return;
+      // held still before letting go: no fling
+      if (performance.now() - drag.at > 80) velocity = Math.sign(velocity || 1) * idleSpeed;
+      velocity = Math.max(-maxSpeed, Math.min(maxSpeed, velocity));
       drag = null;
       delete surface.dataset.dragging;
-      holdRotation();
-    };
-
-    const release = (e: PointerEvent) => {
-      if (drag?.id !== e.pointerId) return;
-      const { x, y, moving } = drag;
-      stop(e);
-      if (moving) {
-        schedule();
-        return;
-      }
-      if (Math.hypot(e.clientX - x, e.clientY - y) >= 8) return;
-      const bounds = surface.getBoundingClientRect();
-      camera.updateMatrixWorld();
-      group.updateMatrixWorld(true);
-      ray.setFromCamera(new Vector2((e.clientX - bounds.left) / bounds.width * 2 - 1, 1 - (e.clientY - bounds.top) / bounds.height * 2), camera);
-      const hit = ray.intersectObjects(meshes, false)[0]?.object;
-      const tile = tiles.find(tile => tile.mesh === hit);
-      if (tile) focus(tile);
-    };
-    const cancel = (e: PointerEvent) => {
-      if (drag?.id === e.pointerId && drag.moving) {
-        group.quaternion.copy(drag.start);
-        schedule();
-      }
-      stop(e);
-    };
-    const enter = (e: PointerEvent) => {
-      if (e.pointerType === "touch") return;
-      hovering = true;
       updateMotion();
     };
-    const leave = (e: PointerEvent) => {
-      if (!surface.hasPointerCapture(e.pointerId)) cancel(e);
-      hovering = false;
-      updateMotion();
-    };
-    const updateFocus = (target: EventTarget | null) => {
-      focused = target instanceof HTMLElement && !!section?.contains(target);
-      updateMotion();
-    };
-    const focusIn = (event: FocusEvent) => updateFocus(event.target);
-    const focusOut = (event: FocusEvent) => updateFocus(event.relatedTarget);
-    const contextLost = () => {
-      onReady(false);
-    };
+    const contextLost = () => onReady(false);
 
     surface.addEventListener("pointerdown", start);
     surface.addEventListener("pointermove", move);
-    surface.addEventListener("pointerup", release);
-    surface.addEventListener("pointerenter", enter);
-    surface.addEventListener("pointerleave", leave);
-    surface.addEventListener("pointercancel", cancel);
-    surface.addEventListener("lostpointercapture", cancel);
+    surface.addEventListener("pointerup", stop);
+    surface.addEventListener("pointercancel", stop);
+    surface.addEventListener("lostpointercapture", stop);
     surface.addEventListener("webglcontextlost", contextLost);
-    section?.addEventListener("focusin", focusIn);
-    section?.addEventListener("focusout", focusOut);
-    updateFocus(document.activeElement);
 
     return () => {
       disposed = true;
@@ -323,20 +254,15 @@ export default function CoverSphere({ covers, onReady }: {
       observer.disconnect();
       visibility.disconnect();
       replaceCovers.current = null;
-      window.clearTimeout(resumeTimer);
       document.removeEventListener("visibilitychange", updateMotion);
       reduced.removeEventListener("change", updateMotion);
       surface.removeEventListener("pointerdown", start);
       surface.removeEventListener("pointermove", move);
-      surface.removeEventListener("pointerup", release);
-      surface.removeEventListener("pointerenter", enter);
-      surface.removeEventListener("pointerleave", leave);
-      surface.removeEventListener("pointercancel", cancel);
-      surface.removeEventListener("lostpointercapture", cancel);
+      surface.removeEventListener("pointerup", stop);
+      surface.removeEventListener("pointercancel", stop);
+      surface.removeEventListener("lostpointercapture", stop);
       surface.removeEventListener("webglcontextlost", contextLost);
-      section?.removeEventListener("focusin", focusIn);
-      section?.removeEventListener("focusout", focusOut);
-      for (const tile of tiles) tile.mesh.geometry.dispose();
+      for (const mesh of meshes) mesh.geometry.dispose();
       for (const material of materials.values()) {
         material.map?.dispose();
         material.dispose();
