@@ -47,6 +47,7 @@ const styles = result.outputs
   .filter(n => n.endsWith(".css") && !html.includes(n));
 if (styles.length > 1) die(`Build failed: expected one staff stylesheet, found ${styles.join(", ")}`);
 await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff, style: styles[0] ?? null }));
+await Bun.write(`${out}/assets/social-card.png`, Bun.file("brand/social-card.png"));
 
 const size = (names: string[]) => {
   const bytes = names.reduce((n, f) => n + Bun.file(`${out}/${f}`).size, 0);

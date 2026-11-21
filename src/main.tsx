@@ -8,6 +8,7 @@ import { applyTheme, startingTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { Button, RouteLink } from "./kit";
 import { createRoot } from "react-dom/client";
+import { PageMetadata } from "./page-metadata";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
 import { api, AuthContext, dec, invalidateAll, liveConnect, prefetch, qs, refreshListening, useAuth, useLive, userUrl, type Me, type Ok } from "./lib";
 import type { MeResponse } from "../shared/auth";
@@ -476,6 +477,7 @@ function App() {
     <LinkProvider component={RouteLink}>
     <AuthContext.Provider value={{ me, setMe, refresh }}>
       <BrowserRouter>
+        <PageMetadata />
         <PlayerProvider>
           <ScrollTop />
           <LookAhead />
