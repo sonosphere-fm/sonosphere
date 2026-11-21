@@ -1,7 +1,8 @@
 import { findItem, resolveTrack, type TrackNames, type TrackRef } from "../catalog/repo";
 import { correct } from "../corrections/service";
 import { bad } from "../http";
-import { clean, now } from "../util";
+import { clean, norm, now } from "../util";
+import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import type { EditScope, Report, ScrobbleResult } from "../../shared/listening";
 
@@ -10,29 +11,59 @@ export type ScrobbleInput = { artist?: unknown; track?: unknown; album?: unknown
 
 const OLDEST = 946684800;
 
+const UPLOAD = /^(.+?)\s+[-–—]\s+(.+)$/;
+const uploads = new Map<string, { artist: string; track: string } | null>();
+
+/**
+ * A video scrobbled under the channel that uploaded it ("HEMERA", "Jane Remover - Dooo it!"), or with the artist
+ * repeated in the title, goes to the artist named in the title when MusicBrainz knows that song and not the one as sent.
+ */
+export async function unscramble(artist: string, track: string): Promise<{ artist: string; track: string } | null> {
+  const m = UPLOAD.exec(track);
+  if (!m || !mbdb.mbdbOn) return null;
+  const key = `${norm(artist)}\n${norm(track)}`;
+  if (uploads.has(key)) return uploads.get(key)!;
+  let found: { artist: string; track: string } | null = null;
+  try {
+    const real = await mbdb.recorded(m[1]!, m[2]!);
+    if (real && !(await mbdb.recorded(artist, track))) found = { artist: real.artist, track: real.title };
+  } catch (e) {
+    console.error("unscramble:", e);
+    return null;
+  }
+  if (uploads.size >= 5000) uploads.clear();
+  uploads.set(key, found);
+  return found;
+}
+
 /** The names after community corrections, or null when artist or track is missing. */
-function names(input: ScrobbleInput): TrackNames | null {
-  const artist = clean(input.artist);
-  const track = clean(input.track);
+async function names(input: ScrobbleInput): Promise<TrackNames | null> {
+  let artist = clean(input.artist);
+  let track = clean(input.track);
   if (!artist || !track) return null;
+  const moved = await unscramble(artist, track);
+  if (moved) ({ artist, track } = moved);
   return { ...correct(artist, track, clean(input.album)), duration: Number(input.duration) || 0 };
 }
 
 export async function resolve(input: ScrobbleInput): Promise<TrackRef | null> {
-  const n = names(input);
+  const n = await names(input);
   return n && resolveTrack(n);
 }
 
 /** One result per input, in order. */
 export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], source = "web"): Promise<ScrobbleResult[]> {
   const refused = (reason: string) => ({ accepted: false as const, reason });
-  const checked = inputs.map(input => {
+  const checked = [];
+  for (const input of inputs) {
     const ts = Math.floor(Number(input.timestamp) || now());
-    if (ts > now() + 3600) return refused("Timestamp is in the future");
-    if (ts < OLDEST) return refused("Timestamp is too old");
-    const n = names(input);
-    return n ? { ...n, playedAt: ts } : refused("Artist and track are required");
-  });
+    if (ts > now() + 3600) checked.push(refused("Timestamp is in the future"));
+    else if (ts < OLDEST) checked.push(refused("Timestamp is too old"));
+    else {
+      const n = await names(input);
+      checked.push(n ? { ...n, playedAt: ts } : refused("Artist and track are required"));
+    }
+  }
   const filed = await repo.recordScrobbles(userId, checked.filter(c => "playedAt" in c), source);
   let i = 0;
   return checked.map(c => {
