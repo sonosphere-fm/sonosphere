@@ -13,7 +13,7 @@ import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
 import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
 import { Ico } from "../icons";
-import { Art, Async, Section, useAction } from "../ui/base";
+import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
 import { UserList } from "../ui/lists";
 import type { ThemePref } from "../theme";
@@ -39,12 +39,14 @@ export function Settings() {
         {TABS.map(([p, l]) => <NavLink key={p} to={`/settings${p}`} end>{l}</NavLink>)}
       </nav>
       <div className="narrow-col">
-        {tab === "profile" && <ProfileSettings />}
-        {tab === "privacy" && <PrivacySettings />}
-        {tab === "notifications" && <NotificationSettings />}
-        {tab === "account" && <AccountSettings />}
-        {tab === "applications" && <AppSettings />}
-        {tab === "data" && <DataSettings />}
+        <Pane>
+          {tab === "profile" && <ProfileSettings />}
+          {tab === "privacy" && <PrivacySettings />}
+          {tab === "notifications" && <NotificationSettings />}
+          {tab === "account" && <AccountSettings />}
+          {tab === "applications" && <AppSettings />}
+          {tab === "data" && <DataSettings />}
+        </Pane>
       </div>
     </div>
   );
