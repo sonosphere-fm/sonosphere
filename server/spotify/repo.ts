@@ -26,21 +26,21 @@ export async function dropLink(userId: number): Promise<boolean> {
   return gone.length > 0;
 }
 
-/** Working links whose recent plays were last fetched before `before`, longest-waiting first. */
-export const dueLinks = (before: number, limit: number): Promise<Link[]> =>
+/** Working links whose recent plays are due by `at`, longest-waiting first. */
+export const dueLinks = (at: number, limit: number): Promise<Link[]> =>
   db.select()
     .from(spotifyLinks)
-    .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.recentAt, before)))
+    .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.recentAt, at)))
     .orderBy(asc(spotifyLinks.recentAt))
     .limit(limit);
 
 export const workingLinks = (): Promise<Link[]> => db.select().from(spotifyLinks).where(isNull(spotifyLinks.broken));
 
-/** Working links whose "now playing" was last checked before `before`. */
-export const playingDue = (before: number, limit: number): Promise<Link[]> =>
+/** Working links whose "now playing" check is due by `at`. */
+export const playingDue = (at: number, limit: number): Promise<Link[]> =>
   db.select()
     .from(spotifyLinks)
-    .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.playingAt, before)))
+    .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.playingAt, at)))
     .orderBy(asc(spotifyLinks.playingAt))
     .limit(limit);
 
