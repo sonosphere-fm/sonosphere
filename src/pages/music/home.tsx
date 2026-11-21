@@ -4,6 +4,7 @@ import { Button } from "../../kit";
 import { Link } from "react-router-dom";
 import { artistUrl, date, num, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
 import { Async, Avatar, Empty, Section } from "../../ui/base";
+import { UserLabels } from "../../ui/user-labels";
 import { RecCard, Grid, TrackList } from "../../ui/lists";
 import { EventList } from "../../ui/events";
 import { TagChips } from "../../ui/tags";
@@ -98,7 +99,7 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
           <li key={f.user.username}>
             <Avatar user={f.user} />
             <div className="grow">
-              <Link className="strong" to={userUrl(f.user.username)}>{f.user.username}</Link>
+              <Link className="strong" to={userUrl(f.user.username)}>{f.user.username}</Link> <UserLabels name={f.user.username} />
               <span>
                 <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link> <span className="muted">by</span>{" "}
                 <Link to={artistUrl(f.track.artist)}>{f.track.artist}</Link>

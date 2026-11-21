@@ -66,6 +66,18 @@ export const users = pgTable("users", {
 });
 
 // kind: "verify", "change" (a new address, replaces users.email once confirmed) or "reset"
+export const userLabels = pgTable("user_labels", {
+  id: integer().primaryKey().generatedByDefaultAsIdentity(),
+  text: text().notNull(),
+  icon: text().notNull(),
+  color: text().notNull(),
+});
+export const userLabelAssignments = pgTable("user_label_assignments", {
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  labelId: integer("label_id").notNull().references(() => userLabels.id, { onDelete: "cascade" }),
+  position: integer().notNull(),
+}, t => [primaryKey({ columns: [t.userId, t.labelId] })]);
+
 export const emailTokens = pgTable("email_tokens", {
 	hash: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),

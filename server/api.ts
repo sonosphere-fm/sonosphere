@@ -1,4 +1,5 @@
 import { Router } from "./http";
+import { router as userLabels } from "./users/labels";
 import { router as account } from "./account/routes";
 import { router as apps } from "./apps/routes";
 import { router as auth } from "./auth/routes";
@@ -35,6 +36,7 @@ import { router as adminSettings } from "./admin/settings";
 import { router as adminUsers } from "./admin/users";
 
 export const api = new Router().include(
+  userLabels,
   auth, oauth, account, images, site,
   home, search, catalog, tags, wiki, shouts, video, stations,
   listening, imports, users, obsessions, playlists, events, journals, notifications, blocks, apps, reports, dm, spotify,

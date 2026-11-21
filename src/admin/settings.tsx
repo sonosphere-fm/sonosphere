@@ -4,6 +4,7 @@ import { api, useApi, useTitle } from "../lib";
 import { Async, Section } from "../ui/base";
 import { useConfirm } from "./common";
 import type { AdminSettings } from "../../shared/admin-content";
+import { ManageLabelDefinitions } from "./user-labels";
 
 export function SiteSettings() {
   const q = useApi<AdminSettings>("/admin/settings");
@@ -12,7 +13,7 @@ export function SiteSettings() {
     q.setData(s);
     window.dispatchEvent(new Event("spin:site"));
   };
-  return <Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async>;
+  return <><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></>;
 }
 type Fields = { registrationsOpen: boolean; announcement: string; announcementTone: string; maxShoutLength: string };
 function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: AdminSettings) => void }) {

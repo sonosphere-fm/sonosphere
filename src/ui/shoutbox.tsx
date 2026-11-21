@@ -4,6 +4,7 @@ import { Button, Modal, Select, Textarea } from "../kit";
 import { Link } from "react-router-dom";
 import { ago, api, dateTime, qs, useApi, useAuth, userUrl } from "../lib";
 import { Empty, Async, useAction, Avatar } from "./base";
+import { UserLabels } from "./user-labels";
 import type { ItemType } from "../../shared/catalog";
 import type { ReportOk } from "../../shared/reports";
 import type { ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
@@ -129,7 +130,7 @@ export function Shoutbox({ type, id, limit = 20, word = "post" }: {
                 <Avatar user={s.author} />
                 <div className="grow">
                   <div>
-                    <Link className="strong" to={userUrl(s.author.username)}>{s.author.username}</Link>{" "}
+                    <Link className="strong" to={userUrl(s.author.username)}>{s.author.username}</Link> <UserLabels name={s.author.username} />{" "}
                     <span className="muted small" title={dateTime(s.createdAt)}>{ago(s.createdAt)}</span>
                   </div>
                   <p>{s.body}</p>

@@ -162,6 +162,13 @@
       "when": 1795271950727,
       "tag": "0022_pano_scrobbler",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795274820488,
+      "tag": "0023_user_labels",
+      "breakpoints": true
     }
   ]
 }

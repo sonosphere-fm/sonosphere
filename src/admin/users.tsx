@@ -6,6 +6,7 @@ import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, userUrl, us
 import { Async, Avatar, Empty, Pager, Section, Stat } from "../ui/base";
 import { type Role, REASON, TYPE, ROLE, adminUrl, useQuery, useRole, useConfirm, useFlash, StatusBadges } from "./common";
 import { AuditList } from "./audit";
+import { ManageUserLabels } from "./user-labels";
 import type {
   BanResult, DmMuteResult, NoteAdded, Ok, ProbationResult, ReportBrief, RoleResult, SessionsResult, StaffTrust, StaffUserList, StaffUserPage, SuspendResult,
 } from "../../shared/admin";
@@ -301,6 +302,7 @@ export function UserDetail() {
             </div>
             <div className="cols">
               <div className="main">
+                {role === "admin" && <ManageUserLabels name={u.username} />}
                 <Section title="Internal notes">
                   <p className="muted small">Only staff can see these.</p>
                   <form className="adm-note-form" onSubmit={addNote}>
