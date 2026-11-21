@@ -3,7 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useState, type ComponentProps, 
 import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
-import { needleTheme } from "./themes/needle/needle.js";
+import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, startingTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { Button, RouteLink } from "./kit";
@@ -475,7 +475,7 @@ function App() {
     </>
   );
   return (
-    <Theme theme={needleTheme} mode={themePref}>
+    <Theme theme={sonosphereTheme} mode={themePref}>
     <LinkProvider component={RouteLink}>
     <AuthContext.Provider value={{ me, setMe, refresh }}>
       <BrowserRouter>
