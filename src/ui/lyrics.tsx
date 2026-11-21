@@ -18,12 +18,13 @@ declare module "react" {
 let loaded: Promise<unknown> | null = null;
 const load = () => loaded ??= import("@uimaxbai/am-lyrics/am-lyrics.js");
 // the component's toolbar (singer view, translate, download) and footer (source picker, credits, ~350px of run-out space)
-// live in its shadow root, out of reach of styles.css
+// live in its shadow root, out of reach of styles.css. The footer is collapsed rather than removed: the component
+// measures how far it can scroll from the footer's position
 let sheet: CSSStyleSheet | null = null;
 function restyle(el: El) {
   const root = el.shadowRoot;
   if (!root) return;
-  if (!sheet) { sheet = new CSSStyleSheet(); sheet.replaceSync(".lyrics-header, .lyrics-footer { display: none !important; } .lyrics-container { padding-top: 16px !important; padding-bottom: 24px !important; } :host([data-reading]) .lyrics-header + .lyrics-gap { display: none !important; }"); }
+  if (!sheet) { sheet = new CSSStyleSheet(); sheet.replaceSync(".lyrics-header { display: none !important; } .lyrics-footer { visibility: hidden !important; height: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; } .lyrics-container { padding-top: 16px !important; padding-bottom: 24px !important; } :host(:not([data-reading])) .lyrics-container { padding-bottom: 320px !important; } :host([data-reading]) .lyrics-header + .lyrics-gap { display: none !important; }"); }
   if (!root.adoptedStyleSheets.includes(sheet)) root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
 }
 
