@@ -5,7 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { flag } from "../db/dialect";
 import { albums, artists, eventArtists, eventAttendance, events, follows, lovedTracks, scrobbles, taggings, tags, tracks, users } from "../db/schema";
-import { publicCols } from "../users/repo";
+import { openListener, publicCols } from "../users/repo";
 import type { EventSummary } from "../../shared/events";
 import type { ChartTag, FriendLove, SiteTotals } from "../../shared/home";
 import type { TagCount } from "../../shared/tags";
@@ -58,7 +58,7 @@ export async function siteTotals(): Promise<SiteTotals> {
 /** The people someone follows, leaving out those who keep their listening private. */
 export const openFollowees = (userId: number): Promise<PublicUser[]> =>
   db.select(publicCols).from(follows).innerJoin(users, eq(users.id, follows.followeeId))
-    .where(and(eq(follows.followerId, userId), eq(users.hideRecent, false)));
+    .where(and(eq(follows.followerId, userId), openListener()));
 
 /** The tracks most recently loved by the people someone follows. `loved` says whether they love it too. */
 export function friendLoves(userId: number, limit: number): Promise<FriendLove[]> {
@@ -70,5 +70,6 @@ export function friendLoves(userId: number, limit: number): Promise<FriendLove[]
   }).from(lovedTracks).innerJoin(follows, and(eq(follows.followeeId, lovedTracks.userId), eq(follows.followerId, userId)))
     .innerJoin(users, eq(users.id, lovedTracks.userId)).innerJoin(tracks, eq(tracks.id, lovedTracks.trackId))
     .innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
+    .where(eq(users.privateListening, false))
     .orderBy(desc(lovedTracks.createdAt)).limit(limit);
 }

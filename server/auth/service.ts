@@ -14,7 +14,7 @@ import type { Me } from "../../shared/auth";
 export async function me(u: User): Promise<Me> {
   return {
     id: u.id, username: u.username, email: u.email, realname: u.realname, about: u.about, country: u.country, website: u.website,
-    image: u.imageId, hideRecent: u.hideRecent, shoutsEnabled: u.shoutsEnabled, registeredAt: u.registeredAt, admin: u.isAdmin, role: roleOf(u), suspended: u.suspended,
+    image: u.imageId, hideRecent: u.hideRecent, privateListening: u.privateListening, shoutsEnabled: u.shoutsEnabled, registeredAt: u.registeredAt, admin: u.isAdmin, role: roleOf(u), suspended: u.suspended,
     openReports: u.isAdmin ? await repo.openReportCount() : 0,
     unread: await repo.unreadCount(u.id),
     dm: await dmCounts(u.id), dmPolicy: u.dmPolicy || "requests",

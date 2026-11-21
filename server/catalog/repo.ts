@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, exists, getTableColumns, gt, inArray, isNotN
 import { db, transact, type Tx } from "../db/client";
 import { flag } from "../db/dialect";
 import { albums, albumTracks, artists, eventArtists, eventAttendance, events, journals, lovedTracks, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
-import { publicCols } from "../users/repo";
+import { openListener, publicCols } from "../users/repo";
 import { clean, first, norm, now } from "../util";
 import type { ArtistAlbum, ArtistAlbumWithPlays, EventSummary, ItemType, LatestAlbum, Listener, OtherAlbum, TrackAlbum } from "../../shared/catalog";
 
@@ -117,7 +117,7 @@ const albumCard = { id: albums.id, title: albums.title, image: albums.imageId };
 
 /** The people who play an item most. Those who hide their listening are left out. */
 export async function topListeners(kind: "artist" | "album" | "track", id: number, limit: number): Promise<Listener[]> {
-  const open = eq(users.hideRecent, false);
+  const open = openListener();
   if (kind === "artist") return db.select({ ...publicCols, playcount: userArtists.plays }).from(userArtists).innerJoin(users, eq(users.id, userArtists.userId))
     .where(and(eq(userArtists.artistId, id), open)).orderBy(desc(userArtists.plays)).limit(limit);
   if (kind === "album") return db.select({ ...publicCols, playcount: userAlbums.plays }).from(userAlbums).innerJoin(users, eq(users.id, userAlbums.userId))

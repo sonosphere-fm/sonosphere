@@ -6,20 +6,22 @@ import { obsessionsOf } from "../obsessions/repo";
 import { taste } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
-import { canSee } from "./service";
+import { canSee, canSeeCharts } from "./service";
 import type { Person, Profile, PublicUser, UserArtistLibrary, WeekCount } from "../../shared/users";
 
 /** Everything on a profile page, as `viewer` (null when signed out) may see it. */
 export async function profile(u: repo.User, viewer: Viewer | null): Promise<Profile> {
-  const stats = await listening.counts({ userId: u.id }), visible = canSee(u, viewer);
+  const visible = canSee(u, viewer), open = canSeeCharts(u, viewer);
+  // a private listener's numbers are left at zero for others (the page shows none of them)
+  const stats = open ? await listening.counts({ userId: u.id }) : { playcount: 0, artists: 0, albums: 0, tracks: 0 };
   return {
-    ...repo.publicUser(u), about: u.about, website: u.website, registeredAt: u.registeredAt, hidden: !visible, shoutsEnabled: u.shoutsEnabled,
+    ...repo.publicUser(u), about: u.about, website: u.website, registeredAt: u.registeredAt, hidden: !visible, locked: !open, shoutsEnabled: u.shoutsEnabled,
     playcount: stats.playcount, artistCount: stats.artists, albumCount: stats.albums, trackCount: stats.tracks,
-    lovedCount: await repo.lovedCount(u.id), followers: await repo.followerCount(u.id), following: await repo.followingCount(u.id),
+    lovedCount: open ? await repo.lovedCount(u.id) : 0, followers: await repo.followerCount(u.id), following: await repo.followingCount(u.id),
     isFollowing: !!viewer && await repo.isFollowing(viewer.id, u.id),
     followsYou: !!viewer && await repo.isFollowing(u.id, viewer.id),
     nowPlaying: visible ? await listening.nowPlaying(u.id, viewer?.id) : null,
-    taste: viewer && viewer.id !== u.id ? await taste(viewer.id, u.id) : null,
+    taste: viewer && viewer.id !== u.id && open ? await taste(viewer.id, u.id) : null,
     obsession: (await obsessionsOf(u.id, viewer?.id, 1))[0] ?? null,
     shoutCount: await shoutCount("user", u.id), journalCount: await repo.journalCount(u.id),
     blocked: !!viewer && await repo.hasBlocked(viewer.id, u.id),
@@ -28,10 +30,14 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
 }
 
 /** Adds to each person what a list of people shows: their plays, their last track, and whether the viewer follows them. */
-export const people = (list: PublicUser[], viewerId: number | undefined): Promise<Person[]> =>
-  Promise.all(list.map(async p => ({
-    ...p, playcount: await repo.playcount(p.id), isFollowing: !!viewerId && await repo.isFollowing(viewerId, p.id), lastTrack: await repo.lastTrack(p.id),
+/** Private listeners appear without their play count. */
+export async function people(list: PublicUser[], viewerId: number | undefined): Promise<Person[]> {
+  const shut = await repo.privateAmong(list.map(p => p.id).filter(id => id !== viewerId));
+  return Promise.all(list.map(async p => ({
+    ...p, ...(shut.has(p.id) ? {} : { playcount: await repo.playcount(p.id) }),
+    isFollowing: !!viewerId && await repo.isFollowing(viewerId, p.id), lastTrack: await repo.lastTrack(p.id),
   })));
+}
 
 const WEEK = 604800, THURSDAY = 259200; // weeks run Monday to Sunday; the epoch fell on a Thursday
 

@@ -29,15 +29,19 @@ export function UserPage({ tab }: { tab: Tab }) {
   useTitle(q.data ? `${q.data.username}'s music profile` : name);
   return (
     <Async q={q}>{u => {
-      const mine = me?.username === u.username;
+      const mine = me?.username === u.username, locked = u.locked && !mine;
+      // a private listener's profile has no listening tabs, numbers or station for anyone else
+      const listening = new Set([`${base}/listening-report`, `${base}/library`, `${base}/loved`, `${base}/soundalikes`]);
+      const tabs: [string, string, boolean?][] = [[base, "Overview", true], [`${base}/listening-report`, "Reports"], [`${base}/library`, "Library"], [`${base}/following`, `Following (${u.following})`], [`${base}/followers`, "Followers"], [`${base}/loved`, "Loved"], [`${base}/journal`, "Journal"], [`${base}/earworms`, "Earworms"], [`${base}/playlists`, "Playlists"], [`${base}/events`, "Events"], [`${base}/soundalikes`, "Soundalikes"], [`${base}/tags`, "Tags"], [`${base}/wall`, `Wall (${u.shoutCount})`]];
+      const shut = <Empty>{u.username} keeps their listening private.</Empty>;
       return (
         <>
-          <Hero tabs={<Tabs items={[[base, "Overview", true], [`${base}/listening-report`, "Reports"], [`${base}/library`, "Library"], [`${base}/following`, `Following (${u.following})`], [`${base}/followers`, "Followers"], [`${base}/loved`, "Loved"], [`${base}/journal`, "Journal"], [`${base}/earworms`, "Earworms"], [`${base}/playlists`, "Playlists"], [`${base}/events`, "Events"], [`${base}/soundalikes`, "Soundalikes"], [`${base}/tags`, "Tags"], [`${base}/wall`, `Wall (${u.shoutCount})`]]} />} image={u.image}
+          <Hero tabs={<Tabs items={locked ? tabs.filter(t => !listening.has(t[0])) : tabs} />} image={u.image}
             art={<Art image={u.image} kind="user" />} kicker={u.followsYou ? "Follows you" : "Listener"} title={u.username}
             sub={<>{[u.realname, u.country].filter(Boolean).join(" · ")}{(u.realname || u.country) && " · "}scrobbling since {date(u.registeredAt)}</>}
-            stats={<><Stat label="Scrobbles" value={<Link to={`${base}/library`}>{num(u.playcount)}</Link>} /><Stat label="Artists" value={<Link to={`${base}/library/artists`}>{num(u.artistCount)}</Link>} />
+            stats={locked ? <Stat label="Followers" value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} /> : <><Stat label="Scrobbles" value={<Link to={`${base}/library`}>{num(u.playcount)}</Link>} /><Stat label="Artists" value={<Link to={`${base}/library/artists`}>{num(u.artistCount)}</Link>} />
               <Stat label="Loved tracks" value={<Link to={`${base}/loved`}>{num(u.lovedCount)}</Link>} /><Stat label="Followers" value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} /></>}
-            actions={mine ? <><Button kind="btn ghost" href="/settings">Edit profile</Button><Button kind="btn ghost" href="/scrobble">Scrobble manually</Button></> : <>{!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={q.reload} />}<StationButton type="library" name={u.username} label="Play library" ghost />{me && !u.blocked && <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>Message</Button>}{me && <ProfileMenu u={u} onChange={q.reload} />}</>} />
+            actions={mine ? <><Button kind="btn ghost" href="/settings">Edit profile</Button><Button kind="btn ghost" href="/scrobble">Scrobble manually</Button></> : <>{!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={q.reload} />}{!u.hidden && <StationButton type="library" name={u.username} label="Play library" ghost />}{me && !u.blocked && <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>Message</Button>}{me && <ProfileMenu u={u} onChange={q.reload} />}</>} />
           <div className="wrap page">
             {u.blocked && <p className="notice">You've blocked {u.username}. They can't follow you or post on your profile, and you won't see their wall posts. <Button kind="link" type="button" onClick={() => api<BlockResult>("/block", { body: { username: u.username, block: false } }).then(q.reload)}>Unblock</Button></p>}
             {u.suspended && (mine || me?.admin) && <p className="notice">{mine ? "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work." : `${u.username} is suspended from posting.`}</p>}
@@ -45,17 +49,18 @@ export function UserPage({ tab }: { tab: Tab }) {
             {tab === "journal-post" && <JournalPost name={u.username} id={Number(p.post)} mine={mine} />}
             {tab === "journal-new" && (mine ? <JournalEditor name={u.username} /> : <Empty>Only {u.username} can write here.</Empty>)}
             {tab === "journal-edit" && (mine ? <JournalEditor name={u.username} id={Number(p.post)} /> : <Empty>Only {u.username} can edit this post.</Empty>)}
-            {tab === "overview" && <Overview u={u} mine={mine} />}
-            {tab === "library" && <Library name={u.username} mine={mine} />}
-            {tab === "library-artist" && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
-            {tab === "report" && <Report name={u.username} type={p.type === "year" ? "year" : "week"} />}
+            {tab === "overview" && <Overview u={u} mine={mine} locked={locked} />}
+            {locked && (tab === "library" || tab === "library-artist" || tab === "report" || tab === "loved" || tab === "neighbours") && shut}
+            {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
+            {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
+            {tab === "report" && !locked && <Report name={u.username} type={p.type === "year" ? "year" : "week"} />}
             {tab === "following" && <People path={`/user/following${qs({ name })}`} empty={`${u.username} isn't following anyone yet.`} />}
             {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty="No followers yet." />}
-            {tab === "loved" && <Loved name={u.username} />}
+            {tab === "loved" && !locked && <Loved name={u.username} />}
             {tab === "obsessions" && <Obsessions name={u.username} mine={mine} />}
             {tab === "playlists" && <Playlists name={u.username} mine={mine} />}
             {tab === "events" && <UserEvents name={u.username} />}
-            {tab === "neighbours" && <Neighbours name={u.username} />}
+            {tab === "neighbours" && !locked && <Neighbours name={u.username} />}
             {tab === "tags" && <UserTags name={u.username} />}
             {tab === "shoutbox" && <Shoutbox type="user" id={u.id} />}
           </div>
@@ -84,7 +89,30 @@ function UserEvents({ name }: { name: string }) {
   const q = useApi<UserEventList>(`/user/events${qs({ name })}`);
   return <Async q={q}>{d => d.items.length ? <EventList items={d.items} /> : <Empty>No events yet. <Link to="/events">Find something to go to <Ico.Right /></Link></Empty>}</Async>;
 }
-function Overview({ u, mine }: { u: Profile; mine: boolean }) {
+function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: boolean }) {
+  if (locked) return (
+    <div className="cols">
+      <div className="main">
+        <Section title="Listening"><Empty>{u.username} keeps their listening private.</Empty></Section>
+        <Section title="Wall" more={`${userUrl(u.username)}/wall`} moreLabel="Whole wall"><Shoutbox type="user" id={u.id} limit={5} /></Section>
+      </div>
+      <aside className="side"><About u={u} /><Earworm u={u} /></aside>
+    </div>
+  );
+  return <OpenOverview u={u} mine={mine} />;
+}
+function About({ u }: { u: Profile }) {
+  return u.about || u.website ? <Section title="About"><Markdown text={u.about} />{u.website && <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>}</Section> : null;
+}
+function Earworm({ u }: { u: Profile }) {
+  return u.obsession ? (
+    <Section title="Current earworm" more={`${userUrl(u.username)}/earworms`} moreLabel="All">
+      <div className="obsession"><Link to={trackUrl(u.obsession.artist, u.obsession.title)}><Art image={u.obsession.image} /></Link>
+        <div><Link className="strong" to={trackUrl(u.obsession.artist, u.obsession.title)}>{u.obsession.title}</Link><Link className="muted" to={artistUrl(u.obsession.artist)}>{u.obsession.artist}</Link>{u.obsession.comment && <p className="small">“{u.obsession.comment}”</p>}</div></div>
+    </Section>
+  ) : null;
+}
+function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   const base = userUrl(u.username), [sp] = useSearchParams(), period = sp.get("period") || "7day";
   const recent = useApi<UserRecent>(`/user/recent${qs({ name: u.username, limit: 10 })}`);
   const artists = useApi<UserTop<TopArtist>>(`/user/top${qs({ name: u.username, kind: "artists", period, limit: 8 })}`);
@@ -105,19 +133,14 @@ function Overview({ u, mine }: { u: Profile; mine: boolean }) {
         <Section title="Wall" more={`${base}/wall`} moreLabel="Whole wall"><Shoutbox type="user" id={u.id} limit={5} /></Section>
       </div>
       <aside className="side">
-        {(u.about || u.website) && <Section title="About"><Markdown text={u.about} />{u.website && <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>}</Section>}
+        <About u={u} />
         {u.taste && (
           <Section title="Your compatibility">
             <div className="taste"><div className="taste-bar"><span style={{ width: `${Math.max(4, u.taste.score * 100)}%` }} /></div><b>{u.taste.label}</b></div>
             {u.taste.artists.length > 0 ? <p className="small">You both listen to {u.taste.artists.map((a, i) => <span key={a.name}>{i > 0 && ", "}<Link to={artistUrl(a.name)}>{a.name}</Link></span>)}.</p> : <p className="muted small">No artists in common yet.</p>}
           </Section>
         )}
-        {u.obsession && (
-          <Section title="Current earworm" more={`${base}/earworms`} moreLabel="All">
-            <div className="obsession"><Link to={trackUrl(u.obsession.artist, u.obsession.title)}><Art image={u.obsession.image} /></Link>
-              <div><Link className="strong" to={trackUrl(u.obsession.artist, u.obsession.title)}>{u.obsession.title}</Link><Link className="muted" to={artistUrl(u.obsession.artist)}>{u.obsession.artist}</Link>{u.obsession.comment && <p className="small">“{u.obsession.comment}”</p>}</div></div>
-          </Section>
-        )}
+        <Earworm u={u} />
         <Section title="Library"><ul className="plain"><li><Link to={`${base}/library/artists`}>{num(u.artistCount)} artists</Link></li><li><Link to={`${base}/library/albums`}>{num(u.albumCount)} albums</Link></li><li><Link to={`${base}/library/tracks`}>{num(u.trackCount)} tracks</Link></li>
           <li><Link to={`${base}/listening-report/week`}>Weekly listening report</Link></li><li><Link to={`${base}/listening-report/year`}>Yearly listening report</Link></li></ul></Section>
       </aside>

@@ -148,7 +148,7 @@ export async function saveNeighbours(userId: number, matches: { id: number; scor
 /** A user's stored neighbours, closest first. */
 export async function neighbourRows(userId: number, limit: number) {
   return db.select({ id: users.id, username: users.username, realname: users.realname, country: users.country, image: users.imageId, match: userNeighbours.score })
-    .from(userNeighbours).innerJoin(users, eq(users.id, userNeighbours.neighbourId)).where(eq(userNeighbours.userId, userId)).orderBy(desc(userNeighbours.score), asc(users.id)).limit(limit);
+    .from(userNeighbours).innerJoin(users, eq(users.id, userNeighbours.neighbourId)).where(and(eq(userNeighbours.userId, userId), eq(users.privateListening, false))).orderBy(desc(userNeighbours.score), asc(users.id)).limit(limit);
 }
 /** Artists two users both play, the most shared first. */
 export async function sharedArtists(a: number, b: number, limit = 5) {

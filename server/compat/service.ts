@@ -68,6 +68,9 @@ const trackOf = async (p: Params) => (await findTrack(text(p.artist), text(p.tra
 const albumOf = async (p: Params) => (await findAlbum(text(p.artist), text(p.album))) ?? fail(6, "Album not found");
 const tagOf = async (p: Params) => (await findTag(text(p.tag))) ?? fail(6, "Tag not found");
 /** The user named, or failing that the one with the fallback id. */
+/** An empty chart for someone who keeps their listening private, or undefined when it may be read. */
+const shut = (u: User) => (u.privateListening ? { items: [], total: 0 } : undefined);
+
 async function userOf(name: unknown, fallback?: number): Promise<User> {
   const u = name ? await findByName(text(name)) : fallback ? await findById(fallback) : null;
   return u ?? fail(6, "User not found");
@@ -177,7 +180,8 @@ const methods: Record<string, Method> = {
   "track.removetag": async c => tagMutation(c, "track", (await trackOf(c.p)).id, true),
   // --- user ---
   "user.getinfo": async c => {
-    const u = await userOf(c.p.user, c.p.sk ? await session(c) : undefined), n = await counts({ userId: u.id });
+    const me = c.p.sk ? await session(c) : undefined, u = await userOf(c.p.user, me);
+    const n = u.privateListening && u.id !== me ? { playcount: 0, artists: 0, albums: 0, tracks: 0 } : await counts({ userId: u.id });
     return { user: {
       name: u.username, realname: u.realname, country: u.country, url: `${c.origin}/user/${u.username}`, playcount: String(n.playcount), artist_count: String(n.artists),
       album_count: String(n.albums), track_count: String(n.tracks), image: img(u.imageId, c.origin), registered: { unixtime: String(u.registeredAt), "#text": u.registeredAt }, subscriber: "0", type: "user",
@@ -185,26 +189,26 @@ const methods: Record<string, Method> = {
   },
   "user.getrecenttracks": async c => {
     const u = await userOf(c.p.user), [from, to] = period(c.p, "overall");
-    if (u.hideRecent) return { recenttracks: { track: [], "@attr": attr({ user: u.username }, c.pg, 0) } };
+    if (u.hideRecent || u.privateListening) return { recenttracks: { track: [], "@attr": attr({ user: u.username }, c.pg, 0) } };
     const r = await recent({ userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     const np = c.pg.page === 1 ? await nowPlaying(u.id) : null;
     const plays = r.items.map(t => playShape(c, t, { date: { uts: String(t.playedAt), "#text": shortDate(t.playedAt) } }));
     return { recenttracks: { track: [...(np ? [playShape(c, np, { "@attr": { nowplaying: "true" } })] : []), ...plays], "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.gettopartists": async c => {
-    const u = await userOf(c.p.user), [from, to] = period(c.p), r = await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), [from, to] = period(c.p), r = shut(u) ?? await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     return { topartists: { artist: ranked(r.items.map(artistShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.gettopalbums": async c => {
-    const u = await userOf(c.p.user), [from, to] = period(c.p), r = await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), [from, to] = period(c.p), r = shut(u) ?? await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     return { topalbums: { album: ranked(r.items.map(albumShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.gettoptracks": async c => {
-    const u = await userOf(c.p.user), [from, to] = period(c.p), r = await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), [from, to] = period(c.p), r = shut(u) ?? await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     return { toptracks: { track: ranked(r.items.map(trackShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.getlovedtracks": async c => {
-    const u = await userOf(c.p.user), total = await lovedCount(u.id), rows = await repo.lovedPage(u.id, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), total = shut(u) ? 0 : await lovedCount(u.id), rows = shut(u) ? [] : await repo.lovedPage(u.id, c.pg.limit, c.pg.offset);
     return { lovedtracks: { track: rows.map(t => ({ ...trackShape(c)(t), date: { uts: String(t.at), "#text": shortDate(t.at) } })), "@attr": attr({ user: u.username }, c.pg, total) } };
   },
   "user.getfriends": async c => {

@@ -1,5 +1,5 @@
 // Data access for accounts, and the public shape of one.
-import { and, count, desc, eq, exists, min, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, exists, inArray, min, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { flag } from "../db/dialect";
@@ -12,6 +12,8 @@ import type { LovedTrack, Person, PublicUser, TaggedItem } from "../../shared/us
 export type User = typeof users.$inferSelect;
 
 /** The columns that make a PublicUser. Spread into a select to add a person to any query that joins `users`. */
+/** Accounts whose listening may be shown with their name on it (neither recent listening nor everything hidden). */
+export const openListener = () => and(eq(users.hideRecent, false), eq(users.privateListening, false));
 export const publicCols = { id: users.id, username: users.username, realname: users.realname, country: users.country, image: users.imageId };
 
 type Named = Pick<User, "id" | "username" | "realname" | "country">;
@@ -60,11 +62,18 @@ export const followersOf = (userId: number): Promise<PublicUser[]> =>
 export const playcount = (userId: number): Promise<number> =>
   total(db.select({ c: sql<number>`COALESCE(SUM(${userArtists.plays}), 0)` }).from(userArtists).where(eq(userArtists.userId, userId)));
 
+/** Which of these accounts keep all their listening private. */
+export async function privateAmong(ids: number[]): Promise<Set<number>> {
+  if (!ids.length) return new Set();
+  const rows = await db.select({ id: users.id }).from(users).where(and(inArray(users.id, ids), eq(users.privateListening, true)));
+  return new Set(rows.map(r => r.id));
+}
+
 /** The last thing a user played, or null when there is nothing or they keep their listening private. */
 export const lastTrack = (userId: number): Promise<Person["lastTrack"]> =>
   first(db.select({ title: tracks.title, artist: artists.name, playedAt: scrobbles.playedAt }).from(scrobbles)
     .innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).innerJoin(artists, eq(artists.id, scrobbles.artistId)).innerJoin(users, eq(users.id, scrobbles.userId))
-    .where(and(eq(scrobbles.userId, userId), eq(users.hideRecent, false))).orderBy(desc(scrobbles.playedAt)).limit(1));
+    .where(and(eq(scrobbles.userId, userId), openListener())).orderBy(desc(scrobbles.playedAt)).limit(1));
 
 /** When a user first played an artist, or null if they never have. */
 export const firstPlay = async (userId: number, artistId: number): Promise<number | null> =>

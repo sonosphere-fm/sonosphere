@@ -32,7 +32,7 @@ router.patch<ProfileSaved>("/api/me", async c => {
   const dmPolicy = b.dmPolicy === undefined ? undefined : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
   await repo.updateProfile(u.id, {
     realname: clean(b.realname ?? u.realname, 60), about: String(b.about ?? u.about).trim().slice(0, 2000), country: clean(b.country ?? u.country, 60),
-    website, hideRecent: !!(b.hideRecent ?? u.hideRecent), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
+    website, hideRecent: !!(b.hideRecent ?? u.hideRecent), privateListening: !!(b.privateListening ?? u.privateListening), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
     ...(dmPolicy && { dmPolicy }),
   });
   return { user: await me((await findById(u.id)) ?? missing("User")) };
