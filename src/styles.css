@@ -1348,8 +1348,9 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .import-track { height: 8px; border-radius: 4px; background: var(--panel); overflow: hidden; }
 .import-track > span { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width .6s ease; }
 .import-progress .btn { justify-self: start; }
-.lastfm-import { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
-.lastfm-import label { flex: 1 1 220px; }
+.lastfm-import { display: flex; gap: 10px; align-items: flex-end; }
+.lastfm-import label { flex: 1; min-width: 0; }
+.lastfm-import .astryx-button { flex: none; }
 
 .avatar-edit { display: flex; align-items: center; gap: 20px; }
 .hero:has(> .hero-banner) { background: var(--bg); border-bottom: 0; }
