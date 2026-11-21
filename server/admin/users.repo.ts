@@ -1,10 +1,10 @@
 // Data access for the accounts section of the staff API: the searchable account list, everything shown on one
 // account's page, and the changes staff make to accounts (suspend, ban, sign out, delete, notes).
-import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, notLike, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import {
-  apiSessions, apiTokens, auditLog, blocks, dmFlags, dmMessages, dmThreads, follows, journals, lovedTracks, modNotes, nowPlaying, playlists,
+  apiSessions, apiTokens, auditLog, blocks, dmFlags, emailTokens, dmMessages, dmThreads, follows, journals, lovedTracks, modNotes, nowPlaying, playlists,
   reports, scrobbles, sessions, shouts, taggings, userArtists, users, wikis,
 } from "../db/schema";
 import { jsonField, matches } from "../db/dialect";
@@ -26,13 +26,14 @@ const against = (userId: SQL | typeof users.id, username: SQL | typeof users.use
 const lastLogin = sql<number | null>`(SELECT MAX(${sessions.createdAt}) FROM ${sessions} WHERE ${sessions.userId} = ${users.id})`;
 const openReports = sql<number>`(SELECT COUNT(*) FROM ${reports} WHERE ${reports.status} = 'open' AND ${against(users.id, users.username)})`;
 
-export type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported";
+export type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported" | "unconfirmed";
 export type UserSort = "username" | "registered" | "scrobbles" | "reports" | "login";
 const notBanned = eq(users.banned, false);
 const FILTERS: Record<UserFilter, SQL | undefined> = {
   all: undefined, staff: and(eq(users.isAdmin, true), notBanned),
   admins: and(eq(users.isAdmin, true), ne(users.role, "moderator"), notBanned), moderators: and(eq(users.isAdmin, true), eq(users.role, "moderator"), notBanned),
   suspended: and(eq(users.suspended, true), notBanned), banned: eq(users.banned, true), reported: gt(openReports, 0),
+  unconfirmed: and(isNull(users.emailVerifiedAt), notLike(users.email, "%.invalid")),
 };
 export type UserQuery = { filter: UserFilter; sort: UserSort; ascending: boolean; pattern: string | null; searchEmail: boolean; limit: number; offset: number };
 export type UserListRow = User & { scrobbles: number; openReports: number; lastLogin: number | null };
@@ -127,6 +128,13 @@ export const findNote = (id: number) =>
 export async function deleteNote(id: number): Promise<void> { await db.delete(modNotes).where(eq(modNotes.id, id)); }
 
 // ---------- changes to an account ----------
+/** Marks an account's address confirmed by hand and drops any confirmation link still out. */
+export async function setVerified(id: number, at: number): Promise<void> {
+  await db.transaction(async tx => {
+    await tx.update(users).set({ emailVerifiedAt: at }).where(eq(users.id, id));
+    await tx.delete(emailTokens).where(and(eq(emailTokens.userId, id), eq(emailTokens.kind, "verify")));
+  });
+}
 export async function setSuspended(id: number, suspended: boolean): Promise<void> { await db.update(users).set({ suspended }).where(eq(users.id, id)); }
 export async function setDmMuted(id: number, dmMuted: boolean): Promise<void> { await db.update(users).set({ dmMuted }).where(eq(users.id, id)); }
 

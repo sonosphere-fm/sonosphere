@@ -13,7 +13,7 @@ type AccountReply = NoteAdded | DmMuteResult | SuspendResult | BanResult | Sessi
 const ROLES: Role[] = ["user", "moderator", "admin"];
 
 // ---------- users ----------
-const USER_FILTERS: [string, string][] = [["all", "Everyone"], ["reported", "With open reports"], ["suspended", "Suspended"], ["banned", "Banned"], ["staff", "All staff"], ["admins", "Admins"], ["moderators", "Moderators"]];
+const USER_FILTERS: [string, string][] = [["all", "Everyone"], ["reported", "With open reports"], ["suspended", "Suspended"], ["banned", "Banned"], ["unconfirmed", "Email not confirmed"], ["staff", "All staff"], ["admins", "Admins"], ["moderators", "Moderators"]];
 const POLICY: Record<string, string> = { everyone: "Messages from anyone", requests: "Requests from people they don't follow", following: "Only people they follow", nobody: "No messages" };
 export function Users() {
   const [sp, set] = useQuery(), role = useRole();
@@ -127,7 +127,8 @@ export function UserDetail() {
               <aside className="side">
                 <Section title="Account">
                   <dl className="adm-facts">
-                    {u.email !== undefined && <><dt>Email</dt><dd>{u.email}</dd></>}
+                    {u.email !== undefined && <><dt>Email</dt><dd className="adm-break">{u.email}</dd></>}
+                    <dt>Confirmed</dt><dd>{u.emailVerifiedAt ? dateTime(u.emailVerifiedAt) : u.placeholder ? "No, imported profile with a placeholder address" : "Not yet"}</dd>
                     <dt>Joined</dt><dd>{dateTime(u.registeredAt)}</dd>
                     <dt>Last login</dt><dd>{d.lastLogin ? dateTime(d.lastLogin) : "No active session"}</dd>
                     <dt>Sessions</dt><dd>{num(d.counts.sessions)} web, {num(d.counts.apiSessions)} app</dd>
@@ -162,6 +163,8 @@ export function UserDetail() {
                         ? <Button kind="btn ghost" type="button" onClick={() => ask({ title: "Lift ban", action: "Unban", body: <p>{u.username} will be able to log in again and their profile becomes visible.</p>, run: note => post("ban", { banned: false, note }) })}>Lift ban</Button>
                         : <Button kind="btn danger" type="button" disabled={staffTarget || locked} onClick={() => ask({ title: `Ban ${u.username}`, action: "Ban account", danger: true, note: "Reason (kept with the ban)",
                             body: <p>They are signed out everywhere, can't log in, and their profile is hidden from everyone but staff. Their scrobbles and posts are kept.</p>, run: note => post("ban", { banned: true, note }) })}>Ban account</Button>}
+                      {u.unconfirmed && <Button kind="btn ghost" type="button" onClick={() => ask({ title: "Mark email as confirmed", action: "Confirm email",
+                        body: <p>{u.username} gets full access (posting, messaging, following) without using the link, and won't be removed as unconfirmed. Only do this if you know the address is theirs.</p>, run: note => post("verify", { note }) })}>Mark email confirmed</Button>}
                       <Button kind="btn ghost" type="button" disabled={u.self || !(d.counts.sessions + d.counts.apiSessions)} onClick={() => ask({ title: "Sign out everywhere", action: "Revoke sessions",
                         body: <p>End {u.username}'s {plural(d.counts.sessions, "web session")} and {plural(d.counts.apiSessions, "app session")}. They can log in again.</p>, run: note => post("sessions", { note }).then(() => {}) })}>Revoke sessions</Button>
                       {!u.banned && !locked && <RolePicker current={u.role} onPick={r => ask({ title: `Make ${u.username} ${r === "user" ? "a regular user" : `a${r === "admin" ? "n" : ""} ${r}`}`, action: "Change role", danger: r === "admin",

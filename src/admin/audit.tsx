@@ -10,7 +10,7 @@ import type { AuditList as AuditPage } from "../../shared/admin-content";
 
 // ---------- audit entries (dashboard, user history, audit log) ----------
 const ACTION: Record<string, string> = {
-  "user.suspend": "Suspended", "user.unsuspend": "Lifted suspension", "user.ban": "Banned", "user.unban": "Unbanned", "user.role": "Changed role", "user.sessions": "Signed out everywhere",
+  "user.suspend": "Suspended", "user.unsuspend": "Lifted suspension", "user.ban": "Banned", "user.unban": "Unbanned", "user.role": "Changed role", "user.sessions": "Signed out everywhere", "user.verify": "Confirmed email",
   "user.delete": "Deleted account", "note.add": "Added note", "note.delete": "Deleted note", "report.dismiss": "Dismissed report", "report.remove": "Removed reported content",
   "report.suspend": "Removed and suspended", "shout.delete": "Deleted wall post", "journal.delete": "Deleted journal post", "wiki.delete": "Deleted wiki revision", "wiki.revert": "Reverted wiki",
   "wiki.lock": "Locked wiki", "wiki.unlock": "Unlocked wiki", "catalogue.merge": "Merged", "catalogue.rename": "Renamed", "catalogue.orphans": "Deleted orphans", "tag.delete": "Deleted tag",

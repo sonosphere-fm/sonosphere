@@ -74,12 +74,13 @@ export function useFlash() {
   return { run, set: setMsg, note: msg ? <p className={msg.ok ? "form-ok" : "form-error"} role={msg.ok ? "status" : "alert"}>{msg.text}</p> : null };
 }
 export const FLAG: Record<string, string> = { "copy-paste": "Copy-paste", volume: "Volume", "new-conversations": "New conversations" };
-export function StatusBadges({ u }: { u: { role: Role; banned: boolean; suspended: boolean } }) {
+export function StatusBadges({ u }: { u: { role: Role; banned: boolean; suspended: boolean; unconfirmed?: boolean } }) {
   return (
     <>
       {u.role !== "user" && <span className={`adm-badge role-${u.role}`}>{ROLE[u.role]}</span>}
       {u.banned && <span className="adm-badge bad">Banned</span>}
       {u.suspended && !u.banned && <span className="adm-badge warn">Suspended</span>}
+      {u.unconfirmed && !u.banned && <span className="adm-badge">Unconfirmed</span>}
     </>
   );
 }

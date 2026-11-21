@@ -18,6 +18,7 @@ export async function me(u: User): Promise<Me> {
     openReports: u.isAdmin ? await repo.openReportCount() : 0,
     unread: await repo.unreadCount(u.id),
     dm: await dmCounts(u.id), dmPolicy: u.dmPolicy || "requests",
+    emailNotify: u.emailNotify, emailMuted: u.emailMuted.split(",").filter(Boolean),
     emailVerified: !!u.emailVerifiedAt, pendingEmail: await pendingEmail(u.id),
   };
 }

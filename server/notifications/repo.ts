@@ -3,6 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { blocks, notifications, users } from "../db/schema";
 import { first, now } from "../util";
+import { mailNotice } from "./email";
 
 /**
  * Tells `userId` that `actorId` did something (`type`, with `data` for the details). Nothing is sent for your own
@@ -12,6 +13,7 @@ export async function notify(userId: number, type: string, actorId: number, data
   if (userId === actorId) return;
   if (await first(db.select({ one: sql`1` }).from(blocks).where(and(eq(blocks.blockerId, userId), eq(blocks.blockedId, actorId))).limit(1))) return;
   await db.insert(notifications).values({ userId, type, actorId, data: JSON.stringify(data), createdAt: now() });
+  await mailNotice(userId, type, actorId, data as Record<string, unknown>);
 }
 
 /** A stored notification with who caused it. `data` is still JSON text; the actor fields are null once that account is gone. */

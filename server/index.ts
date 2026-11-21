@@ -7,6 +7,7 @@ import { appRoutes } from "./app";
 import { handleCompat } from "./compat/routes";
 import { dropStaleTokens } from "./compat/repo";
 import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
+import { sendDigests } from "./notifications/email";
 import { deliver } from "./mail";
 import { syncCorrections } from "./corrections/service";
 import { exclusive } from "./kv";
@@ -58,7 +59,7 @@ const g = globalThis as { __spinHousekeeping?: ReturnType<typeof setInterval> };
 clearInterval(g.__spinHousekeeping);
 const tidy = () => {
   syncCorrections().catch(e => console.error(e)); // re-downloads at most once a day
-  exclusive("tidy", 5 * 60_000, () => Promise.all([dropExpiredNowPlaying(), dropStaleTokens(), sweepUnused(), dropExpiredEmailTokens(), purgeUnverified()])).catch(e => console.error(e)); // one process is enough
+  exclusive("tidy", 5 * 60_000, () => Promise.all([dropExpiredNowPlaying(), dropStaleTokens(), sweepUnused(), dropExpiredEmailTokens(), purgeUnverified(), sendDigests()])).catch(e => console.error(e)); // one process is enough
 };
 g.__spinHousekeeping = setInterval(tidy, 10 * 60 * 1000);
 // Mail that failed to send, or was queued while another process was busy sending, goes out on the next pass.

@@ -15,6 +15,7 @@ import { fail, HttpError } from "../http";
 import { onClientMessage, push, type ClientMessage } from "../realtime";
 import { blockedEither, findById, hasBlocked, type User } from "../users/repo";
 import { now } from "../util";
+import { mailMessage } from "../notifications/email";
 import * as repo from "./repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
 import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
@@ -143,7 +144,10 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
   }
   const { thread, accepted } = out, message = messageShape(out.message);
   // a declined request is delivered nowhere; everything else reaches the other side's open tabs at once
-  if (thread.status !== "declined") emit(to.id, { t: "dm", thread: await threadShape(thread, to.id), message, counts: await dmCounts(to.id) });
+  if (thread.status !== "declined") {
+    emit(to.id, { t: "dm", thread: await threadShape(thread, to.id), message, counts: await dmCounts(to.id) });
+    await mailMessage(to, from.username, thread.id, thread.status === "request", body);
+  }
   emit(from.id, { t: "dm", thread: await threadShape(thread, from.id), message, counts: await dmCounts(from.id), accepted });
   return { message, thread: await threadShape(thread, from.id) };
 }

@@ -7,6 +7,7 @@ import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/a
 import type { AppOk, Apps } from "../../shared/apps";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
+import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
 import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
 import { Ico } from "../icons";
 import { Art, Async, Section, useAction } from "../ui/base";
@@ -19,10 +20,11 @@ export function Settings() {
   return (
     <div className="wrap page">
       <h1 className="page-title">Settings</h1>
-      <nav className="tabs">{[["", "Profile"], ["/privacy", "Privacy"], ["/account", "Account"], ["/applications", "Applications"], ["/data", "Your data"]].map(([p, l]) => <NavLink key={p} to={`/settings${p}`} end>{l}</NavLink>)}</nav>
+      <nav className="tabs">{[["", "Profile"], ["/privacy", "Privacy"], ["/notifications", "Notifications"], ["/account", "Account"], ["/applications", "Applications"], ["/data", "Your data"]].map(([p, l]) => <NavLink key={p} to={`/settings${p}`} end>{l}</NavLink>)}</nav>
       <div className="narrow-col">
         {tab === "profile" && <ProfileSettings />}
         {tab === "privacy" && <PrivacySettings />}
+        {tab === "notifications" && <NotificationSettings />}
         {tab === "account" && <AccountSettings />}
         {tab === "applications" && <AppSettings />}
         {tab === "data" && <DataSettings />}
@@ -73,6 +75,26 @@ function PrivacySettings() {
     </Section>
     <BlockedUsers />
     </>
+  );
+}
+function NotificationSettings() {
+  const { me, setMe } = useAuth(), act = useAction();
+  const save = (body: ProfileEdit) => act.run(async () => { setMe((await api<ProfileSaved>("/me", { method: "PATCH", body })).user); return "Saved."; });
+  const off = me!.emailNotify === "off", muted = new Set(me!.emailMuted);
+  const toggle = (k: string, on: boolean) => save({ emailMuted: on ? me!.emailMuted.filter(x => x !== k) : [...me!.emailMuted, k] });
+  return (
+    <Section title="Email notifications">
+      <div className="form">
+        {!me!.emailVerified && <p className="muted small">Emails only go to a confirmed address. Confirm {me!.email} under <Link to="/settings/account">Account</Link> to start getting them.</p>}
+        <label>Send me emails
+          <Select label="How often to email you" value={me!.emailNotify} onChange={v => save({ emailNotify: v })} options={EMAIL_MODES.map(([v, l]) => [v, l])} />
+        </label>
+        {me!.emailNotify !== "instant" && !off && <p className="muted small">One email {me!.emailNotify === "daily" ? "a day" : "a week"} with whatever is still unread, and nothing when there's nothing new.</p>}
+        <p className="field-label">Email me when</p>
+        {EMAIL_KINDS.map(([k, l]) => <label key={k} className="check"><Input type="checkbox" checked={!off && !muted.has(k)} disabled={off} onChange={e => toggle(k, e.target.checked)} /> {l}</label>)}
+        {act.note}
+      </div>
+    </Section>
   );
 }
 function BlockedUsers() {

@@ -71,6 +71,17 @@ export async function unreadCounts(userId: number): Promise<DmCounts> {
   return { unread: row?.unread ?? 0, requests: row?.requests ?? 0 };
 }
 
+/** Messages to `userId` since `since` that are still unread, and how many people sent them (declined requests left out). */
+export async function unreadSince(userId: number, since: number): Promise<{ messages: number; people: number }> {
+  const t = alias(dmThreads, "t"), m = alias(dmMessages, "m");
+  const [row] = await db.select({ messages: sql<number>`count(*)::int`, people: sql<number>`count(distinct ${m.senderId})::int` })
+    .from(m).innerJoin(t, eq(t.id, m.threadId))
+    .where(and(or(eq(t.userLo, userId), eq(t.userHi, userId)), ne(m.senderId, userId), isNull(m.deletedAt), gt(m.createdAt, since), ne(t.status, "declined"), or(
+      and(eq(t.userLo, userId), gt(m.id, t.loRead), gt(m.id, t.loCleared)),
+      and(ne(t.userLo, userId), gt(m.id, t.hiRead), gt(m.id, t.hiCleared)))));
+  return { messages: row?.messages ?? 0, people: row?.people ?? 0 };
+}
+
 export const setStatus = async (threadId: number, status: "active" | "declined"): Promise<void> => {
   await db.update(dmThreads).set({ status }).where(eq(dmThreads.id, threadId));
 };

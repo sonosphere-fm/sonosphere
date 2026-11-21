@@ -36,6 +36,13 @@
       "when": 1795225672863,
       "tag": "0004_private_listening",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795227730240,
+      "tag": "0005_email_notify",
+      "breakpoints": true
     }
   ]
 }

@@ -58,7 +58,7 @@ function TagInput({ type, id, mine, onChange, onDone }: { type: ItemType; id: nu
       <div className="tag-row">
         <div className="tag-field" onMouseDown={e => { if (e.target === e.currentTarget) { e.preventDefault(); input.current?.focus(); } }}>
           {mine.map(t => <span key={t} className="tag-token">{t}<button type="button" aria-label={`Remove tag ${t}`} title="Remove" onClick={() => save({ tag: t }, "/tags/remove")}><Ico.X /></button></span>)}
-          <input ref={input} autoFocus value={text} maxLength={200} placeholder={mine.length ? "Add another…" : "Type a tag…"} aria-label="Add a tag"
+          <input ref={input} autoFocus value={text} maxLength={200} placeholder={mine.length ? "Add another…" : "Type a tag, then Enter"} aria-label="Add a tag"
             role="combobox" aria-expanded={openList} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={openList ? `${listId}-${active}` : undefined} autoComplete="off" autoCapitalize="none" spellCheck={false}
             onChange={e => { const v = e.target.value; setShow(true); if (v.includes(",")) add(v.split(",")); else setText(v); }}
             onKeyDown={onKey} onFocus={() => setShow(true)} onBlur={() => setShow(false)} />
@@ -76,7 +76,7 @@ function TagInput({ type, id, mine, onChange, onDone }: { type: ItemType; id: nu
         </div>
         <Button kind="btn small ghost" onClick={onDone}>Done</Button>
       </div>
-      {error ? <p className="form-error small">{error}</p> : <p className="small muted">Press Enter or comma to add a tag. Your tags are saved as you go.</p>}
+      {error && <p className="form-error small">{error}</p>}
     </div>
   );
 }

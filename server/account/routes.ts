@@ -7,7 +7,8 @@ import { confirmed, need } from "../guards";
 import { bad, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
 import { deleteAllScrobbles, exportLoved, exportScrobbles } from "../listening/repo";
 import { findById } from "../users/repo";
-import { clean } from "../util";
+import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
+import { clean, now } from "../util";
 import * as repo from "./repo";
 import type { ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { Ok } from "../../shared/auth";
@@ -33,10 +34,15 @@ router.patch<ProfileSaved>("/api/me", async c => {
   const realname = clean(b.realname ?? u.realname, 60), about = String(b.about ?? u.about).trim().slice(0, 2000), country = clean(b.country ?? u.country, 60);
   if (realname !== u.realname || about !== u.about || country !== u.country || website !== u.website) confirmed(u);
   const dmPolicy = b.dmPolicy === undefined ? undefined : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
+  const emailNotify = b.emailNotify === undefined ? undefined : oneOf(b.emailNotify, EMAIL_MODES.map(m => m[0])) ?? bad("Pick how often to get emails");
+  const emailMuted = Array.isArray(b.emailMuted) ? EMAIL_KINDS.map(k => k[0]).filter(k => (b.emailMuted as unknown[]).includes(k)).join(",") : undefined;
   await repo.updateProfile(u.id, {
     realname, about, country,
     website, hideRecent: !!(b.hideRecent ?? u.hideRecent), privateListening: !!(b.privateListening ?? u.privateListening), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
     ...(dmPolicy && { dmPolicy }),
+    // a digest starts counting from when it was picked, so the first one doesn't cover everything before
+    ...(emailNotify && { emailNotify, ...(emailNotify !== u.emailNotify && { digestAt: now() }) }),
+    ...(emailMuted !== undefined && { emailMuted }),
   });
   return { user: await me((await findById(u.id)) ?? missing("User")) };
 });

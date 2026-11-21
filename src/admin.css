@@ -55,6 +55,11 @@ td .adm-badge:first-child { margin-left: 0; }
 .adm-filterbar > .field, .adm-filterbar > div:has(> input), .adm-filterbar .astryx-text-input { min-width: 170px; }
 .adm-search { min-width: 260px; flex: 0 1 340px; }
 .adm-search.wide { flex: 1; min-width: 0; }
+/* the search box and the filter dropdowns beside it share one height */
+.adm-body .toolbar { align-items: center; }
+.adm-search .search-field { height: 40px; }
+.adm-search .astryx-button.search-go { width: 42px; font-size: 16px; }
+.adm-body .toolbar .astryx-selector { min-height: 40px; font-size: 15px; font-weight: 400; }
 .adm-check { align-items: center !important; font-size: 14px !important; margin: 0; }
 .adm-scroll { overflow-x: auto; margin-bottom: 14px; }
 .adm-table { width: 100%; border-collapse: collapse; font-size: 14px; }

@@ -9,11 +9,14 @@ import { disconnect } from "../realtime";
 import { canAct, note, paging, targetUser } from "./common";
 import { pageOf } from "../moderation/repo";
 import * as repo from "./users.repo";
-import type { BanResult, NoteAdded, Ok, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult } from "../../shared/admin";
+import type { BanResult, NoteAdded, Ok, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult, VerifyResult } from "../../shared/admin";
 
 export const router = new Router({ jsonOnly: true });
 
-const FILTERS = ["all", "staff", "admins", "moderators", "suspended", "banned", "reported"] as const;
+const placeholder = (u: { email: string }) => u.email.endsWith(".invalid");
+const unconfirmed = (u: { email: string; emailVerifiedAt: number | null }) => !u.emailVerifiedAt && !placeholder(u);
+
+const FILTERS = ["all", "staff", "admins", "moderators", "suspended", "banned", "reported", "unconfirmed"] as const;
 const SORTS = ["username", "registered", "scrobbles", "reports", "login"] as const;
 const ROLES = ["user", "moderator", "admin"] as const;
 
@@ -26,7 +29,7 @@ router.get<StaffUserList>("/api/admin/users", async c => {
   return {
     items: rows.map(u => ({
       id: u.id, username: u.username, realname: u.realname, image: u.imageId, email: admin ? u.email : undefined, registeredAt: u.registeredAt, role: roleOf(u),
-      suspended: u.suspended, banned: u.banned, scrobbles: u.scrobbles, openReports: u.openReports, lastLogin: u.lastLogin,
+      suspended: u.suspended, banned: u.banned, unconfirmed: unconfirmed(u), scrobbles: u.scrobbles, openReports: u.openReports, lastLogin: u.lastLogin,
     })),
     total, ...pg,
   };
@@ -39,7 +42,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async c => {
     user: {
       id, username: u.username, realname: u.realname, email: isAdmin(me) ? u.email : undefined, country: u.country, website: u.website, about: u.about, image: u.imageId,
       registeredAt: u.registeredAt, role: roleOf(u), suspended: u.suspended, banned: u.banned, bannedAt: u.bannedAt, banReason: u.banReason,
-      hideRecent: u.hideRecent, configAdmin: (await configAdmins()).includes(u.usernameNorm), self: id === me.id,
+      hideRecent: u.hideRecent, emailVerifiedAt: u.emailVerifiedAt, placeholder: placeholder(u), unconfirmed: unconfirmed(u), configAdmin: (await configAdmins()).includes(u.usernameNorm), self: id === me.id,
     },
     counts: await repo.userCounts(id),
     lastLogin: await repo.lastLoginOf(id),
@@ -79,6 +82,16 @@ router.post<RoleResult>("/api/admin/users/:name/role", async c => {
   await setRole(t.id, role);
   await audit(me, { action: "user.role", targetType: "user", targetId: t.id, label: t.username, subjectId: t.id, note: note(c), data: { from: was, to: role } });
   return { role };
+});
+
+router.post<VerifyResult>("/api/admin/users/:name/verify", async c => {
+  const me = adminOnly(c), t = await targetUser(c.params[0]!);
+  if (t.emailVerifiedAt) return { verifiedAt: t.emailVerifiedAt };
+  if (placeholder(t)) bad("This account has a placeholder address from an import; it can't be confirmed");
+  const at = now();
+  await repo.setVerified(t.id, at);
+  await audit(me, { action: "user.verify", targetType: "user", targetId: t.id, label: t.username, subjectId: t.id, note: note(c) });
+  return { verifiedAt: at };
 });
 
 router.post<SessionsResult>("/api/admin/users/:name/sessions", async c => {

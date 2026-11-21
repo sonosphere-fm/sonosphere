@@ -6,13 +6,16 @@ import { UNVERIFIED_DAYS } from "../../shared/auth";
 const BLUE = "#2438d6", YELLOW = "#ffcf33", INK = "#171717", MUTED = "#4a4a4a", PAPER = "#f7f3ee";
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-type Part = { p: string } | { button: string; url: string } | { small: string };
+type Part = { p: string } | { button: string; url: string } | { small: string } | { item: string; url: string; quote?: string };
 
-function build(to: string, subject: string, heading: string, parts: Part[]): Mail {
-  const text = [heading, "", ...parts.flatMap(x => "p" in x ? [x.p, ""] : "button" in x ? [`${x.button}: ${x.url}`, ""] : [x.small, ""]),
-    "-- ", `Sonosphere - ${SITE_URL}`].join("\n");
+function build(to: string, subject: string, heading: string, parts: Part[], optional = false): Mail {
+  const manage = `${SITE_URL}/settings/notifications`;
+  const text = [heading, "", ...parts.flatMap(x => "p" in x ? [x.p, ""] : "button" in x ? [`${x.button}: ${x.url}`, ""] : "item" in x ? [x.item, ...(x.quote ? [`  "${x.quote}"`] : []), `  ${x.url}`, ""] : [x.small, ""]),
+    "-- ", `Sonosphere - ${SITE_URL}`, ...(optional ? [`Choose which emails you get: ${manage}`] : [])].join("\n");
   const body = parts.map(x => "p" in x
     ? `<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:${INK}">${esc(x.p)}</p>`
+    : "item" in x
+      ? `<p style="margin:0 0 14px;font-size:16px;line-height:1.5;color:${INK}"><a href="${esc(x.url)}" style="color:${INK};text-decoration:none">${esc(x.item)}</a>${x.quote ? `<br><span style="color:${MUTED};font-size:14px">&ldquo;${esc(x.quote)}&rdquo;</span>` : ""}</p>`
     : "button" in x
       ? `<p style="margin:8px 0 24px"><a href="${esc(x.url)}" style="display:inline-block;background:${BLUE};color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:14px 26px">${esc(x.button)}</a></p>
          <p style="margin:0 0 16px;font-size:13px;line-height:1.5;color:${MUTED}">Or paste this into your browser:<br><a href="${esc(x.url)}" style="color:${BLUE};word-break:break-all">${esc(x.url)}</a></p>`
@@ -26,7 +29,7 @@ function build(to: string, subject: string, heading: string, parts: Part[]): Mai
 <h1 style="margin:0 0 20px;font-size:24px;line-height:1.25;color:${INK}">${esc(heading)}</h1>
 ${body}
 </td></tr>
-<tr><td style="padding:16px 28px;font-size:12px;line-height:1.5;color:${MUTED}">You are getting this because of an account at <a href="${esc(SITE_URL)}" style="color:${MUTED}">${esc(SITE_URL.replace(/^https?:\/\//, ""))}</a>.</td></tr>
+<tr><td style="padding:16px 28px;font-size:12px;line-height:1.5;color:${MUTED}">You are getting this because of an account at <a href="${esc(SITE_URL)}" style="color:${MUTED}">${esc(SITE_URL.replace(/^https?:\/\//, ""))}</a>.${optional ? ` <a href="${esc(manage)}" style="color:${MUTED}">Choose which emails you get</a>.` : ""}</td></tr>
 </table></td></tr></table></body></html>`;
   return { to, subject, text, html };
 }
@@ -70,3 +73,18 @@ export const passwordChangedMail = (to: string, username: string) => build(to, "
   { p: "If this was not you, reset your password right away from the log-in page." },
   { button: "Reset password", url: `${SITE_URL}/forgot` },
 ]);
+
+/** One thing that happened, as a notification email or a digest line shows it. */
+export type NoticeLine = { line: string; url: string; quote?: string };
+
+export const noticeMail = (to: string, n: NoticeLine & { button: string }) => build(to, n.line, n.line, [
+  ...(n.quote ? [{ p: `“${n.quote}”` }] : []),
+  { button: n.button, url: n.url },
+], true);
+
+export const digestMail = (to: string, username: string, weekly: boolean, lines: NoticeLine[], more: number) => build(to,
+  `Your ${weekly ? "week" : "day"} on Sonosphere: ${lines.length + more} new`, `Hi ${username}, here's what you missed`, [
+  ...lines.map(l => ({ item: l.line, url: l.url, quote: l.quote })),
+  ...(more ? [{ small: `And ${more} more in your inbox.` }] : []),
+  { button: "Open your inbox", url: `${SITE_URL}/inbox` },
+], true);

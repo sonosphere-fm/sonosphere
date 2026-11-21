@@ -53,6 +53,10 @@ export const users = pgTable("users", {
 	dmMuted: boolean("dm_muted").default(false).notNull(),
 	// when the address in `email` was confirmed by following an emailed link; null until then
 	emailVerifiedAt: integer("email_verified_at"),
+	// notification emails: "instant", "daily", "weekly" or "off"; the kinds turned off (comma separated); the last digest
+	emailNotify: text("email_notify").default("instant").notNull(),
+	emailMuted: text("email_muted").default("").notNull(),
+	digestAt: integer("digest_at"),
 });
 
 /**

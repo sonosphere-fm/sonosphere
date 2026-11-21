@@ -37,7 +37,8 @@ export type Dashboard = {
 /** A row of the account list. `email` is only sent to admins. */
 export type StaffUserRow = {
   id: number; username: string; realname: string; image: string | null; email?: string; registeredAt: number; role: Role; suspended: boolean; banned: boolean;
-  scrobbles: number; openReports: number; lastLogin: number | null;
+  /** still has to confirm a real address (imported profiles with placeholder addresses don't count) */
+  unconfirmed: boolean; scrobbles: number; openReports: number; lastLogin: number | null;
 };
 export type StaffUserList = { items: StaffUserRow[]; total: number } & Paged;
 /** A report as listed on an account's page. */
@@ -51,6 +52,8 @@ export type StaffUserPage = {
   user: {
     id: number; username: string; realname: string; email?: string; country: string; website: string; about: string; image: string | null; registeredAt: number;
     role: Role; suspended: boolean; banned: boolean; bannedAt: number | null; banReason: string; hideRecent: boolean; configAdmin: boolean; self: boolean;
+    /** when the address was confirmed; `placeholder` marks an imported profile's address, which can't receive mail */
+    emailVerifiedAt: number | null; placeholder: boolean; unconfirmed: boolean;
   };
   counts: {
     scrobbles: number; loved: number; shouts: number; journals: number; wikiEdits: number; playlists: number; tags: number; followers: number; following: number;
@@ -69,6 +72,7 @@ export type SuspendResult = { suspended: boolean };
 export type BanResult = { banned: boolean };
 export type RoleResult = { role: Role };
 export type SessionsResult = { revoked: number };
+export type VerifyResult = { verifiedAt: number };
 export type NoteAdded = { id: number };
 
 // ---------- reports ----------
