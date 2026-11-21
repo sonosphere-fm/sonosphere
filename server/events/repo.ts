@@ -5,7 +5,7 @@ import { db, transact } from "../db/client";
 import { artists, eventArtists, eventAttendance, events, userArtists, users } from "../db/schema";
 import { publicCols } from "../users/repo";
 import { now } from "../util";
-import type { Attendance, EventArtist, EventSummary } from "../../shared/events";
+import type { Attendance, EventArtist, EventPlace, EventSummary } from "../../shared/events";
 import type { PublicUser } from "../../shared/users";
 
 /** Which events a list covers. Every field narrows it. */
@@ -21,6 +21,10 @@ export type Filter = {
   attendee?: number;
   /** Events with one of this user's 50 most played artists on the bill. */
   fanOf?: number;
+  /** Events at a venue within `km` of a point. */
+  near?: { lat: number; lon: number; km: number };
+  /** Events in this country (its English name, as stored). */
+  country?: string;
 };
 
 function matching(f: Filter): SQL | undefined {
@@ -38,6 +42,14 @@ function matching(f: Filter): SQL | undefined {
     const favourites = db.select({ id: userArtists.artistId }).from(userArtists).where(eq(userArtists.userId, f.fanOf)).orderBy(desc(userArtists.plays)).limit(50);
     c.push(inArray(events.id, db.select({ id: eventArtists.eventId }).from(eventArtists).where(inArray(eventArtists.artistId, favourites))));
   }
+  if (f.near) {
+    const { lat, lon, km } = f.near, dLat = km / 111, dLon = km / (111 * Math.max(0.1, Math.cos(lat * Math.PI / 180)));
+    // a box first (cheap), then the great-circle distance
+    c.push(sql`${events.lat} BETWEEN ${lat - dLat} AND ${lat + dLat} AND ${events.lon} BETWEEN ${lon - dLon} AND ${lon + dLon}`);
+    c.push(sql`6371 * 2 * asin(sqrt(power(sin(radians(${events.lat} - ${lat}) / 2), 2)
+      + cos(radians(${lat})) * cos(radians(${events.lat})) * power(sin(radians(${events.lon} - ${lon}) / 2), 2))) <= ${km}`);
+  }
+  if (f.country) c.push(sql`lower(${events.country}) = ${f.country.toLowerCase()}`);
   return and(...c);
 }
 
@@ -53,7 +65,7 @@ export async function listEvents(f: Filter, viewerId: number | undefined, order:
   const mine = db.select({ status: eventAttendance.status }).from(eventAttendance).where(and(eq(eventAttendance.eventId, events.id), eq(eventAttendance.userId, viewerId || 0)));
   const rows = await db.select({
     id: events.id, title: events.title, venue: events.venue, city: events.city, country: events.country, startsAt: events.startsAt,
-    description: events.description, url: events.url, creator: users.username,
+    description: events.description, url: events.url, creator: users.username, source: events.source,
     going: sql<number>`${headCount("going")}`, interested: sql<number>`${headCount("interested")}`,
     // the status column only ever holds the two values of Attendance (see setAttendance)
     status: sql<Attendance | null>`${mine}`,
@@ -76,12 +88,14 @@ export type NewEvent = { title: string; venue: string; city: string; country: st
  * Returns the event's id.
  */
 export async function createEvent(e: NewEvent, artistNames: string[], creatorId: number): Promise<number> {
-  return transact(tx => {
-    const id = tx.insert(events).values({ ...e, creatorId, createdAt: now() }).returning({ id: events.id }).get().id;
-    artistNames.forEach((name, position) => tx.insert(eventArtists).values({ eventId: id, artistId: getOrCreateArtistTx(tx, name), position }).onConflictDoNothing().run());
-    tx.insert(eventAttendance).values({ eventId: id, userId: creatorId, status: "going", createdAt: now() }).run();
+  return (await transact(async tx => {
+    const id = (await tx.insert(events).values({ ...e, creatorId, createdAt: now() }).returning({ id: events.id }))[0].id;
+    for (const [position, name] of artistNames.entries()) {
+      await tx.insert(eventArtists).values({ eventId: id, artistId: await getOrCreateArtistTx(tx, name), position }).onConflictDoNothing();
+    }
+    await tx.insert(eventAttendance).values({ eventId: id, userId: creatorId, status: "going", createdAt: now() });
     return id;
-  });
+  }));
 }
 
 /** Deletes an event if this user created it. False when they did not (or there is no such event). */
@@ -90,8 +104,20 @@ export const deleteOwnEvent = async (id: number, creatorId: number): Promise<boo
 
 /** Records what a user says about an event, replacing any earlier answer. Null withdraws it. */
 export async function setAttendance(eventId: number, userId: number, status: Attendance | null): Promise<void> {
-  transact(tx => {
-    tx.delete(eventAttendance).where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.userId, userId))).run();
-    if (status) tx.insert(eventAttendance).values({ eventId, userId, status, createdAt: now() }).run();
+  await transact(async tx => {
+    await tx.delete(eventAttendance).where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.userId, userId)));
+    if (status) await tx.insert(eventAttendance).values({ eventId, userId, status, createdAt: now() });
   });
+}
+
+/** Places events are already held at, most used first, for the add form's suggestions. Countries come all at once (there are few);
+ *  venues and cities only those containing the typed text. A venue carries its city and country, a city its country. */
+export async function places(field: "venue" | "city" | "country", q: string): Promise<EventPlace[]> {
+  const col = events[field], n = sql<number>`count(*)::int`;
+  const like = `%${q.toLowerCase().replace(/[\\%_]/g, c => "\\" + c)}%`;
+  const where = and(sql`${col} <> ''`, field === "country" || !q ? undefined : sql`lower(${col}) LIKE ${like}`);
+  if (field === "country") return db.select({ name: col, count: n }).from(events).where(where).groupBy(col).orderBy(desc(n));
+  // the most common city and country seen with each name
+  const city = sql<string>`mode() within group (order by ${events.city})`, country = sql<string>`mode() within group (order by ${events.country})`;
+  return db.select({ name: col, count: n, ...(field === "venue" && { city }), country }).from(events).where(where).groupBy(col).orderBy(desc(n), asc(col)).limit(8);
 }

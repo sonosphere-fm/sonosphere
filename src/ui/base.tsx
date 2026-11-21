@@ -1,13 +1,14 @@
-import { Ico } from "../icons";
-import { useRef, useState, type ReactNode } from "react";
+import { Lockup, Mark } from "./brand";
+import { Ico, Spinner } from "../icons";
+import { Suspense, useRef, useState, type ReactNode } from "react";
 import { Pages, Select } from "../kit";
 import { Link, NavLink } from "react-router-dom";
 import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
 
 // ---------- artwork ----------
 /** A picture when there is one; otherwise a flat grey tile with a quiet glyph (a person for artists and listeners, a record for albums). */
-export function Art({ name, sub = "", image, kind = "album" }: { name: string; sub?: string; image?: number | null; kind?: "artist" | "album" | "user" }) {
-  if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image)} alt="" loading="lazy" /></span>;
+export function Art({ image, kind = "album" }: { image?: string | null; kind?: "artist" | "album" | "user" }) {
+  if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image, "small")} alt="" loading="lazy" /></span>;
   return (
     <span className={`art art-${kind} art-none`}>
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -78,10 +79,11 @@ export function useAction() {
   const note = error ? <p className="form-error" role="alert">{error}</p> : done ? <p className="form-ok" role="status">{done}</p> : null;
   return { busy, run, note, error };
 }
-export const Avatar = ({ user, size = 40, plain }: { user: { username: string; image?: number | null }; size?: number; plain?: boolean }) => plain
-  ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art name={user.username} image={user.image} kind="user" /></span> // inside another link
-  : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art name={user.username} image={user.image} kind="user" /></Link>;
+export const Avatar = ({ user, size = 40, plain }: { user: { username: string; image?: string | null }; size?: number; plain?: boolean }) => plain
+  ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art image={user.image} kind="user" /></span> // inside another link
+  : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art image={user.image} kind="user" /></Link>;
 
 // The wordmark: heavy italic type with a corner of a record (spindle and two grooves) spinning off the end.
-export const LogoDisc = () => <svg className="wm-grooves" viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="4.6" strokeLinecap="round"><path d="M4 8a28 28 0 0 1 28 28" /><path d="M4 19a17 17 0 0 1 17 17" /></g><circle cx="5.5" cy="34.5" r="5.5" fill="currentColor" /></svg>;
-export const Logo = () => <span className="wordmark" role="img" aria-label="spin">spin<LogoDisc /></span>;
+export const Logo = () => <span className="wordmark" role="img" aria-label="sonosphere"><Lockup /><Mark className="brand-mark logo-small" /></span>;
+/** The part of a tabbed page that changes from tab to tab. While a tab's data loads, only this part shows the spinner; the header stays put. */
+export const Pane = ({ children }: { children: ReactNode }) => <Suspense fallback={<Spinner page />}>{children}</Suspense>;

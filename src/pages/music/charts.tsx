@@ -1,7 +1,7 @@
 import { Ico } from "../../icons";
 import { Button } from "../../kit";
 import { Link, useSearchParams } from "react-router-dom";
-import { albumUrl, artistUrl, num, qs, tagUrl, trackUrl, useApi, useParam, useTitle } from "../../lib";
+import { albumUrl, artistUrl, num, prefetch, qs, tagUrl, trackUrl, useApi, useParam, useTitle } from "../../lib";
 import { Art, Async, Empty, Pager, PeriodPicker, Section } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { RankList, TrackList } from "../../ui/lists";
@@ -18,7 +18,7 @@ function ChartCol(props: ChartColProps) {
   const name = (r: ChartItem) => ("name" in r ? r.name : r.title);
   const artist = (r: ChartItem) => ("artist" in r ? r.artist : undefined);
   const to = (r: ChartItem) => kind === "artist" ? artistUrl(name(r)) : kind === "tag" ? tagUrl(name(r)) : kind === "album" ? albumUrl(artist(r) ?? "", name(r)) : trackUrl(artist(r) ?? "", name(r));
-  const art = (r: ChartItem) => <Art name={"album" in r ? r.album || r.title : name(r)} sub={artist(r)} image={"image" in r ? r.image : undefined} kind={kind === "artist" ? "artist" : "album"} />;
+  const art = (r: ChartItem) => <Art image={"image" in r ? r.image : undefined} kind={kind === "artist" ? "artist" : "album"} />;
   const [top, ...rest] = items, lead = kind !== "tag" && top;
   return (
     <section className="chartcol" id={`top-${kind}s`}>
@@ -43,7 +43,11 @@ function ChartCol(props: ChartColProps) {
 }
 function ChartsOverview() {
   const [period, setPeriod] = useParam("period", "overall");
-  const get = <T extends ChartItem>(kind: string) => useApi<ChartsData<T>>(`/charts${qs({ kind, period: kind === "tags" ? undefined : period, limit: 10 })}`);
+  const path = (kind: string) => `/charts${qs({ kind, period: kind === "tags" ? undefined : period, limit: 10 })}`;
+  // ask for all five lists at once; otherwise each one would only start once the one before it had arrived
+  for (const k of ["tracks", "artists", "albums", "tags"]) prefetch(path(k));
+  prefetch("/home");
+  const get = <T extends ChartItem>(kind: string) => useApi<ChartsData<T>>(path(kind));
   const tracks = get<TopTrack>("tracks"), artists = get<TopArtist>("artists"), albums = get<TopAlbum>("albums"), tags = get<ChartTag>("tags"), home = useApi<Home>("/home");
   const p = period === "overall" ? "" : `&period=${period}`;
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ block: "start" });

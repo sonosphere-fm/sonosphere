@@ -4,6 +4,7 @@ import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { needleTheme } from "./themes/needle/needle.js";
+import { applyTheme, startingTheme } from "./theme";
 import { Button, RouteLink } from "./kit";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
@@ -15,7 +16,7 @@ import { Art, Empty, Logo } from "./ui/base";
 import { Home } from "./pages/music/home";
 import { NotFound } from "./pages/notfound";
 import { Private } from "./pages/private";
-import { SiteBanner } from "./banner";
+import { SiteBanner, VerifyBanner } from "./banner";
 
 // Every page but the home page is its own download, fetched the first time it is needed. Pointing at a link
 // renders its page out of sight (see LookAhead below), which also starts that download before the click.
@@ -32,12 +33,19 @@ const EventPage = lazy(() => import("./pages/events").then(m => ({ default: m.Ev
 const EventAdd = lazy(() => import("./pages/events").then(m => ({ default: m.EventAdd })));
 const PlaylistPage = lazy(() => import("./pages/playlist").then(m => ({ default: m.PlaylistPage })));
 const AuthPage = lazy(() => import("./pages/auth").then(m => ({ default: m.AuthPage })));
+const OAuthJoinPage = lazy(() => import("./pages/auth").then(m => ({ default: m.OAuthJoinPage })));
+const ForgotPage = lazy(() => import("./pages/auth").then(m => ({ default: m.ForgotPage })));
+const ResetPage = lazy(() => import("./pages/auth").then(m => ({ default: m.ResetPage })));
+const VerifyPage = lazy(() => import("./pages/auth").then(m => ({ default: m.VerifyPage })));
 const Settings = lazy(() => import("./pages/settings").then(m => ({ default: m.Settings })));
 const Inbox = lazy(() => import("./pages/inbox").then(m => ({ default: m.Inbox })));
 const Recommended = lazy(() => import("./pages/recommended").then(m => ({ default: m.Recommended })));
 const ScrobblePage = lazy(() => import("./pages/scrobble").then(m => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then(m => ({ default: m.Connect })));
 const Developers = lazy(() => import("./pages/developers").then(m => ({ default: m.Developers })));
+const Terms = lazy(() => import("./pages/legal").then(m => ({ default: m.Terms })));
+const PrivacyPolicy = lazy(() => import("./pages/legal").then(m => ({ default: m.Privacy })));
+const Guidelines = lazy(() => import("./pages/legal").then(m => ({ default: m.Guidelines })));
 
 // The staff portal is a separate download, fetched only when a member of staff opens it.
 const AdminPage = lazy(() => import("./admin/index"));
@@ -62,7 +70,7 @@ function Header() {
   return (
     <header className="site-header">
       <div className="wrap">
-        <Link to="/" className="logo" aria-label="Spin home"><Logo /></Link>
+        <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
         <nav className="site-nav" aria-label="Main">
           <Button kind="nav-search" type="button" aria-label="Search" onClick={() => setOpen(true)}><Ico.Search /></Button>
           <NavLink to="/" end>Home</NavLink>
@@ -70,7 +78,7 @@ function Header() {
           <NavLink to="/events">Events</NavLink>
           {me ? (
             <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480}
-              button={{ label: `${me.username} menu`, variant: "ghost", className: "menu-toggle", children: <><span className="avatar" style={{ width: 30, height: 30 }}><Art name={me.username} image={me.image} kind="user" /></span>{me.unread + me.dm.unread + me.dm.requests > 0 && <b className="dot">{me.unread + me.dm.unread + me.dm.requests}</b>}</> }}>
+              button={{ label: `${me.username} menu`, variant: "ghost", className: "menu-toggle", children: <><span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>{me.unread + me.dm.unread + me.dm.requests > 0 && <b className="dot">{me.unread + me.dm.unread + me.dm.requests}</b>}</> }}>
               <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
               <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
               <DropdownMenuItem icon={<Ico.Reports />} label="Listening reports" href={`${userUrl(me.username)}/listening-report/week`} />
@@ -113,8 +121,9 @@ function Footer() {
       </div>
       <div className="footer-base">
         <div className="wrap">
-          <Link to="/" className="logo" aria-label="Spin home"><Logo /></Link>
-          <span className="footer-copy">© {new Date().getFullYear()} Spin</span>
+          <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
+          <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
+          <span className="footer-legal"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/guidelines">Guidelines</Link><a href="mailto:support@sonosp.here">Contact</a></span>
         </div>
       </div>
     </footer>
@@ -139,6 +148,36 @@ function apiFor(pathname: string): string | null {
   if (p[0] === "user" && p[1]) return `/user${qs({ name: d(p[1]) })}`;
   if ((p[0] === "event" || p[0] === "playlist") && p[1]) return `/${p[0]}/${p[1]}`;
   return null;
+}
+/** What a profile tab asks for once the profile itself has arrived, so both requests can go out together.
+ *  Keys must match the ones the tab builds (src/pages/user/); a mismatch only costs a wasted request. */
+function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
+  const page = Number(sp.get("page")) || 1, period = sp.get("period");
+  switch (p[2]) {
+    case undefined: return [`/user/recent${qs({ name, limit: 10 })}`, ...["artists", "albums", "tracks"].map(kind => `/user/top${qs({ name, kind, period: period || "7day", limit: kind === "tracks" ? 10 : 8 })}`)];
+    case "library": {
+      if (p[3] === "music" || sp.get("from") || sp.get("to")) return [];
+      const params = { name, page, limit: 50, period: period || "overall" };
+      return [!p[3] || p[3] === "scrobbles" ? `/user/recent${qs(params)}` : `/user/top${qs({ ...params, kind: p[3] })}`];
+    }
+    case "listening-report": { const type = p[3] === "year" ? "year" : "week"; return [`/user/report${qs({ name, type, offset: Number(sp.get("offset") || (type === "week" ? "1" : "0")), tz: -new Date().getTimezoneOffset() })}`]; }
+    case "loved": return [`/user/loved${qs({ name, page })}`];
+    case "journal": return p[3] ? [] : [`/user/journal${qs({ name, page })}`];
+    case "following": case "followers": return [`/user/${p[2]}${qs({ name })}`];
+    case "earworms": return [`/user/obsessions${qs({ name })}`];
+    case "soundalikes": return [`/user/neighbours${qs({ name })}`];
+    case "tags": return [`/user/tags${qs({ name, tag: sp.get("tag") })}`];
+    case "playlists": case "events": return [`/user/${p[2]}${qs({ name })}`];
+    default: return [];
+  }
+}
+/** Every request a page will make that can be known from its address alone. */
+function apisFor(url: string): string[] {
+  const at = new URL(url, location.origin), first = apiFor(at.pathname);
+  if (!first) return [];
+  const p = at.pathname.split("/").filter(Boolean);
+  if (p[0] !== "user" || !p[1]) return [first];
+  return [first, ...userTabApi(p, at.searchParams, dec(p[1]))];
 }
 /** The staff portal, for staff. Everyone else gets a short notice and the portal's code is never requested. */
 function Staff() {
@@ -189,6 +228,10 @@ function Pages() {
       <Route path="/playlist/:id" element={<PlaylistPage />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/join" element={<AuthPage mode="join" />} />
+      <Route path="/join/oauth" element={<OAuthJoinPage />} />
+      <Route path="/forgot" element={<ForgotPage />} />
+      <Route path="/reset" element={<ResetPage />} />
+      <Route path="/verify" element={<VerifyPage />} />
       <Route path="/settings" element={<Private><Settings /></Private>} />
       <Route path="/settings/:tab" element={<Private><Settings /></Private>} />
       <Route path="/moderation" element={<Navigate to="/admin/reports" replace />} />
@@ -202,6 +245,9 @@ function Pages() {
       <Route path="/scrobble" element={<Private><ScrobblePage /></Private>} />
       <Route path="/connect" element={<Private><Connect /></Private>} />
       <Route path="/developers" element={<Developers />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/guidelines" element={<Guidelines />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -216,7 +262,7 @@ const inApp = (e: Event) => {
   return a && a.origin === location.origin && !a.target && !a.hasAttribute("download") && !a.pathname.startsWith("/api/") ? a : null;
 };
 let ahead: (url: string) => void = () => {};
-for (const type of ["mouseover", "touchstart", "focusin"]) document.addEventListener(type, e => { const a = inApp(e); if (a) ahead(a.pathname + a.search); }, { passive: true });
+for (const type of ["mouseover", "touchstart", "focusin"]) document.addEventListener(type, e => { const a = inApp(e); if (a) { const url = a.pathname + a.search; for (const path of apisFor(url)) prefetch(path); ahead(url); } }, { passive: true });
 const never = new Promise<void>(() => {});
 function Never(): null { throw never; } // keeps the look-ahead from ever being committed: no DOM, no effects
 function LookAhead() {
@@ -253,14 +299,27 @@ function LookAhead() {
 }
 
 // the first page's data is requested straight away, alongside the session check, rather than after it
-{ const first = apiFor(location.pathname); if (first) prefetch(first); }
+for (const path of apisFor(location.pathname + location.search)) prefetch(path);
+
+// A click shows the next page at once. If its code or data has not arrived yet (nothing preloaded it on hover),
+// the old page gives way to a spinner rather than sitting there as if the click did nothing. Keying on the path
+// remounts the page so it cannot hold on to the previous one; changes to the query string (period, page) stay in place.
+function Routed() {
+  const { pathname } = useLocation();
+  return <Suspense key={pathname} fallback={<Spinner page />}><Pages /></Suspense>;
+}
+
+const boot = (window as { __ME?: MeResponse }).__ME;
 
 function App() {
-  const [me, setMeRaw] = useState<Me | null>(null), [ready, setReady] = useState(false);
+  // the server puts the answer to /api/me in the page (server/app.ts); in development it is fetched
+  const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null), [ready, setReady] = useState(!!boot);
+  const themePref = me?.theme ?? (ready ? "light" : startingTheme());
+  useEffect(() => { if (ready) applyTheme(themePref); }, [themePref, ready]); // not before the session check, or a signed-in reload would forget the remembered theme
   // what the API returns depends on who is asking, so a change of viewer refetches everything on screen
   const setMe = useCallback((m: Me | null) => { setMeRaw(prev => { if ((prev?.username ?? null) !== (m?.username ?? null)) invalidateAll(); return m; }); }, []);
   const refresh = useCallback(() => { api<MeResponse>("/me").then(r => setMeRaw(r.user)).catch(() => {}).finally(() => setReady(true)); }, []);
-  useEffect(refresh, [refresh]);
+  useEffect(() => { if (!boot) refresh(); }, [refresh]);
   // live updates: one socket while signed in. Events patch the cached pages and the unread badge.
   useEffect(() => { liveConnect(!!me?.id); }, [me?.id]);
   useLive(e => {
@@ -270,19 +329,18 @@ function App() {
   });
   if (!ready) return <><header className="site-header"><div className="wrap"><span className="logo"><Logo /></span></div></header><Spinner page /></>;
   return (
-    <Theme theme={needleTheme} mode="light">
+    <Theme theme={needleTheme} mode={themePref}>
     <LinkProvider component={RouteLink}>
     <AuthContext.Provider value={{ me, setMe, refresh }}>
-      <BrowserRouter future={{ v7_startTransition: true }}>
+      <BrowserRouter>
         <PlayerProvider>
           <ScrollTop />
           <LookAhead />
           <Header />
           <SiteBanner />
+          <VerifyBanner />
           <main>
-            <Suspense fallback={<Spinner page />}>
-            <Pages />
-            </Suspense>
+            <Routed />
           </main>
           <Footer />
         </PlayerProvider>

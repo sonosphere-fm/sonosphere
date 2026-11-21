@@ -156,7 +156,7 @@ const TOOLS: { label: string; keys?: string; Icon: PhIcon; edit: Edit }[] = [
   { label: "Numbered list", Icon: ListNumbers, edit: prefix(i => `${i + 1}. `, /^\s*\d{1,3}[.)]\s+/) },
 ];
 
-/** Highlighted element → the toolbar button it lights up. */
+/** Highlighted element to the toolbar button it lights up. */
 const ON: [string, string][] = [["strong", "Bold"], ["em", "Italic"], ["s, del", "Strikethrough"], ["code", "Code"], [".md-link", "Link"], [".md-h", "Heading"], [".md-quote", "Quote"], [".md-ul", "Bulleted list"], [".md-ol", "Numbered list"]];
 
 /**

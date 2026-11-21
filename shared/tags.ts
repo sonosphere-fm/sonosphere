@@ -6,7 +6,7 @@ import type { WikiVersion } from "./wiki";
 export type TagCount = { name: string; count: number };
 
 /** An artist carrying a tag: `tagCount` is how strongly the tag applies to them. */
-export type TaggedArtist = { id: number; name: string; image: number | null; tagCount: number; listeners: number; playcount: number };
+export type TaggedArtist = { id: number; name: string; image: string | null; tagCount: number; listeners: number; playcount: number };
 /** GET /api/tag. `taggings` is how often the tag was applied and `taggers` by how many people; `related` are tags found on the same items. */
 export type TagPage = {
   id: number; name: string; wiki: WikiVersion | null; taggings: number; taggers: number;

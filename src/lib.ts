@@ -33,12 +33,12 @@ export type ApiError = Error & { status?: number };
 type Entry = { data?: unknown; error?: ApiError; promise?: Promise<void>; at: number; subs: Set<() => void> };
 const cache = new Map<string, Entry>();
 /** Start downloading the pictures a reply refers to, so a page fetched ahead of the click arrives with its artwork. */
-const seen = new Set<number>();
+const seen = new Set<string>();
 function pictures(data: unknown, budget = { left: 24 }) {
   if (!data || typeof data !== "object") return;
   for (const [k, v] of Object.entries(data)) {
     if (budget.left <= 0) return;
-    if (typeof v === "number" && v > 0 && /image$/i.test(k)) { if (!seen.has(v)) { seen.add(v); budget.left--; new Image().src = imageUrl(v); } }
+    if (typeof v === "string" && /image$/i.test(k) && /^[0-9a-f]{32}$/.test(v)) { if (!seen.has(v)) { seen.add(v); budget.left--; new Image().src = imageUrl(v, "small"); } }
     else if (v && typeof v === "object") pictures(v, budget);
   }
 }
@@ -97,7 +97,8 @@ export const albumUrl = (artist: string, album: string) => `/music/${enc(artist)
 export const trackUrl = (artist: string, track: string) => `/music/${enc(artist)}/_/${enc(track)}`;
 export const userUrl = (name: string) => `/user/${encodeURIComponent(name)}`;
 export const tagUrl = (tag: string) => `/tag/${enc(tag)}`;
-export const imageUrl = (id: number) => `/api/image/${id}`;
+/** A stored picture: full size (up to 1200px) or small (up to 300px, for thumbnails). */
+export const imageUrl = (id: string, size: "large" | "small" = "large") => `/api/image/${id}${size === "small" ? "?s=small" : ""}`;
 
 // ---------- formatting ----------
 /** Copies text. The clipboard API only exists on https pages, so plain http falls back to a selected text field. */
@@ -133,7 +134,7 @@ export function useParam(name: string, def = ""): [string, (v: string) => void] 
   return [sp.get(name) || def, v => setSp(prev => { const n = new URLSearchParams(prev); if (v && v !== def) n.set(name, v); else n.delete(name); if (name !== "page") n.delete("page"); return n; }, { preventScrollReset: true })];
 }
 export function useTitle(title: string | null | undefined) {
-  useEffect(() => { if (title) document.title = `${title} | Spin`; }, [title]);
+  useEffect(() => { if (title) document.title = `${title} | Sonosphere`; }, [title]);
 }
 
 // ---------- live updates ----------

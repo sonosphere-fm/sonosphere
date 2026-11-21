@@ -2,7 +2,7 @@
 import { requireArtist, requireTag } from "../catalog/service";
 import { need } from "../guards";
 import { bad, fail, Router, type Ctx } from "../http";
-import { requireUser } from "../users/service";
+import { canSee, requireUser } from "../users/service";
 import * as service from "./service";
 import type { Station } from "../../shared/stations";
 
@@ -14,7 +14,7 @@ async function station(type: string | null, name: string | null, c: Ctx): Promis
   const viewer = c.user?.id ?? 0;
   if (type === "library") {
     const u = name ? await requireUser(name) : need(c);
-    if (u.hideRecent && c.user?.id !== u.id) fail(403, "This user keeps their listening private");
+    if (!canSee(u, c.user)) fail(403, "This user keeps their listening private");
     return { title: u.id === viewer ? "Your library" : `${u.username}'s library`, tracks: await service.library(u.id, viewer) };
   }
   if (type === "recommended") return { title: "Your recommendations", tracks: await service.recommended(need(c).id, viewer) };

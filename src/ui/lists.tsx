@@ -26,7 +26,7 @@ export function LoveButton({ track, loved, onChange, label }: { track: { id?: nu
 
 // ---------- chart list (tracks) ----------
 /** What a track row needs: every track shape the API sends (chart, recent, album, playlist, search...) fits it. */
-type Row = { id?: number; trackId?: number; title: string; artist: string; album?: string | null; image?: number | null; duration?: number; playcount?: number; listeners?: number; loved?: number | boolean; playedAt?: number; position?: number };
+type Row = { id?: number; trackId?: number; title: string; artist: string; album?: string | null; image?: string | null; duration?: number; playcount?: number; listeners?: number; loved?: number | boolean; playedAt?: number; position?: number };
 /** A row as `actions` sees it: one of the items, or the "scrobbling now" row put in front of them. */
 export type TrackRow<R extends Row> = (R & { _np?: false }) | (Row & { _np: true });
 export function TrackList<R extends Row>({ items, count, rank, time, showArtist = true, showDuration, nowPlaying, actions, numbered, compact }: {
@@ -43,7 +43,7 @@ export function TrackList<R extends Row>({ items, count, rank, time, showArtist 
           <tr key={r.id ?? `${r.artist}-${r.title}-${i}`} className={r._np ? "now" : ""}>
             {(rank !== undefined || numbered) && <td className="c-rank">{numbered ? r.position : rank! + i - (nowPlaying ? 1 : 0)}</td>}
             <td className="c-play"><PlayButton queue={queue} index={i} /></td>
-            <td className="c-art"><Link to={r.album ? albumUrl(r.artist, r.album) : trackUrl(r.artist, r.title)} tabIndex={-1}><Art name={r.album || r.title} sub={r.artist} image={r.image} /></Link></td>
+            <td className="c-art"><Link to={r.album ? albumUrl(r.artist, r.album) : trackUrl(r.artist, r.title)} tabIndex={-1}><Art image={r.image} /></Link></td>
             {!compact && <td className="c-love"><LoveButton track={r} loved={!!r.loved} /></td>}
             <td className="c-name">
               <Link className="strong" to={trackUrl(r.artist, r.title)}>{r.title}</Link>
@@ -82,7 +82,7 @@ export function RankList({ items, kind, rank = 1, count = kind === "tag" ? "coun
           return (
             <tr key={"id" in r ? r.id : r.name}>
               <td className="c-rank">{rank + i}</td>
-              {kind !== "tag" && <td className={kind === "artist" ? "c-art round" : "c-art"}><Link to={to} tabIndex={-1}><Art name={name} sub={artist} image={image} kind={kind} /></Link></td>}
+              {kind !== "tag" && <td className={kind === "artist" ? "c-art round" : "c-art"}><Link to={to} tabIndex={-1}><Art image={image} kind={kind} /></Link></td>}
               <td className="c-name"><Link className="strong" to={to}>{name}</Link>{kind === "album" && <Link className="muted" to={artistUrl(artist)}>{artist}</Link>}</td>
               <CountCell value={rankValue(r, count)} max={max} unit={count === "listeners" ? "listeners" : count === "count" ? "taggings" : "scrobbles"} plain={compact} />
             </tr>
@@ -96,7 +96,7 @@ export function RankList({ items, kind, rank = 1, count = kind === "tag" ? "coun
 // ---------- grids ----------
 type CardKind = "artist" | "album";
 /** An artist (by `name`) or an album (by `title` and `artist`), as any list of them arrives from the API. */
-type CardItem = { id?: number; name: string; image?: number | null; listeners?: number } | { id?: number; title: string; artist: string; image?: number | null; listeners?: number };
+type CardItem = { id?: number; name: string; image?: string | null; listeners?: number } | { id?: number; title: string; artist: string; image?: string | null; listeners?: number };
 const cardName = (it: CardItem) => ("name" in it ? it.name : it.title);
 const listeners = (n: number) => `${num(n)} ${n === 1 ? "listener" : "listeners"}`;
 
@@ -106,14 +106,14 @@ function MediaCard({ kind, item, sub, below }: { kind: CardKind; item: CardItem;
   // `below`: the detail-page card, picture (round for artists) with its caption underneath
   if (below) return (
     <Link className={`mcard ${kind}`} to={kind === "artist" ? artistUrl(name) : albumUrl(artist, name)}>
-      <Art name={name} sub={artist} image={item.image} kind={kind} />
+      <Art image={item.image} kind={kind} />
       <strong>{name}</strong>
       {sub ? sub : item.listeners != null ? <span>{listeners(item.listeners)}</span> : kind === "album" && <span>{artist}</span>}
     </Link>
   );
   return (
     <Link className="rcard-img" to={kind === "artist" ? artistUrl(name) : albumUrl(artist, name)}>
-      <Art name={name} sub={artist} image={item.image} kind={kind} />
+      <Art image={item.image} kind={kind} />
       <span className="rcard-cap">
         <strong>{name}</strong>
         {kind === "album" && <span>{artist}</span>}
@@ -137,6 +137,7 @@ export function Grid<T extends CardItem>({ items, kind, sub, cols = 6, lead, flu
 
 /** One recommendation: picture with caption, a badge for what it is, and the reason underneath. */
 export function RecCard({ kind, item, because = [] }: { kind: "artist" | "album" | "track"; item: Recommendation | TopAlbum | TopTrack; because?: string[] }) {
+  const via = "via" in item ? item.via : undefined;
   const name = "name" in item ? item.name : item.title, artist = "artist" in item ? item.artist : "";
   const album = "album" in item ? item.album : null, duration = "duration" in item ? item.duration : 0;
   const to = kind === "artist" ? artistUrl(name) : kind === "album" ? albumUrl(artist, name) : trackUrl(artist, name);
@@ -146,7 +147,7 @@ export function RecCard({ kind, item, because = [] }: { kind: "artist" | "album"
     <article className="rec">
       <div className="rec-img">
         <Link className="rcard-img" to={to}>
-          <Art name={kind === "track" ? album || name : name} sub={artist} image={item.image} kind={kind === "artist" ? "artist" : "album"} />
+          <Art image={item.image} kind={kind === "artist" ? "artist" : "album"} />
           <span className="rcard-cap">
             <strong>{name}{kind === "track" && duration > 0 && <i> ({dur(duration)})</i>}</strong>
             {kind !== "artist" && <span>{artist}</span>}
@@ -160,7 +161,7 @@ export function RecCard({ kind, item, because = [] }: { kind: "artist" | "album"
         {kind !== "artist" && <>By <Link to={artistUrl(artist)}>{artist}</Link>{similar.length > 0 && ", similar to "}</>}
         {kind === "artist" && similar.length > 0 && "Similar to "}
         {similar}
-        {kind === "artist" && !similar.length && "Picked from your listening"}
+        {kind === "artist" && !similar.length && (via === "neighbours" ? "Popular with listeners like you" : "Picked from your listening")}
       </p>
     </article>
   );

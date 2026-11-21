@@ -1,8 +1,11 @@
 // Data access for scrobbles and every statistic drawn from them: rankings, totals, recent plays, charts.
+import { wantBare } from "../metadata/wanted";
 import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isNotNull, lt, ne, notExists, or, sql, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { playImage, trackImage } from "../catalog/art";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
+import { getJson, setJson } from "../kv";
 import { albums, artists, lovedTracks, nowPlaying as playing, scrobbles, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx, resolveTrackTx, type TrackNames, type TrackRef } from "../catalog/repo";
 import { first, norm, now } from "../util";
@@ -34,7 +37,7 @@ const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?
 // ---------- rankings ----------
 const artistCols = { id: artists.id, name: artists.name, image: artists.imageId };
 const albumCols = { id: albums.id, title: albums.title, image: albums.imageId, artist: artists.name };
-const trackCols = { id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId };
+const trackCols = { id: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: trackImage() };
 /** 1 when the viewer has loved the track in the row, otherwise 0. */
 const lovedBy = (viewerId: number | undefined) => flag(exists(db.select({ one: sql`1` }).from(lovedTracks)
   .where(and(eq(lovedTracks.userId, viewerId || 0), eq(lovedTracks.trackId, tracks.id)))));
@@ -71,7 +74,7 @@ function catalogued(base: Base, artistId: typeof artists.id | typeof albums.arti
   };
 }
 
-export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
+async function topArtistsRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
   if (wholeSite(s)) {
     const x = tallies("artists", s), c = catalogued(artists, artists.id, x, s);
     return {
@@ -91,12 +94,12 @@ export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopL
   const w = within(s);
   return {
     items: await db.select({ ...artistCols, playcount: played, listeners: heardBy }).from(scrobbles).innerJoin(artists, eq(artists.id, scrobbles.artistId))
-      .where(w).groupBy(scrobbles.artistId).orderBy(...ranked(s), artists.name).limit(limit).offset(offset),
+      .where(w).groupBy(artists.id).orderBy(...ranked(s), artists.name).limit(limit).offset(offset),
     total: await total(db.select({ c: countDistinct(scrobbles.artistId) }).from(scrobbles).where(w)),
   };
 }
 
-export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
+async function topAlbumsRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
   if (wholeSite(s)) {
     const x = tallies("albums", s), c = catalogued(albums, albums.artistId, x, s);
     return {
@@ -119,12 +122,12 @@ export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return {
     items: await db.select({ ...albumCols, playcount: played, listeners: heardBy }).from(scrobbles)
       .innerJoin(albums, eq(albums.id, scrobbles.albumId)).innerJoin(artists, eq(artists.id, albums.artistId))
-      .where(w).groupBy(scrobbles.albumId).orderBy(...ranked(s), albums.title).limit(limit).offset(offset),
+      .where(w).groupBy(albums.id, artists.id).orderBy(...ranked(s), albums.title).limit(limit).offset(offset),
     total: await total(db.select({ c: countDistinct(scrobbles.albumId) }).from(scrobbles).where(w)),
   };
 }
 
-export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
+async function topTracksRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
   const loved = lovedBy(s.viewerId);
   if (wholeSite(s)) {
     const x = tallies("tracks", s), c = catalogued(tracks, tracks.artistId, x, s);
@@ -151,7 +154,7 @@ export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return {
     items: await db.select({ ...trackCols, playcount: played, listeners: heardBy, loved }).from(scrobbles)
       .innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
-      .where(w).groupBy(scrobbles.trackId).orderBy(...ranked(s), tracks.title).limit(limit).offset(offset),
+      .where(w).groupBy(tracks.id, artists.id, albums.id).orderBy(...ranked(s), tracks.title).limit(limit).offset(offset),
     total: await total(db.select({ c: countDistinct(scrobbles.trackId) }).from(scrobbles).where(w)),
   };
 }
@@ -163,6 +166,50 @@ export function top(kind: "tracks", s: Scope, limit?: number, offset?: number): 
 export function top(kind: Kind, s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist | TopAlbum | TopTrack>>;
 export function top(kind: Kind, s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist | TopAlbum | TopTrack>> {
   return kind === "artists" ? topArtists(s, limit, offset) : kind === "albums" ? topAlbums(s, limit, offset) : topTracks(s, limit, offset);
+}
+
+// ---------- site charts, shared by everyone ----------
+// The site-wide rankings scan every play, and every visitor asks for the same ones, so each is computed at most once
+// a minute and the rest are served from memory. A stale copy is served while a fresh one is computed. Processes
+// share what they compute through Valkey (server/kv.ts), so one of them does the work and the others reuse it. Only
+// the `loved` flag on tracks depends on who is looking; it is filled in per viewer with one small lookup.
+type SiteList = TopList<TopArtist | TopAlbum | TopTrack>;
+type SiteEntry = { at: number; v: Promise<SiteList>; next?: Promise<unknown> };
+const siteCache = new Map<string, SiteEntry>();
+const SITE_TTL = 60_000;
+export function siteTop(kind: "artists", s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist>>;
+export function siteTop(kind: "albums", s: Scope, limit?: number, offset?: number): Promise<TopList<TopAlbum>>;
+export function siteTop(kind: "tracks", s: Scope, limit?: number, offset?: number): Promise<TopList<TopTrack>>;
+export function siteTop(kind: Kind, s: Scope, limit?: number, offset?: number): Promise<TopList<TopArtist | TopAlbum | TopTrack>>;
+export async function siteTop(kind: Kind, s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist | TopAlbum | TopTrack>> {
+  // windows like "the last 7 days" move every second; snap them to the minute so they share one entry
+  const from = s.from ? s.from - (s.from % 60) : undefined, to = s.to && s.to < FOREVER ? s.to : undefined;
+  const key = `${kind}:${from ?? ""}:${to ?? ""}:${limit}:${offset}`;
+  // another process's fresh copy if there is one, otherwise computed here and offered to the others
+  const load = async (): Promise<{ at: number; list: SiteList }> => {
+    const shared = await getJson<{ at: number; list: SiteList }>(`site:${key}`);
+    if (shared && Date.now() - shared.at < SITE_TTL) return shared;
+    const fresh = { at: Date.now(), list: await top(kind, { from, to, global: true }, limit, offset) };
+    await setJson(`site:${key}`, fresh, 10 * SITE_TTL);
+    return fresh;
+  };
+  let hit = siteCache.get(key);
+  if (!hit || Date.now() - hit.at > 10 * SITE_TTL) { // nothing, or too old to show: fetch it now
+    if (siteCache.size > 500) siteCache.clear();
+    const loading = load();
+    const entry: SiteEntry = { at: Date.now(), v: loading.then(r => r.list) };
+    loading.then(r => { entry.at = r.at; }, () => { if (siteCache.get(key) === entry) siteCache.delete(key); });
+    siteCache.set(key, (hit = entry));
+  } else if (Date.now() - hit.at > SITE_TTL && !hit.next) { // stale: show it, refresh behind it
+    const old = hit;
+    old.next = load().then(r => { siteCache.set(key, { at: r.at, v: Promise.resolve(r.list) }); }, () => { old.next = undefined; });
+  }
+  const list = await hit.v;
+  if (kind !== "tracks" || !s.viewerId || !list.items.length) return list;
+  const ids = list.items.map(i => i.id);
+  const mine = new Set((await db.select({ id: lovedTracks.trackId }).from(lovedTracks)
+    .where(and(eq(lovedTracks.userId, s.viewerId), inArray(lovedTracks.trackId, ids)))).map(r => r.id));
+  return { ...list, items: list.items.map(i => ({ ...i, loved: mine.has(i.id) ? 1 : 0 })) };
 }
 
 // ---------- totals ----------
@@ -210,11 +257,11 @@ export async function counts(s: Scope): Promise<Counts> {
 
 // ---------- recent plays ----------
 /** Plays in a scope, newest first. */
-export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
+async function recentRows(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
   const w = within(s);
   const items = await db.select({
     id: scrobbles.id, playedAt: scrobbles.playedAt, trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name,
-    album: albums.title, image: albums.imageId, user: users.username, userImage: users.imageId, loved: lovedBy(s.viewerId),
+    album: albums.title, image: playImage(), user: users.username, userImage: users.imageId, loved: lovedBy(s.viewerId),
   }).from(scrobbles).innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).innerJoin(artists, eq(artists.id, scrobbles.artistId))
     .leftJoin(albums, eq(albums.id, sql`COALESCE(${scrobbles.albumId}, ${tracks.albumId})`)).innerJoin(users, eq(users.id, scrobbles.userId))
     .where(w).orderBy(desc(scrobbles.playedAt), desc(scrobbles.id)).limit(limit).offset(offset);
@@ -229,7 +276,7 @@ export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<
 /** What someone is listening to right now, or null. */
 export function nowPlaying(userId: number, viewerId = 0): Promise<NowPlaying | null> {
   return first(db.select({
-    trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: albums.imageId,
+    trackId: tracks.id, title: tracks.title, duration: tracks.duration, artist: artists.name, album: albums.title, image: playImage(),
     startedAt: playing.startedAt, loved: lovedBy(viewerId),
   }).from(playing).innerJoin(tracks, eq(tracks.id, playing.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId))
     .leftJoin(albums, eq(albums.id, sql`COALESCE(${playing.albumId}, ${tracks.albumId})`))
@@ -254,13 +301,17 @@ export type Scrobbled = TrackRef & { id: number };
  * Returns one entry per play, in order: where it was filed, or null when that play was already recorded.
  */
 export async function recordScrobbles(userId: number, plays: NewScrobble[], source: string): Promise<(Scrobbled | null)[]> {
-  return transact(tx => plays.map(play => {
-    const ref = resolveTrackTx(tx, play);
-    const row = tx.insert(scrobbles).values({ userId, ...ref, playedAt: play.playedAt, source }).onConflictDoNothing().returning({ id: scrobbles.id }).get();
-    if (!row) return null;
-    // a finished play ends the matching "now playing"
-    tx.delete(playing).where(and(eq(playing.userId, userId), eq(playing.trackId, ref.trackId))).run();
-    return { id: row.id, ...ref };
+  return (await transact(async tx => {
+    const out: (Scrobbled | null)[] = [];
+    for (const play of plays) {
+      const ref = await resolveTrackTx(tx, play);
+      const row = (await tx.insert(scrobbles).values({ userId, ...ref, playedAt: play.playedAt, source, sentArtist: play.artist, sentTrack: play.track, sentAlbum: play.album || null }).onConflictDoNothing().returning({ id: scrobbles.id }))[0];
+      if (!row) { out.push(null); continue; }
+      // a finished play ends the matching "now playing"
+      await tx.delete(playing).where(and(eq(playing.userId, userId), eq(playing.trackId, ref.trackId)));
+      out.push({ id: row.id, ...ref });
+    }
+    return out;
   }));
 }
 
@@ -268,7 +319,7 @@ export async function recordScrobbles(userId: number, plays: NewScrobble[], sour
 /** Plays per bucket in a scope, oldest first. `tzMin` is the reader's offset from UTC in minutes. */
 export async function series(s: Scope, bucket: Bucket, tzMin = 0): Promise<SeriesPoint[]> {
   const k = timeBucket(scrobbles.playedAt, bucket, Math.round(tzMin) * 60).as("k");
-  return db.select({ k, c: count() }).from(scrobbles).where(within(s)).groupBy(sql`${k}`).orderBy(asc(k));
+  return db.select({ k, c: count() }).from(scrobbles).where(within(s)).groupBy(sql`1`).orderBy(sql`1`);
 }
 
 const span = (userId: number, from: number, to: number) => and(eq(scrobbles.userId, userId), gte(scrobbles.playedAt, from), lt(scrobbles.playedAt, to));
@@ -279,12 +330,12 @@ export const listeningSeconds = (userId: number, from: number, to: number): Prom
     .from(scrobbles).innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).where(span(userId, from, to)));
 
 /** Artists a listener played in a span and never before it, most played first. */
-export async function newArtists(userId: number, from: number, to: number): Promise<{ name: string; image: number | null; playcount: number }[]> {
+export async function newArtists(userId: number, from: number, to: number): Promise<{ name: string; image: string | null; playcount: number }[]> {
   const earlier = alias(scrobbles, "o"), playcount = count().as("playcount");
   return db.select({ name: artists.name, image: artists.imageId, playcount }).from(scrobbles).innerJoin(artists, eq(artists.id, scrobbles.artistId))
     .where(and(span(userId, from, to), notExists(db.select({ one: sql`1` }).from(earlier)
       .where(and(eq(earlier.userId, scrobbles.userId), eq(earlier.artistId, scrobbles.artistId), lt(earlier.playedAt, from))))))
-    .groupBy(scrobbles.artistId).orderBy(desc(playcount));
+    .groupBy(artists.id).orderBy(desc(playcount));
 }
 
 /** The tags of the artists a listener played in a span, weighted by plays. */
@@ -298,16 +349,16 @@ export async function playedTags(userId: number, from: number, to: number, limit
 // ---------- running totals ----------
 /** Recounts user_artists, user_albums and user_tracks from the scrobble log. Triggers normally keep them in step. */
 export async function rebuildTallies(): Promise<void> {
-  transact(tx => {
-    tx.delete(userArtists).run();
-    tx.insert(userArtists).select(tx.select({ userId: scrobbles.userId, artistId: scrobbles.artistId, plays: count().as("plays") }).from(scrobbles)
-      .groupBy(scrobbles.userId, scrobbles.artistId)).run();
-    tx.delete(userAlbums).run();
-    tx.insert(userAlbums).select(tx.select({ userId: scrobbles.userId, albumId: sql<number>`${scrobbles.albumId}`.as("album_id"), plays: count().as("plays") }).from(scrobbles)
-      .where(isNotNull(scrobbles.albumId)).groupBy(scrobbles.userId, scrobbles.albumId)).run();
-    tx.delete(userTracks).run();
-    tx.insert(userTracks).select(tx.select({ userId: scrobbles.userId, trackId: scrobbles.trackId, plays: count().as("plays") }).from(scrobbles)
-      .groupBy(scrobbles.userId, scrobbles.trackId)).run();
+  await transact(async tx => {
+    await tx.delete(userArtists);
+    await tx.insert(userArtists).select(tx.select({ userId: scrobbles.userId, artistId: scrobbles.artistId, plays: count().as("plays") }).from(scrobbles)
+      .groupBy(scrobbles.userId, scrobbles.artistId));
+    await tx.delete(userAlbums);
+    await tx.insert(userAlbums).select(tx.select({ userId: scrobbles.userId, albumId: sql<number>`${scrobbles.albumId}`.as("album_id"), plays: count().as("plays") }).from(scrobbles)
+      .where(isNotNull(scrobbles.albumId)).groupBy(scrobbles.userId, scrobbles.albumId));
+    await tx.delete(userTracks);
+    await tx.insert(userTracks).select(tx.select({ userId: scrobbles.userId, trackId: scrobbles.trackId, plays: count().as("plays") }).from(scrobbles)
+      .groupBy(scrobbles.userId, scrobbles.trackId));
   });
 }
 
@@ -337,11 +388,11 @@ export async function deleteScrobbles(userId: number, ids: number[]): Promise<nu
 }
 /** Removes every play a listener has and returns how many went. */
 export async function deleteAllScrobbles(userId: number): Promise<number> {
-  return transact(tx => {
-    const n = tx.select({ c: count() }).from(scrobbles).where(eq(scrobbles.userId, userId)).get()?.c ?? 0;
-    tx.delete(scrobbles).where(eq(scrobbles.userId, userId)).run();
+  return (await transact(async tx => {
+    const n = (await tx.select({ c: count() }).from(scrobbles).where(eq(scrobbles.userId, userId)))[0]?.c ?? 0;
+    await tx.delete(scrobbles).where(eq(scrobbles.userId, userId));
     return n;
-  });
+  }));
 }
 
 /** How many of the listener's plays share this play's track, album and artist. */
@@ -365,44 +416,44 @@ export type BulkEdit = { scope: EditScope; artist: string; track: string; album:
  */
 export async function refileScrobbles(src: Scrobble, edit: BulkEdit): Promise<number> {
   const shared = edit.scope === "track" ? eq(scrobbles.trackId, src.trackId) : edit.scope === "album" ? eq(scrobbles.albumId, src.albumId ?? 0) : eq(scrobbles.artistId, src.artistId);
-  return transact(tx => {
-    const artistId = getOrCreateArtistTx(tx, edit.artist);
-    const rows = tx.select({ id: scrobbles.id, trackId: scrobbles.trackId, albumId: scrobbles.albumId, playedAt: scrobbles.playedAt }).from(scrobbles)
-      .where(and(eq(scrobbles.userId, src.userId), shared)).all();
-    const srcAlbum = src.albumId ? tx.select({ title: albums.title }).from(albums).where(eq(albums.id, src.albumId)).get()?.title || "" : "";
+  return (await transact(async tx => {
+    const artistId = (await getOrCreateArtistTx(tx, edit.artist));
+    const rows = (await tx.select({ id: scrobbles.id, trackId: scrobbles.trackId, albumId: scrobbles.albumId, playedAt: scrobbles.playedAt }).from(scrobbles)
+      .where(and(eq(scrobbles.userId, src.userId), shared)));
+    const srcAlbum = src.albumId ? (await tx.select({ title: albums.title }).from(albums).where(eq(albums.id, src.albumId)))[0]?.title || "" : "";
     const albumEdited = norm(edit.album) !== norm(srcAlbum);
     const movedAlbums = new Map<number, number>(), newTracks = new Map<string, number>(), gone = new Set<number>();
-    const albumFor = (old: number | null): number | null => {
-      if (edit.scope === "album" || (edit.scope === "track" && albumEdited)) return edit.album ? getOrCreateAlbumTx(tx, artistId, edit.album) : null;
+    const albumFor = async (old: number | null): Promise<number | null> => {
+      if (edit.scope === "album" || (edit.scope === "track" && albumEdited)) return edit.album ? (await getOrCreateAlbumTx(tx, artistId, edit.album)) : null;
       if (!old) return null;
       let to = movedAlbums.get(old);
       if (to === undefined) {
         // an album filed under the old artist moves with the rename; anything else (a compilation, say) stays put
-        const a = tx.select({ artistId: albums.artistId, title: albums.title }).from(albums).where(eq(albums.id, old)).get();
-        to = a && a.artistId === src.artistId && artistId !== src.artistId ? getOrCreateAlbumTx(tx, artistId, a.title) : old;
+        const a = (await tx.select({ artistId: albums.artistId, title: albums.title }).from(albums).where(eq(albums.id, old)))[0];
+        to = a && a.artistId === src.artistId && artistId !== src.artistId ? (await getOrCreateAlbumTx(tx, artistId, a.title)) : old;
         movedAlbums.set(old, to);
       }
       return to;
     };
     let changed = 0;
     for (const r of rows) {
-      const albumId = albumFor(r.albumId), key = `${r.trackId}:${albumId}`;
+      const albumId = (await albumFor(r.albumId)), key = `${r.trackId}:${albumId}`;
       let trackId = newTracks.get(key);
       if (trackId === undefined) {
-        const t = tx.select({ title: tracks.title, duration: tracks.duration }).from(tracks).where(eq(tracks.id, r.trackId)).get();
-        trackId = getOrCreateTrackTx(tx, artistId, edit.scope === "track" ? edit.track : t?.title ?? "", t?.duration ?? 0, albumId);
+        const t = (await tx.select({ title: tracks.title, duration: tracks.duration }).from(tracks).where(eq(tracks.id, r.trackId)))[0];
+        trackId = (await getOrCreateTrackTx(tx, artistId, edit.scope === "track" ? edit.track : t?.title ?? "", t?.duration ?? 0, albumId));
         newTracks.set(key, trackId);
       }
       if (gone.has(r.id)) continue;
       // two plays that become the same track at the same second are one play: the duplicate goes
-      const dupes = tx.delete(scrobbles).where(and(eq(scrobbles.userId, src.userId), eq(scrobbles.trackId, trackId), eq(scrobbles.playedAt, r.playedAt), ne(scrobbles.id, r.id)))
-        .returning({ id: scrobbles.id }).all();
+      const dupes = (await tx.delete(scrobbles).where(and(eq(scrobbles.userId, src.userId), eq(scrobbles.trackId, trackId), eq(scrobbles.playedAt, r.playedAt), ne(scrobbles.id, r.id)))
+        .returning({ id: scrobbles.id }));
       for (const d of dupes) gone.add(d.id);
-      tx.update(scrobbles).set({ trackId, artistId, albumId }).where(eq(scrobbles.id, r.id)).run();
+      await tx.update(scrobbles).set({ trackId, artistId, albumId }).where(eq(scrobbles.id, r.id));
       changed++;
     }
     return changed;
-  });
+  }));
 }
 
 // ---------- loved tracks ----------
@@ -417,14 +468,14 @@ export async function setLoved(userId: number, trackId: number, loved: boolean):
  * was loved. Returns how many were not loved already.
  */
 export async function loveTracks(userId: number, list: { artist: string; track: string; lovedAt: number }[]): Promise<number> {
-  return transact(tx => {
+  return (await transact(async tx => {
     let added = 0;
     for (const t of list) {
-      const trackId = getOrCreateTrackTx(tx, getOrCreateArtistTx(tx, t.artist), t.track);
-      if (tx.insert(lovedTracks).values({ userId, trackId, createdAt: t.lovedAt }).onConflictDoNothing().returning({ trackId: lovedTracks.trackId }).get()) added++;
+      const trackId = (await getOrCreateTrackTx(tx, (await getOrCreateArtistTx(tx, t.artist)), t.track));
+      if ((await tx.insert(lovedTracks).values({ userId, trackId, createdAt: t.lovedAt }).onConflictDoNothing().returning({ trackId: lovedTracks.trackId }))[0]) added++;
     }
     return added;
-  });
+  }));
 }
 
 // ---------- export ----------
@@ -442,4 +493,28 @@ export const exportLoved = (userId: number): Promise<ExportRow[]> =>
 /** Drops "now playing" entries whose time is up. */
 export async function dropExpiredNowPlaying(): Promise<void> {
   await db.delete(playing).where(lt(playing.expiresAt, now()));
+}
+
+export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
+  const r = await topArtistsRows(s, limit, offset);
+  wantBare("artist", r.items, r => r.id);
+  return r;
+}
+
+export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
+  const r = await topAlbumsRows(s, limit, offset);
+  wantBare("album", r.items, r => r.id);
+  return r;
+}
+
+export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
+  const r = await topTracksRows(s, limit, offset);
+  wantBare("track", r.items, r => r.id);
+  return r;
+}
+
+export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
+  const r = await recentRows(s, limit, offset);
+  wantBare("track", r.items, r => r.trackId);
+  return r;
 }

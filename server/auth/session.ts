@@ -2,11 +2,12 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { sessions, users } from "../db/schema";
+import { digest } from "../util";
 
 /** The account a session token belongs to. Banned accounts have no valid sessions. */
 export async function sessionUser(token: string) {
   if (!token) return null;
-  const [row] = await db.select({ user: users }).from(sessions).innerJoin(users, eq(users.id, sessions.userId)).where(and(eq(sessions.token, token), eq(users.banned, false))).limit(1);
+  const [row] = await db.select({ user: users }).from(sessions).innerJoin(users, eq(users.id, sessions.userId)).where(and(eq(sessions.token, digest(token)), eq(users.banned, false))).limit(1);
   return row?.user ?? null;
 }
 

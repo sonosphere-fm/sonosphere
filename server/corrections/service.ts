@@ -1,6 +1,7 @@
 // Community name corrections. They are applied in two places: to every incoming scrobble before it is matched
 // against the catalogue, and as a sweep over the names already stored. The data is downloaded at most once a day
 // (see store.ts). Set CORRECTIONS=0 to switch all of this off.
+import { exclusive } from "../kv";
 import { clean, norm, now } from "../util";
 import * as repo from "./repo";
 import * as store from "./store";
@@ -77,27 +78,25 @@ export const mbidOfArtist = (name: string): string => artistMbid.get(norm(name))
 export const mbidOfAlbum = (artist: string, title: string): string => albumMbid.get(`${norm(artist)}\n${norm(title)}`) || "";
 
 /** Bring names already in the catalogue into line. Renames only; two existing entries are never merged automatically. */
-export function sweep(): repo.SweepResult {
+export async function sweep(): Promise<repo.SweepResult> {
   const rules = { artists: artistCase.size + artistMove.size, titles: [...titles.values()].reduce((s, t) => s + t.fix.size + t.move.size, 0), mbids: artistMbid.size + albumMbid.size };
-  return repo.sweep({ artistCase, artistMove, titles }, r => JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules }));
-}
-
-/** What the last sweep did and which versions of the data it used, or null if there has not been one. */
-export async function correctionsStatus(): Promise<unknown> {
-  try { return JSON.parse((await repo.lastSweep()) || "null"); } catch { return null; }
+  return (await repo.sweep({ artistCase, artistMove, titles }, r => JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules })));
 }
 
 /** Load the saved copy straight away, then refresh from the network when it is more than a day old. */
 export async function syncCorrections(force = false): Promise<repo.SweepResult | null> {
   if (!enabled) return null;
   let raw = store.readSaved();
-  if (raw) build(raw);
-  if (force || !raw || now() - raw.at > 86400) {
-    try { raw = await store.download(); store.save(raw); build(raw); }
-    catch (e) { console.error("Corrections: download failed, keeping the saved copy.", String(e)); }
-  }
-  if (!raw) return null;
-  const r = sweep();
-  if (r.fixed || r.renamed) console.log(`Corrections: ${r.fixed} capitalisations fixed, ${r.renamed} renamed${r.clashes ? `, ${r.clashes} left for a manual merge` : ""}.`);
-  return r;
+  if (raw) build(raw); // every process applies corrections to incoming scrobbles, so every process loads them
+  // downloading and sweeping the stored names is done by one process at a time
+  return exclusive("corrections", 30 * 60_000, async () => {
+    if (force || !raw || now() - raw.at > 86400) {
+      try { raw = await store.download(); store.save(raw); build(raw); }
+      catch (e) { console.error("Corrections: download failed, keeping the saved copy.", String(e)); }
+    }
+    if (!raw) return null;
+    const r = await sweep();
+    if (r.fixed || r.renamed) console.log(`Corrections: ${r.fixed} capitalisations fixed, ${r.renamed} renamed${r.clashes ? `, ${r.clashes} left for a manual merge` : ""}.`);
+    return r;
+  });
 }

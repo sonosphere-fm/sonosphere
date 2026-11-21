@@ -1,10 +1,9 @@
-// Reports API: reporting content, and the moderation queue where staff settle reports and suspend accounts.
-import { need } from "../guards";
-import { fail, paging, Router, type Ctx, type Viewer } from "../http";
+// Reports API: reporting content, and suspending an account from its profile. Staff settle reports in the portal.
+import { confirmed, need } from "../guards";
+import { fail, Router, throttle, type Ctx, type Viewer } from "../http";
 import { requireUser } from "../users/service";
-import * as repo from "./repo";
 import * as service from "./service";
-import type { ModReports, ReportOk, SuspendResult } from "../../shared/reports";
+import type { ReportOk, SuspendResult } from "../../shared/reports";
 
 export const router = new Router();
 
@@ -12,23 +11,9 @@ export const router = new Router();
 const moderator = (c: Ctx): Viewer => { const u = need(c); return u.isAdmin ? u : fail(403, "Moderators only"); };
 
 router.post<ReportOk>("/api/reports", async c => {
-  const u = need(c);
+  const u = confirmed(need(c));
+  await throttle(`report:${u.id}`, 20, 3600, "You have sent a lot of reports. The team will get to them; try again later.");
   await service.fileReport(u, { type: String(c.body.type), id: Number(c.body.id), reason: String(c.body.reason), detail: String(c.body.detail || "").trim().slice(0, 1000) });
-  return { ok: true };
-});
-
-// `status=closed` lists settled reports; anything else lists the open ones.
-router.get<ModReports>("/api/mod/reports", async c => {
-  moderator(c);
-  const open = c.q.get("status") !== "closed", pg = paging(c.q, 30, 100);
-  return {
-    items: await service.queue(open, pg.limit, pg.offset), total: await repo.reportCount(open), open: await repo.reportCount(true),
-    suspended: await repo.suspendedUsers(), ...pg,
-  };
-});
-
-router.post<ReportOk>("/api/mod/reports/:id", async c => {
-  await service.resolve(moderator(c), Number(c.params[0]), String(c.body.action));
   return { ok: true };
 });
 

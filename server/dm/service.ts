@@ -13,11 +13,12 @@
 // Delivery to open tabs goes through server/realtime.ts.
 import { fail, HttpError } from "../http";
 import { onClientMessage, push, type ClientMessage } from "../realtime";
-import { blockedEither, findById, type User } from "../users/repo";
+import { blockedEither, findById, hasBlocked, type User } from "../users/repo";
 import { now } from "../util";
+import { mailMessage } from "../notifications/email";
 import * as repo from "./repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
-import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith, ReportedMessage } from "../../shared/dm";
+import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
 
 export const DM = {
   MAX_LENGTH: 2000,
@@ -65,27 +66,29 @@ async function gate(from: User, to: User): Promise<"active" | "request"> {
   return policy === "everyone" || known ? "active" : "request";
 }
 /** Whether a message would be allowed, as the pages show it: yes, or no with the reason. */
-async function allowed(from: User, to: User | null): Promise<{ can: boolean; why: string; opens: "active" | "request" }> {
-  if (!to) return { can: false, why: GONE, opens: "active" };
-  try { return { can: true, why: "", opens: await gate(from, to) }; }
-  catch (e) { if (e instanceof HttpError) return { can: false, why: e.message, opens: "active" }; throw e; }
+// `blocked` is only ever the sender's own block: they may know about that one, so the page can offer to undo it.
+async function allowed(from: User, to: User | null): Promise<{ can: boolean; why: string; blocked: boolean; opens: "active" | "request" }> {
+  if (!to) return { can: false, why: GONE, blocked: false, opens: "active" };
+  if (await hasBlocked(from.id, to.id)) return { can: false, why: `You blocked ${to.username}.`, blocked: true, opens: "active" };
+  try { return { can: true, why: "", blocked: false, opens: await gate(from, to) }; }
+  catch (e) { if (e instanceof HttpError) return { can: false, why: e.message, blocked: false, opens: "active" }; throw e; }
 }
 
 /**
  * The anti-spam limits, checked inside the send transaction. A refusal that staff should know about adds to `flags`:
  * the transaction is rolled back by the refusal, so the caller writes them afterwards.
  */
-function throttle(tx: Tx, from: User, body: string, startsThread: boolean, flags: Flag[]): void {
+async function throttle(tx: Tx, from: User, body: string, startsThread: boolean, flags: Flag[]): Promise<void> {
   const t = now(), flag = (kind: string, detail: string) => { flags.push({ userId: from.id, kind, detail, sample: body }); };
-  if (repo.sentSinceTx(tx, from.id, t - 60) >= DM.PER_MINUTE) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
-  if (repo.sentSinceTx(tx, from.id, t - 86400) >= DM.PER_DAY) { flag("volume", `${DM.PER_DAY} messages in a day`); fail(429, "You've reached today's message limit."); }
+  if ((await repo.sentSinceTx(tx, from.id, t - 60)) >= DM.PER_MINUTE) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
+  if ((await repo.sentSinceTx(tx, from.id, t - 86400)) >= DM.PER_DAY) { flag("volume", `${DM.PER_DAY} messages in a day`); fail(429, "You've reached today's message limit."); }
   if (startsThread && !from.isAdmin) {
     const limit = t - from.registeredAt < 86400 ? DM.NEW_THREADS_NEW_ACCOUNT : DM.NEW_THREADS_PER_DAY;
-    const started = repo.startedSinceTx(tx, from.id, t - 86400);
+    const started = (await repo.startedSinceTx(tx, from.id, t - 86400));
     if (started >= limit) { flag("new-conversations", `${started} new conversations in a day`); fail(429, "You've started a lot of new conversations today. Try again tomorrow."); }
   }
   if (body.length >= 20 && !from.isAdmin) { // the same text pasted to several people
-    const copies = repo.copiesSinceTx(tx, from.id, t - 3600, body);
+    const copies = (await repo.copiesSinceTx(tx, from.id, t - 3600, body));
     if (copies >= DM.COPIES) { flag("copy-paste", `The same message to ${copies} people within an hour`); fail(429, "That looks like the same message sent to many people. It wasn't sent."); }
   }
 }
@@ -121,46 +124,48 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
   const opening = await gate(from, to), flags: Flag[] = [];
   let out: { message: Message; thread: Thread; accepted: boolean };
   try {
-    out = repo.atomically(tx => {
-      let t = repo.threadOfTx(tx, from.id, to.id), accepted = false;
+    out = (await repo.atomically(async tx => {
+      let t = (await repo.threadOfTx(tx, from.id, to.id)), accepted = false;
       const pendingMine = !!t && t.status !== "active" && t.requesterId === from.id;
       if (t && t.status !== "active" && !pendingMine) { // answering a request accepts it
-        repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" }; accepted = true;
+        await repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" }; accepted = true;
       } else if (t && pendingMine && opening === "active" && t.status === "request") { // they followed you since, or opened their inbox
-        repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" };
+        await repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" };
       } else if (t && pendingMine) {
-        if (repo.sentInTx(tx, t.id, from.id) >= DM.REQUEST_CAP) fail(403, "Wait for a reply before sending more messages");
+        if ((await repo.sentInTx(tx, t.id, from.id)) >= DM.REQUEST_CAP) fail(403, "Wait for a reply before sending more messages");
       }
       if ((!t || t.status !== "active") && opening === "request" && hasLink(body)) fail(400, "Links can't be sent until your message request is accepted");
-      throttle(tx, from, body, !t, flags);
+      await throttle(tx, from, body, !t, flags);
       const at = now();
-      return { ...repo.addMessageTx(tx, t ?? repo.createThreadTx(tx, from.id, to.id, opening, at), from.id, body, at), accepted };
-    });
+      return { ...(await repo.addMessageTx(tx, t ?? (await repo.createThreadTx(tx, from.id, to.id, opening, at)), from.id, body, at)), accepted };
+    }));
   } finally {
     for (const f of flags) await repo.raiseFlag(f, now());
   }
   const { thread, accepted } = out, message = messageShape(out.message);
   // a declined request is delivered nowhere; everything else reaches the other side's open tabs at once
-  if (thread.status !== "declined") emit(to.id, { t: "dm", thread: await threadShape(thread, to.id), message, counts: await dmCounts(to.id) });
+  if (thread.status !== "declined") {
+    emit(to.id, { t: "dm", thread: await threadShape(thread, to.id), message, counts: await dmCounts(to.id) });
+    await mailMessage(to, from.username, thread.id, thread.status === "request", body);
+  }
   emit(from.id, { t: "dm", thread: await threadShape(thread, from.id), message, counts: await dmCounts(from.id), accepted });
   return { message, thread: await threadShape(thread, from.id) };
 }
 
 /** Hide a message from both participants (its sender, or staff). The row is kept for moderation. False when there was nothing to hide. */
 export async function removeMessage(messageId: number, byUserId: number): Promise<boolean> {
-  const removed = repo.softDeleteTx(repo.connection, messageId, byUserId, now());
+  const removed = (await repo.softDeleteTx(repo.connection, messageId, byUserId, now()));
   if (removed) await announceRemoved([removed]);
   return !!removed;
 }
 /** Hides a message as part of a larger transaction (moderation). Pass what it returns to announceRemoved after commit. */
-export const removeMessageTx = (tx: Tx, messageId: number, byUserId: number): repo.Removed | null => repo.softDeleteTx(tx, messageId, byUserId, now());
+export const removeMessageTx = async (tx: Tx, messageId: number, byUserId: number): Promise<repo.Removed | null> => (await repo.softDeleteTx(tx, messageId, byUserId, now()));
 /** Tells both people's open tabs that messages disappeared. Call after the transaction that removed them commits. */
 export async function announceRemoved(removed: readonly (repo.Removed | null)[]): Promise<void> {
   for (const m of removed) if (m) for (const uid of [m.userLo, m.userHi]) emit(uid, { t: "dm-deleted", threadId: m.threadId, id: m.id, counts: await dmCounts(uid) });
 }
 
 /** What a report of a message shows staff: the message, who wrote it, and the few messages around it. */
-export const reportedMessage = async (id: number): Promise<ReportedMessage | null> => repo.reportedMessageTx(repo.connection, id);
 export const reportedMessageTx = repo.reportedMessageTx;
 
 // ---------- what the HTTP routes do ----------
@@ -171,20 +176,26 @@ export async function list(me: User, box: "inbox" | "requests"): Promise<DmList>
   return { items, counts: await dmCounts(me.id), policy: policyOf(me) };
 }
 
+/** A first message to a stranger: no conversation between the two yet, and `to` doesn't follow `from`. Those need the robot check. */
+export async function firstContact(from: User, to: User): Promise<boolean> {
+  if (from.isAdmin || from.id === to.id) return false;
+  return !(await repo.threadOf(from.id, to.id)) && !(await repo.isFollowing(to.id, from.id));
+}
+
 /** Opening a conversation from a profile: the existing thread if there is one, and whether a message would be allowed. */
 export async function withUser(me: User, to: User): Promise<DmWith> {
   const t = await repo.threadOf(me.id, to.id);
   const visible = t && !(t.status === "declined" && t.requesterId !== me.id) ? t : null;
-  const { can, why, opens } = await allowed(me, to);
-  return { user: (await repo.person(to.id)) ?? fail(404, "User not found"), threadId: visible?.id ?? null, can, why, request: !visible && opens === "request" };
+  const { can, why, blocked, opens } = await allowed(me, to);
+  return { user: (await repo.person(to.id)) ?? fail(404, "User not found"), threadId: visible?.id ?? null, can, why, blocked, request: !visible && opens === "request", human: await firstContact(me, to) };
 }
 
 /** One page of a conversation: up to 50 messages older than `before`, oldest first. */
 export async function page(me: User, threadId: unknown, before: number): Promise<DmThreadPage> {
   const t = await myThread(threadId, me.id), cleared = side(t, me.id) === "lo" ? t.loCleared : t.hiCleared;
   const rows = await repo.messagesBetween(t.id, cleared, before, 51);
-  const { can, why } = await allowed(me, await findById(otherId(t, me.id)));
-  return { thread: await threadShape(t, me.id), messages: rows.slice(0, 50).reverse().map(messageShape), more: rows.length > 50, can, why, max: DM.MAX_LENGTH, unsendFor: DM.UNSEND_WINDOW };
+  const { can, why, blocked } = await allowed(me, await findById(otherId(t, me.id)));
+  return { thread: await threadShape(t, me.id), messages: rows.slice(0, 50).reverse().map(messageShape), more: rows.length > 50, can, why, blocked, max: DM.MAX_LENGTH, unsendFor: DM.UNSEND_WINDOW };
 }
 
 /** Send into an existing conversation. */

@@ -43,8 +43,8 @@ router.post<CatalogueMerged>("/api/admin/catalogue/merge", async c => {
   const me = adminOnly(c), kind = kindOf(c.body.kind), src = Number(c.body.source), dst = Number(c.body.target), why = note(c);
   if (src === dst) bad("Pick two different items");
   const s = await item(kind, src), d = await item(kind, dst);
-  const { detail, artists } = repo.merge(kind, src, dst, me, detail => (
-    { action: "catalogue.merge", targetType: kind, targetId: dst, label: `${repo.describe(s)} → ${repo.describe(d)}`, note: why, data: { source: src, ...detail } }));
+  const { detail, artists } = (await repo.merge(kind, src, dst, me, detail => (
+    { action: "catalogue.merge", targetType: kind, targetId: dst, label: `${repo.describe(s)} \u2192 ${repo.describe(d)}`, note: why, data: { source: src, ...detail } })));
   // the merged artists have different listeners now: have their taste matches worked out again
   for (const id of artists) await queue("artist", id);
   return { ok: true, ...detail };
@@ -56,7 +56,7 @@ router.post<Ok>("/api/admin/catalogue/rename", async c => {
   const n = norm(name), clash = await repo.nameClash(kind, r, n);
   if (clash !== null) fail(409, `There's already ${kind === "artist" ? "an artist" : `a${kind === "album" ? "n album" : " track"} by ${r.artist}`} called “${name}”. Merge the two instead (#${clash}).`);
   await repo.rename(kind, id, name, n);
-  await audit(me, { action: "catalogue.rename", targetType: kind, targetId: id, label: `${repo.describe(r)} → ${name}`, note: note(c), data: { from: r.label, to: name } });
+  await audit(me, { action: "catalogue.rename", targetType: kind, targetId: id, label: `${repo.describe(r)} \u2192 ${name}`, note: note(c), data: { from: r.label, to: name } });
   return { ok: true };
 });
 
@@ -69,8 +69,8 @@ router.get<OrphanList>("/api/admin/catalogue/orphans", async c => {
 router.post<OrphansDeleted>("/api/admin/catalogue/orphans/delete", async c => {
   const me = adminOnly(c), kind = kindOf(c.body.kind), ids = idList(c.body.ids, 500), why = note(c);
   if (!ids.length) bad("Pick at least one item");
-  const deleted = repo.deleteOrphans(kind, ids, me, (gone, names) => (
-    { action: "catalogue.orphans", targetType: kind, label: `${gone.length} orphaned ${kind}${gone.length === 1 ? "" : "s"}`, note: why, data: { ids: gone, names: names.slice(0, 50) } }));
+  const deleted = (await repo.deleteOrphans(kind, ids, me, (gone, names) => (
+    { action: "catalogue.orphans", targetType: kind, label: `${gone.length} orphaned ${kind}${gone.length === 1 ? "" : "s"}`, note: why, data: { ids: gone, names: names.slice(0, 50) } })));
   return { deleted, skipped: ids.length - deleted };
 });
 
@@ -82,6 +82,6 @@ router.get<AdminTagList>("/api/admin/tags", async c => {
 
 router.post<TagDeleted>("/api/admin/tags/delete", async c => {
   const me = adminOnly(c), g = (await findItem("tag", Number(c.body.id))) ?? missing("Tag"), why = note(c);
-  const uses = repo.deleteTag(g.id, me, uses => ({ action: "tag.delete", targetType: "tag", targetId: g.id, label: g.name, note: why, data: { uses } }));
+  const uses = (await repo.deleteTag(g.id, me, uses => ({ action: "tag.delete", targetType: "tag", targetId: g.id, label: g.name, note: why, data: { uses } })));
   return { ok: true, uses };
 });

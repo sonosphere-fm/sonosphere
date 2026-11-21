@@ -29,8 +29,8 @@ export async function wikiHistory(type: string, id: number, limit = 50): Promise
 
 /** Saves new text for an item's wiki as its next version. */
 export async function addWikiVersion(type: string, id: number, content: string, authorId: number): Promise<void> {
-  transact(tx => {
-    const next = tx.select({ v: sql<number>`COALESCE(MAX(${wikis.version}), 0) + 1` }).from(wikis).where(and(eq(wikis.itemType, type), eq(wikis.itemId, id))).get()?.v ?? 1;
-    tx.insert(wikis).values({ itemType: type, itemId: id, content, authorId, version: next, createdAt: now() }).run();
+  await transact(async tx => {
+    const next = (await tx.select({ v: sql<number>`COALESCE(MAX(${wikis.version}), 0) + 1` }).from(wikis).where(and(eq(wikis.itemType, type), eq(wikis.itemId, id))))[0]?.v ?? 1;
+    await tx.insert(wikis).values({ itemType: type, itemId: id, content, authorId, version: next, createdAt: now() });
   });
 }

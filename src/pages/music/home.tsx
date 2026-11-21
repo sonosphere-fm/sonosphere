@@ -21,13 +21,13 @@ function HomeFeed({ name }: { name: string }) {
       {!hidden && (
         <div className="welcome">
           <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}><Ico.X /></Button>
-          <h1>Welcome to Spin, {name}!</h1>
-          <p>The more you scrobble, the better these picks get. Everything below is chosen from the artists you play most and what listeners like you keep on repeat.</p>
+          <h1>Welcome to Sonosphere, {name}!</h1>
+          <p>The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble more music.</p>
         </div>
       )}
       <Async q={q}>{d => d.artists.length
         ? <div className="recs">{mixRecs(d).map(r => <RecCard key={r.kind + r.item.id} {...r} />)}</div>
-        : <Empty>Scrobble a few more tracks and recommendations will appear here.</Empty>}</Async>
+        : <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>}</Async>
     </>
   );
 }
@@ -47,9 +47,9 @@ export function Home() {
           <div className="wrap banner-inner">
             <div className="banner-copy">
               <h1>Track what you love.</h1>
-              <p>Spin scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
+              <p>Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
               <div className="row"><Button kind="btn invert" href="/join">Join free</Button><Button kind="btn outline-invert" href="/login">Log in</Button></div>
-              {q.data && q.data.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(q.data.stats.users))}+ users scrobbling on Spin</p>}
+              {q.data && q.data.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(q.data.stats.users))}+ users scrobbling on Sonosphere</p>}
             </div>
             {q.data && q.data.trendingTracks.length > 0 && (
               <ol className="banner-chart">
@@ -120,5 +120,5 @@ function HomeRecent({ name }: { name: string }) {
   return <Section title="Your recent tracks" more={`${userUrl(name)}/library`} moreLabel="Library"><TrackList items={q.data.items} nowPlaying={"nowPlaying" in q.data ? q.data.nowPlaying : null} time /></Section>;
 }
 
-/** 132 → 130, 1,532 → 1,500: a round number that is never more than the real one. */
+/** 132 becomes 130, 1,532 becomes 1,500: a round number that is never more than the real one. */
 const roundDown = (n: number) => { const p = Math.max(10, 10 ** (String(Math.floor(n)).length - 2)); return Math.floor(n / p) * p; };

@@ -1,0 +1,8 @@
+[Unit]
+Description=Deploy Sonosphere when GitHub's main has a new commit
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /opt/spin/autodeploy.sh
+Nice=10
+TimeoutStartSec=900

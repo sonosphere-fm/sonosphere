@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Select } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, enc, num, PERIODS, plural, qs, short, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Art, Async, Empty, Pager, PeriodPicker, Section, Tabs } from "../../ui/base";
+import { Art, Async, Empty, Pager, PeriodPicker, Section, Tabs, Pane } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { Grid, TrackList, UserList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
@@ -29,10 +29,11 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
           actions={<><PlayButton queue={a.topTracks} label="Play artist" /><StationButton type="artist" name={a.name} label="Artist radio" ghost />{me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}</>}
           stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>}
           cards={tab === "overview" && (a.latestAlbum || top) ? <>
-            {a.latestAlbum && <FeatureCard label="Latest release" to={albumUrl(a.name, a.latestAlbum.title)} image={a.latestAlbum.image} name={a.latestAlbum.title} artist={a.name} title={a.latestAlbum.title} sub={a.latestAlbum.releaseDate && releaseDate(a.latestAlbum.releaseDate)} />}
-            {top && <FeatureCard label={a.weekTrack ? "Popular this week" : "Most popular track"} to={trackUrl(a.name, top.title)} image={top.image} name={top.album || top.title} artist={a.name} title={top.title} sub={`${num(top.listeners)} listeners`} />}
+            {a.latestAlbum && <FeatureCard label="Latest release" to={albumUrl(a.name, a.latestAlbum.title)} image={a.latestAlbum.image} title={a.latestAlbum.title} sub={a.latestAlbum.releaseDate && releaseDate(a.latestAlbum.releaseDate)} />}
+            {top && <FeatureCard label={a.weekTrack ? "Popular this week" : "Most popular track"} to={trackUrl(a.name, top.title)} image={top.image} title={top.title} sub={`${num(top.listeners)} listeners`} />}
           </> : null} />
         <div className="wrap page mpage">
+          <Pane>
           {tab === "overview" && (
             <div className="cols">
               <div className="main">
@@ -53,7 +54,9 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
                 <Trend data={a.trend} />
                 <Section title="Upcoming events">{a.events.length ? <EventList items={a.events} /> : <p className="muted">We don't have any upcoming events for this artist right now.</p>}
                   <p className="side-links"><Link to="/events/add"><Ico.Plus /> Add event</Link><Link to="/events">View all events</Link></p></Section>
-                {a.mbid && <Section title="Elsewhere"><p className="side-links"><a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a></p></Section>}
+                {(a.mbid || a.spotifyId) && <Section title="Elsewhere"><p className="side-links">
+                  {a.mbid && <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a>}
+                  {a.spotifyId && <a href={`https://open.spotify.com/artist/${a.spotifyId}`} target="_blank" rel="noreferrer">Spotify</a>}</p></Section>}
               </aside>
             </div>
           )}
@@ -63,6 +66,7 @@ export function ArtistPage({ tab }: { tab: "overview" | "tracks" | "albums" | "s
           {tab === "wiki" && <WikiPage type="artist" id={a.id} title={a.name} />}
           {tab === "listeners" && <ArtistListeners name={a.name} />}
           {tab === "shoutbox" && <Shoutbox type="artist" id={a.id} />}
+          </Pane>
         </div>
         {tab === "overview" && <TrendingBand />}
       </>
@@ -96,7 +100,7 @@ function ArtistSimilar({ name }: { name: string }) {
   return <Async q={q}>{d => d.items.length ? (
     <ul className="similar">{d.items.map(s => (
       <li key={s.id}>
-        <Link to={artistUrl(s.name)} className="similar-art"><Art name={s.name} image={s.image} kind="artist" /></Link>
+        <Link to={artistUrl(s.name)} className="similar-art"><Art image={s.image} kind="artist" /></Link>
         <div className="grow"><Link className="strong" to={artistUrl(s.name)}>{s.name}</Link><span className="muted small">{num(s.listeners)} listeners</span><TagChips tags={s.tags.map(n => ({ name: n }))} /></div>
         <div className="match" title={`${Math.round(s.match * 100)}% match`}><span style={{ width: `${Math.min(100, s.match * 100)}%` }} /></div>
       </li>

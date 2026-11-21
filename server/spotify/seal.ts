@@ -3,14 +3,14 @@
 // (not inside it, and not in backups). Losing the key only means listeners have to reconnect Spotify.
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 let cached: Buffer | null = null;
 function key(): Buffer {
   if (cached) return cached;
   const fromEnv = process.env.SPOTIFY_TOKEN_KEY;
   if (fromEnv) return (cached = createHash("sha256").update(fromEnv).digest());
-  const file = join(dirname(process.env.DB_PATH || "data/needle.db"), "token.key");
+  const file = join(process.env.DATA_DIR || "data", "token.key");
   if (!existsSync(file)) {
     // "wx" fails if another process (the other half of a rolling deploy) wrote it first; then read theirs
     try { writeFileSync(file, randomBytes(32).toString("hex"), { flag: "wx", mode: 0o600 }); chmodSync(file, 0o600); } catch { /* already there */ }

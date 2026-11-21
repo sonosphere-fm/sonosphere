@@ -1,6 +1,6 @@
-// Spin's controls. Every button, field, menu, dialog and pager in the app goes through here and is rendered by an
+// Sonosphere's controls. Every button, field, menu, dialog and pager in the app goes through here and is rendered by an
 // Astryx component under the Needle theme (src/themes/needle). The props mirror the DOM so pages stay plain JSX.
-import { isValidElement, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
+import { isValidElement, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { Button as AButton } from "@astryxdesign/core/Button";
 import { TextInput, type TextInputType } from "@astryxdesign/core/TextInput";
@@ -74,6 +74,32 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       <DialogHeader title={title} onOpenChange={() => onClose()} />
       {children}
     </Dialog>
+  );
+}
+/** A yes/no step in our own dialog instead of the browser's confirm(). Render `dialog` somewhere; call `ask({...})` to open it. */
+type Ask = { title: string; body?: ReactNode; action: string; danger?: boolean; run: () => Promise<unknown> | void };
+export function useConfirm() {
+  const [a, ask] = useState<Ask | null>(null);
+  return { ask, dialog: a ? <Confirm a={a} close={() => ask(null)} /> : null };
+}
+function Confirm({ a, close }: { a: Ask; close: () => void }) {
+  const [busy, setBusy] = useState(false), [err, setErr] = useState("");
+  const go = async () => {
+    if (busy) return;
+    setBusy(true); setErr("");
+    try { await a.run(); close(); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setBusy(false); }
+  };
+  return (
+    <Modal title={a.title} onClose={close}>
+      <form className="form confirm" onSubmit={e => { e.preventDefault(); go(); }}>
+        {a.body && <p className="muted">{a.body}</p>}
+        {err && <p className="form-error" role="alert">{err}</p>}
+        <div className="row">
+          <Button kind={a.danger ? "btn danger" : "btn"} loading={busy} autoFocus>{a.action}</Button>
+          <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 export function Pages({ page, pages, onChange }: { page: number; pages: number; onChange: (p: number) => void }) {

@@ -4,6 +4,7 @@ import { Router } from "./http";
 import { router as account } from "./account/routes";
 import { router as apps } from "./apps/routes";
 import { router as auth } from "./auth/routes";
+import { router as oauth } from "./auth/oauth/routes";
 import { router as blocks } from "./blocks/routes";
 import { router as catalog } from "./catalog/routes";
 import { router as dm } from "./dm/routes";
@@ -13,6 +14,7 @@ import { router as home } from "./home/routes";
 import { router as images } from "./images/routes";
 import { router as journals } from "./journals/routes";
 import { router as listening } from "./listening/routes";
+import { router as imports } from "./listening/imports";
 import { router as notifications } from "./notifications/routes";
 import { router as obsessions } from "./obsessions/routes";
 import { router as playlists } from "./playlists/routes";
@@ -35,8 +37,8 @@ import { router as adminSettings } from "./admin/settings";
 import { router as adminUsers } from "./admin/users";
 
 export const api = new Router().include(
-  auth, account, images, site,
+  auth, oauth, account, images, site,
   home, search, catalog, tags, wiki, shouts, video, stations,
-  listening, users, obsessions, playlists, events, journals, notifications, blocks, apps, reports, dm, spotify,
+  listening, imports, users, obsessions, playlists, events, journals, notifications, blocks, apps, reports, dm, spotify,
   adminDashboard, adminUsers, adminReports, adminMessages, adminContent, adminCatalogue, adminAudit, adminSettings,
 );

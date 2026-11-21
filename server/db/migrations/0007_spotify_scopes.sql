@@ -1,0 +1,1 @@
+ALTER TABLE "spotify_links" ADD COLUMN "scopes" text DEFAULT '' NOT NULL;

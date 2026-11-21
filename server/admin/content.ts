@@ -44,7 +44,7 @@ router.post<Ok>("/api/admin/content/delete", async c => {
   const me = staff(c), kind = String(c.body.kind), id = Number(c.body.id), why = note(c);
   if (!["shout", "journal", "wiki"].includes(kind)) bad("Unknown content kind");
   const t = (await reportTarget(kind, id)) ?? missing("That content");
-  repo.removeContent(kind, id, me, why, closedReports => ({
+  await repo.removeContent(kind, id, me, why, closedReports => ({
     action: `${kind}.delete`, targetType: kind, targetId: id, label: `${t.where}${t.author ? ` by ${t.author}` : ""}`, subjectId: t.authorId, note: why,
     data: { text: t.text.slice(0, 500), closedReports },
   }));

@@ -3,9 +3,12 @@
 // Security: the upgrade is refused unless the session cookie is valid AND the Origin header is this site
 // (browsers attach cookies to cross-site WebSocket handshakes, so the origin check is what stops another
 // site from opening a socket as the visitor). Sessions are re-checked while the socket is open.
+// With several site processes a user's tabs may be connected to different ones, so events go out through Valkey
+// (server/kv.ts) and every process delivers them to the sockets it holds.
 import type { Server, ServerWebSocket } from "bun";
 import { sessionUser } from "./auth/session";
-import { tokenOf } from "./http";
+import { ipOf, tokenOf } from "./http";
+import { hits, publish, subscribe } from "./kv";
 
 /** What each open socket remembers about itself. */
 export type SocketData = { userId: number; token: string; typedAt: number; msgs: number; windowAt: number };
@@ -28,6 +31,9 @@ function sameOrigin(req: Request) {
 /** GET /api/ws */
 export async function upgrade(req: Request, server: Server<Data>): Promise<Response | undefined> {
   if (!sameOrigin(req)) return new Response("Forbidden", { status: 403 });
+  // a page reconnects after network blips, never dozens of times a minute
+  const wait = await hits(`ws:${ipOf(req)}`, 30, 60);
+  if (wait) return new Response("Too many connections", { status: 429, headers: { "Retry-After": String(wait) } });
   const token = tokenOf(req), user = await sessionUser(token);
   if (!user) return new Response("Unauthorized", { status: 401 });
   if ((sockets.get(user.id)?.size ?? 0) >= MAX_PER_USER) return new Response("Too many connections", { status: 429 });
@@ -62,18 +68,22 @@ export const websocket = {
   },
 };
 
-/** Send an event to every tab the user has open. */
-export function push(userId: number, event: object) {
-  const set = sockets.get(userId);
+type Fanout = { u: number; e?: object; bye?: true };
+subscribe("live", raw => {
+  let m: Fanout;
+  try { m = JSON.parse(raw) as Fanout; } catch { return; }
+  const set = sockets.get(m.u);
   if (!set) return;
-  const text = JSON.stringify(event);
+  if (m.bye) { for (const ws of set) { try { ws.close(1008, "Signed out"); } catch { /* already closed */ } } return; }
+  const text = JSON.stringify(m.e);
   for (const ws of set) { try { ws.send(text); } catch { /* socket closed mid-send */ } }
-}
-/** Close a user's sockets (logged out, banned, password changed). */
-export function disconnect(userId: number) {
-  for (const ws of sockets.get(userId) ?? []) { try { ws.close(1008, "Signed out"); } catch { /* already closed */ } }
-}
-export const online = (userId: number) => sockets.has(userId);
+});
+const send = (m: Fanout) => { publish("live", JSON.stringify(m)).catch(e => console.error("live update:", e)); };
+
+/** Send an event to every tab the user has open, whichever process holds it. */
+export function push(userId: number, event: object) { send({ u: userId, e: event }); }
+/** Close a user's sockets in every process (logged out, banned, password changed). */
+export function disconnect(userId: number) { send({ u: userId, bye: true }); }
 
 // A socket outlives the request that opened it, so check every minute that its session still exists.
 const sweep = globalThis as { __spinSocketSweep?: ReturnType<typeof setInterval> };

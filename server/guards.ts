@@ -8,3 +8,9 @@ export const poster = (c: Ctx): Viewer => { const u = need(c); return u.suspende
 /** A moderator or an admin. */
 export const staff = (c: Ctx): Viewer => { const u = need(c); return isStaff(u) ? u : fail(403, "Staff only"); };
 export const adminOnly = (c: Ctx): Viewer => { const u = staff(c); return isAdmin(u) ? u : fail(403, "Admins only"); };
+/**
+ * Refuses an account whose email is not confirmed yet. Used on what spammers and throwaway accounts would abuse:
+ * public writing (wiki, shouts, journals, tags, events), messages, pictures and API keys. Staff are trusted.
+ */
+export const confirmed = (u: Viewer): Viewer =>
+  u.emailVerifiedAt || isStaff(u) ? u : fail(403, "Please confirm your email address first. You should have received a verification email. If you didn't, you can resend it from Settings, under Account.");

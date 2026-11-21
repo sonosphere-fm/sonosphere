@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "private_listening" boolean DEFAULT false NOT NULL;

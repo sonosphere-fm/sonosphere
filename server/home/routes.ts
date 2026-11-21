@@ -2,12 +2,12 @@
 import { need } from "../guards";
 import { bad, oneOf, paging, Router } from "../http";
 import { range } from "../listening/period";
-import { counts, nowPlaying, recent, top, topAlbums, topArtists, topTracks } from "../listening/repo";
-import { recommendedArtists } from "../recommend/service";
+import { counts, nowPlaying, recent, siteTop, topAlbums } from "../listening/repo";
+import { recommendations, recommendedArtists } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
-import type { TopAlbum, TopTrack } from "../../shared/listening";
+import type { TopAlbum } from "../../shared/listening";
 
 export const router = new Router();
 
@@ -18,7 +18,7 @@ router.get<Charts>("/api/charts", async c => {
   const pg = paging(c.q), [from, to] = range(c.q);
   if (c.q.get("kind") === "tags") return { items: await repo.tagChart(pg.limit, pg.offset), total: await repo.usedTagCount(), ...pg };
   const kind = oneOf(c.q.get("kind"), ["artists", "albums", "tracks"]) ?? bad("kind must be artists, albums, tracks or tags");
-  return { ...(await top(kind, { from, to, viewerId: c.user?.id, global: true }, pg.limit, pg.offset)), ...pg };
+  return { ...(await siteTop(kind, { from, to, viewerId: c.user?.id }, pg.limit, pg.offset)), ...pg };
 });
 
 /** What each person the viewer follows is playing or played last: those playing now first, then the most recent. */
@@ -40,9 +40,9 @@ router.get<Home>("/api/home", async c => {
   const week = busy ? since : undefined;
   const out: Home = {
     trendingPeriod: busy ? "week" : "overall",
-    trendingArtists: (await topArtists({ from: week, global: true }, 12)).items,
-    trendingTracks: (await topTracks({ from: week, viewerId, global: true }, 10)).items,
-    trendingAlbums: (await topAlbums({ from: week, global: true }, 6)).items,
+    trendingArtists: (await siteTop("artists", { from: week }, 12)).items,
+    trendingTracks: (await siteTop("tracks", { from: week, viewerId }, 10)).items,
+    trendingAlbums: (await siteTop("albums", { from: week }, 6)).items,
     tags: await repo.popularTags(18),
     events: await repo.upcomingEvents(now(), viewerId, 4),
     stats: await repo.siteTotals(),
@@ -57,9 +57,7 @@ router.get<Home>("/api/home", async c => {
 });
 
 router.get<Recommended>("/api/recommended", async c => {
-  const u = need(c), artists = await recommendedArtists(u.id, 30);
-  const tracks: TopTrack[] = [];
-  for (const a of artists.slice(0, 15)) tracks.push(...(await topTracks({ artistId: a.id, viewerId: u.id, global: true }, 2)).items);
+  const u = need(c), { artists, tracks } = await recommendations(u.id, u.id, 30, 30);
   const albums: TopAlbum[] = [];
   for (const a of artists.slice(0, 18)) albums.push(...(await topAlbums({ artistId: a.id, global: true }, 1)).items);
   return { artists, tracks, albums, events: await repo.upcomingEvents(now(), u.id, 20) };

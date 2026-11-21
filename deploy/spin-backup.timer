@@ -1,5 +1,5 @@
 [Unit]
-Description=Back up the Spin database every hour
+Description=Back up the Sonosphere database every hour
 [Timer]
 OnCalendar=hourly
 RandomizedDelaySec=120

@@ -1,0 +1,7 @@
+[Unit]
+Description=Check GitHub for a new Sonosphere commit every minute
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=60
+[Install]
+WantedBy=timers.target

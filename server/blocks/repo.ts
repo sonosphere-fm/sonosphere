@@ -13,9 +13,9 @@ export const blockedBy = (userId: number): Promise<Blocks["items"]> =>
 
 /** Blocks someone. Neither side follows the other afterwards. */
 export async function block(blockerId: number, blockedId: number): Promise<void> {
-  transact(tx => {
-    tx.insert(blocks).values({ blockerId, blockedId, createdAt: now() }).onConflictDoNothing().run();
-    tx.delete(follows).where(or(and(eq(follows.followerId, blockerId), eq(follows.followeeId, blockedId)), and(eq(follows.followerId, blockedId), eq(follows.followeeId, blockerId)))).run();
+  await transact(async tx => {
+    await tx.insert(blocks).values({ blockerId, blockedId, createdAt: now() }).onConflictDoNothing();
+    await tx.delete(follows).where(or(and(eq(follows.followerId, blockerId), eq(follows.followeeId, blockedId)), and(eq(follows.followerId, blockedId), eq(follows.followeeId, blockerId))));
   });
 }
 

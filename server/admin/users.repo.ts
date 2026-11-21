@@ -1,10 +1,10 @@
 // Data access for the accounts section of the staff API: the searchable account list, everything shown on one
 // account's page, and the changes staff make to accounts (suspend, ban, sign out, delete, notes).
-import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, or, sql, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, notLike, or, sql, type SQL } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import {
-  apiSessions, apiTokens, auditLog, blocks, dmFlags, dmMessages, dmThreads, follows, images, journals, lovedTracks, modNotes, nowPlaying, playlists,
+  apiSessions, apiTokens, auditLog, blocks, dmFlags, emailTokens, dmMessages, dmThreads, follows, journals, lovedTracks, modNotes, nowPlaying, playlists,
   reports, scrobbles, sessions, shouts, taggings, userArtists, users, wikis,
 } from "../db/schema";
 import { jsonField, matches } from "../db/dialect";
@@ -26,13 +26,14 @@ const against = (userId: SQL | typeof users.id, username: SQL | typeof users.use
 const lastLogin = sql<number | null>`(SELECT MAX(${sessions.createdAt}) FROM ${sessions} WHERE ${sessions.userId} = ${users.id})`;
 const openReports = sql<number>`(SELECT COUNT(*) FROM ${reports} WHERE ${reports.status} = 'open' AND ${against(users.id, users.username)})`;
 
-export type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported";
+export type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported" | "unconfirmed";
 export type UserSort = "username" | "registered" | "scrobbles" | "reports" | "login";
 const notBanned = eq(users.banned, false);
 const FILTERS: Record<UserFilter, SQL | undefined> = {
   all: undefined, staff: and(eq(users.isAdmin, true), notBanned),
   admins: and(eq(users.isAdmin, true), ne(users.role, "moderator"), notBanned), moderators: and(eq(users.isAdmin, true), eq(users.role, "moderator"), notBanned),
   suspended: and(eq(users.suspended, true), notBanned), banned: eq(users.banned, true), reported: gt(openReports, 0),
+  unconfirmed: and(isNull(users.emailVerifiedAt), notLike(users.email, "%.invalid")),
 };
 export type UserQuery = { filter: UserFilter; sort: UserSort; ascending: boolean; pattern: string | null; searchEmail: boolean; limit: number; offset: number };
 export type UserListRow = User & { scrobbles: number; openReports: number; lastLogin: number | null };
@@ -127,20 +128,27 @@ export const findNote = (id: number) =>
 export async function deleteNote(id: number): Promise<void> { await db.delete(modNotes).where(eq(modNotes.id, id)); }
 
 // ---------- changes to an account ----------
+/** Marks an account's address confirmed by hand and drops any confirmation link still out. */
+export async function setVerified(id: number, at: number): Promise<void> {
+  await db.transaction(async tx => {
+    await tx.update(users).set({ emailVerifiedAt: at }).where(eq(users.id, id));
+    await tx.delete(emailTokens).where(and(eq(emailTokens.userId, id), eq(emailTokens.kind, "verify")));
+  });
+}
 export async function setSuspended(id: number, suspended: boolean): Promise<void> { await db.update(users).set({ suspended }).where(eq(users.id, id)); }
 export async function setDmMuted(id: number, dmMuted: boolean): Promise<void> { await db.update(users).set({ dmMuted }).where(eq(users.id, id)); }
 
 /** Bans an account (ending every session, API session and pending API token it has) or lifts the ban, and records it. */
 export async function setBanned(actor: Actor, id: number, banned: boolean, reason: string, entry: AuditEntry): Promise<void> {
-  transact(tx => {
+  await transact(async tx => {
     if (banned) {
-      tx.update(users).set({ banned: true, bannedAt: now(), banReason: reason }).where(eq(users.id, id)).run();
-      tx.delete(sessions).where(eq(sessions.userId, id)).run();
-      tx.delete(apiSessions).where(eq(apiSessions.userId, id)).run();
-      tx.delete(apiTokens).where(eq(apiTokens.userId, id)).run();
-      tx.delete(nowPlaying).where(eq(nowPlaying.userId, id)).run();
-    } else tx.update(users).set({ banned: false, bannedAt: null, banReason: "" }).where(eq(users.id, id)).run();
-    auditTx(tx, actor, entry);
+      await tx.update(users).set({ banned: true, bannedAt: now(), banReason: reason }).where(eq(users.id, id));
+      await tx.delete(sessions).where(eq(sessions.userId, id));
+      await tx.delete(apiSessions).where(eq(apiSessions.userId, id));
+      await tx.delete(apiTokens).where(eq(apiTokens.userId, id));
+      await tx.delete(nowPlaying).where(eq(nowPlaying.userId, id));
+    } else await tx.update(users).set({ banned: false, bannedAt: null, banReason: "" }).where(eq(users.id, id));
+    await auditTx(tx, actor, entry);
   });
 }
 
@@ -153,16 +161,16 @@ export async function revokeSessions(id: number): Promise<number> {
 
 /** Deletes an account and everything it owns, settles the open reports about it, and records the deletion. */
 export async function deleteAccount(actor: Actor, t: User, entry: AuditEntry): Promise<void> {
-  transact(tx => {
+  await transact(async tx => {
     // open reports about this person's things are settled by the deletion
-    tx.update(reports).set({ status: "closed", outcome: "account deleted", resolvedBy: actor.id, resolvedAt: now() })
-      .where(and(eq(reports.status, "open"), against(sql`${t.id}`, sql`${t.username}`))).run();
+    await tx.update(reports).set({ status: "closed", outcome: "account deleted", resolvedBy: actor.id, resolvedAt: now() })
+      .where(and(eq(reports.status, "open"), against(sql`${t.id}`, sql`${t.username}`)));
     // comments other people left on this person's journal posts and shouts aimed at their profile go with it
-    tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), inArray(shouts.targetId, tx.select({ id: journals.id }).from(journals).where(eq(journals.userId, t.id))))).run();
-    tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, t.id))).run();
-    tx.delete(modNotes).where(eq(modNotes.userId, t.id)).run();
-    tx.delete(users).where(eq(users.id, t.id)).run(); // everything else cascades (scrobbles, loves, shouts, journals, playlists, tags, sessions...)
-    if (t.imageId) tx.delete(images).where(eq(images.id, t.imageId)).run();
-    auditTx(tx, actor, entry);
+    await tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), inArray(shouts.targetId, tx.select({ id: journals.id }).from(journals).where(eq(journals.userId, t.id)))));
+    await tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, t.id)));
+    await tx.delete(modNotes).where(eq(modNotes.userId, t.id));
+    await tx.delete(users).where(eq(users.id, t.id)); // everything else cascades (scrobbles, loves, shouts, journals, playlists, tags, sessions...)
+    // their profile picture now has nothing pointing at it and goes with the next sweep (images/repo.ts sweepUnused)
+    await auditTx(tx, actor, entry);
   });
 }

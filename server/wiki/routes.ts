@@ -1,7 +1,7 @@
 // Wiki routes: an item's wiki history, and saving a new version.
 import { requireItem } from "../catalog/service";
-import { poster } from "../guards";
-import { Router } from "../http";
+import { confirmed, poster } from "../guards";
+import { Router, throttle } from "../http";
 import type { WikiHistory, WikiSaved } from "../../shared/wiki";
 import * as repo from "./repo";
 import { edit } from "./service";
@@ -16,6 +16,8 @@ router.get<WikiHistory>("/api/wiki", async c => {
 });
 
 router.post<WikiSaved>("/api/wiki", async c => {
-  const u = poster(c), it = await requireItem(c.body.type, c.body.id, WITH_WIKI);
+  const u = confirmed(poster(c));
+  await throttle(`wiki:${u.id}`, 30, 3600, "That is a lot of wiki edits. Take a break and come back in a while.");
+  const it = await requireItem(c.body.type, c.body.id, WITH_WIKI);
   return { wiki: await edit(u, it.type, it.row.id, c.body.content) };
 });

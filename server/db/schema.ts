@@ -1,87 +1,185 @@
 // The database schema. Every table the site uses is declared here; queries elsewhere are built from these definitions,
 // so column names and types are checked by the compiler. Changes are applied with migrations (see server/db/migrate.ts).
-import { sqliteTable, integer, text, blob, primaryKey, index, uniqueIndex, unique, real } from "drizzle-orm/sqlite-core";
+import { pgTable, integer, bigint, boolean, text, customType, primaryKey, index, uniqueIndex, unique, real, type AnyPgColumn } from "drizzle-orm/pg-core";
+
+/** Binary data (pictures, packed vectors), returned as a Buffer. */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+/** Whole numbers that can pass 2^31 (catalogue play counts, millisecond times), read back as plain numbers. */
+const big = (name: string) => bigint(name, { mode: "number" });
 import { sql } from "drizzle-orm";
 
-export const images = sqliteTable("images", {
-	id: integer().primaryKey(),
+/**
+ * A real foreign key for one kind of a type/id pair (a shout on an artist, a tag on a track): the id when the type is `kind`,
+ * else null. The database fills it in, so deleting the item deletes the rows attached to it, and nothing can point at an
+ * item that is not there. Merges move rows by changing the id, which this follows.
+ */
+const kindRef = (typeCol: string, idCol: string, kind: string, target: () => AnyPgColumn) =>
+  integer(`${kind}_ref`).generatedAlwaysAs(sql.raw(`CASE WHEN ${typeCol} = '${kind}' THEN ${idCol} END`)).references(target, { onDelete: "cascade" });
+const kindIndexes = (table: string, cols: Record<string, AnyPgColumn>) => Object.entries(cols).map(([k, c]) => index(`${table}_${k}_ref`).on(c).where(sql`${c} IS NOT NULL`));
+
+/**
+ * Pictures, with random ids. The files live in object storage (server/storage): `key` (img/<id>) names them, a full-size WebP at `<key>.webp` and a
+ * small one at `<key>-s.webp`, and `size` is both together in bytes. `data` holds the original upload of pictures from
+ * before object storage, kept as a fallback until it is cleared.
+ */
+export const images = pgTable("images", {
+	// random, so links to pictures cannot be counted through
+	id: text().primaryKey().default(sql`replace(gen_random_uuid()::text, '-', '')`),
 	mime: text().notNull(),
-	data: blob().notNull(),
+	data: bytea(),
+	key: text(),
+	// a picture shown from where it lives (an artist photo on Spotify's servers) instead of from our storage
+	url: text(),
+	size: integer().notNull().default(0),
+	width: integer(),
+	height: integer(),
 	uploaderId: integer("uploader_id"),
 	createdAt: integer("created_at").notNull(),
-});
+}, (table) => [
+	index("images_uploader").on(table.uploaderId),
+]);
 
-export const users = sqliteTable("users", {
-	id: integer().primaryKey(),
+export const users = pgTable("users", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	username: text().notNull(),
 	usernameNorm: text("username_norm").notNull().unique(),
 	email: text().notNull().unique(),
 	passwordHash: text("password_hash").notNull(),
 	realname: text().default("").notNull(),
+	pronouns: text().default("").notNull(),
 	about: text().default("").notNull(),
 	country: text().default("").notNull(),
 	website: text().default("").notNull(),
-	imageId: integer("image_id").references(() => images.id, { onDelete: "set null" } ),
-	hideRecent: integer("hide_recent", { mode: "boolean" }).default(false).notNull(),
-	shoutsEnabled: integer("shouts_enabled", { mode: "boolean" }).default(true).notNull(),
+	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
+	hideRecent: boolean("hide_recent").default(false).notNull(),
+	privateListening: boolean("private_listening").default(false).notNull(),
+	shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),
 	registeredAt: integer("registered_at").notNull(),
-	isAdmin: integer("is_admin", { mode: "boolean" }).default(false).notNull(),
-	suspended: integer({ mode: "boolean" }).default(false).notNull(),
+	isAdmin: boolean("is_admin").default(false).notNull(),
+	suspended: boolean().default(false).notNull(),
 	role: text().default("user").notNull(),
-	banned: integer({ mode: "boolean" }).default(false).notNull(),
+	banned: boolean().default(false).notNull(),
 	bannedAt: integer("banned_at"),
 	banReason: text("ban_reason").default("").notNull(),
 	dmPolicy: text("dm_policy").default("requests").notNull(),
-	dmMuted: integer("dm_muted", { mode: "boolean" }).default(false).notNull(),
+	dmMuted: boolean("dm_muted").default(false).notNull(),
+	// when the address in `email` was confirmed by following an emailed link; null until then
+	emailVerifiedAt: integer("email_verified_at"),
+	// notification emails: "instant", "daily", "weekly" or "off"; the kinds turned off (comma separated); the last digest
+	emailNotify: text("email_notify").default("instant").notNull(),
+	emailMuted: text("email_muted").default("").notNull(),
+	// site theme: "light" (default), "system" (follow the device) or "dark"
+	theme: text().default("light").notNull(),
+	digestAt: integer("digest_at"),
 });
 
-export const sessions = sqliteTable("sessions", {
+/**
+ * Single-use links sent by email: confirming an address (`verify`, and `change` for a new address, which only replaces
+ * `users.email` once confirmed) and resetting a password (`reset`). Only a hash of the token is kept.
+ */
+export const emailTokens = pgTable("email_tokens", {
+	hash: text().primaryKey(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	kind: text().notNull(),
+	email: text().notNull(),
+	createdAt: integer("created_at").notNull(),
+	expiresAt: integer("expires_at").notNull(),
+}, t => [index("email_tokens_user").on(t.userId, t.kind)]);
+
+/** Mail waiting to go out (server/mail). Rows are deleted once sent, or after giving up. */
+export const outbox = pgTable("outbox", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	to: text().notNull(),
+	subject: text().notNull(),
+	text: text().notNull(),
+	html: text().notNull(),
+	attempts: integer().default(0).notNull(),
+	nextAt: integer("next_at").notNull(),
+	error: text().default("").notNull(),
+	createdAt: integer("created_at").notNull(),
+}, t => [index("outbox_next").on(t.nextAt)]);
+
+/**
+ * Accounts at other sites (Discord, and later others) that can sign in to a Sonosphere account. `provider` names the site
+ * (server/auth/oauth/providers.ts), `subject` is that site's stable id for the person; `name` is their handle there, for display.
+ */
+export const oauthAccounts = pgTable("oauth_accounts", {
+	provider: text().notNull(),
+	subject: text().notNull(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	name: text().default("").notNull(),
+	createdAt: integer("created_at").notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.provider, table.subject], name: "oauth_accounts_provider_subject_pk" }),
+	unique("oauth_accounts_user_provider").on(table.userId, table.provider),
+]);
+
+// Sign-in tokens are kept only as their SHA-256 (digest in server/util.ts): a copy of the database cannot be used to sign in.
+export const sessions = pgTable("sessions", {
 	token: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
 });
 
-export const artists = sqliteTable("artists", {
-	id: integer().primaryKey(),
+export const artists = pgTable("artists", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	name: text().notNull(),
 	nameNorm: text("name_norm").notNull().unique(),
-	imageId: integer("image_id").references(() => images.id, { onDelete: "set null" } ),
+	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
-	baseListeners: integer("base_listeners").default(0).notNull(),
-	basePlaycount: integer("base_playcount").default(0).notNull(),
+	baseListeners: big("base_listeners").default(0).notNull(),
+	basePlaycount: big("base_playcount").default(0).notNull(),
+	// filled in from MusicBrainz and Spotify (server/metadata); metaAt is when that was last tried
+	mbid: text(),
+	spotifyId: text("spotify_id"),
+	metaAt: integer("meta_at"),
+	// when Spotify answered for this entry (found or not): it is asked once, never again after a real answer
+	spAt: integer("sp_at"),
+	// when Wikidata was asked for a photo (by the MusicBrainz id): asked again after a month, photos get added there
+	wdAt: integer("wd_at"),
 });
 
-export const albums = sqliteTable("albums", {
-	id: integer().primaryKey(),
+export const albums = pgTable("albums", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
 	title: text().notNull(),
 	titleNorm: text("title_norm").notNull(),
 	releaseDate: text("release_date"),
-	imageId: integer("image_id").references(() => images.id, { onDelete: "set null" } ),
+	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
-	baseListeners: integer("base_listeners").default(0).notNull(),
-	basePlaycount: integer("base_playcount").default(0).notNull(),
+	baseListeners: big("base_listeners").default(0).notNull(),
+	basePlaycount: big("base_playcount").default(0).notNull(),
+	// the MusicBrainz release group; metaAt as on artists, coverAt when a cover was last looked for
+	mbid: text(),
+	metaAt: integer("meta_at"),
+	coverAt: integer("cover_at"),
+	spAt: integer("sp_at"),
+	lfAt: integer("lf_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),
 ]);
 
-export const tracks = sqliteTable("tracks", {
-	id: integer().primaryKey(),
+export const tracks = pgTable("tracks", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
 	title: text().notNull(),
 	titleNorm: text("title_norm").notNull(),
 	duration: integer().default(0).notNull(),
 	albumId: integer("album_id").references(() => albums.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
-	baseListeners: integer("base_listeners").default(0).notNull(),
-	basePlaycount: integer("base_playcount").default(0).notNull(),
+	baseListeners: big("base_listeners").default(0).notNull(),
+	basePlaycount: big("base_playcount").default(0).notNull(),
+	metaAt: integer("meta_at"),
+	spAt: integer("sp_at"),
+	lfAt: integer("lf_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),
 ]);
 
-export const albumTracks = sqliteTable("album_tracks", {
+export const albumTracks = pgTable("album_tracks", {
 	albumId: integer("album_id").notNull().references(() => albums.id, { onDelete: "cascade" } ),
 	trackId: integer("track_id").notNull().references(() => tracks.id, { onDelete: "cascade" } ),
 	position: integer().notNull(),
@@ -90,14 +188,18 @@ export const albumTracks = sqliteTable("album_tracks", {
 	primaryKey({ columns: [table.albumId, table.trackId], name: "album_tracks_album_id_track_id_pk"})
 ]);
 
-export const scrobbles = sqliteTable("scrobbles", {
-	id: integer().primaryKey(),
+export const scrobbles = pgTable("scrobbles", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	trackId: integer("track_id").notNull().references(() => tracks.id, { onDelete: "cascade" } ),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
 	albumId: integer("album_id").references(() => albums.id, { onDelete: "set null" } ),
 	playedAt: integer("played_at").notNull(),
 	source: text().default("web").notNull(),
+	// the names as the player sent them, before matching, so a correction or a merge never loses what was played (null on older plays)
+	sentArtist: text("sent_artist"),
+	sentTrack: text("sent_track"),
+	sentAlbum: text("sent_album"),
 },
 (table) => [
 	index("scrobbles_user_artist").on(table.userId, table.artistId, table.playedAt),
@@ -109,7 +211,7 @@ export const scrobbles = sqliteTable("scrobbles", {
 	unique().on(table.userId, table.trackId, table.playedAt),
 ]);
 
-export const nowPlaying = sqliteTable("now_playing", {
+export const nowPlaying = pgTable("now_playing", {
 	userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" } ),
 	trackId: integer("track_id").notNull().references(() => tracks.id, { onDelete: "cascade" } ),
 	albumId: integer("album_id"),
@@ -117,7 +219,7 @@ export const nowPlaying = sqliteTable("now_playing", {
 	expiresAt: integer("expires_at").notNull(),
 });
 
-export const lovedTracks = sqliteTable("loved_tracks", {
+export const lovedTracks = pgTable("loved_tracks", {
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	trackId: integer("track_id").notNull().references(() => tracks.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
@@ -126,52 +228,69 @@ export const lovedTracks = sqliteTable("loved_tracks", {
 	primaryKey({ columns: [table.userId, table.trackId], name: "loved_tracks_user_id_track_id_pk"})
 ]);
 
-export const tags = sqliteTable("tags", {
-	id: integer().primaryKey(),
+export const tags = pgTable("tags", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	name: text().notNull(),
 	nameNorm: text("name_norm").notNull().unique(),
 });
 
-export const taggings = sqliteTable("taggings", {
+export const taggings = pgTable("taggings", {
 	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
 	tagId: integer("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" } ),
 	itemType: text("item_type").notNull(),
 	itemId: integer("item_id").notNull(),
 	createdAt: integer("created_at").notNull(),
 	weight: integer().default(1).notNull(),
+	artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+	albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+	trackRef: kindRef("item_type", "item_id", "track", () => tracks.id),
 },
 (table) => [
 	index("taggings_tag").on(table.tagId, table.itemType),
 	index("taggings_item").on(table.itemType, table.itemId),
 	uniqueIndex("taggings_unique").on(sql`COALESCE(${table.userId}, 0)`, table.tagId, table.itemType, table.itemId),
+	...kindIndexes("taggings", { artist: table.artistRef, album: table.albumRef, track: table.trackRef }),
 ]);
 
-export const wikis = sqliteTable("wikis", {
-	id: integer().primaryKey(),
+export const wikis = pgTable("wikis", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	itemType: text("item_type").notNull(),
 	itemId: integer("item_id").notNull(),
 	content: text().notNull(),
 	authorId: integer("author_id").references(() => users.id, { onDelete: "set null" } ),
 	version: integer().notNull(),
 	createdAt: integer("created_at").notNull(),
+	artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+	albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+	trackRef: kindRef("item_type", "item_id", "track", () => tracks.id),
+	tagRef: kindRef("item_type", "item_id", "tag", () => tags.id),
 },
 (table) => [
 	index("wikis_item").on(table.itemType, table.itemId, table.version),
+	...kindIndexes("wikis", { artist: table.artistRef, album: table.albumRef, track: table.trackRef, tag: table.tagRef }),
 ]);
 
-export const shouts = sqliteTable("shouts", {
-	id: integer().primaryKey(),
+export const shouts = pgTable("shouts", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	authorId: integer("author_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	targetType: text("target_type").notNull(),
 	targetId: integer("target_id").notNull(),
 	body: text().notNull(),
 	createdAt: integer("created_at").notNull(),
+	artistRef: kindRef("target_type", "target_id", "artist", () => artists.id),
+	albumRef: kindRef("target_type", "target_id", "album", () => albums.id),
+	trackRef: kindRef("target_type", "target_id", "track", () => tracks.id),
+	tagRef: kindRef("target_type", "target_id", "tag", () => tags.id),
+	userRef: kindRef("target_type", "target_id", "user", (): AnyPgColumn => users.id),
+	eventRef: kindRef("target_type", "target_id", "event", (): AnyPgColumn => events.id),
+	journalRef: kindRef("target_type", "target_id", "journal", (): AnyPgColumn => journals.id),
 },
 (table) => [
 	index("shouts_target").on(table.targetType, table.targetId, table.createdAt),
+	...kindIndexes("shouts", { artist: table.artistRef, album: table.albumRef, track: table.trackRef, tag: table.tagRef, user: table.userRef, event: table.eventRef, journal: table.journalRef }),
 ]);
 
-export const follows = sqliteTable("follows", {
+export const follows = pgTable("follows", {
 	followerId: integer("follower_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	followeeId: integer("followee_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
@@ -181,7 +300,7 @@ export const follows = sqliteTable("follows", {
 	primaryKey({ columns: [table.followerId, table.followeeId], name: "follows_follower_id_followee_id_pk"})
 ]);
 
-export const similarArtists = sqliteTable("similar_artists", {
+export const similarArtists = pgTable("similar_artists", {
 	artistId: integer("artist_id").notNull(),
 	similarId: integer("similar_id").notNull(),
 	score: real().notNull(),
@@ -191,13 +310,13 @@ export const similarArtists = sqliteTable("similar_artists", {
 	primaryKey({ columns: [table.artistId, table.similarId], name: "similar_artists_artist_id_similar_id_pk"})
 ]);
 
-export const meta = sqliteTable("meta", {
+export const meta = pgTable("meta", {
 	key: text().primaryKey(),
 	value: text().notNull(),
 });
 
-export const events = sqliteTable("events", {
-	id: integer().primaryKey(),
+export const events = pgTable("events", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	title: text().notNull(),
 	venue: text().notNull(),
 	city: text().notNull(),
@@ -207,9 +326,19 @@ export const events = sqliteTable("events", {
 	url: text().default("").notNull(),
 	creatorId: integer("creator_id").references(() => users.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
-});
+	// where it came from: "user" (added here), "musicbrainz" or "ticketmaster" (server/events/sync.ts), and its id there
+	source: text().default("user").notNull(),
+	sourceId: text("source_id"),
+	// the venue's coordinates, when known, for events near someone
+	lat: real(),
+	lon: real(),
+},
+(table) => [
+	uniqueIndex("events_source").on(table.source, table.sourceId),
+	index("events_starts").on(table.startsAt),
+]);
 
-export const eventArtists = sqliteTable("event_artists", {
+export const eventArtists = pgTable("event_artists", {
 	eventId: integer("event_id").notNull().references(() => events.id, { onDelete: "cascade" } ),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
 	position: integer().default(0).notNull(),
@@ -218,7 +347,7 @@ export const eventArtists = sqliteTable("event_artists", {
 	primaryKey({ columns: [table.eventId, table.artistId], name: "event_artists_event_id_artist_id_pk"})
 ]);
 
-export const eventAttendance = sqliteTable("event_attendance", {
+export const eventAttendance = pgTable("event_attendance", {
 	eventId: integer("event_id").notNull().references(() => events.id, { onDelete: "cascade" } ),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	status: text().notNull(),
@@ -228,74 +357,78 @@ export const eventAttendance = sqliteTable("event_attendance", {
 	primaryKey({ columns: [table.eventId, table.userId], name: "event_attendance_event_id_user_id_pk"})
 ]);
 
-export const playlists = sqliteTable("playlists", {
-	id: integer().primaryKey(),
+export const playlists = pgTable("playlists", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	title: text().notNull(),
 	description: text().default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
 
-export const playlistTracks = sqliteTable("playlist_tracks", {
-	id: integer().primaryKey(),
+export const playlistTracks = pgTable("playlist_tracks", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	playlistId: integer("playlist_id").notNull().references(() => playlists.id, { onDelete: "cascade" } ),
 	trackId: integer("track_id").notNull().references(() => tracks.id, { onDelete: "cascade" } ),
 	position: integer().notNull(),
 	addedAt: integer("added_at").notNull(),
 });
 
-export const obsessions = sqliteTable("obsessions", {
-	id: integer().primaryKey(),
+export const obsessions = pgTable("obsessions", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	trackId: integer("track_id").notNull().references(() => tracks.id, { onDelete: "cascade" } ),
 	comment: text().default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
 
-export const notifications = sqliteTable("notifications", {
-	id: integer().primaryKey(),
+export const notifications = pgTable("notifications", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	type: text().notNull(),
 	actorId: integer("actor_id").references(() => users.id, { onDelete: "cascade" } ),
 	data: text().default("{}").notNull(),
-	read: integer({ mode: "boolean" }).default(false).notNull(),
+	read: boolean().default(false).notNull(),
 	createdAt: integer("created_at").notNull(),
 },
 (table) => [
 	index("notifications_user").on(table.userId, table.createdAt),
 ]);
 
-export const apiApps = sqliteTable("api_apps", {
-	id: integer().primaryKey(),
+export const apiApps = pgTable("api_apps", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	name: text().notNull(),
 	description: text().default("").notNull(),
 	apiKey: text("api_key").notNull().unique(),
 	secret: text().notNull(),
+	// where web sign-in sends people back to (with ?token=) after they approve the app; empty when the app passes cb= each time
+	callbackUrl: text("callback_url").default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
 
-export const apiTokens = sqliteTable("api_tokens", {
+export const apiTokens = pgTable("api_tokens", {
 	token: text().primaryKey(),
 	appId: integer("app_id").notNull().references(() => apiApps.id, { onDelete: "cascade" } ),
 	userId: integer("user_id").references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
 });
 
-export const apiSessions = sqliteTable("api_sessions", {
+// `token` and `key` below hold digests too. A session not used for a year lapses (server/compat/repo.ts).
+export const apiSessions = pgTable("api_sessions", {
 	key: text().primaryKey(),
 	appId: integer("app_id").notNull().references(() => apiApps.id, { onDelete: "cascade" } ),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
+	lastUsedAt: integer("last_used_at").default(0).notNull(),
 });
 
-export const videoCache = sqliteTable("video_cache", {
+export const videoCache = pgTable("video_cache", {
 	key: text().primaryKey(),
 	videoId: text("video_id"),
 	fetchedAt: integer("fetched_at").notNull(),
 });
 
-export const blocks = sqliteTable("blocks", {
+export const blocks = pgTable("blocks", {
 	blockerId: integer("blocker_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	blockedId: integer("blocked_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	createdAt: integer("created_at").notNull(),
@@ -304,8 +437,8 @@ export const blocks = sqliteTable("blocks", {
 	primaryKey({ columns: [table.blockerId, table.blockedId], name: "blocks_blocker_id_blocked_id_pk"})
 ]);
 
-export const reports = sqliteTable("reports", {
-	id: integer().primaryKey(),
+export const reports = pgTable("reports", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	reporterId: integer("reporter_id").references(() => users.id, { onDelete: "set null" } ),
 	targetType: text("target_type").notNull(),
 	targetId: integer("target_id").notNull(),
@@ -323,8 +456,8 @@ export const reports = sqliteTable("reports", {
 	index("reports_status").on(table.status, table.createdAt),
 ]);
 
-export const journals = sqliteTable("journals", {
-	id: integer().primaryKey(),
+export const journals = pgTable("journals", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	title: text().notNull(),
 	body: text().notNull(),
@@ -335,8 +468,8 @@ export const journals = sqliteTable("journals", {
 	index("journals_user").on(table.userId, table.createdAt),
 ]);
 
-export const auditLog = sqliteTable("audit_log", {
-	id: integer().primaryKey(),
+export const auditLog = pgTable("audit_log", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" } ),
 	actorName: text("actor_name").default("").notNull(),
 	action: text().notNull(),
@@ -353,8 +486,8 @@ export const auditLog = sqliteTable("audit_log", {
 	index("audit_time").on(table.createdAt),
 ]);
 
-export const modNotes = sqliteTable("mod_notes", {
-	id: integer().primaryKey(),
+export const modNotes = pgTable("mod_notes", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	authorId: integer("author_id").references(() => users.id, { onDelete: "set null" } ),
 	body: text().notNull(),
@@ -364,23 +497,28 @@ export const modNotes = sqliteTable("mod_notes", {
 	index("mod_notes_user").on(table.userId, table.createdAt),
 ]);
 
-export const wikiLocks = sqliteTable("wiki_locks", {
+export const wikiLocks = pgTable("wiki_locks", {
 	itemType: text("item_type").notNull(),
 	itemId: integer("item_id").notNull(),
 	lockedBy: integer("locked_by").references(() => users.id, { onDelete: "set null" } ),
 	reason: text().default("").notNull(),
 	createdAt: integer("created_at").notNull(),
+	artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+	albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+	trackRef: kindRef("item_type", "item_id", "track", () => tracks.id),
+	tagRef: kindRef("item_type", "item_id", "tag", () => tags.id),
 },
 (table) => [
-	primaryKey({ columns: [table.itemType, table.itemId], name: "wiki_locks_item_type_item_id_pk"})
+	primaryKey({ columns: [table.itemType, table.itemId], name: "wiki_locks_item_type_item_id_pk"}),
+	...kindIndexes("wiki_locks", { artist: table.artistRef, album: table.albumRef, track: table.trackRef, tag: table.tagRef }),
 ]);
 
-export const siteSettings = sqliteTable("site_settings", {
+export const siteSettings = pgTable("site_settings", {
 	key: text().primaryKey(),
 	value: text().notNull(),
 });
 
-export const userArtists = sqliteTable("user_artists", {
+export const userArtists = pgTable("user_artists", {
 	userId: integer("user_id").notNull(),
 	artistId: integer("artist_id").notNull(),
 	plays: integer().notNull(),
@@ -391,7 +529,7 @@ export const userArtists = sqliteTable("user_artists", {
 	primaryKey({ columns: [table.userId, table.artistId], name: "user_artists_user_id_artist_id_pk"})
 ]);
 
-export const userAlbums = sqliteTable("user_albums", {
+export const userAlbums = pgTable("user_albums", {
 	userId: integer("user_id").notNull(),
 	albumId: integer("album_id").notNull(),
 	plays: integer().notNull(),
@@ -402,7 +540,7 @@ export const userAlbums = sqliteTable("user_albums", {
 	primaryKey({ columns: [table.userId, table.albumId], name: "user_albums_user_id_album_id_pk"})
 ]);
 
-export const userTracks = sqliteTable("user_tracks", {
+export const userTracks = pgTable("user_tracks", {
 	userId: integer("user_id").notNull(),
 	trackId: integer("track_id").notNull(),
 	plays: integer().notNull(),
@@ -413,8 +551,8 @@ export const userTracks = sqliteTable("user_tracks", {
 	primaryKey({ columns: [table.userId, table.trackId], name: "user_tracks_user_id_track_id_pk"})
 ]);
 
-export const dmThreads = sqliteTable("dm_threads", {
-	id: integer().primaryKey(),
+export const dmThreads = pgTable("dm_threads", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userLo: integer("user_lo").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	userHi: integer("user_hi").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	status: text().default("request").notNull(),
@@ -432,8 +570,8 @@ export const dmThreads = sqliteTable("dm_threads", {
 	unique().on(table.userLo, table.userHi),
 ]);
 
-export const dmMessages = sqliteTable("dm_messages", {
-	id: integer().primaryKey(),
+export const dmMessages = pgTable("dm_messages", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	threadId: integer("thread_id").notNull().references(() => dmThreads.id, { onDelete: "cascade" } ),
 	senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	body: text().notNull(),
@@ -446,8 +584,8 @@ export const dmMessages = sqliteTable("dm_messages", {
 	index("dm_messages_thread").on(table.threadId, table.id),
 ]);
 
-export const dmFlags = sqliteTable("dm_flags", {
-	id: integer().primaryKey(),
+export const dmFlags = pgTable("dm_flags", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	kind: text().notNull(),
 	detail: text().default("").notNull(),
@@ -463,7 +601,7 @@ export const dmFlags = sqliteTable("dm_flags", {
 
 // ---------- taste: similar artists and listening neighbours, worked out in the background ----------
 /** Artists and users whose listening changed and whose matches are due a refresh. */
-export const tasteQueue = sqliteTable("taste_queue", {
+export const tasteQueue = pgTable("taste_queue", {
 	kind: text().notNull(), // "artist" or "user"
 	id: integer().notNull(),
 	queuedAt: integer("queued_at").notNull(),
@@ -474,7 +612,7 @@ export const tasteQueue = sqliteTable("taste_queue", {
 ]);
 
 /** Length of each artist's listener vector (and each user's artist vector), needed to turn overlap into a 0-1 score. */
-export const tasteNorms = sqliteTable("taste_norms", {
+export const tasteNorms = pgTable("taste_norms", {
 	kind: text().notNull(),
 	id: integer().notNull(),
 	norm: real().notNull(),
@@ -484,7 +622,7 @@ export const tasteNorms = sqliteTable("taste_norms", {
 	primaryKey({ columns: [table.kind, table.id] }),
 ]);
 
-export const userNeighbours = sqliteTable("user_neighbours", {
+export const userNeighbours = pgTable("user_neighbours", {
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	neighbourId: integer("neighbour_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	score: real().notNull(),
@@ -494,8 +632,18 @@ export const userNeighbours = sqliteTable("user_neighbours", {
 	index("user_neighbours_best").on(table.userId, table.score),
 ]);
 
+/** Taste vectors learned from everyone's listening at once (server/recommend/als.ts), one per user and per artist. */
+export const tasteFactors = pgTable("taste_factors", {
+	kind: text().notNull(), // "artist" or "user"
+	id: integer().notNull(),
+	vec: bytea().notNull(), // float32 values
+},
+(table) => [
+	primaryKey({ columns: [table.kind, table.id] }),
+]);
+
 /** A listener's linked Spotify account. Tokens are sealed (server/spotify/seal.ts), never stored in the clear. */
-export const spotifyLinks = sqliteTable("spotify_links", {
+export const spotifyLinks = pgTable("spotify_links", {
 	userId: integer("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" } ),
 	/** The listener's own Spotify app (each brings one: Spotify caps a development app at a handful of users). */
 	clientId: text("client_id").notNull().default(""),
@@ -505,13 +653,15 @@ export const spotifyLinks = sqliteTable("spotify_links", {
 	refreshToken: text("refresh_token").notNull(),
 	expiresAt: integer("expires_at").notNull(),
 	/** played_at (ms) of the newest play already imported: the next poll asks only for later ones */
-	cursor: integer().default(0).notNull(),
+	cursor: big("cursor").default(0).notNull(),
 	recentAt: integer("recent_at").default(0).notNull(),
 	playingAt: integer("playing_at").default(0).notNull(),
 	importedAt: integer("imported_at"),
 	imported: integer().default(0).notNull(),
 	/** set when Spotify refuses the link (revoked access): polling stops until the listener reconnects */
 	broken: text(),
+	/** what Spotify granted, space separated; "streaming" means the browser player can play through it */
+	scopes: text("scopes").default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 },
 (table) => [
@@ -519,7 +669,7 @@ export const spotifyLinks = sqliteTable("spotify_links", {
 ]);
 
 /** A sign-in with Spotify in progress, between leaving for Spotify and coming back. Lives ten minutes. */
-export const spotifyAuth = sqliteTable("spotify_auth", {
+export const spotifyAuth = pgTable("spotify_auth", {
 	state: text().primaryKey(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	verifier: text().notNull(),
@@ -529,3 +679,41 @@ export const spotifyAuth = sqliteTable("spotify_auth", {
 	redirectUri: text("redirect_uri").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
+
+// Imports of past listening (server/listening/imports.ts), worked through in the background.
+// kind: "scrobbles" or "loved" (from a file), or "lastfm" (read from a Last.fm profile, plays then loved tracks).
+// status: "uploading" (file chunks still arriving), "queued", "running", "done", "failed" or "cancelled".
+// cursor: how many rows have been worked through (files), or Last.fm pages read in the current phase.
+export const importJobs = pgTable("import_jobs", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	kind: text().notNull(),
+	status: text().notNull(),
+	lastfmUser: text("lastfm_user"),
+	// Last.fm: "scrobbles" then "loved"; plays after `lastfmTo` are left out so pages don't shift while reading
+	phase: text().default("scrobbles").notNull(),
+	lastfmTo: integer("lastfm_to"),
+	pages: integer().default(0).notNull(),
+	cursor: integer().default(0).notNull(),
+	total: integer().default(0).notNull(),
+	done: integer().default(0).notNull(),
+	accepted: integer().default(0).notNull(),
+	failures: integer().default(0).notNull(),
+	error: text(),
+	createdAt: integer("created_at").notNull(),
+	updatedAt: integer("updated_at").notNull(),
+},
+(table) => [
+	index("import_jobs_user").on(table.userId, table.createdAt),
+	index("import_jobs_status").on(table.status),
+]);
+
+// An uploaded file's rows, 20,000 to a chunk (JSON), dropped once worked through.
+export const importChunks = pgTable("import_chunks", {
+	jobId: integer("job_id").notNull().references(() => importJobs.id, { onDelete: "cascade" } ),
+	n: integer().notNull(),
+	rows: text().notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.jobId, table.n], name: "import_chunks_pk" }),
+]);

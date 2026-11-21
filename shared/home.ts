@@ -14,8 +14,8 @@ export type Charts<T extends TopArtist | TopAlbum | TopTrack | ChartTag = TopArt
 export type FriendActivity = { user: PublicUser; track: NowPlaying | RecentTrack; nowPlaying: boolean };
 /** A track loved by someone you follow. `user` is their username. */
 export type FriendLove = {
-  id: number; title: string; duration: number; artist: string; album: string | null; image: number | null;
-  lovedAt: number; user: string; userImage: number | null; loved: number;
+  id: number; title: string; duration: number; artist: string; album: string | null; image: string | null;
+  lovedAt: number; user: string; userImage: string | null; loved: number;
 };
 export type SiteTotals = { scrobbles: number; users: number; artists: number; tracks: number };
 /**

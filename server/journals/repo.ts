@@ -34,8 +34,8 @@ export async function updateJournal(id: number, text: JournalText): Promise<void
 }
 
 /** Deletes a post and the comments under it. The Tx form joins a transaction already open. */
-export function dropJournalTx(tx: Tx, id: number): void {
-  tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), eq(shouts.targetId, id))).run();
-  tx.delete(journals).where(eq(journals.id, id)).run();
+export async function dropJournalTx(tx: Tx, id: number): Promise<void> {
+  await tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), eq(shouts.targetId, id)));
+  await tx.delete(journals).where(eq(journals.id, id));
 }
-export const dropJournal = async (id: number): Promise<void> => transact(tx => dropJournalTx(tx, id));
+export const dropJournal = async (id: number): Promise<void> => (await transact(async tx => (await dropJournalTx(tx, id))));

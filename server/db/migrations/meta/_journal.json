@@ -1,40 +1,131 @@
 {
   "version": "7",
-  "dialect": "sqlite",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "6",
-      "when": 1795199027855,
+      "version": "7",
+      "when": 1795220829424,
       "tag": "0000_baseline",
       "breakpoints": true
     },
     {
       "idx": 1,
-      "version": "6",
-      "when": 1795199037995,
+      "version": "7",
+      "when": 1795220843131,
       "tag": "0001_scrobble_tallies",
       "breakpoints": true
     },
     {
       "idx": 2,
-      "version": "6",
-      "when": 1795199282655,
-      "tag": "0002_taste",
+      "version": "7",
+      "when": 1795223726010,
+      "tag": "0002_image_storage",
       "breakpoints": true
     },
     {
       "idx": 3,
-      "version": "6",
-      "when": 1795203856990,
-      "tag": "0003_spotify",
+      "version": "7",
+      "when": 1795224403001,
+      "tag": "0003_email",
       "breakpoints": true
     },
     {
       "idx": 4,
-      "version": "6",
-      "when": 1795204594849,
-      "tag": "0004_spotify_own_app",
+      "version": "7",
+      "when": 1795225672863,
+      "tag": "0004_private_listening",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795227730240,
+      "tag": "0005_email_notify",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795228030940,
+      "tag": "0006_app_callback",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795228224206,
+      "tag": "0007_spotify_scopes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795233003349,
+      "tag": "0008_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795237110448,
+      "tag": "0009_spotify_answered",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795240540030,
+      "tag": "0010_event_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795240992923,
+      "tag": "0011_imports",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795241558364,
+      "tag": "0012_lastfm_meta",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795246711904,
+      "tag": "0013_theme",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795252333813,
+      "tag": "0014_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1795253154382,
+      "tag": "0015_oauth",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795253657953,
+      "tag": "0016_pronouns",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795255033871,
+      "tag": "0017_wikidata",
       "breakpoints": true
     }
   ]

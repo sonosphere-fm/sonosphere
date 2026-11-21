@@ -17,7 +17,7 @@ export const SOURCES = Object.keys(FILES) as Source[];
 /** The downloaded files as they came (nothing in them has been checked) and when they were fetched. */
 export type Raw = Record<Source, unknown> & { at: number };
 
-const CACHE = `${dirname(process.env.DB_PATH || "data/needle.db")}/corrections.json`;
+const CACHE = `${process.env.DATA_DIR || "data"}/corrections.json`;
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
 /** The saved copy, or null when there is none or it cannot be read. */

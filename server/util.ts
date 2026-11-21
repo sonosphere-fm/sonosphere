@@ -1,5 +1,7 @@
 // Small helpers with no dependencies, used across the server.
 export const now = () => Math.floor(Date.now() / 1000);
+/** SHA-256 of a secret, in hex: what the database keeps of sign-in tokens, so a copy of it cannot be used to sign in. */
+export const digest = (secret: string) => new Bun.CryptoHasher("sha256").update(secret).digest("hex");
 /** The form names are compared in: case, spacing and Unicode variants folded away. */
 export const norm = (s: string) => s.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
 /** Tidies free text from a request: any value becomes a trimmed, single-spaced string of at most `max` characters. */

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Arrow } from "../icons";
 import { useTitle } from "../lib";
 
 // ---------- developer docs ----------
@@ -16,20 +17,27 @@ export function Developers() {
   useTitle("API");
   return (
     <div className="wrap page">
-      <h1 className="page-title">Spin API</h1>
+      <h1 className="page-title">Sonosphere API</h1>
       <div className="cols">
         <div className="main prose docs">
-          <p>Spin exposes a web-service API that follows the Last.fm 2.0 protocol, so existing scrobbler code usually works by pointing it at a different root URL.</p>
+          <p>Sonosphere exposes a web-service API that follows the Last.fm 2.0 protocol, so existing scrobbler code usually works by pointing it at a different root URL.</p>
           <h2>Root URL</h2>
           <pre>{origin}/2.0/</pre>
           <p>Send <code>method</code>, <code>api_key</code> and the method's parameters as a query string (reads) or form-encoded POST body (writes). Add <code>format=json</code> for JSON; XML is the default.</p>
           <h2>1. Get an API key</h2>
-          <p>Create an API account under <Link to="/settings/applications">Settings → Applications</Link>. You receive an API key and a shared secret.</p>
+          <p>Create an API account under <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link>. You receive an API key and a shared secret.</p>
           <h2>2. Authenticate a user</h2>
+          <h3>Web applications</h3>
+          <ol>
+            <li>Send the user to <code>{origin}/api/auth?api_key=KEY</code>, optionally with <code>&amp;cb=URL</code>. Without <code>cb</code>, the callback URL saved with your API account is used. If you saved one, <code>cb</code> must be on the same site.</li>
+            <li>Once they approve, they are sent to the callback with <code>?token=TOKEN</code> added.</li>
+            <li>Call <code>auth.getSession</code> with that token (signed) within an hour to receive a session key. Session keys do not expire.</li>
+          </ol>
+          <h3>Desktop applications</h3>
           <ol>
             <li>Call <code>auth.getToken</code> (signed).</li>
-            <li>Send the user to <code>{origin}/api/auth?api_key=KEY&amp;token=TOKEN</code> to approve access. Optionally add <code>cb=</code> to be redirected back.</li>
-            <li>Call <code>auth.getSession</code> with the token (signed) to receive a session key. Session keys do not expire.</li>
+            <li>Send the user to <code>{origin}/api/auth?api_key=KEY&amp;token=TOKEN</code> to approve access. A <code>cb</code> or saved callback URL sends them back afterwards; otherwise they are told to return to your app.</li>
+            <li>Call <code>auth.getSession</code> with the token (signed) to receive a session key.</li>
           </ol>
           <p>Scripts and desktop apps can instead call <code>auth.getMobileSession</code> with <code>username</code> and <code>password</code> over POST.</p>
           <h2>3. Sign your calls</h2>

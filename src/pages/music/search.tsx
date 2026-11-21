@@ -46,7 +46,7 @@ export function SearchPage() {
           <aside className="side">
             {type === "all" && q.data && q.data.tags.length > 0 && <Section title="Tags"><TagChips tags={q.data.tags} /></Section>}
             {type === "all" && q.data && q.data.users.length > 0 && <Section title="Listeners"><UserList items={q.data.users.slice(0, 5)} /></Section>}
-            <Section title="Can't find it?"><p className="muted">Spin's catalogue grows as people listen. Scrobble a track and its artist and album pages appear straight away.</p><Button kind="btn ghost" href="/scrobble">Scrobble a track</Button></Section>
+            <Section title="Can't find it?"><p className="muted">Sonosphere's catalogue grows as people listen. Scrobble a track and its artist and album pages appear straight away.</p><Button kind="btn ghost" href="/scrobble">Scrobble a track</Button></Section>
           </aside>
         </div>
       </div>

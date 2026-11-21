@@ -1,9 +1,10 @@
 import { Ico } from "../../icons";
+import { Lyrics } from "../../ui/lyrics";
 import { useState, type FormEvent, Suspense } from "react";
 import { Button, Input, Modal } from "../../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { albumUrl, api, artistUrl, dec, dur, plural, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Async, Section, Tabs, useAction } from "../../ui/base";
+import { Async, Section, Tabs, useAction, Pane } from "../../ui/base";
 import { Grid, LoveButton, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
@@ -54,7 +55,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
         <MusicHero image={t.artistImage ?? t.image} soft={!t.artistImage} title={t.title} over={<Link to={artistUrl(t.artist)}>{t.artist}</Link>}
           tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />}
           stats={<><HeroStat label="Listeners" value={t.listeners} /><HeroStat label="Scrobbles" value={t.playcount} /></>}
-          cards={tab === "overview" && t.album ? <FeatureCard label="From the album" to={albumUrl(t.artist, t.album)} image={t.image} name={t.album} artist={t.artist} title={t.album} sub={t.artist} /> : null}
+          cards={tab === "overview" && t.album ? <FeatureCard label="From the album" to={albumUrl(t.artist, t.album)} image={t.image} title={t.album} sub={t.artist} /> : null}
           actions={<>
             <PlayButton queue={[t, ...t.similar]} label="Play track" />
             <LoveButton track={t} loved={t.loved} label onChange={q.reload} />
@@ -66,6 +67,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
         {modal === "playlist" && <Suspense fallback={null}><AddToPlaylist track={t} onClose={() => setModal(null)} /></Suspense>}
         {modal === "obsession" && <SetObsession track={t} onClose={() => setModal(null)} />}
         <div className="wrap page mpage">
+          <Pane>
           {tab === "wiki" ? <WikiPage type="track" id={t.id} title={t.title} /> : (
             <div className="cols">
               <div className="main">
@@ -73,6 +75,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                 <About wiki={t.wiki} to={`${base}/+wiki`} facts={[["Length", t.duration > 0 ? dur(t.duration) : "Unknown"], ["Loved by", plural(t.loves, "listener")]]}>
                   <Tagger type="track" id={t.id} tags={t.tags} myTags={t.myTags} />
                 </About>
+                <Lyrics track={t} />
                 <Section title="Similar tracks" aside={<PlayButton queue={t.similar} />}><TrackList items={t.similar} count="listeners" /></Section>
                 {t.albums.length > 0 && <Section title="Appears on"><Grid below kind="album" cols={4} items={t.albums} /></Section>}
                 <Listeners items={t.topListeners} />
@@ -84,6 +87,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
               </aside>
             </div>
           )}
+          </Pane>
         </div>
         {tab === "overview" && <TrendingBand />}
       </>

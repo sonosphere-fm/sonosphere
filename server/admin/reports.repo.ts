@@ -1,7 +1,7 @@
 // Data access for the report queue of the staff API: listing reports with their counts, and resolving them
 // (dismiss, remove the content, suspend or mute its author), which closes every open report about the same thing.
 import { and, count, desc, eq, ne, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Tx } from "../db/client";
 import { dmMessages, reports, users } from "../db/schema";
 import { bad } from "../http";
@@ -52,29 +52,29 @@ const OUTCOME: Record<Decision, string> = { dismiss: "dismissed", remove: "conte
  * Anything but a dismissal also removes the content if it still exists. A removed direct message is added to
  * `removed`, so both people's open tabs can be told once the transaction commits.
  */
-function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: string, configured: string[], removed: Removed[]): number {
-  const t = reportTargetTx(tx, r.targetType, r.targetId);
-  const author = t?.authorId ? tx.select().from(users).where(eq(users.id, t.authorId)).get() ?? null : null;
+async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: string, configured: string[], removed: Removed[]): Promise<number> {
+  const t = (await reportTargetTx(tx, r.targetType, r.targetId));
+  const author = t?.authorId ? (await tx.select().from(users).where(eq(users.id, t.authorId)))[0] ?? null : null;
   if (action !== "dismiss" && t) {
     if (action === "suspend") {
       if (!author) return bad("The author's account no longer exists");
       checkCanAct(me, author, "suspend", configured);
-      tx.update(users).set({ suspended: true }).where(eq(users.id, author.id)).run();
-      auditTx(tx, me, { action: "user.suspend", targetType: "user", targetId: author.id, label: author.username, subjectId: author.id, note: why || `From report #${r.id}` });
+      await tx.update(users).set({ suspended: true }).where(eq(users.id, author.id));
+      await auditTx(tx, me, { action: "user.suspend", targetType: "user", targetId: author.id, label: author.username, subjectId: author.id, note: why || `From report #${r.id}` });
     }
     if (action === "mute") {
       if (r.targetType !== "dm") bad("Muting is only for reported messages");
       if (!author) return bad("The author's account no longer exists");
       checkCanAct(me, author, "mute", configured);
-      tx.update(users).set({ dmMuted: true }).where(eq(users.id, author.id)).run();
-      auditTx(tx, me, { action: "dm.mute", targetType: "user", targetId: author.id, label: author.username, subjectId: author.id, note: why || `From report #${r.id}` });
+      await tx.update(users).set({ dmMuted: true }).where(eq(users.id, author.id));
+      await auditTx(tx, me, { action: "dm.mute", targetType: "user", targetId: author.id, label: author.username, subjectId: author.id, note: why || `From report #${r.id}` });
     }
     if (r.targetType === "user" && action === "remove") bad("A profile can't be removed: suspend the account or dismiss the report");
-    const gone = removeContentTx(tx, r.targetType, r.targetId, me.id);
+    const gone = (await removeContentTx(tx, r.targetType, r.targetId, me.id));
     if (gone) removed.push(gone);
   }
-  const closed = closeReportsTx(tx, r.targetType, r.targetId, OUTCOME[action], me.id, why);
-  auditTx(tx, me, {
+  const closed = (await closeReportsTx(tx, r.targetType, r.targetId, OUTCOME[action], me.id, why));
+  await auditTx(tx, me, {
     action: `report.${action}`, targetType: r.targetType, targetId: r.targetId, label: (t?.where ?? snapshotOf(r.snapshot).where ?? "") + (t?.author ? ` by ${t.author}` : ""),
     subjectId: author?.id ?? null, note: why, data: { report: r.id, closed, reason: r.reason },
   });
@@ -84,18 +84,18 @@ function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: string,
 /** Resolves one report, all or nothing. `configured` is the list from configAdmins(). Returns how many reports it closed. */
 export async function resolve(me: User, r: ReportRow, action: Decision, why: string, configured: string[]): Promise<number> {
   const removed: Removed[] = [];
-  const closed = transact(tx => decideTx(tx, me, r, action, why, configured, removed));
+  const closed = (await transact(async tx => (await decideTx(tx, me, r, action, why, configured, removed))));
   await announceRemoved(removed);
   return closed;
 }
 /** Dismisses each of the given reports that is still open, all or nothing. Returns how many reports were closed. */
 export async function dismissAll(me: User, ids: number[], why: string): Promise<number> {
-  return transact(tx => {
+  return (await transact(async tx => {
     let closed = 0;
     for (const id of ids) {
-      const r = tx.select().from(reports).where(and(eq(reports.id, id), eq(reports.status, "open"))).get();
-      if (r) closed += decideTx(tx, me, r, "dismiss", why, [], []);
+      const r = (await tx.select().from(reports).where(and(eq(reports.id, id), eq(reports.status, "open"))))[0];
+      if (r) closed += (await decideTx(tx, me, r, "dismiss", why, [], []));
     }
     return closed;
-  });
+  }));
 }

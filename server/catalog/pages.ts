@@ -24,7 +24,7 @@ async function trend(scope: Scope, weeks = 26): Promise<TrendPoint[]> {
 export async function artistPage(a: repo.Artist, viewerId: number | undefined): Promise<ArtistPage> {
   const stats = await counts({ artistId: a.id });
   return {
-    id: a.id, name: a.name, mbid: mbidOfArtist(a.name), image: a.imageId, listeners: stats.listeners, playcount: stats.playcount,
+    id: a.id, name: a.name, mbid: mbidOfArtist(a.name) || a.mbid || "", spotifyId: a.spotifyId || "", image: a.imageId, listeners: stats.listeners, playcount: stats.playcount,
     userPlaycount: viewerId ? (await counts({ artistId: a.id, userId: viewerId })).playcount : 0,
     tags: await topTags("artist", a.id, 8), myTags: await myTags(viewerId, "artist", a.id), wiki: await latestWiki("artist", a.id),
     similar: await similarArtists(a.id, 6),
@@ -48,13 +48,15 @@ export async function similarWithTags(artistId: number): Promise<ArtistSimilar["
 
 export async function albumPage(al: repo.AlbumWithArtist, viewerId: number): Promise<AlbumPage> {
   const stats = await counts({ albumId: al.id });
+  const artistImage = (await repo.findItem("artist", al.artistId))?.imageId ?? null;
+  // rows fall back to the artist photo when the album has no cover, as the track page does
   const tracks = (await repo.trackList(al.id, viewerId)).map(t => ({
-    position: t.position, id: t.id, title: t.title, duration: t.duration, artist: al.artist, album: al.title, image: al.imageId,
+    position: t.position, id: t.id, title: t.title, duration: t.duration, artist: al.artist, album: al.title, image: al.imageId ?? artistImage,
     playcount: t.playcount, listeners: t.listeners, loved: t.loved,
   }));
   return {
-    id: al.id, title: al.title, artist: al.artist, mbid: mbidOfAlbum(al.artist, al.title), image: al.imageId, releaseDate: al.releaseDate,
-    artistImage: (await repo.findItem("artist", al.artistId))?.imageId ?? null,
+    id: al.id, title: al.title, artist: al.artist, mbid: mbidOfAlbum(al.artist, al.title) || al.mbid || "", image: al.imageId, releaseDate: al.releaseDate,
+    artistImage,
     listeners: stats.listeners, playcount: stats.playcount,
     userPlaycount: viewerId ? (await counts({ albumId: al.id, userId: viewerId })).playcount : 0,
     tags: await topTags("album", al.id, 8), myTags: await myTags(viewerId, "album", al.id), wiki: await latestWiki("album", al.id), tracks,

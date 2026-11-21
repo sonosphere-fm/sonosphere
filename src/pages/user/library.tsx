@@ -113,7 +113,7 @@ function LibraryArtists({ items, name, rank }: { items: TopArtist[]; name: strin
   if (!items.length) return <Empty>Nothing to show for this period.</Empty>;
   return (
     <table className="chartlist"><tbody>{items.map((a, i) => (
-      <tr key={a.id}><td className="c-rank">{rank + i}</td><td className="c-art"><Link to={artistUrl(a.name)} tabIndex={-1}><Art name={a.name} image={a.image} kind="artist" /></Link></td>
+      <tr key={a.id}><td className="c-rank">{rank + i}</td><td className="c-art"><Link to={artistUrl(a.name)} tabIndex={-1}><Art image={a.image} kind="artist" /></Link></td>
         <td className="c-name"><Link className="strong" to={artistUrl(a.name)}>{a.name}</Link></td>
         <td className="c-bar"><Link className="bar" to={`${userUrl(name)}/library/music/${enc(a.name)}`}><span style={{ width: `${(a.playcount / max) * 100}%` }} /><b>{num(a.playcount)}</b> <em>scrobbles</em></Link></td></tr>
     ))}</tbody></table>

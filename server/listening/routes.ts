@@ -1,7 +1,7 @@
 // HTTP routes for a listener's own plays: scrobbling, now playing, editing and deleting plays, and loving tracks.
 import { requireItem, requireTrack } from "../catalog/service";
 import { need } from "../guards";
-import { bad, int, missing, oneOf, Router, type Ctx } from "../http";
+import { bad, int, missing, oneOf, Router, throttle, type Ctx } from "../http";
 import { clean } from "../util";
 import * as repo from "./repo";
 import { editScrobble, editScrobbles, importLoved, scrobbleMany, setNowPlaying, type ScrobbleInput } from "./service";
@@ -22,6 +22,7 @@ async function ownScrobble(c: Ctx) {
 
 router.post<ScrobbleResponse>("/api/scrobble", async c => {
   const u = need(c);
+  await throttle(`scrobble-web:${u.id}`, 200, 3600, "Too many scrobbles from the website this hour. Try again later.");
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [c.body];
   if (list.length > 5000) bad("At most 5000 scrobbles per request");
   const inputs = list.map(asInput), results = await scrobbleMany(u.id, inputs, clean(c.body.source, 20) || "web");
@@ -72,6 +73,7 @@ router.post<LovedImported>("/api/love/import", async c => {
 
 router.post<Loved>("/api/love", async c => {
   const u = need(c), loved = c.body.loved !== false;
+  await throttle(`love:${u.id}`, 300, 3600);
   const track = c.body.trackId ? (await requireItem("track", c.body.trackId, ["track"])).row : await requireTrack(text(c.body.artist), text(c.body.track));
   await repo.setLoved(u.id, track.id, loved);
   return { loved };

@@ -21,18 +21,18 @@ export type Listener = PublicUser & { playcount: number };
 /** A concert or festival as shown in a list. `status` is the viewer's own answer, if they gave one. */
 export type EventSummary = {
   id: number; title: string; venue: string; city: string; country: string; startsAt: number; description: string; url: string;
-  creator: string | null; going: number; interested: number; status: string | null;
-  artists: { name: string; image: number | null }[];
+  creator: string | null; source: string; going: number; interested: number; status: string | null;
+  artists: { name: string; image: string | null }[];
 };
 
 /** An album in an artist's discography. `releaseDate` is "YYYY", "YYYY-MM" or "YYYY-MM-DD" when known. */
-export type ArtistAlbum = { id: number; title: string; image: number | null; releaseDate: string | null; artist: string; listeners: number; trackCount: number };
-export type ArtistAlbumWithPlays = { id: number; title: string; image: number | null; releaseDate: string | null; artist: string; playcount: number; listeners: number; trackCount: number };
-export type LatestAlbum = { id: number; title: string; image: number | null; releaseDate: string | null; artist: string };
+export type ArtistAlbum = { id: number; title: string; image: string | null; releaseDate: string | null; artist: string; listeners: number; trackCount: number };
+export type ArtistAlbumWithPlays = { id: number; title: string; image: string | null; releaseDate: string | null; artist: string; playcount: number; listeners: number; trackCount: number };
+export type LatestAlbum = { id: number; title: string; image: string | null; releaseDate: string | null; artist: string };
 
 /** GET /api/artist */
 export type ArtistPage = {
-  id: number; name: string; mbid: string; image: number | null; listeners: number; playcount: number; userPlaycount: number;
+  id: number; name: string; mbid: string; spotifyId: string; image: string | null; listeners: number; playcount: number; userPlaycount: number;
   tags: TagCount[]; myTags: string[]; wiki: WikiVersion | null;
   similar: SimilarArtist[]; topTracks: TopTrack[]; topAlbums: ArtistAlbum[]; latestAlbum: LatestAlbum | null; weekTrack: TopTrack | null;
   albumCount: number; trackCount: number;
@@ -49,14 +49,14 @@ export type ArtistListeners = { items: Listener[] };
 
 /** A track in an album's track list. */
 export type AlbumTrack = {
-  position: number; id: number; title: string; duration: number; artist: string; album: string; image: number | null;
+  position: number; id: number; title: string; duration: number; artist: string; album: string; image: string | null;
   playcount: number; listeners: number; loved: number;
 };
-export type OtherAlbum = { id: number; title: string; image: number | null; artist: string; listeners: number };
+export type OtherAlbum = { id: number; title: string; image: string | null; artist: string; listeners: number };
 
 /** GET /api/album. `duration` is the length of the whole track list in seconds. */
 export type AlbumPage = {
-  id: number; title: string; artist: string; mbid: string; image: number | null; releaseDate: string | null; artistImage: number | null;
+  id: number; title: string; artist: string; mbid: string; image: string | null; releaseDate: string | null; artistImage: string | null;
   listeners: number; playcount: number; userPlaycount: number;
   tags: TagCount[]; myTags: string[]; wiki: WikiVersion | null;
   tracks: AlbumTrack[]; duration: number; otherAlbums: OtherAlbum[];
@@ -64,11 +64,11 @@ export type AlbumPage = {
 };
 
 /** An album a track appears on. */
-export type TrackAlbum = { id: number; title: string; image: number | null; artist: string };
+export type TrackAlbum = { id: number; title: string; image: string | null; artist: string };
 
 /** GET /api/track. `album` and `image` come from the track's main album; `loves` counts everyone who loved it. */
 export type TrackPage = {
-  id: number; title: string; artist: string; duration: number; album: string | null; image: number | null; artistImage: number | null;
+  id: number; title: string; artist: string; duration: number; album: string | null; image: string | null; artistImage: string | null;
   listeners: number; playcount: number; userPlaycount: number; loved: boolean; loves: number;
   tags: TagCount[]; myTags: string[]; wiki: WikiVersion | null;
   albums: TrackAlbum[]; similar: TopTrack[];

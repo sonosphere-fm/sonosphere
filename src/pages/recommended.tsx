@@ -20,7 +20,7 @@ export function Recommended() {
         <Async q={q}>{d => {
           const why = new Map(d.artists.map(a => [a.name, a.because]));
           if (at === "events") return d.events.length ? <EventList items={d.events} /> : <Empty>No upcoming events right now.</Empty>;
-          if (!d.artists.length) return <Empty>Scrobble a few more tracks and recommendations will appear here.</Empty>;
+          if (!d.artists.length) return <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>;
           if (at === "tracks") return <Section title="Tracks to try" aside={<span className="row"><PlayButton queue={d.tracks} label="Play all" /><StationButton type="recommended" label="Recommendations radio" ghost /></span>}><TrackList items={d.tracks} count="listeners" /></Section>;
           return <div className="recs four">{at === "albums"
             ? d.albums.map(x => <RecCard key={x.id} kind="album" item={x} because={why.get(x.artist)} />)

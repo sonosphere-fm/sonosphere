@@ -68,6 +68,9 @@ const trackOf = async (p: Params) => (await findTrack(text(p.artist), text(p.tra
 const albumOf = async (p: Params) => (await findAlbum(text(p.artist), text(p.album))) ?? fail(6, "Album not found");
 const tagOf = async (p: Params) => (await findTag(text(p.tag))) ?? fail(6, "Tag not found");
 /** The user named, or failing that the one with the fallback id. */
+/** An empty chart for someone who keeps their listening private, or undefined when it may be read. */
+const shut = (u: User) => (u.privateListening ? { items: [], total: 0 } : undefined);
+
 async function userOf(name: unknown, fallback?: number): Promise<User> {
   const u = name ? await findByName(text(name)) : fallback ? await findById(fallback) : null;
   return u ?? fail(6, "User not found");
@@ -75,7 +78,7 @@ async function userOf(name: unknown, fallback?: number): Promise<User> {
 
 // ---------- shapes ----------
 const enc = (s: string) => encodeURIComponent(s).replace(/%20/g, "+");
-const img = (id: number | null, origin: string) => ["small", "medium", "large", "extralarge"].map(size => ({ "#text": id ? `${origin}/api/image/${id}` : "", size }));
+const img = (id: string | null, origin: string) => ["small", "medium", "large", "extralarge"].map(size => ({ "#text": id ? `${origin}/api/image/${id}${size === "small" || size === "medium" ? "?s=small" : ""}` : "", size }));
 const attr = (extra: Record<string, string>, pg: Page, total: number) =>
   ({ ...extra, page: String(pg.page), perPage: String(pg.limit), totalPages: String(Math.ceil(total / pg.limit)), total: String(total) });
 const ranked = <T extends object>(items: T[], pg: Page) => items.map((x, i) => ({ ...x, "@attr": { rank: String(pg.offset + i + 1) } }));
@@ -83,10 +86,10 @@ const ranked = <T extends object>(items: T[], pg: Page) => items.map((x, i) => (
 const shortDate = (seconds: number) => new Date(seconds * 1000).toUTCString().slice(5, 22);
 const longDate = (seconds: number) => new Date(seconds * 1000).toUTCString();
 
-type ArtistRow = { name: string; image: number | null; playcount?: number; listeners?: number };
-type TrackRow = { title: string; duration: number; artist: string; image: number | null; playcount?: number; listeners?: number };
-type AlbumRow = { title: string; artist: string; image: number | null; playcount?: number };
-type PlayRow = { title: string; artist: string; album: string | null; image: number | null };
+type ArtistRow = { name: string; image: string | null; playcount?: number; listeners?: number };
+type TrackRow = { title: string; duration: number; artist: string; image: string | null; playcount?: number; listeners?: number };
+type AlbumRow = { title: string; artist: string; image: string | null; playcount?: number };
+type PlayRow = { title: string; artist: string; album: string | null; image: string | null };
 
 const artistUrl = (c: Call, artist: string) => `${c.origin}/music/${enc(artist)}`;
 const trackUrl = (c: Call, artist: string, title: string) => `${c.origin}/music/${enc(artist)}/_/${enc(title)}`;
@@ -130,7 +133,7 @@ const methods: Record<string, Method> = {
     const t = (await repo.findToken(key(c.p.token), c.app.id)) ?? fail(4, "Invalid authentication token supplied");
     if (!t.userId) fail(14, "This token has not been authorized");
     if (t.createdAt < now() - 3600) fail(15, "This token has expired");
-    await repo.deleteToken(t.token);
+    await repo.deleteToken(key(c.p.token));
     return newSession(c, t.userId);
   },
   "auth.getmobilesession": async c => {
@@ -177,7 +180,8 @@ const methods: Record<string, Method> = {
   "track.removetag": async c => tagMutation(c, "track", (await trackOf(c.p)).id, true),
   // --- user ---
   "user.getinfo": async c => {
-    const u = await userOf(c.p.user, c.p.sk ? await session(c) : undefined), n = await counts({ userId: u.id });
+    const me = c.p.sk ? await session(c) : undefined, u = await userOf(c.p.user, me);
+    const n = u.privateListening && u.id !== me ? { playcount: 0, artists: 0, albums: 0, tracks: 0 } : await counts({ userId: u.id });
     return { user: {
       name: u.username, realname: u.realname, country: u.country, url: `${c.origin}/user/${u.username}`, playcount: String(n.playcount), artist_count: String(n.artists),
       album_count: String(n.albums), track_count: String(n.tracks), image: img(u.imageId, c.origin), registered: { unixtime: String(u.registeredAt), "#text": u.registeredAt }, subscriber: "0", type: "user",
@@ -185,26 +189,26 @@ const methods: Record<string, Method> = {
   },
   "user.getrecenttracks": async c => {
     const u = await userOf(c.p.user), [from, to] = period(c.p, "overall");
-    if (u.hideRecent) return { recenttracks: { track: [], "@attr": attr({ user: u.username }, c.pg, 0) } };
+    if (u.hideRecent || u.privateListening) return { recenttracks: { track: [], "@attr": attr({ user: u.username }, c.pg, 0) } };
     const r = await recent({ userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     const np = c.pg.page === 1 ? await nowPlaying(u.id) : null;
     const plays = r.items.map(t => playShape(c, t, { date: { uts: String(t.playedAt), "#text": shortDate(t.playedAt) } }));
     return { recenttracks: { track: [...(np ? [playShape(c, np, { "@attr": { nowplaying: "true" } })] : []), ...plays], "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.gettopartists": async c => {
-    const u = await userOf(c.p.user), [from, to] = period(c.p), r = await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), [from, to] = period(c.p), r = shut(u) ?? await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     return { topartists: { artist: ranked(r.items.map(artistShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.gettopalbums": async c => {
-    const u = await userOf(c.p.user), [from, to] = period(c.p), r = await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), [from, to] = period(c.p), r = shut(u) ?? await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     return { topalbums: { album: ranked(r.items.map(albumShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.gettoptracks": async c => {
-    const u = await userOf(c.p.user), [from, to] = period(c.p), r = await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), [from, to] = period(c.p), r = shut(u) ?? await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     return { toptracks: { track: ranked(r.items.map(trackShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "user.getlovedtracks": async c => {
-    const u = await userOf(c.p.user), total = await lovedCount(u.id), rows = await repo.lovedPage(u.id, c.pg.limit, c.pg.offset);
+    const u = await userOf(c.p.user), total = shut(u) ? 0 : await lovedCount(u.id), rows = shut(u) ? [] : await repo.lovedPage(u.id, c.pg.limit, c.pg.offset);
     return { lovedtracks: { track: rows.map(t => ({ ...trackShape(c)(t), date: { uts: String(t.at), "#text": shortDate(t.at) } })), "@attr": attr({ user: u.username }, c.pg, total) } };
   },
   "user.getfriends": async c => {

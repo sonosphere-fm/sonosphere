@@ -35,6 +35,6 @@ export const entryCount = async (f: AuditFilter): Promise<number> =>
   (await db.select({ c: count() }).from(auditLog).leftJoin(auditSubject, eq(auditSubject.id, auditLog.subjectId)).where(where(f)))[0]?.c ?? 0;
 /** Everyone who appears in the log as the one who acted. */
 export const actors = async (): Promise<string[]> =>
-  (await db.selectDistinct({ n: auditLog.actorName }).from(auditLog).orderBy(asc(sql`lower(${auditLog.actorName})`))).map(r => r.n);
+  (await db.selectDistinct({ n: auditLog.actorName, k: sql`lower(${auditLog.actorName})` }).from(auditLog).orderBy(sql`2`)).map(r => r.n);
 /** Every kind of action in the log. */
 export const actions = async (): Promise<string[]> => (await db.selectDistinct({ n: auditLog.action }).from(auditLog).orderBy(asc(auditLog.action))).map(r => r.n);

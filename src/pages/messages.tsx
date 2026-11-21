@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../icons";
 import { Button } from "../kit";
+import { useTurnstile } from "./auth";
 import { ago, api, date, invalidateAll, liveSend, mutate, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
 import type { BlockResult } from "../../shared/blocks";
 import type { DmAccepted, DmCounts, DmDone, DmSent, DmUnsent, DmWith } from "../../shared/dm";
@@ -46,7 +47,7 @@ export function MessagesPage({ view }: { view: "inbox" | "requests" | "thread" |
                   </Link>
                 </li>
               ))}
-              {list.data && !list.data.items.length && <li className="dm-none muted">{requests ? "No message requests." : "No conversations yet. Open someone's profile and choose Message to start one."}</li>}
+              {list.data && !list.data.items.length && <li className="dm-none muted">{requests ? "No message requests." : "No conversations yet. You can start one from someone's profile."}</li>}
             </ul>
           )}
         </aside>
@@ -61,7 +62,7 @@ export function MessagesPage({ view }: { view: "inbox" | "requests" | "thread" |
     </div>
   );
 }
-function Composer({ onSend, max, threadId, placeholder }: { onSend: (body: string) => Promise<void>; max: number; threadId?: number; placeholder: string }) {
+function Composer({ onSend, max, threadId, placeholder, above }: { onSend: (body: string) => Promise<void>; max: number; threadId?: number; placeholder: string; above?: ReactNode }) {
   const [text, setText] = useState(""), [error, setError] = useState(""), busy = useRef(false), typed = useRef(0), box = useRef<HTMLTextAreaElement>(null);
   const send = async () => {
     const body = text.trim();
@@ -74,6 +75,7 @@ function Composer({ onSend, max, threadId, placeholder }: { onSend: (body: strin
   return (
     <form className="dm-composer" onSubmit={e => { e.preventDefault(); send(); }}>
       {error && <p className="form-error" role="alert">{error}</p>}
+      {above}
       <div className="dm-composer-row">
         <textarea ref={box} className="native-input" rows={1} value={text} maxLength={max} placeholder={placeholder} aria-label="Message" name="message" autoFocus onKeyDown={key}
           onChange={e => {
@@ -144,6 +146,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
   const decline = () => api<DmDone>(`${threadPath(id)}/decline`, { body: {} }).then(leave);
   const remove = () => api<DmDone>(threadPath(id), { method: "DELETE" }).then(leave);
   const block = () => api<BlockResult>("/block", { body: { username: other.username, block: true } }).then(() => { invalidateAll(); nav(back, { replace: true }); });
+  const unblock = () => api<BlockResult>("/block", { body: { username: other.username, block: false } }).then(() => { invalidateAll(); q.reload(); });
   const unsend = (m: Msg) => api<DmUnsent>(`/dm/message/${m.id}`, { method: "DELETE" }).then(() => applyDmEvent({ t: "dm-deleted", threadId: id, id: m.id })).catch(() => {});
   const lastTheirs = [...d.messages].reverse().find(m => m.from !== me!.id && !m.deleted); // a report is filed against a message; staff see the ones around it
   const lastMine = [...d.messages].reverse().find(m => m.from === me!.id && !m.deleted);
@@ -155,7 +158,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
           <DropdownMenuItem label="View profile" href={userUrl(other.username)} />
           {lastTheirs && <DropdownMenuItem label={`Report ${other.username}`} onClick={() => setReporting(lastTheirs.id)} />}
           <DropdownMenuItem label="Delete conversation" onClick={remove} />
-          <DropdownMenuItem label={`Block ${other.username}`} onClick={block} />
+          <DropdownMenuItem label={d.blocked ? `Unblock ${other.username}` : `Block ${other.username}`} onClick={d.blocked ? unblock : block} />
         </DropdownMenu>
       </Head>
       <div className="dm-scroll" ref={scroller}>
@@ -191,7 +194,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
             <Button kind="btn ghost" type="button" onClick={() => decline().then(block)}>Block</Button>
           </div>
         </div>
-      ) : !d.can ? <p className="dm-closed muted">{d.why}</p> : t.left === 0 ? <p className="dm-closed muted">Your message request has been sent. You can write again once {other.username} replies.</p> : (
+      ) : d.blocked ? <Blocked name={other.username} onUnblock={unblock} /> : !d.can ? <p className="dm-closed muted">{d.why}</p> : t.left === 0 ? <p className="dm-closed muted">Your message request has been sent. You can write again once {other.username} replies.</p> : (
         <>
           {t.left != null && <p className="dm-closed muted small">This is a message request: {other.username} will see it under Requests. You can send {t.left} more {t.left === 1 ? "message" : "messages"}, without links, until they reply.</p>}
           <Composer onSend={send} max={d.max} threadId={t.status === "active" ? id : undefined} placeholder={`Message ${other.username}`} />
@@ -202,24 +205,42 @@ function Conversation({ id, back }: { id: number; back: string }) {
   );
 }
 
+/** In place of the composer when the reader has blocked the other person. */
+function Blocked({ name, onUnblock }: { name: string; onUnblock: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <p className="dm-closed muted">You blocked {name}, so you can't message each other. <Button kind="link" type="button" loading={busy} onClick={() => { setBusy(true); onUnblock().finally(() => setBusy(false)); }}>Unblock</Button></p>
+  );
+}
+
 /** Writing to someone for the first time: nothing exists on the server until the first message is sent. */
 function NewConversation({ name }: { name: string }) {
   const q = useApi<DmWith>(`/dm/with?name=${encodeURIComponent(name)}`), nav = useNavigate();
   if (q.error) return <div className="dm-blank muted"><p>{q.error.message}</p><Link to="/messages">Back to messages</Link></div>;
   const d = q.data; if (!d) return null;
   if (d.threadId) return <Navigate to={`/messages/${d.threadId}`} replace />;
-  const send = async (body: string) => {
-    const r = await api<DmSent>("/dm/send", { body: { to: d.user.username, body } });
+  const send = async (body: string, turnstile?: string) => {
+    const r = await api<DmSent>("/dm/send", { body: { to: d.user.username, body, turnstile } });
     mutate<DmWith>(`/dm/with?name=${encodeURIComponent(name)}`, x => ({ ...x, threadId: r.thread.id }));
     place(r.thread); nav(`/messages/${r.thread.id}`, { replace: true });
   };
   return (
     <>
       <Head user={d.user} back="/messages" />
-      <div className="dm-scroll"><p className="dm-start muted small">{d.can
+      <div className="dm-scroll">{!d.blocked && <p className="dm-start muted small">{d.can
         ? d.request ? `${d.user.username} doesn't follow you, so your message will arrive as a request. You can send up to 3 messages, without links, until they reply.` : `Say hello to ${d.user.username}.`
-        : d.why}</p></div>
-      {d.can && <Composer onSend={send} max={2000} placeholder={`Message ${d.user.username}`} />}
+        : d.why}</p>}</div>
+      {d.blocked && <Blocked name={d.user.username} onUnblock={() => api<BlockResult>("/block", { body: { username: d.user.username, block: false } }).then(() => { invalidateAll(); q.reload(); })} />}
+      {d.can && (d.human ? <HumanComposer onSend={send} name={d.user.username} /> : <Composer onSend={send} max={2000} placeholder={`Message ${d.user.username}`} />)}
     </>
   );
+}
+/** The composer for a first message to someone who doesn't follow you, which needs the robot check (when the site has it on). */
+function HumanComposer({ onSend, name }: { onSend: (body: string, turnstile?: string) => Promise<void>; name: string }) {
+  const robot = useTurnstile("dm");
+  const send = async (body: string) => {
+    if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot first.");
+    try { await onSend(body, robot.token || undefined); } catch (e) { robot.reset(); throw e; }
+  };
+  return <Composer onSend={send} max={2000} placeholder={`Message ${name}`} above={robot.view && <div className="dm-human">{robot.view}</div>} />;
 }

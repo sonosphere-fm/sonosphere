@@ -41,7 +41,7 @@ export function Obsessions({ name, mine }: { name: string; mine: boolean }) {
     <Async q={q}>{d => d.items.length ? (
       <ul className="obsessions">{d.items.map((o, i) => (
         <li key={o.id} className="obsession">
-          <Link to={trackUrl(o.artist, o.title)}><Art name={o.album || o.title} sub={o.artist} image={o.image} /></Link>
+          <Link to={trackUrl(o.artist, o.title)}><Art image={o.image} /></Link>
           <div className="grow">{i === 0 && <span className="badge">Current</span>}<Link className="strong" to={trackUrl(o.artist, o.title)}>{o.title}</Link><Link className="muted" to={artistUrl(o.artist)}>{o.artist}</Link>
             {o.comment && <p>“{o.comment}”</p>}<span className="muted small">{date(o.createdAt)}</span></div>
           {mine && <Button kind="link small" onClick={() => api<ObsessionRemoved>(`/obsessions/${o.id}`, { method: "DELETE" }).then(q.reload)}>Remove</Button>}
@@ -58,8 +58,8 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
     <>
       {mine && <form className="inline-form" onSubmit={create}><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="New playlist title" aria-label="New playlist title" maxLength={100} /><Button kind="btn" loading={act.busy} disabled={!title.trim()}>Create playlist</Button>{act.note}</form>}
       <Async q={q}>{d => d.items.length ? (
-        <div className="grid" data-cols={6} style={sixCols}>{d.items.map(p => (
-          <div className="tile" key={p.id}><Link to={`/playlist/${p.id}`}><Art name={p.title + p.id} image={p.image} /></Link><Link className="strong" to={`/playlist/${p.id}`}>{p.title}</Link><span className="muted small">{plural(p.trackCount, "track")}</span></div>
+        <div className="grid below" data-cols={6} style={sixCols}>{d.items.map(p => (
+          <Link className="mcard album" key={p.id} to={`/playlist/${p.id}`}><Art image={p.image} /><strong>{p.title}</strong><span>{plural(p.trackCount, "track")}</span></Link>
         ))}</div>
       ) : <Empty>No playlists yet.</Empty>}</Async>
     </>

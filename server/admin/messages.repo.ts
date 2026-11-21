@@ -1,7 +1,7 @@
 // Data access for direct-message moderation in the staff API: who talks to whom, transcripts (admins, with a
 // recorded reason), removing a message, and the automatic spam flags.
 import { and, count, desc, eq, gte, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { auditLog, dmFlags, dmMessages, dmThreads, reports, users } from "../db/schema";
 import { matches } from "../db/dialect";
@@ -70,11 +70,11 @@ export const findMessage = (id: number) =>
  * number of reports closed) and hides the message. Returns how many reports were closed.
  */
 export async function deleteMessage(actor: Actor, id: number, why: string, entry: (closed: number) => AuditEntry): Promise<number> {
-  const { closed, removed } = transact(tx => {
-    const n = closeReportsTx(tx, "dm", id, "content removed", actor.id, why);
-    auditTx(tx, actor, entry(n));
-    return { closed: n, removed: removeMessageTx(tx, id, actor.id) };
-  });
+  const { closed, removed } = (await transact(async tx => {
+    const n = (await closeReportsTx(tx, "dm", id, "content removed", actor.id, why));
+    await auditTx(tx, actor, entry(n));
+    return { closed: n, removed: (await removeMessageTx(tx, id, actor.id)) };
+  }));
   await announceRemoved([removed]);
   return closed;
 }
