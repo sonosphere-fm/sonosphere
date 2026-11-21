@@ -8,7 +8,7 @@ import { applyTheme, startingTheme } from "./theme";
 import { Button, RouteLink } from "./kit";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
-import { api, AuthContext, dec, invalidateAll, liveConnect, prefetch, qs, useAuth, useLive, userUrl, type Me, type Ok } from "./lib";
+import { api, AuthContext, dec, invalidateAll, liveConnect, prefetch, qs, refreshListening, useAuth, useLive, userUrl, type Me, type Ok } from "./lib";
 import type { MeResponse } from "../shared/auth";
 import { applyDmEvent } from "./dm";
 import { PlayerProvider } from "./player";
@@ -445,6 +445,11 @@ function App() {
   useEffect(() => { if (!boot) refresh(); }, [refresh]);
 
   useEffect(() => { liveConnect(!!me?.id); }, [me?.id]);
+  useEffect(() => {
+    const onScrobble = () => { if (me) refreshListening(me.username); };
+    window.addEventListener("spin:scrobble", onScrobble);
+    return () => window.removeEventListener("spin:scrobble", onScrobble);
+  }, [me?.username]);
   useLive(e => {
     if (e.t === "open" && e.again) {
       invalidateAll();

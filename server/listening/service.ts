@@ -4,6 +4,7 @@ import { bad } from "../http";
 import { clean, norm, now } from "../util";
 import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
+import { listeningChanged } from "../realtime";
 import type { EditScope, Report, ScrobbleResult } from "../../shared/listening";
 
 /** Nothing about it has been checked yet. */
@@ -65,6 +66,7 @@ export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], sour
     }
   }
   const filed = await repo.recordScrobbles(userId, checked.filter(c => "playedAt" in c), source);
+  if (filed.some(Boolean)) listeningChanged(userId, "scrobbles");
   let i = 0;
   return checked.map(c => {
     if (!("playedAt" in c)) return c;
@@ -80,6 +82,7 @@ export async function setNowPlaying(userId: number, input: ScrobbleInput): Promi
   if (!ref) return false;
   const seconds = Number(input.duration) || (await findItem("track", ref.trackId))?.duration || 240;
   await repo.saveNowPlaying(userId, ref, seconds);
+  listeningChanged(userId, "nowplaying");
   return true;
 }
 

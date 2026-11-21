@@ -9,6 +9,7 @@ import { albums, artists, lovedTracks, nowPlaying as playing, scrobbles, tagging
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx, resolveTrackTx, type TrackNames, type TrackRef } from "../catalog/repo";
 import { first, norm, now } from "../util";
 import { FOREVER } from "./period";
+import { listeningChanged } from "../realtime";
 import type { Counts, EditScope, ExportRow, NowPlaying, RecentTrack, ScopeCounts, SeriesPoint, TopAlbum, TopArtist, TopList, TopTrack } from "../../shared/listening";
 
 /**
@@ -457,7 +458,8 @@ export async function saveNowPlaying(userId: number, ref: TrackRef, seconds: num
 }
 
 export async function clearNowPlaying(userId: number): Promise<void> {
-  await db.delete(playing).where(eq(playing.userId, userId));
+  const removed = await db.delete(playing).where(eq(playing.userId, userId)).returning({ id: playing.userId });
+  if (removed.length) listeningChanged(userId, "nowplaying");
 }
 
 type NewScrobble = TrackNames & { playedAt: number };
@@ -733,7 +735,8 @@ export const exportLoved = (userId: number): Promise<ExportRow[]> =>
     .orderBy(desc(lovedTracks.createdAt));
 
 export async function dropExpiredNowPlaying(): Promise<void> {
-  await db.delete(playing).where(lt(playing.expiresAt, now()));
+  const expired = await db.delete(playing).where(lt(playing.expiresAt, now())).returning({ userId: playing.userId });
+  for (const { userId } of expired) listeningChanged(userId, "nowplaying");
 }
 
 export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopList<TopArtist>> {
