@@ -136,6 +136,10 @@ input[type="file"] { border: 1px dashed var(--edge); background: var(--panel); }
 
 .art { display: block; aspect-ratio: 1; background: var(--panel); overflow: hidden; width: 100%; }
 .art svg, .art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.image-frame { display: block; position: relative; overflow: hidden; }
+.image-frame > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.image-frame:not([data-state="loaded"]) > img { opacity: 0; }
+.image-placeholder { display: grid; place-items: center; width: 100%; height: 100%; color: var(--muted); font-size: 14px; }
 .avatar { display: block; flex: none; border-radius: 50%; overflow: hidden; background: var(--panel); }
 .grid { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr)); gap: 18px 14px; }
 
@@ -565,6 +569,7 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 .vplayer-screen { position: relative; aspect-ratio: 16 / 9; background: #000; }
 .vplayer-video { position: absolute; inset: 0; }
 .vplayer-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; } .vplayer-video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.vplayer-art > img { object-fit: contain; }
 .vplayer-blank { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; } .vplayer-blank svg { width: 36px; height: 36px; }
 .vplayer-progress { position: relative; height: 4px; background: #6b6b6b; touch-action: none; } .vplayer-progress div { height: 100%; background: var(--accent); }
 .vplayer-progress.seekable { cursor: pointer; } .vplayer-progress.seekable::before { content: ""; position: absolute; inset: -8px 0; }
@@ -639,6 +644,7 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 .hero.mhero:not(:has(.hero-tabs)) { padding-bottom: 0; }
 .mhero-img { position: absolute; top: 0; bottom: 0; right: 0; width: min(62%, 900px); background-size: cover; background-position: center 22%;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 55%); mask-image: linear-gradient(to right, transparent, #000 55%); opacity: .9; }
+.mhero-img > img { object-position: center 22%; }
 .mhero-inner { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; padding-top: 56px; padding-bottom: 26px; }
 .mhero-inner > * { max-width: 760px; }
 .mhero h1 { font-size: 46px; font-weight: 700; line-height: 1.05; letter-spacing: -.01em; text-shadow: 0 1px 12px rgba(0, 0, 0, .45); }
@@ -1336,6 +1342,7 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .banner-edit { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .banner-edit p { margin: 0; }
 .banner-preview { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; background: var(--panel); }
+.banner-preview > .image-placeholder { position: absolute; inset: 0; }
 .avatar-pick { width: 88px; height: 88px; flex: none; padding: 0; border: 0; cursor: pointer; background: var(--panel); transition: opacity .15s; }
 .avatar-pick:hover { opacity: .88; }
 .avatar-pick:disabled { cursor: progress; }

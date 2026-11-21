@@ -4,17 +4,17 @@ import { Suspense, useRef, useState, type ReactNode } from "react";
 import { Pages, Select } from "../kit";
 import { Link, NavLink } from "react-router-dom";
 import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
+import { ImageWithFallback } from "./image";
 
 export function Art({ image, kind = "album" }: { image?: string | null; kind?: "artist" | "album" | "user" }) {
-  if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image, "small")} alt="" loading="lazy" /></span>;
   return (
-    <span className={`art art-${kind} art-none`}>
+    <ImageWithFallback src={image ? imageUrl(image, "small") : null} alt="" className={`art art-${kind} art-none`} fallback={
       <svg viewBox="0 0 100 100" aria-hidden="true">
         {kind === "album"
           ? <path fillRule="evenodd" d="M50 20a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm0 21a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z" />
           : <><circle cx="50" cy="39" r="17" /><path d="M16 100c0-21 15-34 34-34s34 13 34 34Z" /></>}
       </svg>
-    </span>
+    } />
   );
 }
 
