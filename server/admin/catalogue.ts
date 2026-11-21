@@ -44,7 +44,7 @@ router.post<CatalogueMerged>("/api/admin/catalogue/merge", async c => {
   if (src === dst) bad("Pick two different items");
   const s = await item(kind, src), d = await item(kind, dst);
   const { detail, artists } = (await repo.merge(kind, src, dst, me, detail => (
-    { action: "catalogue.merge", targetType: kind, targetId: dst, label: `${repo.describe(s)} → ${repo.describe(d)}`, note: why, data: { source: src, ...detail } })));
+    { action: "catalogue.merge", targetType: kind, targetId: dst, label: `${repo.describe(s)} \u2192 ${repo.describe(d)}`, note: why, data: { source: src, ...detail } })));
   // the merged artists have different listeners now: have their taste matches worked out again
   for (const id of artists) await queue("artist", id);
   return { ok: true, ...detail };
@@ -56,7 +56,7 @@ router.post<Ok>("/api/admin/catalogue/rename", async c => {
   const n = norm(name), clash = await repo.nameClash(kind, r, n);
   if (clash !== null) fail(409, `There's already ${kind === "artist" ? "an artist" : `a${kind === "album" ? "n album" : " track"} by ${r.artist}`} called “${name}”. Merge the two instead (#${clash}).`);
   await repo.rename(kind, id, name, n);
-  await audit(me, { action: "catalogue.rename", targetType: kind, targetId: id, label: `${repo.describe(r)} → ${name}`, note: note(c), data: { from: r.label, to: name } });
+  await audit(me, { action: "catalogue.rename", targetType: kind, targetId: id, label: `${repo.describe(r)} \u2192 ${name}`, note: note(c), data: { from: r.label, to: name } });
   return { ok: true };
 });
 

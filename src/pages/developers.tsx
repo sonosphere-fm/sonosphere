@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Arrow } from "../icons";
 import { useTitle } from "../lib";
 
 // ---------- developer docs ----------
@@ -24,7 +25,7 @@ export function Developers() {
           <pre>{origin}/2.0/</pre>
           <p>Send <code>method</code>, <code>api_key</code> and the method's parameters as a query string (reads) or form-encoded POST body (writes). Add <code>format=json</code> for JSON; XML is the default.</p>
           <h2>1. Get an API key</h2>
-          <p>Create an API account under <Link to="/settings/applications">Settings → Applications</Link>. You receive an API key and a shared secret.</p>
+          <p>Create an API account under <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link>. You receive an API key and a shared secret.</p>
           <h2>2. Authenticate a user</h2>
           <ol>
             <li>Call <code>auth.getToken</code> (signed).</li>

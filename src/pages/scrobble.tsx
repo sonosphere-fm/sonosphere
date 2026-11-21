@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Button, Input } from "../kit";
 import { Link } from "react-router-dom";
+import { Arrow } from "../icons";
 import { api, dateTime, num, plural, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Art, Async, Section, useAction } from "../ui/base";
 import { Suggest } from "../ui/suggest";
@@ -141,7 +142,7 @@ export function ScrobblePage() {
             </div>
           </Section>
           <Section title="Scrobble from other apps">
-            <p>Sonosphere speaks the Last.fm 2.0 scrobbling protocol at <code>/2.0/</code>. Create an API key under <Link to="/settings/applications">Settings → Applications</Link> and see the <Link to="/developers">API docs</Link>.</p>
+            <p>Sonosphere speaks the Last.fm 2.0 scrobbling protocol at <code>/2.0/</code>. Create an API key under <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link> and see the <Link to="/developers">API docs</Link>.</p>
           </Section>
         </div>
       </div>

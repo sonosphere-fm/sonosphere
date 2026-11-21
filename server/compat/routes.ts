@@ -3,6 +3,7 @@
 // the service's own error numbers. So it reads requests and writes responses itself instead of using Router.
 import { ApiError, call, type Params, type Reply } from "./service";
 import { ipOf, limit } from "../http";
+import { hits } from "../kv";
 
 export { COMPAT_METHODS } from "./service";
 
@@ -46,6 +47,11 @@ const FORBIDDEN = [10, 9, 4, 13];
 
 export async function handleCompat(req: Request): Promise<Response> {
   const url = new URL(req.url), p = await params(req, url), json = p.format === "json";
+  // About five calls a second per address, like the service this one copies: plenty for any player or tool,
+  // too little to copy the catalogue through it. Error 29 is what scrobbler apps expect and back off on.
+  const ip = ipOf(req);
+  const wait = Math.max(...(await Promise.all([hits(`compat:${ip}`, 300, 60), hits(`compat:${ip}`, 6000, 3600), hits(`compat:${ip}`, 50_000, 86_400)])));
+  if (wait) { const r = failed(json, 29, "Rate limit exceeded", 429); r.headers.set("Retry-After", String(wait)); return r; }
   // password sign-ins from scrobbler apps get the same per-address limit as the site's own log-in form
   if (String(p.method ?? "").toLowerCase() === "auth.getmobilesession") {
     try { await limit(`login:${ipOf(req)}`, 10, 300); } catch { return failed(json, 29, "Rate limit exceeded", 429); }

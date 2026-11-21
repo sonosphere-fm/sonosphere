@@ -24,7 +24,7 @@ export function Users() {
   const th = (key: string, label: string, cls = "") => (
     <th className={cls} aria-sort={sort === key ? (dir === "asc" ? "ascending" : "descending") : "none"}>
       <button type="button" className={sort === key ? "on" : ""} onClick={() => set({ sort: key, dir: sort === key ? (dir === "asc" ? "desc" : "asc") : key === "username" ? "asc" : "desc" })}>
-        {label}{sort === key && <span aria-hidden="true">{dir === "asc" ? " ↑" : " ↓"}</span>}
+        {label}{sort === key && (dir === "asc" ? <Ico.SortUp /> : <Ico.SortDown />)}
       </button>
     </th>
   );

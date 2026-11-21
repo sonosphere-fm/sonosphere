@@ -4,6 +4,7 @@
 import type { users } from "./db/schema";
 import { sessionUser } from "./auth/session";
 import { attempt, hits } from "./kv";
+import { isStaff } from "./site/roles";
 
 export class HttpError extends Error { constructor(public status: number, message: string, public retryAfter = 0) { super(message); } }
 export const fail = (status: number, msg: string): never => { throw new HttpError(status, msg); };
@@ -44,11 +45,13 @@ export class Router {
     try {
       // Writes must come from this site: a browser always sends Origin on a cross-site write.
       if (req.method !== "GET" && crossSite(req, url)) fail(403, "Cross-site request refused");
+      const user = await sessionUser(tokenOf(req));
+      await budget(req, url, user);
       for (const r of this.routes) {
         if (r.method !== req.method) continue;
         const m = r.re.exec(url.pathname);
         if (!m) continue;
-        const c: Ctx = { req, url, q: url.searchParams, user: await sessionUser(tokenOf(req)), body: await readBody(req, r.jsonOnly), params: m.slice(1).map(decodeURIComponent), headers };
+        const c: Ctx = { req, url, q: url.searchParams, user, body: await readBody(req, r.jsonOnly), params: m.slice(1).map(decodeURIComponent), headers };
         const out = await r.fn(c);
         return out instanceof Response ? out : new Response(JSON.stringify(out), { headers });
       }
@@ -86,6 +89,31 @@ export async function limit(key: string, max: number, seconds: number, msg = "To
 export async function throttle(key: string, max: number, seconds: number, msg = "You are going a bit fast. Wait a moment and try again."): Promise<void> {
   const wait = await hits(key, max, seconds);
   if (wait) throw new HttpError(429, msg, wait);
+}
+
+// ---------- the site-wide budget ----------
+// Every API request counts against its sender, so nobody can walk the whole catalogue or every profile page by page.
+// A person browsing makes a handful of requests per page, which stays far inside these; a scraper does not.
+// Signed-in people are counted by account and get more room; everyone is also counted by address, which caps what
+// many throwaway accounts on one machine can do together. Staff are not counted (the portal makes many requests).
+// Pictures have their own, larger limit (images/routes.ts).
+const READS = { visitor: [[120, 60], [2000, 3600], [10_000, 86_400]], member: [[300, 60], [6000, 3600], [40_000, 86_400]] } as const;
+const WRITES = [[60, 60], [600, 3600], [3000, 86_400]] as const;
+const PER_ADDRESS = [[600, 60], [12_000, 3600]] as const;
+const SLOW = "You are going too fast. Wait a little and try again.";
+
+async function budget(req: Request, url: URL, user: Viewer | null): Promise<void> {
+  if (user && isStaff(user)) return;
+  if (req.method === "GET" && url.pathname.startsWith("/api/image/")) return;
+  const ip = ipOf(req), who = user ? `u${user.id}` : `ip${ip}`;
+  const rules = req.method === "GET" ? READS[user ? "member" : "visitor"] : WRITES;
+  const kind = req.method === "GET" ? "r" : "w";
+  const waits = await Promise.all([
+    ...rules.map(([max, secs]) => hits(`api-${kind}:${who}`, max, secs)),
+    ...PER_ADDRESS.map(([max, secs]) => hits(`api-ip:${ip}`, max, secs)),
+  ]);
+  const wait = Math.max(...waits);
+  if (wait) throw new HttpError(429, SLOW, wait);
 }
 
 /** Other addresses the site is served from, such as a proxy in front of it (TRUSTED_ORIGINS, comma separated). */

@@ -1,4 +1,4 @@
-import { Ico } from "../../icons";
+import { Arrow, Ico } from "../../icons";
 import { useEffect, useState } from "react";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Button } from "../../kit";
@@ -96,7 +96,7 @@ function Overview({ u, mine }: { u: Profile; mine: boolean }) {
       <div className="main">
         <Section title="Recent tracks" more={`${base}/library`} moreLabel="More tracks">
           <Async q={recent}>{d => "hidden" in d ? <Empty>{u.username} keeps their recent listening private.</Empty> : d.items.length || d.nowPlaying ? <TrackList items={d.items} nowPlaying={d.nowPlaying} time /> :
-            <Empty>{mine ? <>Nothing scrobbled yet. Press play on any track, <Link to="/scrobble">scrobble manually</Link>, or connect a scrobbler from <Link to="/settings/applications">Settings → Applications</Link>.</> : "No scrobbles yet."}</Empty>}</Async>
+            <Empty>{mine ? <>Nothing scrobbled yet. Press play on any track, <Link to="/scrobble">scrobble manually</Link>, or connect a scrobbler from <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link>.</> : "No scrobbles yet."}</Empty>}</Async>
         </Section>
         <div className="toolbar"><h2>Top music</h2><PeriodPicker def="7day" /></div>
         <Section title="Top artists" more={`${base}/library/artists?period=${period}`}><Async q={artists}>{d => <Grid kind="artist" cols={4} items={d.items} sub={a => `${num(a.playcount)} scrobbles`} />}</Async></Section>

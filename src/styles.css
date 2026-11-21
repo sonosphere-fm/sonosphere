@@ -249,6 +249,8 @@ a.bar:hover > span { background: #f6c6c2; }
 .astryx-button .ico { vertical-align: middle; } .astryx-button > span > span { display: inline-flex; align-items: center; gap: 6px; }
 .bare.love { font-size: 20px; } .play-btn .ico { width: 12px; height: 12px; } .icon-btn .ico { width: 18px; height: 18px; }
 .more .ico, p .ico { vertical-align: -0.15em; }
+.arrow .ico { width: .85em; height: .85em; margin: 0 .3em; vertical-align: -0.1em; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .spinner svg { width: 20px; height: 20px; animation: spin .7s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
 /* a page that arrives quickly never shows it: the spinner stays invisible for the first 150ms */
 .page-spinner { display: flex; justify-content: center; padding: 96px 0; color: var(--accent); animation: appear 0s linear .15s both; } .page-spinner svg { width: 32px; height: 32px; }

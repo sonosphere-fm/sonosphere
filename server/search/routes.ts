@@ -1,5 +1,5 @@
 // Search across artists, albums, tracks, tags and people.
-import { paging, Router } from "../http";
+import { ipOf, paging, Router, throttle } from "../http";
 import { norm } from "../util";
 import * as repo from "./repo";
 import type { SearchResults } from "../../shared/search";
@@ -10,6 +10,9 @@ export const router = new Router();
 router.get<SearchResults>("/api/search", async c => {
   const term = norm(c.q.get("q") || ""), type = c.q.get("type") || "all", pg = paging(c.q, type === "all" ? 8 : 32, 50);
   if (!term) return { artists: [], albums: [], tracks: [], tags: [], users: [] };
+  const who = c.user ? `u${c.user.id}` : ipOf(c.req);
+  await throttle(`search:${who}`, 60, 60, "Too many searches. Wait a moment and try again.");
+  await throttle(`search-h:${who}`, 1000, 3600, "Too many searches. Try again later.");
   const query = { term, limit: pg.limit, offset: pg.offset }, want = (t: string) => type === "all" || type === t;
   return {
     artists: want("artists") ? await repo.searchArtists(query) : [],

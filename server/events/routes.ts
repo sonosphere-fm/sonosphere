@@ -1,7 +1,7 @@
 // Events API: browse upcoming and past events, one event's page, adding and deleting events, and saying you will go.
 import { requireItem } from "../catalog/service";
 import { confirmed, need } from "../guards";
-import { fail, oneOf, paging, Router } from "../http";
+import { fail, oneOf, paging, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
 import { norm, now } from "../util";
 import * as repo from "./repo";
@@ -30,6 +30,7 @@ router.get<EventPage>("/api/event/:id", c => eventPage(Number(c.params[0]), c.us
 
 router.post<EventCreated>("/api/events", async c => {
   const u = confirmed(need(c));
+  await throttle(`event:${u.id}`, 10, 86_400, "You can add up to 10 events a day.");
   return { id: await addEvent(c.body, u) };
 });
 

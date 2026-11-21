@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { Fragment, useState, type ReactNode } from "react";
+import { Arrow, arrowed } from "../icons";
 import { Link } from "react-router-dom";
 import { Button, Input, Select } from "../kit";
 import { ago, dateTime, plural, qs, useApi, useTitle } from "../lib";
@@ -22,10 +23,10 @@ const count = (v: unknown) => (typeof v === "number" ? v : 0);
 /** A settings change as the audit log stores it: { from, to }. */
 const change = (v: unknown) => (typeof v === "object" && v !== null && "from" in v && "to" in v ? v : { from: undefined, to: undefined });
 const ROLE_NAME: Record<string, string> = ROLE;
-function details(a: AuditRow): string {
+function details(a: AuditRow): ReactNode {
   const d = a.data || {};
-  if (a.action === "user.role") return `${ROLE_NAME[String(d.from)] ?? d.from} → ${ROLE_NAME[String(d.to)] ?? d.to}`;
-  if (a.action === "settings.update") return Object.entries(d).map(([k, v]) => { const c = change(v); return `${k}: ${JSON.stringify(c.from)} → ${JSON.stringify(c.to)}`; }).join("; ");
+  if (a.action === "user.role") return <>{ROLE_NAME[String(d.from)] ?? String(d.from)}<Arrow />{ROLE_NAME[String(d.to)] ?? String(d.to)}</>;
+  if (a.action === "settings.update") return Object.entries(d).map(([k, v], i) => { const c = change(v); return <Fragment key={k}>{i > 0 && "; "}{k}: {JSON.stringify(c.from)}<Arrow />{JSON.stringify(c.to)}</Fragment>; });
   if (a.action.startsWith("report.")) return `report #${d.report}${d.reason ? ` (${REASON[String(d.reason)] ?? d.reason})` : ""}${count(d.closed) > 1 ? `, closed ${d.closed}` : ""}`;
   if (a.action === "wiki.revert") return `back to version ${d.toVersion}`;
   if (a.action === "catalogue.merge" && d.merged !== undefined) return `${d.merged} merged, ${d.moved} moved`;
@@ -46,8 +47,8 @@ export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }
         <li key={a.id}>
           <span className={`adm-act act-${a.action.split(".")[0]}`}>{actionLabel(a.action)}</span>
           <span className="grow">
-            {a.targetType === "user" && (a.subject || a.label) ? <Link className="strong" to={adminUrl(a.subject || a.label)}>{a.label || a.subject}</Link>
-              : a.targetType === "dm_thread" ? <Link className="strong" to={`/admin/messages/${a.targetId}`}>{a.label}</Link> : <b>{a.label || a.targetType}</b>}
+            {a.targetType === "user" && (a.subject || a.label) ? <Link className="strong" to={adminUrl(a.subject || a.label)}>{arrowed(a.label || a.subject)}</Link>
+              : a.targetType === "dm_thread" ? <Link className="strong" to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link> : <b>{arrowed(a.label || a.targetType)}</b>}
             {a.subject && a.targetType !== "user" && <> · <Link to={adminUrl(a.subject)}>{a.subject}</Link></>}
             {extra && <span className="muted"> · {extra}</span>}
             {a.note && <span className="adm-note">“{a.note}”</span>}
@@ -89,8 +90,8 @@ export function Audit() {
                     <td className="nowrap small" title={dateTime(a.createdAt)}>{dateTime(a.createdAt)}</td>
                     <td><button type="button" className="adm-linkish" onClick={() => set({ actor: a.actor })}>{a.actor}</button></td>
                     <td><button type="button" className={`adm-act act-${a.action.split(".")[0]}`} onClick={() => set({ action: a.action })}>{actionLabel(a.action)}</button></td>
-                    <td>{a.targetType === "user" && (a.subject || a.label) ? <Link to={adminUrl(a.subject || a.label)}>{a.label || a.subject}</Link>
-                      : a.targetType === "dm_thread" ? <Link to={`/admin/messages/${a.targetId}`}>{a.label}</Link> : a.label || <span className="muted">{a.targetType}</span>}
+                    <td>{a.targetType === "user" && (a.subject || a.label) ? <Link to={adminUrl(a.subject || a.label)}>{arrowed(a.label || a.subject)}</Link>
+                      : a.targetType === "dm_thread" ? <Link to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link> : a.label ? arrowed(a.label) : <span className="muted">{a.targetType}</span>}
                       {a.subject && a.targetType !== "user" && <span className="muted small"> · <Link to={adminUrl(a.subject)}>{a.subject}</Link></span>}</td>
                     <td className="small">{extra && <span className="muted">{extra}</span>}{a.note && <span className="adm-note">“{a.note}”</span>}</td>
                   </tr>

@@ -65,6 +65,7 @@ router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async c => {
 /** A download of every play (or every loved track with ?what=loved), as JSON or with ?format=csv. */
 router.get("/api/me/export", async c => {
   const u = need(c);
+  await throttle(`export:${u.id}`, 10, 3600, "You have downloaded your data a few times already. Try again in an hour.");
   const loved = c.q.get("what") === "loved", csv = c.q.get("format") === "csv";
   const rows = loved ? await exportLoved(u.id) : await exportScrobbles(u.id);
   const quoted = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;

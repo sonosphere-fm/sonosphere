@@ -7,8 +7,8 @@
 // (server/kv.ts) and every process delivers them to the sockets it holds.
 import type { Server, ServerWebSocket } from "bun";
 import { sessionUser } from "./auth/session";
-import { tokenOf } from "./http";
-import { publish, subscribe } from "./kv";
+import { ipOf, tokenOf } from "./http";
+import { hits, publish, subscribe } from "./kv";
 
 /** What each open socket remembers about itself. */
 export type SocketData = { userId: number; token: string; typedAt: number; msgs: number; windowAt: number };
@@ -31,6 +31,9 @@ function sameOrigin(req: Request) {
 /** GET /api/ws */
 export async function upgrade(req: Request, server: Server<Data>): Promise<Response | undefined> {
   if (!sameOrigin(req)) return new Response("Forbidden", { status: 403 });
+  // a page reconnects after network blips, never dozens of times a minute
+  const wait = await hits(`ws:${ipOf(req)}`, 30, 60);
+  if (wait) return new Response("Too many connections", { status: 429, headers: { "Retry-After": String(wait) } });
   const token = tokenOf(req), user = await sessionUser(token);
   if (!user) return new Response("Unauthorized", { status: 401 });
   if ((sockets.get(user.id)?.size ?? 0) >= MAX_PER_USER) return new Response("Too many connections", { status: 429 });

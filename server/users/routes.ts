@@ -1,7 +1,7 @@
 // Users API: profiles and everything hanging off one (recent plays, charts, library, loved tracks, people, reports, tags), plus following.
 import { requireArtist, requireTag } from "../catalog/service";
 import { need } from "../guards";
-import { bad, fail, missing, oneOf, paging, Router } from "../http";
+import { bad, fail, missing, oneOf, paging, Router, throttle } from "../http";
 import { range } from "../listening/period";
 import * as listening from "../listening/repo";
 import { report } from "../listening/service";
@@ -65,7 +65,9 @@ router.get<UserTags>("/api/user/tags", async c => {
 });
 
 router.post<FollowResult>("/api/follow", async c => {
-  const u = need(c), t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
+  const u = need(c);
+  await throttle(`follow:${u.id}`, 100, 3600, "That is a lot of follows. Try again in a while.");
+  const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
   const follow = c.body.follow !== false;
   if (t.id === u.id) bad("You can't follow yourself");
   if (follow && await repo.blockedEither(u.id, t.id)) fail(403, "You can't follow this user");

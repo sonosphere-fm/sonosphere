@@ -1,6 +1,6 @@
 // Playlists API: a user's playlists, one playlist with its tracks, and the owner's edits.
 import { need } from "../guards";
-import { bad, missing, Router } from "../http";
+import { bad, missing, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
@@ -21,6 +21,7 @@ router.get<PlaylistPage>("/api/playlist/:id", async c => {
 
 router.post<PlaylistCreated>("/api/playlists", async c => {
   const u = need(c), title = clean(c.body.title, 100) || bad("Give the playlist a title");
+  await throttle(`playlist:${u.id}`, 30, 86_400, "You can make up to 30 playlists a day.");
   return { id: await repo.createPlaylist(u.id, title, String(c.body.description || "").trim().slice(0, 500)) };
 });
 

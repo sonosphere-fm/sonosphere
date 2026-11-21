@@ -120,5 +120,5 @@ function HomeRecent({ name }: { name: string }) {
   return <Section title="Your recent tracks" more={`${userUrl(name)}/library`} moreLabel="Library"><TrackList items={q.data.items} nowPlaying={"nowPlaying" in q.data ? q.data.nowPlaying : null} time /></Section>;
 }
 
-/** 132 → 130, 1,532 → 1,500: a round number that is never more than the real one. */
+/** 132 becomes 130, 1,532 becomes 1,500: a round number that is never more than the real one. */
 const roundDown = (n: number) => { const p = Math.max(10, 10 ** (String(Math.floor(n)).length - 2)); return Math.floor(n / p) * p; };

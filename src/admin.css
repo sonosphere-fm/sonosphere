@@ -144,3 +144,4 @@ td .adm-badge:first-child { margin-left: 0; }
 .site-banner .banner-link { padding: 0; opacity: 1; text-decoration: underline; font: inherit; font-weight: 600; }
 .site-banner.preview { border: 1px solid #c9d6f5; margin-top: 4px; }
 .site-banner.preview .site-banner-in { padding: 8px 12px; }
+th button .ico { margin-left: 4px; width: .85em; height: .85em; }

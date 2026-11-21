@@ -21,6 +21,7 @@ router.get<AuthConfig>("/api/auth/config", () => ({ turnstile: turnstileSiteKey(
 
 router.post<Session>("/api/auth/signup", async c => {
   await limit(`signup:${ipOf(c.req)}`, 5, 3600, "Too many sign-ups from here. Try again later.");
+  await throttle(`signup-d:${ipOf(c.req)}`, 15, 86_400, "Too many sign-ups from here today. Try again tomorrow.");
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "signup");
   const u = await signUp(clean(c.body.username, 15), clean(c.body.email, 200).toLowerCase(), String(c.body.password || ""));
   await sendVerification(u);
