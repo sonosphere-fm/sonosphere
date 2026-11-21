@@ -1,6 +1,6 @@
 import { requireArtist, requireTag } from "../catalog/service";
 import { confirmed, need } from "../guards";
-import { bad, fail, missing, oneOf, paging, Router, throttle } from "../http";
+import { bad, fail, missing, oneOf, paging, Router } from "../http";
 import { range } from "../listening/period";
 import * as listening from "../listening/repo";
 import { report } from "../listening/service";
@@ -12,6 +12,7 @@ import * as repo from "./repo";
 import { canSee, canSeeCharts, requireUser } from "./service";
 import type { Report } from "../../shared/listening";
 import type { FollowResult, Neighbours, People, Profile, UserArtistLibrary, UserLoved, UserRecent, UserTags, UserTop } from "../../shared/users";
+import { limit } from "../trust/service";
 
 export const router = new Router();
 
@@ -97,7 +98,7 @@ router.get<UserTags>("/api/user/tags", async c => {
 
 router.post<FollowResult>("/api/follow", async c => {
   const u = need(c);
-  await throttle(`follow:${u.id}`, 100, 3600, "That is a lot of follows. Try again in a while.");
+  await limit(u, `follow:${u.id}`, 100, 3600, "That is a lot of follows. Try again in a while.");
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
   const follow = c.body.follow !== false;
   if (t.id === u.id) bad("You can't follow yourself");
