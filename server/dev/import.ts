@@ -297,7 +297,7 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
         id = await w.addUser({
           username: clean(name, 40),
           usernameNorm: n,
-          email: `${n.replace(/[^a-z0-9._-]/g, "_")}@${mine ? "needle" : "imported"}.invalid`,
+          email: `${n.replace(/[^a-z0-9._-]/g, "_")}@${mine ? "sonosphere" : "imported"}.invalid`,
           passwordHash: mine ? ownerHash : lockedHash,
           registeredAt: t0,
         });

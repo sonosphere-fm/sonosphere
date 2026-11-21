@@ -3,7 +3,7 @@
 @import "@fontsource-variable/radio-canada/wght.css";
 @import "@astryxdesign/core/reset.css";
 @import "@astryxdesign/core/astryx.css";
-@import "./themes/needle/needle.css";
+@import "./themes/sonosphere/sonosphere.css";
 
 :root {
   --accent: light-dark(#2438d6, #5468ff); --accent-dark: light-dark(#1a299f, #6b7dff); --accent-tint: light-dark(#ffe98a, #2a3796); --accent-faint: light-dark(#ece7db, #1f2659);
