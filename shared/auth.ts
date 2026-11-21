@@ -4,7 +4,7 @@ export type DmCounts = { unread: number; requests: number };
 
 export type Me = {
   id: number; username: string; email: string; realname: string; pronouns: string; about: string; country: string; website: string;
-  image: string | null; hideRecent: boolean; privateListening: boolean; shoutsEnabled: boolean; registeredAt: number; admin: boolean; role: Role; suspended: boolean;
+  image: string | null; banner: string | null; hideRecent: boolean; privateListening: boolean; shoutsEnabled: boolean; registeredAt: number; admin: boolean; role: Role; suspended: boolean;
   openReports: number;
   unread: number;
   dm: DmCounts; dmPolicy: string;

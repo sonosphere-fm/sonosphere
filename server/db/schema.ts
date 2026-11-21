@@ -42,6 +42,7 @@ export const users = pgTable("users", {
 	country: text().default("").notNull(),
 	website: text().default("").notNull(),
 	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
+	bannerId: text("banner_id").references(() => images.id, { onDelete: "set null" } ),
 	hideRecent: boolean("hide_recent").default(false).notNull(),
 	privateListening: boolean("private_listening").default(false).notNull(),
 	shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),

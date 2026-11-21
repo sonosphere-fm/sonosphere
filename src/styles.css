@@ -1330,6 +1330,12 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .lastfm-import label { flex: 1 1 220px; }
 
 .avatar-edit { display: flex; align-items: center; gap: 20px; }
+.hero:has(> .hero-banner) { background: var(--bg); border-bottom: 0; }
+.hero-banner { position: absolute; inset: 0; background-size: cover; background-position: center; pointer-events: none; }
+.hero-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg) 0%, transparent 75%), linear-gradient(90deg, color-mix(in srgb, var(--bg) 82%, transparent), color-mix(in srgb, var(--bg) 55%, transparent)); }
+.banner-edit { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.banner-edit p { margin: 0; }
+.banner-preview { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; background: var(--panel); }
 .avatar-pick { width: 88px; height: 88px; flex: none; padding: 0; border: 0; cursor: pointer; background: var(--panel); transition: opacity .15s; }
 .avatar-pick:hover { opacity: .88; }
 .avatar-pick:disabled { cursor: progress; }
