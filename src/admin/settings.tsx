@@ -13,7 +13,7 @@ export function SiteSettings() {
     q.setData(s);
     window.dispatchEvent(new Event("spin:site"));
   };
-  return <><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></>;
+  return <div className="adm-settings-page"><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></div>;
 }
 type Fields = { registrationsOpen: boolean; announcement: string; announcementTone: string; maxShoutLength: string };
 function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: AdminSettings) => void }) {
