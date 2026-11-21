@@ -13,7 +13,7 @@ import type { Me } from "../../shared/auth";
 /** The signed-in account as the browser sees it. */
 export async function me(u: User): Promise<Me> {
   return {
-    id: u.id, username: u.username, email: u.email, realname: u.realname, about: u.about, country: u.country, website: u.website,
+    id: u.id, username: u.username, email: u.email, realname: u.realname, pronouns: u.pronouns, about: u.about, country: u.country, website: u.website,
     image: u.imageId, hideRecent: u.hideRecent, privateListening: u.privateListening, shoutsEnabled: u.shoutsEnabled, registeredAt: u.registeredAt, admin: u.isAdmin, role: roleOf(u), suspended: u.suspended,
     openReports: u.isAdmin ? await repo.openReportCount() : 0,
     unread: await repo.unreadCount(u.id),

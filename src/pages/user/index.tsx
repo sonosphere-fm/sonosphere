@@ -38,7 +38,7 @@ export function UserPage({ tab }: { tab: Tab }) {
         <>
           <Hero tabs={<Tabs items={locked ? tabs.filter(t => !listening.has(t[0])) : tabs} />} image={u.image}
             art={<Art image={u.image} kind="user" />} kicker={u.followsYou ? "Follows you" : "Listener"} title={u.username}
-            sub={<>{[u.realname, u.country].filter(Boolean).join(" · ")}{(u.realname || u.country) && " · "}scrobbling since {date(u.registeredAt)}</>}
+            sub={<>{[u.realname, u.pronouns, u.country].filter(Boolean).join(" · ")}{(u.realname || u.pronouns || u.country) && " · "}scrobbling since {date(u.registeredAt)}</>}
             stats={locked ? <Stat label="Followers" value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} /> : <><Stat label="Scrobbles" value={<Link to={`${base}/library`}>{num(u.playcount)}</Link>} /><Stat label="Artists" value={<Link to={`${base}/library/artists`}>{num(u.artistCount)}</Link>} />
               <Stat label="Loved tracks" value={<Link to={`${base}/loved`}>{num(u.lovedCount)}</Link>} /><Stat label="Followers" value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} /></>}
             actions={mine ? <><Button kind="btn ghost" href="/settings">Edit profile</Button><Button kind="btn ghost" href="/scrobble">Scrobble manually</Button></> : <>{!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={q.reload} />}{!u.hidden && <StationButton type="library" name={u.username} label="Play library" ghost />}{me && !u.blocked && <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>Message</Button>}{me && <ProfileMenu u={u} onChange={q.reload} />}</>} />

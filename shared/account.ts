@@ -3,7 +3,7 @@ import type { Session } from "./auth";
 
 /** PATCH /api/me: every field is optional; the ones left out keep their value. */
 export type ProfileEdit = {
-  realname?: string; about?: string; country?: string; website?: string; email?: string;
+  realname?: string; pronouns?: string; about?: string; country?: string; website?: string; email?: string;
   hideRecent?: boolean; privateListening?: boolean; shoutsEnabled?: boolean; dmPolicy?: string;
   emailNotify?: string; emailMuted?: string[]; theme?: string;
 };

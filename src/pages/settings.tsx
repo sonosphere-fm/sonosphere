@@ -38,7 +38,7 @@ export function Settings() {
 }
 function ProfileSettings() {
   const { me, setMe, refresh } = useAuth(), act = useAction(), img = useAction(), file = useRef<HTMLInputElement>(null);
-  const [f, setF] = useState({ realname: me!.realname, country: me!.country, website: me!.website, about: me!.about });
+  const [f, setF] = useState({ realname: me!.realname, pronouns: me!.pronouns, country: me!.country, website: me!.website, about: me!.about });
   const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <>
@@ -59,6 +59,7 @@ function ProfileSettings() {
       <Section title="Profile">
         <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => { setMe((await api<ProfileSaved>("/me", { method: "PATCH", body: f })).user); return "Profile saved."; }); }}>
           <label>Display name<Input value={f.realname} onChange={set("realname")} maxLength={60} /></label>
+          <label>Pronouns<Input value={f.pronouns} onChange={set("pronouns")} placeholder="they/them" maxLength={30} /></label>
           <label>Country<Input value={f.country} onChange={set("country")} maxLength={60} /></label>
           <label>Website<Input type="url" value={f.website} onChange={set("website")} placeholder="https://" maxLength={200} /></label>
           <div className="field-block"><span className="field-label">About me</span><MdEditor label="About me" rows={5} value={f.about} onChange={about => setF(f => ({ ...f, about }))} maxLength={2000} /></div>

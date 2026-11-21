@@ -24,7 +24,7 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
     !!viewer && repo.hasBlocked(viewer.id, u.id),
   ]);
   return {
-    ...repo.publicUser(u), about: u.about, website: u.website, registeredAt: u.registeredAt, hidden: !visible, locked: !open, shoutsEnabled: u.shoutsEnabled,
+    ...repo.publicUser(u), about: u.about, pronouns: u.pronouns, website: u.website, registeredAt: u.registeredAt, hidden: !visible, locked: !open, shoutsEnabled: u.shoutsEnabled,
     playcount: stats.playcount, artistCount: stats.artists, albumCount: stats.albums, trackCount: stats.tracks,
     lovedCount, followers, following, isFollowing: !!isFollowing, followsYou: !!followsYou, nowPlaying, taste: tasteMatch,
     obsession: obsessions[0] ?? null, shoutCount: shouts, journalCount, blocked: !!blocked,

@@ -31,14 +31,14 @@ router.patch<ProfileSaved>("/api/me", async c => {
     }
   }
   // what others read on the profile waits for a confirmed address; privacy settings and a new email never do
-  const realname = clean(b.realname ?? u.realname, 60), about = String(b.about ?? u.about).trim().slice(0, 2000), country = clean(b.country ?? u.country, 60);
-  if (realname !== u.realname || about !== u.about || country !== u.country || website !== u.website) confirmed(u);
+  const realname = clean(b.realname ?? u.realname, 60), pronouns = clean(b.pronouns ?? u.pronouns, 30), about = String(b.about ?? u.about).trim().slice(0, 2000), country = clean(b.country ?? u.country, 60);
+  if (realname !== u.realname || pronouns !== u.pronouns || about !== u.about || country !== u.country || website !== u.website) confirmed(u);
   const dmPolicy = b.dmPolicy === undefined ? undefined : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
   const emailNotify = b.emailNotify === undefined ? undefined : oneOf(b.emailNotify, EMAIL_MODES.map(m => m[0])) ?? bad("Pick how often to get emails");
   const emailMuted = Array.isArray(b.emailMuted) ? EMAIL_KINDS.map(k => k[0]).filter(k => (b.emailMuted as unknown[]).includes(k)).join(",") : undefined;
   const theme = b.theme === undefined ? undefined : oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme");
   await repo.updateProfile(u.id, {
-    realname, about, country,
+    realname, pronouns, about, country,
     website, hideRecent: !!(b.hideRecent ?? u.hideRecent), privateListening: !!(b.privateListening ?? u.privateListening), shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
     ...(dmPolicy && { dmPolicy }),
     // a digest starts counting from when it was picked, so the first one doesn't cover everything before

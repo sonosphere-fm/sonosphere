@@ -6,7 +6,7 @@ export type DmCounts = { unread: number; requests: number };
 
 /** The signed-in account as the browser sees it. `image` is an image id; `admin` is true for any staff member. */
 export type Me = {
-  id: number; username: string; email: string; realname: string; about: string; country: string; website: string;
+  id: number; username: string; email: string; realname: string; pronouns: string; about: string; country: string; website: string;
   image: string | null; hideRecent: boolean; privateListening: boolean; shoutsEnabled: boolean; registeredAt: number; admin: boolean; role: Role; suspended: boolean;
   /** Reports waiting for staff (always 0 for everyone else). */
   openReports: number;

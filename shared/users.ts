@@ -15,7 +15,7 @@ export type Paging = { limit: number; page: number; offset: number };
  * looking; `locked` means they keep all of it private (charts, library, loved tracks, counts, which are then zero); `isFollowing`, `followsYou`, `blocked` and `taste` are about the person looking and the profile's owner.
  */
 export type Profile = PublicUser & {
-  about: string; website: string; registeredAt: number; hidden: boolean; locked: boolean; shoutsEnabled: boolean;
+  about: string; pronouns: string; website: string; registeredAt: number; hidden: boolean; locked: boolean; shoutsEnabled: boolean;
   playcount: number; artistCount: number; albumCount: number; trackCount: number;
   lovedCount: number; followers: number; following: number; isFollowing: boolean; followsYou: boolean;
   nowPlaying: NowPlaying | null;
