@@ -1441,8 +1441,15 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .suggest-count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .flag { width: 21px; height: 14px; flex: none; display: block; box-shadow: 0 0 0 1px var(--inset); }
 
-/* signing in with another site: full-width buttons above the form, then a ruled "or" */
-.oauth { display: flex; flex-direction: column; gap: 8px; }
-.oauth .oauth-btn { width: 100%; justify-content: center; }
-.oauth-or { display: flex; align-items: center; gap: 10px; margin: 6px 0 0; }
+/* signing in with another site: full-width buttons in each site's colour above the form, then a ruled "or" */
+.oauth { display: flex; flex-direction: column; gap: 10px; align-self: stretch; }
+.astryx-button.oauth-btn[data-size="md"] { width: 100%; height: 44px; gap: 10px; justify-content: center; }
+.oauth-mark { width: 20px; height: 20px; flex: none; }
+.astryx-button.oauth-discord { background: #5865f2; border-color: #5865f2; color: #fff; }
+.astryx-button.oauth-discord:hover { background: #4752c4; border-color: #4752c4; color: #fff; }
+.oauth-or { display: flex; align-items: center; gap: 12px; margin: 4px 0 0; }
 .oauth-or::before, .oauth-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.oauth-row { display: inline-flex; align-items: center; gap: 8px; }
+.oauth-chip { display: inline-grid; place-items: center; width: 28px; height: 28px; background: var(--panel); }
+.oauth-chip.oauth-discord { background: #5865f2; color: #fff; }
+.oauth-chip .oauth-mark { width: 16px; height: 16px; }

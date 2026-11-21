@@ -6,7 +6,7 @@ import { ago, api, copyText, date, num, plural, useApi, useAuth, useTitle, type 
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { ApiApp, AppOk, Apps } from "../../shared/apps";
 import { useTurnstile } from "./auth";
-import { OAUTH_ERRORS, oauthStart } from "../ui/oauth";
+import { OAUTH_ERRORS, OAuthMark, oauthStart } from "../ui/oauth";
 import type { Logins } from "../../shared/auth";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
@@ -150,7 +150,7 @@ function SignInMethods() {
       {linked && !error && <p className="form-ok">Connected. You can now log in with it.</p>}
       <ul className="plain">{q.data.providers.map(p => (
         <li key={p.id} className="row between">
-          <span><b>{p.label}</b> <span className="muted small">{p.connected ? <>{p.connected.name || "connected"}, since {date(p.connected.since)}</> : "not connected"}</span></span>
+          <span className="oauth-row"><span className={`oauth-chip oauth-${p.id}`}><OAuthMark id={p.id} /></span><b>{p.label}</b> <span className="muted small">{p.connected ? <>{p.connected.name || "connected"}, since {date(p.connected.since)}</> : "not connected"}</span></span>
           {p.connected
             ? <Button kind="btn ghost small" disabled={lastWayIn} title={lastWayIn ? "Set a password first" : undefined} onClick={() => disconnect(p.id)}>Disconnect</Button>
             : <Button kind="btn ghost small" href={oauthStart(p.id, "link")}>Connect</Button>}
