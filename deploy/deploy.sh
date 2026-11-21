@@ -15,4 +15,12 @@ OUT=$(COPYFILE_DISABLE=1 tar czf - --exclude .DS_Store server shared dist deploy
   $SSH "$HOST" "TERM=dumb sh -c 'set -e; R=/opt/spin/releases/$ID; mkdir -p \$R; tar xzf - -C \$R 2>/dev/null; sh \$R/deploy/remote.sh \$R'" 2>&1) ||
   { echo "$OUT" | grep -v 'bashrc\|tput'; echo "DEPLOY FAILED (the live site was left as it was)"; exit 1; }
 echo "$OUT" | grep -v 'bashrc\|tput' || true
+# New files have new names, so the first visitor after a deploy would wait on Cloudflare fetching each one from the
+# server. Ask for them once now (through the Cloudflare location nearest here) so they are already there. Staff-only
+# files are left out: they answer 404 to strangers, and Cloudflare would keep that answer for a while.
+if [ -n "${SPIN_URL:-https://sonosp.here}" ]; then
+  STAFF=$(cat dist/staff.json)
+  ls dist/assets | while read -r f; do case "$STAFF" in *"assets/$f"*) ;; *) echo "${SPIN_URL:-https://sonosp.here}/assets/$f" ;; esac; done |
+    xargs -P 8 -n 1 curl -s -o /dev/null -H "Accept-Encoding: br, gzip" --max-time 30 || true
+fi
 echo "deployed in $(( $(date +%s) - T0 ))s"

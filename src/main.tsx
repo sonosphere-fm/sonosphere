@@ -306,12 +306,15 @@ function Routed() {
   return <Suspense key={pathname} fallback={<Spinner page />}><Pages /></Suspense>;
 }
 
+const boot = (window as { __ME?: MeResponse }).__ME;
+
 function App() {
-  const [me, setMeRaw] = useState<Me | null>(null), [ready, setReady] = useState(false);
+  // the server puts the answer to /api/me in the page (server/app.ts); in development it is fetched
+  const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null), [ready, setReady] = useState(!!boot);
   // what the API returns depends on who is asking, so a change of viewer refetches everything on screen
   const setMe = useCallback((m: Me | null) => { setMeRaw(prev => { if ((prev?.username ?? null) !== (m?.username ?? null)) invalidateAll(); return m; }); }, []);
   const refresh = useCallback(() => { api<MeResponse>("/me").then(r => setMeRaw(r.user)).catch(() => {}).finally(() => setReady(true)); }, []);
-  useEffect(refresh, [refresh]);
+  useEffect(() => { if (!boot) refresh(); }, [refresh]);
   // live updates: one socket while signed in. Events patch the cached pages and the unread badge.
   useEffect(() => { liveConnect(!!me?.id); }, [me?.id]);
   useLive(e => {

@@ -3,6 +3,7 @@
 // to everyone else they do not exist. Everything is read into memory once at start.
 import { readdir } from "node:fs/promises";
 import { sessionUser } from "./auth/session";
+import { me } from "./auth/service";
 import { tokenOf } from "./http";
 import { isStaff } from "./site/roles";
 
@@ -30,7 +31,14 @@ async function load() {
 export async function appRoutes() {
   const { assets, html } = await load();
   const missing = () => new Response("Not found", { status: 404 });
-  const shell = () => new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } });
+  // the page carries who is signed in (what /api/me answers), so the app can start without asking first: one round trip
+  // less before anything shows. It holds the account's details, so no shared cache may keep it.
+  const shell = async (req: Request) => {
+    const viewer = await sessionUser(tokenOf(req)).catch(() => null);
+    const data = JSON.stringify({ user: viewer ? await me(viewer) : null }).replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, c => `\\u${c.charCodeAt(0).toString(16)}`);
+    const page = html.replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
+    return new Response(page, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-cache", Vary: "Cookie" } });
+  };
   const asset = async (req: Request) => {
     const path = new URL(req.url).pathname, found = assets.get(path);
     if (!found) return missing();
