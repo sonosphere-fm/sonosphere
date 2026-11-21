@@ -121,14 +121,30 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
 async function accessToken(link: repo.Link, force = false): Promise<string> {
   const current = unseal(link.accessToken);
   if (current && !force && link.expiresAt > now() + 60) return current;
-  const refresh = unseal(link.refreshToken);
-  if (!refresh || !link.clientId) throw new Revoked("Connect Spotify again to resume importing.");
-  const t = await tokenRequest(link.clientId, { grant_type: "refresh_token", refresh_token: refresh });
-  link.accessToken = seal(t.access); link.expiresAt = now() + t.expiresIn;
-  if (t.refresh) link.refreshToken = seal(t.refresh); // Spotify rotates refresh tokens for PKCE sign-ins
-  if (t.scope) link.scopes = t.scope;
-  await repo.updateLink(link.userId, { accessToken: link.accessToken, refreshToken: link.refreshToken, expiresAt: link.expiresAt, scopes: link.scopes });
-  return t.access;
+  // Spotify rotates refresh tokens for PKCE sign-ins, so two refreshes at once (the importer and a catalogue lookup,
+  // maybe in different processes) would leave one holding a spent token: one refresh per link at a time, and each
+  // starts from the stored row in case another just refreshed it
+  for (let tries = 0; tries < 30; tries++) {
+    const token = await exclusive(`spotify-refresh:${link.userId}`, 20_000, async () => {
+      const stored = await repo.findLink(link.userId);
+      if (!stored) throw new Revoked("Connect Spotify again to resume importing.");
+      const fresher = stored.expiresAt > link.expiresAt;
+      Object.assign(link, stored);
+      const cur = unseal(link.accessToken);
+      if (cur && (!force || fresher) && link.expiresAt > now() + 60) return cur;
+      const refresh = unseal(link.refreshToken);
+      if (!refresh || !link.clientId) throw new Revoked("Connect Spotify again to resume importing.");
+      const t = await tokenRequest(link.clientId, { grant_type: "refresh_token", refresh_token: refresh });
+      link.accessToken = seal(t.access); link.expiresAt = now() + t.expiresIn;
+      if (t.refresh) link.refreshToken = seal(t.refresh);
+      if (t.scope) link.scopes = t.scope;
+      await repo.updateLink(link.userId, { accessToken: link.accessToken, refreshToken: link.refreshToken, expiresAt: link.expiresAt, scopes: link.scopes });
+      return t.access;
+    });
+    if (token !== null) return token;
+    await new Promise(r => setTimeout(r, 300));
+  }
+  throw new Slowed();
 }
 
 class Slowed extends Error {}
@@ -195,6 +211,32 @@ function failed(link: repo.Link, e: unknown): number {
   if (e instanceof Revoked) { repo.updateLink(link.userId, { broken: e.message }).catch(err => console.error(err)); return 0; }
   if (!(e instanceof Slowed)) console.error(`Spotify (user ${link.userId}):`, e);
   return 0;
+}
+
+// ---------- catalogue lookups (server/metadata) ----------
+/**
+ * GET from the Web API catalogue (search, artists, albums) as a connected listener, picked at random each call so the
+ * load spreads over every linked account (and the Spotify app behind each). Falls through to the next account when
+ * one is rate limited or refused. Null when no account can answer or Spotify has nothing.
+ */
+export async function catalogueGet(path: string): Promise<Json | null> {
+  const links = (await repo.workingLinks()).sort(() => Math.random() - 0.5);
+  for (const link of links) {
+    if (await paused(link.clientId)) continue;
+    try {
+      let res = await fetch(API + path, { headers: { Authorization: `Bearer ${await accessToken(link)}` }, signal: AbortSignal.timeout(15_000) });
+      if (res.status === 401) res = await fetch(API + path, { headers: { Authorization: `Bearer ${await accessToken(link, true)}` }, signal: AbortSignal.timeout(15_000) });
+      if (res.status === 429) { await setJson(pauseKey(link.clientId), 1, Math.max(5, Number(res.headers.get("retry-after")) || 30) * 1000); continue; }
+      if (res.status === 401 || res.status === 403) continue; // this account can't; the importer marks a link that is really broken
+      if (res.status === 404 || res.status === 400) return null;
+      if (!res.ok) throw new Error(`Spotify ${path.split("?")[0]} answered ${res.status}`);
+      return obj(await res.json().catch(() => null));
+    } catch (e) {
+      if (e instanceof Slowed || e instanceof Revoked) continue;
+      throw e;
+    }
+  }
+  return null;
 }
 
 // ---------- for the routes ----------

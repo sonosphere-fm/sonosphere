@@ -17,6 +17,7 @@ import { dropExpiredNowPlaying, ensureTallies } from "./listening/repo";
 import { upgrade, websocket, type SocketData } from "./realtime";
 import { startTasteWorker } from "./recommend/worker";
 import { startSpotify } from "./spotify/service";
+import { startMetadata } from "./metadata/service";
 import { syncAdmins } from "./site/roles";
 
 const production = process.env.NODE_ENV === "production";
@@ -36,6 +37,7 @@ await syncAdmins(); // accounts named in ADMIN_USERS are staff
 startDm();
 startTasteWorker();
 startSpotify();
+startMetadata();
 
 // The browser app: built files in production, Bun's bundler (with hot reload) in development.
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };

@@ -61,6 +61,7 @@ router.get("/api/image/:id", async c => {
   const id = c.params[0] ?? "";
   const img = (/^[0-9a-f]{32}$/.test(id) ? await repo.findImage(id) : null) ?? missing("Image");
   if ("data" in img) return new Response(img.data, { headers: { "Content-Type": img.mime, ...IMMUTABLE } });
+  if ("url" in img) return new Response(null, { status: 302, headers: { Location: img.url, "Cache-Control": "public, max-age=86400" } });
   const file = repo.fileOf(img.key, c.q.get("s") === "small" ? "small" : "large");
   const link = store.link(file);
   if (link) {

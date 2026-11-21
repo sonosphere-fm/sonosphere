@@ -24,7 +24,7 @@ async function trend(scope: Scope, weeks = 26): Promise<TrendPoint[]> {
 export async function artistPage(a: repo.Artist, viewerId: number | undefined): Promise<ArtistPage> {
   const stats = await counts({ artistId: a.id });
   return {
-    id: a.id, name: a.name, mbid: mbidOfArtist(a.name), image: a.imageId, listeners: stats.listeners, playcount: stats.playcount,
+    id: a.id, name: a.name, mbid: mbidOfArtist(a.name) || a.mbid || "", image: a.imageId, listeners: stats.listeners, playcount: stats.playcount,
     userPlaycount: viewerId ? (await counts({ artistId: a.id, userId: viewerId })).playcount : 0,
     tags: await topTags("artist", a.id, 8), myTags: await myTags(viewerId, "artist", a.id), wiki: await latestWiki("artist", a.id),
     similar: await similarArtists(a.id, 6),
@@ -53,7 +53,7 @@ export async function albumPage(al: repo.AlbumWithArtist, viewerId: number): Pro
     playcount: t.playcount, listeners: t.listeners, loved: t.loved,
   }));
   return {
-    id: al.id, title: al.title, artist: al.artist, mbid: mbidOfAlbum(al.artist, al.title), image: al.imageId, releaseDate: al.releaseDate,
+    id: al.id, title: al.title, artist: al.artist, mbid: mbidOfAlbum(al.artist, al.title) || al.mbid || "", image: al.imageId, releaseDate: al.releaseDate,
     artistImage: (await repo.findItem("artist", al.artistId))?.imageId ?? null,
     listeners: stats.listeners, playcount: stats.playcount,
     userPlaycount: viewerId ? (await counts({ albumId: al.id, userId: viewerId })).playcount : 0,

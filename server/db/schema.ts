@@ -19,6 +19,8 @@ export const images = pgTable("images", {
 	mime: text().notNull(),
 	data: bytea(),
 	key: text(),
+	// a picture shown from where it lives (an artist photo on Spotify's servers) instead of from our storage
+	url: text(),
 	size: integer().notNull().default(0),
 	width: integer(),
 	height: integer(),
@@ -99,6 +101,10 @@ export const artists = pgTable("artists", {
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
+	// filled in from MusicBrainz and Spotify (server/metadata); metaAt is when that was last tried
+	mbid: text(),
+	spotifyId: text("spotify_id"),
+	metaAt: integer("meta_at"),
 });
 
 export const albums = pgTable("albums", {
@@ -111,6 +117,10 @@ export const albums = pgTable("albums", {
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
+	// the MusicBrainz release group; metaAt as on artists, coverAt when a cover was last looked for
+	mbid: text(),
+	metaAt: integer("meta_at"),
+	coverAt: integer("cover_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),
@@ -126,6 +136,7 @@ export const tracks = pgTable("tracks", {
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
+	metaAt: integer("meta_at"),
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),

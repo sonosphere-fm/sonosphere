@@ -57,6 +57,13 @@
       "when": 1795228224206,
       "tag": "0007_spotify_scopes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795233003349,
+      "tag": "0008_metadata",
+      "breakpoints": true
     }
   ]
 }

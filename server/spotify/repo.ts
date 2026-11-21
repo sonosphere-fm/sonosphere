@@ -28,6 +28,9 @@ export async function dropLink(userId: number): Promise<boolean> {
 export const dueLinks = (before: number, limit: number): Promise<Link[]> =>
   db.select().from(spotifyLinks).where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.recentAt, before))).orderBy(asc(spotifyLinks.recentAt)).limit(limit);
 
+/** Every working link (catalogue lookups spread over them, server/metadata). */
+export const workingLinks = (): Promise<Link[]> => db.select().from(spotifyLinks).where(isNull(spotifyLinks.broken));
+
 /** Working links whose "now playing" was last checked before `before`. */
 export const playingDue = (before: number, limit: number): Promise<Link[]> =>
   db.select().from(spotifyLinks).where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.playingAt, before))).orderBy(asc(spotifyLinks.playingAt)).limit(limit);

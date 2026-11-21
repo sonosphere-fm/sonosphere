@@ -38,11 +38,12 @@ export async function saveImage(img: Converted, uploaderId: number | null, at = 
   } catch (e) { await deleteFiles(key).catch(() => {}); throw e; }
 }
 
-/** A picture's storage key, or for one from before object storage, its original bytes. */
-export async function findImage(id: string): Promise<{ key: string } | { mime: string; data: Uint8Array<ArrayBuffer> } | null> {
-  const row = await first(db.select({ key: images.key, mime: images.mime, data: images.data }).from(images).where(eq(images.id, id)).limit(1));
+/** A picture's storage key, the address of one shown from elsewhere, or for one from before object storage, its original bytes. */
+export async function findImage(id: string): Promise<{ key: string } | { url: string } | { mime: string; data: Uint8Array<ArrayBuffer> } | null> {
+  const row = await first(db.select({ key: images.key, url: images.url, mime: images.mime, data: images.data }).from(images).where(eq(images.id, id)).limit(1));
   if (!row) return null;
   if (row.key) return { key: row.key };
+  if (row.url) return { url: row.url };
   return row.data instanceof Uint8Array ? { mime: row.mime, data: new Uint8Array(row.data) } : null;
 }
 
@@ -66,6 +67,13 @@ export async function setUserImage(userId: number, imageId: string | null): Prom
 export async function setCatalogueImage(type: "artist" | "album", id: number, imageId: string): Promise<void> {
   if (type === "artist") await db.update(artists).set({ imageId }).where(eq(artists.id, id));
   else await db.update(albums).set({ imageId }).where(eq(albums.id, id));
+}
+
+/** Records a picture shown from another site's address (nothing is stored here) and returns its id. */
+export async function saveRemoteImage(url: string, width: number | null, height: number | null): Promise<string> {
+  const [row] = await db.insert(images).values({ id: rid(16), mime: "image/jpeg", url, width, height, uploaderId: null, createdAt: now() }).returning({ id: images.id });
+  if (!row) throw new Error("The picture was not recorded");
+  return row.id;
 }
 
 // ---------- clearing away ----------

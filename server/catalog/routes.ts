@@ -5,11 +5,19 @@ import { topTracks } from "../listening/repo";
 import type { AlbumPage, ArtistAlbums, ArtistListeners, ArtistPage, ArtistSimilar, ArtistTracks, TrackPage } from "../../shared/catalog";
 import { albumPage, artistPage, similarWithTags, trackPage } from "./pages";
 import * as repo from "./repo";
+import { albumOrImport, artistOrImport, refresh, trackOrImport } from "../metadata/service";
 import { requireAlbum, requireArtist, requireTrack } from "./service";
 
 export const router = new Router();
 
-router.get<ArtistPage>("/api/artist", async c => artistPage(await requireArtist(c.q.get("name")), c.user?.id));
+// A page we have nothing for is looked up elsewhere when a confirmed account asks, and a page that was never filled in
+// is filled in the background (server/metadata)
+router.get<ArtistPage>("/api/artist", async c => {
+  const name = c.q.get("name") || "";
+  const a = await artistOrImport(name, c.user, () => requireArtist(name));
+  refresh(c.user, "artist", a);
+  return artistPage(a, c.user?.id);
+});
 
 router.get<ArtistTracks>("/api/artist/tracks", async c => {
   const a = await requireArtist(c.q.get("name")), [from, to] = range(c.q), pg = paging(c.q);
@@ -25,6 +33,16 @@ router.get<ArtistSimilar>("/api/artist/similar", async c => ({ items: await simi
 
 router.get<ArtistListeners>("/api/artist/listeners", async c => ({ items: await repo.topListeners("artist", (await requireArtist(c.q.get("name"))).id, 50) }));
 
-router.get<AlbumPage>("/api/album", async c => albumPage(await requireAlbum(c.q.get("artist"), c.q.get("album")), c.user?.id ?? 0));
+router.get<AlbumPage>("/api/album", async c => {
+  const artist = c.q.get("artist") || "", title = c.q.get("album") || "";
+  const al = await albumOrImport(artist, title, c.user, () => requireAlbum(artist, title));
+  refresh(c.user, "album", al);
+  return albumPage(al, c.user?.id ?? 0);
+});
 
-router.get<TrackPage>("/api/track", async c => trackPage(await requireTrack(c.q.get("artist"), c.q.get("track")), c.user?.id ?? 0));
+router.get<TrackPage>("/api/track", async c => {
+  const artist = c.q.get("artist") || "", title = c.q.get("track") || "";
+  const t = await trackOrImport(artist, title, c.user, () => requireTrack(artist, title));
+  refresh(c.user, "track", t);
+  return trackPage(t, c.user?.id ?? 0);
+});
