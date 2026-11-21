@@ -1,29 +1,15 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { FeaturedSphere as Featured } from "../../../shared/home";
+import type { Sphere } from "../../../shared/home";
 import type { TopAlbum } from "../../../shared/listening";
-import previewAtlas from "../../assets/sphere-preview.webp";
 import { Ico } from "../../icons";
-import { imageUrl, qs, tagUrl } from "../../lib";
+import { imageUrl, tagUrl } from "../../lib";
 
 const CoverSphere = lazy(() => import("./cover-sphere"));
 const topicInterval = 8_000;
 const blurDuration = 280;
-const columns = 4, rows = 3;
 
-const editorialTopics = [
-  { title: "Coldplay", href: `/search${qs({ q: "Coldplay", type: "artists" })}`, sleeves: [0, 7, 4, 2, 11, 3, 6, 9, 5, 8, 10, 1] },
-  { title: "Christmas music", href: `/search${qs({ q: "Christmas", type: "albums" })}`, sleeves: [1, 5, 8, 2, 10, 11, 3, 7, 4, 0, 6, 9] },
-  { title: "Ambient", href: `/search${qs({ q: "Ambient" })}`, sleeves: [7, 4, 2, 11, 8, 0, 5, 6, 3, 9, 1, 10] },
-];
-
-export type SphereCover = { image: HTMLImageElement; atlasIndex: number | null };
-type Topic = {
-  title: string;
-  href: string;
-  sleeves?: number[];
-  covers?: SphereCover[];
-};
+type Topic = { title: string; href: string; covers: HTMLImageElement[] };
 
 function loadImage(url: string, signal: AbortSignal): Promise<HTMLImageElement | null> {
   return new Promise(resolve => {
@@ -48,41 +34,26 @@ function loadImage(url: string, signal: AbortSignal): Promise<HTMLImageElement |
 }
 
 async function loadAlbums(albums: TopAlbum[], signal: AbortSignal) {
-  if (albums.length < 6) return [];
-  const covers = await Promise.all(albums.map(async album => {
-    if (!album.image) return null;
-    const image = await loadImage(`${imageUrl(album.image, "small")}&texture=1`, signal);
-    return image && { image, atlasIndex: null };
-  }));
+  const covers = await Promise.all(albums.map(album =>
+    album.image ? loadImage(`${imageUrl(album.image, "small")}&texture=1`, signal) : null));
   return covers.filter(cover => cover !== null);
 }
 
-function flatStyle(tile: number) {
-  return {
-    backgroundImage: `url("${previewAtlas}")`,
-    backgroundSize: `${columns * 100}% ${rows * 100}%`,
-    backgroundPosition: `${tile % columns / (columns - 1) * 100}% ${Math.floor(tile / columns) / (rows - 1) * 100}%`,
-  };
-}
-
-function TopicArtwork({ topic, atlas }: { topic: Topic; atlas: HTMLImageElement | null }) {
+function TopicArtwork({ topic }: { topic: Topic | undefined }) {
   const [ready, setReady] = useState(false);
-  const covers = useMemo(() => topic.covers ?? (atlas && topic.sleeves?.map(atlasIndex => ({ image: atlas, atlasIndex }))), [topic, atlas]);
   return (
     <div className="album-sphere-stage" data-rendered={ready || undefined} aria-hidden="true">
-      {!ready && <div className="album-sphere-flat">
-        {topic.covers?.[0] ? <img src={topic.covers[0].image.src} alt="" /> : <div style={flatStyle(topic.sleeves?.[0] ?? 0)} />}
-      </div>}
-      {covers && (
+      {!ready && topic && <div className="album-sphere-flat"><img src={topic.covers[0]!.src} alt="" /></div>}
+      {topic && (
         <Suspense fallback={null}>
-          <CoverSphere covers={covers} onReady={setReady} />
+          <CoverSphere covers={topic.covers} onReady={setReady} />
         </Suspense>
       )}
     </div>
   );
 }
 
-function SphereDisplay({ topics, atlas }: { topics: Topic[]; atlas: HTMLImageElement | null }) {
+function SphereDisplay({ topics }: { topics: Topic[] }) {
   const section = useRef<HTMLElement>(null);
   const [{ index, leaving }, setRotation] = useState({ index: 0, leaving: false });
   const [visible, setVisible] = useState(false);
@@ -90,8 +61,8 @@ function SphereDisplay({ topics, atlas }: { topics: Topic[]; atlas: HTMLImageEle
   const [focused, setFocused] = useState(false);
   const [touching, setTouching] = useState(false);
   const [canAnimate, setCanAnimate] = useState(false);
-  const topic = topics[index % topics.length];
-  const rotating = canAnimate && visible && !hovered && !focused && !touching;
+  const topic = topics.length ? topics[index % topics.length] : undefined;
+  const rotating = topics.length > 1 && canAnimate && visible && !hovered && !focused && !touching;
   const advance = useCallback(() => {
     setRotation(current => current.leaving ? { index: (current.index + 1) % topics.length, leaving: false } : current);
   }, [topics.length]);
@@ -135,44 +106,38 @@ function SphereDisplay({ topics, atlas }: { topics: Topic[]; atlas: HTMLImageEle
       onPointerDown={event => { if (event.pointerType === "touch") setTouching(true); }}
       onPointerUp={() => setTouching(false)} onPointerCancel={() => setTouching(false)}
       onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}>
-      <TopicArtwork topic={topic} atlas={atlas} />
-      <Link className="album-sphere-topic" to={topic.href}>
-        <span onTransitionEnd={event => { if (rotating && leaving && event.propertyName === "opacity") advance(); }}>
-          Explore {topic.title}
-        </span>
-        <Ico.Right />
-      </Link>
+      <TopicArtwork topic={topic} />
+      {topic && (
+        <Link className="album-sphere-topic" to={topic.href}>
+          <span onTransitionEnd={event => { if (rotating && leaving && event.propertyName === "opacity") advance(); }}>
+            Explore {topic.title}
+          </span>
+          <Ico.Right />
+        </Link>
+      )}
     </section>
   );
 }
 
-export function FeaturedSphere({ feature, chartAlbums }: { feature: Featured | null; chartAlbums: TopAlbum[] }) {
-  const [atlas, setAtlas] = useState<HTMLImageElement | null>(null);
-  const [catalogueTopics, setCatalogueTopics] = useState<Topic[]>([]);
-
-  useEffect(() => {
-    const request = new AbortController();
-    void loadImage(previewAtlas, request.signal).then(image => { if (image && !request.signal.aborted) setAtlas(image); });
-    return () => request.abort();
-  }, []);
+export function FeaturedSphere({ spheres }: { spheres: Sphere[] }) {
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   useEffect(() => {
     const request = new AbortController();
     const { signal } = request;
-    async function prepare() {
-      const [featured, charts] = await Promise.all([
-        feature ? loadAlbums(feature.albums, signal) : Promise.resolve([]),
-        loadAlbums(chartAlbums, signal),
-      ]);
-      if (signal.aborted) return;
-      const next: Topic[] = [];
-      if (feature && featured.length >= 6) next.push({ title: feature.tag, href: tagUrl(feature.tag), covers: featured });
-      if (charts.length >= 6) next.push({ title: "top albums", href: "/charts?kind=albums", covers: charts });
-      setCatalogueTopics(next);
-    }
-    void prepare();
+    setTopics([]);
+    spheres.forEach(async sphere => {
+      const covers = await loadAlbums(sphere.albums, signal);
+      if (signal.aborted || covers.length < 6) return;
+      const topic = {
+        title: sphere.tag ?? "top albums",
+        href: sphere.tag ? tagUrl(sphere.tag) : "/charts?kind=albums",
+        covers,
+      };
+      setTopics(current => [...current, topic]);
+    });
     return () => request.abort();
-  }, [feature, chartAlbums]);
+  }, [spheres]);
 
-  return <SphereDisplay topics={[...editorialTopics, ...catalogueTopics]} atlas={atlas} />;
+  return <SphereDisplay topics={topics} />;
 }
