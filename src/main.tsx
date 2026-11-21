@@ -322,6 +322,8 @@ function Pages() {
       <Route path="/messages" element={<Private><MessagesPage view="inbox" /></Private>} />
       <Route path="/messages/requests" element={<Private><MessagesPage view="requests" /></Private>} />
       <Route path="/messages/to/:name" element={<Private><MessagesPage view="new" /></Private>} />
+      <Route path="/messages/new-group" element={<Private><MessagesPage view="new-group" /></Private>} />
+      <Route path="/messages/g/:id" element={<Private><MessagesPage view="group" /></Private>} />
       <Route path="/messages/:id" element={<Private><MessagesPage view="thread" /></Private>} />
       <Route path="/recommended" element={<Private><Recommended /></Private>} />
       <Route path="/scrobble" element={<Private><ScrobblePage /></Private>} />

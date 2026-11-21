@@ -1,5 +1,5 @@
 import { mutate, type LiveEvent } from "./lib";
-import type { DmList, DmMessage, DmThread, DmThreadPage } from "../shared/dm";
+import type { DmGroup, DmGroupMessage, DmGroupPage, DmList, DmMessage, DmThread, DmThreadPage } from "../shared/dm";
 
 export type Msg = DmMessage;
 export type Thread = DmThread;
@@ -8,9 +8,15 @@ export type ListReply = DmList;
 export const INBOX = "/dm";
 export const REQUESTS = "/dm?box=requests";
 export const threadPath = (id: number | string) => `/dm/thread/${id}`;
+export const groupPath = (id: number | string) => `/dm/group/${id}`;
 
 /** A change made on this tab (after a send or an unsend), applied the same way as the matching server event. */
-type LocalChange = { t: "dm"; thread: Thread; message: Msg } | { t: "dm-deleted"; threadId: number; id: number };
+type LocalChange =
+  | { t: "dm"; thread: Thread; message: Msg }
+  | { t: "dm-deleted"; threadId: number; id: number }
+  | { t: "dm-group"; group: DmGroup; message: DmGroupMessage }
+  | { t: "dm-group-gone"; groupId: number }
+  | { t: "dm-group-deleted"; groupId: number; id: number };
 
 /** Put a conversation at the top of the list it belongs in, and take it out of the other. */
 export function place(t: Thread | null, id = t?.id) {
@@ -21,6 +27,13 @@ export function place(t: Thread | null, id = t?.id) {
       return { ...d, items: belongsHere ? [t, ...rest] : rest };
     });
   }
+}
+
+export function placeGroup(g: DmGroup | null, id = g?.id) {
+  mutate<ListReply>(INBOX, d => {
+    const rest = d.groups.filter(x => x.id !== id);
+    return { ...d, groups: g ? [g, ...rest] : rest };
+  });
 }
 
 const updateLists = (fn: (t: Thread) => Thread) => {
@@ -46,6 +59,20 @@ export function applyDmEvent(e: LiveEvent | LocalChange) {
     const gone = <M extends Msg | null>(m: M): M => (m && m.id === id ? { ...m, body: "", deleted: true } : m);
     updateLists(t => ({ ...t, last: gone(t.last) }));
     mutate<ThreadReply>(threadPath(e.threadId), d => ({ ...d, messages: d.messages.map(gone) }));
+  } else if (e.t === "dm-group") {
+    const { group, message } = e;
+    placeGroup(group);
+    mutate<DmGroupPage>(groupPath(group.id), d => {
+      const known = d.messages.some(m => m.id === message.id);
+      return { ...d, group, messages: known ? d.messages : [...d.messages, message] };
+    });
+  } else if (e.t === "dm-group-gone") {
+    placeGroup(null, e.groupId);
+  } else if (e.t === "dm-group-deleted") {
+    const { id } = e;
+    const gone = <M extends DmGroupMessage | null>(m: M): M => (m && m.id === id ? { ...m, body: "", deleted: true } : m);
+    mutate<ListReply>(INBOX, d => ({ ...d, groups: d.groups.map(g => ({ ...g, last: gone(g.last) })) }));
+    mutate<DmGroupPage>(groupPath(e.groupId), d => ({ ...d, messages: d.messages.map(gone) }));
   } else if (e.t === "dm-read") {
     const { threadId, seen } = e;
     mutate<ThreadReply>(threadPath(threadId), d => ({ ...d, thread: { ...d.thread, seen: Math.max(d.thread.seen, seen) } }));

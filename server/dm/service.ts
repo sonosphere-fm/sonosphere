@@ -1,15 +1,16 @@
 // A message to someone who doesn't follow you starts a request: capped, link-free, with no read receipts, and
 // declining it is silent. Messages are not end-to-end encrypted; staff reads are audited.
 import { fail, HttpError } from "../http";
-import { onClientMessage, push, type ClientMessage } from "../realtime";
+import { push } from "../realtime";
 import { blockedEither, findById, hasBlocked, type User } from "../users/repo";
 import { now } from "../util";
 import { mailMessage } from "../notifications/email";
 import * as repo from "./repo";
+import { softDeleteTx as softDeleteGroupTx, unreadGroups, memberIds, type GroupRemoved } from "./groups.repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
 import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
 
-const DM = {
+export const DM = {
   MAX_LENGTH: 2000,
   UNSEND_WINDOW: 15 * 60,
   REQUEST_CAP: 3,
@@ -40,7 +41,7 @@ async function myThread(id: unknown, userId: number): Promise<Thread> {
 
 const hasLink = (s: string) => /(https?:\/\/|www\.)\S|\b[a-z0-9-]+\.(com|net|org|io|ru|xyz|top|gg|me|co|link|app|ly)\b/i.test(s);
 
-function tidy(input: unknown): string {
+export function tidy(input: unknown): string {
   return String(input ?? "")
     .normalize("NFC")
     .replace(/\r\n?/g, "\n")
@@ -50,11 +51,15 @@ function tidy(input: unknown): string {
     .trim();
 }
 
-// Returns how a new thread would begin, or throws.
-async function gate(from: User, to: User): Promise<"active" | "request"> {
-  if (from.id === to.id) fail(400, "You can't message yourself");
+export function canPost(from: User): void {
   if (from.suspended) fail(403, "Your account is suspended from posting");
   if (from.dmMuted) fail(403, "Messaging has been turned off for your account");
+}
+
+// Returns how a new thread would begin, or throws.
+export async function gate(from: User, to: User): Promise<"active" | "request"> {
+  if (from.id === to.id) fail(400, "You can't message yourself");
+  canPost(from);
   // one answer for every kind of refusal, so the sender can't tell whether they were blocked
   if (to.banned || (await blockedEither(from.id, to.id))) fail(403, "You can't message this user");
   if (from.isAdmin) return "active";
@@ -146,7 +151,10 @@ async function shapeOrNull(t: Thread, userId: number): Promise<DmThread | null> 
 
 const threadShape = async (t: Thread, userId: number): Promise<DmThread> => (await shapeOrNull(t, userId)) ?? notFound();
 
-export const dmCounts = (userId: number): Promise<DmCounts> => repo.unreadCounts(userId);
+export async function dmCounts(userId: number): Promise<DmCounts> {
+  const counts = await repo.unreadCounts(userId);
+  return { ...counts, unread: counts.unread + (await unreadGroups(userId)) };
+}
 
 export async function send(from: User, to: User, rawBody: unknown): Promise<DmSent> {
   const body = tidy(rawBody);
@@ -201,19 +209,28 @@ async function removeMessage(messageId: number, byUserId: number): Promise<void>
 }
 
 // Pass the result to announceRemoved once the transaction commits.
+export const removeGroupMessageTx = (tx: Tx, messageId: number, byUserId: number): Promise<GroupRemoved | null> =>
+  softDeleteGroupTx(tx, messageId, byUserId, now());
+
 export const removeMessageTx = (tx: Tx, messageId: number, byUserId: number): Promise<repo.Removed | null> =>
   repo.softDeleteTx(tx, messageId, byUserId, now());
 
-export async function announceRemoved(removed: readonly (repo.Removed | null)[]): Promise<void> {
+export async function announceRemoved(removed: readonly (repo.Removed | GroupRemoved | null)[]): Promise<void> {
   for (const m of removed) {
     if (!m) continue;
+    if ("groupId" in m) {
+      for (const uid of await memberIds(m.groupId)) {
+        emit(uid, { t: "dm-group-deleted", groupId: m.groupId, id: m.id, counts: await dmCounts(uid) });
+      }
+      continue;
+    }
     for (const uid of [m.userLo, m.userHi]) {
       emit(uid, { t: "dm-deleted", threadId: m.threadId, id: m.id, counts: await dmCounts(uid) });
     }
   }
 }
 
-export async function list(me: User, box: "inbox" | "requests"): Promise<DmList> {
+export async function list(me: User, box: "inbox" | "requests"): Promise<Omit<DmList, "groups">> {
   const items: DmThread[] = [];
   for (const t of await repo.listThreads(me.id, box)) {
     const s = await shapeOrNull(t, me.id);
@@ -312,15 +329,8 @@ export async function unsend(me: User, messageId: unknown): Promise<DmUnsent> {
 }
 
 // Typing indicators are only relayed inside an accepted conversation.
-async function relayTyping(userId: number, msg: ClientMessage): Promise<void> {
-  if (msg.t !== "typing") return;
-  const t = await repo.activeThreadFor(Number(msg.thread) || 0, userId);
+export async function relayTyping(userId: number, threadId: number): Promise<void> {
+  const t = await repo.activeThreadFor(threadId, userId);
   if (!t || (await blockedEither(t.userLo, t.userHi))) return;
   emit(otherId(t, userId), { t: "dm-typing", threadId: t.id });
-}
-
-export function startDm(): void {
-  onClientMessage((userId, msg) => {
-    relayTyping(userId, msg).catch(e => console.error(e));
-  });
 }

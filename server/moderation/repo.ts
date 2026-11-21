@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db, type Conn, type Tx } from "../db/client";
 import { albums, artists, events, journals, reports, shouts, tags, tracks, users, wikis } from "../db/schema";
 import { reportedMessageTx, softDeleteTx, type Removed } from "../dm/repo";
+import { reportedMessageTx as reportedGroupMessageTx, softDeleteTx as softDeleteGroupTx, type GroupRemoved } from "../dm/groups.repo";
 import { dropJournalTx } from "../journals/repo";
 import { parseObject } from "../site/repo";
 import { now } from "../util";
@@ -113,8 +114,8 @@ export async function reportTargetTx(conn: Conn, type: string, id: number): Prom
       link: page?.link ?? null,
     };
   }
-  if (type === "dm") {
-    const m = await reportedMessageTx(conn, id);
+  if (type === "dm" || type === "group") {
+    const m = type === "dm" ? await reportedMessageTx(conn, id) : await reportedGroupMessageTx(conn, id);
     if (!m) return null;
     return {
       authorId: m.authorId,
@@ -146,11 +147,12 @@ export const reportTarget = (type: string, id: number): Promise<ReportTarget | n
 
 // For a direct message it hides rather than deletes, and returns who to tell: pass that to
 // `announceRemoved` from server/dm/service.ts after commit.
-export async function removeContentTx(tx: Tx, type: string, id: number, by: number): Promise<Removed | null> {
+export async function removeContentTx(tx: Tx, type: string, id: number, by: number): Promise<Removed | GroupRemoved | null> {
   if (type === "shout") await tx.delete(shouts).where(eq(shouts.id, id));
   else if (type === "wiki") await tx.delete(wikis).where(eq(wikis.id, id));
   else if (type === "journal") await dropJournalTx(tx, id);
   else if (type === "dm") return softDeleteTx(tx, id, by, now());
+  else if (type === "group") return softDeleteGroupTx(tx, id, by, now());
   return null;
 }
 

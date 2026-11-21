@@ -1,6 +1,7 @@
 import { and, eq, inArray, type SQL } from "drizzle-orm";
 import { db } from "../db/client";
 import { journals, modNotes, shouts, users } from "../db/schema";
+import { handOffGroupsTx } from "../dm/groups.repo";
 
 type ProfileFields = Partial<Pick<typeof users.$inferInsert,
   | "realname" | "pronouns" | "about" | "country" | "website" | "hideRecent" | "privateListening"
@@ -23,6 +24,7 @@ export async function deleteAccount(userId: number, onlyIf?: SQL): Promise<boole
     await tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), inArray(shouts.targetId, ownJournals)));
     await tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, userId)));
     await tx.delete(modNotes).where(eq(modNotes.userId, userId));
+    await handOffGroupsTx(tx, userId);
     await tx.delete(users).where(eq(users.id, userId));
     return true;
   });

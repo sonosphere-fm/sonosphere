@@ -19,6 +19,7 @@ export const TYPE: Record<string, string> = {
   journal: "Journal post",
   user: "Profile",
   dm: "Direct message",
+  group: "Group message",
 };
 export const ROLE: Record<Role, string> = { user: "User", moderator: "Moderator", admin: "Admin" };
 export const adminUrl = (name: string) => `/admin/users/${encodeURIComponent(name)}`;

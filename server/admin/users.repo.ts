@@ -12,6 +12,7 @@ import type { AuditEntry } from "../site/audit";
 import { snapshotOf } from "../moderation/repo";
 import { auditRows } from "../site/repo";
 import { auditTx } from "../site/audit";
+import { handOffGroupsTx } from "../dm/groups.repo";
 import type { AuditRow, ModNote, ReportBrief, StaffUserPage } from "../../shared/admin";
 
 const DAY = 86400;
@@ -248,6 +249,7 @@ export async function deleteAccount(actor: Actor, t: User, entry: AuditEntry): P
     await tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), inArray(shouts.targetId, theirJournals)));
     await tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, t.id)));
     await tx.delete(modNotes).where(eq(modNotes.userId, t.id));
+    await handOffGroupsTx(tx, t.id);
     // everything else cascades; the profile picture goes with the next images sweep
     await tx.delete(users).where(eq(users.id, t.id));
     await auditTx(tx, actor, entry);

@@ -15,7 +15,7 @@ export async function fileReport(reporter: Viewer, r: NewReport): Promise<void> 
   if (!oneOf(r.reason, REASONS)) bad("Pick a reason");
   const t = (await reportTarget(r.type, r.id)) ?? missing("That content");
   // a direct message can only be reported by someone who is in that conversation
-  if (r.type === "dm" && !t.participants?.includes(reporter.id)) missing("That content");
+  if ((r.type === "dm" || r.type === "group") && !t.participants?.includes(reporter.id)) missing("That content");
   if (t.authorId === reporter.id) bad("You can't report your own content");
   const filed = await repo.filedSince(reporter.id, now() - 3600);
   if (filed >= HOURLY_LIMIT) fail(429, "That's a lot of reports in an hour. Try again later.");
