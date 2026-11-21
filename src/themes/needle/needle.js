@@ -93,7 +93,7 @@ export const needleTheme = {
     "--_astryx-pre-tempo-duration-slow-max": "0ms",
     "--_astryx-motion-tempo": "1",
     "--font-family-body": "\"Source Sans 3 Variable\", \"Helvetica Neue\", Arial, sans-serif",
-    "--font-family-heading": "\"Radio Canada Variable\", \"Helvetica Neue\", Arial, sans-serif",
+    "--font-family-heading": "\"Source Sans 3 Variable\", \"Helvetica Neue\", Arial, sans-serif",
     "--font-family-code": "ui-monospace, \"SF Mono\", Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
     "--color-syntax-keyword": "light-dark(#6b187c, #efa8ff)",
     "--color-syntax-string": "light-dark(#0b5615, #a4d6a3)",
@@ -114,24 +114,24 @@ export const needleTheme = {
     "--color-syntax-diff-header": "transparent",
     "--color-syntax-added-marker": "var(--color-syntax-punctuation)",
     "--color-syntax-removed-marker": "var(--color-syntax-punctuation)",
-    "--color-background-surface": "#ffffff",
-    "--color-background-body": "#ffffff",
-    "--color-background-card": "#ffffff",
-    "--color-background-popover": "#ffffff",
-    "--color-background-muted": "#f5f3ef",
-    "--color-accent": "#2438d6",
-    "--color-accent-muted": "#fbe3e1",
+    "--color-background-surface": "light-dark(#ffffff, #1d1b16)",
+    "--color-background-body": "light-dark(#ffffff, #15130f)",
+    "--color-background-card": "light-dark(#ffffff, #1d1b16)",
+    "--color-background-popover": "light-dark(#ffffff, #24211b)",
+    "--color-background-muted": "light-dark(#f5f3ef, #221f1a)",
+    "--color-accent": "light-dark(#2438d6, #ffcf33)",
+    "--color-accent-muted": "light-dark(#fbe3e1, #3d3417)",
     "--color-neutral": "light-dark(#0000000F, #ffffff1A)",
     "--color-overlay": "light-dark(#00000080, #000000CC)",
     "--color-overlay-hover": "light-dark(#0000000D, #ffffff0D)",
     "--color-overlay-pressed": "light-dark(#0000001A, #ffffff1A)",
-    "--color-text-primary": "#171717",
-    "--color-text-secondary": "#4a4a4a",
-    "--color-text-disabled": "#9a9a9a",
-    "--color-text-accent": "#2438d6",
+    "--color-text-primary": "light-dark(#171717, #ece6d9)",
+    "--color-text-secondary": "light-dark(#4a4a4a, #c8c1b2)",
+    "--color-text-disabled": "light-dark(#9a9a9a, #6f695e)",
+    "--color-text-accent": "light-dark(#2438d6, #ffd257)",
     "--color-on-dark": "#ffffff",
     "--color-on-light": "#111111",
-    "--color-on-accent": "#ffffff",
+    "--color-on-accent": "light-dark(#ffffff, #17150f)",
     "--color-on-success": "light-dark(#ffffff, #111111)",
     "--color-on-error": "light-dark(#ffffff, #111111)",
     "--color-on-warning": "#111111",
@@ -139,26 +139,26 @@ export const needleTheme = {
     "--color-info-muted": "light-dark(#b9d7ff, #88bcff3D)",
     "--color-on-info": "light-dark(#ffffff, #111111)",
     "--color-text-info": "light-dark(#0067ce, #a1caff)",
-    "--color-text-success": "#1b7a3d",
+    "--color-text-success": "light-dark(#1b7a3d, #6fcf8e)",
     "--color-text-warning": "light-dark(#836700, #eec448)",
-    "--color-text-error": "#1a299f",
+    "--color-text-error": "light-dark(#1a299f, #ff8a75)",
     "--color-on-info-muted": "light-dark(#003978, #a1caff)",
     "--color-on-success-muted": "light-dark(#00490b, #90ca90)",
     "--color-on-warning-muted": "light-dark(#4b3900, #eec448)",
     "--color-on-error-muted": "light-dark(#76000c, #ffaea7)",
-    "--color-icon-accent": "#2438d6",
-    "--color-icon-primary": "#171717",
-    "--color-icon-secondary": "#767676",
+    "--color-icon-accent": "light-dark(#2438d6, #ffd257)",
+    "--color-icon-primary": "light-dark(#171717, #ece6d9)",
+    "--color-icon-secondary": "light-dark(#767676, #9b9486)",
     "--color-icon-disabled": "light-dark(#919191, #525252)",
-    "--color-success": "#1b7a3d",
+    "--color-success": "light-dark(#1b7a3d, #6fcf8e)",
     "--color-warning": "#ffce2f",
-    "--color-error": "#1a299f",
+    "--color-error": "light-dark(#1a299f, #ff8a75)",
     "--color-success-muted": "light-dark(#bce0bb, #90ca903D)",
     "--color-error-muted": "light-dark(#ffc4be, #ff98903D)",
     "--color-warning-muted": "light-dark(#fae19e, #e2b6233D)",
-    "--color-border": "#e3e0db",
-    "--color-border-emphasized": "#bdb9b2",
-    "--color-skeleton": "light-dark(#f1f1f1, #525252)",
+    "--color-border": "light-dark(#e3e0db, #332f28)",
+    "--color-border-emphasized": "light-dark(#bdb9b2, #4a443b)",
+    "--color-skeleton": "light-dark(#d4d4d4, #525252)",
     "--color-shadow": "light-dark(#0000001A, #0000004D)",
     "--color-tint-hover": "light-dark(#000000, #ffffff)",
     "--color-background-red": "light-dark(#ffc4be, #5b2b28)",
@@ -206,6 +206,7 @@ export const needleTheme = {
     "--radius-element": "0px",
     "--radius-container": "0px",
     "--radius-page": "0px",
+    "--radius-chat": "0px",
     "--radius-full": "0px",
     "--shadow-low": "0 0 0 transparent",
     "--shadow-med": "0 0 0 transparent",
@@ -215,8 +216,7 @@ export const needleTheme = {
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
     "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
-    "--radius-chat": "0px",
-    "--color-border-error": "#1a299f",
+    "--color-border-error": "light-dark(#1a299f, #ff8a75)",
     "--duration-exit": "0ms",
     "--_astryx-pre-tempo-duration-exit": "0ms"
   },
@@ -345,23 +345,23 @@ export const needleTheme = {
     },
     "button": {
       "variant:destructive": {
-        "backgroundColor": "#171717",
-        "color": "#ffffff"
+        "backgroundColor": "var(--color-text-primary)",
+        "color": "var(--color-background-body)"
       },
       "base": {
         "fontWeight": "600",
         "borderRadius": "0px"
       },
       "variant:primary": {
-        "backgroundColor": "#2438d6",
-        "color": "#ffffff"
+        "backgroundColor": "var(--color-accent)",
+        "color": "var(--color-on-accent)"
       },
       "variant:secondary": {
         "backgroundColor": "transparent",
-        "color": "#171717",
+        "color": "var(--color-text-primary)",
         "borderWidth": "2px",
         "borderStyle": "solid",
-        "borderColor": "#171717"
+        "borderColor": "var(--color-text-primary)"
       }
     },
     "badge": {
@@ -442,9 +442,44 @@ export const needleTheme = {
         "--color-background-muted": "var(--color-border-emphasized)"
       }
     },
+    "progress-bar-fill": {
+      "variant:neutral": {
+        "backgroundColor": "light-dark(var(--color-text-secondary), #b9b9b9)"
+      },
+      "variant:disabled": {
+        "backgroundColor": "light-dark(var(--color-text-secondary), #b9b9b9)"
+      }
+    },
     "card": {
       "base": {
         "padding": "var(--spacing-3)"
+      },
+      "variant:blue": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:cyan": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:green": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:orange": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:pink": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:purple": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:red": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:teal": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
+      },
+      "variant:yellow": {
+        "--color-text-secondary": "light-dark(#474747, #b9b9b9)"
       }
     },
     "section": {
