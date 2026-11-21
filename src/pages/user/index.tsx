@@ -1,5 +1,5 @@
 import { Arrow, Ico } from "../../icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Button } from "../../kit";
 import { Markdown } from "../../md";
@@ -273,12 +273,6 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   const artists = useApi<UserTop<TopArtist>>(paths[1]);
   const albums = useApi<UserTop<TopAlbum>>(paths[2]);
   const tracks = useApi<UserTop<TopTrack>>(paths[3]);
-
-  useEffect(() => {
-    const h = () => recent.reload();
-    window.addEventListener("spin:scrobble", h);
-    return () => window.removeEventListener("spin:scrobble", h);
-  }, [recent.reload]);
 
   return (
     <div className="cols">

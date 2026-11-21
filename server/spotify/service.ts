@@ -4,6 +4,7 @@ import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/se
 import { attempt, exclusive, getJson, setJson } from "../kv";
 import { now, rid } from "../util";
 import * as repo from "./repo";
+import { clearNowPlaying } from "../listening/repo";
 import { seal, unseal } from "./seal";
 import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
 
@@ -265,7 +266,10 @@ async function mirrorPlaying(link: repo.Link) {
   if (await paused(link.clientId)) return;
   try {
     const reply = await spotifyGet(link, "/me/player/currently-playing");
-    if (!reply || reply.is_playing !== true || reply.currently_playing_type !== "track") return;
+    if (!reply || reply.is_playing !== true || reply.currently_playing_type !== "track") {
+      await clearNowPlaying(link.userId);
+      return;
+    }
     const input = trackInput(reply.item);
     if (input) await setNowPlaying(link.userId, input);
   } catch (e) {

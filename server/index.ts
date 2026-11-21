@@ -64,7 +64,6 @@ clearInterval(g.__spinHousekeeping);
 const tidy = () => {
   syncCorrections().catch(e => console.error(e));
   const jobs = () => Promise.all([
-    dropExpiredNowPlaying(),
     dropStaleTokens(),
     sweepUnused(),
     dropExpiredEmailTokens(),
@@ -75,6 +74,12 @@ const tidy = () => {
   exclusive("tidy", 5 * 60_000, jobs).catch(e => console.error(e));
 };
 g.__spinHousekeeping = setInterval(tidy, 10 * 60 * 1000);
+
+const playing = globalThis as { __spinPlayingExpiry?: ReturnType<typeof setInterval> };
+clearInterval(playing.__spinPlayingExpiry);
+playing.__spinPlayingExpiry = setInterval(() => {
+  exclusive("nowplaying-expiry", 30_000, dropExpiredNowPlaying).catch(e => console.error("now playing expiry:", e));
+}, 30_000);
 
 const m = globalThis as { __spinMail?: ReturnType<typeof setInterval> };
 clearInterval(m.__spinMail);
