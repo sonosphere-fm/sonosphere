@@ -1376,3 +1376,9 @@ html { scrollbar-color: #bdb4a2 var(--bg); }
 .callback-field > .astryx-button.astryx-button { height: 32px; min-height: 32px; padding-block: 0; }
 .check input[type="checkbox"] { height: 16px !important; min-height: 0 !important; padding: 0 !important; }
 @media (max-width: 600px) { .vplayer-bar { gap: 0; } .vplayer-bar > button, .vplayer-bar > a { width: 34px; } }
+.footer-legal { display: flex; gap: 14px; }
+.legal { max-width: 82ch; font-size: 14px; line-height: 1.5; }
+.legal p { margin: 0 0 8px; } .legal.docs h2 { margin: 22px 0 6px; font-size: 16px; }
+.legal ol { list-style: none; counter-reset: cl; margin: 0 0 8px; padding-left: 28px; }
+.legal ol li { counter-increment: cl; position: relative; margin: 2px 0; }
+.legal ol li::before { content: "(" counter(cl, lower-alpha) ")"; position: absolute; left: -28px; }

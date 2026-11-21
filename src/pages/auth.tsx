@@ -79,6 +79,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
         {mode === "join" && <label>Email<Input type="email" value={f.email} onChange={set("email")} autoComplete="email" required /></label>}
         <label>Password<Input type="password" value={f.password} onChange={set("password")} autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={mode === "join" ? 8 : undefined} /></label>
         {robot.view}
+        {mode === "join" && <p className="muted small">By creating an account you agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>, and confirm you are at least 13.</p>}
         {act.note}
         <Button kind="btn" loading={act.busy}>{mode === "login" ? "Log in" : "Create account"}</Button>
       </form>

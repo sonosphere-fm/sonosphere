@@ -284,11 +284,11 @@ function AppSettings() {
   );
 }
 function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
-  const [v, setV] = useState(app.callbackUrl), act = useAction();
+  const saved = app.callbackUrl ?? "", [v, setV] = useState(saved), act = useAction();
   return (
     <form className="callback-field" onSubmit={e => { e.preventDefault(); act.run(async () => { await api<AppOk>(`/apps/${app.id}`, { method: "PATCH", body: { callbackUrl: v.trim() } }); onSaved(); return "Saved."; }); }}>
       <Input value={v} onChange={e => setV(e.target.value)} maxLength={500} placeholder="None" aria-label="Callback URL" />
-      {v.trim() !== app.callbackUrl && <Button kind="btn small" loading={act.busy}>Save</Button>}{act.note}
+      {v.trim() !== saved &&<Button kind="btn small" loading={act.busy}>Save</Button>}{act.note}
     </form>
   );
 }

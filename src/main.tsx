@@ -41,6 +41,9 @@ const Recommended = lazy(() => import("./pages/recommended").then(m => ({ defaul
 const ScrobblePage = lazy(() => import("./pages/scrobble").then(m => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then(m => ({ default: m.Connect })));
 const Developers = lazy(() => import("./pages/developers").then(m => ({ default: m.Developers })));
+const Terms = lazy(() => import("./pages/legal").then(m => ({ default: m.Terms })));
+const PrivacyPolicy = lazy(() => import("./pages/legal").then(m => ({ default: m.Privacy })));
+const Guidelines = lazy(() => import("./pages/legal").then(m => ({ default: m.Guidelines })));
 
 // The staff portal is a separate download, fetched only when a member of staff opens it.
 const AdminPage = lazy(() => import("./admin/index"));
@@ -118,6 +121,7 @@ function Footer() {
         <div className="wrap">
           <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
           <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
+          <span className="footer-legal"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/guidelines">Guidelines</Link></span>
         </div>
       </div>
     </footer>
@@ -238,6 +242,9 @@ function Pages() {
       <Route path="/scrobble" element={<Private><ScrobblePage /></Private>} />
       <Route path="/connect" element={<Private><Connect /></Private>} />
       <Route path="/developers" element={<Developers />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/guidelines" element={<Guidelines />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
