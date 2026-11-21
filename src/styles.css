@@ -1382,3 +1382,10 @@ html { scrollbar-color: #bdb4a2 var(--bg); }
 .legal ol { list-style: none; counter-reset: cl; margin: 0 0 8px; padding-left: 28px; }
 .legal ol li { counter-increment: cl; position: relative; margin: 2px 0; }
 .legal ol li::before { content: "(" counter(cl, lower-alpha) ")"; position: absolute; left: -28px; }
+.lyrics-box { height: 440px; border-radius: 10px; background: var(--panel); overflow: hidden; }
+.lyrics-box am-lyrics {
+  --am-lyrics-highlight-surface: color-mix(in srgb, var(--ink) 6%, transparent);
+  --am-lyrics-compact-font-size: 20px; --am-lyrics-compact-line-spacing: 12px;
+  --lyplus-font-size-base: 22px; --am-lyrics-line-spacing: 14px; --am-lyrics-wide-font-size: 24px; --am-lyrics-wide-line-spacing: 16px;
+  --am-lyrics-glow-radius: 0px;
+}

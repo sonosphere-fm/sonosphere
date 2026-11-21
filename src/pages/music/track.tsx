@@ -1,4 +1,5 @@
 import { Ico } from "../../icons";
+import { Lyrics } from "../../ui/lyrics";
 import { useState, type FormEvent, Suspense } from "react";
 import { Button, Input, Modal } from "../../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -74,6 +75,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                 <About wiki={t.wiki} to={`${base}/+wiki`} facts={[["Length", t.duration > 0 ? dur(t.duration) : "Unknown"], ["Loved by", plural(t.loves, "listener")]]}>
                   <Tagger type="track" id={t.id} tags={t.tags} myTags={t.myTags} />
                 </About>
+                <Lyrics track={t} />
                 <Section title="Similar tracks" aside={<PlayButton queue={t.similar} />}><TrackList items={t.similar} count="listeners" /></Section>
                 {t.albums.length > 0 && <Section title="Appears on"><Grid below kind="album" cols={4} items={t.albums} /></Section>}
                 <Listeners items={t.topListeners} />

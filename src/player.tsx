@@ -50,7 +50,7 @@ function save(s: State) {
 const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
 type Player = { state: State; play: (q: PTrack[], i?: number) => void; playStation: (path: string) => Promise<void>; toggle: () => void; seek: (sec: number) => void; isCurrent: (t: PTrack) => boolean };
 const Ctx = createContext<Player | null>(null);
-const usePlayer = () => {
+export const usePlayer = () => {
   const p = useContext(Ctx);
   if (!p) throw new Error("The player is used outside <PlayerProvider>");
   return p;
