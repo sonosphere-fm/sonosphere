@@ -1,4 +1,4 @@
-import { and, asc, count, countDistinct, desc, eq, exists, gte, sql } from "drizzle-orm";
+import { and, asc, count, countDistinct, desc, eq, exists, gte, inArray, sql } from "drizzle-orm";
 import { trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
@@ -31,6 +31,11 @@ export const popularTags = (limit: number): Promise<TagCount[]> =>
     .groupBy(tags.id)
     .orderBy(desc(applied))
     .limit(limit);
+
+export const topGenreTags = (genres: readonly string[]) =>
+  db.select({ id: tags.id, name: tags.name }).from(taggings).innerJoin(tags, eq(tags.id, taggings.tagId))
+    .where(and(eq(taggings.itemType, "artist"), inArray(tags.nameNorm, genres)))
+    .groupBy(tags.id).orderBy(desc(applied.sql), asc(tags.name));
 
 const headCount = (status: string) => {
   const q = db.select({ c: count() }).from(eventAttendance)

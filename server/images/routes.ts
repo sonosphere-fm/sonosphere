@@ -54,17 +54,19 @@ router.get("/api/image/:id", async c => {
   const id = c.params[0] ?? "";
   const found = /^[0-9a-f]{32}$/.test(id) ? await repo.findImage(id) : null;
   const img = found ?? missing("Image");
+  const texture = c.q.get("texture") === "1";
   if ("data" in img) return new Response(img.data, { headers: { "Content-Type": img.mime, ...IMMUTABLE } });
   if ("url" in img) {
+    if (texture) missing("Image");
     return new Response(null, { status: 302, headers: { Location: img.url, "Cache-Control": "public, max-age=86400" } });
   }
-  const file = repo.fileOf(img.key, c.q.get("s") === "small" ? "small" : "large");
+  const file = repo.fileOf(img.key, texture || c.q.get("s") === "small" ? "small" : "large");
   const link = store.link(file);
   if (link) {
     if (!(await spendRead())) fail(503, "Pictures are unavailable for the rest of today");
     // the same link is handed out until `until`, so the browser may keep the redirect that long
     const age = Math.max(0, link.until - Math.floor(Date.now() / 1000) - 60);
-    return new Response(null, { status: 302, headers: { Location: link.url, "Cache-Control": `private, max-age=${age}` } });
+    if (!texture) return new Response(null, { status: 302, headers: { Location: link.url, "Cache-Control": `private, max-age=${age}` } });
   }
   const bytes = (await store.get(file)) ?? missing("Image");
   return new Response(bytes, { headers: { "Content-Type": "image/webp", ...IMMUTABLE } });

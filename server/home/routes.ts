@@ -5,6 +5,7 @@ import { counts, nowPlaying, recent, siteTop, topAlbums } from "../listening/rep
 import { recommendations, recommendedArtists } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
+import { homeSpheres } from "./sphere";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
 import type { TopAlbum } from "../../shared/listening";
 
@@ -52,6 +53,7 @@ router.get<Home>("/api/home", async c => {
     tags: await repo.popularTags(18),
     events: await repo.upcomingEvents(now(), viewerId, 4),
     stats: await repo.siteTotals(),
+    ...await homeSpheres(),
   };
   if (viewerId) {
     out.friends = await friendActivity(viewerId);

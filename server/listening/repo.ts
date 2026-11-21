@@ -5,7 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
 import { getJson, setJson } from "../kv";
-import { albums, artists, lovedTracks, nowPlaying as playing, scrobbles, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
+import { albums, artists, images, lovedTracks, nowPlaying as playing, scrobbles, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx, resolveTrackTx, type TrackNames, type TrackRef } from "../catalog/repo";
 import { first, norm, now } from "../util";
 import { FOREVER } from "./period";
@@ -133,6 +133,25 @@ async function topArtistsRows(s: Scope, limit = 50, offset = 0): Promise<TopList
     .limit(limit)
     .offset(offset);
   return { items, total: await total(db.select({ c: countDistinct(scrobbles.artistId) }).from(scrobbles).where(w)) };
+}
+
+/** Rank albums with locally served artwork, capping each artist before applying the overall limit. */
+export async function topAlbumsWithArtwork(artistIds: number[] | undefined, perArtist: number, limit: number): Promise<TopAlbum[]> {
+  if (artistIds?.length === 0) return [];
+  const scope = { artistIds, global: true };
+  const x = tallies("albums", scope), c = catalogued(albums, albums.artistId, x, scope);
+  const ranked = db.select({
+    ...albumCols, listeners: c.listeners, playcount: c.playcount,
+    artistRank: sql<number>`ROW_NUMBER() OVER (
+      PARTITION BY ${albums.artistId}
+      ORDER BY ${c.listeners.sql} DESC, ${c.playcount.sql} DESC, ${albums.title}, ${albums.id}
+    )`.as("artist_rank"),
+  }).from(albums).innerJoin(artists, eq(artists.id, albums.artistId))
+    .innerJoin(images, eq(images.id, albums.imageId)).leftJoin(x, eq(x.k, albums.id))
+    .where(and(c.where, or(isNotNull(images.key), isNotNull(images.data)))).as("ranked_albums");
+  const { id, title, image, artist, listeners, playcount, artistRank } = ranked;
+  return db.select({ id, title, image, artist, listeners, playcount }).from(ranked)
+    .where(sql`${artistRank} <= ${perArtist}`).orderBy(desc(listeners), desc(playcount), asc(title), asc(id)).limit(limit);
 }
 
 async function topAlbumsRows(s: Scope, limit = 50, offset = 0): Promise<TopList<TopAlbum>> {
