@@ -1,14 +1,29 @@
 // API applications: registering apps that scrobble through the Last.fm-compatible API, and approving their access.
+import { checkTurnstile } from "../auth/turnstile";
 import { confirmed, need } from "../guards";
-import { bad, missing, Router, throttle } from "../http";
+import { bad, ipOf, missing, Router, throttle } from "../http";
 import { clean, now, rid } from "../util";
 import * as repo from "./repo";
-import type { AppInfo, AppOk, Apps } from "../../shared/apps";
+import type { AppAuthorized, AppInfo, AppOk, Apps } from "../../shared/apps";
 
 export const router = new Router();
 
 /** How long an application has to get its token approved, in seconds. */
 const TOKEN_LIFE = 3600;
+
+/**
+ * A place to send someone back to after they approve an app: a web address, or an app's own scheme (myapp://...) for
+ * native apps. Script-running and local-file schemes are refused. Returns "" for an empty value.
+ */
+function callbackUrl(raw: unknown): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  if (s.length > 500) bad("The callback URL is too long");
+  let u: URL;
+  try { u = new URL(s); } catch { return bad("The callback URL isn't a valid URL"); }
+  if (["javascript:", "data:", "vbscript:", "file:", "blob:", "about:"].includes(u.protocol)) bad("That kind of callback URL isn't allowed");
+  return u.href;
+}
 
 router.get<Apps>("/api/apps", async c => {
   const u = need(c);
@@ -16,9 +31,15 @@ router.get<Apps>("/api/apps", async c => {
 });
 
 router.post<AppOk>("/api/apps", async c => {
-  const u = confirmed(need(c)), name = clean(c.body.name, 60) || bad("Give the application a name");
+  const u = confirmed(need(c)), name = clean(c.body.name, 60) || bad("Give the application a name"), cb = callbackUrl(c.body.callbackUrl);
   await throttle(`app-create:${u.id}`, 5, 86_400, "You can create up to 5 applications a day.");
-  await repo.createApp({ userId: u.id, name, description: clean(c.body.description, 300), apiKey: rid(16), secret: rid(16) });
+  await checkTurnstile(c.body.turnstile, ipOf(c.req), "apiapp");
+  await repo.createApp({ userId: u.id, name, description: clean(c.body.description, 300), apiKey: rid(16), secret: rid(16), callbackUrl: cb });
+  return { ok: true };
+});
+
+router.patch<AppOk>("/api/apps/:id", async c => {
+  await repo.setCallback(Number(c.params[0]), need(c).id, callbackUrl(c.body.callbackUrl));
   return { ok: true };
 });
 
@@ -36,9 +57,25 @@ router.post<AppOk>("/api/apps/revoke", async c => {
 
 router.get<AppInfo>("/api/apps/lookup", async c => (await repo.appByKey(c.q.get("api_key") ?? "")) ?? missing("Application"));
 
-router.post<AppOk>("/api/apps/authorize", async c => {
-  const u = need(c), token = String(c.body.token);
-  if (!(await repo.tokenIssued(token, String(c.body.api_key), now() - TOKEN_LIFE))) missing("Token (it may have expired)");
-  await repo.approveToken(token, u.id);
-  return { ok: true };
+/**
+ * Approves an app for the signed-in user. Desktop sign-in brings the token the app got from auth.getToken; web sign-in
+ * brings none, so one is made here, already approved. Either way the person goes back to `cb` (or the app's registered
+ * callback URL) with ?token= added, and the app trades it for a session with auth.getSession. When the app registered
+ * a callback URL, `cb` has to be on the same site, so a link can't send the token somewhere else.
+ */
+router.post<AppAuthorized>("/api/apps/authorize", async c => {
+  const u = need(c), apiKey = String(c.body.api_key ?? ""), app = (await repo.appByKey(apiKey)) ?? missing("Application");
+  const cb = callbackUrl(c.body.cb);
+  if (cb && app.callbackUrl && new URL(cb).origin !== new URL(app.callbackUrl).origin) bad("This sign-in link sends you to a site the application didn't register");
+  const back = cb || app.callbackUrl;
+  let token = typeof c.body.token === "string" ? c.body.token : "";
+  if (token) {
+    if (!(await repo.tokenIssued(token, apiKey, now() - TOKEN_LIFE))) missing("Token (it may have expired)");
+    await repo.approveToken(token, u.id);
+  } else {
+    if (!back) bad("This application didn't say where to send you back to");
+    token = rid(16);
+    await repo.createApprovedToken(token, (await repo.appIdByKey(apiKey))!, u.id);
+  }
+  return { token, redirect: back ? `${back}${back.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}` : null };
 });

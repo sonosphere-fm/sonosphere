@@ -322,6 +322,8 @@ export const apiApps = pgTable("api_apps", {
 	description: text().default("").notNull(),
 	apiKey: text("api_key").notNull().unique(),
 	secret: text().notNull(),
+	// where web sign-in sends people back to (with ?token=) after they approve the app; empty when the app passes cb= each time
+	callbackUrl: text("callback_url").default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 });
 

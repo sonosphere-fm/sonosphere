@@ -43,6 +43,13 @@
       "when": 1795227730240,
       "tag": "0005_email_notify",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795228030940,
+      "tag": "0006_app_callback",
+      "breakpoints": true
     }
   ]
 }

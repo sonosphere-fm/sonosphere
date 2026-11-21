@@ -1,0 +1,1 @@
+ALTER TABLE "api_apps" ADD COLUMN "callback_url" text DEFAULT '' NOT NULL;

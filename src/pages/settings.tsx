@@ -4,7 +4,8 @@ import { MdEditor } from "../md";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ago, api, copyText, date, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
-import type { AppOk, Apps } from "../../shared/apps";
+import type { ApiApp, AppOk, Apps } from "../../shared/apps";
+import { useTurnstile } from "./auth";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
@@ -240,7 +241,7 @@ function Services() {
 }
 
 function AppSettings() {
-  const q = useApi<Apps>("/apps"), [f, setF] = useState({ name: "", description: "" }), act = useAction(), c = useConfirm();
+  const q = useApi<Apps>("/apps"), [f, setF] = useState({ name: "", description: "", callbackUrl: "" }), act = useAction(), c = useConfirm(), robot = useTurnstile("apiapp");
   return (
     <>
       {c.dialog}
@@ -256,15 +257,31 @@ function AppSettings() {
             <div className="row between"><b>{a.name}</b><Button kind="link small" onClick={() => c.ask({ title: `Delete “${a.name}”?`, body: "Apps using this key will stop working.", action: "Delete", danger: true, run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload) })}>Delete</Button></div>
             {a.description && <p className="muted small">{a.description}</p>}
             <dl className="keys"><dt>API key</dt><dd><code>{a.apiKey}</code></dd><dt>Shared secret</dt><dd><code>{a.secret}</code></dd></dl>
+            <CallbackField app={a} onSaved={q.reload} />
           </li>
         ))}</ul> : <p className="muted">Create an API account to get a key and shared secret.</p>}</Async>
-        <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => { await api<AppOk>("/apps", { body: f }); setF({ name: "", description: "" }); q.reload(); return "API account created."; }); }}>
+        <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => {
+          if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+          try { await api<AppOk>("/apps", { body: { ...f, turnstile: robot.token } }); } finally { robot.reset(); }
+          setF({ name: "", description: "", callbackUrl: "" }); q.reload(); return "API account created.";
+        }); }}>
           <label>Application name<Input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} required maxLength={60} /></label>
           <label>Description (optional)<Input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} maxLength={300} /></label>
-          {act.note}<Button kind="btn" loading={act.busy}>Create API account</Button>
+          <label>Callback URL (optional)<Input value={f.callbackUrl} onChange={e => setF({ ...f, callbackUrl: e.target.value })} maxLength={500} placeholder="https://example.com/callback" /></label>
+          <p className="muted small">For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.</p>
+          {robot.view}{act.note}<Button kind="btn" loading={act.busy}>Create API account</Button>
         </form>
       </Section>
     </>
+  );
+}
+function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
+  const [v, setV] = useState(app.callbackUrl), act = useAction();
+  return (
+    <form className="inline-form callback-field" onSubmit={e => { e.preventDefault(); act.run(async () => { await api<AppOk>(`/apps/${app.id}`, { method: "PATCH", body: { callbackUrl: v } }); onSaved(); return "Saved."; }); }}>
+      <label>Callback URL<Input value={v} onChange={e => setV(e.target.value)} maxLength={500} placeholder="None (pass cb= when signing in)" /></label>
+      <Button kind="btn ghost small" loading={act.busy} disabled={v === app.callbackUrl}>Save</Button>{act.note}
+    </form>
   );
 }
 function DataSettings() {
