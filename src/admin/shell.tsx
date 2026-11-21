@@ -1,5 +1,3 @@
-// The staff portal at /admin. Moderators see reports, users, content and the audit log; admins also get account
-// actions, the catalogue tools and site settings. The server enforces every rule; this page only hides what a role can't use.
 import "../admin.css";
 import { Suspense, type ReactNode } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
@@ -16,16 +14,25 @@ import { Catalogue } from "./catalogue";
 import { Audit } from "./audit";
 import { SiteSettings } from "./settings";
 
-// ---------- shell ----------
 const SECTIONS: [string, string, boolean][] = [
-  ["/admin", "Dashboard", false], ["/admin/reports", "Reports", false], ["/admin/messages", "Messages", false], ["/admin/users", "Users", false], ["/admin/content", "Content", false],
-  ["/admin/catalogue", "Catalogue", true], ["/admin/audit", "Audit log", false], ["/admin/settings", "Site settings", true],
+  ["/admin", "Dashboard", false],
+  ["/admin/reports", "Reports", false],
+  ["/admin/messages", "Messages", false],
+  ["/admin/users", "Users", false],
+  ["/admin/content", "Content", false],
+  ["/admin/catalogue", "Catalogue", true],
+  ["/admin/audit", "Audit log", false],
+  ["/admin/settings", "Site settings", true],
 ];
 export function AdminPage() {
-  const { me } = useAuth(), role = useRole();
+  // main.tsx only renders the portal for signed-in staff
+  const me = useAuth().me!;
+  const role = useRole();
   useTitle("Admin");
-  if (!me?.admin) return <div className="wrap page narrow"><h1 className="page-title">Admin</h1><Empty>This area is for moderators and admins.</Empty></div>;
   const adminOnly = (el: ReactNode) => (role === "admin" ? el : <Empty>Only admins can use this section.</Empty>);
+  const transcriptDenied = (
+    <Empty>Only admins can read conversations. Reported messages, with the messages around them, are in the reports queue.</Empty>
+  );
   return (
     <div className="wrap page adm">
       <div className="adm-head">
@@ -35,8 +42,11 @@ export function AdminPage() {
       <div className="adm-layout">
         <nav className="adm-nav" aria-label="Admin sections">
           {SECTIONS.filter(([, , a]) => !a || role === "admin").map(([to, label]) => (
-            <NavLink key={to} to={to} end={to === "/admin"}>{label}{to === "/admin/reports" && me.openReports > 0 && <span className="adm-count">{me.openReports}</span>}
-              {to === "/admin/messages" && <Suspense fallback={null}><FlagCount /></Suspense>}</NavLink>
+            <NavLink key={to} to={to} end={to === "/admin"}>
+              {label}
+              {to === "/admin/reports" && me.openReports > 0 && <span className="adm-count">{me.openReports}</span>}
+              {to === "/admin/messages" && <Suspense fallback={null}><FlagCount /></Suspense>}
+            </NavLink>
           ))}
         </nav>
         <div className="adm-body">
@@ -44,7 +54,7 @@ export function AdminPage() {
             <Route index element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
             <Route path="messages" element={<Messages />} />
-            <Route path="messages/:id" element={role === "admin" ? <Transcript /> : <Empty>Only admins can read conversations. Reported messages, with the messages around them, are in the reports queue.</Empty>} />
+            <Route path="messages/:id" element={role === "admin" ? <Transcript /> : transcriptDenied} />
             <Route path="users" element={<Users />} />
             <Route path="users/:name" element={<UserDetail />} />
             <Route path="content" element={<Content />} />

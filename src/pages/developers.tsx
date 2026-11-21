@@ -2,13 +2,21 @@ import { Link } from "react-router-dom";
 import { Arrow } from "../icons";
 import { useTitle } from "../lib";
 
-// ---------- developer docs ----------
 const METHODS: [string, string[]][] = [
   ["Auth", ["auth.getToken", "auth.getSession", "auth.getMobileSession"]],
-  ["Track", ["track.scrobble", "track.updateNowPlaying", "track.love", "track.unlove", "track.getInfo", "track.getSimilar", "track.getTopTags", "track.search", "track.addTags", "track.removeTag"]],
-  ["Artist", ["artist.getInfo", "artist.getTopTracks", "artist.getTopAlbums", "artist.getSimilar", "artist.getTopTags", "artist.search", "artist.addTags", "artist.removeTag"]],
+  ["Track", [
+    "track.scrobble", "track.updateNowPlaying", "track.love", "track.unlove", "track.getInfo",
+    "track.getSimilar", "track.getTopTags", "track.search", "track.addTags", "track.removeTag",
+  ]],
+  ["Artist", [
+    "artist.getInfo", "artist.getTopTracks", "artist.getTopAlbums", "artist.getSimilar",
+    "artist.getTopTags", "artist.search", "artist.addTags", "artist.removeTag",
+  ]],
   ["Album", ["album.getInfo", "album.getTopTags", "album.search", "album.addTags", "album.removeTag"]],
-  ["User", ["user.getInfo", "user.getRecentTracks", "user.getTopArtists", "user.getTopAlbums", "user.getTopTracks", "user.getLovedTracks", "user.getFriends", "user.getTopTags"]],
+  ["User", [
+    "user.getInfo", "user.getRecentTracks", "user.getTopArtists", "user.getTopAlbums",
+    "user.getTopTracks", "user.getLovedTracks", "user.getFriends", "user.getTopTags",
+  ]],
   ["Tag", ["tag.getInfo", "tag.getTopArtists", "tag.getTopTracks", "tag.getTopAlbums"]],
   ["Chart", ["chart.getTopArtists", "chart.getTopTracks", "chart.getTopTags"]],
 ];
@@ -59,7 +67,12 @@ curl -X POST ${origin}/2.0/ \\
         </div>
         <aside className="side">
           <h3>Methods</h3>
-          {METHODS.map(([group, list]) => <div key={group} className="methods"><h4>{group}</h4><ul className="plain">{list.map(m => <li key={m}><code>{m}</code></li>)}</ul></div>)}
+          {METHODS.map(([group, list]) => (
+            <div key={group} className="methods">
+              <h4>{group}</h4>
+              <ul className="plain">{list.map(m => <li key={m}><code>{m}</code></li>)}</ul>
+            </div>
+          ))}
         </aside>
       </div>
     </div>

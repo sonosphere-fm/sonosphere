@@ -1,4 +1,3 @@
-// Obsessions API: list a user's pinned tracks, pin one, unpin one.
 import { requireItem, requireTrack } from "../catalog/service";
 import { confirmed, need } from "../guards";
 import { Router, throttle, type Body } from "../http";
@@ -9,17 +8,23 @@ import type { ObsessionCreated, ObsessionRemoved, Obsessions } from "../../share
 export const router = new Router();
 
 const text = (v: unknown): string | null => (typeof v === "string" ? v : null);
-/** The track a request names: by id, or by artist and title. */
-const trackId = async (b: Body): Promise<number> =>
-  b.trackId ? (await requireItem("track", b.trackId, ["track"])).row.id : (await requireTrack(text(b.artist), text(b.track))).id;
 
-router.get<Obsessions>("/api/user/obsessions", async c => ({ items: await repo.obsessionsOf((await requireUser(c.q.get("name"))).id, c.user?.id) }));
+async function trackId(b: Body): Promise<number> {
+  if (b.trackId) return (await requireItem("track", b.trackId, ["track"])).row.id;
+  return (await requireTrack(text(b.artist), text(b.track))).id;
+}
+
+router.get<Obsessions>("/api/user/obsessions", async c => {
+  const u = await requireUser(c.q.get("name"));
+  return { items: await repo.obsessionsOf(u.id, c.user?.id) };
+});
 
 router.post<ObsessionCreated>("/api/obsessions", async c => {
   const u = confirmed(need(c));
   await throttle(`obsession:${u.id}`, 30, 3600);
   const id = await trackId(c.body);
-  return { id: await repo.addObsession(u.id, id, String(c.body.comment || "").trim().slice(0, 300)) };
+  const comment = String(c.body.comment || "").trim().slice(0, 300);
+  return { id: await repo.addObsession(u.id, id, comment) };
 });
 
 router.delete<ObsessionRemoved>("/api/obsessions/:id", async c => {

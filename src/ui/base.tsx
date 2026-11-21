@@ -5,8 +5,6 @@ import { Pages, Select } from "../kit";
 import { Link, NavLink } from "react-router-dom";
 import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
 
-// ---------- artwork ----------
-/** A picture when there is one; otherwise a flat grey tile with a quiet glyph (a person for artists and listeners, a record for albums). */
 export function Art({ image, kind = "album" }: { image?: string | null; kind?: "artist" | "album" | "user" }) {
   if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image, "small")} alt="" loading="lazy" /></span>;
   return (
@@ -20,13 +18,11 @@ export function Art({ image, kind = "album" }: { image?: string | null; kind?: "
   );
 }
 
-// ---------- states ----------
 export const Empty = ({ children }: { children: ReactNode }) => <div className="state empty">{children}</div>;
 function ErrorBox({ error }: { error: ApiError }) {
   return <div className="state error"><strong>{error.status === 404 ? "Nothing here." : "Something went wrong."}</strong> {error.message}</div>;
 }
 
-/** Renders children with the loaded data, or the error. There is no loading state: useApi keeps the previous screen up until data is in. */
 export function Async<T>({ q, children }: { q: { data: T | null; error: ApiError | null; loading: boolean }; children: (data: T) => ReactNode }) {
   if (q.error) return <ErrorBox error={q.error} />;
   if (!q.data) return null;
@@ -46,7 +42,11 @@ export function Section({ title, more, moreLabel = "View all", aside, foot, chil
   );
 }
 export const Stat = ({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) => (
-  <div className="stat"><div className="stat-label">{label}</div><div className="stat-value">{value}</div>{hint && <div className="stat-hint">{hint}</div>}</div>
+  <div className="stat">
+    <div className="stat-label">{label}</div>
+    <div className="stat-value">{value}</div>
+    {hint && <div className="stat-hint">{hint}</div>}
+  </div>
 );
 export function Tabs({ items }: { items: [string, string, boolean?][] }) {
   return <nav className="tabs">{items.map(([to, label, end]) => <NavLink key={to} to={to} end={end ?? false}>{label}</NavLink>)}</nav>;
@@ -59,31 +59,46 @@ export function Pager({ total, limit }: { total: number; limit: number }) {
   const [page, setPage] = useParam("page", "1");
   const pages = Math.ceil(total / limit);
   if (pages <= 1) return null;
-  return <Pages page={Number(page)} pages={pages} onChange={p => { setPage(String(p)); window.scrollTo({ top: 0 }); }} />;
+  const go = (p: number) => {
+    setPage(String(p));
+    window.scrollTo({ top: 0 });
+  };
+  return <Pages page={Number(page)} pages={pages} onChange={go} />;
 }
 
-/** The message to show for something thrown. */
 export const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-/** Form helper: runs an async submit, shows its error / success message. */
 export function useAction() {
-  const [busy, setBusy] = useState(false), [error, setError] = useState(""), [done, setDone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState("");
   const lock = useRef(false);
   const run = async (fn: () => Promise<string | void>) => {
-    if (lock.current) return; // a second click while the first is in flight is ignored, without repainting the button
+    if (lock.current) return;
     lock.current = true;
-    // a request that is slow enough to notice puts a spinner in its button; a normal one never repaints it
+    // only a request slow enough to notice puts a spinner in its button
     const slow = setTimeout(() => setBusy(true), 150);
-    try { const msg = (await fn()) || ""; setError(""); setDone(msg); } catch (e) { setDone(""); setError(errorText(e)); } finally { clearTimeout(slow); lock.current = false; setBusy(false); }
+    try {
+      const msg = (await fn()) || "";
+      setError("");
+      setDone(msg);
+    } catch (e) {
+      setDone("");
+      setError(errorText(e));
+    } finally {
+      clearTimeout(slow);
+      lock.current = false;
+      setBusy(false);
+    }
   };
-  const note = error ? <p className="form-error" role="alert">{error}</p> : done ? <p className="form-ok" role="status">{done}</p> : null;
+  let note: ReactNode = null;
+  if (error) note = <p className="form-error" role="alert">{error}</p>;
+  else if (done) note = <p className="form-ok" role="status">{done}</p>;
   return { busy, run, note, error };
 }
 export const Avatar = ({ user, size = 40, plain }: { user: { username: string; image?: string | null }; size?: number; plain?: boolean }) => plain
-  ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art image={user.image} kind="user" /></span> // inside another link
+  ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art image={user.image} kind="user" /></span>
   : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art image={user.image} kind="user" /></Link>;
 
-// The wordmark: heavy italic type with a corner of a record (spindle and two grooves) spinning off the end.
 export const Logo = () => <span className="wordmark" role="img" aria-label="sonosphere"><Lockup /><Mark className="brand-mark logo-small" /></span>;
-/** The part of a tabbed page that changes from tab to tab. While a tab's data loads, only this part shows the spinner; the header stays put. */
 export const Pane = ({ children }: { children: ReactNode }) => <Suspense fallback={<Spinner page />}>{children}</Suspense>;

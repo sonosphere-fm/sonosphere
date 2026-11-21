@@ -1,4 +1,3 @@
-// HTTP routes for direct messages. Every one needs a signed-in user; the rules live in ./service.
 import { confirmed, need } from "../guards";
 import { ipOf, Router } from "../http";
 import { checkTurnstile } from "../auth/turnstile";
@@ -10,12 +9,16 @@ export const router = new Router();
 
 router.get<DmList>("/api/dm", c => dm.list(need(c), c.q.get("box") === "requests" ? "requests" : "inbox"));
 
-router.get<DmWith>("/api/dm/with", async c => { const me = need(c); return dm.withUser(me, await requireUser(c.q.get("name"))); });
+router.get<DmWith>("/api/dm/with", async c => {
+  const me = need(c);
+  return dm.withUser(me, await requireUser(c.q.get("name")));
+});
 
-router.get<DmThreadPage>("/api/dm/thread/:id", c => dm.page(need(c), c.params[0], Number(c.q.get("before")) || 2 ** 31 - 1));
+router.get<DmThreadPage>("/api/dm/thread/:id", c => {
+  const before = Number(c.q.get("before")) || 2 ** 31 - 1;
+  return dm.page(need(c), c.params[0], before);
+});
 
-/** Into an existing conversation (`thread`) or to a username (`to`), which may start one. A first message to someone
- *  who doesn't follow you also needs a robot-check token (`turnstile`). */
 router.post<DmSent>("/api/dm/send", async c => {
   const me = confirmed(need(c));
   if (c.body.thread != null) return dm.sendToThread(me, c.body.thread, c.body.body);

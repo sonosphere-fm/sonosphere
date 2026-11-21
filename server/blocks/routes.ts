@@ -1,4 +1,3 @@
-// Blocking API: the signed-in user's block list, and blocking or unblocking someone.
 import { need } from "../guards";
 import { bad, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
@@ -16,6 +15,7 @@ router.post<BlockResult>("/api/block", async c => {
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
   if (t.id === u.id) bad("You can't block yourself");
   const blocked = c.body.block !== false;
-  if (blocked) await repo.block(u.id, t.id); else await repo.unblock(u.id, t.id);
+  if (blocked) await repo.block(u.id, t.id);
+  else await repo.unblock(u.id, t.id);
   return { blocked };
 });

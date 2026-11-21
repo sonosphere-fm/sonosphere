@@ -1,4 +1,3 @@
-// Rules for shouts: who may post where, who is told about a new post, and who may delete one.
 import { findItem } from "../catalog/repo";
 import { pageOf } from "../moderation/repo";
 import type { Item } from "../catalog/service";
@@ -9,14 +8,17 @@ import { setting } from "../site/settings";
 import { blockedEither } from "../users/repo";
 import * as repo from "./repo";
 
-/** Whose page a shout sits on, for the two kinds of page that belong to somebody. */
-export const ownerOf = (it: Item): number | null => (it.type === "user" ? it.row.id : it.type === "journal" ? it.row.userId : null);
-/** False only for a profile whose owner has turned their wall off. */
+export function ownerOf(it: Item): number | null {
+  if (it.type === "user") return it.row.id;
+  if (it.type === "journal") return it.row.userId;
+  return null;
+}
+
 export const wallOpen = (it: Item): boolean => it.type !== "user" || it.row.shoutsEnabled;
 
-/** Posts `text` on a page and tells the page's owner. Returns the new post's id. */
 export async function post(author: Viewer, it: Item, text: unknown): Promise<number> {
-  const body = String(text || "").trim(), max = await setting("maxShoutLength");
+  const body = String(text || "").trim();
+  const max = await setting("maxShoutLength");
   if (!body) bad("Write something first");
   if (body.length > max) bad(`Posts can be at most ${max} characters`);
   const owner = ownerOf(it);
@@ -24,18 +26,27 @@ export async function post(author: Viewer, it: Item, text: unknown): Promise<num
   if (!wallOpen(it)) fail(403, "This user has turned off their wall");
   const id = await repo.addShout(author.id, it.type, it.row.id, body);
   if (it.type === "user") await notify(it.row.id, "shout", author.id, { body: body.slice(0, 140) });
-  if (it.type === "journal") await notify(it.row.userId, "comment", author.id, { body: body.slice(0, 140), journalId: it.row.id, title: it.row.title });
+  if (it.type === "journal") {
+    await notify(it.row.userId, "comment", author.id, { body: body.slice(0, 140), journalId: it.row.id, title: it.row.title });
+  }
   return id;
 }
 
-/**
- * Deletes a post. Its author may, as may the owner of the profile or journal it is on; staff may delete any post,
- * and that is written to the audit log.
- */
+// The author or the owner of the profile or journal may delete a post; staff may delete any, and that is audited.
 export async function remove(by: Viewer, s: repo.ShoutRow): Promise<void> {
-  const mine = s.authorId === by.id || (s.targetType === "user" && s.targetId === by.id)
+  const mine = s.authorId === by.id
+    || (s.targetType === "user" && s.targetId === by.id)
     || (s.targetType === "journal" && (await findItem("journal", s.targetId))?.userId === by.id);
   if (!mine && !by.isAdmin) fail(403, "You can't delete that post");
   await repo.deleteShout(s.id);
-  if (!mine) await audit(by, { action: "shout.delete", targetType: "shout", targetId: s.id, label: `Shout on ${(await pageOf(s.targetType, s.targetId))?.label ?? "a page"}`, subjectId: s.authorId, data: { text: s.body.slice(0, 500) } });
+  if (mine) return;
+  const page = await pageOf(s.targetType, s.targetId);
+  await audit(by, {
+    action: "shout.delete",
+    targetType: "shout",
+    targetId: s.id,
+    label: `Shout on ${page?.label ?? "a page"}`,
+    subjectId: s.authorId,
+    data: { text: s.body.slice(0, 500) },
+  });
 }
