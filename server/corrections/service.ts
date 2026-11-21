@@ -77,9 +77,9 @@ export const mbidOfArtist = (name: string): string => artistMbid.get(norm(name))
 export const mbidOfAlbum = (artist: string, title: string): string => albumMbid.get(`${norm(artist)}\n${norm(title)}`) || "";
 
 /** Bring names already in the catalogue into line. Renames only; two existing entries are never merged automatically. */
-export function sweep(): repo.SweepResult {
+export async function sweep(): Promise<repo.SweepResult> {
   const rules = { artists: artistCase.size + artistMove.size, titles: [...titles.values()].reduce((s, t) => s + t.fix.size + t.move.size, 0), mbids: artistMbid.size + albumMbid.size };
-  return repo.sweep({ artistCase, artistMove, titles }, r => JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules }));
+  return (await repo.sweep({ artistCase, artistMove, titles }, r => JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules })));
 }
 
 /** Load the saved copy straight away, then refresh from the network when it is more than a day old. */
@@ -92,7 +92,7 @@ export async function syncCorrections(force = false): Promise<repo.SweepResult |
     catch (e) { console.error("Corrections: download failed, keeping the saved copy.", String(e)); }
   }
   if (!raw) return null;
-  const r = sweep();
+  const r = (await sweep());
   if (r.fixed || r.renamed) console.log(`Corrections: ${r.fixed} capitalisations fixed, ${r.renamed} renamed${r.clashes ? `, ${r.clashes} left for a manual merge` : ""}.`);
   return r;
 }

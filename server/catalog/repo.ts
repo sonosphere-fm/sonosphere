@@ -51,39 +51,39 @@ export const findItem = <K extends ItemType>(type: K, id: number): Promise<ItemR
 
 // ---------- get or create ----------
 // Each comes in two forms: the plain one runs in its own transaction; the Tx one joins a transaction already open.
-export function getOrCreateArtistTx(tx: Tx, name: string): number {
+export async function getOrCreateArtistTx(tx: Tx, name: string): Promise<number> {
   const n = norm(name);
-  const row = tx.select({ id: artists.id }).from(artists).where(eq(artists.nameNorm, n)).get();
+  const row = (await tx.select({ id: artists.id }).from(artists).where(eq(artists.nameNorm, n)))[0];
   if (row) return row.id;
-  return tx.insert(artists).values({ name: clean(name), nameNorm: n, createdAt: now() }).returning({ id: artists.id }).get().id;
+  return (await tx.insert(artists).values({ name: clean(name), nameNorm: n, createdAt: now() }).returning({ id: artists.id }))[0].id;
 }
 
-export function getOrCreateAlbumTx(tx: Tx, artistId: number, title: string, releaseDate: string | null = null): number {
+export async function getOrCreateAlbumTx(tx: Tx, artistId: number, title: string, releaseDate: string | null = null): Promise<number> {
   const n = norm(title);
-  const row = tx.select({ id: albums.id }).from(albums).where(and(eq(albums.artistId, artistId), eq(albums.titleNorm, n))).get();
+  const row = (await tx.select({ id: albums.id }).from(albums).where(and(eq(albums.artistId, artistId), eq(albums.titleNorm, n))))[0];
   if (row) return row.id;
-  return tx.insert(albums).values({ artistId, title: clean(title), titleNorm: n, releaseDate, createdAt: now() }).returning({ id: albums.id }).get().id;
+  return (await tx.insert(albums).values({ artistId, title: clean(title), titleNorm: n, releaseDate, createdAt: now() }).returning({ id: albums.id }))[0].id;
 }
 
 /**
  * Finds or adds a track. A known track gains the duration or album if it had none, and when an album is given the
  * track is added to its track list (at `position`, or at the end).
  */
-export function getOrCreateTrackTx(tx: Tx, artistId: number, title: string, duration = 0, albumId: number | null = null, position?: number): number {
+export async function getOrCreateTrackTx(tx: Tx, artistId: number, title: string, duration = 0, albumId: number | null = null, position?: number): Promise<number> {
   const n = norm(title);
-  const row = tx.select({ id: tracks.id, duration: tracks.duration, albumId: tracks.albumId }).from(tracks)
-    .where(and(eq(tracks.artistId, artistId), eq(tracks.titleNorm, n))).get();
+  const row = (await tx.select({ id: tracks.id, duration: tracks.duration, albumId: tracks.albumId }).from(tracks)
+    .where(and(eq(tracks.artistId, artistId), eq(tracks.titleNorm, n))))[0];
   let id: number;
   if (!row) {
-    id = tx.insert(tracks).values({ artistId, title: clean(title), titleNorm: n, duration: duration | 0, albumId, createdAt: now() }).returning({ id: tracks.id }).get().id;
+    id = (await tx.insert(tracks).values({ artistId, title: clean(title), titleNorm: n, duration: duration | 0, albumId, createdAt: now() }).returning({ id: tracks.id }))[0].id;
   } else {
     id = row.id;
-    if (!row.duration && duration > 0) tx.update(tracks).set({ duration: duration | 0 }).where(eq(tracks.id, id)).run();
-    if (!row.albumId && albumId) tx.update(tracks).set({ albumId }).where(eq(tracks.id, id)).run();
+    if (!row.duration && duration > 0) await tx.update(tracks).set({ duration: duration | 0 }).where(eq(tracks.id, id));
+    if (!row.albumId && albumId) await tx.update(tracks).set({ albumId }).where(eq(tracks.id, id));
   }
-  if (albumId && !tx.select({ trackId: albumTracks.trackId }).from(albumTracks).where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, id))).get()) {
-    const next = () => tx.select({ p: sql<number>`COALESCE(MAX(${albumTracks.position}), 0) + 1` }).from(albumTracks).where(eq(albumTracks.albumId, albumId)).get()?.p ?? 1;
-    tx.insert(albumTracks).values({ albumId, trackId: id, position: position ?? next() }).run();
+  if (albumId && !(await tx.select({ trackId: albumTracks.trackId }).from(albumTracks).where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, id))))[0]) {
+    const next = async () => (await tx.select({ p: sql<number>`COALESCE(MAX(${albumTracks.position}), 0) + 1` }).from(albumTracks).where(eq(albumTracks.albumId, albumId)))[0]?.p ?? 1;
+    await tx.insert(albumTracks).values({ albumId, trackId: id, position: position ?? (await next()) });
   }
   return id;
 }
@@ -95,14 +95,14 @@ export type TrackNames = { artist: string; track: string; album?: string; durati
 export type TrackRef = { artistId: number; trackId: number; albumId: number | null };
 
 /** Turns names into catalogue ids, adding whatever is not there yet. */
-export function resolveTrackTx(tx: Tx, names: TrackNames): TrackRef {
-  const artistId = getOrCreateArtistTx(tx, names.artist);
-  const albumId = names.album ? getOrCreateAlbumTx(tx, artistId, names.album) : null;
-  const trackId = getOrCreateTrackTx(tx, artistId, names.track, names.duration ?? 0, albumId);
-  const known = () => tx.select({ albumId: tracks.albumId }).from(tracks).where(eq(tracks.id, trackId)).get()?.albumId ?? null;
-  return { artistId, trackId, albumId: albumId ?? known() };
+export async function resolveTrackTx(tx: Tx, names: TrackNames): Promise<TrackRef> {
+  const artistId = (await getOrCreateArtistTx(tx, names.artist));
+  const albumId = names.album ? (await getOrCreateAlbumTx(tx, artistId, names.album)) : null;
+  const trackId = (await getOrCreateTrackTx(tx, artistId, names.track, names.duration ?? 0, albumId));
+  const known = async () => (await tx.select({ albumId: tracks.albumId }).from(tracks).where(eq(tracks.id, trackId)))[0]?.albumId ?? null;
+  return { artistId, trackId, albumId: albumId ?? (await known()) };
 }
-export const resolveTrack = async (names: TrackNames): Promise<TrackRef> => transact(tx => resolveTrackTx(tx, names));
+export const resolveTrack = async (names: TrackNames): Promise<TrackRef> => (await transact(async tx => (await resolveTrackTx(tx, names))));
 
 // ---------- what the artist, album and track pages show ----------
 const single = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;

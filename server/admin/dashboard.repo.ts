@@ -1,6 +1,6 @@
 // Data access for the staff dashboard: site-wide totals, daily activity and the newest accounts.
-import { and, count, countDistinct, desc, eq, gte, isNull, ne } from "drizzle-orm";
-import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
+import { and, count, countDistinct, desc, eq, gte, isNull, ne, sql } from "drizzle-orm";
+import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { albums, artists, dmFlags, journals, reports, scrobbles, shouts, tracks, users, wikiLocks, wikis } from "../db/schema";
 import { timeBucket } from "../db/dialect";
@@ -36,9 +36,9 @@ export async function totals(t: number): Promise<Dashboard["totals"]> {
 }
 
 /** Rows per UTC day ("YYYY-MM-DD") since `from`, counted on a time column. */
-async function perDay(table: SQLiteTable, time: SQLiteColumn, from: number): Promise<Map<string, number>> {
+async function perDay(table: PgTable, time: PgColumn, from: number): Promise<Map<string, number>> {
   const day = timeBucket(time, "day");
-  const rows = await db.select({ d: day, c: count() }).from(table).where(gte(time, from)).groupBy(day);
+  const rows = await db.select({ d: day, c: count() }).from(table).where(gte(time, from)).groupBy(sql`1`);
   return new Map(rows.map(r => [String(r.d), r.c]));
 }
 /** One entry per day for `days` days starting at `from`, adding up the given per-day counts. */

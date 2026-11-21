@@ -53,6 +53,9 @@ export class Router {
       }
       return fail(404, "Not found");
     } catch (e) {
+      // a number that is not one (NaN) or does not fit the column reaches Postgres as a bad value: the input was wrong
+      const pgCode = (e as { cause?: { code?: string } })?.cause?.code;
+      if (pgCode === "22P02" || pgCode === "22003") e = new HttpError(400, "Invalid number");
       const status = e instanceof HttpError ? e.status : 500;
       if (status === 500) console.error(e);
       return new Response(JSON.stringify({ error: e instanceof HttpError ? e.message : "Something went wrong" }), { status, headers });

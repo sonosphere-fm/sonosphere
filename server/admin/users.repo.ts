@@ -1,7 +1,7 @@
 // Data access for the accounts section of the staff API: the searchable account list, everything shown on one
 // account's page, and the changes staff make to accounts (suspend, ban, sign out, delete, notes).
 import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, or, sql, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import {
   apiSessions, apiTokens, auditLog, blocks, dmFlags, dmMessages, dmThreads, follows, images, journals, lovedTracks, modNotes, nowPlaying, playlists,
@@ -132,15 +132,15 @@ export async function setDmMuted(id: number, dmMuted: boolean): Promise<void> { 
 
 /** Bans an account (ending every session, API session and pending API token it has) or lifts the ban, and records it. */
 export async function setBanned(actor: Actor, id: number, banned: boolean, reason: string, entry: AuditEntry): Promise<void> {
-  transact(tx => {
+  await transact(async tx => {
     if (banned) {
-      tx.update(users).set({ banned: true, bannedAt: now(), banReason: reason }).where(eq(users.id, id)).run();
-      tx.delete(sessions).where(eq(sessions.userId, id)).run();
-      tx.delete(apiSessions).where(eq(apiSessions.userId, id)).run();
-      tx.delete(apiTokens).where(eq(apiTokens.userId, id)).run();
-      tx.delete(nowPlaying).where(eq(nowPlaying.userId, id)).run();
-    } else tx.update(users).set({ banned: false, bannedAt: null, banReason: "" }).where(eq(users.id, id)).run();
-    auditTx(tx, actor, entry);
+      await tx.update(users).set({ banned: true, bannedAt: now(), banReason: reason }).where(eq(users.id, id));
+      await tx.delete(sessions).where(eq(sessions.userId, id));
+      await tx.delete(apiSessions).where(eq(apiSessions.userId, id));
+      await tx.delete(apiTokens).where(eq(apiTokens.userId, id));
+      await tx.delete(nowPlaying).where(eq(nowPlaying.userId, id));
+    } else await tx.update(users).set({ banned: false, bannedAt: null, banReason: "" }).where(eq(users.id, id));
+    await auditTx(tx, actor, entry);
   });
 }
 
@@ -153,16 +153,16 @@ export async function revokeSessions(id: number): Promise<number> {
 
 /** Deletes an account and everything it owns, settles the open reports about it, and records the deletion. */
 export async function deleteAccount(actor: Actor, t: User, entry: AuditEntry): Promise<void> {
-  transact(tx => {
+  await transact(async tx => {
     // open reports about this person's things are settled by the deletion
-    tx.update(reports).set({ status: "closed", outcome: "account deleted", resolvedBy: actor.id, resolvedAt: now() })
-      .where(and(eq(reports.status, "open"), against(sql`${t.id}`, sql`${t.username}`))).run();
+    await tx.update(reports).set({ status: "closed", outcome: "account deleted", resolvedBy: actor.id, resolvedAt: now() })
+      .where(and(eq(reports.status, "open"), against(sql`${t.id}`, sql`${t.username}`)));
     // comments other people left on this person's journal posts and shouts aimed at their profile go with it
-    tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), inArray(shouts.targetId, tx.select({ id: journals.id }).from(journals).where(eq(journals.userId, t.id))))).run();
-    tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, t.id))).run();
-    tx.delete(modNotes).where(eq(modNotes.userId, t.id)).run();
-    tx.delete(users).where(eq(users.id, t.id)).run(); // everything else cascades (scrobbles, loves, shouts, journals, playlists, tags, sessions...)
-    if (t.imageId) tx.delete(images).where(eq(images.id, t.imageId)).run();
-    auditTx(tx, actor, entry);
+    await tx.delete(shouts).where(and(eq(shouts.targetType, "journal"), inArray(shouts.targetId, tx.select({ id: journals.id }).from(journals).where(eq(journals.userId, t.id)))));
+    await tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, t.id)));
+    await tx.delete(modNotes).where(eq(modNotes.userId, t.id));
+    await tx.delete(users).where(eq(users.id, t.id)); // everything else cascades (scrobbles, loves, shouts, journals, playlists, tags, sessions...)
+    if (t.imageId) await tx.delete(images).where(eq(images.id, t.imageId));
+    await auditTx(tx, actor, entry);
   });
 }

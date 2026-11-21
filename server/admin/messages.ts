@@ -49,7 +49,7 @@ router.get<DmThreadList>("/api/admin/dm/threads", async c => {
 router.get<DmTranscript>("/api/admin/dm/threads/:id", async c => {
   const me = adminOnly(c), t = await threadOr404(Number(c.params[0])), head = await threadHead(t), read = await repo.recentRead(me.id, t.id, now() - READ_WINDOW);
   if (!read) return { thread: head, locked: true, window: READ_WINDOW };
-  const rows = await repo.transcript(t.id, Number(c.q.get("before")) || Number.MAX_SAFE_INTEGER, 51);
+  const rows = await repo.transcript(t.id, Number(c.q.get("before")) || 2 ** 31 - 1, 51);
   return {
     thread: head, locked: false, window: READ_WINDOW, openedAt: read.createdAt, reason: read.note, more: rows.length > 50,
     messages: rows.slice(0, 50).reverse().map(m => ({ id: m.id, from: m.senderId, body: m.body, at: m.createdAt, deletedAt: m.deletedAt,

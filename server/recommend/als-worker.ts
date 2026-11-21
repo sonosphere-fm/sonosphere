@@ -1,7 +1,7 @@
 // Runs on its own thread (started by worker.ts): reads everyone's artist play counts, learns taste vectors (als.ts),
 // checks them against listening held back from training, and stores the vectors and how much they can be trusted.
 // The site never waits on this; recommendations use whatever model was stored last.
-import { Database } from "bun:sqlite";
+import postgres from "postgres";
 import { buildMatrix, evaluate, rng, train } from "./als";
 
 declare const self: Worker;
@@ -14,16 +14,16 @@ const TOP_N = 20;            // "hit" = the held-back artist is in the top 20 su
 
 export type TrainResult = { at: number; users: number; artists: number; k: number; hitModel: number; hitPopular: number; evalUsers: number; quality: number; ms: number };
 
-function run(path: string): TrainResult {
+async function run(url: string): Promise<TrainResult> {
   const started = Date.now();
-  const db = new Database(path);
-  db.exec("PRAGMA busy_timeout = 5000;");
+  const db = postgres(url, { max: 1, onnotice: () => {} });
   try {
-    const artistIds = db.query<{ id: number }, []>(`SELECT artist_id AS id FROM user_artists GROUP BY artist_id HAVING COUNT(*) >= 2 ORDER BY COUNT(*) DESC, artist_id LIMIT ${MAX_ARTISTS}`).all().map(r => r.id);
+    const artistIds = (await db<{ id: number }[]>`SELECT artist_id AS id FROM user_artists GROUP BY artist_id HAVING COUNT(*) >= 2 ORDER BY COUNT(*) DESC, artist_id LIMIT ${MAX_ARTISTS}`).map(r => r.id);
     const itemOf = new Map(artistIds.map((id, i) => [id, i]));
-    // Every user's kept artists, most played first.
+    // Every user's kept artists, most played first, read in batches so memory stays flat.
     const rows = new Map<number, { item: number; plays: number }[]>();
-    for (const r of db.query<{ u: number; a: number; p: number }, []>("SELECT user_id AS u, artist_id AS a, plays AS p FROM user_artists WHERE plays > 0 ORDER BY user_id, plays DESC").iterate()) {
+    const all = db<{ u: number; a: number; p: number }[]>`SELECT user_id AS u, artist_id AS a, plays AS p FROM user_artists WHERE plays > 0 ORDER BY user_id, plays DESC`;
+    for await (const batch of all.cursor(10_000)) for (const r of batch) {
       const item = itemOf.get(r.a);
       if (item === undefined) continue;
       let list = rows.get(r.u);
@@ -58,22 +58,24 @@ function run(path: string): TrainResult {
     const quality = grade.users < 20 ? 0 : edge * Math.min(1, grade.users / 100);
     const result: TrainResult = { at: Math.floor(Date.now() / 1000), users: userIds.length, artists: artistIds.length, k, hitModel: grade.model, hitPopular: grade.popular, evalUsers: grade.users, quality, ms: 0 };
 
-    const put = db.prepare("INSERT INTO taste_factors (kind, id, vec) VALUES (?, ?, ?)");
-    const row = (mat: Float32Array, i: number) => new Uint8Array(mat.buffer.slice(i * k * 4, (i + 1) * k * 4));
-    db.transaction(() => {
-      db.run("DELETE FROM taste_factors");
-      userIds.forEach((id, i) => put.run("user", id, row(model.x, i)));
-      artistIds.forEach((id, i) => put.run("artist", id, row(model.y, i)));
+    const vec = (mat: Float32Array, i: number) => Buffer.from(mat.buffer.slice(i * k * 4, (i + 1) * k * 4));
+    const factors = [
+      ...userIds.map((id, i) => ({ kind: "user", id, vec: vec(model.x, i) })),
+      ...artistIds.map((id, i) => ({ kind: "artist", id, vec: vec(model.y, i) })),
+    ];
+    await db.begin(async tx => {
+      await tx`DELETE FROM taste_factors`;
+      for (let i = 0; i < factors.length; i += 5000) await tx`INSERT INTO taste_factors ${tx(factors.slice(i, i + 5000), "kind", "id", "vec")}`;
       result.ms = Date.now() - started;
-      db.run("INSERT INTO meta (key, value) VALUES ('taste_model', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [JSON.stringify(result)]);
-    })();
+      await tx`INSERT INTO meta (key, value) VALUES ('taste_model', ${JSON.stringify(result)}) ON CONFLICT (key) DO UPDATE SET value = excluded.value`;
+    });
     return result;
   } finally {
-    db.close();
+    await db.end();
   }
 }
 
-self.onmessage = (ev: MessageEvent<{ path: string }>) => {
-  try { postMessage({ ok: true, result: run(ev.data.path) }); }
+self.onmessage = async (ev: MessageEvent<{ url: string }>) => {
+  try { postMessage({ ok: true, result: await run(ev.data.url) }); }
   catch (err) { postMessage({ ok: false, error: String(err instanceof Error ? err.stack : err) }); }
 };

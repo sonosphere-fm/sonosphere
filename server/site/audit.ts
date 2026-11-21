@@ -15,4 +15,4 @@ const row = (actor: Actor, e: AuditEntry) => ({
 
 export const audit = (actor: Actor, e: AuditEntry): Promise<void> => insertAudit(row(actor, e));
 /** As audit, inside a transaction, so the record and the action stand or fall together. */
-export const auditTx = (conn: Conn, actor: Actor, e: AuditEntry): void => insertAuditTx(conn, row(actor, e));
+export const auditTx = async (conn: Conn, actor: Actor, e: AuditEntry): Promise<void> => (await insertAuditTx(conn, row(actor, e)));

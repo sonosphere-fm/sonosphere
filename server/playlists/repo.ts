@@ -1,6 +1,6 @@
 // Data access for playlists and the tracks on them.
 import { and, asc, count, desc, eq, getTableColumns, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { albums, artists, playlists, playlistTracks, tracks, users } from "../db/schema";
 import { lovedBy } from "../users/repo";
@@ -56,9 +56,9 @@ export async function deletePlaylist(id: number): Promise<void> {
 
 /** Puts a track at the end of a playlist. */
 export async function appendTrack(playlistId: number, trackId: number): Promise<void> {
-  transact(tx => {
-    const last = tx.select({ p: sql<number>`COALESCE(MAX(${playlistTracks.position}), 0)` }).from(playlistTracks).where(eq(playlistTracks.playlistId, playlistId)).get();
-    tx.insert(playlistTracks).values({ playlistId, trackId, position: (last?.p ?? 0) + 1, addedAt: now() }).run();
+  await transact(async tx => {
+    const last = (await tx.select({ p: sql<number>`COALESCE(MAX(${playlistTracks.position}), 0)` }).from(playlistTracks).where(eq(playlistTracks.playlistId, playlistId)))[0];
+    await tx.insert(playlistTracks).values({ playlistId, trackId, position: (last?.p ?? 0) + 1, addedAt: now() });
   });
 }
 /** Takes one entry off a playlist. */

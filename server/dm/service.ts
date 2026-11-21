@@ -77,17 +77,17 @@ async function allowed(from: User, to: User | null): Promise<{ can: boolean; why
  * The anti-spam limits, checked inside the send transaction. A refusal that staff should know about adds to `flags`:
  * the transaction is rolled back by the refusal, so the caller writes them afterwards.
  */
-function throttle(tx: Tx, from: User, body: string, startsThread: boolean, flags: Flag[]): void {
+async function throttle(tx: Tx, from: User, body: string, startsThread: boolean, flags: Flag[]): Promise<void> {
   const t = now(), flag = (kind: string, detail: string) => { flags.push({ userId: from.id, kind, detail, sample: body }); };
-  if (repo.sentSinceTx(tx, from.id, t - 60) >= DM.PER_MINUTE) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
-  if (repo.sentSinceTx(tx, from.id, t - 86400) >= DM.PER_DAY) { flag("volume", `${DM.PER_DAY} messages in a day`); fail(429, "You've reached today's message limit."); }
+  if ((await repo.sentSinceTx(tx, from.id, t - 60)) >= DM.PER_MINUTE) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
+  if ((await repo.sentSinceTx(tx, from.id, t - 86400)) >= DM.PER_DAY) { flag("volume", `${DM.PER_DAY} messages in a day`); fail(429, "You've reached today's message limit."); }
   if (startsThread && !from.isAdmin) {
     const limit = t - from.registeredAt < 86400 ? DM.NEW_THREADS_NEW_ACCOUNT : DM.NEW_THREADS_PER_DAY;
-    const started = repo.startedSinceTx(tx, from.id, t - 86400);
+    const started = (await repo.startedSinceTx(tx, from.id, t - 86400));
     if (started >= limit) { flag("new-conversations", `${started} new conversations in a day`); fail(429, "You've started a lot of new conversations today. Try again tomorrow."); }
   }
   if (body.length >= 20 && !from.isAdmin) { // the same text pasted to several people
-    const copies = repo.copiesSinceTx(tx, from.id, t - 3600, body);
+    const copies = (await repo.copiesSinceTx(tx, from.id, t - 3600, body));
     if (copies >= DM.COPIES) { flag("copy-paste", `The same message to ${copies} people within an hour`); fail(429, "That looks like the same message sent to many people. It wasn't sent."); }
   }
 }
@@ -123,21 +123,21 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
   const opening = await gate(from, to), flags: Flag[] = [];
   let out: { message: Message; thread: Thread; accepted: boolean };
   try {
-    out = repo.atomically(tx => {
-      let t = repo.threadOfTx(tx, from.id, to.id), accepted = false;
+    out = (await repo.atomically(async tx => {
+      let t = (await repo.threadOfTx(tx, from.id, to.id)), accepted = false;
       const pendingMine = !!t && t.status !== "active" && t.requesterId === from.id;
       if (t && t.status !== "active" && !pendingMine) { // answering a request accepts it
-        repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" }; accepted = true;
+        await repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" }; accepted = true;
       } else if (t && pendingMine && opening === "active" && t.status === "request") { // they followed you since, or opened their inbox
-        repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" };
+        await repo.setStatusTx(tx, t.id, "active"); t = { ...t, status: "active" };
       } else if (t && pendingMine) {
-        if (repo.sentInTx(tx, t.id, from.id) >= DM.REQUEST_CAP) fail(403, "Wait for a reply before sending more messages");
+        if ((await repo.sentInTx(tx, t.id, from.id)) >= DM.REQUEST_CAP) fail(403, "Wait for a reply before sending more messages");
       }
       if ((!t || t.status !== "active") && opening === "request" && hasLink(body)) fail(400, "Links can't be sent until your message request is accepted");
-      throttle(tx, from, body, !t, flags);
+      await throttle(tx, from, body, !t, flags);
       const at = now();
-      return { ...repo.addMessageTx(tx, t ?? repo.createThreadTx(tx, from.id, to.id, opening, at), from.id, body, at), accepted };
-    });
+      return { ...(await repo.addMessageTx(tx, t ?? (await repo.createThreadTx(tx, from.id, to.id, opening, at)), from.id, body, at)), accepted };
+    }));
   } finally {
     for (const f of flags) await repo.raiseFlag(f, now());
   }
@@ -150,12 +150,12 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
 
 /** Hide a message from both participants (its sender, or staff). The row is kept for moderation. False when there was nothing to hide. */
 export async function removeMessage(messageId: number, byUserId: number): Promise<boolean> {
-  const removed = repo.softDeleteTx(repo.connection, messageId, byUserId, now());
+  const removed = (await repo.softDeleteTx(repo.connection, messageId, byUserId, now()));
   if (removed) await announceRemoved([removed]);
   return !!removed;
 }
 /** Hides a message as part of a larger transaction (moderation). Pass what it returns to announceRemoved after commit. */
-export const removeMessageTx = (tx: Tx, messageId: number, byUserId: number): repo.Removed | null => repo.softDeleteTx(tx, messageId, byUserId, now());
+export const removeMessageTx = async (tx: Tx, messageId: number, byUserId: number): Promise<repo.Removed | null> => (await repo.softDeleteTx(tx, messageId, byUserId, now()));
 /** Tells both people's open tabs that messages disappeared. Call after the transaction that removed them commits. */
 export async function announceRemoved(removed: readonly (repo.Removed | null)[]): Promise<void> {
   for (const m of removed) if (m) for (const uid of [m.userLo, m.userHi]) emit(uid, { t: "dm-deleted", threadId: m.threadId, id: m.id, counts: await dmCounts(uid) });

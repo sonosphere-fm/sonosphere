@@ -1,6 +1,6 @@
 // Data access for scrobbles and every statistic drawn from them: rankings, totals, recent plays, charts.
 import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isNotNull, lt, ne, notExists, or, sql, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
 import { albums, artists, lovedTracks, nowPlaying as playing, scrobbles, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
@@ -41,11 +41,6 @@ const lovedBy = (viewerId: number | undefined) => flag(exists(db.select({ one: s
 
 // Counted from the scrobble log: used whenever a time span or a single album or track is involved.
 const played = count().as("playcount"), heardBy = countDistinct(scrobbles.userId).as("listeners");
-// With a time window, SQLite would rather walk an index sorted by item (every play ever) than the time index (only the
-// plays in the window). A unary + on the item column takes the item index out of the running.
-type ItemCol = typeof scrobbles.artistId | typeof scrobbles.albumId | typeof scrobbles.trackId;
-const byItem = (col: ItemCol, s: Scope) => (s.from ? sql`+${col}` : col);
-const itemsIn = (col: ItemCol, s: Scope) => (s.from ? sql<number>`count(distinct +${col})` : countDistinct(col));
 const ranked = (s: Scope) => (s.global ? [desc(heardBy), desc(played)] : [desc(played), desc(heardBy)]);
 
 // Site-wide, all-time rankings start from the catalogue so imported base totals count alongside local scrobbles.
@@ -96,8 +91,8 @@ export async function topArtists(s: Scope, limit = 50, offset = 0): Promise<TopL
   const w = within(s);
   return {
     items: await db.select({ ...artistCols, playcount: played, listeners: heardBy }).from(scrobbles).innerJoin(artists, eq(artists.id, scrobbles.artistId))
-      .where(w).groupBy(byItem(scrobbles.artistId, s)).orderBy(...ranked(s), artists.name).limit(limit).offset(offset),
-    total: await total(db.select({ c: itemsIn(scrobbles.artistId, s) }).from(scrobbles).where(w)),
+      .where(w).groupBy(artists.id).orderBy(...ranked(s), artists.name).limit(limit).offset(offset),
+    total: await total(db.select({ c: countDistinct(scrobbles.artistId) }).from(scrobbles).where(w)),
   };
 }
 
@@ -124,8 +119,8 @@ export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return {
     items: await db.select({ ...albumCols, playcount: played, listeners: heardBy }).from(scrobbles)
       .innerJoin(albums, eq(albums.id, scrobbles.albumId)).innerJoin(artists, eq(artists.id, albums.artistId))
-      .where(w).groupBy(byItem(scrobbles.albumId, s)).orderBy(...ranked(s), albums.title).limit(limit).offset(offset),
-    total: await total(db.select({ c: itemsIn(scrobbles.albumId, s) }).from(scrobbles).where(w)),
+      .where(w).groupBy(albums.id, artists.id).orderBy(...ranked(s), albums.title).limit(limit).offset(offset),
+    total: await total(db.select({ c: countDistinct(scrobbles.albumId) }).from(scrobbles).where(w)),
   };
 }
 
@@ -156,8 +151,8 @@ export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return {
     items: await db.select({ ...trackCols, playcount: played, listeners: heardBy, loved }).from(scrobbles)
       .innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
-      .where(w).groupBy(byItem(scrobbles.trackId, s)).orderBy(...ranked(s), tracks.title).limit(limit).offset(offset),
-    total: await total(db.select({ c: itemsIn(scrobbles.trackId, s) }).from(scrobbles).where(w)),
+      .where(w).groupBy(tracks.id, artists.id, albums.id).orderBy(...ranked(s), tracks.title).limit(limit).offset(offset),
+    total: await total(db.select({ c: countDistinct(scrobbles.trackId) }).from(scrobbles).where(w)),
   };
 }
 
@@ -293,13 +288,17 @@ export type Scrobbled = TrackRef & { id: number };
  * Returns one entry per play, in order: where it was filed, or null when that play was already recorded.
  */
 export async function recordScrobbles(userId: number, plays: NewScrobble[], source: string): Promise<(Scrobbled | null)[]> {
-  return transact(tx => plays.map(play => {
-    const ref = resolveTrackTx(tx, play);
-    const row = tx.insert(scrobbles).values({ userId, ...ref, playedAt: play.playedAt, source }).onConflictDoNothing().returning({ id: scrobbles.id }).get();
-    if (!row) return null;
-    // a finished play ends the matching "now playing"
-    tx.delete(playing).where(and(eq(playing.userId, userId), eq(playing.trackId, ref.trackId))).run();
-    return { id: row.id, ...ref };
+  return (await transact(async tx => {
+    const out: (Scrobbled | null)[] = [];
+    for (const play of plays) {
+      const ref = await resolveTrackTx(tx, play);
+      const row = (await tx.insert(scrobbles).values({ userId, ...ref, playedAt: play.playedAt, source }).onConflictDoNothing().returning({ id: scrobbles.id }))[0];
+      if (!row) { out.push(null); continue; }
+      // a finished play ends the matching "now playing"
+      await tx.delete(playing).where(and(eq(playing.userId, userId), eq(playing.trackId, ref.trackId)));
+      out.push({ id: row.id, ...ref });
+    }
+    return out;
   }));
 }
 
@@ -307,7 +306,7 @@ export async function recordScrobbles(userId: number, plays: NewScrobble[], sour
 /** Plays per bucket in a scope, oldest first. `tzMin` is the reader's offset from UTC in minutes. */
 export async function series(s: Scope, bucket: Bucket, tzMin = 0): Promise<SeriesPoint[]> {
   const k = timeBucket(scrobbles.playedAt, bucket, Math.round(tzMin) * 60).as("k");
-  return db.select({ k, c: count() }).from(scrobbles).where(within(s)).groupBy(sql`${k}`).orderBy(asc(k));
+  return db.select({ k, c: count() }).from(scrobbles).where(within(s)).groupBy(sql`1`).orderBy(sql`1`);
 }
 
 const span = (userId: number, from: number, to: number) => and(eq(scrobbles.userId, userId), gte(scrobbles.playedAt, from), lt(scrobbles.playedAt, to));
@@ -323,7 +322,7 @@ export async function newArtists(userId: number, from: number, to: number): Prom
   return db.select({ name: artists.name, image: artists.imageId, playcount }).from(scrobbles).innerJoin(artists, eq(artists.id, scrobbles.artistId))
     .where(and(span(userId, from, to), notExists(db.select({ one: sql`1` }).from(earlier)
       .where(and(eq(earlier.userId, scrobbles.userId), eq(earlier.artistId, scrobbles.artistId), lt(earlier.playedAt, from))))))
-    .groupBy(scrobbles.artistId).orderBy(desc(playcount));
+    .groupBy(artists.id).orderBy(desc(playcount));
 }
 
 /** The tags of the artists a listener played in a span, weighted by plays. */
@@ -337,16 +336,16 @@ export async function playedTags(userId: number, from: number, to: number, limit
 // ---------- running totals ----------
 /** Recounts user_artists, user_albums and user_tracks from the scrobble log. Triggers normally keep them in step. */
 export async function rebuildTallies(): Promise<void> {
-  transact(tx => {
-    tx.delete(userArtists).run();
-    tx.insert(userArtists).select(tx.select({ userId: scrobbles.userId, artistId: scrobbles.artistId, plays: count().as("plays") }).from(scrobbles)
-      .groupBy(scrobbles.userId, scrobbles.artistId)).run();
-    tx.delete(userAlbums).run();
-    tx.insert(userAlbums).select(tx.select({ userId: scrobbles.userId, albumId: sql<number>`${scrobbles.albumId}`.as("album_id"), plays: count().as("plays") }).from(scrobbles)
-      .where(isNotNull(scrobbles.albumId)).groupBy(scrobbles.userId, scrobbles.albumId)).run();
-    tx.delete(userTracks).run();
-    tx.insert(userTracks).select(tx.select({ userId: scrobbles.userId, trackId: scrobbles.trackId, plays: count().as("plays") }).from(scrobbles)
-      .groupBy(scrobbles.userId, scrobbles.trackId)).run();
+  await transact(async tx => {
+    await tx.delete(userArtists);
+    await tx.insert(userArtists).select(tx.select({ userId: scrobbles.userId, artistId: scrobbles.artistId, plays: count().as("plays") }).from(scrobbles)
+      .groupBy(scrobbles.userId, scrobbles.artistId));
+    await tx.delete(userAlbums);
+    await tx.insert(userAlbums).select(tx.select({ userId: scrobbles.userId, albumId: sql<number>`${scrobbles.albumId}`.as("album_id"), plays: count().as("plays") }).from(scrobbles)
+      .where(isNotNull(scrobbles.albumId)).groupBy(scrobbles.userId, scrobbles.albumId));
+    await tx.delete(userTracks);
+    await tx.insert(userTracks).select(tx.select({ userId: scrobbles.userId, trackId: scrobbles.trackId, plays: count().as("plays") }).from(scrobbles)
+      .groupBy(scrobbles.userId, scrobbles.trackId));
   });
 }
 
@@ -376,11 +375,11 @@ export async function deleteScrobbles(userId: number, ids: number[]): Promise<nu
 }
 /** Removes every play a listener has and returns how many went. */
 export async function deleteAllScrobbles(userId: number): Promise<number> {
-  return transact(tx => {
-    const n = tx.select({ c: count() }).from(scrobbles).where(eq(scrobbles.userId, userId)).get()?.c ?? 0;
-    tx.delete(scrobbles).where(eq(scrobbles.userId, userId)).run();
+  return (await transact(async tx => {
+    const n = (await tx.select({ c: count() }).from(scrobbles).where(eq(scrobbles.userId, userId)))[0]?.c ?? 0;
+    await tx.delete(scrobbles).where(eq(scrobbles.userId, userId));
     return n;
-  });
+  }));
 }
 
 /** How many of the listener's plays share this play's track, album and artist. */
@@ -404,44 +403,44 @@ export type BulkEdit = { scope: EditScope; artist: string; track: string; album:
  */
 export async function refileScrobbles(src: Scrobble, edit: BulkEdit): Promise<number> {
   const shared = edit.scope === "track" ? eq(scrobbles.trackId, src.trackId) : edit.scope === "album" ? eq(scrobbles.albumId, src.albumId ?? 0) : eq(scrobbles.artistId, src.artistId);
-  return transact(tx => {
-    const artistId = getOrCreateArtistTx(tx, edit.artist);
-    const rows = tx.select({ id: scrobbles.id, trackId: scrobbles.trackId, albumId: scrobbles.albumId, playedAt: scrobbles.playedAt }).from(scrobbles)
-      .where(and(eq(scrobbles.userId, src.userId), shared)).all();
-    const srcAlbum = src.albumId ? tx.select({ title: albums.title }).from(albums).where(eq(albums.id, src.albumId)).get()?.title || "" : "";
+  return (await transact(async tx => {
+    const artistId = (await getOrCreateArtistTx(tx, edit.artist));
+    const rows = (await tx.select({ id: scrobbles.id, trackId: scrobbles.trackId, albumId: scrobbles.albumId, playedAt: scrobbles.playedAt }).from(scrobbles)
+      .where(and(eq(scrobbles.userId, src.userId), shared)));
+    const srcAlbum = src.albumId ? (await tx.select({ title: albums.title }).from(albums).where(eq(albums.id, src.albumId)))[0]?.title || "" : "";
     const albumEdited = norm(edit.album) !== norm(srcAlbum);
     const movedAlbums = new Map<number, number>(), newTracks = new Map<string, number>(), gone = new Set<number>();
-    const albumFor = (old: number | null): number | null => {
-      if (edit.scope === "album" || (edit.scope === "track" && albumEdited)) return edit.album ? getOrCreateAlbumTx(tx, artistId, edit.album) : null;
+    const albumFor = async (old: number | null): Promise<number | null> => {
+      if (edit.scope === "album" || (edit.scope === "track" && albumEdited)) return edit.album ? (await getOrCreateAlbumTx(tx, artistId, edit.album)) : null;
       if (!old) return null;
       let to = movedAlbums.get(old);
       if (to === undefined) {
         // an album filed under the old artist moves with the rename; anything else (a compilation, say) stays put
-        const a = tx.select({ artistId: albums.artistId, title: albums.title }).from(albums).where(eq(albums.id, old)).get();
-        to = a && a.artistId === src.artistId && artistId !== src.artistId ? getOrCreateAlbumTx(tx, artistId, a.title) : old;
+        const a = (await tx.select({ artistId: albums.artistId, title: albums.title }).from(albums).where(eq(albums.id, old)))[0];
+        to = a && a.artistId === src.artistId && artistId !== src.artistId ? (await getOrCreateAlbumTx(tx, artistId, a.title)) : old;
         movedAlbums.set(old, to);
       }
       return to;
     };
     let changed = 0;
     for (const r of rows) {
-      const albumId = albumFor(r.albumId), key = `${r.trackId}:${albumId}`;
+      const albumId = (await albumFor(r.albumId)), key = `${r.trackId}:${albumId}`;
       let trackId = newTracks.get(key);
       if (trackId === undefined) {
-        const t = tx.select({ title: tracks.title, duration: tracks.duration }).from(tracks).where(eq(tracks.id, r.trackId)).get();
-        trackId = getOrCreateTrackTx(tx, artistId, edit.scope === "track" ? edit.track : t?.title ?? "", t?.duration ?? 0, albumId);
+        const t = (await tx.select({ title: tracks.title, duration: tracks.duration }).from(tracks).where(eq(tracks.id, r.trackId)))[0];
+        trackId = (await getOrCreateTrackTx(tx, artistId, edit.scope === "track" ? edit.track : t?.title ?? "", t?.duration ?? 0, albumId));
         newTracks.set(key, trackId);
       }
       if (gone.has(r.id)) continue;
       // two plays that become the same track at the same second are one play: the duplicate goes
-      const dupes = tx.delete(scrobbles).where(and(eq(scrobbles.userId, src.userId), eq(scrobbles.trackId, trackId), eq(scrobbles.playedAt, r.playedAt), ne(scrobbles.id, r.id)))
-        .returning({ id: scrobbles.id }).all();
+      const dupes = (await tx.delete(scrobbles).where(and(eq(scrobbles.userId, src.userId), eq(scrobbles.trackId, trackId), eq(scrobbles.playedAt, r.playedAt), ne(scrobbles.id, r.id)))
+        .returning({ id: scrobbles.id }));
       for (const d of dupes) gone.add(d.id);
-      tx.update(scrobbles).set({ trackId, artistId, albumId }).where(eq(scrobbles.id, r.id)).run();
+      await tx.update(scrobbles).set({ trackId, artistId, albumId }).where(eq(scrobbles.id, r.id));
       changed++;
     }
     return changed;
-  });
+  }));
 }
 
 // ---------- loved tracks ----------
@@ -456,14 +455,14 @@ export async function setLoved(userId: number, trackId: number, loved: boolean):
  * was loved. Returns how many were not loved already.
  */
 export async function loveTracks(userId: number, list: { artist: string; track: string; lovedAt: number }[]): Promise<number> {
-  return transact(tx => {
+  return (await transact(async tx => {
     let added = 0;
     for (const t of list) {
-      const trackId = getOrCreateTrackTx(tx, getOrCreateArtistTx(tx, t.artist), t.track);
-      if (tx.insert(lovedTracks).values({ userId, trackId, createdAt: t.lovedAt }).onConflictDoNothing().returning({ trackId: lovedTracks.trackId }).get()) added++;
+      const trackId = (await getOrCreateTrackTx(tx, (await getOrCreateArtistTx(tx, t.artist)), t.track));
+      if ((await tx.insert(lovedTracks).values({ userId, trackId, createdAt: t.lovedAt }).onConflictDoNothing().returning({ trackId: lovedTracks.trackId }))[0]) added++;
     }
     return added;
-  });
+  }));
 }
 
 // ---------- export ----------

@@ -1,7 +1,7 @@
 // Data access for direct messages: threads (one per pair of people), their messages, and automatic spam flags.
 // Functions ending in Tx run inside a transaction opened with `atomically`; the rest are awaited on their own.
 import { and, between, count, countDistinct, desc, eq, exists, getTableColumns, gt, isNull, lt, max, ne, or, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn, type Tx } from "../db/client";
 import { dmFlags, dmMessages, dmThreads, follows, users } from "../db/schema";
 import { first } from "../util";
@@ -15,10 +15,10 @@ export type Side = "lo" | "hi";
 /** A spam flag waiting to be written. */
 export type Flag = { userId: number; kind: string; detail: string; sample: string };
 
-/** Runs `fn` in a transaction. It must be synchronous and use the Tx functions below; throwing rolls everything back. */
 /** The plain connection, for the Tx functions when no transaction is open. */
 export const connection: Conn = db;
-export const atomically = <T>(fn: (tx: Tx) => T): T => transact(fn);
+/** Runs `fn` in a transaction, using the Tx functions below; throwing rolls everything back. */
+export const atomically = async <T>(fn: (tx: Tx) => Promise<T>): Promise<T> => (await transact(fn));
 
 const pair = (a: number, b: number) => and(eq(dmThreads.userLo, Math.min(a, b)), eq(dmThreads.userHi, Math.max(a, b)));
 const sentBy = (threadId: number, userId: number) => and(eq(dmMessages.threadId, threadId), eq(dmMessages.senderId, userId));
@@ -113,67 +113,68 @@ export const ownMessage = (id: number, senderId: number): Promise<Message | null
 /** Who saw a removed message: its thread and the thread's two people. */
 export type Removed = { id: number; threadId: number; userLo: number; userHi: number };
 /** Hides a message inside a transaction (the row is kept for staff). Null when it is gone or already hidden. */
-export function softDeleteTx(conn: Conn, id: number, byUserId: number, at: number): Removed | null {
-  const m = conn.select({ id: dmMessages.id, threadId: dmMessages.threadId, deletedAt: dmMessages.deletedAt, userLo: dmThreads.userLo, userHi: dmThreads.userHi })
-    .from(dmMessages).innerJoin(dmThreads, eq(dmThreads.id, dmMessages.threadId)).where(eq(dmMessages.id, id)).get();
+export async function softDeleteTx(conn: Conn, id: number, byUserId: number, at: number): Promise<Removed | null> {
+  const m = (await conn.select({ id: dmMessages.id, threadId: dmMessages.threadId, deletedAt: dmMessages.deletedAt, userLo: dmThreads.userLo, userHi: dmThreads.userHi })
+    .from(dmMessages).innerJoin(dmThreads, eq(dmThreads.id, dmMessages.threadId)).where(eq(dmMessages.id, id)))[0];
   if (!m || m.deletedAt) return null;
-  conn.update(dmMessages).set({ deletedAt: at, deletedBy: byUserId }).where(eq(dmMessages.id, id)).run();
+  await conn.update(dmMessages).set({ deletedAt: at, deletedBy: byUserId }).where(eq(dmMessages.id, id));
   return { id: m.id, threadId: m.threadId, userLo: m.userLo, userHi: m.userHi };
 }
 
 /** What a report of a message shows staff (see ReportedMessage). Synchronous so moderation can read it inside a transaction. */
-export function reportedMessageTx(conn: Conn, id: number): ReportedMessage | null {
-  const m = conn.select({ ...getTableColumns(dmMessages), userLo: dmThreads.userLo, userHi: dmThreads.userHi }).from(dmMessages)
-    .innerJoin(dmThreads, eq(dmThreads.id, dmMessages.threadId)).where(eq(dmMessages.id, id)).get();
+export async function reportedMessageTx(conn: Conn, id: number): Promise<ReportedMessage | null> {
+  const m = (await conn.select({ ...getTableColumns(dmMessages), userLo: dmThreads.userLo, userHi: dmThreads.userHi }).from(dmMessages)
+    .innerJoin(dmThreads, eq(dmThreads.id, dmMessages.threadId)).where(eq(dmMessages.id, id)))[0];
   if (!m) return null;
   const names = new Map<number, string>();
-  const name = (uid: number) => {
-    const known = names.get(uid) ?? conn.select({ username: users.username }).from(users).where(eq(users.id, uid)).get()?.username ?? "(deleted)";
+  const name = async (uid: number) => {
+    const known = names.get(uid) ?? (await conn.select({ username: users.username }).from(users).where(eq(users.id, uid)))[0]?.username ?? "(deleted)";
     names.set(uid, known);
     return known;
   };
   // the 11 newest messages near it, narrowed to five either side of where it sits among them
-  const near = conn.select().from(dmMessages).where(and(eq(dmMessages.threadId, m.threadId), between(dmMessages.id, m.id - 200, m.id + 200)))
-    .orderBy(desc(dmMessages.id)).limit(11).all().reverse();
+  const near = (await conn.select().from(dmMessages).where(and(eq(dmMessages.threadId, m.threadId), between(dmMessages.id, m.id - 200, m.id + 200)))
+    .orderBy(desc(dmMessages.id)).limit(11)).reverse();
   const at = near.findIndex(x => x.id === m.id);
-  const lines = near.flatMap((x, i) => (Math.abs(at - i) <= 5 ? [`${x.id === m.id ? ">> " : ""}${name(x.senderId)}: ${x.body}`] : []));
+  const lines: string[] = [];
+  for (const [i, x] of near.entries()) if (Math.abs(at - i) <= 5) lines.push(`${x.id === m.id ? ">> " : ""}${await name(x.senderId)}: ${x.body}`);
   return {
-    authorId: m.senderId, author: name(m.senderId), participants: [m.userLo, m.userHi], threadId: m.threadId,
+    authorId: m.senderId, author: (await name(m.senderId)), participants: [m.userLo, m.userHi], threadId: m.threadId,
     text: `${m.body}\n\n--- conversation around it ---\n${lines.join("\n")}`,
-    where: `Direct message between ${name(m.userLo)} and ${name(m.userHi)}`, link: `/admin/messages/${m.threadId}`,
+    where: `Direct message between ${(await name(m.userLo))} and ${(await name(m.userHi))}`, link: `/admin/messages/${m.threadId}`,
   };
 }
 
 // ---------- sending (inside one transaction) ----------
-export const threadOfTx = (tx: Tx, a: number, b: number): Thread | null => tx.select().from(dmThreads).where(pair(a, b)).get() ?? null;
+export const threadOfTx = async (tx: Tx, a: number, b: number): Promise<Thread | null> => (await tx.select().from(dmThreads).where(pair(a, b)))[0] ?? null;
 
-export function setStatusTx(tx: Tx, threadId: number, status: "active"): void {
-  tx.update(dmThreads).set({ status }).where(eq(dmThreads.id, threadId)).run();
+export async function setStatusTx(tx: Tx, threadId: number, status: "active"): Promise<void> {
+  await tx.update(dmThreads).set({ status }).where(eq(dmThreads.id, threadId));
 }
-export const sentInTx = (tx: Tx, threadId: number, userId: number): number =>
-  tx.select({ c: count() }).from(dmMessages).where(sentBy(threadId, userId)).get()?.c ?? 0;
+export const sentInTx = async (tx: Tx, threadId: number, userId: number): Promise<number> =>
+  (await tx.select({ c: count() }).from(dmMessages).where(sentBy(threadId, userId)))[0]?.c ?? 0;
 
 /** Messages someone has sent to anyone since a moment (Unix seconds, exclusive). */
-export const sentSinceTx = (tx: Tx, userId: number, since: number): number =>
-  tx.select({ c: count() }).from(dmMessages).where(and(eq(dmMessages.senderId, userId), gt(dmMessages.createdAt, since))).get()?.c ?? 0;
+export const sentSinceTx = async (tx: Tx, userId: number, since: number): Promise<number> =>
+  (await tx.select({ c: count() }).from(dmMessages).where(and(eq(dmMessages.senderId, userId), gt(dmMessages.createdAt, since))))[0]?.c ?? 0;
 
 /** Conversations someone has started since a moment. */
-export const startedSinceTx = (tx: Tx, userId: number, since: number): number =>
-  tx.select({ c: count() }).from(dmThreads).where(and(eq(dmThreads.requesterId, userId), gt(dmThreads.createdAt, since))).get()?.c ?? 0;
+export const startedSinceTx = async (tx: Tx, userId: number, since: number): Promise<number> =>
+  (await tx.select({ c: count() }).from(dmThreads).where(and(eq(dmThreads.requesterId, userId), gt(dmThreads.createdAt, since))))[0]?.c ?? 0;
 
 /** In how many different conversations someone has sent exactly this text since a moment. */
-export const copiesSinceTx = (tx: Tx, userId: number, since: number, body: string): number =>
-  tx.select({ c: countDistinct(dmMessages.threadId) }).from(dmMessages)
-    .where(and(eq(dmMessages.senderId, userId), gt(dmMessages.createdAt, since), eq(dmMessages.body, body))).get()?.c ?? 0;
+export const copiesSinceTx = async (tx: Tx, userId: number, since: number, body: string): Promise<number> =>
+  (await tx.select({ c: countDistinct(dmMessages.threadId) }).from(dmMessages)
+    .where(and(eq(dmMessages.senderId, userId), gt(dmMessages.createdAt, since), eq(dmMessages.body, body))))[0]?.c ?? 0;
 
-export const createThreadTx = (tx: Tx, from: number, to: number, status: "active" | "request", at: number): Thread =>
-  tx.insert(dmThreads).values({ userLo: Math.min(from, to), userHi: Math.max(from, to), status, requesterId: from, createdAt: at, lastAt: at }).returning().get();
+export const createThreadTx = async (tx: Tx, from: number, to: number, status: "active" | "request", at: number): Promise<Thread> =>
+  (await tx.insert(dmThreads).values({ userLo: Math.min(from, to), userHi: Math.max(from, to), status, requesterId: from, createdAt: at, lastAt: at }).returning())[0];
 
 /** Stores a message, moves the thread to the top and marks it read for its sender. Returns the message and the thread as it now stands. */
-export function addMessageTx(tx: Tx, thread: Thread, senderId: number, body: string, at: number): { message: Message; thread: Thread } {
-  const message = tx.insert(dmMessages).values({ threadId: thread.id, senderId, body, createdAt: at }).returning().get();
+export async function addMessageTx(tx: Tx, thread: Thread, senderId: number, body: string, at: number): Promise<{ message: Message; thread: Thread }> {
+  const message = (await tx.insert(dmMessages).values({ threadId: thread.id, senderId, body, createdAt: at }).returning())[0];
   const read = thread.userLo === senderId ? { loRead: message.id } : { hiRead: message.id };
-  return { message, thread: tx.update(dmThreads).set({ lastAt: at, ...read }).where(eq(dmThreads.id, thread.id)).returning().get() };
+  return { message, thread: (await tx.update(dmThreads).set({ lastAt: at, ...read }).where(eq(dmThreads.id, thread.id)).returning())[0] };
 }
 
 // ---------- spam flags ----------

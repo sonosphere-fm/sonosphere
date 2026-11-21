@@ -1,6 +1,6 @@
 // Data access for accounts, and the public shape of one.
 import { and, count, desc, eq, exists, min, or, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { flag } from "../db/dialect";
 import { albums, artists, blocks, follows, journals, lovedTracks, scrobbles, taggings, tags, tracks, userArtists, users } from "../db/schema";

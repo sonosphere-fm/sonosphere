@@ -33,7 +33,7 @@ async function refreshArtist(id: number) {
   await repo.saveNorm("seq", id, seq.total);
   const dots = new Map(others.map(o => [o.id, o.dot])), order = new Map(seq.rows.map(r => [r.id, r.w]));
   const ids = [...new Set([...dots.keys(), ...seq.rows.sort((a, b) => b.w - a.w).slice(0, CANDIDATES / 2).map(r => r.id)])];
-  if (!ids.length) return repo.saveSimilar(id, []);
+  if (!ids.length) return (await repo.saveSimilar(id, []));
   const [norms, seqNorms, tags] = await Promise.all([repo.norms("artist", ids), repo.storedNorms("seq", ids), repo.artistTagSets([id, ...ids])]);
   const mine = tags.get(id);
   const wOrder = 0.25 * Math.min(1, seq.total / SEQ_TRUSTED), wTags = mine ? 0.3 * (1 - 0.75 * Math.min(1, fans / FANS_TRUSTED)) : 0;
@@ -55,7 +55,7 @@ async function refreshArtist(id: number) {
     if (score > MIN_SCORE) scored.push({ id: o, score });
   }
   scored.sort((a, b) => b.score - a.score || a.id - b.id);
-  repo.saveSimilar(id, scored.slice(0, KEEP));
+  await repo.saveSimilar(id, scored.slice(0, KEEP));
 }
 
 async function refreshUser(id: number) {
@@ -64,7 +64,7 @@ async function refreshUser(id: number) {
   const rough = new Map<number, number>();
   for (const a of mine) for (const l of await repo.topListeners(a.artist, SEED_LISTENERS)) if (l.user !== id) rough.set(l.user, (rough.get(l.user) ?? 0) + a.w * l.w);
   const shortlist = [...rough.entries()].sort((a, b) => b[1] - a[1]).slice(0, SHORTLIST).map(e => e[0]);
-  if (!shortlist.length) return repo.saveNeighbours(id, []);
+  if (!shortlist.length) return (await repo.saveNeighbours(id, []));
   // Exact pass over the shortlist.
   const [dots, norms] = await Promise.all([repo.userOverlap(id, shortlist, DEPTH), repo.norms("user", [id, ...shortlist])]);
   const own = norms.get(id);
@@ -76,7 +76,7 @@ async function refreshUser(id: number) {
     if (score > MIN_NEIGHBOUR) scored.push({ id: u, score });
   }
   scored.sort((a, b) => b.score - a.score || a.id - b.id);
-  repo.saveNeighbours(id, scored.slice(0, NEIGHBOURS));
+  await repo.saveNeighbours(id, scored.slice(0, NEIGHBOURS));
 }
 
 /**
@@ -84,7 +84,7 @@ async function refreshUser(id: number) {
  * Returns true when there is more left to do.
  */
 export async function refreshTaste(budgetMs = 200): Promise<boolean> {
-  repo.queueChanged();
+  await repo.queueChanged();
   const started = Date.now();
   for (;;) {
     const batch = await repo.due(50);
@@ -116,7 +116,7 @@ export function trainModel(): Promise<TrainResult | null> {
       const reply = await new Promise<{ ok: boolean; result?: TrainResult; error?: string }>((resolve, reject) => {
         worker.onmessage = ev => resolve(ev.data);
         worker.onerror = ev => reject(ev);
-        worker.postMessage({ path: repo.dbPath });
+        worker.postMessage({ url: repo.databaseUrl });
       });
       if (!reply.ok || !reply.result) { console.error("taste model:", reply.error); return null; }
       await repo.saveMeta(MODEL_MARK, String(mark));

@@ -76,12 +76,14 @@ export type NewEvent = { title: string; venue: string; city: string; country: st
  * Returns the event's id.
  */
 export async function createEvent(e: NewEvent, artistNames: string[], creatorId: number): Promise<number> {
-  return transact(tx => {
-    const id = tx.insert(events).values({ ...e, creatorId, createdAt: now() }).returning({ id: events.id }).get().id;
-    artistNames.forEach((name, position) => tx.insert(eventArtists).values({ eventId: id, artistId: getOrCreateArtistTx(tx, name), position }).onConflictDoNothing().run());
-    tx.insert(eventAttendance).values({ eventId: id, userId: creatorId, status: "going", createdAt: now() }).run();
+  return (await transact(async tx => {
+    const id = (await tx.insert(events).values({ ...e, creatorId, createdAt: now() }).returning({ id: events.id }))[0].id;
+    for (const [position, name] of artistNames.entries()) {
+      await tx.insert(eventArtists).values({ eventId: id, artistId: await getOrCreateArtistTx(tx, name), position }).onConflictDoNothing();
+    }
+    await tx.insert(eventAttendance).values({ eventId: id, userId: creatorId, status: "going", createdAt: now() });
     return id;
-  });
+  }));
 }
 
 /** Deletes an event if this user created it. False when they did not (or there is no such event). */
@@ -90,8 +92,8 @@ export const deleteOwnEvent = async (id: number, creatorId: number): Promise<boo
 
 /** Records what a user says about an event, replacing any earlier answer. Null withdraws it. */
 export async function setAttendance(eventId: number, userId: number, status: Attendance | null): Promise<void> {
-  transact(tx => {
-    tx.delete(eventAttendance).where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.userId, userId))).run();
-    if (status) tx.insert(eventAttendance).values({ eventId, userId, status, createdAt: now() }).run();
+  await transact(async tx => {
+    await tx.delete(eventAttendance).where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.userId, userId)));
+    if (status) await tx.insert(eventAttendance).values({ eventId, userId, status, createdAt: now() });
   });
 }

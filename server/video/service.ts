@@ -35,7 +35,7 @@ async function findVideos(artist: string, track: string): Promise<string[]> {
  * A failed lookup is not cached and comes back empty.
  */
 export async function videosFor(artist: string, track: string): Promise<string[]> {
-  const key = `${norm(artist)}\u0000${norm(track)}`;
+  const key = `${norm(artist)}\u001f${norm(track)}`;
   const hit = await repo.cached(key);
   if (hit && (hit.videoId || now() - hit.fetchedAt < DAY)) return hit.videoId ? hit.videoId.split(",") : [];
   let ids: string[];

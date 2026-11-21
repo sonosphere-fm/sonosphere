@@ -11,7 +11,7 @@ router.get<DmList>("/api/dm", c => dm.list(need(c), c.q.get("box") === "requests
 
 router.get<DmWith>("/api/dm/with", async c => { const me = need(c); return dm.withUser(me, await requireUser(c.q.get("name"))); });
 
-router.get<DmThreadPage>("/api/dm/thread/:id", c => dm.page(need(c), c.params[0], Number(c.q.get("before")) || Number.MAX_SAFE_INTEGER));
+router.get<DmThreadPage>("/api/dm/thread/:id", c => dm.page(need(c), c.params[0], Number(c.q.get("before")) || 2 ** 31 - 1));
 
 /** Into an existing conversation (`thread`) or to a username (`to`), which may start one. */
 router.post<DmSent>("/api/dm/send", async c => {

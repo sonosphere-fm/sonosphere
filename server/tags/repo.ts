@@ -1,6 +1,6 @@
 // Data access for tags.
 import { and, count, countDistinct, desc, eq, ne, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Tx } from "../db/client";
 import { artists, taggings, tags, userArtists } from "../db/schema";
 import { norm, now } from "../util";
@@ -10,14 +10,14 @@ import type { TagCount, TaggedArtist } from "../../shared/tags";
 export async function topTags(type: string, id: number, limit = 10): Promise<TagCount[]> {
   const weight = sql<number>`SUM(${taggings.weight})`.as("count");
   return db.select({ name: tags.name, count: weight }).from(taggings).innerJoin(tags, eq(tags.id, taggings.tagId))
-    .where(and(eq(taggings.itemType, type), eq(taggings.itemId, id))).groupBy(taggings.tagId).orderBy(desc(weight), tags.name).limit(limit);
+    .where(and(eq(taggings.itemType, type), eq(taggings.itemId, id))).groupBy(tags.id).orderBy(desc(weight), tags.name).limit(limit);
 }
 
 /** The id of a tag, adding it if it is new. Tags are stored in their normalised form. */
-export function getOrCreateTagTx(tx: Tx, name: string): number {
+export async function getOrCreateTagTx(tx: Tx, name: string): Promise<number> {
   const n = norm(name);
-  const row = tx.select({ id: tags.id }).from(tags).where(eq(tags.nameNorm, n)).get();
-  return row ? row.id : tx.insert(tags).values({ name: n, nameNorm: n }).returning({ id: tags.id }).get().id;
+  const row = (await tx.select({ id: tags.id }).from(tags).where(eq(tags.nameNorm, n)))[0];
+  return row ? row.id : (await tx.insert(tags).values({ name: n, nameNorm: n }).returning({ id: tags.id }))[0].id;
 }
 
 // ---------- one person's tags ----------
@@ -31,9 +31,9 @@ export async function myTags(userId: number | undefined, type: string, id: numbe
 
 /** Puts tags on an item for a person, adding tags that are new. Ones they had already applied are left alone. */
 export async function addTags(userId: number, type: string, id: number, names: string[]): Promise<void> {
-  transact(tx => {
+  await transact(async tx => {
     for (const name of names) {
-      tx.insert(taggings).values({ userId, tagId: getOrCreateTagTx(tx, name), itemType: type, itemId: id, createdAt: now() }).onConflictDoNothing().run();
+      await tx.insert(taggings).values({ userId, tagId: (await getOrCreateTagTx(tx, name)), itemType: type, itemId: id, createdAt: now() }).onConflictDoNothing();
     }
   });
 }

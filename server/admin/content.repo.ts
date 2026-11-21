@@ -1,7 +1,7 @@
 // Data access for the staff content pages: listing shouts, journal posts and wiki versions, removing them, and
 // reverting and locking wikis.
 import { and, count, desc, eq, exists, max, or, sql, type AnyColumn } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import { albums, artists, journals, reports, shouts, tags, tracks, users, wikiLocks, wikis } from "../db/schema";
 import { like, norm, now } from "../util";
@@ -55,10 +55,10 @@ export const wikiCount = (f: ContentFilter) => total(db.select({ c: count() }).f
  * Deletes a shout, journal post or wiki version, closes the open reports about it and records the action, all or
  * nothing. `entry` builds the audit record from the number of reports closed.
  */
-export function removeContent(kind: string, id: number, actor: { id: number; username: string }, why: string, entry: (closedReports: number) => AuditEntry): void {
-  transact(tx => {
-    removeContentTx(tx, kind, id, actor.id);
-    auditTx(tx, actor, entry(closeReportsTx(tx, kind, id, "content removed", actor.id, why)));
+export async function removeContent(kind: string, id: number, actor: { id: number; username: string }, why: string, entry: (closedReports: number) => AuditEntry): Promise<void> {
+  await transact(async tx => {
+    await removeContentTx(tx, kind, id, actor.id);
+    await auditTx(tx, actor, entry((await closeReportsTx(tx, kind, id, "content removed", actor.id, why))));
   });
 }
 

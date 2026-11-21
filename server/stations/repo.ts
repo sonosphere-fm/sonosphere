@@ -24,12 +24,12 @@ type Ranked = ArtistTrack & { rn: number };
 /** The `pool` most popular tracks of each of these artists, grouped by artist with the most popular first. */
 export async function popularTracks(artistIds: number[], viewerId: number, pool: number): Promise<ArtistTrack[]> {
   // a window function ranks each artist's tracks; the builder cannot select from that with these column names
-  const rows = db.all<Ranked>(sql`SELECT * FROM (
+  const rows = await db.execute<Ranked>(sql`SELECT * FROM (
     SELECT ${tracks.id} id, ${tracks.title} title, ${tracks.duration} duration, ${artists.name} artist, ${albums.title} album, ${albums.imageId} image,
-      ${lovedBy(viewerId)} loved, ${tracks.artistId} artistId,
+      ${lovedBy(viewerId)} loved, ${tracks.artistId} "artistId",
       ROW_NUMBER() OVER (PARTITION BY ${tracks.artistId} ORDER BY ${tracks.baseListeners} DESC, ${tracks.basePlaycount} DESC, ${tracks.id}) rn
     FROM ${tracks} JOIN ${artists} ON ${artists.id} = ${tracks.artistId} LEFT JOIN ${albums} ON ${albums.id} = ${tracks.albumId}
-    WHERE ${inArray(tracks.artistId, artistIds)}) WHERE rn <= ${pool}`);
+    WHERE ${inArray(tracks.artistId, artistIds)}) ranked WHERE rn <= ${pool}`);
   return rows.map(({ rn, ...track }) => track);
 }
 

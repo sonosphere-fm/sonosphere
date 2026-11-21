@@ -1,6 +1,6 @@
 // Data access for site administration: staff flags, stored settings, the audit log and the import marker.
 import { and, count, desc, eq, ne, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn } from "../db/client";
 import { auditLog, meta, siteSettings, users } from "../db/schema";
 import { first } from "../util";
@@ -27,8 +27,8 @@ export async function promote(usernames: string[]): Promise<void> {
 export const storedSettings = (): Promise<{ key: string; value: string }[]> => db.select().from(siteSettings);
 /** Writes settings (key and JSON text), replacing any stored value, all or nothing. */
 export async function storeSettings(entries: [key: string, value: string][]): Promise<void> {
-  transact(tx => {
-    for (const [key, value] of entries) tx.insert(siteSettings).values({ key, value }).onConflictDoUpdate({ target: siteSettings.key, set: { value } }).run();
+  await transact(async tx => {
+    for (const [key, value] of entries) await tx.insert(siteSettings).values({ key, value }).onConflictDoUpdate({ target: siteSettings.key, set: { value } });
   });
 }
 
@@ -36,8 +36,8 @@ export async function insertAudit(row: typeof auditLog.$inferInsert): Promise<vo
   await db.insert(auditLog).values(row);
 }
 /** As insertAudit, inside a transaction. */
-export function insertAuditTx(conn: Conn, row: typeof auditLog.$inferInsert): void {
-  conn.insert(auditLog).values(row).run();
+export async function insertAuditTx(conn: Conn, row: typeof auditLog.$inferInsert): Promise<void> {
+  await conn.insert(auditLog).values(row);
 }
 
 /** JSON text from the database as an object; anything unreadable is an empty object. */

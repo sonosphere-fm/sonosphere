@@ -1,7 +1,7 @@
 // Data access for the site charts and the home page: tag rankings, upcoming events, site totals and what the
 // people you follow have been up to. Rankings of artists, albums and tracks come from server/listening/repo.ts.
 import { and, asc, count, countDistinct, desc, eq, exists, gte, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
 import { flag } from "../db/dialect";
 import { albums, artists, eventArtists, eventAttendance, events, follows, lovedTracks, scrobbles, taggings, tags, tracks, users } from "../db/schema";

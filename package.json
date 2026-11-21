@@ -6,7 +6,7 @@
     "dev": "bun --hot server/index.ts",
     "start": "NODE_ENV=production bun server/index.ts",
     "import:dev": "bun server/dev/import.ts",
-    "reset": "rm -f data/needle.db data/needle.db-wal data/needle.db-shm data/dev-login.txt",
+    "reset": "dropdb --if-exists --force sonosphere && createdb sonosphere && rm -f data/dev-login.txt",
     "db:generate": "drizzle-kit generate",
     "build": "bun scripts/build.ts",
     "typecheck": "tsc --noEmit -p ."
@@ -19,6 +19,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@stylexjs/stylex": "^0.19.2",
     "drizzle-orm": "^0.45.4",
+    "postgres": "^4.1.1",
     "react": "19",
     "react-dom": "19",
     "react-router-dom": "6"

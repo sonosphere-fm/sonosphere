@@ -8,7 +8,7 @@ export type NewLink = typeof spotifyLinks.$inferInsert;
 export type PendingAuth = typeof spotifyAuth.$inferSelect;
 
 export const findLink = async (userId: number): Promise<Link | null> =>
-  (await db.select().from(spotifyLinks).where(eq(spotifyLinks.userId, userId)).get()) ?? null;
+  (await db.select().from(spotifyLinks).where(eq(spotifyLinks.userId, userId)))[0] ?? null;
 
 /** Linking again (same or another Spotify account) replaces the old link and starts importing afresh. */
 export async function saveLink(row: NewLink): Promise<void> {
@@ -37,11 +37,11 @@ export async function savePending(row: PendingAuth): Promise<void> {
 }
 
 export const findPending = async (state: string): Promise<PendingAuth | null> =>
-  (await db.select().from(spotifyAuth).where(eq(spotifyAuth.state, state)).get()) ?? null;
+  (await db.select().from(spotifyAuth).where(eq(spotifyAuth.state, state)))[0] ?? null;
 
 /** Takes a pending sign-in (each can be used once). */
 export async function takePending(state: string): Promise<PendingAuth | null> {
-  return (await db.delete(spotifyAuth).where(eq(spotifyAuth.state, state)).returning().get()) ?? null;
+  return (await db.delete(spotifyAuth).where(eq(spotifyAuth.state, state)).returning())[0] ?? null;
 }
 
 export async function dropStalePending(before: number): Promise<void> {

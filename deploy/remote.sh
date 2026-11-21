@@ -1,6 +1,6 @@
 #!/bin/sh
 # Runs on the server, called by deploy.sh with the folder of the freshly unpacked release.
-# Layout under /opt/spin: data/ (database, never touched here), releases/<id>/, slot/<port> -> a release,
+# Layout under /opt/spin: data/ (keys and caches, never touched here; the database is Postgres), releases/<id>/, slot/<port> -> a release,
 # deps/<hash>/node_modules (shared between releases with the same lockfile).
 # Two ports take turns: the new release starts on the idle one, is health-checked, then nginx is pointed at it.
 set -e
@@ -25,7 +25,7 @@ ln -sfn $A/deps/$H/node_modules $R/node_modules
 cp $R/deploy/backup.sh $A/backup.sh
 
 # a release that changes the database shape gets a backup taken first
-if [ -f $A/data/needle.db ] && ! diff -rq $R/server/db/migrations "${OLD:-/nonexistent}/server/db/migrations" >/dev/null 2>&1; then sh $A/backup.sh deploy; fi
+if ! diff -rq $R/server/db/migrations "${OLD:-/nonexistent}/server/db/migrations" >/dev/null 2>&1; then sh $A/backup.sh deploy; fi
 
 for u in spin@.service spin-backup.service spin-backup.timer; do
   same $R/deploy/$u /etc/systemd/system/$u || { cp $R/deploy/$u /etc/systemd/system/$u; RELOAD=1; }
