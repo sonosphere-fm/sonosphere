@@ -50,6 +50,13 @@
       "when": 1795228030940,
       "tag": "0006_app_callback",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795228224206,
+      "tag": "0007_spotify_scopes",
+      "breakpoints": true
     }
   ]
 }

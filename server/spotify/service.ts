@@ -17,6 +17,9 @@ import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
 
 const ACCOUNTS = "https://accounts.spotify.com", API = "https://api.spotify.com/v1";
 const SCOPES = "user-read-recently-played user-read-currently-playing";
+/** Extra access for playing in the browser with the Web Playback SDK (only offered when asked for: it needs Premium). */
+const PLAY_SCOPES = "streaming user-read-email user-read-private user-modify-playback-state";
+const canPlay = (link: repo.Link) => !link.broken && link.scopes.split(" ").includes("streaming");
 const RECENT_EVERY = 5 * 60, PLAYING_EVERY = 60, PENDING_FOR = 10 * 60;
 
 /** Spotify client IDs are 32 hex characters. */
@@ -48,17 +51,17 @@ export function redirectFor(req: Request): string | null {
 }
 
 /** The Spotify page that asks the listener to approve access for their app. */
-export async function connectUrl(userId: number, clientId: string, redirectUri: string, origin: string): Promise<string> {
+export async function connectUrl(userId: number, clientId: string, redirectUri: string, origin: string, playback = false): Promise<string> {
   const state = rid(16), verifier = b64url(Buffer.from(crypto.getRandomValues(new Uint8Array(48))));
   await repo.savePending({ state, userId, clientId, verifier, redirectUri, origin, createdAt: now() });
   const q = new URLSearchParams({
-    client_id: clientId, response_type: "code", redirect_uri: redirectUri, state, scope: SCOPES,
+    client_id: clientId, response_type: "code", redirect_uri: redirectUri, state, scope: playback ? `${SCOPES} ${PLAY_SCOPES}` : SCOPES,
     code_challenge_method: "S256", code_challenge: b64url(createHash("sha256").update(verifier).digest()),
   });
   return `${ACCOUNTS}/authorize?${q}`;
 }
 
-type Tokens = { access: string; refresh: string; expiresIn: number };
+type Tokens = { access: string; refresh: string; expiresIn: number; scope: string };
 
 async function tokenRequest(clientId: string, params: Record<string, string>): Promise<Tokens> {
   const res = await fetch(`${ACCOUNTS}/api/token`, {
@@ -70,7 +73,7 @@ async function tokenRequest(clientId: string, params: Record<string, string>): P
   if (res.status === 400 && error === "invalid_grant") throw new Revoked("Spotify access was withdrawn. Connect again to resume.");
   if (error === "invalid_client") throw new Revoked("Spotify no longer recognises your app's client ID. Check the app on Spotify's dashboard, then connect again.");
   if (!res.ok || !data || !str(data.access_token)) throw new Error(`Spotify token request failed (${res.status})`);
-  return { access: str(data.access_token), refresh: str(data.refresh_token), expiresIn: numOr(data.expires_in, 3600) };
+  return { access: str(data.access_token), refresh: str(data.refresh_token), expiresIn: numOr(data.expires_in, 3600), scope: str(data.scope) };
 }
 
 export type Outcome = "connected" | "denied" | "expired" | "failed" | "forbidden";
@@ -103,7 +106,7 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
     await repo.saveLink({
       userId: pending.userId, clientId: pending.clientId, spotifyId: str(me.id), displayName: str(me.display_name) || str(me.id),
       accessToken: seal(t.access), refreshToken: seal(t.refresh), expiresAt: now() + t.expiresIn,
-      cursor: 0, recentAt: 0, playingAt: 0, importedAt: null, imported: 0, broken: null, createdAt: now(),
+      cursor: 0, recentAt: 0, playingAt: 0, importedAt: null, imported: 0, broken: null, scopes: t.scope, createdAt: now(),
     });
     const link = await repo.findLink(pending.userId);
     if (link) importRecent(link).catch(e => console.error("Spotify import:", e)); // the last 50 plays, right away
@@ -123,7 +126,8 @@ async function accessToken(link: repo.Link, force = false): Promise<string> {
   const t = await tokenRequest(link.clientId, { grant_type: "refresh_token", refresh_token: refresh });
   link.accessToken = seal(t.access); link.expiresAt = now() + t.expiresIn;
   if (t.refresh) link.refreshToken = seal(t.refresh); // Spotify rotates refresh tokens for PKCE sign-ins
-  await repo.updateLink(link.userId, { accessToken: link.accessToken, refreshToken: link.refreshToken, expiresAt: link.expiresAt });
+  if (t.scope) link.scopes = t.scope;
+  await repo.updateLink(link.userId, { accessToken: link.accessToken, refreshToken: link.refreshToken, expiresAt: link.expiresAt, scopes: link.scopes });
   return t.access;
 }
 
@@ -195,7 +199,7 @@ function failed(link: repo.Link, e: unknown): number {
 
 // ---------- for the routes ----------
 function view(link: repo.Link): SpotifyLink {
-  return { account: { id: link.spotifyId, name: link.displayName }, clientId: link.clientId, connectedAt: link.createdAt, lastImport: link.importedAt, imported: link.imported, broken: link.broken };
+  return { account: { id: link.spotifyId, name: link.displayName }, clientId: link.clientId, connectedAt: link.createdAt, lastImport: link.importedAt, imported: link.imported, broken: link.broken, playback: canPlay(link) };
 }
 
 export async function status(userId: number, req: Request): Promise<SpotifyStatus> {
@@ -214,6 +218,14 @@ export async function syncNow(userId: number): Promise<{ imported: number; link:
 }
 
 export const disconnect = (userId: number) => repo.dropLink(userId);
+
+/** A current access token for the listener's browser player, when their link was made with playback. */
+export async function playerToken(userId: number): Promise<{ token: string | null; expiresAt: number }> {
+  const link = await repo.findLink(userId);
+  if (!link || !canPlay(link)) return { token: null, expiresAt: 0 };
+  try { const token = await accessToken(link); return { token, expiresAt: link.expiresAt }; }
+  catch (e) { failed(link, e); return { token: null, expiresAt: 0 }; }
+}
 
 // ---------- background loop ----------
 let busy = false;

@@ -156,8 +156,8 @@ const SPOTIFY_OUTCOME: Record<string, { ok: boolean; text: string }> = {
 const SPOTIFY_DASHBOARD = "https://developer.spotify.com/dashboard";
 
 /** How to make the listener's own Spotify app, then the client ID field. */
-function SpotifySetup({ redirectUri, initial, onConnect, busy, note }: { redirectUri: string; initial: string; onConnect: (clientId: string) => void; busy: boolean; note: ReactNode }) {
-  const [id, setId] = useState(initial), [copied, setCopied] = useState(false);
+function SpotifySetup({ redirectUri, initial, playback, onConnect, busy, note }: { redirectUri: string; initial: string; playback: boolean; onConnect: (clientId: string, playback: boolean) => void; busy: boolean; note: ReactNode }) {
+  const [id, setId] = useState(initial), [copied, setCopied] = useState(false), [play, setPlay] = useState(playback);
   const copy = () => copyText(redirectUri).then(ok => { if (ok) { setCopied(true); setTimeout(() => setCopied(false), 1500); } });
   return (
     <>
@@ -168,11 +168,12 @@ function SpotifySetup({ redirectUri, initial, onConnect, busy, note }: { redirec
         <li>Under <b>Redirect URIs</b>, paste this address exactly and click <b>Add</b>:
           <span className="copy-row"><code onClick={e => { const r = document.createRange(); r.selectNodeContents(e.currentTarget); getSelection()?.removeAllRanges(); getSelection()?.addRange(r); }}>{redirectUri}</code><Button kind="btn ghost small" type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</Button></span>
         </li>
-        <li>Under <b>Which API/SDKs are you planning to use?</b>, tick <b>Web API</b>, agree to the terms and click <b>Save</b>.</li>
+        <li>Under <b>Which API/SDKs are you planning to use?</b>, tick <b>Web API</b> (and <b>Web Playback SDK</b> to play music here), agree to the terms and click <b>Save</b>.</li>
         <li>Open the app's <b>Settings</b>, copy its <b>Client ID</b> and paste it below. You don't need the client secret.</li>
       </ol>
-      <form className="form" onSubmit={e => { e.preventDefault(); onConnect(id.trim()); }}>
+      <form className="form" onSubmit={e => { e.preventDefault(); onConnect(id.trim(), play); }}>
         <label>Client ID<Input value={id} onChange={e => setId(e.target.value)} required maxLength={64} placeholder="32 letters and numbers" autoComplete="off" spellCheck={false} /></label>
+        <label className="check"><Input type="checkbox" checked={play} onChange={e => setPlay(e.target.checked)} /> Also play music here through Spotify instead of videos (needs Spotify Premium)</label>
         {note}
         <div className="row"><Button kind="btn" loading={busy}>Connect Spotify</Button></div>
       </form>
@@ -184,7 +185,7 @@ function SpotifySetup({ redirectUri, initial, onConnect, busy, note }: { redirec
 function SpotifySettings() {
   const q = useApi<SpotifyStatus>("/spotify"), act = useAction(), [sp, setSp] = useSearchParams(), [redo, setRedo] = useState(false);
   const outcome = SPOTIFY_OUTCOME[sp.get("spotify") ?? ""];
-  const connect = (clientId: string) => act.run(async () => { window.location.href = (await api<SpotifyConnect>("/spotify/connect", { body: { clientId } satisfies SpotifyConnectBody })).url; });
+  const connect = (clientId: string, playback: boolean) => act.run(async () => { window.location.href = (await api<SpotifyConnect>("/spotify/connect", { body: { clientId, playback } satisfies SpotifyConnectBody })).url; });
   const sync = (s: Extract<SpotifyStatus, { enabled: true }>) => act.run(async () => { const r = await api<SpotifySynced>("/spotify/sync", { method: "POST" }); q.setData({ ...s, link: r.link }); return r.imported ? `Imported ${plural(r.imported, "play")}.` : "Nothing new to import."; });
   const disconnect = () => act.run(async () => { await api<Ok>("/spotify", { method: "DELETE" }); setSp({}, { replace: true }); setRedo(false); q.reload(); });
   const linked = (s: Extract<SpotifyStatus, { enabled: true }>, l: SpotifyLink) => (
@@ -193,7 +194,8 @@ function SpotifySettings() {
       {l.broken ? <p className="form-error">{l.broken}</p> : (
         <p className="muted small">{l.lastImport ? <>Last import {ago(l.lastImport)} · {num(l.imported)} plays imported</> : "Importing your recent plays..."}. New plays are picked up every few minutes.</p>
       )}
-      {l.broken || redo ? <SpotifySetup redirectUri={s.redirectUri} initial={l.clientId} onConnect={connect} busy={act.busy} note={act.note} /> : act.note}
+      {!l.broken && <p className="muted small">{l.playback ? "The player plays through Spotify when it has the track." : "The player uses videos. To play through Spotify (Premium) instead, choose Change app and tick the playback option."}</p>}
+      {l.broken || redo ? <SpotifySetup redirectUri={s.redirectUri} initial={l.clientId} playback={l.playback} onConnect={connect} busy={act.busy} note={act.note} /> : act.note}
       <div className="row">
         {!l.broken && !redo && <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>}
         {!l.broken && !redo && <Button kind="btn ghost" onClick={() => setRedo(true)}>Change app</Button>}
@@ -209,7 +211,7 @@ function SpotifySettings() {
       <Async q={q}>{d => !d.enabled ? <p className="muted">Scrobbling from Spotify is disabled.</p> : (
         <div className="spotify">
           {outcome && !(outcome.ok && d.link?.broken) && <p className={outcome.ok ? "form-ok" : "form-error"}>{outcome.text}</p>}
-          {d.link ? linked(d, d.link) : <SpotifySetup redirectUri={d.redirectUri} initial="" onConnect={connect} busy={act.busy} note={act.note} />}
+          {d.link ? linked(d, d.link) : <SpotifySetup redirectUri={d.redirectUri} initial="" playback={false} onConnect={connect} busy={act.busy} note={act.note} />}
         </div>
       )}</Async>
     </Service>

@@ -593,7 +593,8 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 .vplayer-x { position: absolute; right: 0; top: -36px; width: 28px; height: 28px; display: grid; place-items: center; border: 0; background: #4a4a4a; color: #fff; cursor: pointer; }
 .vplayer-x:hover { background: var(--accent); } .vplayer-x svg { width: 16px; height: 16px; }
 .vplayer-screen { position: relative; aspect-ratio: 16 / 9; background: #000; }
-.vplayer-video { position: absolute; inset: 0; } .vplayer-video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.vplayer-video { position: absolute; inset: 0; }
+.vplayer-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; } .vplayer-video iframe { display: block; width: 100%; height: 100%; border: 0; }
 .vplayer-blank { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; } .vplayer-blank svg { width: 36px; height: 36px; }
 .vplayer-progress { height: 4px; background: #6b6b6b; } .vplayer-progress div { height: 100%; background: var(--accent); }
 .vplayer-bar { display: flex; align-items: center; gap: 4px; min-height: 62px; padding: 8px 10px 8px 16px; background: #222; color: #fff; }

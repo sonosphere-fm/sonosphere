@@ -574,6 +574,8 @@ export const spotifyLinks = pgTable("spotify_links", {
 	imported: integer().default(0).notNull(),
 	/** set when Spotify refuses the link (revoked access): polling stops until the listener reconnects */
 	broken: text(),
+	/** what Spotify granted, space separated; "streaming" means the browser player can play through it */
+	scopes: text("scopes").default("").notNull(),
 	createdAt: integer("created_at").notNull(),
 },
 (table) => [
