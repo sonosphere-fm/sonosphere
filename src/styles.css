@@ -92,7 +92,8 @@ input[type="file"] { border: 1px dashed var(--edge); background: var(--panel); }
 .form > label, .form .row > label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 14px; width: 100%; }
 .form label input, .form label textarea { font-weight: 400; font-size: 16px; width: 100%; }
 .form .row { width: 100%; }
-.check { display: flex !important; flex-direction: row !important; align-items: flex-start; gap: 10px; font-weight: 400 !important; font-size: 15px; }
+.check { display: flex !important; flex-direction: row !important; align-items: flex-start; gap: 12px; font-weight: 400 !important; font-size: 15px; }
+.form > label.check { gap: 12px; }
 .check input { width: 16px !important; margin-top: 3px; flex: none; }
 .form-error { color: var(--accent-dark); font-weight: 600; margin: 0; } .form-ok { color: var(--ok); font-weight: 600; margin: 0; }
 .turnstile { width: 100%; min-height: 65px; }
