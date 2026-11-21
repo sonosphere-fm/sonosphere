@@ -19,4 +19,6 @@ export type Me = {
 export type MeResponse = { user: Me | null };
 /** Sign-up, log-in and profile edits answer with the account as it now stands. */
 export type Session = { user: Me };
+/** What the sign-up and log-in forms need: the Turnstile site key, or null when the robot check is off. */
+export type AuthConfig = { turnstile: string | null };
 export type Ok = { ok: true };

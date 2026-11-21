@@ -90,6 +90,7 @@ input[type="file"] { border: 1px dashed #bdb9b2; background: var(--panel); }
 .check { display: flex !important; flex-direction: row !important; align-items: flex-start; gap: 10px; font-weight: 400 !important; font-size: 15px; }
 .check input { width: 16px !important; margin-top: 3px; flex: none; }
 .form-error { color: var(--accent-dark); font-weight: 600; margin: 0; } .form-ok { color: var(--ok); font-weight: 600; margin: 0; }
+.turnstile { width: 100%; min-height: 65px; }
 .inline-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .row.between { justify-content: space-between; }
 .card { border: 1px solid var(--line); padding: 18px; background: var(--card); margin-bottom: 16px; }
