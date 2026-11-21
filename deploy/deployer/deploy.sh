@@ -46,6 +46,7 @@ preflight() {
 ship() {
   set -e
   docker build -q -t "sonosphere:$1" $SRC
+  $COMPOSE build -q backup
   $COMPOSE exec -T backup sh /deploy/backup.sh deploy
   preflight "$1"
   docker tag "sonosphere:$1" sonosphere:live
