@@ -5,6 +5,7 @@ import { convert } from "../images/process";
 import { attempt, exclusive, getJson, setAdd, setJson, setTake } from "../kv";
 import { isStaff } from "../site/roles";
 import { norm, now } from "../util";
+import * as Sentry from "@sentry/bun";
 import { findAlbum, findArtist, findTrack, type AlbumWithArtist, type Artist, type TrackWithArtist } from "../catalog/repo";
 import * as repo from "./repo";
 import * as src from "./sources";
@@ -31,7 +32,10 @@ function once<T>(key: string, job: () => Promise<T>): Promise<T> {
 }
 
 const quiet = (what: string) => (e: unknown) => {
-  if (!(e instanceof src.Busy)) console.error(`metadata (${what}):`, e);
+  if (e instanceof src.Busy) return;
+  if (e instanceof HttpError && e.status < 500) return;
+  console.error(`metadata (${what}):`, e);
+  Sentry.captureException(e);
 };
 const later = (what: string, job: () => Promise<unknown>) => {
   job().catch(quiet(what));

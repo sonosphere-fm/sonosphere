@@ -6,6 +6,7 @@ import { db } from "../db/client";
 import { outbox } from "../db/schema";
 import { bump, exclusive } from "../kv";
 import { now } from "../util";
+import * as Sentry from "@sentry/bun";
 
 const env = process.env;
 export const SITE_URL = (env.SITE_URL || `http://localhost:${env.PORT || 3000}`).replace(/\/+$/, "");
@@ -41,7 +42,7 @@ export type Mail = { to: string; subject: string; text: string; html: string };
 export async function send(m: Mail): Promise<void> {
   await db.insert(outbox).values({ ...m, nextAt: now(), createdAt: now() });
   queueMicrotask(() => {
-    deliver().catch(e => console.error("mail:", e));
+    deliver().catch(e => { console.error("mail:", e); Sentry.captureException(e); });
   });
 }
 
@@ -114,9 +115,11 @@ export async function deliver(): Promise<void> {
           const gap = RETRY[r.attempts];
           if (gap === undefined) {
             console.error(`mail: giving up on "${r.subject}" after ${r.attempts + 1} tries: ${msg}`);
+            Sentry.captureException(e);
             await db.delete(outbox).where(eq(outbox.id, r.id));
           } else {
             console.error(`mail: "${r.subject}" failed (try ${r.attempts + 1}), retrying in ${gap}s: ${msg}`);
+            Sentry.captureException(e);
             await db.update(outbox)
               .set({ attempts: r.attempts + 1, nextAt: now() + gap, error: msg })
               .where(eq(outbox.id, r.id));

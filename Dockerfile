@@ -1,5 +1,7 @@
 FROM oven/bun:1.4.5 AS build
+ARG GIT_SHA
 WORKDIR /app
+ENV SENTRY_RELEASE=$GIT_SHA
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
@@ -11,8 +13,9 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production
 
 FROM oven/bun:1.4.5-slim
+ARG GIT_SHA
 WORKDIR /app
-ENV NODE_ENV=production DATA_DIR=/data PORT=3000
+ENV NODE_ENV=production DATA_DIR=/data PORT=3000 SENTRY_RELEASE=$GIT_SHA
 COPY package.json ./
 COPY --from=deps /app/node_modules node_modules
 COPY server server

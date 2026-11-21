@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { attempt, exclusive, getJson, setJson } from "../kv";
 import { now, rid } from "../util";
+import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
 import { clearNowPlaying } from "../listening/repo";
 import { seal, unseal } from "./seal";
@@ -157,10 +158,11 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
       createdAt: now(),
     });
     const link = await repo.findLink(pending.userId);
-    if (link) importRecent(link).catch(e => console.error("Spotify import:", e));
+    if (link) importRecent(link).catch(e => { console.error("Spotify import:", e); Sentry.captureException(e); });
     return "connected";
   } catch (e) {
     console.error("Spotify sign-in:", e);
+    Sentry.captureException(e);
     return "failed";
   }
 }
@@ -279,10 +281,10 @@ async function mirrorPlaying(link: repo.Link) {
 
 function failed(link: repo.Link, e: unknown): number {
   if (e instanceof Revoked) {
-    repo.updateLink(link.userId, { broken: e.message }).catch(err => console.error(err));
+    repo.updateLink(link.userId, { broken: e.message }).catch(err => { console.error(err); Sentry.captureException(err); });
     return 0;
   }
-  if (!(e instanceof Slowed)) console.error(`Spotify (user ${link.userId}):`, e);
+  if (!(e instanceof Slowed)) { console.error(`Spotify (user ${link.userId}):`, e); Sentry.captureException(e); }
   return 0;
 }
 
@@ -396,6 +398,7 @@ async function tick() {
     });
   } catch (e) {
     console.error("Spotify loop:", e);
+    Sentry.captureException(e);
   } finally {
     busy = false;
   }

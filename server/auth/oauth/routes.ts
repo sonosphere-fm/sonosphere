@@ -6,6 +6,7 @@ import { getJson, setJson, takeJson } from "../../kv";
 import { SITE_URL } from "../../mail";
 import { findById } from "../../users/repo";
 import { clean, digest, rid } from "../../util";
+import * as Sentry from "@sentry/bun";
 import { emailTaken } from "../repo";
 import { checkNewAccount, createAccount, me, startSession, USERNAME } from "../service";
 import { PROVIDERS, providerById, providerLabel, type Provider } from "./providers";
@@ -93,6 +94,7 @@ router.get("/api/auth/oauth/:provider/callback", async c => {
     who = await p.profile(token);
   } catch (e) {
     console.error(`oauth ${p.id}:`, e instanceof Error ? e.message : e);
+    Sentry.captureException(e);
     return failTo(c, st.intent, "failed");
   }
   if (!who.email || !who.emailVerified) return failTo(c, st.intent, "unverified");
