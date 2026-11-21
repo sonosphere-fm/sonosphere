@@ -5,13 +5,14 @@ import { findById } from "../users/repo";
 import { idList, note, paging } from "./common";
 import { reportTarget, snapshotOf } from "../moderation/repo";
 import * as repo from "./reports.repo";
+import { removed as groupMessageRemoved } from "../dm/groups.repo";
 import type { ReportResolved, ReportsClosed, StaffReport, StaffReportList } from "../../shared/admin";
 
 export const router = new Router({ jsonOnly: true });
 
 const STATUSES = ["open", "closed", "all"] as const;
 const REASONS = ["spam", "abuse", "inappropriate", "impersonation", "other"] as const;
-const TYPES = ["shout", "wiki", "journal", "user", "dm"] as const;
+const TYPES = ["shout", "wiki", "journal", "user", "dm", "group"] as const;
 const DECISIONS = ["dismiss", "remove", "suspend", "mute"] as const;
 
 router.get<StaffReportList>("/api/admin/reports", async c => {
@@ -25,12 +26,16 @@ router.get<StaffReportList>("/api/admin/reports", async c => {
     const live = await reportTarget(r.targetType, r.targetId);
     const snap = snapshotOf(r.snapshot);
     const author = live?.authorId ? await findById(live.authorId) : null;
-    const isDm = r.targetType === "dm";
+    const isDm = r.targetType === "dm" || r.targetType === "group";
     // transcript links are for admins only (the server checks too)
     let link = live?.link ?? null;
     if (isDm) link = live && isAdmin(me) ? live.link : null;
     const dmExtra = isDm
-      ? { threadId: live?.threadId ?? null, authorMuted: !!author?.dmMuted, removed: await repo.messageRemoved(r.targetId) }
+      ? {
+        threadId: live?.threadId ?? null,
+        authorMuted: !!author?.dmMuted,
+        removed: r.targetType === "dm" ? await repo.messageRemoved(r.targetId) : await groupMessageRemoved(r.targetId),
+      }
       : {};
     items.push({
       id: r.id,

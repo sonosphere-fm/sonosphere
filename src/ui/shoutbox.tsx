@@ -17,7 +17,7 @@ const REASONS: [string, string][] = [
 ];
 
 export function ReportButton({ type, id, label = "Report", open: forced, onClose }: {
-  type: "shout" | "wiki" | "journal" | "user" | "dm";
+  type: "shout" | "wiki" | "journal" | "user" | "dm" | "group";
   id: number;
   label?: string;
   open?: boolean;
@@ -56,7 +56,9 @@ export function ReportButton({ type, id, label = "Report", open: forced, onClose
             </div>
           ) : (
             <form className="form" onSubmit={submit}>
-              {type === "dm" && <p className="muted small">Moderators will see the reported message and a few around it. The other person isn't notified.</p>}
+              {(type === "dm" || type === "group") && (
+                <p className="muted small">Moderators will see the reported message and a few around it. {type === "dm" ? "The other person isn't notified." : "No one in the group is notified."}</p>
+              )}
               <label>Reason<Select label="Reason" value={reason} onChange={setReason} options={REASONS} /></label>
               <label>
                 Additional details

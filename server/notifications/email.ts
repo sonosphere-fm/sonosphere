@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, notInArray, no
 import { db } from "../db/client";
 import { notifications, users } from "../db/schema";
 import { unreadSince } from "../dm/repo";
+import { unreadSince as groupUnreadSince } from "../dm/groups.repo";
 import { attempt } from "../kv";
 import { send, SITE_URL } from "../mail";
 import { digestMail, noticeMail, type NoticeLine } from "../mail/templates";
@@ -46,7 +47,7 @@ export async function mailNotice(userId: number, type: string, actorId: number, 
 }
 
 // At most once an hour per conversation.
-export async function mailMessage(to: User, from: string, threadId: number, request: boolean, body: string): Promise<void> {
+export async function mailMessage(to: User, from: string, threadId: number | string, request: boolean, body: string): Promise<void> {
   try {
     if (!wantsNow(to, "message")) return;
     if (!(await attempt(`mail-dm:${to.id}:${threadId}`, 1, 3600_000))) return;
@@ -102,7 +103,9 @@ export async function sendDigests(): Promise<void> {
       .map(r => describe(u, r.type, r.actor, JSON.parse(r.data) as Record<string, unknown>))
       .filter(x => x !== null);
     if (!off.includes("message")) {
-      const dm = await unreadSince(u.id, since);
+      const direct = await unreadSince(u.id, since);
+      const group = await groupUnreadSince(u.id, since);
+      const dm = { messages: direct.messages + group.messages, people: direct.people + group.people };
       if (dm.messages) {
         const messages = `${dm.messages} new message${dm.messages === 1 ? "" : "s"}`;
         const people = `${dm.people} ${dm.people === 1 ? "person" : "people"}`;

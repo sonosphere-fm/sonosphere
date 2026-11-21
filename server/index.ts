@@ -9,7 +9,7 @@ import { deliver } from "./mail";
 import { syncCorrections } from "./corrections/service";
 import { exclusive, releaseAll } from "./kv";
 import { sweepUnused } from "./images/repo";
-import { startDm } from "./dm/service";
+import { startDm } from "./dm/routes";
 import { dropExpiredNowPlaying, ensureTallies } from "./listening/repo";
 import { upgrade, websocket, type SocketData } from "./realtime";
 import { startTasteWorker } from "./recommend/worker";

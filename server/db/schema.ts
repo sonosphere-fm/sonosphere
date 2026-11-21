@@ -565,6 +565,44 @@ export const dmMessages = pgTable("dm_messages", {
 	index("dm_messages_thread").on(table.threadId, table.id),
 ]);
 
+export const dmGroups = pgTable("dm_groups", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	title: text().default("").notNull(),
+	ownerId: integer("owner_id").notNull().references(() => users.id),
+	createdAt: integer("created_at").notNull(),
+	lastAt: integer("last_at").notNull(),
+});
+
+// readId and clearedId are message ids; a new member's clearedId starts at the newest message, so history before
+// they joined stays hidden from them.
+export const dmGroupMembers = pgTable("dm_group_members", {
+	groupId: integer("group_id").notNull().references(() => dmGroups.id, { onDelete: "cascade" } ),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	joinedAt: integer("joined_at").notNull(),
+	readId: integer("read_id").default(0).notNull(),
+	clearedId: integer("cleared_id").default(0).notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.groupId, table.userId] }),
+	index("dm_group_members_user").on(table.userId),
+]);
+
+// A row with `event` set is a membership or title change, and its body is the line shown for it.
+export const dmGroupMessages = pgTable("dm_group_messages", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	groupId: integer("group_id").notNull().references(() => dmGroups.id, { onDelete: "cascade" } ),
+	senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	body: text().notNull(),
+	event: text(),
+	createdAt: integer("created_at").notNull(),
+	deletedAt: integer("deleted_at"),
+	deletedBy: integer("deleted_by"),
+},
+(table) => [
+	index("dm_group_messages_group").on(table.groupId, table.id),
+	index("dm_group_messages_sender").on(table.senderId, table.createdAt),
+]);
+
 export const dmFlags = pgTable("dm_flags", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),

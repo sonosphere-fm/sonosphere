@@ -10,6 +10,7 @@ import { closeReportsTx, removeContentTx, reportTargetTx, snapshotOf } from "../
 import { auditTx } from "../site/audit";
 import { announceRemoved } from "../dm/service";
 import type { Removed } from "../dm/repo";
+import type { GroupRemoved } from "../dm/groups.repo";
 
 type ReportRow = typeof reports.$inferSelect;
 type ReportStatus = "open" | "closed" | "all";
@@ -79,7 +80,7 @@ const OUTCOME: Record<Decision, string> = {
 
 // Closes every open report about the same thing and returns how many. A removed direct message is pushed onto
 // `removed` so both people's open tabs can be told once the transaction commits.
-async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: string, configured: string[], removed: Removed[]): Promise<number> {
+async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: string, configured: string[], removed: (Removed | GroupRemoved)[]): Promise<number> {
   const t = await reportTargetTx(tx, r.targetType, r.targetId);
   let author: User | null = null;
   if (t?.authorId) {
@@ -101,7 +102,7 @@ async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: s
       });
     }
     if (action === "mute") {
-      if (r.targetType !== "dm") bad("Muting is only for reported messages");
+      if (r.targetType !== "dm" && r.targetType !== "group") bad("Muting is only for reported messages");
       if (!author) return bad("The author's account no longer exists");
       checkCanAct(me, author, "mute", configured);
       await tx.update(users).set({ dmMuted: true }).where(eq(users.id, author.id));
@@ -133,7 +134,7 @@ async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: s
 }
 
 export async function resolve(me: User, r: ReportRow, action: Decision, why: string, configured: string[]): Promise<number> {
-  const removed: Removed[] = [];
+  const removed: (Removed | GroupRemoved)[] = [];
   const closed = await transact(tx => decideTx(tx, me, r, action, why, configured, removed));
   await announceRemoved(removed);
   return closed;

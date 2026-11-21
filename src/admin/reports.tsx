@@ -12,9 +12,11 @@ type Option = [string, string];
 
 function decisionCopy(r: StaffReport, action: Decision) {
   const isUser = r.type === "user";
-  const dm = r.type === "dm";
+  const dm = r.type === "dm" || r.type === "group";
   const what = isUser ? `${r.author}'s profile` : `this ${TYPE[r.type].toLowerCase()}${r.author ? ` by ${r.author}` : ""}`;
-  const gone = dm ? " It disappears for both people at once; staff can still see it in the transcript." : " This can't be undone.";
+  let gone = " This can't be undone.";
+  if (r.type === "dm") gone = " It disappears for both people at once; staff can still see it in the transcript.";
+  if (r.type === "group") gone = " It disappears for everyone in the group at once.";
   const others = r.others ? ` The ${plural(r.others, "other open report")} on it will be closed too.` : "";
   const removeVerb = dm ? "Remove" : "Delete";
   switch (action) {
@@ -48,7 +50,7 @@ function decisionCopy(r: StaffReport, action: Decision) {
   }
 }
 
-const AUTHOR_PREFIX: Record<string, string> = { user: "Account ", dm: "Sent by " };
+const AUTHOR_PREFIX: Record<string, string> = { user: "Account ", dm: "Sent by ", group: "Sent by " };
 
 export function Reports() {
   const { refresh } = useAuth();
@@ -141,7 +143,7 @@ export function Reports() {
             )}
             <ul className="reports adm-reports">
               {d.items.map(r => {
-                const dm = r.type === "dm";
+                const dm = r.type === "dm" || r.type === "group";
                 const canRemove = r.exists && r.type !== "user" && !r.removed;
                 const canMute = r.exists && dm && r.author && !r.authorStaff && !r.authorMuted && !r.authorBanned;
                 const canSuspend = r.exists && r.author && !r.authorStaff && !r.authorSuspended && !r.authorBanned;
