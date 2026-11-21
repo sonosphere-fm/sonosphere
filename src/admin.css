@@ -119,6 +119,10 @@ td .adm-badge:first-child { margin-left: 0; }
 .adm-confirm code { background: var(--panel); padding: 1px 5px; border: 1px solid var(--line); }
 .adm-settings { max-width: 640px; }
 .adm-settings .section { margin-bottom: 18px; }
+.adm-settings-page { display: flex; flex-direction: column; gap: 32px; max-width: 640px; }
+.adm-settings-page > .section { margin-bottom: 0; }
+.adm-settings-page .adm-settings > .section:last-of-type { margin-bottom: 0; }
+.adm-settings-page .adm-settings > .section > p:last-child { margin-bottom: 0; }
 .adm-settings input[type="number"] { max-width: 140px; }
 
 @media (max-width: 860px) {

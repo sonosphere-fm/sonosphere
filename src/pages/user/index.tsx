@@ -11,6 +11,7 @@ import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
+import { UserLabels } from "../../ui/user-labels";
 import type { BlockResult } from "../../../shared/blocks";
 import type { UserEvents as UserEventList } from "../../../shared/events";
 import type { TopAlbum, TopArtist, TopTrack } from "../../../shared/listening";
@@ -105,7 +106,7 @@ export function UserPage({ tab }: { tab: Tab }) {
             banner={u.banner}
             art={<Art image={u.image} kind="user" />}
             kicker={u.followsYou ? "Follows you" : "Listener"}
-            title={u.username}
+            title={<>{u.username}<UserLabels name={u.username} all /></>}
             sub={sub}
             stats={<ProfileStats u={u} base={base} locked={locked} />}
             actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}

@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ago, albumUrl, api, artistUrl, dateTime, dur, num, tagUrl, trackUrl, useAuth, userUrl } from "../lib";
 import { PlayButton, type PTrack } from "../player";
 import { Art, Empty, Avatar } from "./base";
+import { UserLabels } from "./user-labels";
 import type { ChartTag } from "../../shared/home";
 import type { Loved, TopAlbum, TopArtist, TopTrack } from "../../shared/listening";
 import type { Recommendation } from "../../shared/recommend";
@@ -286,7 +287,7 @@ export function UserList<U extends PublicUser & { playcount?: number }>({ items,
         <li key={u.username}>
           <Avatar user={u} size={56} />
           <div className="grow">
-            <Link className="strong" to={userUrl(u.username)}>{u.username}</Link>
+            <Link className="strong" to={userUrl(u.username)}>{u.username}</Link> <UserLabels name={u.username} />
             {(u.realname || u.country) && <span className="muted small">{[u.realname, u.country].filter(Boolean).join(" · ")}</span>}
             {extra?.(u)}
           </div>

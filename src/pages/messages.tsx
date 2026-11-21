@@ -11,6 +11,7 @@ import type {
   DmUnsent, DmUser, DmWith,
 } from "../../shared/dm";
 import { Avatar, useAction } from "../ui/base";
+import { UserLabels } from "../ui/user-labels";
 import { ReportButton } from "../ui/shoutbox";
 import { type Msg, type Thread, type ThreadReply, type ListReply, INBOX, REQUESTS, threadPath, groupPath, place, placeGroup, applyDmEvent } from "../dm";
 
@@ -125,7 +126,7 @@ function ThreadRow({ t, requests, current, myId }: { t: Thread; requests: boolea
       >
         <Avatar user={t.user} size={44} plain />
         <span className="grow">
-          <span className="dm-thread-top"><b>{t.user.username}</b><span className="muted small nowrap">{ago(t.at)}</span></span>
+          <span className="dm-thread-top"><b>{t.user.username} <UserLabels name={t.user.username} /></b><span className="muted small nowrap">{ago(t.at)}</span></span>
           <span className="dm-preview">{preview}</span>
         </span>
         {t.unread > 0 && <b className="dot" aria-label={`${t.unread} unread`}>{t.unread}</b>}
@@ -256,7 +257,7 @@ function Head({ user, back, children }: { user: Thread["user"]; back: string; ch
       <Link to={back} className="dm-back" aria-label="Back to conversations"><Ico.ChevLeft /></Link>
       <Link to={userUrl(user.username)} className="dm-who">
         <Avatar user={user} size={36} plain />
-        <span><b>{user.username}</b>{user.realname && <span className="muted small">{user.realname}</span>}</span>
+        <span><b>{user.username} <UserLabels name={user.username} /></b>{user.realname && <span className="muted small">{user.realname}</span>}</span>
       </Link>
       {children}
     </header>
@@ -658,7 +659,7 @@ function GroupConversation({ id }: { id: number }) {
               return (
                 <li key={m.id} className={`${mine ? "mine" : "theirs"}${joined ? " joined" : ""}`}>
                   <DayDivider prev={prev} at={m.at} />
-                  {!mine && !joined && <span className="dm-sender muted small">{m.name}</span>}
+                  {!mine && !joined && <span className="dm-sender muted small">{m.name} <UserLabels name={m.name} /></span>}
                   <Bubble
                     m={m}
                     mine={mine}
@@ -739,7 +740,7 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
         {g.members.map(u => (
           <li key={u.id}>
             <Avatar user={u} size={32} />
-            <Link to={userUrl(u.username)} className="grow">{u.username}{u.id === me!.id && <span className="muted"> (you)</span>}</Link>
+            <Link to={userUrl(u.username)} className="grow">{u.username} <UserLabels name={u.username} />{u.id === me!.id && <span className="muted"> (you)</span>}</Link>
             {u.id === g.owner && <span className="badge off">Owner</span>}
             {owner && u.id !== me!.id && (
               <span className="dm-member-actions">
@@ -776,7 +777,7 @@ function AddPeople({ groupId, onAdd }: { groupId: number; onAdd: (r: DmGroupSent
         {users.map(u => (
           <li key={u.id}>
             <Avatar user={u} size={32} plain />
-            <span className="grow">{u.username}</span>
+            <span className="grow">{u.username} <UserLabels name={u.username} /></span>
             <Button kind="link small" type="button" onClick={() => add(u)}>Add</Button>
           </li>
         ))}
@@ -844,7 +845,7 @@ function NewGroup() {
                     onChange={e => toggle(u.id, e.target.checked)}
                   />
                   <Avatar user={u} size={32} plain />
-                  <span className="grow">{u.username}</span>
+                  <span className="grow">{u.username} <UserLabels name={u.username} /></span>
                 </label>
               </li>
             );
