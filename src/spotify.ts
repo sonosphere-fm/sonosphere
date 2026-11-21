@@ -7,7 +7,7 @@ import type { SpotifyPlayerToken } from "../shared/spotify";
 type SdkTrack = { id: string | null; uri: string; linked_from?: { uri: string | null } };
 export type SdkState = { paused: boolean; position: number; duration: number; track_window: { current_track: SdkTrack | null; previous_tracks: SdkTrack[] } };
 type SdkPlayer = {
-  connect(): Promise<boolean>; disconnect(): void; pause(): Promise<void>; togglePlay(): Promise<void>;
+  connect(): Promise<boolean>; disconnect(): void; pause(): Promise<void>; togglePlay(): Promise<void>; seek(ms: number): Promise<void>;
   getCurrentState(): Promise<SdkState | null>; activateElement(): Promise<void>;
   addListener(ev: "ready" | "not_ready", cb: (e: { device_id: string }) => void): boolean;
   addListener(ev: "player_state_changed", cb: (s: SdkState | null) => void): boolean;
@@ -37,8 +37,8 @@ const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<n
 export type Found = { uri: string; id: string; art: string | null };
 export type SpotifyOut = {
   find(artist: string, title: string): Promise<Found | null>;
-  play(uri: string): Promise<boolean>;
-  pause(): void; toggle(): void; state(): Promise<SdkState | null>; close(): void;
+  play(uri: string, fromMs?: number): Promise<boolean>;
+  pause(): void; toggle(): void; seek(ms: number): void; state(): Promise<SdkState | null>; close(): void;
 };
 /** Whether a player state is about the track we started (Spotify may swap in a regional copy of it). */
 export const isTrack = (t: SdkTrack | null | undefined, uri: string) => !!t && (t.uri === uri || t.linked_from?.uri === uri);
@@ -78,13 +78,14 @@ export async function openSpotify(on: { state: (s: SdkState) => void; lost: () =
       const hit = items.find(i => norm(i.name) === norm(title)) ?? items[0];
       return hit ? { uri: hit.uri, id: hit.id, art: hit.album?.images?.[0]?.url ?? null } : null;
     },
-    async play(uri) {
+    async play(uri, fromMs = 0) {
       if (!device) return false;
-      const r = await web(`/me/player/play?device_id=${encodeURIComponent(device)}`, { method: "PUT", body: JSON.stringify({ uris: [uri] }) });
+      const r = await web(`/me/player/play?device_id=${encodeURIComponent(device)}`, { method: "PUT", body: JSON.stringify({ uris: [uri], position_ms: Math.max(0, Math.round(fromMs)) }) });
       return !!r?.ok;
     },
     pause: () => { player.pause().catch(() => {}); },
     toggle: () => { player.togglePlay().catch(() => {}); },
+    seek: ms => { player.seek(Math.max(0, Math.round(ms))).catch(() => {}); },
     state: () => player.getCurrentState().catch(() => null),
     close: () => player.disconnect(),
   };

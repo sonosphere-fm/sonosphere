@@ -3,7 +3,7 @@
 // Listeners whose Spotify link allows playback hear Spotify instead (src/spotify.ts), falling back to a video for
 // tracks Spotify doesn't have; those plays reach the profile through the Spotify import.
 import { Ico } from "./icons";
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Button } from "./kit";
 import { Link, useNavigate } from "react-router-dom";
 import { api, artistUrl, qs, trackUrl, useAuth } from "./lib";
@@ -16,13 +16,39 @@ import type { VideoLookup } from "../shared/video";
 import { isTrack, openSpotify, type SdkState, type SpotifyOut } from "./spotify";
 
 export type PTrack = { title: string; artist: string; album?: string | null; image?: string | null; duration?: number };
-type Status = "finding" | "ready" | "missing";
+/** "saved": brought back from before a reload, waiting for a press of play (browsers don't let pages autoplay). */
+type Status = "finding" | "ready" | "missing" | "saved";
+/** Whether play/pause acts on the current track rather than starting it afresh. */
+const live = (s: Status) => s === "ready" || s === "saved";
 /** An endless queue: `path` is the API request that returns the next batch of tracks. */
 type Station = { path: string; title: string };
 /** `spotify` is set while the track plays through Spotify: its track id and cover. */
 type State = { queue: PTrack[]; index: number; playing: boolean; status: Status; videoId: string | null; spotify: { id: string; art: string | null } | null; position: number; length: number; scrobbled: boolean; station: Station | null };
 const empty: State = { queue: [], index: -1, playing: false, status: "finding", videoId: null, spotify: null, position: 0, length: 0, scrobbled: false, station: null };
-type Player = { state: State; play: (q: PTrack[], i?: number) => void; playStation: (path: string) => Promise<void>; toggle: () => void; isCurrent: (t: PTrack) => boolean };
+
+// The queue survives a reload: saved in this browser (a window of it around the current track) and restored paused.
+const SAVE_KEY = "spin:player";
+type Saved = { queue: PTrack[]; index: number; station: Station | null; position: number; length: number; art?: string | null };
+/** The cover shown while saved: Spotify's, kept from before the reload. */
+let savedArt: string | null = null;
+function loadSaved(): State {
+  try {
+    const v = JSON.parse(localStorage.getItem(SAVE_KEY) || "null") as Saved | null;
+    if (!v || !Array.isArray(v.queue) || !v.queue[v.index]) return empty;
+    savedArt = typeof v.art === "string" ? v.art : null;
+    return { ...empty, queue: v.queue, index: v.index, station: v.station, status: "saved", position: Number(v.position) || 0, length: Number(v.length) || 0 };
+  } catch { return empty; }
+}
+function save(s: State) {
+  try {
+    if (s.index < 0 || !s.queue[s.index]) return localStorage.removeItem(SAVE_KEY);
+    const from = Math.max(0, s.index - 20);
+    const v: Saved = { queue: s.queue.slice(from, s.index + 80), index: s.index - from, station: s.station, position: s.position, length: s.length, art: s.spotify?.art ?? (s.status === "saved" ? savedArt : null) };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(v));
+  } catch {}
+}
+const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
+type Player = { state: State; play: (q: PTrack[], i?: number) => void; playStation: (path: string) => Promise<void>; toggle: () => void; seek: (sec: number) => void; isCurrent: (t: PTrack) => boolean };
 const Ctx = createContext<Player | null>(null);
 const usePlayer = () => {
   const p = useContext(Ctx);
@@ -33,7 +59,7 @@ const same = (a?: PTrack, b?: PTrack) => !!a && !!b && a.title === b.title && a.
 
 // The few parts of the YouTube IFrame API used here (there is no @types package installed).
 type YTPlayer = {
-  loadVideoById(id: string): void; stopVideo(): void; destroy(): void; pauseVideo(): void; playVideo(): void;
+  loadVideoById(id: string, startSeconds?: number): void; stopVideo(): void; destroy(): void; pauseVideo(): void; playVideo(): void; seekTo(sec: number, allowSeekAhead: boolean): void;
   getDuration(): number; getCurrentTime(): number; getPlayerState(): number;
 };
 type YTOptions = {
@@ -58,14 +84,15 @@ function loadYouTube(): Promise<YTApi> {
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { me } = useAuth();
-  const [state, setState] = useState<State>(empty);
+  const [state, setState] = useState<State>(loadSaved);
   const ref = useRef(state); ref.current = state;
   const meRef = useRef(me); meRef.current = me;
   const yt = useRef<YTPlayer | null>(null), mount = useRef<HTMLDivElement>(null);
   const run = useRef({ token: 0, listened: 0, startedAt: 0 });
   const cands = useRef<string[]>([]); // videos still to try for this track: some can't be embedded
 
-  const station = useRef<(Station & { loading: boolean }) | null>(null);
+  const station = useRef<(Station & { loading: boolean }) | null>(state.station && { ...state.station, loading: false });
+  const from = useRef(0); // where to start the track (resuming after a reload)
 
   // Spotify playback: connected on the first play, and given up on for the session if the link can't play.
   const sp = useRef<{ out: SpotifyOut | null; opening: Promise<SpotifyOut | null> | null; off: boolean; uri: string; moved: boolean }>({ out: null, opening: null, off: false, uri: "", moved: false });
@@ -98,8 +125,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setState(s => { const recent = new Set(s.queue.slice(-60).map(key)); return { ...s, queue: [...s.queue, ...r.tracks.filter(t => !recent.has(key(t)))] }; });
     }).catch(() => {}).finally(() => { st.loading = false; });
   };
-  const start = (queue: PTrack[], index: number) => {
+  const start = (queue: PTrack[], index: number, at = 0) => {
     const t = queue[index], token = ++run.current.token;
+    from.current = at;
     run.current.listened = 0; run.current.startedAt = Math.floor(Date.now() / 1000);
     try { yt.current?.stopVideo?.(); } catch {}
     sp.current.uri = ""; sp.current.out?.pause();
@@ -117,7 +145,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const hit = out && run.current.token === token ? await out.find(t.artist, t.title) : null;
       if (!out || !hit || run.current.token !== token) return null;
       sp.current.uri = hit.uri; sp.current.moved = false;
-      return (await out.play(hit.uri)) ? hit : null;
+      return (await out.play(hit.uri, at * 1000)) ? hit : null;
     }).catch(() => null).then(hit => {
       if (run.current.token !== token) return;
       if (!hit) { sp.current.uri = ""; video(); return; }
@@ -130,14 +158,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const id = state.videoId;
     if (!id) return;
-    if (yt.current?.loadVideoById) { yt.current.loadVideoById(id); return; }
+    if (yt.current?.loadVideoById) { yt.current.loadVideoById(id, from.current); return; }
     let dead = false;
     loadYouTube().then(YT => {
       if (dead || !mount.current || yt.current) return;
       const el = document.createElement("div"); mount.current.appendChild(el);
       yt.current = new YT.Player(el, {
         videoId: id, width: "100%", height: "100%", host: "https://www.youtube-nocookie.com",
-        playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1 },
+        playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, start: Math.floor(from.current) },
         events: {
           onStateChange: e => {
             if (e.data === YT.PlayerState.ENDED) next();
@@ -178,6 +206,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [state.playing, state.status, state.index]);
 
+  // saved on every change of track, and every few seconds of progress
+  useEffect(() => { save(ref.current); }, [state.queue, state.index, state.station, Math.floor(state.position / 5)]);
+
+  const seek = (sec: number) => {
+    const s = ref.current;
+    if (!live(s.status)) return;
+    sec = Math.max(0, Math.min(sec, s.length || sec));
+    if (s.status === "ready") { if (s.spotify) sp.current.out?.seek(sec * 1000); else try { yt.current?.seekTo?.(sec, true); } catch {} }
+    setState(v => ({ ...v, position: sec }));
+  };
+  const toggle = () => {
+    const s = ref.current;
+    if (s.status === "saved") return start(s.queue, s.index, s.position);
+    if (s.spotify) return sp.current.out?.toggle();
+    const p = yt.current;
+    if (!p?.getPlayerState) return;
+    if (s.playing) p.pauseVideo(); else p.playVideo();
+  };
+  const prev = () => { const s = ref.current; if (s.position > 3 || s.index === 0) seek(0); else start(s.queue, s.index - 1); };
   const close = () => { start([], 0); sp.current.out?.pause(); try { yt.current?.destroy?.(); } catch {} yt.current = null; };
   const value = {
     state,
@@ -187,7 +234,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       station.current = { path, title: r.title, loading: false };
       start(r.tracks, 0);
     },
-    toggle: () => { if (ref.current.spotify) return sp.current.out?.toggle(); const p = yt.current; if (!p?.getPlayerState) return; if (ref.current.playing) p.pauseVideo(); else p.playVideo(); },
+    toggle, seek,
     isCurrent: (t: PTrack) => same(state.queue[state.index], t),
   };
   const t = state.queue[state.index], hasNext = state.index < state.queue.length - 1;
@@ -198,10 +245,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         <button type="button" className="vplayer-x" aria-label="Close player" onClick={close}><Ico.X /></button>
         <div className="vplayer-screen">
           <div className="vplayer-video" ref={mount} style={{ visibility: state.status === "ready" && !state.spotify ? "visible" : "hidden" }} />
-          {state.status === "ready" && state.spotify && (state.spotify.art || t?.image) ? <img className="vplayer-art" src={state.spotify.art || t?.image || ""} alt="" />
-            : (state.status !== "ready" || state.spotify) && <div className="vplayer-blank"><Mark /></div>}
+          {(state.status === "ready" && state.spotify) || state.status === "saved"
+            ? <Cover key={`${state.index}:${state.status}`} src={state.spotify?.art || (state.status === "saved" ? savedArt : null) || t?.image || null} />
+            : state.status !== "ready" && <div className="vplayer-blank"><Mark /></div>}
         </div>
-        <div className="vplayer-progress"><div style={{ width: state.length ? `${Math.min(100, (state.position / state.length) * 100)}%` : 0 }} /></div>
+        <SeekBar position={state.position} length={live(state.status) ? state.length : 0} onSeek={seek} />
         {t && (
           <div className="vplayer-bar">
             <div className="vplayer-meta">
@@ -213,6 +261,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 </>
               )}
             </div>
+            <button type="button" aria-label="Previous track" disabled={!live(state.status)} onClick={prev}><Ico.Prev /></button>
+            <button type="button" aria-label={state.playing ? "Pause" : "Play"} disabled={!live(state.status)} onClick={toggle}>{state.playing ? <Ico.Pause /> : <Ico.Play />}</button>
             <button type="button" aria-label="Next track" disabled={!hasNext} onClick={next}><Ico.Next /></button>
             {state.spotify
               ? <a href={`https://open.spotify.com/track/${state.spotify.id}`} target="_blank" rel="noreferrer" aria-label="Open in Spotify" title="Open in Spotify"><SpotifyMark /></a>
@@ -227,13 +277,37 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 }
 const VideoMark = () => <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor" /><path d="M10 9l5 3-5 3z" fill="#222" /></svg>;
 
+/** The track's cover, or the logo when there is none or it fails to load. */
+function Cover({ src }: { src: string | null }) {
+  const [failed, setFailed] = useState(false);
+  return src && !failed ? <img className="vplayer-art" src={src} alt="" onError={() => setFailed(true)} /> : <div className="vplayer-blank"><Mark /></div>;
+}
+/** The progress line, which can be clicked or dragged to seek (or moved with the arrow keys). */
+function SeekBar({ position, length, onSeek }: { position: number; length: number; onSeek: (sec: number) => void }) {
+  const [drag, setDrag] = useState<number | null>(null);
+  const at = (e: PointerEvent<HTMLDivElement>) => { const r = e.currentTarget.getBoundingClientRect(); return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); };
+  const shown = drag ?? (length ? position / length : 0);
+  return (
+    <div className={length ? "vplayer-progress seekable" : "vplayer-progress"} role="slider" aria-label="Seek" tabIndex={length ? 0 : -1}
+      aria-valuemin={0} aria-valuemax={Math.round(length)} aria-valuenow={Math.round(position)} aria-valuetext={`${clock(position)} of ${clock(length)}`}
+      title={length ? `${clock(drag !== null ? drag * length : position)} / ${clock(length)}` : undefined}
+      onPointerDown={e => { if (!length) return; e.currentTarget.setPointerCapture(e.pointerId); setDrag(at(e)); }}
+      onPointerMove={e => { if (drag !== null) setDrag(at(e)); }}
+      onPointerUp={e => { if (drag === null) return; onSeek(at(e) * length); setDrag(null); }}
+      onPointerCancel={() => setDrag(null)}
+      onKeyDown={e => { if (!length) return; if (e.key === "ArrowRight") onSeek(position + 5); else if (e.key === "ArrowLeft") onSeek(position - 5); }}>
+      <div style={{ width: `${Math.min(100, shown * 100)}%` }} />
+      {length > 0 && <span className="vplayer-time">{clock(drag !== null ? drag * length : position)} / {clock(length)}</span>}
+    </div>
+  );
+}
 const SpotifyMark = () => <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" /><path d="M7 9.5c3.5-1 7.5-.6 10.5 1M7.5 12.7c3-.8 6.2-.4 8.7 1M8 15.7c2.4-.6 4.8-.3 6.8.8" stroke="#222" strokeWidth="1.6" strokeLinecap="round" fill="none" /></svg>;
 
 export function PlayButton({ queue, index = 0, label }: { queue: PTrack[]; index?: number; label?: string }) {
   const p = usePlayer(), t = queue[index];
   if (!t) return null;
   const current = p.isCurrent(t), active = current && p.state.playing;
-  const click = () => (current && p.state.status === "ready" ? p.toggle() : p.play(queue, index));
+  const click = () => (current && live(p.state.status) ? p.toggle() : p.play(queue, index));
   if (label) return <Button kind="btn" onClick={click}>{active ? <><Ico.Pause /> Pause</> : <><Ico.Play /> {label}</>}</Button>;
   return <Button kind={"play-btn" + (current ? " on" : "")} aria-label={active ? "Pause" : `Play ${t.title}`} onClick={click}>{active ? <Ico.Pause /> : <Ico.Play />}</Button>;
 }
@@ -244,7 +318,7 @@ export function StationButton({ type, name, label, ghost }: { type: "library" | 
   const [error, setError] = useState(""), [busy, setBusy] = useState(false);
   const path = `/station${qs({ type, name })}`, on = p.state.station?.path === path, active = on && p.state.playing;
   const click = () => {
-    if (on && p.state.status === "ready") return p.toggle();
+    if (on && live(p.state.status)) return p.toggle();
     if (!me && !name) return nav("/login");
     setBusy(true); setError("");
     p.playStation(path).catch(e => setError(errorText(e))).finally(() => setBusy(false));
@@ -261,6 +335,6 @@ export function StationRow({ type, label }: { type: "library" | "recommended" | 
   const p = usePlayer();
   const [error, setError] = useState("");
   const path = `/station${qs({ type })}`, on = p.state.station?.path === path, active = on && p.state.playing;
-  const click = () => (on && p.state.status === "ready" ? p.toggle() : (setError(""), p.playStation(path).catch(e => setError(errorText(e)))));
+  const click = () => (on && live(p.state.status) ? p.toggle() : (setError(""), p.playStation(path).catch(e => setError(errorText(e)))));
   return <li><Button kind={"play-btn" + (on ? " on" : "")} type="button" aria-label={active ? "Pause" : label} onClick={click}>{active ? <Ico.Pause /> : <Ico.Play />}</Button><span>{label}{error && <small className="form-error" role="alert"> {error}</small>}</span></li>;
 }

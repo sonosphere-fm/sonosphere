@@ -254,12 +254,18 @@ function AppSettings() {
         ))}</ul> : <p className="muted">No applications can scrobble to your account yet.</p>}</Async>
       </Section>
       <Section title="Your API accounts" more="/developers" moreLabel="API docs">
-        <Async q={q}>{d => d.items.length ? <ul className="plain">{d.items.map(a => (
-          <li key={a.id} className="card">
-            <div className="row between"><b>{a.name}</b><Button kind="link small" onClick={() => c.ask({ title: `Delete “${a.name}”?`, body: "Apps using this key will stop working.", action: "Delete", danger: true, run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload) })}>Delete</Button></div>
-            {a.description && <p className="muted small">{a.description}</p>}
-            <dl className="keys"><dt>API key</dt><dd><code>{a.apiKey}</code></dd><dt>Shared secret</dt><dd><code>{a.secret}</code></dd></dl>
-            <CallbackField app={a} onSaved={q.reload} />
+        <Async q={q}>{d => d.items.length ? <ul className="plain api-apps">{d.items.map(a => (
+          <li key={a.id}>
+            <details className="api-app">
+              <summary><Ico.Chevron /><b>{a.name}</b><span className="muted small">{a.apiKey.slice(0, 8)}…</span></summary>
+              {a.description && <p className="muted small">{a.description}</p>}
+              <dl className="keys">
+                <dt>API key</dt><dd><code>{a.apiKey}</code></dd>
+                <dt>Shared secret</dt><dd><code>{a.secret}</code></dd>
+                <dt>Callback URL</dt><dd><CallbackField app={a} onSaved={q.reload} /></dd>
+              </dl>
+              <Button kind="link small" onClick={() => c.ask({ title: `Delete “${a.name}”?`, body: "Apps using this key will stop working.", action: "Delete", danger: true, run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload) })}>Delete API account</Button>
+            </details>
           </li>
         ))}</ul> : <p className="muted">Create an API account to get a key and shared secret.</p>}</Async>
         <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => {
@@ -280,9 +286,9 @@ function AppSettings() {
 function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
   const [v, setV] = useState(app.callbackUrl), act = useAction();
   return (
-    <form className="inline-form callback-field" onSubmit={e => { e.preventDefault(); act.run(async () => { await api<AppOk>(`/apps/${app.id}`, { method: "PATCH", body: { callbackUrl: v } }); onSaved(); return "Saved."; }); }}>
-      <label>Callback URL<Input value={v} onChange={e => setV(e.target.value)} maxLength={500} placeholder="None (pass cb= when signing in)" /></label>
-      <Button kind="btn ghost small" loading={act.busy} disabled={v === app.callbackUrl}>Save</Button>{act.note}
+    <form className="callback-field" onSubmit={e => { e.preventDefault(); act.run(async () => { await api<AppOk>(`/apps/${app.id}`, { method: "PATCH", body: { callbackUrl: v.trim() } }); onSaved(); return "Saved."; }); }}>
+      <Input value={v} onChange={e => setV(e.target.value)} maxLength={500} placeholder="None" aria-label="Callback URL" />
+      {v.trim() !== app.callbackUrl && <Button kind="btn small" loading={act.busy}>Save</Button>}{act.note}
     </form>
   );
 }
