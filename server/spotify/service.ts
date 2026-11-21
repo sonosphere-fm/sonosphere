@@ -6,6 +6,7 @@ import { now, rid } from "../util";
 import * as repo from "./repo";
 import { seal, unseal } from "./seal";
 import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
+import { spotifyPulling } from "./pulling";
 
 const ACCOUNTS = "https://accounts.spotify.com";
 const API = "https://api.spotify.com/v1";
@@ -26,20 +27,25 @@ class Slowed extends Error {}
 
 // rate limits apply per Spotify app, so each listener's app is paused separately
 const pauseKey = (clientId: string) => `spotify-pause:${clientId}`;
-const paused = async (clientId: string) => (await getJson<number>(pauseKey(clientId))) !== null;
+const restingUntil = (clientId: string) => getJson<number>(pauseKey(clientId));
+const paused = async (clientId: string) => (await restingUntil(clientId)) !== null;
 const strikeKey = (clientId: string) => `spotify-strikes:${clientId}`;
 
+const MAX_REST = 3600;
+
 /**
- * Rests the app for as long as Spotify's Retry-After asks (never shorter: coming back early gets an app
- * restricted), and at least 30s, 1m, 2m ... up to an hour for repeat 429s within the hour.
+ * Rests the app for at least 30s, 1m, 2m ... for repeat 429s within the hour, and as long as Retry-After asks up to
+ * an hour: Spotify sometimes asks development apps to wait most of a day while answering again within minutes.
  */
-async function slowDown(clientId: string, retryAfter: string | null) {
+async function slowDown(clientId: string, retryAfter: string | null, path: string) {
   const strikes = ((await getJson<number>(strikeKey(clientId))) ?? 0) + 1;
   const asked = Number(retryAfter) || 0;
-  const seconds = Math.max(asked, Math.min(3600, 30 * 2 ** (strikes - 1)));
-  await setJson(strikeKey(clientId), strikes, Math.max(3600, seconds) * 1000);
-  await setJson(pauseKey(clientId), 1, seconds * 1000);
-  console.warn(`spotify: app ${clientId.slice(0, 6)} rate limited (Retry-After ${retryAfter ?? "none"}), resting ${seconds}s, strike ${strikes}`);
+  const seconds = Math.min(MAX_REST, Math.max(asked, 30 * 2 ** (strikes - 1)));
+  await setJson(strikeKey(clientId), strikes, MAX_REST * 1000);
+  await setJson(pauseKey(clientId), now() + seconds, seconds * 1000);
+  console.warn(
+    `spotify: app ${clientId.slice(0, 6)} rate limited on ${path.split("?")[0]} (Retry-After ${retryAfter ?? "none"}), resting ${seconds}s, strike ${strikes}`,
+  );
 }
 
 type Json = Record<string, unknown>;
@@ -204,7 +210,7 @@ async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
   // the token went stale early: refresh once
   if (res.status === 401) res = await fetch(API + path, await authorized(link, true));
   if (res.status === 429) {
-    await slowDown(link.clientId, res.headers.get("retry-after"));
+    await slowDown(link.clientId, res.headers.get("retry-after"), path);
     throw new Slowed();
   }
   if (res.status === 403) {
@@ -316,7 +322,7 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
       let res = await fetch(API + path, await authorized(link));
       if (res.status === 401) res = await fetch(API + path, await authorized(link, true));
       if (res.status === 429) {
-        await slowDown(link.clientId, res.headers.get("retry-after"));
+        await slowDown(link.clientId, res.headers.get("retry-after"), path);
         continue;
       }
       // this account can't; the importer marks a link that is really broken
@@ -332,8 +338,9 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
   throw new NoCapacity();
 }
 
-function view(link: repo.Link): SpotifyLink {
+async function view(link: repo.Link): Promise<SpotifyLink> {
   return {
+    restingUntil: await restingUntil(link.clientId),
     account: { id: link.spotifyId, name: link.displayName },
     clientId: link.clientId,
     connectedAt: link.createdAt,
@@ -348,15 +355,15 @@ export async function status(userId: number, req: Request): Promise<SpotifyStatu
   const redirectUri = redirectFor(req);
   if (!redirectUri) return { enabled: false };
   const link = await repo.findLink(userId);
-  return { enabled: true, redirectUri, link: link && view(link) };
+  return { enabled: true, redirectUri, pulling: spotifyPulling(), link: link && (await view(link)) };
 }
 
 /** Imports now instead of waiting for the next round. */
 export async function syncNow(userId: number): Promise<{ imported: number; link: SpotifyLink } | null> {
   const link = await repo.findLink(userId);
   if (!link) return null;
-  const imported = link.broken ? 0 : await importRecent(link);
-  return { imported, link: view((await repo.findLink(userId)) ?? link) };
+  const imported = link.broken || !spotifyPulling() ? 0 : await importRecent(link);
+  return { imported, link: await view((await repo.findLink(userId)) ?? link) };
 }
 
 export const disconnect = (userId: number) => repo.dropLink(userId);
@@ -375,7 +382,7 @@ export async function playerToken(userId: number): Promise<{ token: string | nul
 
 let busy = false;
 async function tick() {
-  if (busy) return;
+  if (busy || !spotifyPulling()) return;
   busy = true;
   try {
     // one process polls at a time; the lock is generous since a slow round must not overlap the next
