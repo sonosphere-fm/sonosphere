@@ -6,7 +6,6 @@ import { now, rid } from "../util";
 import * as repo from "./repo";
 import { seal, unseal } from "./seal";
 import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
-import { spotifyPulling } from "./pulling";
 
 const ACCOUNTS = "https://accounts.spotify.com";
 const API = "https://api.spotify.com/v1";
@@ -355,14 +354,14 @@ export async function status(userId: number, req: Request): Promise<SpotifyStatu
   const redirectUri = redirectFor(req);
   if (!redirectUri) return { enabled: false };
   const link = await repo.findLink(userId);
-  return { enabled: true, redirectUri, pulling: spotifyPulling(), link: link && (await view(link)) };
+  return { enabled: true, redirectUri, link: link && (await view(link)) };
 }
 
 /** Imports now instead of waiting for the next round. */
 export async function syncNow(userId: number): Promise<{ imported: number; link: SpotifyLink } | null> {
   const link = await repo.findLink(userId);
   if (!link) return null;
-  const imported = link.broken || !spotifyPulling() ? 0 : await importRecent(link);
+  const imported = link.broken ? 0 : await importRecent(link);
   return { imported, link: await view((await repo.findLink(userId)) ?? link) };
 }
 
@@ -382,7 +381,7 @@ export async function playerToken(userId: number): Promise<{ token: string | nul
 
 let busy = false;
 async function tick() {
-  if (busy || !spotifyPulling()) return;
+  if (busy) return;
   busy = true;
   try {
     // one process polls at a time; the lock is generous since a slow round must not overlap the next
