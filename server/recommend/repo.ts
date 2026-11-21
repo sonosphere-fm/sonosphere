@@ -152,7 +152,7 @@ export async function neighbourRows(userId: number, limit: number) {
 }
 /** Artists two users both play, the most shared first. */
 export async function sharedArtists(a: number, b: number, limit = 5) {
-  return rowsOf<{ name: string; image: number | null; weight: number }>(sql`
+  return rowsOf<{ name: string; image: string | null; weight: number }>(sql`
     SELECT ar.name AS name, ar.image_id AS image, LEAST(x.plays, y.plays) AS weight FROM ${userArtists} x
       JOIN ${userArtists} y ON y.artist_id = x.artist_id AND y.user_id = ${b} JOIN ${artists} ar ON ar.id = x.artist_id
     WHERE x.user_id = ${a} ORDER BY weight DESC LIMIT ${limit}`);

@@ -43,7 +43,7 @@ async function trend(scope: listening.Scope, weeks: number): Promise<WeekCount[]
 }
 
 /** One listener's history with one artist: totals, first play, favourite tracks and albums, and a year of weekly plays. */
-export async function artistLibrary(u: repo.User, a: { id: number; name: string; imageId: number | null }, viewerId: number | undefined): Promise<UserArtistLibrary> {
+export async function artistLibrary(u: repo.User, a: { id: number; name: string; imageId: string | null }, viewerId: number | undefined): Promise<UserArtistLibrary> {
   const scope: listening.Scope = { userId: u.id, artistId: a.id, viewerId };
   return {
     artist: { id: a.id, name: a.name, image: a.imageId }, counts: await listening.counts(scope), first: await repo.firstPlay(u.id, a.id),

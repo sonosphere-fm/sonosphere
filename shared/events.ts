@@ -2,7 +2,7 @@
 import type { Paging, PublicUser } from "./users";
 
 export type Attendance = "going" | "interested";
-export type EventArtist = { name: string; image: number | null };
+export type EventArtist = { name: string; image: string | null };
 /**
  * An event in a list. `creator` is a username, or null once that account is gone; `going` and `interested` are
  * head counts; `status` is what the person looking has said about it.

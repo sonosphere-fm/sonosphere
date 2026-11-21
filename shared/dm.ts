@@ -4,7 +4,7 @@
 /** Who may write to an account: anyone, anyone but strangers land in Requests, only people it follows, or no one. */
 export type DmPolicy = "everyone" | "requests" | "following" | "nobody";
 /** The other person in a conversation. `image` is an image id. */
-export type DmUser = { id: number; username: string; realname: string; image: number | null };
+export type DmUser = { id: number; username: string; realname: string; image: string | null };
 /** One message. A message that was unsent or removed keeps its place but has an empty body. */
 export type DmMessage = { id: number; from: number; body: string; at: number; deleted: boolean };
 /** Unread conversations for the header badge: accepted ones, and requests waiting for an answer. */

@@ -5,7 +5,7 @@
  */
 export type Notification = {
   id: number; type: string; data: Record<string, unknown>; read: boolean; createdAt: number;
-  actor: { username: string | null; image: number | null };
+  actor: { username: string | null; image: string | null };
 };
 /** GET /api/notifications */
 export type Notifications = { items: Notification[] };

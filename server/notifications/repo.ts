@@ -15,7 +15,7 @@ export async function notify(userId: number, type: string, actorId: number, data
 }
 
 /** A stored notification with who caused it. `data` is still JSON text; the actor fields are null once that account is gone. */
-export type NotificationRow = { id: number; type: string; data: string; read: boolean; createdAt: number; username: string | null; image: number | null };
+export type NotificationRow = { id: number; type: string; data: string; read: boolean; createdAt: number; username: string | null; image: string | null };
 
 /** Someone's newest notifications, read or not. */
 export const latestFor = (userId: number, limit = 100): Promise<NotificationRow[]> =>

@@ -12,7 +12,7 @@ import type { ScrobbleResponse } from "../shared/listening";
 import type { Station as StationReply } from "../shared/stations";
 import type { VideoLookup } from "../shared/video";
 
-export type PTrack = { title: string; artist: string; album?: string | null; image?: number | null; duration?: number };
+export type PTrack = { title: string; artist: string; album?: string | null; image?: string | null; duration?: number };
 type Status = "finding" | "ready" | "missing";
 /** An endless queue: `path` is the API request that returns the next batch of tracks. */
 type Station = { path: string; title: string };

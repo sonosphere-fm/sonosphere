@@ -31,14 +31,14 @@ export async function deleteToken(token: string): Promise<void> {
 }
 
 // ---------- one person's lists ----------
-export type LovedRow = { title: string; duration: number; artist: string; image: number | null; at: number };
+export type LovedRow = { title: string; duration: number; artist: string; image: string | null; at: number };
 /** The tracks someone loves, the latest first. */
 export const lovedPage = (userId: number, limit: number, offset: number): Promise<LovedRow[]> =>
   db.select({ title: tracks.title, duration: tracks.duration, artist: artists.name, image: albums.imageId, at: lovedTracks.createdAt }).from(lovedTracks)
     .innerJoin(tracks, eq(tracks.id, lovedTracks.trackId)).innerJoin(artists, eq(artists.id, tracks.artistId)).leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(eq(lovedTracks.userId, userId)).orderBy(desc(lovedTracks.createdAt)).limit(limit).offset(offset);
 
-export type Friend = { username: string; realname: string; country: string; imageId: number | null; registeredAt: number };
+export type Friend = { username: string; realname: string; country: string; imageId: string | null; registeredAt: number };
 /** The people someone follows, the latest first. */
 export const friendsPage = (userId: number, limit: number, offset: number): Promise<Friend[]> =>
   db.select({ username: users.username, realname: users.realname, country: users.country, imageId: users.imageId, registeredAt: users.registeredAt }).from(follows)
@@ -52,20 +52,20 @@ export function userTopTags(userId: number, limit: number): Promise<{ name: stri
 }
 
 // ---------- search (the pattern is used as given: % and _ in it are wildcards, as they always were here) ----------
-export type ArtistHit = { name: string; image: number | null; listeners: number };
+export type ArtistHit = { name: string; image: string | null; listeners: number };
 export function searchArtists(pattern: string, limit: number, offset: number): Promise<ArtistHit[]> {
   const listeners = sql<number>`((SELECT COUNT(*) FROM ${userArtists} WHERE ${userArtists.artistId} = ${artists.id}) + ${artists.baseListeners})`.as("listeners");
   return db.select({ name: artists.name, image: artists.imageId, listeners }).from(artists).where(like(artists.nameNorm, pattern)).orderBy(desc(listeners)).limit(limit).offset(offset);
 }
 export const countArtists = (pattern: string): Promise<number> => total(db.select({ c: count() }).from(artists).where(like(artists.nameNorm, pattern)));
 
-export type AlbumHit = { title: string; image: number | null; artist: string };
+export type AlbumHit = { title: string; image: string | null; artist: string };
 export const searchAlbums = (pattern: string, limit: number, offset: number): Promise<AlbumHit[]> =>
   db.select({ title: albums.title, image: albums.imageId, artist: artists.name }).from(albums).innerJoin(artists, eq(artists.id, albums.artistId))
     .where(like(albums.titleNorm, pattern)).limit(limit).offset(offset);
 export const countAlbums = (pattern: string): Promise<number> => total(db.select({ c: count() }).from(albums).where(like(albums.titleNorm, pattern)));
 
-export type TrackHit = { title: string; duration: number; artist: string; image: number | null; listeners: number };
+export type TrackHit = { title: string; duration: number; artist: string; image: string | null; listeners: number };
 /** Tracks whose title matches, most listeners first. `artistNorm` narrows it to one artist (normalised name). */
 export function searchTracks(pattern: string, artistNorm: string | null, limit: number, offset: number): Promise<TrackHit[]> {
   const listeners = sql<number>`((SELECT COUNT(*) FROM ${userTracks} WHERE ${userTracks.trackId} = ${tracks.id}) + ${tracks.baseListeners})`.as("listeners");
@@ -82,7 +82,7 @@ export const albumTrackList = (albumId: number): Promise<{ title: string; durati
 
 // ---------- tags ----------
 /** The artists a tag was put on most often. */
-export function tagTopArtists(tagId: number, limit: number, offset: number): Promise<{ name: string; image: number | null }[]> {
+export function tagTopArtists(tagId: number, limit: number, offset: number): Promise<{ name: string; image: string | null }[]> {
   const uses = count().as("c");
   return db.select({ name: artists.name, image: artists.imageId, c: uses }).from(taggings).innerJoin(artists, eq(artists.id, taggings.itemId))
     .where(and(eq(taggings.tagId, tagId), eq(taggings.itemType, "artist"))).groupBy(artists.id).orderBy(desc(uses)).limit(limit).offset(offset);

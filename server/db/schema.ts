@@ -8,13 +8,25 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () =>
 const big = (name: string) => bigint(name, { mode: "number" });
 import { sql } from "drizzle-orm";
 
+/**
+ * Pictures, with random ids. The files live in object storage (server/storage): `key` (img/<id>) names them, a full-size WebP at `<key>.webp` and a
+ * small one at `<key>-s.webp`, and `size` is both together in bytes. `data` holds the original upload of pictures from
+ * before object storage, kept until they have been moved (scripts/images-to-storage.ts).
+ */
 export const images = pgTable("images", {
-	id: integer().primaryKey().generatedByDefaultAsIdentity(),
+	// random, so links to pictures cannot be counted through
+	id: text().primaryKey().default(sql`replace(gen_random_uuid()::text, '-', '')`),
 	mime: text().notNull(),
-	data: bytea().notNull(),
+	data: bytea(),
+	key: text(),
+	size: integer().notNull().default(0),
+	width: integer(),
+	height: integer(),
 	uploaderId: integer("uploader_id"),
 	createdAt: integer("created_at").notNull(),
-});
+}, (table) => [
+	index("images_uploader").on(table.uploaderId),
+]);
 
 export const users = pgTable("users", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
@@ -26,7 +38,7 @@ export const users = pgTable("users", {
 	about: text().default("").notNull(),
 	country: text().default("").notNull(),
 	website: text().default("").notNull(),
-	imageId: integer("image_id").references(() => images.id, { onDelete: "set null" } ),
+	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
 	hideRecent: boolean("hide_recent").default(false).notNull(),
 	shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),
 	registeredAt: integer("registered_at").notNull(),
@@ -50,7 +62,7 @@ export const artists = pgTable("artists", {
 	id: integer().primaryKey().generatedByDefaultAsIdentity(),
 	name: text().notNull(),
 	nameNorm: text("name_norm").notNull().unique(),
-	imageId: integer("image_id").references(() => images.id, { onDelete: "set null" } ),
+	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),
@@ -62,7 +74,7 @@ export const albums = pgTable("albums", {
 	title: text().notNull(),
 	titleNorm: text("title_norm").notNull(),
 	releaseDate: text("release_date"),
-	imageId: integer("image_id").references(() => images.id, { onDelete: "set null" } ),
+	imageId: text("image_id").references(() => images.id, { onDelete: "set null" } ),
 	createdAt: integer("created_at").notNull(),
 	baseListeners: big("base_listeners").default(0).notNull(),
 	basePlaycount: big("base_playcount").default(0).notNull(),

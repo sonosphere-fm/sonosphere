@@ -4,7 +4,7 @@ import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, or, sql, 
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import {
-  apiSessions, apiTokens, auditLog, blocks, dmFlags, dmMessages, dmThreads, follows, images, journals, lovedTracks, modNotes, nowPlaying, playlists,
+  apiSessions, apiTokens, auditLog, blocks, dmFlags, dmMessages, dmThreads, follows, journals, lovedTracks, modNotes, nowPlaying, playlists,
   reports, scrobbles, sessions, shouts, taggings, userArtists, users, wikis,
 } from "../db/schema";
 import { jsonField, matches } from "../db/dialect";
@@ -162,7 +162,7 @@ export async function deleteAccount(actor: Actor, t: User, entry: AuditEntry): P
     await tx.delete(shouts).where(and(eq(shouts.targetType, "user"), eq(shouts.targetId, t.id)));
     await tx.delete(modNotes).where(eq(modNotes.userId, t.id));
     await tx.delete(users).where(eq(users.id, t.id)); // everything else cascades (scrobbles, loves, shouts, journals, playlists, tags, sessions...)
-    if (t.imageId) await tx.delete(images).where(eq(images.id, t.imageId));
+    // their profile picture now has nothing pointing at it and goes with the next sweep (images/repo.ts sweepUnused)
     await auditTx(tx, actor, entry);
   });
 }

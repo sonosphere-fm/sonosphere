@@ -41,7 +41,7 @@ function ProfileSettings() {
           <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={e => { const x = e.target.files?.[0]; if (x) img.run(async () => { await api<ImageSaved>("/image?type=user", { raw: x, headers: { "Content-Type": x.type } }); refresh(); return "Avatar updated."; }); e.target.value = ""; }} />
           <Button kind="btn" loading={img.busy} onClick={() => file.current?.click()}>Upload image</Button>
           {me!.image && <Button kind="btn ghost" onClick={() => img.run(async () => { await api<Ok>("/image", { method: "DELETE" }); refresh(); })}>Remove</Button>}
-        </div>{img.note}<p className="muted small">PNG, JPEG, WebP or GIF, up to 2 MB.</p>
+        </div>{img.note}<p className="muted small">PNG, JPEG, WebP or GIF, up to 8 MB. Animated GIFs keep their first frame.</p>
       </Section>
       <Section title="Profile">
         <form className="form" onSubmit={e => { e.preventDefault(); act.run(async () => { setMe((await api<ProfileSaved>("/me", { method: "PATCH", body: f })).user); return "Profile saved."; }); }}>

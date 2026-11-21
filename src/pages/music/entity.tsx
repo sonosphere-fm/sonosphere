@@ -12,7 +12,7 @@ import type { WikiVersion } from "../../../shared/wiki";
 
 // ---------- artist / album / track pages: shared pieces ----------
 /** Dark header for a piece of music: the picture bleeds in from the right, the title, actions and headline numbers sit on the left. */
-export function MusicHero({ image, soft, over, title, actions, stats, cards, tabs, children }: { image?: number | null; soft?: boolean; over?: ReactNode; title: ReactNode; actions?: ReactNode; stats?: ReactNode; cards?: ReactNode; tabs?: ReactNode; children?: ReactNode }) {
+export function MusicHero({ image, soft, over, title, actions, stats, cards, tabs, children }: { image?: string | null; soft?: boolean; over?: ReactNode; title: ReactNode; actions?: ReactNode; stats?: ReactNode; cards?: ReactNode; tabs?: ReactNode; children?: ReactNode }) {
   return (
     <div className="hero mhero">
       {image ? <div className={soft ? "mhero-img soft" : "mhero-img"} style={{ backgroundImage: `url(${imageUrl(image)})` }} /> : null}
@@ -28,7 +28,7 @@ export function MusicHero({ image, soft, over, title, actions, stats, cards, tab
   );
 }
 export const HeroStat = ({ label, value }: { label: string; value: number }) => <div className="mstat"><span>{label}</span><b title={num(value)}>{short(value)}</b></div>;
-export function FeatureCard({ label, to, image, title, sub }: { label: string; to: string; image?: number | null; title: string; sub?: ReactNode }) {
+export function FeatureCard({ label, to, image, title, sub }: { label: string; to: string; image?: string | null; title: string; sub?: ReactNode }) {
   return <Link className="mfeat" to={to}><Art image={image} /><span><em>{label}</em><strong>{title}</strong>{sub && <span>{sub}</span>}</span></Link>;
 }
 export const releaseDate = (d: string) => (d.length > 4 ? date(Date.parse(d + "T12:00:00") / 1000) : d);
@@ -48,7 +48,7 @@ export function About({ wiki, to, facts, children }: { wiki: WikiVersion | null;
     </section>
   );
 }
-export const ByArtist = ({ name, image }: { name: string; image?: number | null }) => <Section title="Artist"><Link className="by-artist" to={artistUrl(name)}><Art image={image} kind="artist" /><span><strong>{name}</strong><span>View artist <Ico.Right /></span></span></Link></Section>;
+export const ByArtist = ({ name, image }: { name: string; image?: string | null }) => <Section title="Artist"><Link className="by-artist" to={artistUrl(name)}><Art image={image} kind="artist" /><span><strong>{name}</strong><span>View artist <Ico.Right /></span></span></Link></Section>;
 export const Trend = ({ data }: { data: TrendPoint[] }) => weekTrend(data).every(w => !w.value) ? null : <Section title="Scrobble stats"><BarChart data={weekTrend(data)} height={110} every={5} /><p className="muted small">Scrobbles per week, last 6 months</p></Section>;
 export const Listeners = ({ items, more }: { items: Listener[]; more?: string }) => !items.length ? null : <Section title="Listeners" more={more} moreLabel="View all listeners" foot><div className="listeners2"><UserList items={items} /></div></Section>;
 

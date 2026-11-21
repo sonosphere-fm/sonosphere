@@ -18,7 +18,7 @@ export const IMPORT_DIR = process.env.IMPORT_DIR || resolve(import.meta.dir, "..
 type Ref = { kind: "artist"; artist: string } | { kind: "album" | "track"; artist: string; title: string };
 type Ent = { kind: Ref["kind"]; table: CatalogueTable; id: number };
 type Page = cheerio.CheerioAPI;
-type Picture = { id: number; size: number };
+type Picture = { id: string; size: number };
 type Ev = { title?: string; venue?: string; city?: string; country?: string; starts?: number; description?: string; url?: string; lineup?: string[]; exact?: boolean };
 
 // ---------- small parsers ----------
@@ -128,7 +128,9 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
         const data = readFileSync(p), key = Bun.hash(data).toString(36);
         let hit = byHash.get(key);
         if (!hit) {
-          hit = { id: (await w.addImage(mime, data, t0)), size: data.length };
+          const id = await w.addImage(data, t0);
+          if (id === null) return null;
+          hit = { id, size: data.length };
           byHash.set(key, hit); tally("images");
         }
         return hit;

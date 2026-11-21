@@ -16,7 +16,7 @@ export const publicCols = { id: users.id, username: users.username, realname: us
 
 type Named = Pick<User, "id" | "username" | "realname" | "country">;
 /** The public part of an account, from a stored row or from a row selected with `publicCols` plus other fields. */
-export const publicUser = (u: Named & ({ imageId: number | null } | { image: number | null })): PublicUser =>
+export const publicUser = (u: Named & ({ imageId: string | null } | { image: string | null })): PublicUser =>
   ({ id: u.id, username: u.username, realname: u.realname, country: u.country, image: ("imageId" in u ? u.imageId : u.image) ?? null });
 
 export const findByName = (name: string): Promise<User | null> => first(db.select().from(users).where(eq(users.usernameNorm, norm(name))).limit(1));

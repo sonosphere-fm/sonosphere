@@ -7,8 +7,8 @@ import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
 
 // ---------- artwork ----------
 /** A picture when there is one; otherwise a flat grey tile with a quiet glyph (a person for artists and listeners, a record for albums). */
-export function Art({ image, kind = "album" }: { image?: number | null; kind?: "artist" | "album" | "user" }) {
-  if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image)} alt="" loading="lazy" /></span>;
+export function Art({ image, kind = "album" }: { image?: string | null; kind?: "artist" | "album" | "user" }) {
+  if (image) return <span className={`art art-${kind}`}><img src={imageUrl(image, "small")} alt="" loading="lazy" /></span>;
   return (
     <span className={`art art-${kind} art-none`}>
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -79,7 +79,7 @@ export function useAction() {
   const note = error ? <p className="form-error" role="alert">{error}</p> : done ? <p className="form-ok" role="status">{done}</p> : null;
   return { busy, run, note, error };
 }
-export const Avatar = ({ user, size = 40, plain }: { user: { username: string; image?: number | null }; size?: number; plain?: boolean }) => plain
+export const Avatar = ({ user, size = 40, plain }: { user: { username: string; image?: string | null }; size?: number; plain?: boolean }) => plain
   ? <span className="avatar" style={{ width: size, height: size }} aria-hidden><Art image={user.image} kind="user" /></span> // inside another link
   : <Link to={userUrl(user.username)} className="avatar" style={{ width: size, height: size }} aria-label={user.username}><Art image={user.image} kind="user" /></Link>;
 

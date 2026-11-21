@@ -26,7 +26,7 @@ export function LoveButton({ track, loved, onChange, label }: { track: { id?: nu
 
 // ---------- chart list (tracks) ----------
 /** What a track row needs: every track shape the API sends (chart, recent, album, playlist, search...) fits it. */
-type Row = { id?: number; trackId?: number; title: string; artist: string; album?: string | null; image?: number | null; duration?: number; playcount?: number; listeners?: number; loved?: number | boolean; playedAt?: number; position?: number };
+type Row = { id?: number; trackId?: number; title: string; artist: string; album?: string | null; image?: string | null; duration?: number; playcount?: number; listeners?: number; loved?: number | boolean; playedAt?: number; position?: number };
 /** A row as `actions` sees it: one of the items, or the "scrobbling now" row put in front of them. */
 export type TrackRow<R extends Row> = (R & { _np?: false }) | (Row & { _np: true });
 export function TrackList<R extends Row>({ items, count, rank, time, showArtist = true, showDuration, nowPlaying, actions, numbered, compact }: {
@@ -96,7 +96,7 @@ export function RankList({ items, kind, rank = 1, count = kind === "tag" ? "coun
 // ---------- grids ----------
 type CardKind = "artist" | "album";
 /** An artist (by `name`) or an album (by `title` and `artist`), as any list of them arrives from the API. */
-type CardItem = { id?: number; name: string; image?: number | null; listeners?: number } | { id?: number; title: string; artist: string; image?: number | null; listeners?: number };
+type CardItem = { id?: number; name: string; image?: string | null; listeners?: number } | { id?: number; title: string; artist: string; image?: string | null; listeners?: number };
 const cardName = (it: CardItem) => ("name" in it ? it.name : it.title);
 const listeners = (n: number) => `${num(n)} ${n === 1 ? "listener" : "listeners"}`;
 

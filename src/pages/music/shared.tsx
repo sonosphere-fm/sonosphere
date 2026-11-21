@@ -8,7 +8,7 @@ import type { ImageSaved } from "../../../shared/images";
 import type { TopAlbum, TopTrack } from "../../../shared/listening";
 import type { Recommendation } from "../../../shared/recommend";
 
-export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image }: { art?: ReactNode; kicker?: ReactNode; title: ReactNode; sub?: ReactNode; stats?: ReactNode; actions?: ReactNode; children?: ReactNode; tabs?: ReactNode; image?: number | null }) {
+export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image }: { art?: ReactNode; kicker?: ReactNode; title: ReactNode; sub?: ReactNode; stats?: ReactNode; actions?: ReactNode; children?: ReactNode; tabs?: ReactNode; image?: string | null }) {
   return (
     <div className="hero">
       {image ? <div className="hero-bg" style={{ backgroundImage: `url(${imageUrl(image)})` }} /> : null}

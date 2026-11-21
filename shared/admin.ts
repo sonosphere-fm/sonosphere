@@ -36,7 +36,7 @@ export type Dashboard = {
 // ---------- accounts ----------
 /** A row of the account list. `email` is only sent to admins. */
 export type StaffUserRow = {
-  id: number; username: string; realname: string; image: number | null; email?: string; registeredAt: number; role: Role; suspended: boolean; banned: boolean;
+  id: number; username: string; realname: string; image: string | null; email?: string; registeredAt: number; role: Role; suspended: boolean; banned: boolean;
   scrobbles: number; openReports: number; lastLogin: number | null;
 };
 export type StaffUserList = { items: StaffUserRow[]; total: number } & Paged;
@@ -49,7 +49,7 @@ export type ModNote = { id: number; body: string; createdAt: number; author: str
 /** Everything staff see about one account. */
 export type StaffUserPage = {
   user: {
-    id: number; username: string; realname: string; email?: string; country: string; website: string; about: string; image: number | null; registeredAt: number;
+    id: number; username: string; realname: string; email?: string; country: string; website: string; about: string; image: string | null; registeredAt: number;
     role: Role; suspended: boolean; banned: boolean; bannedAt: number | null; banReason: string; hideRecent: boolean; configAdmin: boolean; self: boolean;
   };
   counts: {
@@ -88,7 +88,7 @@ export type ReportResolved = { ok: true; closed: number };
 export type DmSummary = { openFlags: number };
 /** One side of a conversation. Only the id is left once the account is gone. */
 export type DmPerson =
-  | { id: number; username: string; image: number | null; role: Role; suspended: boolean; banned: boolean; dmMuted: boolean }
+  | { id: number; username: string; image: string | null; role: Role; suspended: boolean; banned: boolean; dmMuted: boolean }
   | { id: number; username: null };
 /** A conversation without its text. */
 export type DmThreadHead = {

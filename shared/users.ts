@@ -5,7 +5,7 @@ import type { Neighbour, Taste } from "./recommend";
 import type { TagCount } from "./tags";
 
 /** What anyone may see of an account. `image` is an image id. */
-export type PublicUser = { id: number; username: string; realname: string; country: string; image: number | null };
+export type PublicUser = { id: number; username: string; realname: string; country: string; image: string | null };
 
 /** Which page of a list a response holds: echoed back on every paged response. */
 export type Paging = { limit: number; page: number; offset: number };
@@ -32,13 +32,13 @@ export type UserRecent = TopList<RecentTrack> & Paging & ({ hidden: true } | { n
 export type UserTop<T extends TopArtist | TopAlbum | TopTrack = TopArtist | TopAlbum | TopTrack> = TopList<T> & Paging & { counts?: Counts };
 /** GET /api/user/library/artist: one listener's history with one artist. `first` is when they first played them. */
 export type UserArtistLibrary = {
-  artist: { id: number; name: string; image: number | null }; counts: Counts; first: number | null;
+  artist: { id: number; name: string; image: string | null }; counts: Counts; first: number | null;
   tracks: TopTrack[]; albums: TopAlbum[]; trend: WeekCount[];
 };
 /** Plays in the week that began at `start` (a Monday, Unix seconds). */
 export type WeekCount = { start: number; count: number };
 
-export type LovedTrack = { id: number; title: string; duration: number; artist: string; album: string | null; image: number | null; lovedAt: number; loved: number };
+export type LovedTrack = { id: number; title: string; duration: number; artist: string; album: string | null; image: string | null; lovedAt: number; loved: number };
 export type UserLoved = TopList<LovedTrack> & Paging;
 
 /** Someone in a following or followers list. `lastTrack` is null for people who keep their listening private. */

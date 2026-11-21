@@ -1,16 +1,16 @@
 // Types shared by the server and the browser for scrobbles and the statistics drawn from them.
 // `image` fields are image ids; `loved` is 1 when the person looking has loved the track, otherwise 0.
-export type TopArtist = { id: number; name: string; image: number | null; playcount: number; listeners: number };
-export type TopAlbum = { id: number; title: string; image: number | null; artist: string; playcount: number; listeners: number };
-export type TopTrack = { id: number; title: string; duration: number; artist: string; album: string | null; image: number | null; playcount: number; listeners: number; loved: number };
+export type TopArtist = { id: number; name: string; image: string | null; playcount: number; listeners: number };
+export type TopAlbum = { id: number; title: string; image: string | null; artist: string; playcount: number; listeners: number };
+export type TopTrack = { id: number; title: string; duration: number; artist: string; album: string | null; image: string | null; playcount: number; listeners: number; loved: number };
 /** One page of a ranking, with the size of the whole ranking. */
 export type TopList<T> = { items: T[]; total: number };
 
 export type RecentTrack = {
-  id: number; playedAt: number; trackId: number; title: string; duration: number; artist: string; album: string | null; image: number | null;
-  user: string; userImage: number | null; loved: number;
+  id: number; playedAt: number; trackId: number; title: string; duration: number; artist: string; album: string | null; image: string | null;
+  user: string; userImage: string | null; loved: number;
 };
-export type NowPlaying = { trackId: number; title: string; duration: number; artist: string; album: string | null; image: number | null; startedAt: number; loved: number };
+export type NowPlaying = { trackId: number; title: string; duration: number; artist: string; album: string | null; image: string | null; startedAt: number; loved: number };
 export type Counts = { playcount: number; listeners: number; artists: number; albums: number; tracks: number };
 /** One bar of a chart: `k` is the bucket (an hour, a week number, "YYYY-MM-DD" or "YYYY-MM") and `c` its plays. */
 export type SeriesPoint = { k: string | number; c: number };
@@ -22,7 +22,7 @@ export type Report = {
   buckets: { key: string; label: string; count: number }[];
   clock: { hour: number; count: number }[];
   topArtists: TopArtist[]; topAlbums: TopAlbum[]; topTracks: TopTrack[];
-  newArtists: { count: number; items: { name: string; image: number | null; playcount: number }[] };
+  newArtists: { count: number; items: { name: string; image: string | null; playcount: number }[] };
   tags: { name: string; weight: number }[];
 };
 

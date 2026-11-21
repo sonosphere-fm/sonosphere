@@ -62,6 +62,29 @@ export async function attempt(key: string, max: number, ms: number): Promise<boo
   catch (e) { warn(e); return true; }
 }
 
+// ---------- counters ----------
+const memCounts = new Map<string, { n: number; until: number }>();
+/**
+ * Adds `by` to the counter `key` (which starts at 0 and lasts `ttlMs` from its first use) and returns the new total.
+ * While Valkey is unreachable the count carries on in this process's memory, so limits built on it still hold.
+ */
+export async function bump(key: string, by: number, ttlMs: number): Promise<number> {
+  const local = () => {
+    const t = Date.now(), e = memCounts.get(key);
+    const entry = e && e.until > t ? e : { n: 0, until: t + ttlMs };
+    entry.n += by; memCounts.set(key, entry);
+    if (memCounts.size > 10_000) for (const [k, v] of memCounts) if (v.until <= t) memCounts.delete(k);
+    return entry.n;
+  };
+  if (!client) return local();
+  if (ready) await ready;
+  try {
+    const n = Number(await client.send("INCRBY", [PREFIX + "n:" + key, String(by)]));
+    if (n === by) await client.send("PEXPIRE", [PREFIX + "n:" + key, String(Math.ceil(ttlMs))]);
+    return n;
+  } catch (e) { warn(e); return local(); }
+}
+
 // ---------- values ----------
 export async function getJson<T>(key: string): Promise<T | null> {
   if (ready) await ready;

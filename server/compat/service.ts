@@ -75,7 +75,7 @@ async function userOf(name: unknown, fallback?: number): Promise<User> {
 
 // ---------- shapes ----------
 const enc = (s: string) => encodeURIComponent(s).replace(/%20/g, "+");
-const img = (id: number | null, origin: string) => ["small", "medium", "large", "extralarge"].map(size => ({ "#text": id ? `${origin}/api/image/${id}` : "", size }));
+const img = (id: string | null, origin: string) => ["small", "medium", "large", "extralarge"].map(size => ({ "#text": id ? `${origin}/api/image/${id}${size === "small" || size === "medium" ? "?s=small" : ""}` : "", size }));
 const attr = (extra: Record<string, string>, pg: Page, total: number) =>
   ({ ...extra, page: String(pg.page), perPage: String(pg.limit), totalPages: String(Math.ceil(total / pg.limit)), total: String(total) });
 const ranked = <T extends object>(items: T[], pg: Page) => items.map((x, i) => ({ ...x, "@attr": { rank: String(pg.offset + i + 1) } }));
@@ -83,10 +83,10 @@ const ranked = <T extends object>(items: T[], pg: Page) => items.map((x, i) => (
 const shortDate = (seconds: number) => new Date(seconds * 1000).toUTCString().slice(5, 22);
 const longDate = (seconds: number) => new Date(seconds * 1000).toUTCString();
 
-type ArtistRow = { name: string; image: number | null; playcount?: number; listeners?: number };
-type TrackRow = { title: string; duration: number; artist: string; image: number | null; playcount?: number; listeners?: number };
-type AlbumRow = { title: string; artist: string; image: number | null; playcount?: number };
-type PlayRow = { title: string; artist: string; album: string | null; image: number | null };
+type ArtistRow = { name: string; image: string | null; playcount?: number; listeners?: number };
+type TrackRow = { title: string; duration: number; artist: string; image: string | null; playcount?: number; listeners?: number };
+type AlbumRow = { title: string; artist: string; image: string | null; playcount?: number };
+type PlayRow = { title: string; artist: string; album: string | null; image: string | null };
 
 const artistUrl = (c: Call, artist: string) => `${c.origin}/music/${enc(artist)}`;
 const trackUrl = (c: Call, artist: string, title: string) => `${c.origin}/music/${enc(artist)}/_/${enc(title)}`;

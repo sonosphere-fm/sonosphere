@@ -328,7 +328,7 @@ export const listeningSeconds = (userId: number, from: number, to: number): Prom
     .from(scrobbles).innerJoin(tracks, eq(tracks.id, scrobbles.trackId)).where(span(userId, from, to)));
 
 /** Artists a listener played in a span and never before it, most played first. */
-export async function newArtists(userId: number, from: number, to: number): Promise<{ name: string; image: number | null; playcount: number }[]> {
+export async function newArtists(userId: number, from: number, to: number): Promise<{ name: string; image: string | null; playcount: number }[]> {
   const earlier = alias(scrobbles, "o"), playcount = count().as("playcount");
   return db.select({ name: artists.name, image: artists.imageId, playcount }).from(scrobbles).innerJoin(artists, eq(artists.id, scrobbles.artistId))
     .where(and(span(userId, from, to), notExists(db.select({ one: sql`1` }).from(earlier)

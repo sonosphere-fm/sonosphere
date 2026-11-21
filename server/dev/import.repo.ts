@@ -4,10 +4,12 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx } from "../catalog/repo";
 import { db, transact, type Tx } from "../db/client";
 import {
-  albums, artists, eventArtists, eventAttendance, events, follows, images, lovedTracks, meta, obsessions, playlists, scrobbles, shouts, similarArtists,
+  albums, artists, eventArtists, eventAttendance, events, follows, lovedTracks, meta, obsessions, playlists, scrobbles, shouts, similarArtists,
   taggings, tags, tracks, users, wikis,
 } from "../db/schema";
 import { getOrCreateTagTx } from "../tags/repo";
+import { convert } from "../images/process";
+import { saveImage } from "../images/repo";
 import { first } from "../util";
 
 /** Whether the saved pages have been loaded into this database already. */
@@ -59,8 +61,10 @@ function writer(tx: Tx) {
     catalogueSizes: async () => ({ artists: (await total(artists)), albums: (await total(albums)), tracks: (await total(tracks)), tags: (await total(tags)) }),
 
     // ---------- images ----------
-    addImage: async (mime: string, data: Buffer, at: number) => (await tx.insert(images).values({ mime, data, createdAt: at }).returning({ id: images.id }))[0].id,
-    async setImage(table: Pictured, id: number, imageId: number) {
+    /** Converts and stores a picture like an upload (outside the transaction: the files cannot be rolled back anyway,
+     *  and pictures left unused by a failed import are swept away later). Null for files that are not usable pictures. */
+    addImage: async (data: Buffer, at: number) => { try { return await saveImage(await convert(data), null, at); } catch { return null; } },
+    async setImage(table: Pictured, id: number, imageId: string) {
       if (table === "users") await tx.update(users).set({ imageId }).where(eq(users.id, id));
       else if (table === "albums") await tx.update(albums).set({ imageId }).where(eq(albums.id, id));
       else await tx.update(artists).set({ imageId }).where(eq(artists.id, id));

@@ -19,7 +19,7 @@ export function playlistsOf(userId: number): Promise<PlaylistCard[]> {
     .leftJoin(albums, eq(albums.id, tracks.albumId)).where(eq(playlistTracks.playlistId, p.id)).orderBy(asc(playlistTracks.position)).limit(1);
   return db.select({
     id: p.id, title: p.title, description: p.description, createdAt: p.createdAt,
-    trackCount: sql<number>`${size}`, image: sql<number | null>`${cover}`,
+    trackCount: sql<number>`${size}`, image: sql<string | null>`${cover}`,
   }).from(p).where(eq(p.userId, userId)).orderBy(desc(p.createdAt));
 }
 
