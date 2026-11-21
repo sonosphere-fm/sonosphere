@@ -5,6 +5,7 @@ import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { needleTheme } from "./themes/needle/needle.js";
 import { applyTheme, startingTheme } from "./theme";
+import { ThemeToggle } from "./ui/theme-toggle";
 import { Button, RouteLink } from "./kit";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Navigate, NavigationType, NavLink, Route, Routes, UNSAFE_LocationContext as LocationContext, useLocation, useNavigate } from "react-router-dom";
@@ -171,6 +172,7 @@ function Footer() {
       <div className="footer-base">
         <div className="wrap">
           <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
+          <ThemeToggle />
           <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
           <span className="footer-legal">
             <Link to="/terms">Terms</Link>
@@ -425,7 +427,7 @@ const boot = (window as { __ME?: MeResponse }).__ME;
 function App() {
   const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null);
   const [ready, setReady] = useState(!!boot);
-  const themePref = me?.theme ?? (ready ? "light" : startingTheme());
+  const themePref = me?.theme ?? startingTheme();
   // Wait for the session check, or a signed-in reload would forget the remembered theme.
   useEffect(() => { if (ready) applyTheme(themePref); }, [themePref, ready]);
 

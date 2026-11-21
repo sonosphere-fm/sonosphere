@@ -205,10 +205,12 @@ function About({ u }: { u: Profile }) {
   if (!u.about && !u.website) return null;
   return (
     <Section title="About">
-      <Markdown text={u.about} />
-      {u.website && (
-        <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>
-      )}
+      <div className="profile-about">
+        <Markdown text={u.about} />
+        {u.website && (
+          <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>
+        )}
+      </div>
     </Section>
   );
 }
