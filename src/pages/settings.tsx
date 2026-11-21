@@ -17,6 +17,8 @@ import { Art, Async, Section, useAction } from "../ui/base";
 import { UserList } from "../ui/lists";
 import type { ThemePref } from "../theme";
 
+const clock = (at: number) => new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
 const TABS = [
   ["", "Profile"],
   ["/privacy", "Privacy"],
@@ -561,7 +563,8 @@ function SpotifySettings() {
   const sync = (s: SpotifyOn) => act.run(async () => {
     const r = await api<SpotifySynced>("/spotify/sync", { method: "POST" });
     q.setData({ ...s, link: r.link });
-    return r.imported ? `Imported ${plural(r.imported, "play")}.` : "Nothing new to import.";
+    if (r.imported) return `Imported ${plural(r.imported, "play")}.`;
+    return r.link.restingUntil ? "Spotify asked us to wait, so nothing was imported." : "Nothing new to import.";
   });
 
   const disconnect = () => act.run(async () => {
@@ -582,6 +585,9 @@ function SpotifySettings() {
             {l.lastImport ? <>Last import {ago(l.lastImport)} · {num(l.imported)} plays imported</> : "Importing your recent plays..."}.
             New plays are picked up every few minutes.
           </p>
+          {l.restingUntil && (
+            <p className="muted small">Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.</p>
+          )}
           <p className="muted small">
             {l.playback
               ? "The player plays through Spotify when it has the track."

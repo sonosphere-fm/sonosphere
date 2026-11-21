@@ -6,6 +6,7 @@ export type SpotifyLink = {
   imported: number;
   broken: string | null;
   playback: boolean;
+  restingUntil: number | null;
 };
 
 export type SpotifyStatus = { enabled: false } | { enabled: true; redirectUri: string; link: SpotifyLink | null };
