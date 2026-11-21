@@ -113,7 +113,9 @@ export function useApi<T>(path: string | null) {
   if (shown && (!entry || (entry.data === undefined && entry.error === undefined))) throw load(shown).promise;
   useEffect(() => {
     if (!shown) return;
-    const e = cache.get(shown)!;
+    // The entry may have been evicted (e.g. by invalidateAll or refreshListening)
+    // since the last render; recreate it so subscribing can't throw.
+    const e = cache.get(shown) ?? load(shown);
     e.subs.add(bump);
     scheduleSubscriptions();
     // Revisits show the cached copy at once, then refresh quietly unless it was just fetched on hover.
