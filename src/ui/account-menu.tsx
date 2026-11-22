@@ -43,6 +43,7 @@ export default function AccountMenu({
       />
       <DropdownMenuItem icon={<Ico.Inbox />} label={me.unread > 0 ? `Inbox (${me.unread})` : "Inbox"} href="/inbox" />
       <DropdownMenuItem icon={<Ico.Scrobble />} label="Scrobble" href="/scrobble" />
+      <DropdownMenuItem icon={<Ico.Library />} label="Import listening history" href="/import" />
       <DropdownMenuItem icon={<Ico.Settings />} label="Settings" href="/settings" />
       {me.admin && (
         <DropdownMenuItem

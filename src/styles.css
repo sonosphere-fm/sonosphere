@@ -5727,6 +5727,15 @@
   .lastfm-import .astryx-button {
     flex: none;
   }
+  @media (max-width: 600px) {
+    .lastfm-import {
+      display: grid;
+      justify-items: start;
+    }
+    .lastfm-import label {
+      width: 100%;
+    }
+  }
 
   .avatar-edit {
     display: flex;

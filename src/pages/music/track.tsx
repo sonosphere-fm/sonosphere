@@ -1,3 +1,4 @@
+import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../../icons";
 import { Lyrics } from "../../ui/lyrics";
 import { lazy, useState, type FormEvent, Suspense } from "react";
@@ -194,17 +195,11 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                   <Ico.External /> Open in
                 </Button>
                 {me && (
-                  <>
-                    <Button kind="btn ghost" onClick={() => setModal("playlist")}>
-                      <Ico.Plus /> Playlist
-                    </Button>
-                    <Button kind="btn ghost" onClick={() => setModal("obsession")}>
-                      Set as earworm
-                    </Button>
-                    <Button kind="btn ghost" loading={act.busy} onClick={() => scrobbleNow(t)}>
-                      Scrobble now
-                    </Button>
-                  </>
+                  <DropdownMenu placement="below" alignment="start" button={{ label: "More", variant: "secondary" }}>
+                    <DropdownMenuItem label="Add to playlist" onClick={() => setModal("playlist")} />
+                    <DropdownMenuItem label="Set as earworm" onClick={() => setModal("obsession")} />
+                    <DropdownMenuItem label="Scrobble now" isDisabled={act.busy} onClick={() => scrobbleNow(t)} />
+                  </DropdownMenu>
                 )}
                 {me?.admin && (
                   <Suspense fallback={null}>

@@ -210,14 +210,26 @@ export function Select({
   value,
   onChange,
   options,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: [string, string][];
+  disabled?: boolean;
 }) {
   const items = options.map(([v, l]) => ({ value: v, label: l }));
-  return <Selector label={label} isLabelHidden size="sm" value={value} onChange={onChange} options={items} />;
+  return (
+    <Selector
+      label={label}
+      isLabelHidden
+      isDisabled={disabled}
+      size="sm"
+      value={value}
+      onChange={onChange}
+      options={items}
+    />
+  );
 }
 
 export function Modal({

@@ -263,11 +263,13 @@ router.get<ImportState>("/api/import", async (c) => {
 router.post<ImportState>("/api/import", async (c) => {
   const u = need(c);
   const kind = c.body.kind === "loved" ? "loved" : "scrobbles";
+  const lastfmUser = c.body.lastfmUser === undefined ? null : clean(c.body.lastfmUser, 40);
+  if (lastfmUser !== null && !/^[A-Za-z][\w-]{1,30}$/.test(lastfmUser)) bad("That isn't a Last.fm username");
   const total = int(c.body.total);
   if (total === null || total < 1) bad("Nothing to import");
   if (total! > IMPORT_MAX)
     bad(`An import can hold up to ${IMPORT_MAX.toLocaleString("en")} rows. Split the file and import it in parts.`);
-  return { job: shown(await startJob(u.id, { kind, status: "uploading", total: total! })) };
+  return { job: shown(await startJob(u.id, { kind, status: "uploading", total: total!, lastfmUser })) };
 });
 
 router.post<{ ok: true }>("/api/import/:id/chunk", async (c) => {
@@ -295,29 +297,12 @@ router.post<ImportState>("/api/import/:id/start", async (c) => {
   if (j.status !== "uploading") return { job: shown(j) };
   const [have] = await db.select({ c: count() }).from(importChunks).where(eq(importChunks.jobId, j.id));
   if ((have?.c ?? 0) < Math.ceil(j.total / IMPORT_CHUNK)) bad("Some of the file hasn't been uploaded yet");
-  await save(j.id, { status: "queued" });
-  return { job: shown((await latest(j.userId))!) };
-});
-
-router.post<ImportState>("/api/import/lastfm", async (c) => {
-  const u = need(c);
-  const user = clean(c.body.user, 40);
-  if (!/^[A-Za-z][\w-]{1,30}$/.test(user)) bad("That isn't a Last.fm username");
-  let info: { user?: { name?: string; playcount?: string } };
-  try {
-    info = await lastfm({ method: "user.getinfo", user });
-  } catch (e) {
-    return bad(e instanceof Error ? e.message : "Last.fm didn't answer");
-  }
-  const total = Math.min(IMPORT_MAX, Number(info.user?.playcount) || 0);
-  const job = await startJob(u.id, {
-    kind: "lastfm",
-    status: "queued",
-    total,
-    lastfmUser: info.user?.name || user,
-    lastfmTo: now(),
-  });
-  return { job: shown(job) };
+  const [started] = await db
+    .update(importJobs)
+    .set({ status: "queued", updatedAt: now() })
+    .where(and(eq(importJobs.id, j.id), eq(importJobs.status, "uploading")))
+    .returning();
+  return { job: shown(started ?? (await ownJob(j.userId, c.params[0]))) };
 });
 
 router.delete<ImportState>("/api/import/:id", async (c) => {
