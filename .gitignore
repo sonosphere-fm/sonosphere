@@ -5,3 +5,4 @@ server/changelog/history.json
 .env
 *.env
 .DS_Store
+server/changelog/history.gitlog
