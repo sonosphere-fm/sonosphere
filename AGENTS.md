@@ -32,6 +32,7 @@ Use **Bun** for dependencies, scripts, tests, and the server. The application us
 - `server/db/client.ts` runs migrations at module initialization. Importing a database-backed module can therefore connect to and modify the configured database.
 - Development startup may import available development data unless `IMPORT=0` is set. It also starts background workers and housekeeping; it is not a read-only smoke test.
 - `VALKEY_URL` enables Valkey-backed caching, coordination, and fanout through `server/kv.ts`. The module also contains in-memory fallback paths; do not assume these provide cross-process coordination.
+- Sentry error reporting is enabled in production (Docker images set `NODE_ENV=production`), including local Docker runs. Development servers disable it automatically. Set `SENTRY_DISABLED=1` (and `VITE_SENTRY_DISABLED=1` at build time for the frontend) to disable reporting in any environment.
 - `compose.yaml` describes the production VPS stack, including external environment files, persistent volumes, and host networking. Do not treat `docker compose up` as the default local setup.
 - `.env`, local data, and deployment credentials are not documentation sources. Never print or commit secrets.
 

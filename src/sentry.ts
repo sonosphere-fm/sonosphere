@@ -8,8 +8,10 @@ const release = process.env.NODE_ENV === "production" ? process.env.SENTRY_RELEA
 
 // The entry point runs again during Bun HMR; Replay must retain its existing client.
 if (!Sentry.getClient()) {
+  const dsn = import.meta.env?.VITE_SENTRY_DSN;
   Sentry.init({
-    dsn: import.meta.env?.VITE_SENTRY_DSN || "https://871bed67ac8e4f45ad7eaa2c78c19646@rustrak.edideaur.works/2",
+    dsn: dsn ?? (process.env.NODE_ENV === "production" ? "https://871bed67ac8e4f45ad7eaa2c78c19646@rustrak.edideaur.works/2" : undefined),
+    enabled: import.meta.env?.VITE_SENTRY_DISABLED !== "1" && (process.env.NODE_ENV === "production" || !!dsn),
     environment: import.meta.env?.VITE_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
     release,
     integrations: [
