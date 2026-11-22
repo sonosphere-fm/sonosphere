@@ -51,6 +51,11 @@ https://sonosp.here {
 	handle / {
 		redir https://sonosphere.fm/ 302
 	}
+	# scrobblers set up during the beta still post here
+	@compat path /2.0 /2.0/*
+	handle @compat {
+		import app
+	}
 	handle {
 		rewrite * /api/short{path}
 		import app
