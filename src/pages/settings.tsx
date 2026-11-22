@@ -213,10 +213,12 @@ function ProfileSettings() {
                 onChange={(about) => setF((f) => ({ ...f, about }))}
                 maxLength={2000}
                 images
+                imageUpload="about"
               />
             )}
             <p className="muted small">
-              Add images with ![description](https://image-url). Headings, lists, and links are supported.
+              Upload images with the image button (PNG, JPEG, WebP or GIF, max 8 MB). Headings, lists, and links are
+              supported.
             </p>
           </div>
           <fieldset className="border-0 p-0 m-0 min-w-0 grid gap-3">

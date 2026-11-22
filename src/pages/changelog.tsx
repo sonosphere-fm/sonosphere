@@ -51,7 +51,7 @@ export function Changelog() {
                           {" · "}
                           {post.author}
                         </p>
-                        <Markdown text={post.body} className="prose max-w-[68ch] [overflow-wrap:anywhere]" />
+                        <Markdown text={post.body} images className="prose max-w-[68ch] [overflow-wrap:anywhere]" />
                       </article>
                     ))}
                   </div>
