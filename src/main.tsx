@@ -176,11 +176,6 @@ function Header() {
           </NavLink>
           <NavLink to="/charts">Charts</NavLink>
           <NavLink to="/events">Events</NavLink>
-          {me && (
-            <NavLink className="max-[720px]:hidden" to="/import">
-              Import
-            </NavLink>
-          )}
           {me && menuButton ? (
             <Suspense
               fallback={

@@ -5715,24 +5715,49 @@
   .import-progress .btn {
     justify-self: start;
   }
-  .lastfm-import {
+  .import-prompt {
+    padding: 32px 28px;
+    background: var(--panel);
+  }
+  .import-prompt h2 {
+    margin: 0 0 8px;
+    font-size: 26px;
+  }
+  .import-prompt p {
+    margin: 0 0 20px;
+    max-width: 62ch;
+    color: var(--ink-2);
+  }
+  .import-status:not(:empty) {
+    margin-bottom: 28px;
+  }
+  .import-row {
     display: flex;
     gap: 10px;
     align-items: flex-end;
+    width: 100%;
   }
-  .lastfm-import label {
+  .import-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     flex: 1;
     min-width: 0;
+    font-weight: 600;
+    font-size: 14px;
   }
-  .lastfm-import .astryx-button {
+  .import-row input[type="file"] {
+    padding: 3px;
+  }
+  .import-row .astryx-button {
     flex: none;
   }
   @media (max-width: 600px) {
-    .lastfm-import {
+    .import-row {
       display: grid;
       justify-items: start;
     }
-    .lastfm-import label {
+    .import-row label {
       width: 100%;
     }
   }

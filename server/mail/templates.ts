@@ -82,11 +82,14 @@ export const welcomeMail = (to: string, username: string) =>
   build(to, "Welcome to Sonosphere", `Welcome, ${username}`, [
     { p: "Your email is confirmed and your account is ready. A few things to try first:" },
     {
-      p: "Connect a player so every song you play is scrobbled to your profile. Spotify, desktop players and phone apps all work.",
+      p: "Bring your scrobbles with you. Import your listening history from Last.fm or a file and your profile, charts and recommendations fill in from everything you have played.",
     },
-    { p: "Already have years of listening history somewhere else? Import it from Settings, under Import & export." },
-    { p: "Follow friends and find your soundalikes: people whose taste is closest to yours." },
+    { button: "Import your scrobbles", url: `${SITE_URL}/import` },
+    {
+      p: "Then connect a player so every song you play from now on is scrobbled to your profile. Spotify, desktop players and phone apps all work.",
+    },
     { button: "Connect a player", url: `${SITE_URL}/settings/applications` },
+    { p: "Follow friends and find your soundalikes: people whose taste is closest to yours." },
     { small: `Your profile: ${SITE_URL}/user/${encodeURIComponent(username)}` },
   ]);
 

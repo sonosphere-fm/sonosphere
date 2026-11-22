@@ -294,21 +294,23 @@ export function ImportPage() {
     <div className="wrap page">
       <div className="mx-auto max-w-[700px]">
         <h1 className="page-title">Import listening history</h1>
-        {job && !download && (
-          <ImportProgress
-            job={job}
-            onCancel={() =>
-              cancel.run(async () => {
-                const result = await api<ImportState>(`/import/${job.id}`, { method: "DELETE" });
-                setJob(result.job);
-              })
-            }
-          />
-        )}
-        {cancel.note}
+        <div className="import-status">
+          {job && !download && (
+            <ImportProgress
+              job={job}
+              onCancel={() =>
+                cancel.run(async () => {
+                  const result = await api<ImportState>(`/import/${job.id}`, { method: "DELETE" });
+                  setJob(result.job);
+                })
+              }
+            />
+          )}
+          {cancel.note}
+        </div>
         <Section title="Import from Last.fm">
           <div className="card form">
-            <form className="lastfm-import" onSubmit={fromLastfm}>
+            <form className="import-row" onSubmit={fromLastfm}>
               <label>
                 Last.fm username
                 <Input
@@ -358,44 +360,35 @@ export function ImportPage() {
               </div>
             )}
             {lastfm.note}
-            <a className="muted small" href="https://www.last.fm/">
-              Powered by AudioScrobbler
-            </a>
           </div>
         </Section>
         <Section title="Import a file">
           <fieldset className="card form" disabled={busy}>
             <p>
-              Import scrobbles or loved tracks from a CSV or JSON file. CSV columns:{" "}
-              <code>artist, album, track, timestamp</code> (Unix seconds or ISO date; only artist and track are
-              required).
+              Import scrobbles or loved tracks from a CSV or JSON file. CSV columns: <code>artist</code>,{" "}
+              <code>album</code>, <code>track</code>, <code>timestamp</code> (Unix seconds or ISO date; only artist and
+              track are required).
             </p>
-            <div className="tabs sub" role="group" aria-label="What the file contains">
-              <button
-                type="button"
-                className={what === "scrobbles" ? "active" : ""}
-                aria-pressed={what === "scrobbles"}
-                onClick={() => setWhat("scrobbles")}
-              >
-                Scrobbles
-              </button>
-              <button
-                type="button"
-                className={what === "loved" ? "active" : ""}
-                aria-pressed={what === "loved"}
-                onClick={() => setWhat("loved")}
-              >
-                Loved tracks
-              </button>
-            </div>
-            <label>
-              File
-              <Input
-                type="file"
-                accept=".csv,.json,text/csv,application/json"
-                onChange={(e) => pick(e.target.files?.[0])}
+            <div className="import-row">
+              <label>
+                File
+                <Input
+                  type="file"
+                  accept=".csv,.json,text/csv,application/json"
+                  onChange={(e) => pick(e.target.files?.[0])}
+                />
+              </label>
+              <Select
+                label="What the file contains"
+                disabled={busy}
+                value={what}
+                onChange={(value) => setWhat(value === "loved" ? "loved" : "scrobbles")}
+                options={[
+                  ["scrobbles", "Scrobbles"],
+                  ["loved", "Loved tracks"],
+                ]}
               />
-            </label>
+            </div>
             {rows && (
               <>
                 <p>

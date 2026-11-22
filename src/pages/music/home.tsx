@@ -4,14 +4,14 @@ import { SiteBanner } from "../../banner";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
 import { artistUrl, date, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
-import { Async, Avatar, Empty, Pane, Section } from "../../ui/base";
+import { Async, Avatar, Pane, Section } from "../../ui/base";
 import { UserLabels } from "../../ui/user-labels";
 import { RecCard, Grid, TrackList } from "../../ui/lists";
 import { EventList } from "../../ui/events";
 import { TagChips } from "../../ui/tags";
 import { StationRow } from "../../player";
 import { HomeHero, HomeHeroChart, HomeHeroStats } from "./home-hero";
-import { HomeTabs, mixRecs } from "./shared";
+import { HomeTabs, ImportPrompt, mixRecs } from "./shared";
 import type { FriendActivity, FriendLove, Home as HomeData, Recommended } from "../../../shared/home";
 import type { UserRecent } from "../../../shared/users";
 
@@ -40,7 +40,7 @@ function Recs() {
             ))}
           </div>
         ) : (
-          <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>
+          <ImportPrompt />
         )
       }
     </Async>
