@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { viewerOf } from "./auth/session";
 import { me } from "./auth/service";
+import { cacheAnonymousAtEdge } from "./edge-cache";
 import { isStaff } from "./site/roles";
 import { pageSeo, seoContent, seoHead } from "./seo";
 import { crawlerRoutes } from "./sitemap";
@@ -34,7 +35,7 @@ export async function appRoutes() {
   const { assets, html, guestHome } = await load();
   const missing = () => new Response("Not found", { status: 404 });
 
-  // the page embeds the viewer's account, so no shared cache may keep it
+  // The authenticated shell embeds the viewer and must stay private.
   const shell = async (req: Request) => {
     const url = new URL(req.url);
     const match = /^\/user\/([^/]+)/.exec(url.pathname);
@@ -62,15 +63,18 @@ export async function appRoutes() {
       .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))
       .replace(/<div id=["']?root["']?>/, (root) => (publicHome ? root : root + seoContent(seo)))
       .replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
-    const headers = {
+    const headers = new Headers({
       "Content-Type": "text/html; charset=utf-8",
       ...(home && {
         Link: "</api/home>; rel=preload; as=fetch; crossorigin=anonymous; fetchpriority=low, </api/site>; rel=preload; as=fetch; crossorigin=anonymous; fetchpriority=low",
       }),
       "Cache-Control": "private, no-cache",
-      Vary: "Cookie",
-    };
-    return new Response(page, { headers, status: seo.status ?? 200 });
+      Vary: "Cookie, Authorization",
+    });
+    const status = seo.status ?? 200;
+    const artist = seo.schema?.["@type"] === "MusicGroup";
+    if (!viewer && !actor && status === 200 && !url.search && (home || artist)) cacheAnonymousAtEdge(req, headers, 60);
+    return new Response(page, { headers, status });
   };
 
   const metadata = async (req: Request) => {

@@ -1,0 +1,26 @@
+[
+  {
+    "description": "Sonosphere: use origin edge TTLs for anonymous homepage and artist content",
+    "expression": "(http.host eq \"sonosphere.fm\" and ((http.request.uri.query eq \"\" and (http.request.uri.path eq \"/\" or starts_with(http.request.uri.path, \"/music/\"))) or http.request.uri.path in {\"/api/home\" \"/api/artist\" \"/api/artist/tracks\" \"/api/artist/albums\" \"/api/artist/similar\" \"/api/artist/listeners\"})) and http.request.method in {\"GET\" \"HEAD\"} and not (http.cookie contains \"sid=\" or http.cookie contains \"act_as=\" or any(http.request.headers[\"authorization\"][*] ne \"\") or http.request.headers.truncated)",
+    "action": "set_cache_settings",
+    "action_parameters": {
+      "cache": true,
+      "edge_ttl": {
+        "mode": "bypass_by_default"
+      },
+      "browser_ttl": {
+        "mode": "respect_origin"
+      }
+    },
+    "enabled": true
+  },
+  {
+    "description": "Sonosphere: bypass authenticated homepage and artist content",
+    "expression": "(http.host eq \"sonosphere.fm\" and ((http.request.uri.path eq \"/\" or starts_with(http.request.uri.path, \"/music/\")) or http.request.uri.path in {\"/api/home\" \"/api/artist\" \"/api/artist/tracks\" \"/api/artist/albums\" \"/api/artist/similar\" \"/api/artist/listeners\"})) and (http.cookie contains \"sid=\" or http.cookie contains \"act_as=\" or any(http.request.headers[\"authorization\"][*] ne \"\") or http.request.headers.truncated)",
+    "action": "set_cache_settings",
+    "action_parameters": {
+      "cache": false
+    },
+    "enabled": true
+  }
+]

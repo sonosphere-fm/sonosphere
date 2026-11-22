@@ -1,6 +1,7 @@
 import type { users } from "./db/schema";
 import { viewerOf } from "./auth/session";
 export { tokenOf } from "./auth/session";
+import { cacheAnonymousAtEdge } from "./edge-cache";
 import { attempt, hits } from "./kv";
 import { isStaff } from "./site/roles";
 
@@ -41,20 +42,20 @@ type Options = {
 };
 
 export class Router {
-  private routes: { method: Method; re: RegExp; fn: Handler; jsonOnly: boolean }[] = [];
+  private routes: { method: Method; re: RegExp; fn: Handler; jsonOnly: boolean; edgeMaxAge?: number }[] = [];
   constructor(private opts: Options = {}) {}
 
   /** `:name` segments in the path arrive in order as c.params. */
-  on<R>(method: Method, path: string, fn: Handler<R>) {
+  on<R>(method: Method, path: string, fn: Handler<R>, options?: { edgeMaxAge?: number }) {
     const pattern = (this.opts.prefix ?? "") + path.replace(/:\w+/g, "([^/]+)");
-    this.routes.push({ method, re: new RegExp(`^${pattern}$`), fn, jsonOnly: !!this.opts.jsonOnly });
+    this.routes.push({ method, re: new RegExp(`^${pattern}$`), fn, jsonOnly: !!this.opts.jsonOnly, ...options });
   }
   include(...others: Router[]) {
     for (const o of others) this.routes.push(...o.routes);
     return this;
   }
-  get<R>(path: string, fn: Handler<R>) {
-    this.on("GET", path, fn);
+  get<R>(path: string, fn: Handler<R>, options?: { edgeMaxAge?: number }) {
+    this.on("GET", path, fn, options);
   }
   post<R>(path: string, fn: Handler<R>) {
     this.on("POST", path, fn);
@@ -89,7 +90,13 @@ export class Router {
           headers,
         };
         const out = await r.fn(c);
-        return out instanceof Response ? out : new Response(JSON.stringify(out), { headers });
+        if (out instanceof Response) return out;
+        const json = JSON.stringify(out);
+        if (r.edgeMaxAge) {
+          headers.set("Vary", "Cookie, Authorization");
+          if (!user && !actor) cacheAnonymousAtEdge(req, headers, r.edgeMaxAge);
+        }
+        return new Response(json, { headers });
       }
       return fail(404, "Not found");
     } catch (e) {

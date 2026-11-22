@@ -42,42 +42,46 @@ async function friendActivity(viewerId: number): Promise<FriendActivity[]> {
   });
 }
 
-router.get<Home>("/api/home", async (c) => {
-  const viewerId = c.user?.id;
-  // "This week" needs enough recent listening to mean something; otherwise show the all-time lists.
-  const since = now() - WEEK;
-  const busy = (await counts({ from: since })).listeners >= 3;
-  const week = busy ? since : undefined;
-  const [trendingArtists, trendingTracks, trendingAlbums, tags, events, stats] = await Promise.all([
-    siteTop("artists", { from: week }, 12),
-    siteTop("tracks", { from: week, viewerId }, 10),
-    siteTop("albums", { from: week }, 6),
-    repo.popularTags(18),
-    repo.upcomingEvents(now(), viewerId, 4),
-    repo.siteTotals(),
-  ]);
-  const out: Home = {
-    trendingPeriod: busy ? "week" : "overall",
-    trendingArtists: trendingArtists.items,
-    trendingTracks: trendingTracks.items,
-    trendingAlbums: trendingAlbums.items,
-    tags,
-    events,
-    stats,
-  };
-  if (viewerId) {
-    const [friends, friendLoves, thisWeek, lastWeek] = await Promise.all([
-      friendActivity(viewerId),
-      repo.friendLoves(viewerId, 8).then((rows) => wantCovers(rows, (r) => r.id)),
-      counts({ userId: viewerId, from: since }),
-      counts({ userId: viewerId, from: since - WEEK, to: since }),
+router.get<Home>(
+  "/api/home",
+  async (c) => {
+    const viewerId = c.user?.id;
+    // "This week" needs enough recent listening to mean something; otherwise show the all-time lists.
+    const since = now() - WEEK;
+    const busy = (await counts({ from: since })).listeners >= 3;
+    const week = busy ? since : undefined;
+    const [trendingArtists, trendingTracks, trendingAlbums, tags, events, stats] = await Promise.all([
+      siteTop("artists", { from: week }, 12),
+      siteTop("tracks", { from: week, viewerId }, 10),
+      siteTop("albums", { from: week }, 6),
+      repo.popularTags(18),
+      repo.upcomingEvents(now(), viewerId, 4),
+      repo.siteTotals(),
     ]);
-    out.friends = friends;
-    out.friendLoves = friendLoves;
-    out.week = { now: thisWeek.playcount, before: lastWeek.playcount };
-  }
-  return out;
-});
+    const out: Home = {
+      trendingPeriod: busy ? "week" : "overall",
+      trendingArtists: trendingArtists.items,
+      trendingTracks: trendingTracks.items,
+      trendingAlbums: trendingAlbums.items,
+      tags,
+      events,
+      stats,
+    };
+    if (viewerId) {
+      const [friends, friendLoves, thisWeek, lastWeek] = await Promise.all([
+        friendActivity(viewerId),
+        repo.friendLoves(viewerId, 8).then((rows) => wantCovers(rows, (r) => r.id)),
+        counts({ userId: viewerId, from: since }),
+        counts({ userId: viewerId, from: since - WEEK, to: since }),
+      ]);
+      out.friends = friends;
+      out.friendLoves = friendLoves;
+      out.week = { now: thisWeek.playcount, before: lastWeek.playcount };
+    }
+    return out;
+  },
+  { edgeMaxAge: 30 }
+);
 
 router.get<Recommended>("/api/recommended", async (c) => {
   const u = need(c);

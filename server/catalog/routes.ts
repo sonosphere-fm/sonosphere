@@ -20,38 +20,58 @@ import { wantBare } from "../metadata/wanted";
 
 export const router = new Router();
 
-router.get<ArtistPage>("/api/artist", async (c) => {
-  const name = c.q.get("name") || "";
-  const a = await artistOrImport(name, c.user, () => requireArtist(name));
-  refresh(c.user, "artist", a);
-  return artistPage(a, c.user?.id);
-});
+router.get<ArtistPage>(
+  "/api/artist",
+  async (c) => {
+    const name = c.q.get("name") || "";
+    const a = await artistOrImport(name, c.user, () => requireArtist(name));
+    refresh(c.user, "artist", a);
+    return artistPage(a, c.user?.id);
+  },
+  { edgeMaxAge: 60 }
+);
 
-router.get<ArtistTracks>("/api/artist/tracks", async (c) => {
-  const a = await requireArtist(c.q.get("name"));
-  const [from, to] = range(c.q);
-  const pg = paging(c.q);
-  const page = await topTracks({ artistId: a.id, from, to, viewerId: c.user?.id, global: true }, pg.limit, pg.offset);
-  return { ...page, ...pg };
-});
+router.get<ArtistTracks>(
+  "/api/artist/tracks",
+  async (c) => {
+    const a = await requireArtist(c.q.get("name"));
+    const [from, to] = range(c.q);
+    const pg = paging(c.q);
+    const page = await topTracks({ artistId: a.id, from, to, viewerId: c.user?.id, global: true }, pg.limit, pg.offset);
+    return { ...page, ...pg };
+  },
+  { edgeMaxAge: 60 }
+);
 
-router.get<ArtistAlbums>("/api/artist/albums", async (c) => {
-  const a = await requireArtist(c.q.get("name"));
-  const pg = paging(c.q, 48);
-  const singles = c.q.get("type") === "singles";
-  const items = wantBare("album", await repo.discography(a.id, singles, pg.limit, pg.offset), (r) => r.id);
-  return { items, total: await repo.albumCount(a.id, singles), ...pg };
-});
+router.get<ArtistAlbums>(
+  "/api/artist/albums",
+  async (c) => {
+    const a = await requireArtist(c.q.get("name"));
+    const pg = paging(c.q, 48);
+    const singles = c.q.get("type") === "singles";
+    const items = wantBare("album", await repo.discography(a.id, singles, pg.limit, pg.offset), (r) => r.id);
+    return { items, total: await repo.albumCount(a.id, singles), ...pg };
+  },
+  { edgeMaxAge: 60 }
+);
 
-router.get<ArtistSimilar>("/api/artist/similar", async (c) => {
-  const a = await requireArtist(c.q.get("name"));
-  return { items: await similarWithTags(a.id) };
-});
+router.get<ArtistSimilar>(
+  "/api/artist/similar",
+  async (c) => {
+    const a = await requireArtist(c.q.get("name"));
+    return { items: await similarWithTags(a.id) };
+  },
+  { edgeMaxAge: 60 }
+);
 
-router.get<ArtistListeners>("/api/artist/listeners", async (c) => {
-  const a = await requireArtist(c.q.get("name"));
-  return { items: await repo.topListeners("artist", a.id, 50) };
-});
+router.get<ArtistListeners>(
+  "/api/artist/listeners",
+  async (c) => {
+    const a = await requireArtist(c.q.get("name"));
+    return { items: await repo.topListeners("artist", a.id, 50) };
+  },
+  { edgeMaxAge: 60 }
+);
 
 router.get<AlbumPage>("/api/album", async (c) => {
   const artist = c.q.get("artist") || "";
