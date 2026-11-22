@@ -1,6 +1,7 @@
 import { Router } from "./http";
 import { router as userLabels } from "./users/labels";
 import { router as account } from "./account/routes";
+import { router as usernameFont } from "./account/username-font";
 import { router as apps } from "./apps/routes";
 import { router as auth } from "./auth/routes";
 import { router as oauth } from "./auth/oauth/routes";
@@ -41,6 +42,7 @@ export const api = new Router().include(
   auth,
   oauth,
   account,
+  usernameFont,
   images,
   site,
   changelog,

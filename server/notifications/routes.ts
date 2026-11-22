@@ -2,6 +2,7 @@ import { need } from "../guards";
 import { Router } from "../http";
 import * as repo from "./repo";
 import type { Notifications, NotificationsRead } from "../../shared/notifications";
+import { userAppearance } from "../users/appearance";
 
 export const router = new Router();
 
@@ -18,7 +19,7 @@ router.get<Notifications>("/api/notifications", async (c) => {
     data: details(n.data),
     read: n.read,
     createdAt: n.createdAt,
-    actor: { username: n.username, image: n.image },
+    actor: { ...userAppearance(n), username: n.username, image: n.image },
   }));
   return { items };
 });

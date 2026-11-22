@@ -62,7 +62,7 @@ function Pair({ users }: { users: DmPerson[] }) {
             <>
               <Avatar user={u} size={24} />
               <Link className="strong" to={adminUrl(u.username)}>
-                {u.username}
+                <Username name={u.username} />
               </Link>
             </>
           ) : (
@@ -158,7 +158,10 @@ function Threads() {
               {d.user && (
                 <>
                   {" "}
-                  with <Link to={adminUrl(d.user)}>{d.user}</Link>
+                  with{" "}
+                  <Link to={adminUrl(d.user)}>
+                    <Username name={d.user} />
+                  </Link>
                 </>
               )}
               {term && <> matching “{term}”</>}
@@ -455,7 +458,9 @@ export function Transcript() {
                               {name}
                             </Link>
                           ) : (
-                            <b>{name}</b>
+                            <b>
+                              <Username name={name} />
+                            </b>
                           )}
                           <span className="muted small" title={dateTime(m.at)}>
                             {dateTime(m.at)}
@@ -518,7 +523,7 @@ export function Transcript() {
                   <Avatar user={u} size={32} />
                   <span className="grow">
                     <Link className="strong" to={adminUrl(u.username)}>
-                      {u.username}
+                      <Username name={u.username} />
                     </Link>{" "}
                     <StatusBadges u={u} />
                     {u.dmMuted && <Badge tone="warn">Messaging off</Badge>}
@@ -631,7 +636,7 @@ function Flags() {
                     <div className="row adm-flag-head">
                       <span className="badge">{FLAG[f.kind] ?? f.kind}</span>
                       <Link className="strong" to={adminUrl(u.username)}>
-                        {u.username}
+                        <Username name={u.username} />
                       </Link>
                       <StatusBadges u={u} />
                       {u.dmMuted && <Badge tone="warn">Messaging off</Badge>}
@@ -691,3 +696,4 @@ function Flags() {
     </>
   );
 }
+import { Username } from "../ui/username";

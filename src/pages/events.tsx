@@ -113,7 +113,18 @@ export function EventsPage() {
 function Listed({ e }: { e: EventData }) {
   if (e.source === "musicbrainz") return <>Listed on MusicBrainz</>;
   if (e.source === "ticketmaster") return <>Listed on Ticketmaster</>;
-  return <>Added by {e.creator ? <Link to={userUrl(e.creator)}>{e.creator}</Link> : "a deleted user"}</>;
+  return (
+    <>
+      Added by{" "}
+      {e.creator ? (
+        <Link to={userUrl(e.creator)}>
+          <Username name={e.creator} />
+        </Link>
+      ) : (
+        "a deleted user"
+      )}
+    </>
+  );
 }
 
 export function EventPage() {
@@ -342,3 +353,4 @@ export function EventAdd() {
     </div>
   );
 }
+import { Username } from "../ui/username";

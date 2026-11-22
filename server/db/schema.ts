@@ -13,6 +13,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { UsernameFont } from "../../shared/username-fonts";
 
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 const big = (name: string) => bigint(name, { mode: "number" });
@@ -48,6 +49,9 @@ export const images = pgTable(
 export const users = pgTable("users", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   username: text().notNull(),
+  usernameFont: text("username_font").$type<UsernameFont>().default("default").notNull(),
+  profileAccent: text("profile_accent"),
+  profileAccentEnd: text("profile_accent_end"),
   usernameNorm: text("username_norm").notNull().unique(),
   usernameChangeAfter: integer("username_change_after").default(0).notNull(),
   email: text().notNull().unique(),

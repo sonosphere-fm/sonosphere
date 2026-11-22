@@ -6303,6 +6303,297 @@
   }
 }
 
+/* The route owns the root palette; previews use the same tokens locally. */
+@layer components {
+  :root[data-profile-shell="custom"],
+  .profile-theme[data-profile-accent="custom"] {
+    --bg: var(--profile-bg);
+    --panel: var(--profile-panel);
+    --card: var(--profile-card);
+    --fill: var(--profile-fill);
+    --fill-hover: var(--profile-fill-hover);
+    --edge: var(--profile-edge);
+    --line: color-mix(in srgb, var(--profile-accent) 25%, var(--bg));
+    --ink: light-dark(#171215, #fff8fc);
+    --ink-2: light-dark(#352a30, #f1e6ed);
+    --muted: light-dark(#51454b, #d6cbd2);
+    --accent: var(--profile-accent);
+    --accent-dark: var(--profile-text);
+    --on-accent: var(--profile-on-accent);
+    --link: var(--profile-text);
+    --sun: var(--profile-accent);
+    --sun-dark: var(--profile-accent);
+    --on-sun: var(--profile-on-accent);
+    --accent-tint: color-mix(in srgb, var(--profile-accent) 18%, var(--bg));
+    --accent-faint: color-mix(in srgb, var(--profile-accent) 8%, var(--bg));
+    --now: var(--accent-tint);
+    --now-hover: color-mix(in srgb, var(--profile-accent) 23%, var(--bg));
+    --np: var(--profile-text);
+    --bar-fill-hover: var(--now-hover);
+    --bar: var(--profile-bar);
+    --bar-hover: #ffffff24;
+    --banner: var(--profile-fill);
+    --black: color-mix(in srgb, var(--profile-accent) 8%, #080808);
+    --zebra: color-mix(in srgb, var(--profile-accent) 5%, transparent);
+    --tint: color-mix(in srgb, var(--profile-accent) 12%, transparent);
+    --art-none: var(--profile-panel);
+    --art-glyph: var(--profile-edge);
+    --scroll: var(--profile-edge);
+    --scroll-thin: var(--profile-edge);
+    --profile-chart: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--profile-accent) 24%, var(--bg)),
+      color-mix(in srgb, var(--profile-accent-end) 24%, var(--bg))
+    );
+    background: var(--profile-page);
+  }
+  .profile-theme[data-profile-accent="custom"] .hero {
+    background: var(--profile-surface);
+    border-top: 3px solid var(--profile-accent);
+  }
+  .profile-theme[data-profile-accent="custom"] .hero-banner::after {
+    background: var(--profile-banner-shade);
+  }
+  .profile-theme[data-profile-accent="custom"]
+    :is(.hero h1, .section-head h2, .toolbar h2, .report-title, .accent-preview-heading) {
+    color: var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] :is(.stats.boxed, .notice, .accent-preview-heading) {
+    background: var(--profile-surface);
+  }
+  .profile-theme[data-profile-accent="custom"] :is(.section-head, .tabs) {
+    border-color: var(--profile-accent);
+  }
+  .profile-theme[data-profile-accent="custom"] .section-head {
+    box-shadow: inset 0 -1px color-mix(in srgb, var(--profile-accent) 28%, var(--bg));
+    padding-bottom: 8px;
+  }
+  .profile-theme[data-profile-accent="custom"] :is(.section-head h2, .toolbar h2) a {
+    color: var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] :is(.bar > span, .taste-bar span, .tagbars i) {
+    background: var(--profile-chart);
+    border-inline-start: 3px solid var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] :is(.taste-bar span, .tagbars i) {
+    background: linear-gradient(90deg, var(--profile-accent), var(--profile-accent-end));
+  }
+  .profile-theme[data-profile-accent="custom"] a.bar:hover > span {
+    background: var(--now-hover);
+  }
+  .profile-theme[data-profile-accent="custom"] figure .bg-site-accent,
+  .profile-theme[data-profile-accent="custom"] figure .bg-site-accent-dark {
+    background: linear-gradient(0deg, var(--profile-accent), var(--profile-accent-end));
+    border-top: 2px solid var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] .chartlist tr:hover td {
+    background: var(--accent-faint);
+  }
+  .profile-theme[data-profile-accent="custom"] .chartlist tr.now td {
+    background: var(--now);
+  }
+  .profile-theme[data-profile-accent="custom"] .astryx-button.bare:not(.play-btn):not(.love),
+  .profile-theme[data-profile-accent="custom"] .accent-preview-link {
+    color: var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] .astryx-button.bare.love.on {
+    color: var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] :focus-visible {
+    outline-color: var(--profile-text);
+  }
+  .profile-theme[data-profile-accent="custom"] ::selection {
+    background: var(--profile-accent);
+    color: var(--profile-on-accent);
+  }
+  .accent-fields {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+  }
+  .accent-color-field {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+  }
+  .accent-color-field label {
+    flex: 1;
+    min-width: 0;
+  }
+  .accent-color-field input[type="color"] {
+    width: 48px;
+    height: 40px;
+    padding: 3px;
+    border: 1px solid var(--edge);
+    background: var(--card);
+    cursor: pointer;
+  }
+  .accent-color-field input[type="color"]:disabled {
+    cursor: progress;
+    opacity: 0.5;
+  }
+  .accent-preview {
+    padding: 16px;
+    border: 1px solid var(--line);
+    display: grid;
+    gap: 14px;
+  }
+  .accent-preview-heading {
+    background: var(--panel);
+    padding: 12px;
+    font-size: 24px;
+    overflow-wrap: anywhere;
+  }
+  .accent-preview .section-head {
+    margin: 0;
+  }
+  .accent-preview .bar {
+    width: 100%;
+    color: var(--ink);
+  }
+  .accent-preview .astryx-button {
+    justify-self: start;
+  }
+  .accent-preview-action {
+    justify-self: start;
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 1px solid var(--link);
+    padding: 6px 14px;
+    font-weight: 600;
+  }
+  .profile-theme .hero h1 {
+    overflow-wrap: anywhere;
+  }
+  @media (forced-colors: active) {
+    .profile-theme[data-profile-accent="custom"]
+      :is(.bar > span, .taste-bar span, .tagbars i, figure .bg-site-accent, figure .bg-site-accent-dark) {
+      background: Highlight;
+      border-color: Highlight;
+    }
+  }
+}
+
+/* Unlayered shell rules also override the shell's fixed-color Tailwind utilities. */
+html[data-profile-shell="custom"] body {
+  background: var(--profile-page);
+  color: var(--ink);
+}
+html[data-profile-shell="custom"] [data-astryx-theme] {
+  --color-accent: var(--profile-accent);
+  --color-accent-hover: var(--profile-accent);
+  --color-text-primary: var(--ink);
+  --color-text-secondary: var(--ink-2);
+  --color-text-tertiary: var(--muted);
+  --color-background: var(--bg);
+  --color-surface: var(--card);
+  --color-border: var(--edge);
+  color: var(--ink);
+}
+html[data-profile-shell="custom"] :is(.site-header, #root > footer, footer.bg-site-bar, .vplayer-bar, .vplayer-x) {
+  background: var(--profile-shell-bar);
+  color: #fff;
+}
+html[data-profile-shell="custom"] .site-header :is(.logo, .site-nav > a, .site-nav > .astryx-button, .menu-toggle),
+html[data-profile-shell="custom"] footer.bg-site-bar :is(a, h2, .text-white, .text-site-sun),
+html[data-profile-shell="custom"]
+  .vplayer
+  :is(
+    .vplayer-meta,
+    .vplayer-meta a,
+    .vplayer-meta > span,
+    .vplayer-meta small,
+    .vplayer-meta em,
+    .vplayer-bar > button,
+    .vplayer-bar > a
+  ) {
+  color: #fff;
+}
+html[data-profile-shell="custom"] .site-header .site-nav > a.join,
+html[data-profile-shell="custom"] footer.bg-site-bar a.bg-site-sun {
+  background: var(--card);
+  color: var(--profile-text);
+}
+html[data-profile-shell="custom"]
+  :is(
+    .site-header .site-nav > a:hover,
+    .site-header .menu-toggle:hover,
+    .vplayer-bar > button:hover,
+    .vplayer-bar > a:hover,
+    .vplayer-x:hover
+  ) {
+  background: #ffffff24;
+  color: #fff;
+}
+html[data-profile-shell="custom"] .site-header .site-nav > a.active {
+  box-shadow: inset 0 -3px 0 #fff;
+}
+html[data-profile-shell="custom"] :is(.site-header, footer.bg-site-bar, .vplayer) :focus-visible {
+  outline-color: #fff;
+}
+html[data-profile-shell="custom"] .vplayer-bar > button:disabled {
+  color: #ffffff80;
+}
+html[data-profile-shell="custom"] .vplayer-screen {
+  background: var(--black);
+}
+html[data-profile-shell="custom"] .vplayer-bar svg [fill="#222"] {
+  fill: var(--profile-bar);
+}
+html[data-profile-shell="custom"] .vplayer-bar svg [stroke="#222"] {
+  stroke: var(--profile-bar);
+}
+html[data-profile-shell="custom"] .vplayer-progress {
+  background: var(--panel);
+}
+html[data-profile-shell="custom"] .vplayer-progress > div {
+  background: linear-gradient(90deg, var(--profile-accent), var(--profile-accent-end));
+}
+html[data-profile-shell="custom"] .site-banner {
+  background: var(--profile-surface);
+  color: var(--ink);
+  border-color: var(--edge);
+}
+html[data-profile-shell="custom"] .site-banner:is(.warning, .impersonation) {
+  border-inline-start: 4px solid var(--profile-text);
+}
+html[data-profile-shell="custom"]
+  .astryx-button[data-variant="primary"]:not(.bare):not(:disabled):not([aria-disabled="true"]) {
+  background: var(--profile-accent);
+  color: var(--profile-on-accent);
+  border-color: var(--profile-text);
+}
+html[data-profile-shell="custom"] .astryx-button[data-variant="primary"]:not(.bare):hover {
+  background: var(--profile-accent);
+  color: var(--profile-on-accent);
+  text-decoration: underline;
+}
+html[data-profile-shell="custom"]
+  :is(
+    .astryx-selector,
+    .astryx-text-input,
+    .astryx-text-area,
+    .astryx-dropdown-menu,
+    [role="listbox"],
+    .astryx-dialog
+  ) {
+  background-color: var(--card);
+  color: var(--ink);
+  border-color: var(--edge);
+}
+html[data-profile-shell="custom"] :focus-visible {
+  outline-color: var(--profile-text);
+}
+@media (forced-colors: active) {
+  html[data-profile-shell="custom"] :is(body, .site-header, footer.bg-site-bar, .vplayer-bar, .site-banner) {
+    background: Canvas;
+    color: CanvasText;
+  }
+}
+
 @keyframes dialog-enter {
   from {
     opacity: 0.65;

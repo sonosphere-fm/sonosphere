@@ -1,7 +1,11 @@
 import type { Session } from "./auth";
 import type { ProfileLink } from "./profile-links";
+import type { UsernameFont } from "./username-fonts";
 
 export type ProfileEdit = {
+  usernameFont?: UsernameFont;
+  profileAccent?: string | null;
+  profileAccentEnd?: string | null;
   realname?: string;
   pronouns?: string;
   about?: string;

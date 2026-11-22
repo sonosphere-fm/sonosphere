@@ -59,13 +59,20 @@ export function Connect() {
         <p>
           <b>{app.name}</b>{" "}
           <span className="muted">
-            by <Link to={userUrl(app.owner)}>{app.owner}</Link>
+            by{" "}
+            <Link to={userUrl(app.owner)}>
+              <Username name={app.owner} />
+            </Link>
           </span>{" "}
           wants to connect to your Sonosphere account
           {me && (
             <>
               {" "}
-              (<b>{me.username}</b>)
+              (
+              <b>
+                <Username user={me} />
+              </b>
+              )
             </>
           )}
           .
@@ -104,3 +111,4 @@ export function Connect() {
     </div>
   );
 }
+import { Username } from "../ui/username";

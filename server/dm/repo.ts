@@ -20,6 +20,7 @@ import { db, transact, type Conn, type Tx } from "../db/client";
 import { dmFlags, dmMessages, dmThreads, follows, users } from "../db/schema";
 import { first } from "../util";
 import type { DmCounts, DmUser, ReportedMessage } from "../../shared/dm";
+import { appearanceCols } from "../users/appearance";
 
 export type Thread = typeof dmThreads.$inferSelect;
 export type Message = typeof dmMessages.$inferSelect;
@@ -37,7 +38,13 @@ const sentBy = (threadId: number, userId: number) =>
 export const person = (id: number): Promise<DmUser | null> =>
   first(
     db
-      .select({ id: users.id, username: users.username, realname: users.realname, image: users.imageId })
+      .select({
+        ...appearanceCols,
+        id: users.id,
+        username: users.username,
+        realname: users.realname,
+        image: users.imageId,
+      })
       .from(users)
       .where(eq(users.id, id))
       .limit(1)

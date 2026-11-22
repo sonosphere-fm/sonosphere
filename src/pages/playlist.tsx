@@ -55,7 +55,11 @@ export function PlaylistPage() {
         const length = dur(p.tracks.reduce((s, t) => s + t.duration, 0)) || "0:00";
         const sub = (
           <>
-            by <Link to={userUrl(p.owner)}>{p.owner}</Link> · {plural(p.tracks.length, "track")} · {length}
+            by{" "}
+            <Link to={userUrl(p.owner)}>
+              <Username name={p.owner} />
+            </Link>{" "}
+            · {plural(p.tracks.length, "track")} · {length}
           </>
         );
         const actions = (
@@ -167,3 +171,4 @@ export function PlaylistPage() {
     </Async>
   );
 }
+import { Username } from "../ui/username";

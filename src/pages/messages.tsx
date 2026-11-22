@@ -179,7 +179,7 @@ function ThreadRow({ t, requests, current, myId }: { t: Thread; requests: boolea
         <span className="grow">
           <span className="dm-thread-top">
             <b>
-              {t.user.username} <UserLabels name={t.user.username} />
+              <Username user={t.user} /> <UserLabels name={t.user.username} />
             </b>
             <span className="muted small nowrap">{ago(t.at)}</span>
           </span>
@@ -340,7 +340,7 @@ function Head({ user, back, children }: { user: Thread["user"]; back: string; ch
         <Avatar user={user} size={36} plain />
         <span>
           <b>
-            {user.username} <UserLabels name={user.username} />
+            <Username user={user} /> <UserLabels name={user.username} />
           </b>
           {user.realname && <span className="muted small">{user.realname}</span>}
         </span>
@@ -574,7 +574,9 @@ function Conversation({ id, back }: { id: number; back: string }) {
     footer = (
       <div className="dm-request">
         <p>
-          <b>{other.username} wants to message you.</b>{" "}
+          <b>
+            <Username user={other} /> wants to message you.
+          </b>{" "}
           <span className="muted">They won't know you've seen this unless you accept. Declining is silent.</span>
         </p>
         <div className="dm-request-actions">
@@ -597,7 +599,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
   } else if (t.left === 0) {
     footer = (
       <p className="dm-closed muted">
-        Your message request has been sent. You can write again once {other.username} replies.
+        Your message request has been sent. You can write again once <Username user={other} /> replies.
       </p>
     );
   } else {
@@ -606,7 +608,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
       <>
         {t.left != null && (
           <p className="dm-closed muted small">
-            This is a message request: {other.username} will see it under Requests. You can send {t.left} more{" "}
+            This is a message request: <Username user={other} /> will see it under Requests. You can send {t.left} more{" "}
             {t.left === 1 ? "message" : "messages"}, without links, until they reply.
           </p>
         )}
@@ -634,8 +636,8 @@ function Conversation({ id, back }: { id: number; back: string }) {
         <Older more={d.more} older={older} loadOlder={loadOlder} />
         {!d.more && (
           <p className="dm-start muted small">
-            This is the start of your conversation with {other.username}. Messages are private between the two of you,
-            but staff may review them when investigating a report or abuse.
+            This is the start of your conversation with <Username user={other} />. Messages are private between the two
+            of you, but staff may review them when investigating a report or abuse.
           </p>
         )}
         <ol className="dm-msgs">
@@ -664,7 +666,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
         </ol>
         {typing && (
           <p className="dm-typing muted small" role="status">
-            {other.username} is typing…
+            <Username user={other} /> is typing…
           </p>
         )}
       </div>
@@ -774,7 +776,9 @@ function GroupConversation({ id }: { id: number }) {
         <button type="button" className="dm-who dm-who-group" onClick={() => setInfo(!info)} aria-expanded={info}>
           <GroupAvatar g={g} myId={myId} size={36} />
           <span>
-            <b>{name}</b>
+            <b>
+              <Username name={name} />
+            </b>
             <span className="muted small">{g.members.length} people</span>
           </span>
         </button>
@@ -919,7 +923,7 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
           <li key={u.id}>
             <Avatar user={u} size={32} />
             <Link to={userUrl(u.username)} className="grow">
-              {u.username} <UserLabels name={u.username} />
+              <Username user={u} /> <UserLabels name={u.username} />
               {u.id === me!.id && <span className="muted"> (you)</span>}
             </Link>
             {u.id === g.owner && <span className="badge off">Owner</span>}
@@ -968,7 +972,7 @@ function AddPeople({ groupId, onAdd }: { groupId: number; onAdd: (r: DmGroupSent
           <li key={u.id}>
             <Avatar user={u} size={32} plain />
             <span className="grow">
-              {u.username} <UserLabels name={u.username} />
+              <Username user={u} /> <UserLabels name={u.username} />
             </span>
             <Button kind="link small" type="button" onClick={() => add(u)}>
               Add
@@ -1052,7 +1056,7 @@ function NewGroup() {
                   />
                   <Avatar user={u} size={32} plain />
                   <span className="grow">
-                    {u.username} <UserLabels name={u.username} />
+                    <Username user={u} /> <UserLabels name={u.username} />
                   </span>
                 </label>
               </li>
@@ -1142,3 +1146,4 @@ function HumanComposer({
   const above = robot.view && <div className="dm-human">{robot.view}</div>;
   return <Composer onSend={send} max={2000} placeholder={`Message ${name}`} above={above} />;
 }
+import { Username } from "../ui/username";

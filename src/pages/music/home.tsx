@@ -97,7 +97,7 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
             <Avatar user={f.user} />
             <div className="grow">
               <Link className="strong" to={userUrl(f.user.username)}>
-                {f.user.username}
+                <Username user={f.user} />
               </Link>{" "}
               <UserLabels name={f.user.username} />
               <span>
@@ -138,7 +138,10 @@ function FriendLoves({ items }: { items: FriendLove[] }) {
             <span className="muted">- {t.artist}</span>
             <br />
             <span className="muted small">
-              <Ico.Heart on /> <Link to={userUrl(t.user)}>{t.user}</Link>
+              <Ico.Heart on />{" "}
+              <Link to={userUrl(t.user)}>
+                <Username name={t.user} />
+              </Link>
             </span>
           </li>
         ))}
@@ -247,3 +250,4 @@ function HomeRecent({ name }: { name: string }) {
     </Section>
   );
 }
+import { Username } from "../../ui/username";

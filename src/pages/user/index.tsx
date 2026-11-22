@@ -29,6 +29,8 @@ import { FollowButton, Grid, TrackList } from "../../ui/lists";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
 import { UserLabels } from "../../ui/user-labels";
+import { Username } from "../../ui/username";
+import { ProfileShellTheme, profileAccentStyle } from "../../ui/profile-accent";
 import type { BlockResult } from "../../../shared/blocks";
 import type { UserEvents as UserEventList } from "../../../shared/events";
 import type { TopAlbum, TopArtist, TopTrack } from "../../../shared/listening";
@@ -161,7 +163,12 @@ export function UserPage({ tab }: { tab: Tab }) {
           </>
         );
         return (
-          <>
+          <div
+            className="profile-theme"
+            data-profile-accent={u.profileAccent ? "custom" : undefined}
+            style={profileAccentStyle(u)}
+          >
+            <ProfileShellTheme user={u} name={name} />
             <Hero
               tabs={<Tabs items={profileTabs(u, base, locked)} />}
               banner={u.banner}
@@ -169,7 +176,7 @@ export function UserPage({ tab }: { tab: Tab }) {
               kicker={u.followsYou ? "Follows you" : "Listener"}
               title={
                 <>
-                  {u.username}
+                  <Username user={u} />
                   <UserLabels name={u.username} all />
                 </>
               }
@@ -180,8 +187,8 @@ export function UserPage({ tab }: { tab: Tab }) {
             <div className="wrap page">
               {u.blocked && (
                 <p className="notice">
-                  You've blocked {u.username}. They can't follow you or post on your profile, and you won't see their
-                  wall posts.{" "}
+                  You've blocked <Username user={u} />. They can't follow you or post on your profile, and you won't see
+                  their wall posts.{" "}
                   <Button kind="link" type="button" onClick={() => setBlock(u.username, false).then(q.reload)}>
                     Unblock
                   </Button>
@@ -189,29 +196,52 @@ export function UserPage({ tab }: { tab: Tab }) {
               )}
               {u.suspended && (mine || me?.admin) && (
                 <p className="notice">
-                  {mine
-                    ? "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work."
-                    : `${u.username} is suspended from posting.`}
+                  {mine ? (
+                    "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work."
+                  ) : (
+                    <>
+                      <Username user={u} /> is suspended from posting.
+                    </>
+                  )}
                 </p>
               )}
               <Pane>
                 {tab === "journal" && <Journal name={u.username} mine={mine} />}
                 {tab === "journal-post" && <JournalPost name={u.username} id={Number(p.post)} mine={mine} />}
                 {tab === "journal-new" &&
-                  (mine ? <JournalEditor name={u.username} /> : <Empty>Only {u.username} can write here.</Empty>)}
+                  (mine ? (
+                    <JournalEditor name={u.username} />
+                  ) : (
+                    <Empty>
+                      Only <Username user={u} /> can write here.
+                    </Empty>
+                  ))}
                 {tab === "journal-edit" &&
                   (mine ? (
                     <JournalEditor name={u.username} id={Number(p.post)} />
                   ) : (
-                    <Empty>Only {u.username} can edit this post.</Empty>
+                    <Empty>
+                      Only <Username user={u} /> can edit this post.
+                    </Empty>
                   ))}
                 {tab === "overview" && <Overview u={u} mine={mine} locked={locked} />}
-                {locked && LISTENING_TABS.includes(tab) && <Empty>{u.username} keeps their listening private.</Empty>}
+                {locked && LISTENING_TABS.includes(tab) && (
+                  <Empty>
+                    <Username user={u} /> keeps their listening private.
+                  </Empty>
+                )}
                 {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
                 {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
                 {tab === "report" && !locked && <Report name={u.username} type={p.type === "year" ? "year" : "week"} />}
                 {tab === "following" && (
-                  <People path={`/user/following${qs({ name })}`} empty={`${u.username} isn't following anyone yet.`} />
+                  <People
+                    path={`/user/following${qs({ name })}`}
+                    empty={
+                      <>
+                        <Username user={u} /> isn't following anyone yet.
+                      </>
+                    }
+                  />
                 )}
                 {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty="No followers yet." />}
                 {tab === "loved" && !locked && <Loved name={u.username} />}
@@ -223,7 +253,7 @@ export function UserPage({ tab }: { tab: Tab }) {
                 {tab === "shoutbox" && <Shoutbox type="user" id={u.id} />}
               </Pane>
             </div>
-          </>
+          </div>
         );
       }}
     </Async>
@@ -288,7 +318,9 @@ function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: bool
     <div className="cols">
       <div className="main">
         <Section title="Listening">
-          <Empty>{u.username} keeps their listening private.</Empty>
+          <Empty>
+            <Username user={u} /> keeps their listening private.
+          </Empty>
         </Section>
         <Section title="Wall" more={`${userUrl(u.username)}/wall`} moreLabel="Whole wall">
           <Shoutbox type="user" id={u.id} limit={5} />
@@ -382,7 +414,12 @@ function Compatibility({ taste }: { taste: NonNullable<Profile["taste"]> }) {
 }
 
 function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean }) {
-  if ("hidden" in d) return <Empty>{u.username} keeps their recent listening private.</Empty>;
+  if ("hidden" in d)
+    return (
+      <Empty>
+        <Username user={u} /> keeps their recent listening private.
+      </Empty>
+    );
   if (d.items.length || d.nowPlaying) return <TrackList items={d.items} nowPlaying={d.nowPlaying} time />;
   if (!mine) return <Empty>No scrobbles yet.</Empty>;
   return (

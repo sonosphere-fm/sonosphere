@@ -3,6 +3,8 @@ import { db } from "../db/client";
 import { blocks, notifications, users } from "../db/schema";
 import { first, now } from "../util";
 import { mailNotice } from "./email";
+import { appearanceCols } from "../users/appearance";
+import type { UserAppearance } from "../../shared/username-fonts";
 
 export async function notify(userId: number, type: string, actorId: number, data: object = {}): Promise<void> {
   if (userId === actorId) return;
@@ -18,7 +20,7 @@ export async function notify(userId: number, type: string, actorId: number, data
   await mailNotice(userId, type, actorId, data as Record<string, unknown>);
 }
 
-type NotificationRow = {
+type NotificationRow = Omit<UserAppearance, "usernameFont"> & { usernameFont: string | null } & {
   id: number;
   type: string;
   data: string;
@@ -37,6 +39,7 @@ export const latestFor = (userId: number, limit = 100): Promise<NotificationRow[
       read: notifications.read,
       createdAt: notifications.createdAt,
       username: users.username,
+      ...appearanceCols,
       image: users.imageId,
     })
     .from(notifications)

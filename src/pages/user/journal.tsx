@@ -108,7 +108,10 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
           </p>
           <h1 className="page-title">{j.title}</h1>
           <p className="muted small journal-by">
-            <Avatar user={j.author} size={28} /> <Link to={userUrl(j.author.username)}>{j.author.username}</Link>{" "}
+            <Avatar user={j.author} size={28} />{" "}
+            <Link to={userUrl(j.author.username)}>
+              <Username user={j.author} />
+            </Link>{" "}
             <UserLabels name={j.author.username} /> · <span title={dateTime(j.createdAt)}>{date(j.createdAt)}</span>
             {j.updatedAt > j.createdAt + 60 && <> · edited {ago(j.updatedAt)}</>}
           </p>
@@ -193,3 +196,4 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
     </form>
   );
 }
+import { Username } from "../../ui/username";

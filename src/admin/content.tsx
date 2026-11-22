@@ -147,8 +147,10 @@ export function Content() {
                       <p className={BODY_TEXT}>{it.body}</p>
                       <div className="row between">
                         <span className="muted small">
-                          <Link to={adminUrl(it.author)}>{it.author}</Link> on{" "}
-                          {it.page ? <Link to={it.page.link}>{it.page.label}</Link> : "a removed page"} ·{" "}
+                          <Link to={adminUrl(it.author)}>
+                            <Username name={it.author} />
+                          </Link>{" "}
+                          on {it.page ? <Link to={it.page.link}>{it.page.label}</Link> : "a removed page"} ·{" "}
                           {ago(it.createdAt)}
                           <ReportCount n={it.reports} />
                         </span>
@@ -174,8 +176,10 @@ export function Content() {
                       <p className={`${BODY_TEXT} muted`}>{it.excerpt}</p>
                       <div className="row between">
                         <span className="muted small">
-                          <Link to={adminUrl(it.author)}>{it.author}</Link> · {ago(it.createdAt)} ·{" "}
-                          {plural(it.comments, "comment")}
+                          <Link to={adminUrl(it.author)}>
+                            <Username name={it.author} />
+                          </Link>{" "}
+                          · {ago(it.createdAt)} · {plural(it.comments, "comment")}
                           <ReportCount n={it.reports} />
                         </span>
                         <Button
@@ -225,8 +229,14 @@ export function Content() {
                     <p className={`${BODY_TEXT} muted`}>{it.excerpt}</p>
                     <div className="row between">
                       <span className="muted small">
-                        {it.author ? <Link to={adminUrl(it.author)}>{it.author}</Link> : "deleted user"} ·{" "}
-                        {ago(it.createdAt)}
+                        {it.author ? (
+                          <Link to={adminUrl(it.author)}>
+                            <Username name={it.author} />
+                          </Link>
+                        ) : (
+                          "deleted user"
+                        )}{" "}
+                        · {ago(it.createdAt)}
                         <ReportCount n={it.reports} />
                       </span>
                       <span className="row">
@@ -398,3 +408,4 @@ function Locks({ rev }: { rev: number }) {
     </Section>
   );
 }
+import { Username } from "../ui/username";

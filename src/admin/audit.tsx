@@ -163,7 +163,10 @@ export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }
               {a.subject && a.targetType !== "user" && (
                 <>
                   {" "}
-                  · <Link to={adminUrl(a.subject)}>{a.subject}</Link>
+                  ·{" "}
+                  <Link to={adminUrl(a.subject)}>
+                    <Username name={a.subject} />
+                  </Link>
                 </>
               )}
               {extra && <span className="muted"> · {extra}</span>}
@@ -307,7 +310,10 @@ export function Audit() {
                             {a.subject && a.targetType !== "user" && (
                               <span className="muted small">
                                 {" "}
-                                · <Link to={adminUrl(a.subject)}>{a.subject}</Link>
+                                ·{" "}
+                                <Link to={adminUrl(a.subject)}>
+                                  <Username name={a.subject} />
+                                </Link>
                               </span>
                             )}
                           </td>
@@ -337,3 +343,4 @@ export function Audit() {
     </Async>
   );
 }
+import { Username } from "../ui/username";

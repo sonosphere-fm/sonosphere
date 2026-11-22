@@ -3,8 +3,15 @@ import type { Obsession } from "./obsessions";
 import type { Neighbour, Taste } from "./recommend";
 import type { TagCount } from "./tags";
 import type { ProfileLink } from "./profile-links";
+import type { UserAppearance } from "./username-fonts";
 
-export type PublicUser = { id: number; username: string; realname: string; country: string; image: string | null };
+export type PublicUser = UserAppearance & {
+  id: number;
+  username: string;
+  realname: string;
+  country: string;
+  image: string | null;
+};
 
 export type Paging = { limit: number; page: number; offset: number };
 

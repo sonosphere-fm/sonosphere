@@ -21,7 +21,7 @@ function Message({ n, me }: { n: Notification; me: string }) {
   const actor = (
     <>
       <Link className="strong inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
-        {n.type === "follow" ? n.actor.username : n.actor.username || "Someone"}
+        <Username user={n.actor} name={n.actor.username || "Someone"} />
       </Link>
       {n.actor.username && <UserLabels name={n.actor.username} />}
     </>
@@ -83,3 +83,4 @@ export function Inbox() {
     </div>
   );
 }
+import { Username } from "../ui/username";

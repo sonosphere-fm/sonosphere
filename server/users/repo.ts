@@ -21,11 +21,13 @@ import { first, norm, now } from "../util";
 import type { TagCount } from "../../shared/tags";
 import { aliasUser } from "../account/usernames";
 import type { LovedTrack, Person, PublicUser, TaggedItem } from "../../shared/users";
+import { appearanceCols, userAppearance } from "./appearance";
 
 export type User = typeof users.$inferSelect;
 
 export const openListener = () => and(eq(users.hideRecent, false), eq(users.privateListening, false));
 export const publicCols = {
+  ...appearanceCols,
   id: users.id,
   username: users.username,
   realname: users.realname,
@@ -33,9 +35,13 @@ export const publicCols = {
   image: users.imageId,
 };
 
-type Named = Pick<User, "id" | "username" | "realname" | "country">;
+type Named = Pick<
+  User,
+  "id" | "username" | "realname" | "country" | "usernameFont" | "profileAccent" | "profileAccentEnd"
+>;
 // Accepts a stored row or a row selected with `publicCols`.
 export const publicUser = (u: Named & ({ imageId: string | null } | { image: string | null })): PublicUser => ({
+  ...userAppearance(u),
   id: u.id,
   username: u.username,
   realname: u.realname,

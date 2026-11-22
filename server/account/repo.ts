@@ -20,6 +20,9 @@ type ProfileFields = Partial<
     | "emailMuted"
     | "digestAt"
     | "theme"
+    | "usernameFont"
+    | "profileAccent"
+    | "profileAccentEnd"
   >
 >;
 

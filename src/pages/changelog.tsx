@@ -49,7 +49,7 @@ export function Changelog() {
                         <p className="text-[13px] text-site-muted mt-2 mb-5">
                           <time dateTime={new Date(post.createdAt * 1000).toISOString()}>{date(post.createdAt)}</time>
                           {" · "}
-                          {post.author}
+                          <Username name={post.author} />
                         </p>
                         <Markdown text={post.body} images className="prose max-w-[68ch] [overflow-wrap:anywhere]" />
                       </article>
@@ -67,3 +67,4 @@ export function Changelog() {
     </div>
   );
 }
+import { Username } from "../ui/username";

@@ -53,7 +53,7 @@ export type Dashboard = {
   recentActions: AuditRow[];
 };
 
-export type StaffUserRow = {
+export type StaffUserRow = UserAppearance & {
   id: number;
   username: string;
   realname: string;
@@ -253,3 +253,4 @@ export type DmFlag = {
   threadsDay: number;
 };
 export type DmFlagList = { items: DmFlag[]; total: number; open: number; canRead: boolean } & Paged;
+import type { UserAppearance } from "./username-fonts";

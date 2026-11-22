@@ -1,4 +1,5 @@
 import { Ico } from "../../icons";
+import { Username } from "../../ui/username";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
 import { date, num, qs, tagUrl, useApi, useParam, userUrl } from "../../lib";
@@ -55,7 +56,8 @@ function ReportBody({
   return (
     <div className="report">
       <h2 className="report-title">
-        {name}'s {type} in music{" "}
+        <Username name={name} />
+        's {type} in music{" "}
         <span className="muted">
           · {title}
           {offset === 0 ? " (so far)" : ""}
