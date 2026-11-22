@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "@phosphor-icons/react";
 import { api, useAuth } from "../lib";
-import { applyTheme } from "../theme";
+import { changeTheme } from "../theme";
 import { useAction } from "./base";
 import type { ProfileSaved } from "../../shared/account";
 
@@ -34,11 +34,11 @@ export function ThemeToggle() {
     act.run(async () => {
       const theme = isDark() ? "light" : "dark";
       if (!me) {
-        applyTheme(theme);
+        await changeTheme(theme);
         return;
       }
       const previous = me;
-      setMe({ ...me, theme });
+      await changeTheme(theme, () => setMe({ ...me, theme }));
       try {
         const saved = await api<ProfileSaved>("/me", { method: "PATCH", body: { theme } });
         setMe(saved.user);

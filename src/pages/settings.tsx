@@ -37,7 +37,7 @@ import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
 import { ImageCropper } from "../ui/image-cropper";
 import { UserList } from "../ui/lists";
-import type { ThemePref } from "../theme";
+import { changeTheme, type ThemePref } from "../theme";
 
 const clock = (at: number) => new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -374,8 +374,8 @@ function Appearance() {
   const pick = (theme: ThemePref) => {
     const was = me!;
     if (theme === was.theme) return;
-    setMe({ ...was, theme });
     act.run(async () => {
+      await changeTheme(theme, () => setMe({ ...was, theme }));
       try {
         const r = await api<ProfileSaved>("/me", { method: "PATCH", body: { theme } });
         setMe(r.user);

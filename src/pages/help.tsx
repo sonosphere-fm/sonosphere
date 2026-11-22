@@ -20,7 +20,7 @@ export function Help() {
     </Link>
   );
   return (
-    <div className="wrap page">
+    <div className="wrap page docs-page">
       <h1 className="page-title">Scrobbling help</h1>
       <div className="cols">
         <div className="main prose docs">

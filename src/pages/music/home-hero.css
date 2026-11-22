@@ -1,6 +1,5 @@
 /* Shared with the initial guest HTML, which paints before the app stylesheet arrives. */
 .banner {
-  color-scheme: light;
   --hero-ink: #17150f;
   --hero-paper: #f6f2e9;
   --hero-link: #2438d6;
@@ -55,6 +54,8 @@
   justify-content: center;
   height: 40px;
   padding: 0 18px;
+  border: 0;
+  box-shadow: none;
   background: var(--hero-ink);
   color: var(--hero-paper);
   font: 700 13px / 1.45 var(--font, "Source Sans 3 Variable", Arial, sans-serif);
@@ -79,10 +80,14 @@
   color: #45413a;
 }
 .banner-chart {
-  background: #fffdf7;
+  background: var(--card, light-dark(#fffdf7, #181d45));
+  color: var(--ink, light-dark(#17150f, #f3efe4));
+  --chart-link: var(--link, light-dark(#2438d6, #ffd257));
+  border: 1px solid light-dark(#b5b5b5, #666678);
+  box-sizing: border-box;
   width: 360px;
   flex: none;
-  min-block-size: calc(36px + 5 * 62px);
+  min-block-size: calc(2px + 36px + 5 * 62px);
 }
 .banner-chart ol {
   list-style: none;
@@ -111,11 +116,11 @@
   text-transform: uppercase;
 }
 .banner-chart .banner-chart-more {
-  color: var(--hero-link);
+  color: var(--chart-link);
   text-decoration: underline;
 }
 .banner-chart b {
-  color: var(--hero-link);
+  color: var(--chart-link);
   font-family: var(--display, "Radio Canada Variable", Arial, sans-serif);
   font-size: 26px;
   width: 22px;
@@ -137,7 +142,7 @@
   white-space: nowrap;
 }
 .banner-chart span {
-  color: #6b665c;
+  color: var(--muted, light-dark(#6b665c, #9da2c6));
   font-size: 14px;
 }
 :root:has(.banner) {

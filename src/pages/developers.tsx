@@ -53,7 +53,7 @@ export function Developers() {
   const origin = window.location.origin;
   useTitle("API");
   return (
-    <div className="wrap page">
+    <div className="wrap page docs-page">
       <h1 className="page-title">Sonosphere API</h1>
       <div className="cols">
         <div className="main prose docs">

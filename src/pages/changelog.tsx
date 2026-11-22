@@ -12,7 +12,7 @@ export function Changelog() {
 
   return (
     <div className="wrap page">
-      <div className="max-w-[800px]">
+      <div className="mx-auto max-w-[68ch]">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h1 className="page-title mb-0">Changelog</h1>
           {admin && (

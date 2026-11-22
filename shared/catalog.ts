@@ -144,3 +144,10 @@ export type TrackPage = {
   topListeners: Listener[];
   shoutCount: number;
 };
+
+export type TrackLinks = {
+  appleMusic?: string;
+  spotify?: string;
+  tidal?: string;
+  youtube?: string;
+};

@@ -53,7 +53,8 @@ export async function appRoutes() {
     ]);
     const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer, actor) : null }));
     const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
-    const publicHome = !viewer && /^\/+$/u.test(url.pathname);
+    const home = /^\/+$/u.test(url.pathname);
+    const publicHome = home && !viewer;
     const page = (publicHome ? guestHome : html)
       .replace('<html lang="en">', () => `<html lang="en"${scheme}>`)
       .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))
@@ -61,6 +62,9 @@ export async function appRoutes() {
       .replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
     const headers = {
       "Content-Type": "text/html; charset=utf-8",
+      ...(home && {
+        Link: "</api/home>; rel=preload; as=fetch; crossorigin=anonymous; fetchpriority=low, </api/site>; rel=preload; as=fetch; crossorigin=anonymous; fetchpriority=low",
+      }),
       "Cache-Control": "private, no-cache",
       Vary: "Cookie",
     };
