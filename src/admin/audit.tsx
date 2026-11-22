@@ -34,6 +34,7 @@ const ACTION: Record<string, string> = {
   "wiki.unlock": "Unlocked wiki",
   "catalogue.merge": "Merged",
   "catalogue.rename": "Renamed",
+  "catalogue.tracklist": "Edited track list",
   "catalogue.orphans": "Deleted orphans",
   "tag.delete": "Deleted tag",
   "settings.update": "Changed settings",

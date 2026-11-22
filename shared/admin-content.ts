@@ -18,6 +18,8 @@ export type WikiLockList = { items: { type: string; id: number; page: PageRef | 
 
 export type CatalogueKind = "artist" | "album" | "track";
 export type CatalogueItem = { id: number; name: string; artist: string | null; createdAt: number; tracks: number | null; albums: number | null; scrobbles: number };
+export type TracklistTrack = { id: number; name: string; artist: string };
+export type Tracklist = { tracks: TracklistTrack[] };
 export type CatalogueSearch = { items: CatalogueItem[]; total: number } & Paged;
 export type DuplicateArtist = { id: number; name: string; scrobbles: number; tracks: number; albums: number };
 export type CatalogueDuplicates = { groups: DuplicateArtist[][] };
