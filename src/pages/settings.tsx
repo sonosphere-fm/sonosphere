@@ -15,6 +15,7 @@ import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, Sp
 import { Ico } from "../icons";
 import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
+import { ImageCropper } from "../ui/image-cropper";
 import { UserList } from "../ui/lists";
 import type { ThemePref } from "../theme";
 
@@ -67,6 +68,7 @@ function ProfileSettings() {
   const { me, setMe, refresh } = useAuth();
   const act = useAction();
   const img = useAction();
+  const [crop, setCrop] = useState<File | null>(null);
   const file = useRef<HTMLInputElement>(null);
   const [f, setF] = useState({
     realname: me!.realname,
@@ -79,13 +81,7 @@ function ProfileSettings() {
 
   const upload = (e: ChangeEvent<HTMLInputElement>) => {
     const x = e.target.files?.[0];
-    if (x) {
-      img.run(async () => {
-        await api<ImageSaved>("/image?type=user", { raw: x, headers: { "Content-Type": x.type } });
-        refresh();
-        return "Avatar updated.";
-      });
-    }
+    if (x) setCrop(x);
     e.target.value = "";
   };
 
@@ -105,6 +101,11 @@ function ProfileSettings() {
 
   return (
     <>
+      {crop && <ImageCropper file={crop} kind="avatar" onClose={() => setCrop(null)} onSave={async image => {
+        await api<ImageSaved>("/image?type=user", { raw: image, headers: { "Content-Type": image.type } });
+        refresh();
+        invalidateAll();
+      }} />}
       <Section title="Avatar">
         <div className="avatar-edit">
           <button type="button" className="avatar avatar-pick" aria-label="Change avatar" onClick={() => file.current?.click()} disabled={img.busy}>
@@ -147,17 +148,12 @@ function BannerSettings() {
   const { me, refresh } = useAuth();
   const act = useAction();
   const file = useRef<HTMLInputElement>(null);
+  const [crop, setCrop] = useState<File | null>(null);
 
   const upload = (e: ChangeEvent<HTMLInputElement>) => {
     const image = e.target.files?.[0];
     e.target.value = "";
-    if (!image) return;
-    act.run(async () => {
-      await api<ImageSaved>("/image?type=banner", { raw: image, headers: { "Content-Type": image.type } });
-      refresh();
-      invalidateAll();
-      return "Banner updated.";
-    });
+    if (image) setCrop(image);
   };
 
   const remove = () => act.run(async () => {
@@ -169,6 +165,11 @@ function BannerSettings() {
 
   return (
     <Section title="Banner">
+      {crop && <ImageCropper file={crop} kind="banner" onClose={() => setCrop(null)} onSave={async image => {
+        await api<ImageSaved>("/image?type=banner", { raw: image, headers: { "Content-Type": image.type } });
+        refresh();
+        invalidateAll();
+      }} />}
       <div className="banner-edit">
         {me!.banner && (
           <ImageWithFallback
