@@ -27,17 +27,16 @@ const icons = {
   sparkle: Sparkle,
 };
 const badge =
-  "inline-flex items-center gap-[5px] max-w-full px-1.5 py-0.5 border " +
-  "border-[color:color-mix(in_srgb,var(--label-color)_50%,transparent)] " +
-  "bg-[color:color-mix(in_srgb,var(--label-color)_14%,var(--bg))] " +
-  "text-[color:color-mix(in_srgb,var(--label-color)_65%,var(--ink))] " +
-  "font-site font-bold text-[11px] leading-[1.4] tracking-[.025em] align-middle wrap-anywhere";
+  "inline-flex items-center gap-1 max-w-full px-[7px] py-px " +
+  "bg-[color:color-mix(in_srgb,var(--label-color)_16%,transparent)] " +
+  "text-[color:color-mix(in_srgb,var(--label-color)_70%,var(--ink))] " +
+  "font-site font-semibold text-[11px] leading-[1.5] align-middle wrap-anywhere";
 
 export function UserLabelBadge({ label }: { label: UserLabel }) {
   const Icon = icons[label.icon] ?? Star;
   return (
     <span className={badge} style={{ "--label-color": label.color } as CSSProperties}>
-      <Icon className="flex-none" size={13} weight="fill" aria-hidden />
+      <Icon className="flex-none" size={11} weight="fill" aria-hidden />
       <span>{label.text}</span>
     </span>
   );

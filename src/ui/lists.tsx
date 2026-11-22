@@ -427,10 +427,12 @@ export function UserList<U extends PublicUser & { playcount?: number }>({
         <li key={u.username}>
           <Avatar user={u} size={56} />
           <div className="grow">
-            <Link className="strong" to={userUrl(u.username)}>
-              {u.username}
-            </Link>{" "}
-            <UserLabels name={u.username} />
+            <span>
+              <Link className="strong" to={userUrl(u.username)}>
+                {u.username}
+              </Link>
+              <UserLabels name={u.username} />
+            </span>
             {(u.realname || u.country) && (
               <span className="muted small">{[u.realname, u.country].filter(Boolean).join(" · ")}</span>
             )}
