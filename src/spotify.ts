@@ -1,4 +1,5 @@
 import { api } from "./lib";
+import type { ImageSaved } from "../shared/images";
 import type { SpotifyPlayerToken } from "../shared/spotify";
 
 type SdkTrack = { id: string | null; uri: string; linked_from?: { uri: string | null } };
@@ -69,6 +70,8 @@ const norm = (s: string) => s
   .replace(/\s*[([].*?[)\]]\s*/g, " ")
   .replace(/[^\p{L}\p{N}]+/gu, " ")
   .trim();
+// the art is shown from our own address, never Spotify's
+const artId = (url: string) => api<ImageSaved>("/image/art", { body: { url } }).then(r => r.image, () => null);
 type SearchItem = { id: string; uri: string; name: string; artists: { name: string }[]; album?: { images?: { url: string }[] } };
 
 /** Null when the listener's link can't play (no playback access, no Premium...). */
@@ -119,7 +122,9 @@ export async function openSpotify(on: { state: (s: SdkState) => void; lost: () =
       const data = r?.ok ? await r.json().catch(() => null) as { tracks?: { items?: SearchItem[] } } | null : null;
       const items = (data?.tracks?.items ?? []).filter(i => i && i.artists?.some(a => norm(a.name) === norm(artist)));
       const hit = items.find(i => norm(i.name) === norm(title)) ?? items[0];
-      return hit ? { uri: hit.uri, id: hit.id, art: hit.album?.images?.[0]?.url ?? null } : null;
+      if (!hit) return null;
+      const art = hit.album?.images?.[0]?.url;
+      return { uri: hit.uri, id: hit.id, art: art ? await artId(art) : null };
     },
     async play(uri, fromMs = 0) {
       if (!device) return false;
