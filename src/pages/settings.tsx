@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { Button, Input, Select, useConfirm } from "../kit";
-import { MdEditor } from "../md";
+import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -94,6 +94,7 @@ function ProfileSettings() {
   const act = useAction();
   const img = useAction();
   const [crop, setCrop] = useState<File | null>(null);
+  const [previewAbout, setPreviewAbout] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const [f, setF] = useState({
     realname: me!.realname,
@@ -101,8 +102,10 @@ function ProfileSettings() {
     country: me!.country,
     website: me!.website,
     about: me!.about,
+    links: me!.links ?? [],
   });
-  const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const set = (k: "realname" | "pronouns" | "country" | "website") => (e: ChangeEvent<HTMLInputElement>) =>
+    setF({ ...f, [k]: e.target.value });
 
   const upload = (e: ChangeEvent<HTMLInputElement>) => {
     const x = e.target.files?.[0];
@@ -187,15 +190,91 @@ function ProfileSettings() {
             <Input type="url" value={f.website} onChange={set("website")} placeholder="https://" maxLength={200} />
           </label>
           <div className="field-block">
-            <span className="field-label">About me</span>
-            <MdEditor
-              label="About me"
-              rows={5}
-              value={f.about}
-              onChange={(about) => setF((f) => ({ ...f, about }))}
-              maxLength={2000}
-            />
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <span className="field-label">About me</span>
+              <Button
+                type="button"
+                kind="btn ghost small"
+                aria-pressed={previewAbout}
+                onClick={() => setPreviewAbout(!previewAbout)}
+              >
+                {previewAbout ? "Write" : "Preview"}
+              </Button>
+            </div>
+            {previewAbout ? (
+              <div className="border border-site-line p-3 min-h-[140px] [overflow-wrap:anywhere]">
+                <Markdown text={f.about} images />
+              </div>
+            ) : (
+              <MdEditor
+                label="About me"
+                rows={5}
+                value={f.about}
+                onChange={(about) => setF((f) => ({ ...f, about }))}
+                maxLength={2000}
+                images
+              />
+            )}
+            <p className="muted small">
+              Add images with ![description](https://image-url). Headings, lists, and links are supported.
+            </p>
           </div>
+          <fieldset className="border-0 p-0 m-0 min-w-0 grid gap-3">
+            <legend className="field-label mb-2">Profile links</legend>
+            {f.links.map((link, index) => (
+              <div key={index} className="grid gap-2 border-b border-site-line pb-3">
+                <div className="grid gap-2 min-w-0">
+                  <label>
+                    Label
+                    <Input
+                      value={link.label}
+                      maxLength={60}
+                      onChange={(e) =>
+                        setF({
+                          ...f,
+                          links: f.links.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)),
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    URL
+                    <Input
+                      type="url"
+                      required
+                      value={link.url}
+                      placeholder="https://"
+                      maxLength={500}
+                      onChange={(e) =>
+                        setF({
+                          ...f,
+                          links: f.links.map((item, i) => (i === index ? { ...item, url: e.target.value } : item)),
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="grid">
+                  <Button
+                    type="button"
+                    kind="btn ghost small"
+                    aria-label={`Remove profile link ${index + 1}`}
+                    onClick={() => setF({ ...f, links: f.links.filter((_, i) => i !== index) })}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              kind="btn ghost small"
+              disabled={f.links.length >= 8}
+              onClick={() => setF({ ...f, links: [...f.links, { label: "", url: "" }] })}
+            >
+              Add link
+            </Button>
+          </fieldset>
           {act.note}
           <Button kind="btn" loading={act.busy}>
             Save profile

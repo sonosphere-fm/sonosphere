@@ -1,4 +1,5 @@
 import type { Role } from "./site";
+import type { ProfileLink } from "./profile-links";
 
 export type DmCounts = { unread: number; requests: number };
 
@@ -11,6 +12,7 @@ export type Me = {
   about: string;
   country: string;
   website: string;
+  links: ProfileLink[];
   image: string | null;
   banner: string | null;
   hideRecent: boolean;

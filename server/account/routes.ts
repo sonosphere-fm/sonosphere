@@ -5,6 +5,7 @@ import { POLICIES } from "../dm/service";
 import { confirmed, need, poster } from "../guards";
 import { changeUsername, usernameStatus } from "./usernames";
 import type { UsernameStatus } from "../../shared/account";
+import { profileLinks } from "../../shared/profile-links";
 import { bad, fail, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
 import { clearActAsCookie } from "../auth/session";
 import { isAdmin } from "../site/roles";
@@ -39,6 +40,12 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   const u = need(c);
   const b = c.body;
   const website = clean(b.website ?? u.website, 200);
+  const links =
+    b.links === undefined
+      ? u.profileLinks
+      : JSON.stringify(
+          profileLinks(b.links) ?? bad("Add up to 8 valid http or https links, with labels up to 60 characters")
+        );
   if (website && !/^https?:\/\//i.test(website)) bad("Website must start with http:// or https://");
   // a new address only takes over once a link sent to it is followed
   if (b.email !== undefined) {
@@ -63,7 +70,8 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     pronouns !== u.pronouns ||
     about !== u.about ||
     country !== u.country ||
-    website !== u.website;
+    website !== u.website ||
+    links !== u.profileLinks;
   if (publicChanged) confirmed(u);
 
   const dmPolicy =
@@ -90,6 +98,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     about,
     country,
     website,
+    profileLinks: links,
     hideRecent: !!(b.hideRecent ?? u.hideRecent),
     privateListening: !!(b.privateListening ?? u.privateListening),
     shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),

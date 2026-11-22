@@ -293,11 +293,22 @@ function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: bool
 }
 
 function About({ u }: { u: Profile }) {
-  if (!u.about && !u.website) return null;
+  if (!u.about && !u.website && !u.links?.length) return null;
   return (
     <Section title="About">
       <div className="profile-about">
-        <Markdown text={u.about} />
+        <Markdown text={u.about} images />
+        {!!u.links?.length && (
+          <ul className="list-none m-0 p-0 grid gap-2 [overflow-wrap:anywhere]">
+            {u.links.map((link, i) => (
+              <li key={i}>
+                <a href={link.url} rel="nofollow noopener noreferrer" target="_blank">
+                  {link.label || link.url.replace(/^https?:\/\//, "")}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
         {u.website && (
           <p>
             <a href={u.website} rel="nofollow noopener noreferrer" target="_blank">

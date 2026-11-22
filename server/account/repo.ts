@@ -11,6 +11,7 @@ type ProfileFields = Partial<
     | "about"
     | "country"
     | "website"
+    | "profileLinks"
     | "hideRecent"
     | "privateListening"
     | "shoutsEnabled"

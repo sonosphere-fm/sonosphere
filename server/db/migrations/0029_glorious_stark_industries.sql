@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "profile_links" text DEFAULT '[]' NOT NULL;
