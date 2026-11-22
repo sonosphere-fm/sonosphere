@@ -1,4 +1,4 @@
-import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
+import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../../icons";
 import { Lyrics } from "../../ui/lyrics";
 import { lazy, useState, type FormEvent, Suspense } from "react";
@@ -24,7 +24,7 @@ import { Grid, LoveButton, TrackList } from "../../ui/lists";
 import { shortMusicUrl } from "../../../shared/paths";
 import { Shoutbox } from "../../ui/shoutbox";
 import { TrackLinks } from "../../ui/track-links";
-import { CopyLink } from "../../ui/copy-link";
+import { MoreMenu } from "../../ui/more-menu";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
@@ -197,14 +197,11 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                 <Button kind="btn ghost" type="button" onClick={() => setModal("links")}>
                   <Ico.External /> Open in
                 </Button>
-                <CopyLink url={shortMusicUrl("t", t.id)} />
-                {me && (
-                  <DropdownMenu placement="below" alignment="start" button={{ label: "More", variant: "secondary" }}>
-                    <DropdownMenuItem label="Add to playlist" onClick={() => setModal("playlist")} />
-                    <DropdownMenuItem label="Set as earworm" onClick={() => setModal("obsession")} />
-                    <DropdownMenuItem label="Scrobble now" isDisabled={act.busy} onClick={() => scrobbleNow(t)} />
-                  </DropdownMenu>
-                )}
+                <MoreMenu label={`More actions for ${t.title}`} link={shortMusicUrl("t", t.id)}>
+                  {me && <DropdownMenuItem label="Add to playlist" onClick={() => setModal("playlist")} />}
+                  {me && <DropdownMenuItem label="Set as earworm" onClick={() => setModal("obsession")} />}
+                  {me && <DropdownMenuItem label="Scrobble now" isDisabled={act.busy} onClick={() => scrobbleNow(t)} />}
+                </MoreMenu>
                 {me?.admin && (
                   <Suspense fallback={null}>
                     <AdminTools kind="track" item={{ id: t.id, name: t.title, artist: t.artist }} onDone={q.reload} />

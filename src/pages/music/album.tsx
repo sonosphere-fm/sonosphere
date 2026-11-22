@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, dur, plural, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
 import { Async, Section, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
-import { CopyLink } from "../../ui/copy-link";
+import { MoreMenu } from "../../ui/more-menu";
 import { shortMusicUrl } from "../../../shared/paths";
 import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
@@ -62,8 +62,8 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             actions={
               <>
                 <PlayButton queue={a.tracks} label="Play album" />
-                <CopyLink url={shortMusicUrl("r", a.id)} />
                 {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
+                <MoreMenu label={`More actions for ${a.title}`} link={shortMusicUrl("r", a.id)} />
                 {me?.admin && (
                   <Suspense fallback={null}>
                     <AdminTools kind="album" item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} />
