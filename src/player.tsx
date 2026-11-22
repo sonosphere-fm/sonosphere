@@ -2,7 +2,7 @@ import { Ico } from "./icons";
 import { createContext, useContext, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import { Button } from "./kit";
 import { Link, useNavigate } from "react-router-dom";
-import { api, artistUrl, qs, trackUrl, useAuth } from "./lib";
+import { api, artistUrl, imageUrl, qs, trackUrl, useAuth } from "./lib";
 import { errorText } from "./ui/base";
 import { Mark } from "./ui/brand";
 import { ImageWithFallback } from "./ui/image";
@@ -53,7 +53,7 @@ function loadSaved(): State {
   try {
     const v = JSON.parse(localStorage.getItem(SAVE_KEY) || "null") as Saved | null;
     if (!v || !Array.isArray(v.queue) || !v.queue[v.index]) return empty;
-    savedArt = typeof v.art === "string" ? v.art : null;
+    savedArt = typeof v.art === "string" && /^[0-9a-f]{32}$/.test(v.art) ? v.art : null;
     return {
       ...empty,
       queue: v.queue,
@@ -439,7 +439,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const t = state.queue[state.index];
   const hasNext = state.index < state.queue.length - 1;
   const showCover = (state.status === "ready" && state.spotify) || state.status === "saved";
-  const coverSrc = state.spotify?.art || (state.status === "saved" ? savedArt : null) || t?.image || null;
+  const cover = state.spotify?.art || (state.status === "saved" ? savedArt : null) || t?.image;
+  const coverSrc = cover ? imageUrl(cover) : null;
   return (
     <Ctx.Provider value={value}>
       {children}

@@ -52,7 +52,7 @@ const MB = [
   { name: "mb-videolan", base: "https://mb.videolan.org/ws/2" },
 ];
 // MusicBrainz asks every client to name itself and give a way to reach whoever runs it
-const agent = () => `Sonosphere/1.0${process.env.SITE_URL ? ` ( ${process.env.SITE_URL} )` : ""}`;
+export const agent = () => `Sonosphere/1.0${process.env.SITE_URL ? ` ( ${process.env.SITE_URL} )` : ""}`;
 
 async function mb(path: string, params: Record<string, string>): Promise<Json | null> {
   let res: Response | null = null;

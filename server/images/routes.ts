@@ -5,6 +5,7 @@ import { getJson, setJson } from "../kv";
 import { store } from "../storage";
 import { caps, spendRead } from "../storage/budget";
 import { convert } from "./process";
+import { fetchRemote, type Picture } from "./remote";
 import * as repo from "./repo";
 import type { Ok } from "../../shared/auth";
 import type { ImageSaved } from "../../shared/images";
@@ -49,25 +50,71 @@ async function storeImage(c: Ctx, userId: number): Promise<string> {
   return repo.saveImage(img, userId);
 }
 
+const CACHE_BYTES = 64_000_000;
+const cache = new Map<string, Picture>();
+let cached = 0;
+
+function remember(key: string, pic: Picture): Picture {
+  cache.set(key, pic);
+  cached += pic.data.length;
+  for (const [k, v] of cache) {
+    if (cached <= CACHE_BYTES) break;
+    cache.delete(k);
+    cached -= v.data.length;
+  }
+  return pic;
+}
+
+function recall(key: string): Picture | null {
+  const pic = cache.get(key);
+  if (!pic) return null;
+  cache.delete(key);
+  cache.set(key, pic);
+  return pic;
+}
+
+async function stored(key: string): Promise<Picture | null> {
+  if (!(await spendRead())) fail(503, "Pictures are unavailable for the rest of today");
+  const data = await store.get(key);
+  return data && { mime: "image/webp", data };
+}
+
+const ART_LIFE = 90 * 86400_000;
+const SPOTIFY_ART = /^https:\/\/i\.scdn\.co\/image\/[0-9a-f]{40}$/;
+const artKey = (id: string) => `art:${id}`;
+
+// every picture comes from this address, whatever its source, so pages never reveal where one is kept
+async function load(id: string, small: boolean): Promise<Picture | null> {
+  const remote = (url: string) => fetchRemote(url).catch(() => null);
+  const img = await repo.findImage(id);
+  if (!img) {
+    const art = await getJson<string>(artKey(id));
+    return art ? remote(art) : null;
+  }
+  if ("data" in img) return img;
+  if ("url" in img) return remote(img.url);
+  return stored(repo.fileOf(img.key, small ? "small" : "large"));
+}
+
 router.get("/api/image/:id", async c => {
   await limit(`image:${ipOf(c.req)}`, 1500, 60, "Too many requests");
   const id = c.params[0] ?? "";
-  const found = /^[0-9a-f]{32}$/.test(id) ? await repo.findImage(id) : null;
-  const img = found ?? missing("Image");
-  if ("data" in img) return new Response(img.data, { headers: { "Content-Type": img.mime, ...IMMUTABLE } });
-  if ("url" in img) {
-    return new Response(null, { status: 302, headers: { Location: img.url, "Cache-Control": "public, max-age=86400" } });
-  }
-  const file = repo.fileOf(img.key, c.q.get("s") === "small" ? "small" : "large");
-  const link = store.link(file);
-  if (link) {
-    if (!(await spendRead())) fail(503, "Pictures are unavailable for the rest of today");
-    // the same link is handed out until `until`, so the browser may keep the redirect that long
-    const age = Math.max(0, link.until - Math.floor(Date.now() / 1000) - 60);
-    return new Response(null, { status: 302, headers: { Location: link.url, "Cache-Control": `private, max-age=${age}` } });
-  }
-  const bytes = (await store.get(file)) ?? missing("Image");
-  return new Response(bytes, { headers: { "Content-Type": "image/webp", ...IMMUTABLE } });
+  if (!/^[0-9a-f]{32}$/.test(id)) missing("Image");
+  const small = c.q.get("s") === "small";
+  const key = small ? `${id}-s` : id;
+  const pic = recall(key) ?? remember(key, (await load(id, small)) ?? missing("Image"));
+  return new Response(pic.data, { headers: { "Content-Type": pic.mime, ...IMMUTABLE } });
+});
+
+// album art the player found on Spotify, given an address of ours like every other picture
+router.post<ImageSaved>("/api/image/art", async c => {
+  need(c);
+  await limit(`art:${ipOf(c.req)}`, 300, 3600, "Too many requests");
+  const url = String(c.body.url ?? "");
+  if (!SPOTIFY_ART.test(url)) bad("Unknown picture");
+  const image = new Bun.CryptoHasher("sha256").update(url).digest("hex").slice(0, 32);
+  await setJson(artKey(image), url, ART_LIFE);
+  return { image };
 });
 
 router.post<ImageSaved>("/api/image", async c => {
