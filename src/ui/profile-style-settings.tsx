@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { isProfileAccent } from "../../shared/profile-accent";
 import { USERNAME_FONTS, type UsernameFont } from "../../shared/username-fonts";
-import { Input, Select } from "../kit";
+import { ColorPicker } from "../colorpicker";
+import { Select } from "../kit";
 import { useAuth } from "../lib";
 import { Avatar } from "./base";
 import { FONT_PREVIEW_HEIGHT, FONT_PREVIEW_TOP, FONT_PREVIEWS } from "./font-previews";
@@ -35,24 +35,10 @@ function FontName(id: string, label: string) {
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
-    <label>
-      {label}
-      <span className="color-field">
-        <input
-          type="color"
-          aria-label={`${label} picker`}
-          value={isProfileAccent(value) ? value : "#2438d6"}
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <Input
-          required
-          pattern="#[0-9a-fA-F]{6}"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          aria-label={`${label} hex`}
-        />
-      </span>
-    </label>
+    <div className="style-field">
+      <span>{label}</span>
+      <ColorPicker label={label} value={value} onChange={onChange} />
+    </div>
   );
 }
 
@@ -81,8 +67,7 @@ export function ProfileStyleSettings({
     setLastEnd(color);
     onChange({ profileAccentEnd: color });
   };
-  const valid = mode === "default" || (isProfileAccent(start) && (mode !== "gradient" || isProfileAccent(end)));
-  const custom = valid && mode !== "default";
+  const custom = mode !== "default";
   const appearance = { profileAccent: custom ? start : null, profileAccentEnd: mode === "gradient" ? end : null };
 
   return (
@@ -129,11 +114,6 @@ export function ProfileStyleSettings({
           <ColorField label="Accent" value={start} onChange={setStart} />
           {mode === "gradient" && <ColorField label="Second color" value={end} onChange={setEnd} />}
         </div>
-      )}
-      {!valid && (
-        <p className="form-error" role="alert">
-          Enter six-digit hex colors, like #2438d6.
-        </p>
       )}
     </fieldset>
   );
