@@ -1,4 +1,5 @@
 import type { Session } from "./auth";
+import type { ProfileLink } from "./profile-links";
 
 export type ProfileEdit = {
   realname?: string;
@@ -6,6 +7,7 @@ export type ProfileEdit = {
   about?: string;
   country?: string;
   website?: string;
+  links?: ProfileLink[];
   email?: string;
   hideRecent?: boolean;
   privateListening?: boolean;

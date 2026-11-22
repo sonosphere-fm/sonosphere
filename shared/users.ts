@@ -2,6 +2,7 @@ import type { Counts, NowPlaying, RecentTrack, TopAlbum, TopArtist, TopList, Top
 import type { Obsession } from "./obsessions";
 import type { Neighbour, Taste } from "./recommend";
 import type { TagCount } from "./tags";
+import type { ProfileLink } from "./profile-links";
 
 export type PublicUser = { id: number; username: string; realname: string; country: string; image: string | null };
 
@@ -12,6 +13,7 @@ export type Profile = PublicUser & {
   about: string;
   pronouns: string;
   website: string;
+  links: ProfileLink[];
   registeredAt: number;
   hidden: boolean;
   locked: boolean;

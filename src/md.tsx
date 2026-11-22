@@ -11,6 +11,7 @@ import {
 import {
   Code,
   LinkSimple,
+  Image,
   ListBullets,
   ListNumbers,
   Quotes,
@@ -107,7 +108,39 @@ const breaks = (rows: string[], key: string) =>
     return i ? [<br key={`${key}b${i}`} />, ...row] : row;
   });
 
-export function Markdown({ text, className = "prose" }: { text: string; className?: string }) {
+export function Markdown({
+  text,
+  className = "prose",
+  images = false,
+}: {
+  text: string;
+  className?: string;
+  images?: boolean;
+}) {
+  if (images) {
+    const parts = text.split(/(!\[[^\]\n]*\]\(https?:\/\/[^\s)]+\))/g);
+    return (
+      <div className={className}>
+        {parts.map((part, index) => {
+          if (!part) return null;
+          const image = /^!\[([^\]\n]*)\]\((https?:\/\/[^\s)]+)\)$/.exec(part);
+          return image ? (
+            <img
+              key={index}
+              src={image[2]}
+              alt={image[1]}
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              className="block max-w-full h-auto my-3"
+            />
+          ) : (
+            <Markdown key={index} text={part} className="md" />
+          );
+        })}
+      </div>
+    );
+  }
   const lines = String(text || "")
     .replace(/\r\n?/g, "\n")
     .split("\n")
@@ -289,6 +322,20 @@ const insertLink: Edit = (t, [a, b]) => {
   return { text: `${t.slice(0, a)}[${inner}](${url})${t.slice(b)}`, sel: [caret, caret] };
 };
 
+const IMAGE_TOOL = {
+  label: "Image",
+  keys: undefined,
+  Icon: Image,
+  edit: ((text, [a, b]) => {
+    const alt = text.slice(a, b) || "Image description";
+    const inserted = `![${alt}](https://)`;
+    return {
+      text: text.slice(0, a) + inserted + text.slice(b),
+      sel: [a + inserted.length - 1, a + inserted.length - 1],
+    };
+  }) as Edit,
+};
+
 const TOOLS: { label: string; keys?: string; Icon: PhIcon; edit: Edit }[] = [
   { label: "Bold", keys: "b", Icon: TextB, edit: wrap("**", "bold text") },
   { label: "Italic", keys: "i", Icon: TextItalic, edit: wrap("*", "italic text") },
@@ -338,10 +385,20 @@ type MdEditorProps = {
   label: string;
   placeholder?: string;
   autoFocus?: boolean;
+  images?: boolean;
 };
 
 /** A plain-text editor that formats as you type: the markup stays visible and editable. Pastes arrive as plain text. */
-export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeholder, autoFocus }: MdEditorProps) {
+export function MdEditor({
+  value,
+  onChange,
+  rows = 10,
+  maxLength,
+  label,
+  placeholder,
+  autoFocus,
+  images = false,
+}: MdEditorProps) {
   const ref = useRef<HTMLDivElement>(null);
   const text = useRef<string | null>(null);
   const composing = useRef(false);
@@ -498,7 +555,7 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
   return (
     <div className="md-editor">
       <div className="md-tools" role="toolbar" aria-label="Formatting">
-        {TOOLS.map(({ label, keys, Icon, edit }, i) => (
+        {(images ? [...TOOLS, IMAGE_TOOL] : TOOLS).map(({ label, keys, Icon, edit }, i) => (
           <button
             key={label}
             type="button"

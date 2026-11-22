@@ -8,6 +8,7 @@ import { pendingEmail } from "./email";
 import * as repo from "./repo";
 import { clearActAsCookie, sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
+import { storedProfileLinks } from "../../shared/profile-links";
 import { USERNAME } from "../account/username-policy";
 export { USERNAME } from "../account/username-policy";
 
@@ -21,6 +22,7 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     about: u.about,
     country: u.country,
     website: u.website,
+    links: storedProfileLinks(u.profileLinks),
     image: u.imageId,
     banner: u.bannerId,
     hideRecent: u.hideRecent,
