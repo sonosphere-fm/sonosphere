@@ -152,9 +152,9 @@ export function Select({ label, value, onChange, options }: { label: string; val
   return <Selector label={label} isLabelHidden size="sm" value={value} onChange={onChange} options={items} />;
 }
 
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, onClose, children, width = 460 }: { title: string; onClose: () => void; children: ReactNode; width?: number }) {
   return (
-    <Dialog isOpen onOpenChange={open => { if (!open) onClose(); }} width={460} purpose="form">
+    <Dialog isOpen onOpenChange={open => { if (!open) onClose(); }} width={width} purpose="form">
       <DialogHeader title={title} onOpenChange={() => onClose()} />
       {children}
     </Dialog>
