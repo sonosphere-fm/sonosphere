@@ -1394,11 +1394,14 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 .oauth-mark { width: 20px; height: 20px; flex: none; }
 .astryx-button.oauth-discord { background: #5865f2; border-color: #5865f2; color: #fff; }
 .astryx-button.oauth-discord:hover { background: #4752c4; border-color: #4752c4; color: #fff; }
+.astryx-button.oauth-google { background: #f2f2f2; border-color: #f2f2f2; color: #1f1f1f; }
+.astryx-button.oauth-google:hover { background: #e6e6e6; border-color: #e6e6e6; color: #1f1f1f; }
 .oauth-or { display: flex; align-items: center; gap: 12px; margin: 4px 0 0; }
 .oauth-or::before, .oauth-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
 .oauth-row { display: inline-flex; align-items: center; gap: 8px; }
 .oauth-chip { display: inline-grid; place-items: center; width: 28px; height: 28px; background: var(--panel); }
 .oauth-chip.oauth-discord { background: #5865f2; color: #fff; }
+.oauth-chip.oauth-google { background: #f2f2f2; }
 .oauth-chip .oauth-mark { width: 16px; height: 16px; }
 
 /* ---------- site navigation and footer ---------- */

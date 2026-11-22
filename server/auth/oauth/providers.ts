@@ -45,6 +45,26 @@ const ALL: Provider[] = [
       };
     },
   },
+  {
+    id: "google",
+    label: "Google",
+    clientId: env.GOOGLE_CLIENT_ID || "",
+    clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    scope: "openid email",
+    pkce: true,
+    async profile(token) {
+      const u = await getJson("https://openidconnect.googleapis.com/v1/userinfo", token);
+      const email = typeof u.email === "string" ? u.email.toLowerCase() : null;
+      return {
+        subject: String(u.sub),
+        name: email ?? "",
+        email,
+        emailVerified: u.email_verified === true,
+      };
+    },
+  },
 ];
 
 export const PROVIDERS = ALL.filter(p => p.clientId && p.clientSecret);
