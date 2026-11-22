@@ -12,3 +12,4 @@ export type Apps = { items: ApiApp[]; sessions: ApiSession[] };
 export type AppInfo = { name: string; description: string; owner: string; callbackUrl: string };
 export type AppAuthorized = { token: string; redirect: string | null };
 export type AppOk = { ok: true };
+export type ListenToken = { token: string };

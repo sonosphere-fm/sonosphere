@@ -3,6 +3,7 @@ import type { Server } from "bun";
 import * as Sentry from "@sentry/bun";
 import { api } from "./api";
 import { appRoutes } from "./app";
+import { handleListenBrainz } from "./listenbrainz/routes";
 import { handleCompat } from "./compat/routes";
 import { dropStaleTokens } from "./compat/repo";
 import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
@@ -75,6 +76,7 @@ const server = Bun.serve<SocketData>({
       new Response(null, { status: 302, headers: { Location: DISCORD_INVITE, "Cache-Control": "no-store" } }),
     "/2.0": handleCompat,
     "/2.0/": handleCompat,
+    "/1/*": handleListenBrainz,
     ...app,
   },
   websocket: {

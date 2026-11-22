@@ -3,7 +3,8 @@ import { confirmed, need } from "../guards";
 import { bad, ipOf, missing, Router, throttle } from "../http";
 import { clean, now, rid } from "../util";
 import * as repo from "./repo";
-import type { AppAuthorized, AppInfo, AppOk, Apps } from "../../shared/apps";
+import { createSession } from "../compat/repo";
+import type { AppAuthorized, AppInfo, AppOk, Apps, ListenToken } from "../../shared/apps";
 
 export const router = new Router();
 
@@ -92,4 +93,13 @@ router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
   if (!back) return { token, redirect: null };
   const sep = back.includes("?") ? "&" : "?";
   return { token, redirect: `${back}${sep}token=${encodeURIComponent(token)}` };
+});
+
+// for ListenBrainz-compatible players (served at /1/); shown once, and listed with the connected applications
+router.post<ListenToken>("/api/apps/listen-token", async (c) => {
+  const u = confirmed(need(c));
+  await throttle(`listen-token:${u.id}`, 10, 86_400, "You can create up to 10 tokens a day.");
+  const token = crypto.randomUUID();
+  await createSession(token, (await repo.appIdByKey("listenbrainz"))!, u.id);
+  return { token };
 });

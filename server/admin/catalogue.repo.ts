@@ -32,6 +32,7 @@ import {
   nowPlaying,
   obsessions,
   playlistTracks,
+  recordingMbids,
   scrobbles,
   shouts,
   similarArtists,
@@ -312,6 +313,7 @@ async function mergeTrackTx(tx: Tx, src: number, dst: number): Promise<void> {
   await tx.delete(albumTracks).where(eq(albumTracks.trackId, src));
 
   await tx.update(playlistTracks).set({ trackId: dst }).where(eq(playlistTracks.trackId, src));
+  await tx.update(recordingMbids).set({ trackId: dst }).where(eq(recordingMbids.trackId, src));
   await tx.update(obsessions).set({ trackId: dst }).where(eq(obsessions.trackId, src));
   await tx.update(nowPlaying).set({ trackId: dst }).where(eq(nowPlaying.trackId, src));
   await moveItemRefsTx(tx, "track", src, dst);
