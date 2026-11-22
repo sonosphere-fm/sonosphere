@@ -79,7 +79,7 @@ function Banner({ d }: { d: HomeData | null }) {
           <h1>Track what you love.</h1>
           <p>Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
           <div className="row">
-            <Button kind="btn invert" href="/join">Join free</Button>
+            <Button kind="btn inverse" href="/join">Join free</Button>
             <Button kind="btn outline-invert" href="/login">Log in</Button>
           </div>
           {d && d.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(d.stats.users))}+ users scrobbling on Sonosphere</p>}

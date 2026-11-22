@@ -160,7 +160,7 @@ const searchClose = "order-3 w-10 ml-1.5 bg-transparent text-white opacity-80 ho
 const searchGo = "order-2 w-11 bg-site-sun text-site-on-sun hover:bg-site-sun-dark focus-visible:bg-site-sun-dark";
 
 const navSearch = "inline-flex items-center justify-center size-10 p-0 text-white text-[19px] rounded-[50%] hover:bg-site-bar-hover";
-const menuToggle = "menu-toggle flex items-center gap-2 size-[38px] min-w-0 p-0 ml-1.5 border-none bg-transparent "
+const menuToggle = "menu-toggle flex items-center gap-2 size-[38px] min-w-0 p-0 ml-1.5 rounded-[50%] border-none bg-transparent "
   + "text-white hover:bg-site-bar-hover aria-expanded:bg-site-bar-hover "
   + "focus-visible:outline-none focus-visible:bg-[rgba(255,255,255,.12)]";
 

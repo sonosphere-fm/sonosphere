@@ -115,7 +115,9 @@ button { cursor: pointer; }
 .native-input { border: 1px solid var(--edge); background: var(--card); padding: 8px 10px; border-radius: 0; max-width: 100%; }
 .native-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
 input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
-input[type="file"] { border: 1px dashed var(--edge); background: var(--panel); }
+input[type="file"] { width: 100%; padding: 6px; background: var(--card); cursor: pointer; }
+input[type="file"]::file-selector-button { height: 32px; margin-right: 12px; padding: 0 16px; border: 0; background: var(--fill); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+input[type="file"]::file-selector-button:hover { background: var(--fill-hover); }
 .select { padding: 6px 8px; font-weight: 500; }
 .form { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
 .form > label, .form .row > label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 14px; width: 100%; }
@@ -231,7 +233,7 @@ a.bar:hover > span { background: #f6c6c2; }
 .astryx-button[data-variant="primary"]:hover { background-color: var(--accent-dark); }
 .astryx-button[data-variant="secondary"]:hover, .astryx-button[data-variant="destructive"]:hover { background-color: var(--ink); color: var(--bg); }
 .astryx-button.love.on { border-color: var(--accent); color: var(--link); }
-.astryx-button.invert { background: var(--card); color: var(--link); border: 2px solid #fff; } .astryx-button.invert:hover { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.astryx-button.inverse { background: var(--card); color: var(--link); border: 2px solid #fff; } .astryx-button.inverse:hover { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .astryx-button.outline-invert { background: transparent; color: #fff; border: 2px solid #fff; } .astryx-button.outline-invert:hover { background: var(--card); color: var(--link); }
 .astryx-text-input, .astryx-text-area { border: 1px solid var(--edge); background: var(--card); border-radius: 0; box-shadow: none; }
 .astryx-text-input:focus-within, .astryx-text-area:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
@@ -243,7 +245,7 @@ a.bar:hover > span { background: #f6c6c2; }
 .astryx-selector:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
 .astryx-field-label { font-family: inherit; }
 .astryx-button span { color: inherit; }
-.astryx-button[data-variant="primary"]:not(.invert):not(.outline-invert), .astryx-button[data-variant="primary"]:not(.invert):not(.outline-invert):hover { color: var(--on-accent); }
+.astryx-button[data-variant="primary"]:not(.inverse):not(.outline-invert), .astryx-button[data-variant="primary"]:not(.inverse):not(.outline-invert):hover { color: var(--on-accent); }
 .astryx-button.outline-invert.outline-invert { color: #fff; } .astryx-button.outline-invert.outline-invert:hover { color: var(--link); }
 .astryx-button.astryx-button:disabled:not(.bare):not([aria-busy="true"]), .astryx-button.astryx-button[aria-disabled="true"]:not(.bare):not([aria-busy="true"]) { background: var(--fill); border-color: var(--fill); color: var(--muted); cursor: default; }
 [role="dialog"] :is(h1, h2, h3):focus { outline: none; }
@@ -346,8 +348,8 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 .banner { background: var(--black); border-top: 0; }
 .banner .banner-stats, .banner-chart span { color: var(--edge); }
 .banner-chart { background: var(--accent-dark); } .banner-chart b { color: var(--link); }
-.astryx-button.invert { background: var(--accent); border-color: var(--accent); } .astryx-button.invert.invert { color: var(--on-accent); }
-.astryx-button.invert.invert:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: var(--on-accent); }
+.astryx-button.inverse { background: var(--accent); border-color: var(--accent); } .astryx-button.inverse.inverse { color: var(--on-accent); }
+.astryx-button.inverse.inverse:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: var(--on-accent); }
 .astryx-button.outline-invert.outline-invert:hover { color: var(--ink); }
 
 .section-head { border-bottom: 0; padding-bottom: 0; margin-bottom: 14px; }

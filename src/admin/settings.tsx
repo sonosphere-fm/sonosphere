@@ -9,7 +9,7 @@ import { ManageLabelDefinitions } from "./user-labels";
 const PAGE = "flex flex-col gap-8 max-w-[640px] [&>.section]:mb-0";
 const FORM = cx(
   "form [&_.section]:mb-[18px] [&>.section:last-of-type]:mb-0 [&>.section>p:last-child]:mb-0",
-  "[&_input[type=number]]:max-w-[140px]",
+  "[&_input[type=number]]:max-w-[140px] [&_.field-block]:mb-4 [&_.field-block+p]:-mt-2",
 );
 
 export function SiteSettings() {
@@ -70,8 +70,8 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
           </label>
         </Section>
         <Section title="Announcement banner">
-          <label>
-            Message
+          <label className="field-block">
+            <span className="field-label">Message</span>
             <Textarea
               rows={2}
               value={f.announcement}
@@ -80,8 +80,8 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
               placeholder="Leave empty for no banner"
             />
           </label>
-          <label>
-            Style
+          <label className="field-block">
+            <span className="field-label">Style</span>
             <Select
               label="Style"
               value={f.announcementTone}
@@ -97,8 +97,8 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
           )}
         </Section>
         <Section title="Wall posts">
-          <label>
-            Longest wall post, in characters
+          <label className="field-block">
+            <span className="field-label">Longest wall post, in characters</span>
             <Input
               type="number"
               min={50}
