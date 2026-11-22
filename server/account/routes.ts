@@ -6,6 +6,8 @@ import { confirmed, need, poster } from "../guards";
 import { changeUsername, usernameStatus } from "./usernames";
 import type { UsernameStatus } from "../../shared/account";
 import { profileLinks } from "../../shared/profile-links";
+import { isUsernameFont } from "../../shared/username-fonts";
+import { profileColors } from "./profile-accent";
 import { bad, fail, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
 import { clearActAsCookie } from "../auth/session";
 import { isAdmin } from "../site/roles";
@@ -39,6 +41,11 @@ router.post<MeResponse>("/api/me/username/undo", async (c) => {
 router.patch<ProfileSaved>("/api/me", async (c) => {
   const u = need(c);
   const b = c.body;
+  const usernameFont = b.usernameFont === undefined ? u.usernameFont : b.usernameFont;
+  const profileAccent = b.profileAccent === undefined ? u.profileAccent : b.profileAccent;
+  const profileAccentEnd = b.profileAccentEnd === undefined ? u.profileAccentEnd : b.profileAccentEnd;
+  if (!isUsernameFont(usernameFont)) return bad("Choose a username font from the list");
+  const colors = profileColors(profileAccent, profileAccentEnd);
   const website = clean(b.website ?? u.website, 200);
   const links =
     b.links === undefined
@@ -71,7 +78,10 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     about !== u.about ||
     country !== u.country ||
     website !== u.website ||
-    links !== u.profileLinks;
+    links !== u.profileLinks ||
+    usernameFont !== u.usernameFont ||
+    profileAccent !== u.profileAccent ||
+    profileAccentEnd !== u.profileAccentEnd;
   if (publicChanged) confirmed(u);
 
   const dmPolicy =
@@ -93,6 +103,8 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   const theme =
     b.theme === undefined ? undefined : (oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme"));
   await repo.updateProfile(u.id, {
+    usernameFont,
+    ...colors,
     realname,
     pronouns,
     about,

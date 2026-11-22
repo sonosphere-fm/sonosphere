@@ -268,6 +268,7 @@ export async function neighbourRows(userId: number, limit: number) {
       country: users.country,
       image: users.imageId,
       match: userNeighbours.score,
+      ...appearanceCols,
     })
     .from(userNeighbours)
     .innerJoin(users, eq(users.id, userNeighbours.neighbourId))
@@ -450,3 +451,4 @@ export async function getMeta(key: string): Promise<string | null> {
 export async function saveMeta(key: string, value: string) {
   await db.insert(meta).values({ key, value }).onConflictDoUpdate({ target: meta.key, set: { value } });
 }
+import { appearanceCols } from "../users/appearance";

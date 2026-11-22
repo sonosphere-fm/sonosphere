@@ -10,10 +10,12 @@ import { clearActAsCookie, sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
 import { storedProfileLinks } from "../../shared/profile-links";
 import { USERNAME } from "../account/username-policy";
+import { userAppearance } from "../users/appearance";
 export { USERNAME } from "../account/username-policy";
 
 export async function me(u: User, actor?: User | null): Promise<Me> {
   return {
+    ...userAppearance(u),
     id: u.id,
     username: u.username,
     email: u.email,

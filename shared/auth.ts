@@ -1,9 +1,10 @@
 import type { Role } from "./site";
 import type { ProfileLink } from "./profile-links";
+import type { UserAppearance } from "./username-fonts";
 
 export type DmCounts = { unread: number; requests: number };
 
-export type Me = {
+export type Me = UserAppearance & {
   id: number;
   username: string;
   email: string;

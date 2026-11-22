@@ -27,7 +27,13 @@ export type Member = typeof dmGroupMembers.$inferSelect;
 export type GroupMessage = typeof dmGroupMessages.$inferSelect & { name: string };
 export type GroupRemoved = { id: number; groupId: number };
 
-const personColumns = { id: users.id, username: users.username, realname: users.realname, image: users.imageId };
+const personColumns = {
+  ...appearanceCols,
+  id: users.id,
+  username: users.username,
+  realname: users.realname,
+  image: users.imageId,
+};
 const messageColumns = { ...getTableColumns(dmGroupMessages), name: users.username };
 const membership = (groupId: number, userId: number) =>
   and(eq(dmGroupMembers.groupId, groupId), eq(dmGroupMembers.userId, userId));
@@ -360,3 +366,4 @@ export async function reportedMessageTx(conn: Conn, id: number): Promise<Reporte
     link: null,
   };
 }
+import { appearanceCols } from "../users/appearance";

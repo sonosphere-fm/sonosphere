@@ -169,7 +169,7 @@ export function Shoutbox({
                   <div className="grow">
                     <div>
                       <Link className="strong" to={userUrl(s.author.username)}>
-                        {s.author.username}
+                        <Username user={s.author} />
                       </Link>{" "}
                       <UserLabels name={s.author.username} />{" "}
                       <span className="muted small" title={dateTime(s.createdAt)}>
@@ -205,3 +205,4 @@ export function Shoutbox({
     </div>
   );
 }
+import { Username } from "./username";

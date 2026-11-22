@@ -2,6 +2,9 @@ import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, ty
 import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
+import { UsernameFontSettings } from "../ui/username-font-settings";
+import { ProfileAccentSettings } from "../ui/profile-accent-settings";
+import { Username } from "../ui/username";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ago,
@@ -103,6 +106,9 @@ function ProfileSettings() {
     website: me!.website,
     about: me!.about,
     links: me!.links ?? [],
+    usernameFont: me!.usernameFont ?? "default",
+    profileAccent: me!.profileAccent ?? null,
+    profileAccentEnd: me!.profileAccentEnd ?? null,
   });
   const set = (k: "realname" | "pronouns" | "country" | "website") => (e: ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.value });
@@ -124,6 +130,7 @@ function ProfileSettings() {
     act.run(async () => {
       const r = await api<ProfileSaved>("/me", { method: "PATCH", body: f });
       setMe(r.user);
+      invalidateAll();
       return "Profile saved.";
     });
   };
@@ -173,6 +180,16 @@ function ProfileSettings() {
       <BannerSettings />
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
+          <UsernameFontSettings
+            value={f.usernameFont}
+            onChange={(usernameFont) => setF((f) => ({ ...f, usernameFont }))}
+            disabled={act.busy}
+          />
+          <ProfileAccentSettings
+            value={f}
+            onChange={(appearance) => setF((f) => ({ ...f, ...appearance }))}
+            disabled={act.busy}
+          />
           <label>
             Display name
             <Input value={f.realname} onChange={set("realname")} maxLength={60} />
@@ -1251,7 +1268,7 @@ function ConfirmField({ value, onChange }: { value: string; onChange: (v: string
   }
   return (
     <label>
-      Type your username ({me!.username}) to confirm
+      Type your username (<Username user={me!} />) to confirm
       <Input value={value} onChange={(e) => onChange(e.target.value)} required autoComplete="off" />
     </label>
   );
@@ -1320,7 +1337,7 @@ function DataSettings() {
           </p>
           {me?.impersonating ? (
             <p className="muted small">
-              You are acting as {me.username}; no password is needed. This deletion is logged in the audit log.
+              You are acting as <Username user={me} />; no password is needed. This deletion is logged in the audit log.
             </p>
           ) : (
             <ConfirmField value={pw} onChange={setPw} />

@@ -429,7 +429,7 @@ export function UserList<U extends PublicUser & { playcount?: number }>({
           <div className="grow">
             <span>
               <Link className="strong" to={userUrl(u.username)}>
-                {u.username}
+                <Username user={u} />
               </Link>
               <UserLabels name={u.username} />
             </span>
@@ -481,3 +481,4 @@ export function FollowButton({
     </Button>
   );
 }
+import { Username } from "./username";

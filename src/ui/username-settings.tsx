@@ -70,8 +70,8 @@ export function UsernameSettings() {
             {status.undo && status.undo.expiresAt > at && (
               <div className="border-t border-site-line pt-4 mt-2">
                 <p className="muted small">
-                  Restore {status.undo.username} until {dateTime(status.undo.expiresAt)}. Undo starts a new 7-day
-                  cooldown.
+                  Restore <Username name={status.undo.username} font={me?.usernameFont} /> until{" "}
+                  {dateTime(status.undo.expiresAt)}. Undo starts a new 7-day cooldown.
                 </p>
                 <Button type="button" kind="btn ghost" loading={action.busy} onClick={() => change(true)}>
                   Undo username change
@@ -84,3 +84,4 @@ export function UsernameSettings() {
     </Section>
   );
 }
+import { Username } from "./username";

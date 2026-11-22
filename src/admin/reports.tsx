@@ -228,12 +228,24 @@ export function Reports() {
                       </blockquote>
                       <p className="small">
                         {AUTHOR_PREFIX[r.type] ?? "Written by "}
-                        {r.author ? <Link to={adminUrl(r.author)}>{r.author}</Link> : "a deleted user"}
+                        {r.author ? (
+                          <Link to={adminUrl(r.author)}>
+                            <Username name={r.author} />
+                          </Link>
+                        ) : (
+                          "a deleted user"
+                        )}
                         {authorState}
                         {r.authorMuted && <span className="muted"> (messaging off)</span>}
                         {r.authorStaff && <span className="muted"> (staff)</span>}
                         {" · "}reported by{" "}
-                        {r.reporter ? <Link to={adminUrl(r.reporter)}>{r.reporter}</Link> : "a deleted user"}{" "}
+                        {r.reporter ? (
+                          <Link to={adminUrl(r.reporter)}>
+                            <Username name={r.reporter} />
+                          </Link>
+                        ) : (
+                          "a deleted user"
+                        )}{" "}
                         <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>
                         {r.link && (
                           <>
@@ -289,3 +301,4 @@ export function Reports() {
     </>
   );
 }
+import { Username } from "../ui/username";

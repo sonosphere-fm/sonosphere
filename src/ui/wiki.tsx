@@ -101,7 +101,13 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
                   {current && (
                     <p className="muted small">
                       Version {current.version} · edited by{" "}
-                      {current.author ? <Link to={userUrl(current.author)}>{current.author}</Link> : "a deleted user"}{" "}
+                      {current.author ? (
+                        <Link to={userUrl(current.author)}>
+                          <Username name={current.author} />
+                        </Link>
+                      ) : (
+                        "a deleted user"
+                      )}{" "}
                       on {date(current.createdAt)}
                       {current.author !== me?.username && (
                         <>
@@ -135,7 +141,7 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
                         Version {v.version}
                       </Button>{" "}
                       <span className="muted small">
-                        {v.author || "deleted"} · {date(v.createdAt)}
+                        {v.author ? <Username name={v.author} /> : "deleted"} · {date(v.createdAt)}
                       </span>
                     </li>
                   ))}
@@ -150,3 +156,4 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
     </Async>
   );
 }
+import { Username } from "./username";

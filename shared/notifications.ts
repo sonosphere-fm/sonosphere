@@ -4,7 +4,7 @@ export type Notification = {
   data: Record<string, unknown>;
   read: boolean;
   createdAt: number;
-  actor: { username: string | null; image: string | null };
+  actor: UserAppearance & { username: string | null; image: string | null };
 };
 export type Notifications = { items: Notification[] };
 export const EMAIL_KINDS = [
@@ -21,3 +21,4 @@ export const EMAIL_MODES = [
   ["off", "Never"],
 ] as const;
 export type NotificationsRead = { ok: true };
+import type { UserAppearance } from "./username-fonts";

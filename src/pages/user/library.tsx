@@ -1,4 +1,5 @@
 import { DatePicker } from "../../datepicker";
+import { Username } from "../../ui/username";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Input, Select, Modal } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -288,7 +289,12 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   };
 
   const list = (d: UserRecent | UserTop) => {
-    if ("hidden" in d) return <Empty>{name} keeps their listening history private.</Empty>;
+    if ("hidden" in d)
+      return (
+        <Empty>
+          <Username name={name} /> keeps their listening history private.
+        </Empty>
+      );
     if (kind === "scrobbles") {
       return (
         <TrackList
@@ -377,7 +383,7 @@ export function LibraryArtist({ name, artist }: { name: string; artist: string }
           </div>
           {d.counts.playcount === 0 ? (
             <Empty>
-              {name} hasn't scrobbled {d.artist.name} yet.
+              <Username name={name} /> hasn't scrobbled {d.artist.name} yet.
             </Empty>
           ) : (
             <>

@@ -1,5 +1,6 @@
 import { Ico } from "../../icons";
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { Username } from "../../ui/username";
 import { Button, Input } from "../../kit";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ago, albumUrl, api, artistUrl, date, plural, qs, tagUrl, trackUrl, useApi, useParam } from "../../lib";
@@ -37,7 +38,7 @@ function LastTrack({ u }: { u: Person }) {
   );
 }
 
-export function People({ path, empty }: { path: string; empty: string }) {
+export function People({ path, empty }: { path: string; empty: ReactNode }) {
   const q = useApi<PeopleList>(path);
   return (
     <Async q={q}>
@@ -62,7 +63,8 @@ export function Neighbours({ name }: { name: string }) {
   return (
     <>
       <p className="muted">
-        Soundalikes are listeners whose libraries overlap most with {name}'s, recalculated from everyone's scrobbles.
+        Soundalikes are listeners whose libraries overlap most with <Username name={name} />
+        's, recalculated from everyone's scrobbles.
       </p>
       <Async q={q}>
         {(d) =>
@@ -208,7 +210,7 @@ export function UserTags({ name }: { name: string }) {
         <>
           <div className="toolbar">
             <h2>
-              Tagged “<Link to={tagUrl(tag)}>{tag}</Link>” by {name}
+              Tagged “<Link to={tagUrl(tag)}>{tag}</Link>” by <Username name={name} />
             </h2>
             <Button kind="link" onClick={() => setTag("")}>
               <Ico.Left /> All tags
@@ -228,7 +230,12 @@ export function UserTags({ name }: { name: string }) {
         </>
       );
     }
-    if (!d.items.length) return <Empty>{name} hasn't tagged anything yet.</Empty>;
+    if (!d.items.length)
+      return (
+        <Empty>
+          <Username name={name} /> hasn't tagged anything yet.
+        </Empty>
+      );
     return (
       <div className="chips">
         {d.items.filter(isTagCount).map((t) => (

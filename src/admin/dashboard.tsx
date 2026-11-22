@@ -74,7 +74,7 @@ export function Dashboard() {
                       <li key={u.id} className={PERSON}>
                         <Avatar user={u} size={32} />
                         <Link className="grow strong" to={adminUrl(u.username)}>
-                          {u.username}
+                          <Username user={u} />
                         </Link>
                         <span className="muted small">{ago(u.registeredAt)}</span>
                       </li>
@@ -111,3 +111,4 @@ export function Dashboard() {
     </Async>
   );
 }
+import { Username } from "../ui/username";

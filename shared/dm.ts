@@ -1,5 +1,7 @@
+import type { UserAppearance } from "./username-fonts";
+
 export type DmPolicy = "everyone" | "requests" | "following" | "nobody";
-export type DmUser = { id: number; username: string; realname: string; image: string | null };
+export type DmUser = UserAppearance & { id: number; username: string; realname: string; image: string | null };
 export type DmMessage = { id: number; from: number; body: string; at: number; deleted: boolean };
 export type DmCounts = { unread: number; requests: number };
 

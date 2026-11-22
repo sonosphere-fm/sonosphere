@@ -77,8 +77,12 @@ export function ImpersonationBanner() {
     <div className="site-banner impersonation" role="status">
       <div className="wrap site-banner-in">
         <span>
-          Acting as <strong>{me.username}</strong> from {me.impersonating.by}'s account.{" "}
-          {error && <span role="alert">{error}</span>}
+          Acting as{" "}
+          <strong>
+            <Username user={me} />
+          </strong>{" "}
+          from <Username name={me.impersonating.by} />
+          's account. {error && <span role="alert">{error}</span>}
         </span>
         <button type="button" className="banner-link" disabled={busy} onClick={stop}>
           {busy ? "Returning…" : "Return to your account"}
@@ -147,3 +151,4 @@ export function VerifyBanner() {
     </div>
   );
 }
+import { Username } from "./ui/username";

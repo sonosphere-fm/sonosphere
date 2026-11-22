@@ -160,7 +160,7 @@ export function Users() {
                             <Avatar user={u} size={28} />
                             <span>
                               <Link className="strong" to={adminUrl(u.username)}>
-                                {u.username}
+                                <Username user={u} />
                               </Link>
                               {(u.realname || u.email) && (
                                 <span className="muted small">
@@ -230,8 +230,8 @@ export function UserDetail() {
               action: "Act as user",
               body: (
                 <p>
-                  You will browse as {u.username} until you return to your account. Changes affect their account.
-                  Starting and stopping this session, and clearing their scrobbles, are logged.
+                  You will browse as <Username name={u.username} /> until you return to your account. Changes affect
+                  their account. Starting and stopping this session, and clearing their scrobbles, are logged.
                 </p>
               ),
               run: (note) =>
@@ -276,7 +276,11 @@ export function UserDetail() {
             ask({
               title: "Turn messaging back on",
               action: "Allow messaging",
-              body: <p>{u.username} will be able to send direct messages again, within the usual limits.</p>,
+              body: (
+                <p>
+                  <Username name={u.username} /> will be able to send direct messages again, within the usual limits.
+                </p>
+              ),
               run: (note) => post("dm-mute", { muted: false, note }),
             });
           const muteMessaging = () =>
@@ -286,8 +290,8 @@ export function UserDetail() {
               danger: true,
               body: (
                 <p>
-                  {u.username} won't be able to send direct messages. They can still read their conversations and use
-                  the rest of the site.
+                  <Username name={u.username} /> won't be able to send direct messages. They can still read their
+                  conversations and use the rest of the site.
                 </p>
               ),
               run: (note) => post("dm-mute", { muted: true, note }),
@@ -296,7 +300,11 @@ export function UserDetail() {
             ask({
               title: "Lift suspension",
               action: "Lift suspension",
-              body: <p>{u.username} will be able to post on walls, journals and wiki edits again.</p>,
+              body: (
+                <p>
+                  <Username name={u.username} /> will be able to post on walls, journals and wiki edits again.
+                </p>
+              ),
               run: (note) => post("suspend", { suspended: false, note }),
             });
           const suspend = () =>
@@ -305,7 +313,10 @@ export function UserDetail() {
               action: "Suspend",
               danger: true,
               body: (
-                <p>{u.username} can keep listening and scrobbling but can't post on walls, journals or wiki edits.</p>
+                <p>
+                  <Username name={u.username} /> can keep listening and scrobbling but can't post on walls, journals or
+                  wiki edits.
+                </p>
               ),
               run: (note) => post("suspend", { suspended: true, note }),
             });
@@ -313,7 +324,11 @@ export function UserDetail() {
             ask({
               title: "Lift ban",
               action: "Unban",
-              body: <p>{u.username} will be able to log in again and their profile becomes visible.</p>,
+              body: (
+                <p>
+                  <Username name={u.username} /> will be able to log in again and their profile becomes visible.
+                </p>
+              ),
               run: (note) => post("ban", { banned: false, note }),
             });
           const ban = () =>
@@ -336,8 +351,8 @@ export function UserDetail() {
               action: "Confirm email",
               body: (
                 <p>
-                  {u.username} gets full access (posting, messaging, following) without using the link, and won't be
-                  removed as unconfirmed. Only do this if you know the address is theirs.
+                  <Username name={u.username} /> gets full access (posting, messaging, following) without using the
+                  link, and won't be removed as unconfirmed. Only do this if you know the address is theirs.
                 </p>
               ),
               run: (note) => post("verify", { note }),
@@ -346,7 +361,11 @@ export function UserDetail() {
             ask({
               title: "End probation",
               action: "End probation",
-              body: <p>{u.username} gets the usual limits from now on.</p>,
+              body: (
+                <p>
+                  <Username name={u.username} /> gets the usual limits from now on.
+                </p>
+              ),
               run: (note) => post("probation", { probation: false, note }),
             });
           const holdProbation = () =>
@@ -355,8 +374,8 @@ export function UserDetail() {
               action: "Put on probation",
               body: (
                 <p>
-                  {u.username} gets the tighter limits again and stays on probation until staff end it. They aren't
-                  told.
+                  <Username name={u.username} /> gets the tighter limits again and stays on probation until staff end
+                  it. They aren't told.
                 </p>
               ),
               run: (note) => post("probation", { probation: true, note }),
@@ -367,8 +386,9 @@ export function UserDetail() {
               action: "Revoke sessions",
               body: (
                 <p>
-                  End {u.username}'s {plural(d.counts.sessions, "web session")} and{" "}
-                  {plural(d.counts.apiSessions, "app session")}. They can log in again.
+                  End <Username name={u.username} />
+                  's {plural(d.counts.sessions, "web session")} and {plural(d.counts.apiSessions, "app session")}. They
+                  can log in again.
                 </p>
               ),
               run: (note) => post("sessions", { note }).then(() => {}),
@@ -406,7 +426,7 @@ export function UserDetail() {
                 <Avatar user={u} size={64} />
                 <div className="grow">
                   <h2 className={USER_HEAD_TITLE}>
-                    {u.username} <StatusBadges u={{ ...u, probation: d.trust.probation }} />
+                    <Username name={u.username} /> <StatusBadges u={{ ...u, probation: d.trust.probation }} />
                   </h2>
                   <p className={`muted ${USER_HEAD_SUB}`}>
                     {[u.realname, u.country].filter(Boolean).join(" · ") || "No name or country set"}
@@ -775,13 +795,21 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
         if (show === "reporter" && r.reporter)
           who = (
             <>
-              by <Link to={adminUrl(r.reporter)}>{r.reporter}</Link> ·{" "}
+              by{" "}
+              <Link to={adminUrl(r.reporter)}>
+                <Username name={r.reporter} />
+              </Link>{" "}
+              ·{" "}
             </>
           );
         if (show === "author" && r.author)
           who = (
             <>
-              against <Link to={adminUrl(r.author)}>{r.author}</Link> ·{" "}
+              against{" "}
+              <Link to={adminUrl(r.author)}>
+                <Username name={r.author} />
+              </Link>{" "}
+              ·{" "}
             </>
           );
         const state =
@@ -809,3 +837,4 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
   );
 }
 import { ManageUsernames } from "./usernames";
+import { Username } from "../ui/username";

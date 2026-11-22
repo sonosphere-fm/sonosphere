@@ -113,6 +113,7 @@ router.get<StaffUserList>("/api/admin/users", async (c) => {
     offset: pg.offset,
   });
   const items = rows.map((u) => ({
+    ...userAppearance(u),
     id: u.id,
     username: u.username,
     realname: u.realname,
@@ -146,6 +147,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
   );
   return {
     user: {
+      ...userAppearance(u),
       id,
       username: u.username,
       realname: u.realname,
@@ -279,3 +281,4 @@ router.delete<Ok>("/api/admin/notes/:id", async (c) => {
   await audit(me, userAction("note.delete", { id: n.userId, username: n.username }, n.body.slice(0, 200)));
   return { ok: true };
 });
+import { userAppearance } from "../users/appearance";
