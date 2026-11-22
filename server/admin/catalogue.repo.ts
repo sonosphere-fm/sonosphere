@@ -1,7 +1,7 @@
 // A merge moves everything that points at the source over to the target, dropping the source's copy where the
 // target already has the same row. The per-listener tallies (user_artists etc.) are kept in step by the triggers
 // on `scrobbles`, so they are not touched here.
-import { and, asc, count, countDistinct, desc, eq, inArray, ne, notExists, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, countDistinct, desc, eq, inArray, isNull, ne, notExists, notInArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn, type Tx } from "../db/client";
 import {
@@ -9,7 +9,7 @@ import {
   taggings, tags, tracks, userAlbums, userArtists, userTracks, wikiLocks, wikis,
 } from "../db/schema";
 import type { AuditEntry } from "../site/audit";
-import type { AdminTag, CatalogueItem, CatalogueKind, DuplicateArtist, OrphanItem } from "../../shared/admin-content";
+import type { AdminTag, CatalogueItem, TracklistTrack, CatalogueKind, DuplicateArtist, OrphanItem } from "../../shared/admin-content";
 import { auditTx } from "../site/audit";
 
 export type Kind = CatalogueKind;
@@ -282,6 +282,34 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
   }).where(eq(artists.id, dst));
   await tx.delete(artists).where(eq(artists.id, src));
   return { merged, moved };
+}
+
+export const tracklist = (albumId: number): Promise<TracklistTrack[]> =>
+  db.select({ id: tracks.id, name: tracks.title, artist: artists.name })
+    .from(albumTracks)
+    .innerJoin(tracks, eq(tracks.id, albumTracks.trackId))
+    .innerJoin(artists, eq(artists.id, tracks.artistId))
+    .where(eq(albumTracks.albumId, albumId))
+    .orderBy(asc(albumTracks.position));
+
+export async function existingTracks(ids: number[]): Promise<number> {
+  if (!ids.length) return 0;
+  return total(db.select({ c: count() }).from(tracks).where(inArray(tracks.id, ids)));
+}
+
+// Tracks taken off no longer point at the album; the list is locked so scrobbles can't add them back.
+export async function setTracklist(albumId: number, trackIds: number[], actor: Actor, entry: AuditEntry): Promise<void> {
+  await transact(async tx => {
+    await tx.delete(albumTracks).where(eq(albumTracks.albumId, albumId));
+    if (trackIds.length) {
+      await tx.insert(albumTracks).values(trackIds.map((trackId, i) => ({ albumId, trackId, position: i + 1 })));
+      await tx.update(tracks).set({ albumId }).where(and(inArray(tracks.id, trackIds), isNull(tracks.albumId)));
+    }
+    const removed = trackIds.length ? notInArray(tracks.id, trackIds) : undefined;
+    await tx.update(tracks).set({ albumId: null }).where(and(eq(tracks.albumId, albumId), removed));
+    await tx.update(albums).set({ tracklistLocked: true }).where(eq(albums.id, albumId));
+    await auditTx(tx, actor, entry);
+  });
 }
 
 type MergeDetail = { merged?: number; moved?: number };

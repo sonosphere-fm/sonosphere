@@ -159,6 +159,8 @@ export const albums = pgTable("albums", {
 	mbid: text(),
 	// its MusicBrainz primary type in lower case ("album", "single", "ep"), empty when it has none
 	releaseType: text("release_type"),
+	// set once an admin edits the track list, so scrobbles no longer add to it
+	tracklistLocked: boolean("tracklist_locked").default(false).notNull(),
 	metaAt: integer("meta_at"),
 	coverAt: integer("cover_at"),
 	spAt: integer("sp_at"),

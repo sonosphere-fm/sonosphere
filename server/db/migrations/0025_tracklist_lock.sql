@@ -1,0 +1,1 @@
+ALTER TABLE "albums" ADD COLUMN "tracklist_locked" boolean DEFAULT false NOT NULL;

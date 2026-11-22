@@ -6,7 +6,7 @@ import { audit } from "../site/audit";
 import { clean, like, norm } from "../util";
 import { idList, note, paging } from "./common";
 import * as repo from "./catalogue.repo";
-import type { AdminTagList, CatalogueDuplicates, CatalogueMerged, CatalogueSearch, DuplicateArtist, Ok, OrphanList, OrphansDeleted, TagDeleted } from "../../shared/admin-content";
+import type { AdminTagList, Tracklist, CatalogueDuplicates, CatalogueMerged, CatalogueSearch, DuplicateArtist, Ok, OrphanList, OrphansDeleted, TagDeleted } from "../../shared/admin-content";
 
 export const router = new Router({ jsonOnly: true });
 
@@ -96,6 +96,33 @@ router.post<Ok>("/api/admin/catalogue/rename", async c => {
     label: `${repo.describe(r)} → ${name}`,
     note: note(c),
     data: { from: r.label, to: name },
+  });
+  return { ok: true };
+});
+
+const MAX_TRACKS = 300;
+
+router.get<Tracklist>("/api/admin/catalogue/tracklist", async c => {
+  adminOnly(c);
+  const a = await item("album", Number(c.q.get("id")));
+  return { tracks: await repo.tracklist(a.id) };
+});
+
+router.post<Ok>("/api/admin/catalogue/tracklist", async c => {
+  const me = adminOnly(c);
+  const a = await item("album", Number(c.body.id));
+  const ids = idList(c.body.tracks, MAX_TRACKS + 1);
+  if (ids.length > MAX_TRACKS) bad(`An album can list at most ${MAX_TRACKS} tracks`);
+  if (new Set(ids).size !== ids.length) bad("A track is listed twice");
+  if ((await repo.existingTracks(ids)) !== ids.length) bad("A track no longer exists. Reload and try again.");
+  const before = await repo.tracklist(a.id);
+  await repo.setTracklist(a.id, ids, me, {
+    action: "catalogue.tracklist",
+    targetType: "album",
+    targetId: a.id,
+    label: `${repo.describe(a)} (${before.length} → ${ids.length} tracks)`,
+    note: note(c),
+    data: { from: before.map(t => t.id), to: ids },
   });
   return { ok: true };
 });

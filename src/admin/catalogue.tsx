@@ -5,7 +5,8 @@ import { ago, albumUrl, api, artistUrl, num, plural, qs, tagUrl, trackUrl, useAp
 import { Async, Empty, Pager } from "../ui/base";
 import { CHECK, COMPACT_LIST, FILTERBAR, PICKED_ROW, SCROLL, SEARCH, TABLE } from "./common";
 import { TOOLBAR, WIDE_SEARCH, useQuery, useConfirm, useAction2, useFlash } from "./common";
-import type { AdminTagList, CatalogueDuplicates, CatalogueItem, CatalogueMerged, CatalogueSearch, Ok, OrphanList, OrphansDeleted, TagDeleted } from "../../shared/admin-content";
+import type { AdminTagList, CatalogueDuplicates, CatalogueItem, CatalogueMerged, CatalogueSearch, Ok, OrphanList, OrphansDeleted, TagDeleted, Tracklist, TracklistTrack } from "../../shared/admin-content";
+import { Ico } from "../icons";
 
 const KIND_LABEL: Record<string, string> = { artist: "Artists", album: "Albums", track: "Tracks" };
 
@@ -116,6 +117,7 @@ function Browse() {
   const [text, setText] = useState(term);
   const [rename, setRename] = useState<CatalogueItem | null>(null);
   const [merge, setMerge] = useState<CatalogueItem | null>(null);
+  const [editing, setEditing] = useState<CatalogueItem | null>(null);
   const flash = useFlash();
   const q = useApi<CatalogueSearch>(`/admin/catalogue/search${qs({ kind, q: term, page })}`);
   const search = (e: FormEvent) => {
@@ -132,6 +134,10 @@ function Browse() {
   };
   const merged = (msg: string) => {
     setMerge(null);
+    finished(msg);
+  };
+  const edited = (msg: string) => {
+    setEditing(null);
     finished(msg);
   };
   return (
@@ -177,6 +183,7 @@ function Browse() {
                       <td className="nowrap right">
                         <Button kind="link small" type="button" onClick={() => setRename(it)}>Rename</Button>{" "}
                         <Button kind="link small" type="button" onClick={() => setMerge(it)}>Merge into…</Button>
+                        {kind === "album" && <>{" "}<Button kind="link small" type="button" onClick={() => setEditing(it)}>Track list</Button></>}
                       </td>
                     </tr>
                   ))}
@@ -189,6 +196,7 @@ function Browse() {
       )}</Async>
       {rename && <RenameDialog kind={kind} item={rename} close={() => setRename(null)} done={renamed} />}
       {merge && <MergeDialog kind={kind} item={merge} close={() => setMerge(null)} done={merged} />}
+      {editing && <TracklistDialog item={editing} close={() => setEditing(null)} done={edited} />}
     </>
   );
 }
@@ -252,7 +260,7 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
               <SearchField value={text} onChange={setText} placeholder={`Find the ${kind} to keep`} autoFocus />
             </form>
             <Suspense fallback={<p className="muted small">Searching…</p>}>
-              <MergeResults kind={kind} term={term} fallback={item.artist} skip={item.id} onPick={setPick} />
+              <MergeResults kind={kind} term={term} fallback={item.artist} skip={[item.id]} pickLabel="Keep this" onPick={setPick} />
             </Suspense>
           </>
         ) : (
@@ -273,16 +281,96 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
   );
 }
 
-type MergeResultsProps = { kind: string; term: string; fallback: string | null; skip: number; onPick: (it: CatalogueItem) => void };
+type TracklistProps = { item: CatalogueItem; close: () => void; done: (msg: string) => void };
+
+function TracklistDialog({ item, close, done }: TracklistProps) {
+  return (
+    <Modal title="Edit track list" onClose={close}>
+      <Suspense fallback={<p className="muted small">Loading…</p>}>
+        <TracklistEditor item={item} close={close} done={done} />
+      </Suspense>
+    </Modal>
+  );
+}
+
+const TRACK_ROW = "flex items-center gap-2 py-1 border-b border-site-line";
+
+function TracklistEditor({ item, close, done }: TracklistProps) {
+  const q = useApi<Tracklist>(`/admin/catalogue/tracklist${qs({ id: item.id })}`);
+  return <Async q={q}>{d => <TracklistForm item={item} initial={d.tracks} close={close} done={done} />}</Async>;
+}
+
+function TracklistForm({ item, initial, close, done }: TracklistProps & { initial: TracklistTrack[] }) {
+  const [list, setList] = useState(initial);
+  const [text, setText] = useState(item.artist ?? "");
+  const [term, setTerm] = useState(item.artist ?? "");
+  const act = useAction2();
+  const ids = list.map(t => t.id);
+  const changed = ids.join() !== initial.map(t => t.id).join();
+  const move = (i: number, by: number) => {
+    const next = [...list];
+    [next[i], next[i + by]] = [next[i + by]!, next[i]!];
+    setList(next);
+  };
+  const add = (it: CatalogueItem) => setList([...list, { id: it.id, name: it.name, artist: it.artist ?? "" }]);
+  const search = (e: FormEvent) => {
+    e.preventDefault();
+    setTerm(text.trim());
+  };
+  const save = () => act.run(async () => {
+    await api<Ok>("/admin/catalogue/tracklist", { body: { id: item.id, tracks: ids } });
+    done(`Saved the track list of “${item.name}” (${plural(list.length, "track")}).`);
+  });
+  return (
+    <div className="form">
+      <p className="muted small">
+        {item.name} by {item.artist}. Once saved, scrobbles stop adding tracks to this album, so removed tracks stay off.
+      </p>
+      {list.length === 0 ? <p className="muted small">No tracks.</p> : (
+        <ol className="list-none w-full m-0 p-0 max-h-[320px] overflow-auto">
+          {list.map((t, i) => (
+            <li key={t.id} className={TRACK_ROW}>
+              <span className="muted small w-6 text-right">{i + 1}</span>
+              <span className="grow">{t.name}{t.artist !== item.artist && <span className="muted"> by {t.artist}</span>}</span>
+              <Button kind="link small" type="button" aria-label={`Move ${t.name} up`} disabled={i === 0} onClick={() => move(i, -1)}><Ico.SortUp /></Button>
+              <Button kind="link small" type="button" aria-label={`Move ${t.name} down`} disabled={i === list.length - 1} onClick={() => move(i, 1)}><Ico.SortDown /></Button>
+              <Button kind="link small" type="button" onClick={() => setList(list.filter(x => x.id !== t.id))}>Remove</Button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <form className={WIDE_SEARCH} onSubmit={search}>
+        <SearchField value={text} onChange={setText} placeholder="Find a track to add" />
+      </form>
+      <Suspense fallback={<p className="muted small">Searching…</p>}>
+        <MergeResults kind="track" term={term} fallback={item.artist} skip={ids} pickLabel="Add" onPick={add} />
+      </Suspense>
+      {act.note}
+      <div className="row">
+        <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>Save</Button>
+        <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
+type MergeResultsProps = {
+  kind: string;
+  term: string;
+  fallback: string | null;
+  skip: number[];
+  pickLabel: string;
+  onPick: (it: CatalogueItem) => void;
+};
 
 // with no other match by name, the artist's others are the likely targets (a single into its album)
-function MergeResults({ kind, term, fallback, skip, onPick }: MergeResultsProps) {
+function MergeResults({ kind, term, fallback, skip, pickLabel, onPick }: MergeResultsProps) {
   const q = useApi<CatalogueSearch>(`/admin/catalogue/search${qs({ kind, q: term, limit: 8 })}`);
   return (
     <Async q={q}>{d => {
-      const items = d.items.filter(x => x.id !== skip);
+      const items = d.items.filter(x => !skip.includes(x.id));
       if (items.length === 0 && fallback && fallback !== term) {
-        return <MergeResults kind={kind} term={fallback} fallback={null} skip={skip} onPick={onPick} />;
+        return <MergeResults kind={kind} term={fallback} fallback={null} skip={skip} pickLabel={pickLabel} onPick={onPick} />;
       }
       if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
       return (
@@ -293,7 +381,7 @@ function MergeResults({ kind, term, fallback, skip, onPick }: MergeResultsProps)
                 <b>{x.name}</b>{x.artist && <span className="muted"> by {x.artist}</span>}{" "}
                 <span className="muted small">#{x.id} · {plural(x.scrobbles, "scrobble")}</span>
               </span>
-              <Button kind="btn ghost small" type="button" onClick={() => onPick(x)}>Keep this</Button>
+              <Button kind="btn ghost small" type="button" onClick={() => onPick(x)}>{pickLabel}</Button>
             </li>
           ))}
         </ul>

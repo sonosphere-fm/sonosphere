@@ -86,7 +86,7 @@ export async function getOrCreateAlbumTx(tx: Tx, artistId: number, title: string
 
 /**
  * A known track gains the duration or album if it had none. When an album is given the track is added to its
- * track list (at `position`, or at the end).
+ * track list (at `position`, or at the end), unless an admin has locked that list.
  */
 export async function getOrCreateTrackTx(tx: Tx, artistId: number, title: string, duration = 0, albumId: number | null = null, position?: number): Promise<number> {
   const n = norm(title);
@@ -102,13 +102,17 @@ export async function getOrCreateTrackTx(tx: Tx, artistId: number, title: string
   } else {
     id = row.id;
     if (!row.duration && duration > 0) await tx.update(tracks).set({ duration: duration | 0 }).where(eq(tracks.id, id));
-    if (!row.albumId && albumId) await tx.update(tracks).set({ albumId }).where(eq(tracks.id, id));
   }
   if (!albumId) return id;
 
   const [listed] = await tx.select({ trackId: albumTracks.trackId })
     .from(albumTracks)
     .where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, id)));
+  if (!listed) {
+    const [album] = await tx.select({ locked: albums.tracklistLocked }).from(albums).where(eq(albums.id, albumId));
+    if (album?.locked) return id;
+  }
+  if (row && !row.albumId) await tx.update(tracks).set({ albumId }).where(eq(tracks.id, id));
   if (!listed) {
     let pos = position;
     if (pos === undefined) {
