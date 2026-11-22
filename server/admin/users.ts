@@ -10,6 +10,8 @@ import * as repo from "./users.repo";
 import { setProbation, standing } from "../trust/service";
 import { me } from "../auth/service";
 import { actAsCookie } from "../auth/session";
+import { changeUsername, heldUsernames, manageUsernames, usernameStatus } from "../account/usernames";
+import type { AdminUsernameStatus } from "../../shared/account";
 import type { MeResponse } from "../../shared/auth";
 import type {
   BanResult,
@@ -25,6 +27,33 @@ import type {
 } from "../../shared/admin";
 
 export const router = new Router({ jsonOnly: true });
+
+router.get<AdminUsernameStatus>("/api/admin/users/:name/username", async (c) => {
+  adminOnly(c);
+  const target = await targetUser(c.params[0]!);
+  return { ...(await usernameStatus(target.id)), held: await heldUsernames(target.id) };
+});
+
+router.post<{ username: string }>("/api/admin/users/:name/username", async (c) => {
+  const actor = adminOnly(c);
+  const target = await targetUser(c.params[0]!);
+  const updated = await changeUsername(target.id, actor, c.body.username, false, true, note(c));
+  return { username: updated.username };
+});
+
+router.post<Ok>("/api/admin/users/:name/username/release", async (c) => {
+  const actor = adminOnly(c);
+  const target = await targetUser(c.params[0]!);
+  await manageUsernames(target.id, actor, "release", note(c));
+  return { ok: true };
+});
+
+router.post<Ok>("/api/admin/users/:name/username/cooldown", async (c) => {
+  const actor = adminOnly(c);
+  const target = await targetUser(c.params[0]!);
+  await manageUsernames(target.id, actor, "cooldown", note(c));
+  return { ok: true };
+});
 
 const placeholder = (u: { email: string }) => u.email.endsWith(".invalid");
 const unconfirmed = (u: { email: string; emailVerifiedAt: number | null }) => !u.emailVerifiedAt && !placeholder(u);

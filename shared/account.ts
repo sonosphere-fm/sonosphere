@@ -24,3 +24,6 @@ export type UsernameStatus = {
   changeAfter: number;
   undo: { username: string; expiresAt: number } | null;
 };
+export type AdminUsernameStatus = UsernameStatus & {
+  held: { username: string; expiresAt: number }[];
+};
