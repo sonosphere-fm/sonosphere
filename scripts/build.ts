@@ -108,7 +108,6 @@ await Bun.write(
         `${preload.join("")}<style>${criticalFaces.map(({ face }) => face).join("")}${critical.join("")}</style>` +
         `${link.replace("<link ", deferredStyle)}<noscript>${link}</noscript>`
     )
-    .replace("</head>", '<link rel="preload" href="/api/home" as="fetch" crossorigin fetchpriority="low"></head>')
 );
 await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff }));
 await Bun.write(`${out}/assets/social-card.png`, Bun.file("brand/social-card.png"));

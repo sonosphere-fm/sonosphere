@@ -11,7 +11,6 @@ import {
 } from "react";
 import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
-import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, usePageTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
@@ -46,7 +45,6 @@ import {
   useLive,
   userUrl,
   type Me,
-  type Ok,
 } from "./lib";
 import type { MeResponse } from "../shared/auth";
 import { applyDmEvent } from "./dm";
@@ -86,6 +84,7 @@ const Terms = lazy(() => import("./pages/legal").then((m) => ({ default: m.Terms
 const PrivacyPolicy = lazy(() => import("./pages/legal").then((m) => ({ default: m.Privacy })));
 const Guidelines = lazy(() => import("./pages/legal").then((m) => ({ default: m.Guidelines })));
 
+const AccountMenu = lazy(() => import("./ui/account-menu"));
 const AdminPage = lazy(() => import("./admin/index"));
 
 function HeaderAnnouncement() {
@@ -95,7 +94,7 @@ function HeaderAnnouncement() {
 }
 
 function Header() {
-  const { me, setMe } = useAuth();
+  const { me } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
   const [term, setTerm] = useState("");
@@ -111,11 +110,6 @@ function Header() {
     e.preventDefault();
     if (term.trim()) nav(`/search?q=${encodeURIComponent(term.trim())}`);
   };
-  const logout = () =>
-    api<Ok>("/auth/logout", { body: {} }).then(() => {
-      setMe(null);
-      nav("/");
-    });
   const closeOnBlur = (e: FocusEvent<HTMLFormElement>) => {
     if (!term && !e.currentTarget.contains(e.relatedTarget as Node)) close();
   };
@@ -182,44 +176,15 @@ function Header() {
           <NavLink to="/charts">Charts</NavLink>
           <NavLink to="/events">Events</NavLink>
           {me && menuButton ? (
-            <DropdownMenu
-              placement="below"
-              alignment="end"
-              hasChevron={false}
-              menuWidth={200}
-              menuMaxHeight={480}
-              button={menuButton}
+            <Suspense
+              fallback={
+                <span className={menuToggle} aria-hidden="true">
+                  {menuButton.children}
+                </span>
+              }
             >
-              <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
-              <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
-              <DropdownMenuItem
-                icon={<Ico.Reports />}
-                label="Listening reports"
-                href={`${userUrl(me.username)}/listening-report/week`}
-              />
-              <DropdownMenuItem icon={<Ico.Recommended />} label="Recommended" href="/recommended" />
-              <DropdownMenuItem
-                icon={<Ico.Chat />}
-                label={dmCount > 0 ? `Messages (${dmCount})` : "Messages"}
-                href={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"}
-              />
-              <DropdownMenuItem
-                icon={<Ico.Inbox />}
-                label={me.unread > 0 ? `Inbox (${me.unread})` : "Inbox"}
-                href="/inbox"
-              />
-              <DropdownMenuItem icon={<Ico.Scrobble />} label="Scrobble" href="/scrobble" />
-              <DropdownMenuItem icon={<Ico.Settings />} label="Settings" href="/settings" />
-              {me.admin && (
-                <DropdownMenuItem
-                  icon={<Ico.Shield />}
-                  label={me.openReports > 0 ? `Admin (${me.openReports})` : "Admin"}
-                  href={me.openReports > 0 ? "/admin/reports" : "/admin"}
-                />
-              )}
-              <DropdownMenuItem icon={<Ico.Discord />} label="Join our Discord" href="/discord" />
-              <DropdownMenuItem icon={<Ico.LogOut />} label="Log out" onClick={logout} />
-            </DropdownMenu>
+              <AccountMenu viewer={me} button={menuButton} />
+            </Suspense>
           ) : (
             <>
               <NavLink to="/login">Log in</NavLink>

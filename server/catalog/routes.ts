@@ -1,4 +1,4 @@
-import { paging, Router } from "../http";
+import { ipOf, paging, Router, throttle } from "../http";
 import { range } from "../listening/period";
 import { topTracks } from "../listening/repo";
 import type {
@@ -8,8 +8,10 @@ import type {
   ArtistPage,
   ArtistSimilar,
   ArtistTracks,
+  TrackLinks,
   TrackPage,
 } from "../../shared/catalog";
+import { resolveTrackLinks } from "./track-links";
 import { albumPage, artistPage, similarWithTags, trackPage } from "./pages";
 import * as repo from "./repo";
 import { albumOrImport, artistOrImport, refresh, trackOrImport } from "../metadata/service";
@@ -65,4 +67,11 @@ router.get<TrackPage>("/api/track", async (c) => {
   const t = await trackOrImport(artist, title, c.user, () => requireTrack(artist, title));
   refresh(c.user, "track", t);
   return trackPage(t, c.user?.id ?? 0);
+});
+
+router.get<TrackLinks>("/api/track/links", async (c) => {
+  await throttle(`track-links:${c.user?.id ?? ipOf(c.req)}`, 20, 60);
+  const track = await requireTrack(c.q.get("artist"), c.q.get("track"));
+  const album = track.albumId ? await repo.findItem("album", track.albumId) : null;
+  return resolveTrackLinks({ ...track, album: album?.title });
 });

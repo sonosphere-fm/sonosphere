@@ -103,6 +103,10 @@
     color: var(--ink);
     font: 400 16px / 1.45 var(--font);
   }
+  img {
+    outline: 1px solid light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
+    outline-offset: -1px;
+  }
   #root {
     min-height: 100vh;
     display: flex;
@@ -721,6 +725,9 @@
   .docs {
     white-space: normal;
   }
+  .wrap.docs-page {
+    max-width: 1000px;
+  }
   .docs h2 {
     margin: 26px 0 10px;
   }
@@ -831,6 +838,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: inherit;
   }
   .image-frame:not([data-state="loaded"]) > img {
     opacity: 0;
@@ -3519,6 +3527,8 @@
   }
 
   .astryx-dialog {
+    background: var(--card);
+    color: var(--ink);
     --astryx-dialog-padding: 24px;
     --astryx-dialog-padding-inline: 24px;
     border-radius: 0;
@@ -5637,6 +5647,7 @@
   }
   .legal {
     max-width: 82ch;
+    margin-inline: auto;
     font-size: 14px;
     line-height: 1.5;
   }
@@ -6241,5 +6252,25 @@
   }
   .site-banner.preview .site-banner-in {
     padding: 8px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .astryx-dialog[open] {
+    animation: dialog-enter 140ms ease-out;
+  }
+
+  ::view-transition {
+    pointer-events: none;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 180ms;
+  }
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0.65;
   }
 }

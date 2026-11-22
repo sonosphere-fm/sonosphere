@@ -20,6 +20,7 @@ import {
 import { Async, Section, Tabs, useAction, Pane } from "../../ui/base";
 import { Grid, LoveButton, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
+import { TrackLinks } from "../../ui/track-links";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
@@ -140,7 +141,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
   const base = trackUrl(artist, track);
   const q = useApi<TrackData>(`/track${qs({ artist, track })}`);
   const { me } = useAuth();
-  const [modal, setModal] = useState<"playlist" | "obsession" | null>(null);
+  const [modal, setModal] = useState<"playlist" | "obsession" | "links" | null>(null);
   const act = useAction();
   useTitle(q.data ? `${q.data.title} - ${q.data.artist}` : track);
 
@@ -189,6 +190,9 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
               <>
                 <PlayButton queue={[t, ...t.similar]} label="Play track" />
                 <LoveButton track={t} loved={t.loved} label onChange={q.reload} />
+                <Button kind="btn ghost" type="button" onClick={() => setModal("links")}>
+                  <Ico.External /> Open in
+                </Button>
                 {me && (
                   <>
                     <Button kind="btn ghost" onClick={() => setModal("playlist")}>
@@ -216,6 +220,9 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
             <Suspense fallback={null}>
               <AddToPlaylist track={t} onClose={() => setModal(null)} />
             </Suspense>
+          )}
+          {modal === "links" && (
+            <TrackLinks key={t.id} artist={t.artist} title={t.title} onClose={() => setModal(null)} />
           )}
           {modal === "obsession" && <SetObsession track={t} onClose={() => setModal(null)} />}
           <div className="wrap page mpage">
