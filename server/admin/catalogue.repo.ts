@@ -5,11 +5,11 @@ import { and, asc, count, countDistinct, desc, eq, inArray, isNull, ne, notExist
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn, type Tx } from "../db/client";
 import {
-  albumFolds, albums, albumTracks, artists, eventArtists, lovedTracks, nowPlaying, obsessions, playlistTracks, scrobbles, shouts, similarArtists,
+  albumFolds, albums, albumTracks, artists, auditLog, eventArtists, lovedTracks, nowPlaying, obsessions, playlistTracks, scrobbles, shouts, similarArtists,
   taggings, tags, tracks, userAlbums, userArtists, userTracks, wikiLocks, wikis,
 } from "../db/schema";
 import type { AuditEntry } from "../site/audit";
-import type { AdminTag, CatalogueItem, TracklistTrack, CatalogueKind, DuplicateArtist, OrphanItem } from "../../shared/admin-content";
+import type { AdminTag, CatalogueDetails, CatalogueItem, TracklistTrack, CatalogueKind, DuplicateArtist, OrphanItem } from "../../shared/admin-content";
 import { auditTx } from "../site/audit";
 import { bad } from "../http";
 import { getOrCreateTrackTx } from "../catalog/repo";
@@ -293,6 +293,36 @@ export const tracklist = (albumId: number): Promise<TracklistTrack[]> =>
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .where(eq(albumTracks.albumId, albumId))
     .orderBy(asc(albumTracks.position));
+
+export async function details(kind: Kind, id: number): Promise<CatalogueDetails> {
+  if (kind === "artist") {
+    const [a] = await db.select({ mbid: artists.mbid, spotifyId: artists.spotifyId }).from(artists).where(eq(artists.id, id));
+    return a ?? {};
+  }
+  if (kind === "album") {
+    const fields = { releaseDate: albums.releaseDate, releaseType: albums.releaseType, mbid: albums.mbid };
+    const [al] = await db.select(fields).from(albums).where(eq(albums.id, id));
+    return al ?? {};
+  }
+  const [t] = await db.select({ duration: tracks.duration }).from(tracks).where(eq(tracks.id, id));
+  return t ?? {};
+}
+
+export async function setDetails(kind: Kind, id: number, set: CatalogueDetails, actor: Actor, entry: AuditEntry): Promise<void> {
+  await transact(async tx => {
+    if (kind === "artist") await tx.update(artists).set(set).where(eq(artists.id, id));
+    else if (kind === "album") await tx.update(albums).set(set).where(eq(albums.id, id));
+    else await tx.update(tracks).set(set).where(eq(tracks.id, id));
+    await auditTx(tx, actor, entry);
+  });
+}
+
+export async function auditEntry(id: number) {
+  const [e] = await db.select({ id: auditLog.id, action: auditLog.action, targetType: auditLog.targetType, targetId: auditLog.targetId, data: auditLog.data })
+    .from(auditLog)
+    .where(eq(auditLog.id, id));
+  return e ? { ...e, data: JSON.parse(e.data) as Record<string, unknown> } : null;
+}
 
 export async function existingTracks(ids: number[]): Promise<number> {
   if (!ids.length) return 0;

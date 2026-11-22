@@ -2,12 +2,12 @@ import { Fragment, useState, type FormEvent, type ReactNode } from "react";
 import { Arrow, arrowed } from "../icons";
 import { Link } from "react-router-dom";
 import { Button, Input, Select } from "../kit";
-import { ago, dateTime, plural, qs, useApi, useTitle } from "../lib";
+import { ago, api, dateTime, plural, qs, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
 import { FILTERBAR, FLAG, LINKISH, LOG_TABLE, NOTE, REASON, ROLE, SCROLL } from "./common";
-import { act, actButton, adminUrl, useQuery } from "./common";
+import { act, actButton, adminUrl, useConfirm, useFlash, useQuery, useRole } from "./common";
 import type { AuditRow } from "../../shared/admin";
-import type { AuditList as AuditPage } from "../../shared/admin-content";
+import type { AuditList as AuditPage, Ok } from "../../shared/admin-content";
 
 const ACTION: Record<string, string> = {
   "user.suspend": "Suspended",
@@ -35,6 +35,7 @@ const ACTION: Record<string, string> = {
   "catalogue.merge": "Merged",
   "catalogue.rename": "Renamed",
   "catalogue.tracklist": "Edited track list",
+  "catalogue.edit": "Edited details",
   "catalogue.orphans": "Deleted orphans",
   "tag.delete": "Deleted tag",
   "settings.update": "Changed settings",
@@ -59,6 +60,14 @@ function settingsChanges(d: Record<string, unknown>) {
     return <Fragment key={k}>{i > 0 && "; "}{k}: {JSON.stringify(c.from)}<Arrow />{JSON.stringify(c.to)}</Fragment>;
   });
 }
+const FIELD: Record<string, string> = { releaseDate: "release date", releaseType: "type", mbid: "MusicBrainz ID", spotifyId: "Spotify ID", duration: "length" };
+const shown = (v: unknown) => (v === null || v === "" ? "none" : String(v));
+function fieldChanges(fields: unknown) {
+  return Object.entries(fields as Record<string, unknown>).map(([k, v], i) => {
+    const c = change(v);
+    return <Fragment key={k}>{i > 0 && "; "}{FIELD[k] ?? k}: {shown(c.from)}<Arrow />{shown(c.to)}</Fragment>;
+  });
+}
 function reportDetails(d: Record<string, unknown>) {
   const reason = d.reason ? ` (${REASON[String(d.reason)] ?? d.reason})` : "";
   const closed = count(d.closed) > 1 ? `, closed ${d.closed}` : "";
@@ -71,6 +80,8 @@ function details(a: AuditRow): ReactNode {
   if (a.action.startsWith("report.")) return reportDetails(d);
   if (a.action === "wiki.revert") return `back to version ${d.toVersion}`;
   if (a.action === "catalogue.merge" && d.merged !== undefined) return `${d.merged} merged, ${d.moved} moved`;
+  if (a.action === "catalogue.edit") return <>{d.reverts !== undefined && "Undo: "}{fieldChanges(d.fields)}</>;
+  if (d.reverts !== undefined) return "Undo of an earlier change";
   if (a.action === "user.sessions") return plural(count(d.revoked), "session");
   if (a.action === "user.delete") return `${plural(count(d.scrobbles), "scrobble")}, ${plural(count(d.shouts), "shout")}`;
   if (a.action === "tag.delete") return plural(count(d.uses), "use");
@@ -115,6 +126,8 @@ export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }
 
 type Option = [string, string];
 
+const UNDOABLE = new Set(["catalogue.rename", "catalogue.edit", "catalogue.tracklist"]);
+
 export function Audit() {
   const [sp, set] = useQuery();
   const actor = sp.get("actor") || "";
@@ -125,7 +138,19 @@ export function Audit() {
   const [user, setUser] = useState(who);
   const [text, setText] = useState(term);
   const q = useApi<AuditPage>(`/admin/audit${qs({ actor, action, user: who, q: term, page })}`);
+  const admin = useRole() === "admin";
+  const [modal, ask] = useConfirm();
+  const flash = useFlash();
   useTitle("Audit log");
+  const askUndo = (a: AuditRow) => ask({
+    title: "Undo this change",
+    action: "Undo",
+    body: <p>Put {a.label || "this item"} back the way it was before {a.actor}'s change. This is logged too, so it can be undone again.</p>,
+    run: note => api<Ok>("/admin/catalogue/revert", { body: { id: a.id, note } }).then(() => {
+      q.reload();
+      flash.set({ ok: true, text: "Change undone." });
+    }),
+  });
   const filter = (e: FormEvent) => {
     e.preventDefault();
     set({ user: user.trim(), q: text.trim() });
@@ -146,6 +171,7 @@ export function Audit() {
       }
       return (
         <>
+          {modal}
           <form className={FILTERBAR} onSubmit={filter}>
             <Select label="Staff member" value={actor} onChange={v => set({ actor: v })} options={actorOptions} />
             <Select label="Action" value={action} onChange={v => set({ action: v })} options={actionOptions} />
@@ -155,6 +181,7 @@ export function Audit() {
             {(actor || action || who || term) && <Button kind="link small" type="button" onClick={clear}>Clear</Button>}
           </form>
           <p className="muted small">{plural(d.total, "entry").replace("entrys", "entries")}</p>
+          {flash.note}
           {d.items.length === 0 ? <Empty>No entries match.</Empty> : (
             <div className={SCROLL}>
               <table className={LOG_TABLE}>
@@ -187,6 +214,7 @@ export function Audit() {
                         <td className="small">
                           {extra && <span className="muted">{extra}</span>}
                           {a.note && <span className={NOTE}>“{a.note}”</span>}
+                          {admin && UNDOABLE.has(a.action) && <>{" "}<Button kind="link small" type="button" onClick={() => askUndo(a)}>Undo</Button></>}
                         </td>
                       </tr>
                     );

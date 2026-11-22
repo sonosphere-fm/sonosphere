@@ -5,7 +5,7 @@ import { ago, albumUrl, api, artistUrl, num, plural, qs, tagUrl, trackUrl, useAp
 import { Async, Empty, Pager } from "../ui/base";
 import { CHECK, COMPACT_LIST, FILTERBAR, PICKED_ROW, SCROLL, SEARCH, TABLE } from "./common";
 import { TOOLBAR, WIDE_SEARCH, useQuery, useConfirm, useAction2, useFlash } from "./common";
-import type { AdminTagList, CatalogueDuplicates, CatalogueItem, CatalogueMerged, CatalogueSearch, Ok, OrphanList, OrphansDeleted, TagDeleted, Tracklist, TracklistTrack } from "../../shared/admin-content";
+import type { AdminTagList, CatalogueDetails, CatalogueDuplicates, CatalogueItem, CatalogueMerged, CatalogueSearch, Ok, OrphanList, OrphansDeleted, TagDeleted, Tracklist, TracklistTrack } from "../../shared/admin-content";
 import { Ico } from "../icons";
 
 const KIND_LABEL: Record<string, string> = { artist: "Artists", album: "Albums", track: "Tracks" };
@@ -31,7 +31,7 @@ export function Catalogue() {
     <>
       <div className={TOOLBAR}>
         <nav className="tabs sub">
-          {[["duplicates", "Duplicate artists"], ["browse", "Rename and merge"], ["orphans", "Orphans"], ["tags", "Tags"]].map(([k, l]) => (
+          {[["duplicates", "Duplicate artists"], ["browse", "Edit and merge"], ["orphans", "Orphans"], ["tags", "Tags"]].map(([k, l]) => (
             <button key={k} type="button" className={tab === k ? "active" : ""} onClick={() => set({ tab: k === "duplicates" ? "" : k, kind: "", q: "" })}>
               {l}
             </button>
@@ -118,6 +118,7 @@ function Browse() {
   const [rename, setRename] = useState<CatalogueItem | null>(null);
   const [merge, setMerge] = useState<CatalogueItem | null>(null);
   const [editing, setEditing] = useState<CatalogueItem | null>(null);
+  const [details, setDetails] = useState<CatalogueItem | null>(null);
   const flash = useFlash();
   const q = useApi<CatalogueSearch>(`/admin/catalogue/search${qs({ kind, q: term, page })}`);
   const search = (e: FormEvent) => {
@@ -138,6 +139,10 @@ function Browse() {
   };
   const edited = (msg: string) => {
     setEditing(null);
+    finished(msg);
+  };
+  const detailed = (msg: string) => {
+    setDetails(null);
     finished(msg);
   };
   return (
@@ -182,6 +187,7 @@ function Browse() {
                       <td className="num muted small">{it.id}</td>
                       <td className="nowrap right">
                         <Button kind="link small" type="button" onClick={() => setRename(it)}>Rename</Button>{" "}
+                        <Button kind="link small" type="button" onClick={() => setDetails(it)}>Details</Button>{" "}
                         <Button kind="link small" type="button" onClick={() => setMerge(it)}>Merge into…</Button>
                         {kind === "album" && <>{" "}<Button kind="link small" type="button" onClick={() => setEditing(it)}>Track list</Button></>}
                       </td>
@@ -197,20 +203,23 @@ function Browse() {
       {rename && <RenameDialog kind={kind} item={rename} close={() => setRename(null)} done={renamed} />}
       {merge && <MergeDialog kind={kind} item={merge} close={() => setMerge(null)} done={merged} />}
       {editing && <TracklistDialog item={editing} close={() => setEditing(null)} done={edited} />}
+      {details && <DetailsDialog kind={kind} item={details} close={() => setDetails(null)} done={detailed} />}
     </>
   );
 }
 
-type DialogProps = { kind: string; item: CatalogueItem; close: () => void; done: (msg: string) => void };
+export type EditTarget = Pick<CatalogueItem, "id" | "name" | "artist">;
+type DialogProps = { kind: string; item: EditTarget; close: () => void; done: (msg: string) => void };
+type RenameProps = Omit<DialogProps, "done"> & { done: (msg: string, name: string) => void };
 
-function RenameDialog({ kind, item, close, done }: DialogProps) {
+export function RenameDialog({ kind, item, close, done }: RenameProps) {
   const [name, setName] = useState(item.name);
   const act = useAction2();
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
       await api<Ok>("/admin/catalogue/rename", { body: { kind, id: item.id, name } });
-      done(`Renamed “${item.name}” to “${name.trim()}”.`);
+      done(`Renamed “${item.name}” to “${name.trim()}”.`, name.trim());
     });
   };
   return (
@@ -230,7 +239,7 @@ function RenameDialog({ kind, item, close, done }: DialogProps) {
   );
 }
 
-function MergeDialog({ kind, item, close, done }: DialogProps) {
+function MergeDialog({ kind, item, close, done }: DialogProps & { item: CatalogueItem }) {
   const [text, setText] = useState(item.name);
   const [term, setTerm] = useState(item.name);
   const [pick, setPick] = useState<CatalogueItem | null>(null);
@@ -281,9 +290,81 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
   );
 }
 
-type TracklistProps = { item: CatalogueItem; close: () => void; done: (msg: string) => void };
+export function DetailsDialog(props: DialogProps) {
+  return (
+    <Modal title={`Edit ${props.kind} details`} onClose={props.close}>
+      <Suspense fallback={<p className="muted small">Loading…</p>}>
+        <DetailsLoader {...props} />
+      </Suspense>
+    </Modal>
+  );
+}
 
-function TracklistDialog({ item, close, done }: TracklistProps) {
+function DetailsLoader(props: DialogProps) {
+  const q = useApi<CatalogueDetails>(`/admin/catalogue/details${qs({ kind: props.kind, id: props.item.id })}`);
+  return <Async q={q}>{d => <DetailsForm {...props} initial={d} />}</Async>;
+}
+
+const RELEASE_TYPES: [string, string][] = [
+  ["", "Not set (filled in from MusicBrainz)"],
+  ["album", "Album"],
+  ["single", "Single"],
+  ["ep", "EP"],
+  ["broadcast", "Broadcast"],
+  ["other", "Other"],
+];
+
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+function seconds(text: string): number {
+  const [m, s] = text.split(":");
+  return s === undefined ? Number(m) : Number(m) * 60 + Number(s);
+}
+
+function DetailsForm({ kind, item, initial, close, done }: DialogProps & { initial: CatalogueDetails }) {
+  const [mbid, setMbid] = useState(initial.mbid ?? "");
+  const [spotifyId, setSpotifyId] = useState(initial.spotifyId ?? "");
+  const [releaseDate, setReleaseDate] = useState(initial.releaseDate ?? "");
+  const [releaseType, setReleaseType] = useState(initial.releaseType ?? "");
+  const [length, setLength] = useState(initial.duration ? clock(initial.duration) : "");
+  const act = useAction2();
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const fields: Record<string, CatalogueDetails> = {
+      artist: { mbid, spotifyId },
+      album: { releaseDate, releaseType, mbid },
+      track: { duration: seconds(length || "0") },
+    };
+    const changed = Object.entries(fields[kind]!).filter(([k, v]) => v !== (initial[k as keyof CatalogueDetails] ?? ""));
+    act.run(async () => {
+      await api<Ok>("/admin/catalogue/details", { body: { kind, id: item.id, ...Object.fromEntries(changed) } });
+      done(`Saved the details of “${item.name}”.`);
+    });
+  };
+  return (
+    <form className="form" onSubmit={submit}>
+      <p className="muted small">{item.artist ? `${item.name} by ${item.artist}` : item.name}. Every change is logged and can be undone from the audit log.</p>
+      {kind === "album" && (
+        <>
+          <label>Release date <span className="muted small">YYYY or YYYY-MM-DD</span><Input value={releaseDate} onChange={e => setReleaseDate(e.target.value)} autoFocus /></label>
+          <Select label="Release type" value={releaseType} onChange={setReleaseType} options={RELEASE_TYPES} />
+        </>
+      )}
+      {kind === "track" && <label>Length <span className="muted small">minutes:seconds</span><Input value={length} onChange={e => setLength(e.target.value)} autoFocus /></label>}
+      {kind !== "track" && <label>MusicBrainz ID<Input value={mbid} onChange={e => setMbid(e.target.value)} /></label>}
+      {kind === "artist" && <label>Spotify ID<Input value={spotifyId} onChange={e => setSpotifyId(e.target.value)} /></label>}
+      {act.note}
+      <div className="row">
+        <Button kind="btn" loading={act.busy}>Save</Button>
+        <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+      </div>
+    </form>
+  );
+}
+
+type TracklistProps = { item: EditTarget; close: () => void; done: (msg: string) => void };
+
+export function TracklistDialog({ item, close, done }: TracklistProps) {
   return (
     <Modal title="Edit track list" onClose={close}>
       <Suspense fallback={<p className="muted small">Loading…</p>}>

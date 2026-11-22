@@ -6,7 +6,7 @@ import { audit } from "../site/audit";
 import { clean, like, norm } from "../util";
 import { idList, note, paging } from "./common";
 import * as repo from "./catalogue.repo";
-import type { AdminTagList, Tracklist, CatalogueDuplicates, CatalogueMerged, CatalogueSearch, DuplicateArtist, Ok, OrphanList, OrphansDeleted, TagDeleted } from "../../shared/admin-content";
+import type { AdminTagList, CatalogueDetails, Tracklist, CatalogueDuplicates, CatalogueMerged, CatalogueSearch, DuplicateArtist, Ok, OrphanList, OrphansDeleted, TagDeleted } from "../../shared/admin-content";
 
 export const router = new Router({ jsonOnly: true });
 
@@ -73,13 +73,9 @@ router.post<CatalogueMerged>("/api/admin/catalogue/merge", async c => {
   return { ok: true, ...detail };
 });
 
-router.post<Ok>("/api/admin/catalogue/rename", async c => {
-  const me = adminOnly(c);
-  const kind = kindOf(c.body.kind);
-  const id = Number(c.body.id);
-  const r = await item(kind, id);
-  const name = clean(c.body.name);
-  if (!name) bad("Enter a name");
+type Revert = { reverts?: number };
+
+async function rename(me: repo.Actor, kind: repo.Kind, r: repo.CatRow, name: string, why: string, extra: Revert = {}) {
   const n = norm(name);
   const clash = await repo.nameClash(kind, r, n);
   if (clash !== null) {
@@ -88,15 +84,125 @@ router.post<Ok>("/api/admin/catalogue/rename", async c => {
     if (kind === "track") existing = `a track by ${r.artist}`;
     fail(409, `There's already ${existing} called “${name}”. Merge the two instead (#${clash}).`);
   }
-  await repo.rename(kind, id, name, n);
+  await repo.rename(kind, r.id, name, n);
   await audit(me, {
     action: "catalogue.rename",
     targetType: kind,
-    targetId: id,
+    targetId: r.id,
     label: `${repo.describe(r)} → ${name}`,
-    note: note(c),
-    data: { from: r.label, to: name },
+    note: why,
+    data: { from: r.label, to: name, ...extra },
   });
+}
+
+router.post<Ok>("/api/admin/catalogue/rename", async c => {
+  const me = adminOnly(c);
+  const kind = kindOf(c.body.kind);
+  const r = await item(kind, Number(c.body.id));
+  const name = clean(c.body.name);
+  if (!name) bad("Enter a name");
+  await rename(me, kind, r, name, note(c));
+  return { ok: true };
+});
+
+const FIELDS: Record<repo.Kind, (keyof CatalogueDetails)[]> = {
+  artist: ["mbid", "spotifyId"],
+  album: ["releaseDate", "releaseType", "mbid"],
+  track: ["duration"],
+};
+const MBID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const SPOTIFY_ID = /^[0-9A-Za-z]{22}$/;
+const DATE = /^\d{4}(-\d{2}-\d{2})?$/;
+const RELEASE_TYPES = ["album", "single", "ep", "broadcast", "other"];
+const MAX_DURATION = 24 * 3600;
+
+const validDate = (d: string) => DATE.test(d) && (d.length === 4 || !Number.isNaN(Date.parse(d)));
+
+function fieldValue(key: keyof CatalogueDetails, v: unknown): string | number | null {
+  if (key === "duration") {
+    const n = Number(v);
+    return Number.isInteger(n) && n >= 0 && n <= MAX_DURATION ? n : bad("Enter the length in seconds, or as minutes:seconds");
+  }
+  const s = clean(v) || null;
+  if (s === null) return null;
+  if (key === "mbid") return MBID.test(s.toLowerCase()) ? s.toLowerCase() : bad("A MusicBrainz ID looks like 3f1c2b4e-…, 36 characters");
+  if (key === "spotifyId") return SPOTIFY_ID.test(s) ? s : bad("A Spotify ID is 22 letters and digits");
+  if (key === "releaseDate") return validDate(s) ? s : bad("Enter the release date as YYYY or YYYY-MM-DD");
+  return RELEASE_TYPES.includes(s) ? s : bad("Pick a release type");
+}
+
+type Changes = Record<string, { from: unknown; to: unknown }>;
+
+async function editDetails(me: repo.Actor, kind: repo.Kind, r: repo.CatRow, set: CatalogueDetails, why: string, extra: Revert = {}) {
+  const before = await repo.details(kind, r.id);
+  const fields: Changes = {};
+  for (const [k, to] of Object.entries(set)) {
+    const from = before[k as keyof CatalogueDetails];
+    if (from !== to) fields[k] = { from, to };
+  }
+  if (!Object.keys(fields).length) bad("Nothing changed");
+  await repo.setDetails(kind, r.id, set, me, {
+    action: "catalogue.edit",
+    targetType: kind,
+    targetId: r.id,
+    label: repo.describe(r),
+    note: why,
+    data: { fields, ...extra },
+  });
+}
+
+router.get<CatalogueDetails>("/api/admin/catalogue/details", async c => {
+  adminOnly(c);
+  const kind = kindOf(c.q.get("kind"));
+  const r = await item(kind, Number(c.q.get("id")));
+  return repo.details(kind, r.id);
+});
+
+router.post<Ok>("/api/admin/catalogue/details", async c => {
+  const me = adminOnly(c);
+  const kind = kindOf(c.body.kind);
+  const r = await item(kind, Number(c.body.id));
+  const set: Record<string, unknown> = {};
+  for (const k of FIELDS[kind]) if (c.body[k] !== undefined) set[k] = fieldValue(k, c.body[k]);
+  await editDetails(me, kind, r, set, note(c));
+  return { ok: true };
+});
+
+const changedSince = () => fail(409, "It has been changed again since. Edit it by hand instead.");
+const sameIds = (a: unknown, b: number[]) => Array.isArray(a) && a.join() === b.join();
+
+router.post<Ok>("/api/admin/catalogue/revert", async c => {
+  const me = adminOnly(c);
+  const e = (await repo.auditEntry(Number(c.body.id))) ?? missing("Log entry");
+  const kind = kindOf(e.targetType);
+  const r = await item(kind, e.targetId ?? 0);
+  const why = note(c);
+  const extra = { reverts: e.id };
+  if (e.action === "catalogue.rename") {
+    if (r.label !== e.data.to) changedSince();
+    await rename(me, kind, r, String(e.data.from), why, extra);
+  } else if (e.action === "catalogue.edit") {
+    const present = await repo.details(kind, r.id);
+    const set: Record<string, unknown> = {};
+    for (const [k, ch] of Object.entries(e.data.fields as Changes)) {
+      if (present[k as keyof CatalogueDetails] !== ch.to) changedSince();
+      set[k] = ch.from;
+    }
+    await editDetails(me, kind, r, set, why, extra);
+  } else if (e.action === "catalogue.tracklist") {
+    const from = e.data.from as number[];
+    const current = (await repo.tracklist(r.id)).map(t => t.id);
+    if (!sameIds(e.data.to, current)) changedSince();
+    if ((await repo.existingTracks(from)) !== from.length) fail(409, "Some of those tracks have been deleted or merged since. Edit the list by hand instead.");
+    await repo.setTracklist(r, from, me, after => ({
+      action: "catalogue.tracklist",
+      targetType: "album",
+      targetId: r.id,
+      label: `${repo.describe(r)} (${current.length} → ${after.length} tracks)`,
+      note: why,
+      data: { from: current, to: after, ...extra },
+    }));
+  } else bad("This change can't be undone");
   return { ok: true };
 });
 

@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, dur, plural, qs, useApi, useAuth, useTitle } from "../../lib";
 import { Async, Section, Tabs, Pane } from "../../ui/base";
@@ -10,6 +10,9 @@ import { PlayButton } from "../../player";
 import { UploadImage } from "./shared";
 import type { AlbumPage as AlbumData } from "../../../shared/catalog";
 import { MusicHero, HeroStat, releaseDate, YourScrobbles, About, ByArtist, Trend, Listeners, TrendingBand, SIDE_LINKS } from "./entity";
+
+const AdminTools = lazy(() => import("../../admin/page-tools").then(m => ({ default: m.AdminTools })));
+const TracklistTool = lazy(() => import("../../admin/page-tools").then(m => ({ default: m.TracklistTool })));
 
 function albumFacts(a: AlbumData) {
   const facts: [string, ReactNode][] = [];
@@ -39,6 +42,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             <>
               <PlayButton queue={a.tracks} label="Play album" />
               {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
+              {me?.admin && <Suspense fallback={null}><AdminTools kind="album" item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} /></Suspense>}
             </>
           }
           stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>}
@@ -52,7 +56,15 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
                   <About wiki={a.wiki} to={`${base}/+wiki`} facts={albumFacts(a)}>
                     <Tagger type="album" id={a.id} tags={a.tags} myTags={a.myTags} />
                   </About>
-                  <Section title="Tracklist" aside={<PlayButton queue={a.tracks} />}>
+                  <Section
+                    title="Tracklist"
+                    aside={
+                      <>
+                        {me?.admin && <Suspense fallback={null}><TracklistTool item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} /></Suspense>}
+                        <PlayButton queue={a.tracks} />
+                      </>
+                    }
+                  >
                     <TrackList items={a.tracks} numbered showArtist={false} showDuration count="listeners" />
                   </Section>
                   <Listeners items={a.topListeners} />

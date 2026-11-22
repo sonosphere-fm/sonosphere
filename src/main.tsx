@@ -44,6 +44,7 @@ const Inbox = lazy(() => import("./pages/inbox").then(m => ({ default: m.Inbox }
 const Recommended = lazy(() => import("./pages/recommended").then(m => ({ default: m.Recommended })));
 const ScrobblePage = lazy(() => import("./pages/scrobble").then(m => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then(m => ({ default: m.Connect })));
+const Help = lazy(() => import("./pages/help").then(m => ({ default: m.Help })));
 const Developers = lazy(() => import("./pages/developers").then(m => ({ default: m.Developers })));
 const Terms = lazy(() => import("./pages/legal").then(m => ({ default: m.Terms })));
 const PrivacyPolicy = lazy(() => import("./pages/legal").then(m => ({ default: m.Privacy })));
@@ -179,7 +180,7 @@ function Footer() {
   const cols: LinkColumn[] = [
     ["Music", [["Charts", "/charts"], ["Top tracks", "/charts?kind=tracks"], ["Top artists", "/charts?kind=artists"], ["Top albums", "/charts?kind=albums"], ["Top tags", "/charts?kind=tags"], ["Events", "/events"]]],
     yourMusic,
-    ["Scrobbling", [["Scrobble manually", "/scrobble"], ["Connect a player", "/settings/applications"], ["Import & export", "/settings/data"]]],
+    ["Scrobbling", [["Scrobbling help", "/help"], ["Scrobble manually", "/scrobble"], ["Connect a player", "/settings/applications"], ["Import & export", "/settings/data"]]],
     ["Developers", [["API documentation", "/developers"], ["API keys", "/settings/applications"]]],
     ["Community", [["Join our Discord", "/discord"], ["Guidelines", "/guidelines"]]],
     ...account,
@@ -375,6 +376,7 @@ function Pages() {
       <Route path="/recommended" element={<Private><Recommended /></Private>} />
       <Route path="/scrobble" element={<Private><ScrobblePage /></Private>} />
       <Route path="/connect" element={<Private><Connect /></Private>} />
+      <Route path="/help" element={<Help />} />
       <Route path="/developers" element={<Developers />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />

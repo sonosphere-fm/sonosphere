@@ -1,5 +1,5 @@
 import { Ico, Spinner } from "../../icons";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Select } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, enc, num, PERIODS, plural, qs, short, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
@@ -20,6 +20,8 @@ import type {
 } from "../../../shared/catalog";
 import type { TopTrack } from "../../../shared/listening";
 import { MusicHero, HeroStat, FeatureCard, releaseDate, YourScrobbles, About, Trend, Listeners, TrendingBand, SIDE_LINKS } from "./entity";
+
+const AdminTools = lazy(() => import("../../admin/page-tools").then(m => ({ default: m.AdminTools })));
 
 type ArtistTab = "overview" | "tracks" | "albums" | "similar" | "wiki" | "listeners" | "shoutbox";
 
@@ -134,6 +136,7 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
                 <PlayButton queue={a.topTracks} label="Play artist" />
                 <StationButton type="artist" name={a.name} label="Artist radio" ghost />
                 {me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}
+                {me?.admin && <Suspense fallback={null}><AdminTools kind="artist" item={{ id: a.id, name: a.name, artist: null }} onDone={q.reload} /></Suspense>}
               </>
             }
             stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>}
