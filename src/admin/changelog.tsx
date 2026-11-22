@@ -88,10 +88,12 @@ function Editor({ post }: { post?: ChangelogPost }) {
             </div>
             {preview ? (
               <div className="min-h-[300px] border border-site-line p-4">
-                <Markdown text={text.body} />
+                <Markdown text={text.body} images />
               </div>
             ) : (
               <MdEditor
+                images
+                imageUpload="changelog"
                 label="Post"
                 rows={18}
                 maxLength={20000}

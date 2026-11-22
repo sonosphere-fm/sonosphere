@@ -1,6 +1,6 @@
 import { and, eq, lt, notExists, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { albums, artists, images, users } from "../db/schema";
+import { albums, artists, changelogPosts, images, users } from "../db/schema";
 import { store } from "../storage";
 import { spendWrites } from "../storage/budget";
 import { first, now, rid } from "../util";
@@ -96,6 +96,13 @@ export async function saveRemoteImage(url: string, width: number | null, height:
 }
 
 const unused = and(
+  notExists(db.select({ x: sql`1` }).from(users).where(sql`${users.about} LIKE '%/api/image/' || ${images.id} || '%'`)),
+  notExists(
+    db
+      .select({ x: sql`1` })
+      .from(changelogPosts)
+      .where(sql`${changelogPosts.body} LIKE '%/api/image/' || ${images.id} || '%'`)
+  ),
   notExists(db.select({ x: sql`1` }).from(users).where(eq(users.imageId, images.id))),
   notExists(db.select({ x: sql`1` }).from(users).where(eq(users.bannerId, images.id))),
   notExists(db.select({ x: sql`1` }).from(artists).where(eq(artists.imageId, images.id))),

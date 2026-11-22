@@ -8,6 +8,8 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { api } from "./lib";
+import type { ImageSaved } from "../shared/images";
 import {
   Code,
   LinkSimple,
@@ -118,12 +120,14 @@ export function Markdown({
   images?: boolean;
 }) {
   if (images) {
-    const parts = text.split(/(!\[[^\]\n]*\]\(https?:\/\/[^\s)]+\))/g);
+    const parts = text.split(/(!\[[^\]\n]*\]\((?:https?:\/\/[^\s)]+|\/api\/image\/[a-f0-9]{32})\))/g);
     return (
       <div className={className}>
         {parts.map((part, index) => {
           if (!part) return null;
-          const image = /^!\[([^\]\n]*)\]\((https?:\/\/[^\s)]+)\)$/.exec(part);
+          const image = /^!\[([^\]\n]*)\]\(([^\s)]+)\)$/.exec(part);
+          if (image && !/^\/api\/image\/[a-f0-9]{32}$/.test(image[2]!))
+            return <span key={index}>{image[1] || "External image"} (upload this image to display it)</span>;
           return image ? (
             <img
               key={index}
@@ -386,6 +390,7 @@ type MdEditorProps = {
   placeholder?: string;
   autoFocus?: boolean;
   images?: boolean;
+  imageUpload?: "about" | "changelog";
 };
 
 /** A plain-text editor that formats as you type: the markup stays visible and editable. Pastes arrive as plain text. */
@@ -398,7 +403,13 @@ export function MdEditor({
   placeholder,
   autoFocus,
   images = false,
+  imageUpload,
 }: MdEditorProps) {
+  const uploadInput = useRef<HTMLInputElement>(null);
+  const latestValue = useRef(value);
+  latestValue.current = value;
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const text = useRef<string | null>(null);
   const composing = useRef(false);
@@ -555,7 +566,7 @@ export function MdEditor({
   return (
     <div className="md-editor">
       <div className="md-tools" role="toolbar" aria-label="Formatting">
-        {(images ? [...TOOLS, IMAGE_TOOL] : TOOLS).map(({ label, keys, Icon, edit }, i) => (
+        {(images && !imageUpload ? [...TOOLS, IMAGE_TOOL] : TOOLS).map(({ label, keys, Icon, edit }, i) => (
           <button
             key={label}
             type="button"
@@ -569,7 +580,62 @@ export function MdEditor({
             <Icon aria-hidden weight="bold" />
           </button>
         ))}
+        {imageUpload && (
+          <button
+            type="button"
+            className="md-tool"
+            aria-label="Upload image"
+            title="Upload image"
+            disabled={uploading}
+            onClick={() => uploadInput.current?.click()}
+          >
+            <Image aria-hidden weight="bold" />
+          </button>
+        )}
       </div>
+      {imageUpload && (
+        <input
+          ref={uploadInput}
+          type="file"
+          hidden
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={async (event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (!file || uploading) return;
+            setUploadError("");
+            if (file.size > 8_000_000) {
+              setUploadError("Images must be under 8 MB");
+              return;
+            }
+            setUploading(true);
+            try {
+              const saved = await api<ImageSaved>(`/image?type=${imageUpload}`, {
+                raw: file,
+                headers: { "Content-Type": file.type },
+              });
+              const next = `${latestValue.current}\n\n![Image description](/api/image/${saved.image})`;
+              if (maxLength && next.length > maxLength)
+                throw new Error("There isn't enough room in this post for another image.");
+              onChange(next);
+            } catch (error) {
+              setUploadError(error instanceof Error ? error.message : "Image upload failed. Try again.");
+            } finally {
+              setUploading(false);
+            }
+          }}
+        />
+      )}
+      {uploading && (
+        <p role="status" className="small muted">
+          Uploading image…
+        </p>
+      )}
+      {uploadError && (
+        <p role="alert" className="form-error">
+          {uploadError}
+        </p>
+      )}
       <div
         ref={ref}
         className="md-input md"

@@ -1,5 +1,5 @@
 import { requireItem } from "../catalog/service";
-import { confirmed, need } from "../guards";
+import { adminOnly, confirmed, need } from "../guards";
 import { bad, fail, ipOf, limit, missing, Router, type Ctx } from "../http";
 import { getJson, setJson } from "../kv";
 import { store } from "../storage";
@@ -126,6 +126,10 @@ router.post<ImageSaved>("/api/image/art", async (c) => {
 router.post<ImageSaved>("/api/image", async (c) => {
   const u = confirmed(need(c));
   const type = c.q.get("type");
+  if (type === "about" || type === "changelog") {
+    if (type === "changelog") adminOnly(c);
+    return { image: await storeImage(c, u.id) };
+  }
   if (type === "user" || type === "banner") {
     const image = await storeImage(c, u.id);
     if (type === "banner") await repo.setUserBanner(u.id, image);
