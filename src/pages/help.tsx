@@ -78,13 +78,7 @@ export function Help() {
               Add plays by hand on the <Link to="/scrobble">scrobble page</Link>.
             </li>
             <li>
-              Bring over your history from another service under{" "}
-              <Link to="/settings/data">
-                Settings
-                <Arrow say=", " />
-                Your data
-              </Link>
-              .
+              Bring over your history using <Link to="/import">Import listening history</Link>.
             </li>
           </ul>
         </div>

@@ -75,6 +75,7 @@ const VerifyPage = lazy(() => import("./pages/auth").then((m) => ({ default: m.V
 const Settings = lazy(() => import("./pages/settings").then((m) => ({ default: m.Settings })));
 const Inbox = lazy(() => import("./pages/inbox").then((m) => ({ default: m.Inbox })));
 const Recommended = lazy(() => import("./pages/recommended").then((m) => ({ default: m.Recommended })));
+const ImportPage = lazy(() => import("./pages/import").then((m) => ({ default: m.ImportPage })));
 const ScrobblePage = lazy(() => import("./pages/scrobble").then((m) => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then((m) => ({ default: m.Connect })));
 const Help = lazy(() => import("./pages/help").then((m) => ({ default: m.Help })));
@@ -175,6 +176,11 @@ function Header() {
           </NavLink>
           <NavLink to="/charts">Charts</NavLink>
           <NavLink to="/events">Events</NavLink>
+          {me && (
+            <NavLink className="max-[720px]:hidden" to="/import">
+              Import
+            </NavLink>
+          )}
           {me && menuButton ? (
             <Suspense
               fallback={
@@ -273,7 +279,8 @@ function Footer() {
         ["Scrobbling help", "/help"],
         ["Scrobble manually", "/scrobble"],
         ["Connect a player", "/settings/applications"],
-        ["Import & export", "/settings/data"],
+        ["Import history", "/import"],
+        ["Export history", "/settings/data"],
       ],
     ],
     [
@@ -613,6 +620,14 @@ function Pages() {
         element={
           <Private>
             <Recommended />
+          </Private>
+        }
+      />
+      <Route
+        path="/import"
+        element={
+          <Private>
+            <ImportPage />
           </Private>
         }
       />

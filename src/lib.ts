@@ -5,7 +5,13 @@ import type { Me } from "../shared/auth";
 import type { ListenMessage, ListeningEvent } from "../shared/live";
 export type { Ok, Me } from "../shared/auth";
 
-type ApiOptions = { method?: string; body?: unknown; raw?: BodyInit; headers?: Record<string, string> };
+type ApiOptions = {
+  method?: string;
+  body?: unknown;
+  raw?: BodyInit;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+};
 
 /** `T` is the reply type from shared/; use `Ok` for plain acknowledgements. */
 export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
@@ -15,6 +21,7 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     headers: hasJson ? { "Content-Type": "application/json", ...opts.headers } : opts.headers,
     body: hasJson ? JSON.stringify(opts.body) : opts.raw,
     credentials: "same-origin",
+    signal: opts.signal,
   });
   if (res.status === 204) return undefined as T;
   let data: unknown;

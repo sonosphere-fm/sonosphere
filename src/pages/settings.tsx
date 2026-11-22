@@ -1284,6 +1284,12 @@ function DataSettings() {
   return (
     <>
       {c.dialog}
+      <Section title="Import listening history">
+        <p>Bring in scrobbles and loved tracks from Last.fm, CSV, or JSON.</p>
+        <Button kind="btn" href="/import">
+          Import listening history
+        </Button>
+      </Section>
       <Section title="Export your scrobbles">
         <p>Download every scrobble with artist, album, track and timestamp.</p>
         <div className="row">
@@ -1305,11 +1311,6 @@ function DataSettings() {
             Download JSON
           </Button>
         </div>
-      </Section>
-      <Section title="Import">
-        <p>
-          Bring scrobbles or loved tracks in from a CSV or JSON file on the <Link to="/scrobble">Scrobble page</Link>.
-        </p>
       </Section>
       <Section title="Clear listening history">
         <form className="form" onSubmit={submit}>

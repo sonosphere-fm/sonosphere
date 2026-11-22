@@ -46,6 +46,7 @@ const accountPages: Record<string, string> = {
   admin: "Moderation",
   recommended: "Recommendations",
   scrobble: "Scrobble Music",
+  import: "Import Listening History",
   connect: "Connect a Music Player",
 };
 const artistTabs: Record<string, string> = {
