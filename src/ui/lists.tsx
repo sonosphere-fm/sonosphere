@@ -212,6 +212,8 @@ function MediaCard({ kind, item, sub, below }: { kind: CardKind; item: CardItem;
   );
 }
 
+const tiles = "tiles grid grid-cols-4 gap-0 max-[700px]:grid-cols-2";
+
 export function Grid<T extends CardItem>({ items, kind, sub, cols = 6, lead, flush, below }: {
   items: T[];
   kind: CardKind;
@@ -223,12 +225,12 @@ export function Grid<T extends CardItem>({ items, kind, sub, cols = 6, lead, flu
 }) {
   if (!items.length) return <Empty>Nothing to show yet.</Empty>;
   if (flush) {
-    return <div className="tiles">{items.map(it => <MediaCard key={it.id ?? cardName(it)} kind={kind} item={it} sub={sub?.(it)} />)}</div>;
+    return <div className={tiles}>{items.map(it => <MediaCard key={it.id ?? cardName(it)} kind={kind} item={it} sub={sub?.(it)} />)}</div>;
   }
   const style: CSSProperties & { "--cols": number } = { "--cols": cols };
-  let className = "grid";
-  if (lead) className = "grid lead";
-  else if (below) className = "grid below";
+  let className = "cardgrid";
+  if (lead) className = "cardgrid lead";
+  else if (below) className = "cardgrid below";
   return (
     <div className={className} data-cols={cols} style={style}>
       {items.map(it => <MediaCard key={it.id ?? cardName(it)} kind={kind} item={it} sub={sub?.(it)} below={below} />)}
@@ -237,10 +239,16 @@ export function Grid<T extends CardItem>({ items, kind, sub, cols = 6, lead, flu
 }
 
 const REC_KIND = {
-  artist: { title: "Artist", Badge: Ico.Star },
-  album: { title: "Album", Badge: Ico.Disc },
-  track: { title: "Track", Badge: Ico.Music },
+  artist: { title: "Artist", Badge: Ico.Star, color: "bg-[#f08a1c]" },
+  album: { title: "Album", Badge: Ico.Disc, color: "bg-[#2e9d5b]" },
+  track: { title: "Track", Badge: Ico.Music, color: "bg-[#2f7fd6]" },
 };
+const rec = "rec break-inside-avoid m-0 mb-5 min-[601px]:max-[900px]:mb-4 max-[600px]:mb-2.5";
+const recBadge = "absolute z-2 right-2.5 -bottom-3.5 size-[30px] rounded-[50%] grid place-items-center " +
+  "text-white border-2 border-white [&_svg]:size-[15px] " +
+  "max-[600px]:size-6 max-[600px]:right-1.5 max-[600px]:-bottom-3 max-[600px]:[&_svg]:size-3";
+const recWhy = "m-0 py-3 pr-12 pl-3 bg-site-panel border border-site-line [border-top:0] text-[13.5px] leading-[1.4] " +
+  "text-site-ink-2 [&_a]:text-site-link max-[600px]:py-2 max-[600px]:pr-[30px] max-[600px]:pl-2 max-[600px]:text-[12.5px]";
 export function RecCard({ kind, item, because = [] }: {
   kind: "artist" | "album" | "track";
   item: Recommendation | TopAlbum | TopTrack;
@@ -254,11 +262,11 @@ export function RecCard({ kind, item, because = [] }: {
   let to = trackUrl(artist, name);
   if (kind === "artist") to = artistUrl(name);
   else if (kind === "album") to = albumUrl(artist, name);
-  const { title, Badge } = REC_KIND[kind];
+  const { title, Badge, color } = REC_KIND[kind];
   const similar = because.map((b, i) => <span key={b}>{i > 0 && " & "}<Link to={artistUrl(b)}>{b}</Link></span>);
   return (
-    <article className="rec">
-      <div className="rec-img">
+    <article className={rec}>
+      <div className="rec-img relative">
         <Link className="rcard-img" to={to}>
           <Art image={item.image} kind={kind === "artist" ? "artist" : "album"} />
           <span className="rcard-cap">
@@ -268,9 +276,9 @@ export function RecCard({ kind, item, because = [] }: {
           </span>
         </Link>
         {kind === "track" && <PlayButton queue={[{ title: name, artist, album, image: item.image, duration }]} />}
-        <span className={`rec-badge ${kind}`} title={title}><Badge /></span>
+        <span className={`${recBadge} ${color}`} title={title}><Badge /></span>
       </div>
-      <p className="rec-why">
+      <p className={recWhy}>
         {kind !== "artist" && <>By <Link to={artistUrl(artist)}>{artist}</Link>{similar.length > 0 && ", similar to "}</>}
         {kind === "artist" && similar.length > 0 && "Similar to "}
         {similar}

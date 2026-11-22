@@ -1,5 +1,6 @@
 import { rm } from "node:fs/promises";
 import { execSync } from "node:child_process";
+import tailwind from "bun-plugin-tailwind";
 import { STAFF_BUNDLE_MARK } from "../src/admin/index";
 
 let gitSha = process.env.SENTRY_RELEASE || process.env.GIT_SHA || "unknown";
@@ -17,6 +18,7 @@ const result = await Bun.build({
   publicPath: "/",
   naming: { entry: "[name].[ext]", chunk: "assets/[name]-[hash].[ext]", asset: "assets/[name]-[hash].[ext]" },
   define: { "process.env.NODE_ENV": '"production"', "process.env.SENTRY_RELEASE": JSON.stringify(gitSha) },
+  plugins: [tailwind],
 });
 
 function die(message: string): never {
@@ -62,11 +64,12 @@ const html = await Bun.file(`${out}/index.html`).text();
 const leaked = staff.filter(name => html.includes(name));
 if (leaked.length) die(`Build failed: the page loads staff-only files for everyone: ${leaked.join(", ")}`);
 
-const styles = result.outputs
+// the portal styles itself with utilities from the main stylesheet, so nothing loads a second one
+const unloaded = result.outputs
   .map(f => relative(f.path))
   .filter(n => n.endsWith(".css") && !html.includes(n));
-if (styles.length > 1) die(`Build failed: expected one staff stylesheet, found ${styles.join(", ")}`);
-await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff, style: styles[0] ?? null }));
+if (unloaded.length) die(`Build failed: nothing loads these stylesheets: ${unloaded.join(", ")}`);
+await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff }));
 await Bun.write(`${out}/assets/social-card.png`, Bun.file("brand/social-card.png"));
 
 const size = (names: string[]) => {

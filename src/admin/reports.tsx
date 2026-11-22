@@ -4,6 +4,7 @@ import { Ico } from "../icons";
 import { Button, Input, Select } from "../kit";
 import { ago, api, dateTime, plural, qs, useApi, useAuth, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
+import { CHECK, NOTE, PICKED_BG, TOOLBAR, TYPE_LABEL } from "./common";
 import { REASON, TYPE, adminUrl, useQuery, useConfirm } from "./common";
 import type { ReportResolved, ReportsClosed, StaffReport, StaffReportList } from "../../shared/admin";
 
@@ -50,6 +51,7 @@ function decisionCopy(r: StaffReport, action: Decision) {
   }
 }
 
+const PILL = "text-[12px] font-semibold text-site-accent-dark";
 const AUTHOR_PREFIX: Record<string, string> = { user: "Account ", dm: "Sent by ", group: "Sent by " };
 
 export function Reports() {
@@ -93,7 +95,7 @@ export function Reports() {
   return (
     <>
       {modal}
-      <div className="toolbar">
+      <div className={TOOLBAR}>
         <nav className="tabs sub">
           {[["open", "Open"], ["closed", "Resolved"], ["all", "All"]].map(([k, l]) => (
             <button key={k} type="button" className={status === k ? "active" : ""} onClick={() => set({ status: k === "open" ? "" : k })}>
@@ -102,7 +104,7 @@ export function Reports() {
           ))}
         </nav>
         {counts && (
-          <div className="row adm-filters">
+          <div className="row">
             <Select
               label="Type"
               value={type}
@@ -124,7 +126,7 @@ export function Reports() {
           <>
             {open.length > 0 && (
               <div className="bulk-bar">
-                <label className="check adm-check">
+                <label className={CHECK}>
                   <Input
                     type="checkbox"
                     aria-label="Select all on this page"
@@ -141,7 +143,7 @@ export function Reports() {
             {d.items.length === 0 && (
               <Empty>{status === "open" ? "Nothing waiting. Reports from listeners show up here." : "No reports match."}</Empty>
             )}
-            <ul className="reports adm-reports">
+            <ul className="reports [&>li]:py-[14px] [&>li]:px-3">
               {d.items.map(r => {
                 const dm = r.type === "dm" || r.type === "group";
                 const canRemove = r.exists && r.type !== "user" && !r.removed;
@@ -151,8 +153,8 @@ export function Reports() {
                 if (r.authorBanned) authorState = <span className="muted"> (banned)</span>;
                 else if (r.authorSuspended) authorState = <span className="muted"> (suspended)</span>;
                 return (
-                  <li key={r.id} className={picked.has(r.id) ? "picked" : ""}>
-                    <div className="report-head row">
+                  <li key={r.id} className={picked.has(r.id) ? PICKED_BG : ""}>
+                    <div className="row gap-2">
                       {r.status === "open" && (
                         <Input
                           type="checkbox"
@@ -162,11 +164,11 @@ export function Reports() {
                         />
                       )}
                       <span className="badge">{REASON[r.reason] || r.reason}</span>
-                      <span className="adm-type">{TYPE[r.type]}</span>
+                      <span className={TYPE_LABEL}>{TYPE[r.type]}</span>
                       <b>{r.where}</b>
                       {!r.exists && <span className="muted">· no longer exists</span>}
                       {r.removed && <span className="muted">· removed from the conversation</span>}
-                      {r.others > 0 && r.status === "open" && <span className="adm-pill">+{plural(r.others, "more report")}</span>}
+                      {r.others > 0 && r.status === "open" && <span className={PILL}>+{plural(r.others, "more report")}</span>}
                     </div>
                     <blockquote className={dm ? "adm-dm-snap" : undefined}>{r.text || <span className="muted">(empty)</span>}</blockquote>
                     <p className="small">
@@ -202,7 +204,7 @@ export function Reports() {
                     ) : (
                       <p className="muted small">
                         Resolved {ago(r.resolvedAt ?? 0)} by {r.resolver || "a deleted moderator"}: {r.outcome}
-                        {r.note && <span className="adm-note">“{r.note}”</span>}
+                        {r.note && <span className={NOTE}>“{r.note}”</span>}
                       </p>
                     )}
                   </li>

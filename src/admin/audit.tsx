@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { Button, Input, Select } from "../kit";
 import { ago, dateTime, plural, qs, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
-import { REASON, ROLE, adminUrl, useQuery, FLAG } from "./common";
+import { FILTERBAR, FLAG, LINKISH, LOG_TABLE, NOTE, REASON, ROLE, SCROLL } from "./common";
+import { act, actButton, adminUrl, useQuery } from "./common";
 import type { AuditRow } from "../../shared/admin";
 import type { AuditList as AuditPage } from "../../shared/admin-content";
 
@@ -83,10 +84,11 @@ function details(a: AuditRow): ReactNode {
 function auditUserLink(a: AuditRow) {
   return a.targetType === "user" && (a.subject || a.label) ? adminUrl(a.subject || a.label) : null;
 }
+const AUDIT_ROW = "flex gap-3 items-baseline flex-wrap py-[9px] text-[14px] border-b border-b-site-line";
 export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }) {
   if (!items.length) return <Empty>{empty}</Empty>;
   return (
-    <ul className="adm-audit">
+    <ul className="list-none m-0 p-0">
       {items.map(a => {
         const extra = details(a);
         const userLink = auditUserLink(a);
@@ -94,13 +96,13 @@ export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }
         if (userLink) target = <Link className="strong" to={userLink}>{arrowed(a.label || a.subject)}</Link>;
         else if (a.targetType === "dm_thread") target = <Link className="strong" to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link>;
         return (
-          <li key={a.id}>
-            <span className={`adm-act act-${actionGroup(a.action)}`}>{actionLabel(a.action)}</span>
-            <span className="grow">
+          <li key={a.id} className={AUDIT_ROW}>
+            <span className={act(actionGroup(a.action))}>{actionLabel(a.action)}</span>
+            <span className="min-w-0 flex-[1_1_240px] wrap-anywhere">
               {target}
               {a.subject && a.targetType !== "user" && <> · <Link to={adminUrl(a.subject)}>{a.subject}</Link></>}
               {extra && <span className="muted"> · {extra}</span>}
-              {a.note && <span className="adm-note">“{a.note}”</span>}
+              {a.note && <span className={NOTE}>“{a.note}”</span>}
             </span>
             <span className="muted small nowrap" title={dateTime(a.createdAt)}>{a.actor} · {ago(a.createdAt)}</span>
           </li>
@@ -143,7 +145,7 @@ export function Audit() {
       }
       return (
         <>
-          <form className="adm-filterbar" onSubmit={filter}>
+          <form className={FILTERBAR} onSubmit={filter}>
             <Select label="Staff member" value={actor} onChange={v => set({ actor: v })} options={actorOptions} />
             <Select label="Action" value={action} onChange={v => set({ action: v })} options={actionOptions} />
             <Input value={user} onChange={e => setUser(e.target.value)} placeholder="About user" aria-label="About user" />
@@ -153,8 +155,8 @@ export function Audit() {
           </form>
           <p className="muted small">{plural(d.total, "entry").replace("entrys", "entries")}</p>
           {d.items.length === 0 ? <Empty>No entries match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table adm-log">
+            <div className={SCROLL}>
+              <table className={LOG_TABLE}>
                 <thead><tr><th>When</th><th>Staff</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
                 <tbody>
                   {d.items.map(a => {
@@ -168,10 +170,10 @@ export function Audit() {
                       <tr key={a.id}>
                         <td className="nowrap small" title={dateTime(a.createdAt)}>{dateTime(a.createdAt)}</td>
                         <td>
-                          <button type="button" className="adm-linkish" onClick={() => set({ actor: a.actor })}>{a.actor}</button>
+                          <button type="button" className={LINKISH} onClick={() => set({ actor: a.actor })}>{a.actor}</button>
                         </td>
                         <td>
-                          <button type="button" className={`adm-act act-${actionGroup(a.action)}`} onClick={() => set({ action: a.action })}>
+                          <button type="button" className={actButton(actionGroup(a.action))} onClick={() => set({ action: a.action })}>
                             {actionLabel(a.action)}
                           </button>
                         </td>
@@ -183,7 +185,7 @@ export function Audit() {
                         </td>
                         <td className="small">
                           {extra && <span className="muted">{extra}</span>}
-                          {a.note && <span className="adm-note">“{a.note}”</span>}
+                          {a.note && <span className={NOTE}>“{a.note}”</span>}
                         </td>
                       </tr>
                     );

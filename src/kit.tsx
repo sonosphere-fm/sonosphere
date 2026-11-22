@@ -31,7 +31,7 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className"> & 
 
 /**
  * kind: "btn" (primary), "btn ghost", "btn danger", plus "small". Anything else is a bare control whose
- * look comes from its own class (love, play-btn, icon-btn, chip...).
+ * look comes from its own class (love, play-btn, chip...).
  */
 export function Button({ kind = "", children, disabled, loading, type, title, href, download, ...rest }: ButtonProps) {
   const k = kind.split(/\s+/).filter(Boolean);

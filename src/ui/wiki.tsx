@@ -9,13 +9,13 @@ import { ReportButton } from "./shoutbox";
 import type { ItemType } from "../../shared/catalog";
 import type { WikiHistory, WikiSaved, WikiVersion } from "../../shared/wiki";
 
-export function WikiSummary({ wiki, to }: { wiki: Pick<WikiVersion, "content"> | null; to: string }) {
+export function WikiSummary({ wiki, to, flush }: { wiki: Pick<WikiVersion, "content"> | null; to: string; flush?: boolean }) {
   if (!wiki) return <p className="muted">There's no wiki for this yet. <Link to={to}>Start it <Ico.Right /></Link></p>;
   const plain = plainMd(wiki.content).replace(/\n{2,}/g, "\n\n").trim();
   const short = plain.length > 420;
   const text = short ? plain.slice(0, 420).replace(/\s+\S*$/, "") + "… " : plain + " ";
   return (
-    <p className="wiki-summary">
+    <p className={`max-w-[72ch] leading-[1.6] ${flush ? "m-0" : "mb-[26px]"}`}>
       {text}
       <Link to={to}>{short ? "Read more" : "View wiki"} <Ico.Right /></Link>
     </p>
@@ -71,7 +71,7 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
                   </p>
                 )}
                 {me ? (
-                  <div className="wiki-actions">
+                  <div className="mt-5">
                     <Button kind="btn" onClick={edit}>{current ? "Edit wiki" : "Write the wiki"}</Button>
                   </div>
                 ) : (

@@ -4,13 +4,15 @@ import { Ico } from "../icons";
 import { Button, SearchField, Select, Textarea } from "../kit";
 import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, useTitle } from "../lib";
 import { Async, Avatar, Empty, Pager, Section, errorText } from "../ui/base";
+import { Badge, COUNT, FACTS, FILTERBAR, LIST, PEOPLE, PERSON, QUOTE, RED } from "./common";
+import { SCROLL, SEARCH, TABLE, TOOLBAR, USER_HEAD, USER_HEAD_SUB, USER_HEAD_TITLE, WHO } from "./common";
 import { adminUrl, useQuery, useRole, useConfirm, useFlash, FLAG, StatusBadges } from "./common";
 import type { DmFlagList, DmMessageDeleted, DmMuteResult, DmPerson, DmSummary, DmThreadHead, DmThreadList, DmTranscript, DmTranscriptMessage, Ok, SuspendResult } from "../../shared/admin";
 
 // Moderators see the spam flags; only admins can list or read conversations. The server checks both, asks for a reason
 // before it shows a transcript, and writes every opening to the audit log.
 const DM_STATUS: Record<string, [string, string]> = {
-  active: ["Active", "ok"],
+  active: ["Active", ""],
   request: ["Request", "warn"],
   declined: ["Declined", ""],
 };
@@ -24,21 +26,21 @@ export function FlagCount() {
     return () => window.removeEventListener("spin:dmflags", f);
   }, []);
   if (!q.data?.openFlags) return null;
-  return <span className="adm-count" title="Open spam flags">{q.data.openFlags}</span>;
+  return <span className={COUNT} title="Open spam flags">{q.data.openFlags}</span>;
 }
 
 type LivePerson = Extract<DmPerson, { username: string }>;
 const isLive = (u: DmPerson): u is LivePerson => u.username !== null;
 
 function DmStatus({ s }: { s: string }) {
-  return <span className={`adm-badge ${DM_STATUS[s]?.[1] ?? ""}`}>{DM_STATUS[s]?.[0] ?? s}</span>;
+  return <Badge tone={DM_STATUS[s]?.[1]}>{DM_STATUS[s]?.[0] ?? s}</Badge>;
 }
 
 function Pair({ users }: { users: DmPerson[] }) {
   return (
     <span className="adm-pair">
       {users.map((u, i) => (
-        <span key={u.id ?? i} className="adm-who">
+        <span key={u.id ?? i} className={WHO}>
           {i > 0 && <span className="muted small">and</span>}
           {u.username ? (
             <>
@@ -63,7 +65,7 @@ export function Messages() {
   const tabs: [string, string][] = role === "admin" ? [["threads", "Conversations"], ["flags", "Spam flags"]] : [["flags", "Spam flags"]];
   return (
     <>
-      <div className="toolbar">
+      <div className={TOOLBAR}>
         <nav className="tabs sub">
           {tabs.map(([k, l]) => (
             <button key={k} type="button" className={tab === k ? "active" : ""} onClick={() => set({ tab: k === "threads" ? "" : k, q: "", user: "", status: "" })}>
@@ -94,8 +96,8 @@ function Threads() {
       <p className="muted small">
         Conversations are private. This list shows who talks to whom but no text; opening one asks for a reason and is written to the audit log.
       </p>
-      <div className="adm-filterbar">
-        <form className="adm-search" onSubmit={search}>
+      <div className={FILTERBAR}>
+        <form className={SEARCH} onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder="Either person's username" label="Search conversations" clearable />
         </form>
         <Select
@@ -112,8 +114,8 @@ function Threads() {
             {d.user && <> · <Button kind="link small" type="button" onClick={() => set({ user: "" })}>Show everyone's</Button></>}
           </p>
           {d.items.length === 0 ? <Empty>No conversations match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className={SCROLL}>
+              <table className={TABLE}>
                 <thead>
                   <tr>
                     <th>Between</th>
@@ -131,7 +133,7 @@ function Threads() {
                       <td><Pair users={t.users} /></td>
                       <td className="nowrap"><DmStatus s={t.status} />{t.requester && <span className="muted small"> from {t.requester}</span>}</td>
                       <td className="num">{num(t.messages)}{t.deleted > 0 && <span className="muted small"> ({num(t.deleted)} deleted)</span>}</td>
-                      <td className="num">{t.reports ? <b className="adm-red">{t.reports}</b> : <span className="muted">0</span>}</td>
+                      <td className="num">{t.reports ? <b className={RED}>{t.reports}</b> : <span className="muted">0</span>}</td>
                       <td className="nowrap" title={dateTime(t.createdAt)}>{date(t.createdAt)}</td>
                       <td className="nowrap muted" title={dateTime(t.lastAt)}>{ago(t.lastAt)}</td>
                       <td className="right"><Button kind="btn ghost small" href={`/admin/messages/${t.id}`}>Open</Button></td>
@@ -235,7 +237,7 @@ export function Transcript() {
     danger: true,
     body: (
       <>
-        <blockquote className="adm-quote">{m.body}</blockquote>
+        <blockquote className={QUOTE}>{m.body}</blockquote>
         <p>It disappears for both people at once. It stays visible here, marked as deleted by you.{m.reports ? " Its open reports are closed." : ""}</p>
       </>
     ),
@@ -281,10 +283,10 @@ export function Transcript() {
     <>
       {modal}
       <p className="small"><Link to="/admin/messages"><Ico.Left /> All conversations</Link></p>
-      <div className="adm-user-head">
+      <div className={USER_HEAD}>
         <div className="grow">
-          <h2 className="adm-dm-title"><Pair users={t.users} /></h2>
-          <p className="muted">
+          <h2 className={USER_HEAD_TITLE}><Pair users={t.users} /></h2>
+          <p className={`muted ${USER_HEAD_SUB}`}>
             <DmStatus s={t.status} /> Started by {t.requester || "a deleted account"} {ago(t.createdAt)} · last message {ago(t.lastAt)}
           </p>
         </div>
@@ -337,8 +339,8 @@ export function Transcript() {
                         <div className="adm-dm-meta">
                           {who?.username ? <Link className="strong" to={adminUrl(name)}>{name}</Link> : <b>{name}</b>}
                           <span className="muted small" title={dateTime(m.at)}>{dateTime(m.at)}</span>
-                          {m.reports > 0 && <span className="adm-badge warn">{plural(m.reports, "open report")}</span>}
-                          {m.deletedAt && <span className="adm-badge">Deleted</span>}
+                          {m.reports > 0 && <Badge tone="warn">{plural(m.reports, "open report")}</Badge>}
+                          {m.deletedAt && <Badge>Deleted</Badge>}
                           {!m.deletedAt && <Button kind="link small" type="button" onClick={() => deleteMessage(m)}>Delete</Button>}
                         </div>
                         <p className="adm-dm-body">{m.body}</p>
@@ -353,24 +355,24 @@ export function Transcript() {
         </div>
         <aside className="side">
           <Section title="Conversation">
-            <dl className="adm-facts">
+            <dl className={FACTS}>
               <dt>Status</dt>
               <dd>{DM_STATUS[t.status]?.[0] ?? t.status}{t.status !== "active" && t.requester ? `, sent by ${t.requester}` : ""}</dd>
               <dt>Started</dt><dd>{dateTime(t.createdAt)}</dd>
               <dt>Last message</dt><dd>{dateTime(t.lastAt)}</dd>
               <dt>Messages</dt><dd>{num(t.messages)}{t.deleted ? `, ${num(t.deleted)} deleted` : ""}</dd>
               <dt>Open reports</dt>
-              <dd>{t.reports ? <Link to="/admin/reports?type=dm"><b className="adm-red">{t.reports}</b></Link> : "None"}</dd>
+              <dd>{t.reports ? <Link to="/admin/reports?type=dm"><b className={RED}>{t.reports}</b></Link> : "None"}</dd>
             </dl>
           </Section>
           <Section title="People">
-            <ul className="adm-people adm-dm-people">
+            <ul className={`${PEOPLE} adm-dm-people`}>
               {t.users.filter(isLive).map(u => (
-                <li key={u.id}>
+                <li key={u.id} className={PERSON}>
                   <Avatar user={u} size={32} />
                   <span className="grow">
                     <Link className="strong" to={adminUrl(u.username)}>{u.username}</Link> <StatusBadges u={u} />
-                    {u.dmMuted && <span className="adm-badge warn">Messaging off</span>}
+                    {u.dmMuted && <Badge tone="warn">Messaging off</Badge>}
                   </span>
                   {u.role === "user" && !u.banned && (
                     <Button kind="link small" type="button" onClick={() => toggleMute(u)}>
@@ -407,7 +409,7 @@ function Flags() {
         The message limits raise a flag when someone sends the same text to many people, starts a lot of new conversations, or hits the daily cap. The
         message that tripped it is shown as a sample.
       </p>
-      <div className="toolbar">
+      <div className={TOOLBAR}>
         <nav className="tabs sub">
           {[["open", "Open"], ["resolved", "Resolved"], ["all", "All"]].map(([k, l]) => (
             <button key={k} type="button" className={status === k ? "active" : ""} onClick={() => set({ status: k === "open" ? "" : k })}>
@@ -419,7 +421,7 @@ function Flags() {
       <Async q={q}>{d => (
         <>
           {d.items.length === 0 && <Empty>{status === "open" ? "No open spam flags." : "No flags match."}</Empty>}
-          <ul className="adm-list adm-flags">
+          <ul className={LIST}>
             {d.items.map(f => {
               const u = f.user;
               const plain = u.role === "user";
@@ -456,11 +458,11 @@ function Flags() {
                     <span className="badge">{FLAG[f.kind] ?? f.kind}</span>
                     <Link className="strong" to={adminUrl(u.username)}>{u.username}</Link>
                     <StatusBadges u={u} />
-                    {u.dmMuted && <span className="adm-badge warn">Messaging off</span>}
+                    {u.dmMuted && <Badge tone="warn">Messaging off</Badge>}
                     <span className="muted small" title={dateTime(f.createdAt)}>{ago(f.createdAt)}</span>
                   </div>
                   <p className="small">{f.detail}{f.detail && " · "}{plural(f.threadsDay, "new conversation")} in the last day</p>
-                  {f.sample && <blockquote className="adm-quote">{f.sample}</blockquote>}
+                  {f.sample && <blockquote className={QUOTE}>{f.sample}</blockquote>}
                   {f.resolvedAt ? (
                     <p className="muted small">Resolved {ago(f.resolvedAt)} by {f.resolver || "a deleted staff account"}</p>
                   ) : (

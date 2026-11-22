@@ -50,10 +50,10 @@ function HomeFeed({ name }: { name: string }) {
   return (
     <>
       {!hidden && (
-        <div className="welcome">
+        <div className="welcome relative pr-10 mb-6">
           <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}><Ico.X /></Button>
-          <h1>Welcome to Sonosphere, {name}!</h1>
-          <p>The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble more music.</p>
+          <h1 className="text-[24px] m-0 mb-2 max-[600px]:text-[20px]">Welcome to Sonosphere, {name}!</h1>
+          <p className="m-0 text-site-ink-2 max-w-[62ch]">The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble more music.</p>
         </div>
       )}
       <Pane><Recs /></Pane>
@@ -63,7 +63,7 @@ function HomeFeed({ name }: { name: string }) {
 
 function PlayRows() {
   return (
-    <ul className="play-rows">
+    <ul className="play-rows list-none m-0 mb-7 p-0">
       <StationRow type="library" label="Play your library" />
       <StationRow type="mix" label="Play your mix" />
       <StationRow type="recommended" label="Play your recommendations" />

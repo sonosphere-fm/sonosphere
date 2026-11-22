@@ -5,6 +5,9 @@ import { Button, SearchField, Select, Textarea } from "../kit";
 import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Async, Avatar, Empty, Pager, Section, Stat } from "../ui/base";
 import { type Role, REASON, TYPE, ROLE, adminUrl, useQuery, useRole, useConfirm, useFlash, StatusBadges } from "./common";
+import { COMPACT_LIST, FACTS, LIST, RED, SCROLL, SEARCH, TABLE, TILES } from "./common";
+import { TOOLBAR, TYPE_LABEL } from "./common";
+import { USER_HEAD, USER_HEAD_SUB, USER_HEAD_TITLE, WHO, cx, sortButton } from "./common";
 import { AuditList } from "./audit";
 import { ManageUserLabels } from "./user-labels";
 import type {
@@ -69,7 +72,7 @@ export function Users() {
     if (on) ariaSort = dir === "asc" ? "ascending" : "descending";
     return (
       <th className={cls} aria-sort={ariaSort}>
-        <button type="button" className={on ? "on" : ""} onClick={() => sortBy(key)}>
+        <button type="button" className={sortButton(on)} onClick={() => sortBy(key)}>
           {label}{on && (dir === "asc" ? <Ico.SortUp /> : <Ico.SortDown />)}
         </button>
       </th>
@@ -77,8 +80,8 @@ export function Users() {
   };
   return (
     <>
-      <div className="toolbar">
-        <form className="adm-search" onSubmit={search}>
+      <div className={TOOLBAR}>
+        <form className={`${SEARCH} max-[860px]:flex-[1_1_100%]`} onSubmit={search}>
           <SearchField
             value={text}
             onChange={setText}
@@ -93,8 +96,8 @@ export function Users() {
         <>
           <p className="muted small">{plural(d.total, "account")}{term && <> matching “{term}”</>}</p>
           {d.items.length === 0 ? <Empty>No accounts match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className={SCROLL}>
+              <table className={TABLE}>
                 <thead>
                   <tr>
                     {th("username", "Account")}
@@ -109,7 +112,7 @@ export function Users() {
                   {d.items.map(u => (
                     <tr key={u.id}>
                       <td>
-                        <div className="adm-who">
+                        <div className={WHO}>
                           <Avatar user={u} size={28} />
                           <span>
                             <Link className="strong" to={adminUrl(u.username)}>{u.username}</Link>
@@ -119,7 +122,7 @@ export function Users() {
                       </td>
                       <td><StatusBadges u={u} /></td>
                       <td className="num">{num(u.scrobbles)}</td>
-                      <td className="num">{u.openReports ? <b className="adm-red">{u.openReports}</b> : <span className="muted">0</span>}</td>
+                      <td className="num">{u.openReports ? <b className={RED}>{u.openReports}</b> : <span className="muted">0</span>}</td>
                       <td className="nowrap" title={dateTime(u.registeredAt)}>{date(u.registeredAt)}</td>
                       <td className="nowrap muted">{u.lastLogin ? ago(u.lastLogin) : "–"}</td>
                     </tr>
@@ -134,6 +137,13 @@ export function Users() {
     </>
   );
 }
+
+const NOTE_FORM = "flex gap-[10px] items-start mb-2 max-[860px]:flex-col max-[860px]:items-stretch";
+const STAFF_NOTE = cx(
+  "py-[10px] px-3 mb-2 bg-[light-dark(#fffbea,#2a2718)]",
+  "border-l-[3px] border-l-site-sun",
+);
+const ACTIONS = "flex flex-col items-stretch gap-2 *:w-full";
 
 export function UserDetail() {
   const name = useParams().name!;
@@ -274,11 +284,11 @@ export function UserDetail() {
 
         return (
           <>
-            <div className="adm-user-head">
+            <div className={USER_HEAD}>
               <Avatar user={u} size={64} />
               <div className="grow">
-                <h2>{u.username} <StatusBadges u={{ ...u, probation: d.trust.probation }} /></h2>
-                <p className="muted">{[u.realname, u.country].filter(Boolean).join(" · ") || "No name or country set"}</p>
+                <h2 className={USER_HEAD_TITLE}>{u.username} <StatusBadges u={{ ...u, probation: d.trust.probation }} /></h2>
+                <p className={`muted ${USER_HEAD_SUB}`}>{[u.realname, u.country].filter(Boolean).join(" · ") || "No name or country set"}</p>
               </div>
               {!u.banned && <Button kind="btn ghost small" href={userUrl(u.username)}>View profile <Ico.Right /></Button>}
             </div>
@@ -289,7 +299,7 @@ export function UserDetail() {
               </p>
             )}
             {u.suspended && !u.banned && <p className="notice">Suspended from posting. They can still listen and scrobble.</p>}
-            <div className="stats boxed adm-tiles">
+            <div className={TILES}>
               <Stat label="Scrobbles" value={num(d.counts.scrobbles)} hint={d.lastScrobble ? `last ${ago(d.lastScrobble)}` : "none yet"} />
               <Stat label="Wall posts" value={num(d.counts.shouts)} />
               <Stat label="Journal posts" value={num(d.counts.journals)} />
@@ -305,16 +315,16 @@ export function UserDetail() {
                 {role === "admin" && <ManageUserLabels name={u.username} />}
                 <Section title="Internal notes">
                   <p className="muted small">Only staff can see these.</p>
-                  <form className="adm-note-form" onSubmit={addNote}>
+                  <form className={NOTE_FORM} onSubmit={addNote}>
                     <Textarea rows={2} value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Add a note for other staff" maxLength={2000} />
                     <Button kind="btn small" disabled={!noteText.trim()}>Add note</Button>
                   </form>
                   {flash.note}
                   {d.notes.length > 0 && (
-                    <ul className="adm-notes">
+                    <ul className="list-none m-[10px_0_0] p-0">
                       {d.notes.map(n => (
-                        <li key={n.id}>
-                          <p>{n.body}</p>
+                        <li key={n.id} className={STAFF_NOTE}>
+                          <p className="m-[0_0_4px] whitespace-pre-wrap wrap-anywhere">{n.body}</p>
                           <span className="muted small">
                             {n.author || "deleted staff"} · {ago(n.createdAt)} ·{" "}
                             <Button kind="link small" type="button" onClick={() => deleteNote(n.id)}>Delete</Button>
@@ -337,7 +347,7 @@ export function UserDetail() {
                     more={`/admin/content?kind=shouts&user=${encodeURIComponent(u.username)}`}
                     moreLabel="All their posts"
                   >
-                    <ul className="adm-list">
+                    <ul className={LIST}>
                       {d.recentShouts.map(s => (
                         <li key={s.id}>
                           <p>{s.body}</p>
@@ -350,13 +360,13 @@ export function UserDetail() {
               </div>
               <aside className="side">
                 <Section title="Account">
-                  <dl className="adm-facts">
-                    {u.email !== undefined && <><dt>Email</dt><dd className="adm-break">{u.email}</dd></>}
+                  <dl className={FACTS}>
+                    {u.email !== undefined && <><dt>Email</dt><dd className="wrap-anywhere">{u.email}</dd></>}
                     <dt>Confirmed</dt><dd>{confirmed}</dd>
                     <dt>Joined</dt><dd>{dateTime(u.registeredAt)}</dd>
                     <dt>Last login</dt><dd>{d.lastLogin ? dateTime(d.lastLogin) : "No active session"}</dd>
                     <dt>Sessions</dt><dd>{num(d.counts.sessions)} web, {num(d.counts.apiSessions)} app</dd>
-                    {u.website && <><dt>Website</dt><dd className="adm-break">{u.website}</dd></>}
+                    {u.website && <><dt>Website</dt><dd className="wrap-anywhere">{u.website}</dd></>}
                     <dt>Social</dt>
                     <dd>
                       {num(d.counts.followers)} followers, {num(d.counts.following)} following
@@ -368,7 +378,7 @@ export function UserDetail() {
                 <Section title="Probation">
                   <Probation t={d.trust} />
                   {!d.trust.staff && !u.banned && (
-                    <div className="adm-actions adm-dm-act">
+                    <div className={`${ACTIONS} adm-dm-act`}>
                       {d.trust.probation ? (
                         <Button kind="btn ghost" type="button" onClick={endProbation}>End probation</Button>
                       ) : (
@@ -379,7 +389,7 @@ export function UserDetail() {
                 </Section>
                 <Section title="Direct messages">
                   {d.dm.muted && <p className="notice small">Messaging is turned off. They can read their conversations but can't send.</p>}
-                  <dl className="adm-facts">
+                  <dl className={FACTS}>
                     <dt>Conversations</dt>
                     <dd>
                       {num(d.dm.threads)}
@@ -389,18 +399,18 @@ export function UserDetail() {
                     <dt>Sent</dt><dd>{plural(d.dm.sent, "message")}, {num(d.dm.sentWeek)} in the last week</dd>
                     <dt>Spam flags</dt>
                     <dd>
-                      {d.dm.openFlags ? <Link to="/admin/messages?tab=flags"><b className="adm-red">{num(d.dm.openFlags)} open</b></Link> : "None open"}
+                      {d.dm.openFlags ? <Link to="/admin/messages?tab=flags"><b className={RED}>{num(d.dm.openFlags)} open</b></Link> : "None open"}
                     </dd>
                     <dt>Reported</dt>
                     <dd>
                       {d.dm.openReports ? (
-                        <Link to="/admin/reports?type=dm"><b className="adm-red">{plural(d.dm.openReports, "message")}</b></Link>
+                        <Link to="/admin/reports?type=dm"><b className={RED}>{plural(d.dm.openReports, "message")}</b></Link>
                       ) : "No open reports"}
                     </dd>
                     <dt>Accepts</dt><dd>{POLICY[d.dm.policy] ?? d.dm.policy}</dd>
                   </dl>
                   {!staffTarget && !locked && (
-                    <div className="adm-actions adm-dm-act">
+                    <div className={`${ACTIONS} adm-dm-act`}>
                       {d.dm.muted ? (
                         <Button kind="btn ghost" type="button" onClick={allowMessaging}>Allow messaging again</Button>
                       ) : (
@@ -411,7 +421,7 @@ export function UserDetail() {
                 </Section>
                 <Section title="Actions">
                   {why && <p className="muted small">{why}</p>}
-                  <div className="adm-actions">
+                  <div className={ACTIONS}>
                     {canSuspend && (u.suspended ? (
                       <Button kind="btn ghost" type="button" onClick={liftSuspension}>Lift suspension</Button>
                     ) : (
@@ -464,15 +474,15 @@ function Probation({ t }: { t: StaffTrust }) {
   return (
     <>
       <p className="muted small">{state}</p>
-      <dl className="adm-facts">
+      <dl className={FACTS}>
         <dt>Score</dt><dd>{t.score} of {t.needed}</dd>
         {t.probation && <><dt>Earliest exit</dt><dd>{exit}</dd></>}
         {t.checkedAt && <><dt>Last checked</dt><dd>{ago(t.checkedAt)}</dd></>}
       </dl>
       {t.points.length > 0 && (
-        <ul className="adm-points">
+        <ul className="list-none m-[10px_0_0] p-0 text-[14px]">
           {t.points.map(p => (
-            <li key={p.label}><span>{p.label}</span>{p.points > 0 ? <b>+{p.points}</b> : <b className="adm-red">{p.points}</b>}</li>
+            <li key={p.label} className="flex justify-between gap-3 py-[3px]"><span>{p.label}</span>{p.points > 0 ? <b>+{p.points}</b> : <b className={RED}>{p.points}</b>}</li>
           ))}
         </ul>
       )}
@@ -480,11 +490,19 @@ function Probation({ t }: { t: StaffTrust }) {
   );
 }
 
+const ROLE_BUTTON = cx(
+  "flex-1 py-[7px] px-1.5 [border:0] not-last:[border-right:1px_solid_var(--line)]",
+  "font-semibold text-[13px]",
+);
+const ROLE_ON = "bg-site-ink text-site-bg cursor-default";
+const ROLE_OFF = "bg-site-card text-site-ink-2 cursor-pointer hover:bg-site-panel hover:text-site-ink";
+const roleButton = (on: boolean) => `${ROLE_BUTTON} ${on ? ROLE_ON : ROLE_OFF}`;
+
 function RolePicker({ current, onPick }: { current: Role; onPick: (r: Role) => void }) {
   return (
-    <div className="adm-roles" role="group" aria-label="Role">
+    <div className="flex border border-site-line rounded-[4px] overflow-hidden" role="group" aria-label="Role">
       {ROLES.map(r => (
-        <button key={r} type="button" className={r === current ? "on" : ""} aria-pressed={r === current} onClick={() => r !== current && onPick(r)}>
+        <button key={r} type="button" className={roleButton(r === current)} aria-pressed={r === current} onClick={() => r !== current && onPick(r)}>
           {ROLE[r]}
         </button>
       ))}
@@ -495,17 +513,17 @@ function RolePicker({ current, onPick }: { current: Role; onPick: (r: Role) => v
 function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: string; show: "reporter" | "author" }) {
   if (!items.length) return <p className="muted">{empty}</p>;
   return (
-    <ul className="adm-list compact">
+    <ul className={COMPACT_LIST}>
       {items.map(r => {
         let who = null;
         if (show === "reporter" && r.reporter) who = <>by <Link to={adminUrl(r.reporter)}>{r.reporter}</Link> · </>;
         if (show === "author" && r.author) who = <>against <Link to={adminUrl(r.author)}>{r.author}</Link> · </>;
         const state = r.status === "open"
-          ? <Link to="/admin/reports"><b className="adm-red">open</b></Link>
+          ? <Link to="/admin/reports"><b className={RED}>open</b></Link>
           : `${r.outcome}${r.resolver ? ` by ${r.resolver}` : ""}`;
         return (
           <li key={r.id}>
-            <span><span className="badge">{REASON[r.reason] || r.reason}</span> <span className="adm-type">{TYPE[r.type]}</span> {r.where}</span>
+            <span><span className="badge">{REASON[r.reason] || r.reason}</span> <span className={TYPE_LABEL}>{TYPE[r.type]}</span> {r.where}</span>
             <span className="muted small">{who}{ago(r.createdAt)} · {state}</span>
           </li>
         );

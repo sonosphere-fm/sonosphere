@@ -31,23 +31,30 @@ function itemUrl(kind: ChartColProps["kind"], r: ChartItem) {
   return trackUrl(itemArtist(r) ?? "", itemName(r));
 }
 
+const STRIP = "absolute inset-x-0 bottom-0 flex items-center gap-3 px-3 py-2.5 bg-[rgba(0,0,0,.72)]";
+const STRIP_LINE = "block truncate leading-[1.3]";
+const COVER = "[&>.art]:aspect-[16/11] max-[600px]:[&>.art]:aspect-video";
+
 function ChartCol(props: ChartColProps) {
   const { title, kind, items, more } = props;
   const art = (r: ChartItem) => <Art image={"image" in r ? r.image : undefined} kind={kind === "artist" ? "artist" : "album"} />;
   const [top, ...rest] = items;
   const lead = kind !== "tag" && top;
   return (
-    <section className="chartcol" id={`top-${kind}s`}>
-      <h2 className="chart-title"><Link to={more}>{title}</Link></h2>
+    <section className="min-w-0 mb-10 scroll-mt-[70px] max-[600px]:mb-7" id={`top-${kind}s`}>
+      <h2 className="text-[30px] mb-3.5 max-[600px]:text-[24px]"><Link className="hover:text-site-ink hover:underline" to={more}>{title}</Link></h2>
       {!items.length ? <Empty>Nothing charted for this period yet.</Empty> : (
         <>
           {lead && (
-            <Link className="chart-top" to={itemUrl(kind, lead)}>
+            <Link className={`group relative block text-white ${COVER}`} to={itemUrl(kind, lead)}>
               {art(lead)}
-              <span className="chart-top-strip">
-                <b>1</b>
-                <span className={kind === "artist" ? "thumb round" : "thumb"}>{art(lead)}</span>
-                <span className="grow"><strong>{itemName(lead)}</strong>{kind !== "artist" && <span>{itemArtist(lead)}</span>}</span>
+              <span className={STRIP}>
+                <b className="flex-none w-[22px] text-center font-normal text-[15px] tabular-nums">1</b>
+                <span className="block flex-none w-11">{art(lead)}</span>
+                <span className="grow">
+                  <strong className={`${STRIP_LINE} group-hover:underline`}>{itemName(lead)}</strong>
+                  {kind !== "artist" && <span className={`${STRIP_LINE} text-[14px] text-[#d6d6d6]`}>{itemArtist(lead)}</span>}
+                </span>
               </span>
             </Link>
           )}
@@ -81,9 +88,9 @@ function ChartsOverview() {
       <nav className="tabs">
         {CHART_PERIODS.map(([k, l]) => <Button key={k} kind={k === period ? "active" : ""} onClick={() => setPeriod(k)}>{l}</Button>)}
       </nav>
-      <p className="jump">
-        <span>Jump to:</span>
-        {JUMPS.map(([id, l]) => <Button key={id} kind="link" type="button" onClick={() => jump(id)}>{l}</Button>)}
+      <p className="flex items-baseline gap-x-[18px] gap-y-1 flex-wrap -mt-2.5 mb-[26px] text-[14px] max-[600px]:mb-[18px]">
+        <span className="text-site-muted">Jump to:</span>
+        {JUMPS.map(([id, l]) => <Button key={id} kind="link text-[14px] font-medium" type="button" onClick={() => jump(id)}>{l}</Button>)}
       </p>
       <div className="cols">
         <div className="main">

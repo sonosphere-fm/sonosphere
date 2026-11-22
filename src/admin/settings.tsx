@@ -2,9 +2,15 @@ import { useState, type FormEvent } from "react";
 import { Button, Input, Select, Textarea } from "../kit";
 import { api, useApi, useTitle } from "../lib";
 import { Async, Section } from "../ui/base";
-import { useConfirm } from "./common";
+import { cx, useConfirm } from "./common";
 import type { AdminSettings } from "../../shared/admin-content";
 import { ManageLabelDefinitions } from "./user-labels";
+
+const PAGE = "flex flex-col gap-8 max-w-[640px] [&>.section]:mb-0";
+const FORM = cx(
+  "form [&_.section]:mb-[18px] [&>.section:last-of-type]:mb-0 [&>.section>p:last-child]:mb-0",
+  "[&_input[type=number]]:max-w-[140px]",
+);
 
 export function SiteSettings() {
   const q = useApi<AdminSettings>("/admin/settings");
@@ -13,7 +19,7 @@ export function SiteSettings() {
     q.setData(s);
     window.dispatchEvent(new Event("spin:site"));
   };
-  return <div className="adm-settings-page"><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></div>;
+  return <div className={PAGE}><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></div>;
 }
 type Fields = { registrationsOpen: boolean; announcement: string; announcementTone: string; maxShoutLength: string };
 function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: AdminSettings) => void }) {
@@ -52,7 +58,7 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
   return (
     <>
       {modal}
-      <form className="form adm-settings" onSubmit={submit}>
+      <form className={FORM} onSubmit={submit}>
         <Section title="Registrations">
           <label className="check">
             <Input type="checkbox" checked={f.registrationsOpen} onChange={e => setF({ ...f, registrationsOpen: e.target.checked })} />{" "}

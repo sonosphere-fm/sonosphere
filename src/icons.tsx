@@ -41,11 +41,13 @@ export const Ico = {
   Heart: ({ on }: { on?: boolean }) => <Heart className="ico" aria-hidden weight={on ? "fill" : "bold"} />,
 };
 
+const srOnly = "absolute w-px h-px overflow-hidden [clip:rect(0_0_0_0)] [clip-path:inset(50%)] whitespace-nowrap";
+
 /** An arrow between two words, as in "old > new". Screen readers hear `say`. */
 export const Arrow = ({ say = "to" }: { say?: string }) => (
   <span className="arrow">
     <ArrowRight className="ico" aria-hidden weight="bold" />
-    <span className="sr">{say}</span>
+    <span className={srOnly}>{say}</span>
   </span>
 );
 
