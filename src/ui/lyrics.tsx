@@ -27,7 +27,7 @@ declare module "react" {
 }
 
 let loaded: Promise<unknown> | null = null;
-const load = () => loaded ??= import("@uimaxbai/am-lyrics/am-lyrics.js");
+const load = () => (loaded ??= import("@uimaxbai/am-lyrics/am-lyrics.js"));
 // The component's toolbar and footer live in its shadow root, out of reach of styles.css. The footer is collapsed
 // rather than removed because the component measures how far it can scroll from the footer's position.
 const SHADOW_CSS = `
@@ -126,7 +126,9 @@ export function Lyrics({ track }: { track: PTrack }) {
   if (found === false) return null;
   return (
     <div hidden={!found}>
-      <Section title="Lyrics"><div className="lyrics-box h-[440px] bg-site-panel overflow-hidden">{ready && <am-lyrics ref={ref} />}</div></Section>
+      <Section title="Lyrics">
+        <div className="lyrics-box h-[440px] bg-site-panel overflow-hidden">{ready && <am-lyrics ref={ref} />}</div>
+      </Section>
     </div>
   );
 }

@@ -12,12 +12,17 @@ export async function addEvent(b: Body, creator: Viewer): Promise<number> {
   const country = clean(b.country, 80);
   const startsAt = Math.floor(Number(b.startsAt));
   const given: unknown[] = Array.isArray(b.artists) ? b.artists : String(b.artists || "").split(",");
-  const artists = given.map(a => clean(a)).filter(Boolean).slice(0, 20);
+  const artists = given
+    .map((a) => clean(a))
+    .filter(Boolean)
+    .slice(0, 20);
   if (!venue || !city || !startsAt) bad("Venue, city and date are required");
   const headliner = artists[0] ?? bad("Add at least one artist to the line-up");
   const url = clean(b.url, 300);
   if (url && !/^https?:\/\//i.test(url)) bad("Link must start with http:// or https://");
-  const description = String(b.description || "").trim().slice(0, 3000);
+  const description = String(b.description || "")
+    .trim()
+    .slice(0, 3000);
   const event = { title: title || `${headliner} at ${venue}`, venue, city, country, startsAt, description, url };
   return repo.createEvent(event, artists, creator.id);
 }

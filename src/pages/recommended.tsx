@@ -28,16 +28,20 @@ function RecommendedBody({ d, at }: { d: RecommendedData; at: HomeTab }) {
     );
   }
   if (at === "albums") {
-    const why = new Map(d.artists.map(a => [a.name, a.because]));
+    const why = new Map(d.artists.map((a) => [a.name, a.because]));
     return (
       <div className="recs four">
-        {d.albums.map(x => <RecCard key={x.id} kind="album" item={x} because={why.get(x.artist)} />)}
+        {d.albums.map((x) => (
+          <RecCard key={x.id} kind="album" item={x} because={why.get(x.artist)} />
+        ))}
       </div>
     );
   }
   return (
     <div className="recs four">
-      {d.artists.map(x => <RecCard key={x.id} kind="artist" item={x} because={x.because} />)}
+      {d.artists.map((x) => (
+        <RecCard key={x.id} kind="artist" item={x} because={x.because} />
+      ))}
     </div>
   );
 }
@@ -52,7 +56,7 @@ export function Recommended() {
       <HomeTabs at={at} />
       <div className="wrap page home-page">
         <h1 className="page-title">Recommended {at}</h1>
-        <Async q={q}>{d => <RecommendedBody d={d} at={at} />}</Async>
+        <Async q={q}>{(d) => <RecommendedBody d={d} at={at} />}</Async>
       </div>
     </>
   );

@@ -27,7 +27,10 @@ export const groupOf = (path: string): Group => (path.startsWith("/me/player") ?
 
 const blank = (): Ceiling => ({ limit: null, strikeAt: 0, raisedAt: 0 });
 const model = async (): Promise<Model> =>
-  (await getJson<Model>(MODEL)) ?? { player: { burst: blank(), day: blank() }, catalogue: { burst: blank(), day: blank() } };
+  (await getJson<Model>(MODEL)) ?? {
+    player: { burst: blank(), day: blank() },
+    catalogue: { burst: blank(), day: blank() },
+  };
 
 const count = (clientId: string, group: Group, w: Window, by: number) =>
   bump(`spotify-q:${group}:${w}:${clientId}:${Math.floor(now() / LENGTH[w])}`, by, (LENGTH[w] + 60) * 1000);
@@ -83,5 +86,5 @@ export async function pace(clientId: string, group: Group): Promise<number> {
   if (left <= 0) return MAX_PACE;
   const elapsed = Math.max(60, now() % LENGTH.day);
   const remaining = LENGTH.day - (now() % LENGTH.day);
-  return Math.min(MAX_PACE, Math.max(1, (used / elapsed) * remaining / left));
+  return Math.min(MAX_PACE, Math.max(1, ((used / elapsed) * remaining) / left));
 }

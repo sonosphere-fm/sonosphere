@@ -20,7 +20,7 @@ function parseCsv(text: string): string[][] {
   const endRow = () => {
     row.push(cell);
     cell = "";
-    if (row.some(c => c.trim())) rows.push(row);
+    if (row.some((c) => c.trim())) rows.push(row);
     row = [];
   };
   for (let i = 0; i < text.length; i++) {
@@ -68,21 +68,26 @@ function toStamp(v: unknown) {
 // Our export is a flat list; Last.fm API dumps are pages of recenttracks (arrays of arrays, or {recenttracks:{track}}).
 function flatten(j: unknown): unknown[] {
   if (Array.isArray(j)) {
-    return j.flatMap(x => {
+    return j.flatMap((x) => {
       const nested = Array.isArray(x) || get(x, "recenttracks") || get(x, "lovedtracks") || isObj(get(x, "track"));
       return nested ? flatten(x) : [x];
     });
   }
   if (!isObj(j)) return [];
   return flatten(
-    j.tracks ?? j.scrobbles ?? j.loved
-      ?? get(j.recenttracks, "track") ?? j.recenttracks
-      ?? get(j.lovedtracks, "track") ?? j.lovedtracks
-      ?? j.track ?? [],
+    j.tracks ??
+      j.scrobbles ??
+      j.loved ??
+      get(j.recenttracks, "track") ??
+      j.recenttracks ??
+      get(j.lovedtracks, "track") ??
+      j.lovedtracks ??
+      j.track ??
+      []
   );
 }
 
-const text = (v: unknown) => String((isObj(v) ? v["#text"] ?? v.name ?? v.title : v) ?? "").trim();
+const text = (v: unknown) => String((isObj(v) ? (v["#text"] ?? v.name ?? v.title) : v) ?? "").trim();
 
 function rawTime(r: Obj) {
   if (isObj(r.date)) return r.date.uts ?? r.date["#text"];
@@ -94,23 +99,23 @@ function parseImport(name: string, body: string): ImportRow[] {
   if (name.toLowerCase().endsWith(".json") || /^\s*[[{]/.test(body)) {
     rows = flatten(JSON.parse(body))
       .filter(isObj)
-      .filter(r => get(r["@attr"], "nowplaying") !== "true");
+      .filter((r) => get(r["@attr"], "nowplaying") !== "true");
   } else {
     const csv = parseCsv(body);
     if (!csv.length) return [];
-    const head = csv[0].map(h => h.trim().toLowerCase());
+    const head = csv[0].map((h) => h.trim().toLowerCase());
     const hasHead = head.includes("artist");
     const cols = hasHead ? head : ["artist", "album", "track", "timestamp"];
-    rows = csv.slice(hasHead ? 1 : 0).map(r => Object.fromEntries(cols.map((c, i) => [c, r[i]])));
+    rows = csv.slice(hasHead ? 1 : 0).map((r) => Object.fromEntries(cols.map((c, i) => [c, r[i]])));
   }
   return rows
-    .map(r => ({
+    .map((r) => ({
       artist: text(r.artist ?? r.artistName),
       track: text(r.track ?? r.title ?? r.name ?? r.trackName),
       album: text(r.album ?? r.albumName),
       timestamp: toStamp(rawTime(r)),
     }))
-    .filter(r => r.artist && r.track);
+    .filter((r) => r.artist && r.track);
 }
 
 const active = (j: ImportJob | null | undefined) => !!j && ["uploading", "queued", "running"].includes(j.status);
@@ -118,7 +123,10 @@ const active = (j: ImportJob | null | undefined) => !!j && ["uploading", "queued
 // Polls every two seconds while an import is running on the server.
 function useImportJob() {
   const [job, setJob] = useState<ImportJob | null | undefined>(undefined);
-  const load = () => api<ImportState>("/import").then(r => setJob(r.job)).catch(() => {});
+  const load = () =>
+    api<ImportState>("/import")
+      .then((r) => setJob(r.job))
+      .catch(() => {});
   useEffect(() => {
     load();
   }, []);
@@ -144,19 +152,25 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
   if (job.status === "done") {
     return (
       <p className="form-ok">
-        Imported {plural(job.accepted, "scrobble")} from {what}{skipped > 0 ? `, skipped ${num(skipped)} duplicates/errors` : ""}.
+        Imported {plural(job.accepted, "scrobble")} from {what}
+        {skipped > 0 ? `, skipped ${num(skipped)} duplicates/errors` : ""}.
       </p>
     );
   }
   if (job.status === "failed") {
     return (
       <p className="form-error">
-        The import from {what} stopped: {job.error} {job.accepted > 0 && `${plural(job.accepted, "scrobble")} imported before that stay.`}
+        The import from {what} stopped: {job.error}{" "}
+        {job.accepted > 0 && `${plural(job.accepted, "scrobble")} imported before that stay.`}
       </p>
     );
   }
   if (job.status === "cancelled") {
-    return <p className="muted">The import from {what} was cancelled{job.accepted > 0 ? ` after ${plural(job.accepted, "scrobble")}` : ""}.</p>;
+    return (
+      <p className="muted">
+        The import from {what} was cancelled{job.accepted > 0 ? ` after ${plural(job.accepted, "scrobble")}` : ""}.
+      </p>
+    );
   }
 
   let heading = `Matching ${what} to the catalogue…`;
@@ -165,15 +179,21 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
 
   return (
     <div className="import-progress" role="status">
-      <div className="import-head"><Spinner />
+      <div className="import-head">
+        <Spinner />
         <b>{heading}</b>
       </div>
-      <div className="import-track"><span style={{ width: `${job.status === "queued" ? 0 : Math.max(pct, 1)}%` }} /></div>
+      <div className="import-track">
+        <span style={{ width: `${job.status === "queued" ? 0 : Math.max(pct, 1)}%` }} />
+      </div>
       <p className="muted small">
-        {num(job.done)} of {job.total ? `about ${num(job.total)}` : "?"} done{job.accepted ? `, ${num(job.accepted)} added` : ""}.
-        This carries on in the background: you can close the page and come back.
+        {num(job.done)} of {job.total ? `about ${num(job.total)}` : "?"} done
+        {job.accepted ? `, ${num(job.accepted)} added` : ""}. This carries on in the background: you can close the page
+        and come back.
       </p>
-      <Button kind="btn ghost small" onClick={onCancel}>Cancel import</Button>
+      <Button kind="btn ghost small" onClick={onCancel}>
+        Cancel import
+      </Button>
     </div>
   );
 }
@@ -215,9 +235,9 @@ export function ScrobblePage() {
     const matches = (x: T) => Number(x.artist.toLowerCase() === a);
     return [...items].sort((x, y) => matches(y) - matches(x));
   };
-  const findArtists = (q: string) => search(q, "artists").then(r => r.artists);
-  const findAlbums = (q: string) => search(q, "albums").then(r => byTypedArtist(r.albums).slice(0, 6));
-  const findTracks = (q: string) => search(q, "tracks").then(r => byTypedArtist(r.tracks).slice(0, 6));
+  const findArtists = (q: string) => search(q, "artists").then((r) => r.artists);
+  const findAlbums = (q: string) => search(q, "albums").then((r) => byTypedArtist(r.albums).slice(0, 6));
+  const findTracks = (q: string) => search(q, "tracks").then((r) => byTypedArtist(r.tracks).slice(0, 6));
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -241,9 +261,12 @@ export function ScrobblePage() {
     imp.run(async () => {
       const body = await file.text();
       const parsed = parseImport(file.name, body);
-      if (!parsed.length) throw new Error("Nothing found in that file. Expected columns: artist, album, track, timestamp.");
+      if (!parsed.length)
+        throw new Error("Nothing found in that file. Expected columns: artist, album, track, timestamp.");
       if (parsed.length > IMPORT_MAX) {
-        throw new Error(`That file has ${num(parsed.length)} rows; an import can hold up to ${num(IMPORT_MAX)}. Split it and import it in parts.`);
+        throw new Error(
+          `That file has ${num(parsed.length)} rows; an import can hold up to ${num(IMPORT_MAX)}. Split it and import it in parts.`
+        );
       }
       if (/loved/i.test(file.name) || /"lovedtracks"/.test(body.slice(0, 2000))) setWhat("loved");
       setRows(parsed);
@@ -251,19 +274,20 @@ export function ScrobblePage() {
   };
 
   // Rows go up in chunks; once all are there the server takes over and the page can be closed.
-  const runImport = () => imp.run(async () => {
-    const all = rows!;
-    const { job: j } = await api<ImportState>("/import", { body: { kind: what, total: all.length } });
-    for (let n = 0; n * IMPORT_CHUNK < all.length; n++) {
-      const end = (n + 1) * IMPORT_CHUNK;
-      setProgress(`Uploading ${num(Math.min(end, all.length))} of ${num(all.length)}…`);
-      await api(`/import/${j!.id}/chunk`, { body: { n, rows: all.slice(n * IMPORT_CHUNK, end) } });
-    }
-    const started = await api<ImportState>(`/import/${j!.id}/start`, { body: {} });
-    setJob(started.job);
-    setRows(null);
-    setProgress("");
-  });
+  const runImport = () =>
+    imp.run(async () => {
+      const all = rows!;
+      const { job: j } = await api<ImportState>("/import", { body: { kind: what, total: all.length } });
+      for (let n = 0; n * IMPORT_CHUNK < all.length; n++) {
+        const end = (n + 1) * IMPORT_CHUNK;
+        setProgress(`Uploading ${num(Math.min(end, all.length))} of ${num(all.length)}…`);
+        await api(`/import/${j!.id}/chunk`, { body: { n, rows: all.slice(n * IMPORT_CHUNK, end) } });
+      }
+      const started = await api<ImportState>(`/import/${j!.id}/start`, { body: {} });
+      setJob(started.job);
+      setRows(null);
+      setProgress("");
+    });
 
   const fromLastfm = (e: FormEvent) => {
     e.preventDefault();
@@ -291,75 +315,98 @@ export function ScrobblePage() {
         <div>
           <Section title="Scrobble a track manually">
             <form className="form card" onSubmit={submit}>
-              <label>Track
+              <label>
+                Track
                 <Suggest
                   label="Track"
                   autoFocus
                   placeholder="Start typing a song…"
                   value={f.track}
-                  onChange={v => setF({ ...f, track: v })}
+                  onChange={(v) => setF({ ...f, track: v })}
                   search={findTracks}
-                  text={t => t.title}
-                  onPick={t => setF({ ...f, track: t.title, artist: t.artist, album: t.album || "" })}
-                  row={t => (
+                  text={(t) => t.title}
+                  onPick={(t) => setF({ ...f, track: t.title, artist: t.artist, album: t.album || "" })}
+                  row={(t) => (
                     <>
                       <Art image={t.image} />
-                      <span><strong>{t.title}</strong><span>{t.artist}{t.album && ` · ${t.album}`}</span></span>
+                      <span>
+                        <strong>{t.title}</strong>
+                        <span>
+                          {t.artist}
+                          {t.album && ` · ${t.album}`}
+                        </span>
+                      </span>
                     </>
                   )}
                 />
               </label>
               <div className="pair">
-                <label>Artist
+                <label>
+                  Artist
                   <Suggest
                     label="Artist"
                     value={f.artist}
-                    onChange={v => setF({ ...f, artist: v })}
+                    onChange={(v) => setF({ ...f, artist: v })}
                     search={findArtists}
-                    text={a => a.name}
-                    onPick={a => setF({ ...f, artist: a.name })}
-                    row={a => (
+                    text={(a) => a.name}
+                    onPick={(a) => setF({ ...f, artist: a.name })}
+                    row={(a) => (
                       <>
                         <Art image={a.image} kind="artist" />
-                        <span><strong>{a.name}</strong><span>{num(a.listeners)} listeners</span></span>
+                        <span>
+                          <strong>{a.name}</strong>
+                          <span>{num(a.listeners)} listeners</span>
+                        </span>
                       </>
                     )}
                   />
                 </label>
-                <label><span>Album <span className="muted opt">optional</span></span>
+                <label>
+                  <span>
+                    Album <span className="muted opt">optional</span>
+                  </span>
                   <Suggest
                     label="Album"
                     value={f.album}
-                    onChange={v => setF({ ...f, album: v })}
+                    onChange={(v) => setF({ ...f, album: v })}
                     search={findAlbums}
-                    text={a => a.title}
-                    onPick={a => setF({ ...f, album: a.title, artist: f.artist.trim() ? f.artist : a.artist })}
-                    row={a => (
+                    text={(a) => a.title}
+                    onPick={(a) => setF({ ...f, album: a.title, artist: f.artist.trim() ? f.artist : a.artist })}
+                    row={(a) => (
                       <>
                         <Art image={a.image} />
-                        <span><strong>{a.title}</strong><span>{a.artist}</span></span>
+                        <span>
+                          <strong>{a.title}</strong>
+                          <span>{a.artist}</span>
+                        </span>
                       </>
                     )}
                   />
                 </label>
               </div>
-              <label>Listened at
+              <label>
+                Listened at
                 <DatePicker
                   time
                   label="Listened at"
                   value={f.when}
-                  onChange={v => setF({ ...f, when: v || local() })}
+                  onChange={(v) => setF({ ...f, when: v || local() })}
                   max="now"
                   presets={PRESETS}
                 />
               </label>
               {act.note}
-              <Button kind="btn" loading={act.busy} disabled={!f.artist.trim() || !f.track.trim()}>Scrobble</Button>
+              <Button kind="btn" loading={act.busy} disabled={!f.artist.trim() || !f.track.trim()}>
+                Scrobble
+              </Button>
             </form>
-            <p className="muted small">Pick a match to fill in the rest, or type anything: music that isn't in the catalogue yet is added automatically.</p>
+            <p className="muted small">
+              Pick a match to fill in the rest, or type anything: music that isn't in the catalogue yet is added
+              automatically.
+            </p>
           </Section>
           <Section title="Your latest scrobbles" more={`${userUrl(me!.username)}/library`}>
-            <Async q={recent}>{d => <TrackList items={d.items} time />}</Async>
+            <Async q={recent}>{(d) => <TrackList items={d.items} time />}</Async>
           </Section>
         </div>
         <div>
@@ -371,36 +418,69 @@ export function ScrobblePage() {
                   <form className="lastfm-import" onSubmit={fromLastfm}>
                     <label>
                       Last.fm username
-                      <Input value={lfm} onChange={e => setLfm(e.target.value)} placeholder="Your Last.fm username" autoComplete="off" maxLength={40} />
+                      <Input
+                        value={lfm}
+                        onChange={(e) => setLfm(e.target.value)}
+                        placeholder="Your Last.fm username"
+                        autoComplete="off"
+                        maxLength={40}
+                      />
                     </label>
-                    <Button kind="btn" loading={lfmAct.busy} disabled={!lfm.trim()}>Import</Button>
+                    <Button kind="btn" loading={lfmAct.busy} disabled={!lfm.trim()}>
+                      Import
+                    </Button>
                   </form>
                   {lfmAct.note}
                   <p>
-                    Or import scrobbles or loved tracks from a CSV/JSON file. CSV columns: <code>artist, album, track, timestamp</code> (Unix
-                    seconds or ISO date; only artist and track are required).
+                    Or import scrobbles or loved tracks from a CSV/JSON file. CSV columns:{" "}
+                    <code>artist, album, track, timestamp</code> (Unix seconds or ISO date; only artist and track are
+                    required).
                   </p>
                   <div className="tabs sub" role="group" aria-label="What the file contains">
-                    <button type="button" className={what === "scrobbles" ? "active" : ""} aria-pressed={what === "scrobbles"} onClick={() => setWhat("scrobbles")}>
+                    <button
+                      type="button"
+                      className={what === "scrobbles" ? "active" : ""}
+                      aria-pressed={what === "scrobbles"}
+                      onClick={() => setWhat("scrobbles")}
+                    >
                       Scrobbles
                     </button>
-                    <button type="button" className={what === "loved" ? "active" : ""} aria-pressed={what === "loved"} onClick={() => setWhat("loved")}>
+                    <button
+                      type="button"
+                      className={what === "loved" ? "active" : ""}
+                      aria-pressed={what === "loved"}
+                      onClick={() => setWhat("loved")}
+                    >
                       Loved tracks
                     </button>
                   </div>
-                  <label>File<Input type="file" accept=".csv,.json,text/csv,application/json" onChange={e => pick(e.target.files?.[0])} /></label>
+                  <label>
+                    File
+                    <Input
+                      type="file"
+                      accept=".csv,.json,text/csv,application/json"
+                      onChange={(e) => pick(e.target.files?.[0])}
+                    />
+                  </label>
                   {rows && (
                     <>
-                      <p><b>{plural(rows.length, noun)}</b> found in {fileName}. First rows:</p>
+                      <p>
+                        <b>{plural(rows.length, noun)}</b> found in {fileName}. First rows:
+                      </p>
                       <table className="chartlist compact">
                         <tbody>
                           {rows.slice(0, 5).map((r, i) => (
                             <tr key={i}>
                               <td className="c-name">
                                 <span className="strong">{r.track}</span>
-                                <span className="muted">{r.artist}{r.album && ` · ${r.album}`}</span>
+                                <span className="muted">
+                                  {r.artist}
+                                  {r.album && ` · ${r.album}`}
+                                </span>
                               </td>
-                              <td className="c-time">{r.timestamp ? dateTime(r.timestamp) : what === "loved" ? "" : "now"}</td>
+                              <td className="c-time">
+                                {r.timestamp ? dateTime(r.timestamp) : what === "loved" ? "" : "now"}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -408,7 +488,11 @@ export function ScrobblePage() {
                       <Button kind="btn" loading={imp.busy} onClick={runImport}>
                         {imp.busy ? progress || "Uploading…" : `Import ${plural(rows.length, noun)}`}
                       </Button>
-                      {imp.busy && <p className="muted small">Keep this page open until the upload finishes; after that it carries on without it.</p>}
+                      {imp.busy && (
+                        <p className="muted small">
+                          Keep this page open until the upload finishes; after that it carries on without it.
+                        </p>
+                      )}
                     </>
                   )}
                   {imp.note}
@@ -418,8 +502,8 @@ export function ScrobblePage() {
           </Section>
           <Section title="Scrobble from other apps">
             <p>
-              Sonosphere's API is compatible with applications that support the Last.fm 2.0 protocol. To scrobble from another app, follow
-              the <Link to="/help">scrobbling help</Link>.
+              Sonosphere's API is compatible with applications that support the Last.fm 2.0 protocol. To scrobble from
+              another app, follow the <Link to="/help">scrobbling help</Link>.
             </p>
           </Section>
         </div>

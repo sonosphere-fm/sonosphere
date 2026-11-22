@@ -2,8 +2,28 @@ import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, notLike, 
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
 import {
-  apiSessions, apiTokens, auditLog, blocks, dmFlags, emailTokens, dmMessages, dmThreads, follows, journals, lovedTracks, modNotes, nowPlaying, playlists,
-  reports, scrobbles, sessions, shouts, taggings, userArtists, users, wikis,
+  apiSessions,
+  apiTokens,
+  auditLog,
+  blocks,
+  dmFlags,
+  emailTokens,
+  dmMessages,
+  dmThreads,
+  follows,
+  journals,
+  lovedTracks,
+  modNotes,
+  nowPlaying,
+  playlists,
+  reports,
+  scrobbles,
+  sessions,
+  shouts,
+  taggings,
+  userArtists,
+  users,
+  wikis,
 } from "../db/schema";
 import { jsonField, matches } from "../db/dialect";
 import { first, now } from "../util";
@@ -21,11 +41,25 @@ type Actor = { id: number; username: string };
 
 // A report is "against" an account when it reports the profile itself or something the account wrote.
 const against = (userId: SQL | typeof users.id, username: SQL | typeof users.username) =>
-  or(and(eq(reports.targetType, "user"), eq(reports.targetId, userId)), eq(jsonField(reports.snapshot, "author"), username));
-const lastLogin = sql<number | null>`(SELECT MAX(${sessions.createdAt}) FROM ${sessions} WHERE ${sessions.userId} = ${users.id})`;
+  or(
+    and(eq(reports.targetType, "user"), eq(reports.targetId, userId)),
+    eq(jsonField(reports.snapshot, "author"), username)
+  );
+const lastLogin = sql<
+  number | null
+>`(SELECT MAX(${sessions.createdAt}) FROM ${sessions} WHERE ${sessions.userId} = ${users.id})`;
 const openReports = sql<number>`(SELECT COUNT(*) FROM ${reports} WHERE ${reports.status} = 'open' AND ${against(users.id, users.username)})`;
 
-type UserFilter = "all" | "staff" | "admins" | "moderators" | "suspended" | "banned" | "reported" | "unconfirmed" | "probation";
+type UserFilter =
+  | "all"
+  | "staff"
+  | "admins"
+  | "moderators"
+  | "suspended"
+  | "banned"
+  | "reported"
+  | "unconfirmed"
+  | "probation";
 type UserSort = "username" | "registered" | "scrobbles" | "reports" | "login";
 const notBanned = eq(users.banned, false);
 const FILTERS: Record<UserFilter, SQL | undefined> = {
@@ -51,16 +85,32 @@ type UserQuery = {
 type UserListRow = User & { scrobbles: number; openReports: number; lastLogin: number | null; probation: boolean };
 
 export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; total: number }> {
-  const plays = db.select({ userId: scrobbles.userId, c: count().as("c") }).from(scrobbles).groupBy(scrobbles.userId).as("s");
+  const plays = db
+    .select({ userId: scrobbles.userId, c: count().as("c") })
+    .from(scrobbles)
+    .groupBy(scrobbles.userId)
+    .as("s");
   const played = sql<number>`COALESCE(${plays.c}, 0)`;
   const p = q.pattern;
-  const search = p === null
-    ? undefined
-    : or(matches(users.usernameNorm, p), matches(users.realname, p), q.searchEmail ? matches(users.email, p) : undefined);
+  const search =
+    p === null
+      ? undefined
+      : or(
+          matches(users.usernameNorm, p),
+          matches(users.realname, p),
+          q.searchEmail ? matches(users.email, p) : undefined
+        );
   const where = and(FILTERS[q.filter], search);
-  const sortKeys = { username: users.usernameNorm, registered: users.registeredAt, scrobbles: played, reports: openReports, login: lastLogin };
+  const sortKeys = {
+    username: users.usernameNorm,
+    registered: users.registeredAt,
+    scrobbles: played,
+    reports: openReports,
+    login: lastLogin,
+  };
   const key = sortKeys[q.sort];
-  const rows = await db.select({ user: users, scrobbles: played, openReports, lastLogin, probation: probationSql })
+  const rows = await db
+    .select({ user: users, scrobbles: played, openReports, lastLogin, probation: probationSql })
     .from(users)
     .leftJoin(plays, eq(plays.userId, users.id))
     .where(where)
@@ -68,13 +118,24 @@ export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; to
     .limit(q.limit)
     .offset(q.offset);
   return {
-    rows: rows.map(r => ({ ...r.user, scrobbles: r.scrobbles, openReports: r.openReports, lastLogin: r.lastLogin, probation: r.probation })),
+    rows: rows.map((r) => ({
+      ...r.user,
+      scrobbles: r.scrobbles,
+      openReports: r.openReports,
+      lastLogin: r.lastLogin,
+      probation: r.probation,
+    })),
     total: await db.$count(users, where),
   };
 }
 
 export async function contentCounts(id: number): Promise<{ scrobbles: number; shouts: number; journals: number }> {
-  const plays = await first(db.select({ c: sql<number>`COALESCE(SUM(${userArtists.plays}), 0)` }).from(userArtists).where(eq(userArtists.userId, id)));
+  const plays = await first(
+    db
+      .select({ c: sql<number>`COALESCE(SUM(${userArtists.plays}), 0)` })
+      .from(userArtists)
+      .where(eq(userArtists.userId, id))
+  );
   return {
     scrobbles: plays?.c ?? 0,
     shouts: await db.$count(shouts, eq(shouts.authorId, id)),
@@ -101,12 +162,22 @@ export async function userCounts(id: number): Promise<StaffUserPage["counts"]> {
 }
 
 export async function lastLoginOf(id: number): Promise<number | null> {
-  const row = await first(db.select({ t: max(sessions.createdAt) }).from(sessions).where(eq(sessions.userId, id)));
+  const row = await first(
+    db
+      .select({ t: max(sessions.createdAt) })
+      .from(sessions)
+      .where(eq(sessions.userId, id))
+  );
   return row?.t ?? null;
 }
 
 export async function lastScrobbleOf(id: number): Promise<number | null> {
-  const row = await first(db.select({ t: max(scrobbles.playedAt) }).from(scrobbles).where(eq(scrobbles.userId, id)));
+  const row = await first(
+    db
+      .select({ t: max(scrobbles.playedAt) })
+      .from(scrobbles)
+      .where(eq(scrobbles.userId, id))
+  );
   return row?.t ?? null;
 }
 
@@ -114,18 +185,19 @@ async function reportList(where: SQL | undefined): Promise<ReportBrief[]> {
   const reporter = alias(users, "reporter");
   const resolver = alias(users, "resolver");
   const profile = alias(users, "profile");
-  const rows = await db.select({
-    id: reports.id,
-    type: reports.targetType,
-    reason: reports.reason,
-    status: reports.status,
-    outcome: reports.outcome,
-    createdAt: reports.createdAt,
-    reporter: reporter.username,
-    resolver: resolver.username,
-    snapshot: reports.snapshot,
-    profile: profile.username,
-  })
+  const rows = await db
+    .select({
+      id: reports.id,
+      type: reports.targetType,
+      reason: reports.reason,
+      status: reports.status,
+      outcome: reports.outcome,
+      createdAt: reports.createdAt,
+      reporter: reporter.username,
+      resolver: resolver.username,
+      snapshot: reports.snapshot,
+      profile: profile.username,
+    })
     .from(reports)
     .leftJoin(reporter, eq(reporter.id, reports.reporterId))
     .leftJoin(resolver, eq(resolver.id, reports.resolvedBy))
@@ -139,11 +211,19 @@ async function reportList(where: SQL | undefined): Promise<ReportBrief[]> {
   });
 }
 
-export const reportsAgainst = (u: User): Promise<ReportBrief[]> => reportList(against(sql`${u.id}`, sql`${u.username}`));
+export const reportsAgainst = (u: User): Promise<ReportBrief[]> =>
+  reportList(against(sql`${u.id}`, sql`${u.username}`));
 export const reportsBy = (id: number): Promise<ReportBrief[]> => reportList(eq(reports.reporterId, id));
 
 export const recentShouts = (id: number, limit: number) =>
-  db.select({ id: shouts.id, body: shouts.body, targetType: shouts.targetType, targetId: shouts.targetId, createdAt: shouts.createdAt })
+  db
+    .select({
+      id: shouts.id,
+      body: shouts.body,
+      targetType: shouts.targetType,
+      targetId: shouts.targetId,
+      createdAt: shouts.createdAt,
+    })
     .from(shouts)
     .where(eq(shouts.authorId, id))
     .orderBy(desc(shouts.createdAt))
@@ -157,16 +237,21 @@ export function userHistory(id: number, limit: number): Promise<AuditRow[]> {
   const where = or(
     eq(auditLog.subjectId, id),
     and(eq(auditLog.targetType, "user"), eq(auditLog.targetId, id)),
-    and(eq(auditLog.targetType, "dm_thread"), inArray(auditLog.targetId, theirThreads)),
+    and(eq(auditLog.targetType, "dm_thread"), inArray(auditLog.targetId, theirThreads))
   );
   return auditRows(where, limit, 0);
 }
 
 export async function dmActivity(u: User, t: number): Promise<StaffUserPage["dm"]> {
-  const started = (since: number) => db.$count(dmThreads, and(eq(dmThreads.requesterId, u.id), gte(dmThreads.createdAt, since)));
-  const reported = await first(db.select({ c: count() }).from(reports)
-    .innerJoin(dmMessages, eq(dmMessages.id, reports.targetId))
-    .where(and(eq(reports.targetType, "dm"), eq(reports.status, "open"), eq(dmMessages.senderId, u.id))));
+  const started = (since: number) =>
+    db.$count(dmThreads, and(eq(dmThreads.requesterId, u.id), gte(dmThreads.createdAt, since)));
+  const reported = await first(
+    db
+      .select({ c: count() })
+      .from(reports)
+      .innerJoin(dmMessages, eq(dmMessages.id, reports.targetId))
+      .where(and(eq(reports.targetType, "dm"), eq(reports.status, "open"), eq(dmMessages.senderId, u.id)))
+  );
   return {
     muted: u.dmMuted,
     policy: u.dmPolicy || "requests",
@@ -181,23 +266,36 @@ export async function dmActivity(u: User, t: number): Promise<StaffUserPage["dm"
 }
 
 export const notesOn = (userId: number): Promise<ModNote[]> =>
-  db.select({ id: modNotes.id, body: modNotes.body, createdAt: modNotes.createdAt, author: users.username })
+  db
+    .select({ id: modNotes.id, body: modNotes.body, createdAt: modNotes.createdAt, author: users.username })
     .from(modNotes)
     .leftJoin(users, eq(users.id, modNotes.authorId))
     .where(eq(modNotes.userId, userId))
     .orderBy(desc(modNotes.createdAt), desc(modNotes.id));
 
 export async function addNote(userId: number, authorId: number, body: string): Promise<number> {
-  const [row] = await db.insert(modNotes).values({ userId, authorId, body, createdAt: now() }).returning({ id: modNotes.id });
+  const [row] = await db
+    .insert(modNotes)
+    .values({ userId, authorId, body, createdAt: now() })
+    .returning({ id: modNotes.id });
   return row!.id;
 }
 
 export const findNote = (id: number) =>
-  first(db.select({ id: modNotes.id, userId: modNotes.userId, authorId: modNotes.authorId, body: modNotes.body, username: users.username })
-    .from(modNotes)
-    .innerJoin(users, eq(users.id, modNotes.userId))
-    .where(eq(modNotes.id, id))
-    .limit(1));
+  first(
+    db
+      .select({
+        id: modNotes.id,
+        userId: modNotes.userId,
+        authorId: modNotes.authorId,
+        body: modNotes.body,
+        username: users.username,
+      })
+      .from(modNotes)
+      .innerJoin(users, eq(users.id, modNotes.userId))
+      .where(eq(modNotes.id, id))
+      .limit(1)
+  );
 
 export async function deleteNote(id: number): Promise<void> {
   await db.delete(modNotes).where(eq(modNotes.id, id));
@@ -205,7 +303,7 @@ export async function deleteNote(id: number): Promise<void> {
 
 // Also drops any confirmation link still out.
 export async function setVerified(id: number, at: number): Promise<void> {
-  await db.transaction(async tx => {
+  await db.transaction(async (tx) => {
     await tx.update(users).set({ emailVerifiedAt: at }).where(eq(users.id, id));
     await tx.delete(emailTokens).where(and(eq(emailTokens.userId, id), eq(emailTokens.kind, "verify")));
   });
@@ -219,8 +317,14 @@ export async function setDmMuted(id: number, dmMuted: boolean): Promise<void> {
   await db.update(users).set({ dmMuted }).where(eq(users.id, id));
 }
 
-export async function setBanned(actor: Actor, id: number, banned: boolean, reason: string, entry: AuditEntry): Promise<void> {
-  await transact(async tx => {
+export async function setBanned(
+  actor: Actor,
+  id: number,
+  banned: boolean,
+  reason: string,
+  entry: AuditEntry
+): Promise<void> {
+  await transact(async (tx) => {
     if (banned) {
       await tx.update(users).set({ banned: true, bannedAt: now(), banReason: reason }).where(eq(users.id, id));
       await tx.delete(sessions).where(eq(sessions.userId, id));
@@ -242,8 +346,9 @@ export async function revokeSessions(id: number): Promise<number> {
 }
 
 export async function deleteAccount(actor: Actor, t: User, entry: AuditEntry): Promise<void> {
-  await transact(async tx => {
-    await tx.update(reports)
+  await transact(async (tx) => {
+    await tx
+      .update(reports)
       .set({ status: "closed", outcome: "account deleted", resolvedBy: actor.id, resolvedAt: now() })
       .where(and(eq(reports.status, "open"), against(sql`${t.id}`, sql`${t.username}`)));
     // other people's comments on their journal posts and shouts on their profile don't cascade

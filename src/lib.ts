@@ -19,7 +19,7 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   const data: unknown = await res.json().catch(() => ({ error: "Unexpected response from server" }));
   if (!res.ok) {
     const hasMessage = data && typeof data === "object" && "error" in data && typeof data.error === "string";
-    const message = hasMessage ? data.error as string : "Request failed";
+    const message = hasMessage ? (data.error as string) : "Request failed";
     throw Object.assign(new Error(message), { status: res.status });
   }
   return data as T;
@@ -37,7 +37,14 @@ export const qs = (o: Record<string, string | number | boolean | null | undefine
 // Every GET is cached by path. React keeps the old tree while the next one suspends, so views never drop
 // to a loading state.
 export type ApiError = Error & { status?: number };
-type Entry = { data?: unknown; error?: ApiError; promise?: Promise<void>; dirty?: boolean; at: number; subs: Set<() => void> };
+type Entry = {
+  data?: unknown;
+  error?: ApiError;
+  promise?: Promise<void>;
+  dirty?: boolean;
+  at: number;
+  subs: Set<() => void>;
+};
 const cache = new Map<string, Entry>();
 
 // Preloads the pictures a prefetched reply refers to, so the page arrives with its artwork.
@@ -74,15 +81,17 @@ function load(path: string): Entry {
   const onError = (error: ApiError) => {
     if (e.data === undefined) e.error = error;
   };
-  const p: Promise<void> = api<unknown>(path).then(onData, onError).then(() => {
-    e.at = Date.now();
-    if (e.promise === p) e.promise = undefined;
-    e.subs.forEach(f => f());
-    if (e.dirty) {
-      e.dirty = false;
-      load(path);
-    }
-  });
+  const p: Promise<void> = api<unknown>(path)
+    .then(onData, onError)
+    .then(() => {
+      e.at = Date.now();
+      if (e.promise === p) e.promise = undefined;
+      e.subs.forEach((f) => f());
+      if (e.dirty) {
+        e.dirty = false;
+        load(path);
+      }
+    });
   e.promise = p;
   return e;
 }
@@ -120,7 +129,10 @@ export function useApi<T>(path: string | null) {
     scheduleSubscriptions();
     // Revisits show the cached copy at once, then refresh quietly unless it was just fetched on hover.
     if (!e.promise && Date.now() - e.at > 10000) load(shown);
-    return () => { e.subs.delete(bump); scheduleSubscriptions(); };
+    return () => {
+      e.subs.delete(bump);
+      scheduleSubscriptions();
+    };
   }, [shown]);
 
   const reload = () => {
@@ -132,11 +144,11 @@ export function useApi<T>(path: string | null) {
   const setData = (data: T) => {
     if (!entry) return;
     entry.data = data;
-    entry.subs.forEach(f => f());
+    entry.subs.forEach((f) => f());
   };
   return {
     data: (entry?.data ?? null) as T | null,
-    error: entry?.data === undefined ? entry?.error ?? null : null,
+    error: entry?.data === undefined ? (entry?.error ?? null) : null,
     loading: shown !== path,
     reload,
     setData,
@@ -148,7 +160,8 @@ export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, refr
 export const useAuth = () => useContext(AuthContext);
 
 export { enc, dec, artistUrl, albumUrl, trackUrl, userUrl, tagUrl } from "../shared/paths";
-export const imageUrl = (id: string, size: "large" | "small" = "large") => `/api/image/${id}${size === "small" ? "?s=small" : ""}`;
+export const imageUrl = (id: string, size: "large" | "small" = "large") =>
+  `/api/image/${id}${size === "small" ? "?s=small" : ""}`;
 
 // The clipboard API only exists on https pages, so plain http falls back to a selected text field.
 export async function copyText(text: string): Promise<boolean> {
@@ -194,7 +207,8 @@ export function ago(ts: number) {
 }
 const DATE_OPTS: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
 export const date = (ts: number, opts = DATE_OPTS) => new Date(ts * 1000).toLocaleDateString("en-GB", opts);
-export const dateTime = (ts: number) => new Date(ts * 1000).toLocaleString("en-GB", { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" });
+export const dateTime = (ts: number) =>
+  new Date(ts * 1000).toLocaleString("en-GB", { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" });
 
 export const PERIODS: [string, string][] = [
   ["7day", "Last 7 days"],
@@ -207,18 +221,24 @@ export const PERIODS: [string, string][] = [
 
 export function useParam(name: string, def = ""): [string, (v: string) => void] {
   const [sp, setSp] = useSearchParams();
-  const set = (v: string) => setSp(prev => {
-    const n = new URLSearchParams(prev);
-    if (v && v !== def) n.set(name, v);
-    else n.delete(name);
-    if (name !== "page") n.delete("page");
-    return n;
-  }, { preventScrollReset: true });
+  const set = (v: string) =>
+    setSp(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        if (v && v !== def) n.set(name, v);
+        else n.delete(name);
+        if (name !== "page") n.delete("page");
+        return n;
+      },
+      { preventScrollReset: true }
+    );
   return [sp.get(name) || def, set];
 }
 
 export function useTitle(title: string | null | undefined) {
-  useEffect(() => { if (title) document.title = `${title} | Sonosphere`; }, [title]);
+  useEffect(() => {
+    if (title) document.title = `${title} | Sonosphere`;
+  }, [title]);
 }
 
 // One WebSocket per tab while signed in or viewing listening data.
@@ -311,7 +331,7 @@ function liveOpen() {
     liveSend({ t: "listen", names: listeningNames });
     liveEmit({ t: "open", again });
   };
-  s.onmessage = ev => {
+  s.onmessage = (ev) => {
     if (sock !== s) return;
     let m: unknown;
     try {
@@ -320,7 +340,14 @@ function liveOpen() {
       return;
     }
     if (m && typeof m === "object" && "t" in m && typeof m.t === "string") {
-      if (m.t === "listening" && "name" in m && typeof m.name === "string" && "change" in m && (m.change === "scrobbles" || m.change === "nowplaying")) refreshListening(m.name, m.change);
+      if (
+        m.t === "listening" &&
+        "name" in m &&
+        typeof m.name === "string" &&
+        "change" in m &&
+        (m.change === "scrobbles" || m.change === "nowplaying")
+      )
+        refreshListening(m.name, m.change);
       liveEmit(m as LiveEvent);
     }
   };
@@ -354,7 +381,9 @@ export function useLive(fn: (e: LiveEvent) => void) {
   useEffect(() => {
     const l = (e: LiveEvent) => ref.current(e);
     liveListeners.add(l);
-    return () => { liveListeners.delete(l); };
+    return () => {
+      liveListeners.delete(l);
+    };
   }, []);
 }
 
@@ -364,5 +393,5 @@ export function mutate<T>(path: string, fn: (data: T) => T) {
   if (!e || e.data === undefined) return;
   e.data = fn(e.data as T);
   e.at = Date.now();
-  e.subs.forEach(f => f());
+  e.subs.forEach((f) => f());
 }

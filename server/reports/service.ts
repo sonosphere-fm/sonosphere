@@ -27,7 +27,11 @@ export async function fileReport(reporter: Viewer, r: NewReport): Promise<void> 
   else await repo.addReport(reporter.id, r.type, r.id, filing);
 }
 
-export async function suspend(moderator: Viewer, target: { id: number; username: string; isAdmin: boolean }, suspended: boolean): Promise<void> {
+export async function suspend(
+  moderator: Viewer,
+  target: { id: number; username: string; isAdmin: boolean },
+  suspended: boolean
+): Promise<void> {
   if (suspended && target.isAdmin) bad("Moderators can't be suspended");
   await repo.setSuspended(target.id, suspended);
   await audit(moderator, {

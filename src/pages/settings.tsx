@@ -2,7 +2,20 @@ import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, ty
 import { Button, Input, Select, useConfirm } from "../kit";
 import { MdEditor } from "../md";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ago, api, copyText, date, imageUrl, invalidateAll, num, plural, useApi, useAuth, useTitle, type Ok } from "../lib";
+import {
+  ago,
+  api,
+  copyText,
+  date,
+  imageUrl,
+  invalidateAll,
+  num,
+  plural,
+  useApi,
+  useAuth,
+  useTitle,
+  type Ok,
+} from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { ApiApp, AppOk, Apps } from "../../shared/apps";
 import { useTurnstile } from "./auth";
@@ -11,7 +24,13 @@ import type { Logins } from "../../shared/auth";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
-import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
+import type {
+  SpotifyConnect,
+  SpotifyConnectBody,
+  SpotifyLink,
+  SpotifyStatus,
+  SpotifySynced,
+} from "../../shared/spotify";
 import { Ico } from "../icons";
 import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
@@ -37,7 +56,11 @@ export function Settings() {
     <div className="wrap page">
       <h1 className="page-title">Settings</h1>
       <nav className="tabs">
-        {TABS.map(([p, l]) => <NavLink key={p} to={`/settings${p}`} end>{l}</NavLink>)}
+        {TABS.map(([p, l]) => (
+          <NavLink key={p} to={`/settings${p}`} end>
+            {l}
+          </NavLink>
+        ))}
       </nav>
       <div className="narrow-col">
         <Pane>
@@ -56,11 +79,12 @@ export function Settings() {
 function useSaveProfile() {
   const { setMe } = useAuth();
   const act = useAction();
-  const save = (body: ProfileEdit) => act.run(async () => {
-    const r = await api<ProfileSaved>("/me", { method: "PATCH", body });
-    setMe(r.user);
-    return "Saved.";
-  });
+  const save = (body: ProfileEdit) =>
+    act.run(async () => {
+      const r = await api<ProfileSaved>("/me", { method: "PATCH", body });
+      setMe(r.user);
+      return "Saved.";
+    });
   return { act, save };
 }
 
@@ -85,10 +109,11 @@ function ProfileSettings() {
     e.target.value = "";
   };
 
-  const removeImage = () => img.run(async () => {
-    await api<Ok>("/image", { method: "DELETE" });
-    refresh();
-  });
+  const removeImage = () =>
+    img.run(async () => {
+      await api<Ok>("/image", { method: "DELETE" });
+      refresh();
+    });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -101,14 +126,27 @@ function ProfileSettings() {
 
   return (
     <>
-      {crop && <ImageCropper file={crop} kind="avatar" onClose={() => setCrop(null)} onSave={async image => {
-        await api<ImageSaved>("/image?type=user", { raw: image, headers: { "Content-Type": image.type } });
-        refresh();
-        invalidateAll();
-      }} />}
+      {crop && (
+        <ImageCropper
+          file={crop}
+          kind="avatar"
+          onClose={() => setCrop(null)}
+          onSave={async (image) => {
+            await api<ImageSaved>("/image?type=user", { raw: image, headers: { "Content-Type": image.type } });
+            refresh();
+            invalidateAll();
+          }}
+        />
+      )}
       <Section title="Avatar">
         <div className="avatar-edit">
-          <button type="button" className="avatar avatar-pick" aria-label="Change avatar" onClick={() => file.current?.click()} disabled={img.busy}>
+          <button
+            type="button"
+            className="avatar avatar-pick"
+            aria-label="Change avatar"
+            onClick={() => file.current?.click()}
+            disabled={img.busy}
+          >
             <Art image={me!.image} kind="user" />
           </button>
           <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} />
@@ -117,7 +155,11 @@ function ProfileSettings() {
               <Button kind="btn small" loading={img.busy} onClick={() => file.current?.click()}>
                 {me!.image ? "Change picture" : "Upload picture"}
               </Button>
-              {me!.image && <button type="button" className="linklike muted" onClick={removeImage}>Remove</button>}
+              {me!.image && (
+                <button type="button" className="linklike muted" onClick={removeImage}>
+                  Remove
+                </button>
+              )}
             </div>
             <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB).</p>
             {img.note}
@@ -127,16 +169,36 @@ function ProfileSettings() {
       <BannerSettings />
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
-          <label>Display name<Input value={f.realname} onChange={set("realname")} maxLength={60} /></label>
-          <label>Pronouns<Input value={f.pronouns} onChange={set("pronouns")} placeholder="they/them" maxLength={30} /></label>
-          <label>Country<Input value={f.country} onChange={set("country")} maxLength={60} /></label>
-          <label>Website<Input type="url" value={f.website} onChange={set("website")} placeholder="https://" maxLength={200} /></label>
+          <label>
+            Display name
+            <Input value={f.realname} onChange={set("realname")} maxLength={60} />
+          </label>
+          <label>
+            Pronouns
+            <Input value={f.pronouns} onChange={set("pronouns")} placeholder="they/them" maxLength={30} />
+          </label>
+          <label>
+            Country
+            <Input value={f.country} onChange={set("country")} maxLength={60} />
+          </label>
+          <label>
+            Website
+            <Input type="url" value={f.website} onChange={set("website")} placeholder="https://" maxLength={200} />
+          </label>
           <div className="field-block">
             <span className="field-label">About me</span>
-            <MdEditor label="About me" rows={5} value={f.about} onChange={about => setF(f => ({ ...f, about }))} maxLength={2000} />
+            <MdEditor
+              label="About me"
+              rows={5}
+              value={f.about}
+              onChange={(about) => setF((f) => ({ ...f, about }))}
+              maxLength={2000}
+            />
           </div>
           {act.note}
-          <Button kind="btn" loading={act.busy}>Save profile</Button>
+          <Button kind="btn" loading={act.busy}>
+            Save profile
+          </Button>
         </form>
       </Section>
       <Appearance />
@@ -156,20 +218,28 @@ function BannerSettings() {
     if (image) setCrop(image);
   };
 
-  const remove = () => act.run(async () => {
-    await api<Ok>("/image?type=banner", { method: "DELETE" });
-    refresh();
-    invalidateAll();
-    return "Banner removed.";
-  });
+  const remove = () =>
+    act.run(async () => {
+      await api<Ok>("/image?type=banner", { method: "DELETE" });
+      refresh();
+      invalidateAll();
+      return "Banner removed.";
+    });
 
   return (
     <Section title="Banner">
-      {crop && <ImageCropper file={crop} kind="banner" onClose={() => setCrop(null)} onSave={async image => {
-        await api<ImageSaved>("/image?type=banner", { raw: image, headers: { "Content-Type": image.type } });
-        refresh();
-        invalidateAll();
-      }} />}
+      {crop && (
+        <ImageCropper
+          file={crop}
+          kind="banner"
+          onClose={() => setCrop(null)}
+          onSave={async (image) => {
+            await api<ImageSaved>("/image?type=banner", { raw: image, headers: { "Content-Type": image.type } });
+            refresh();
+            invalidateAll();
+          }}
+        />
+      )}
       <div className="banner-edit">
         {me!.banner && (
           <ImageWithFallback
@@ -180,21 +250,39 @@ function BannerSettings() {
             errorFallback={<span className="image-placeholder">Image unavailable</span>}
           />
         )}
-        <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} disabled={act.busy} />
+        <Input
+          ref={file}
+          type="file"
+          hidden
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={upload}
+          disabled={act.busy}
+        />
         <div className="avatar-actions">
           <Button kind="btn small" type="button" loading={act.busy} onClick={() => file.current?.click()}>
             {me!.banner ? "Change banner" : "Upload banner"}
           </Button>
-          {me!.banner && <button type="button" className="linklike muted" disabled={act.busy} onClick={remove}>Remove banner</button>}
+          {me!.banner && (
+            <button type="button" className="linklike muted" disabled={act.busy} onClick={remove}>
+              Remove banner
+            </button>
+          )}
         </div>
-        <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to fit.</p>
+        <p className="muted small">
+          PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to
+          fit.
+        </p>
         {act.note}
       </div>
     </Section>
   );
 }
 
-const THEMES: [ThemePref, string][] = [["light", "Light"], ["system", "Automatic"], ["dark", "Dark"]];
+const THEMES: [ThemePref, string][] = [
+  ["light", "Light"],
+  ["system", "Automatic"],
+  ["dark", "Dark"],
+];
 
 function Appearance() {
   const { me, setMe } = useAuth();
@@ -220,7 +308,9 @@ function Appearance() {
     <Section title="Appearance">
       <div className="theme-pick" role="group" aria-label="Theme">
         {THEMES.map(([v, name]) => (
-          <button key={v} type="button" aria-pressed={me!.theme === v} onClick={() => pick(v)}>{name}</button>
+          <button key={v} type="button" aria-pressed={me!.theme === v} onClick={() => pick(v)}>
+            {name}
+          </button>
         ))}
       </div>
       {act.note}
@@ -235,7 +325,13 @@ const DM_POLICIES: [string, string][] = [
   ["nobody", "Nobody"],
 ];
 
-function CheckOption({ checked, disabled, onChange, title, children }: {
+function CheckOption({
+  checked,
+  disabled,
+  onChange,
+  title,
+  children,
+}: {
   checked: boolean;
   disabled?: boolean;
   onChange: (checked: boolean) => void;
@@ -244,8 +340,12 @@ function CheckOption({ checked, disabled, onChange, title, children }: {
 }) {
   return (
     <label className="check">
-      <Input type="checkbox" checked={checked} disabled={disabled} onChange={e => onChange(e.target.checked)} />{" "}
-      <span><b>{title}</b><br /><span className="muted small">{children}</span></span>
+      <Input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />{" "}
+      <span>
+        <b>{title}</b>
+        <br />
+        <span className="muted small">{children}</span>
+      </span>
     </label>
   );
 }
@@ -261,27 +361,35 @@ function PrivacySettings() {
             title="Hide recent listening"
             checked={me!.hideRecent || me!.privateListening}
             disabled={me!.privateListening}
-            onChange={hideRecent => save({ hideRecent })}
+            onChange={(hideRecent) => save({ hideRecent })}
           >
-            Your scrobble history and recent tracks will not be visible to other users. Your charts will still be shown on your profile.
+            Your scrobble history and recent tracks will not be visible to other users. Your charts will still be shown
+            on your profile.
           </CheckOption>
           <CheckOption
             title="Keep all my listening private"
             checked={me!.privateListening}
-            onChange={privateListening => save({ privateListening })}
+            onChange={(privateListening) => save({ privateListening })}
           >
-            Your charts, library, loved tracks, play counts and listening reports will be hidden from other users. You will also be
-            excluded from other users' soundalikes and top listener lists. Your plays will still count anonymously toward site-wide charts.
+            Your charts, library, loved tracks, play counts and listening reports will be hidden from other users. You
+            will also be excluded from other users' soundalikes and top listener lists. Your plays will still count
+            anonymously toward site-wide charts.
           </CheckOption>
           <CheckOption
             title="Let people write on my wall"
             checked={me!.shoutsEnabled}
-            onChange={shoutsEnabled => save({ shoutsEnabled })}
+            onChange={(shoutsEnabled) => save({ shoutsEnabled })}
           >
             Turn off to close your shoutbox to new shouts.
           </CheckOption>
-          <label>Who can send you direct messages?
-            <Select label="Who can message you" value={me!.dmPolicy} onChange={v => save({ dmPolicy: v })} options={DM_POLICIES} />
+          <label>
+            Who can send you direct messages?
+            <Select
+              label="Who can message you"
+              value={me!.dmPolicy}
+              onChange={(v) => save({ dmPolicy: v })}
+              options={DM_POLICIES}
+            />
           </label>
           {act.note}
         </div>
@@ -297,7 +405,7 @@ function NotificationSettings() {
   const off = me!.emailNotify === "off";
   const muted = new Set(me!.emailMuted);
   const toggle = (k: string, on: boolean) => {
-    const emailMuted = on ? me!.emailMuted.filter(x => x !== k) : [...me!.emailMuted, k];
+    const emailMuted = on ? me!.emailMuted.filter((x) => x !== k) : [...me!.emailMuted, k];
     save({ emailMuted });
   };
   return (
@@ -305,26 +413,35 @@ function NotificationSettings() {
       <div className="form">
         {!me!.emailVerified && (
           <p className="muted small">
-            Emails only go to a confirmed address. Confirm {me!.email} under <Link to="/settings/account">Account</Link> to start getting them.
+            Emails only go to a confirmed address. Confirm {me!.email} under <Link to="/settings/account">Account</Link>{" "}
+            to start getting them.
           </p>
         )}
-        <label>Send me emails
+        <label>
+          Send me emails
           <Select
             label="How often to email you"
             value={me!.emailNotify}
-            onChange={v => save({ emailNotify: v })}
+            onChange={(v) => save({ emailNotify: v })}
             options={EMAIL_MODES.map(([v, l]) => [v, l])}
           />
         </label>
         {me!.emailNotify !== "instant" && !off && (
           <p className="muted small">
-            One email {me!.emailNotify === "daily" ? "a day" : "a week"} with whatever is still unread, and nothing when there's nothing new.
+            One email {me!.emailNotify === "daily" ? "a day" : "a week"} with whatever is still unread, and nothing when
+            there's nothing new.
           </p>
         )}
         <p className="field-label">Email me when</p>
         {EMAIL_KINDS.map(([k, l]) => (
           <label key={k} className="check">
-            <Input type="checkbox" checked={!off && !muted.has(k)} disabled={off} onChange={e => toggle(k, e.target.checked)} /> {l}
+            <Input
+              type="checkbox"
+              checked={!off && !muted.has(k)}
+              disabled={off}
+              onChange={(e) => toggle(k, e.target.checked)}
+            />{" "}
+            {l}
           </label>
         ))}
         {act.note}
@@ -339,18 +456,26 @@ function BlockedUsers() {
   return (
     <Section title="Blocked users">
       <p className="muted small">
-        People you block can't follow you, write on your wall or comment on your journal, and their shouts are hidden from you everywhere.
-        Block someone from the “…” menu on their profile.
+        People you block can't follow you, write on your wall or comment on your journal, and their shouts are hidden
+        from you everywhere. Block someone from the “…” menu on their profile.
       </p>
       <Async q={q}>
-        {d => d.items.length ? (
-          <UserList
-            items={d.items}
-            extra={u => <span><Button kind="link small" type="button" onClick={() => unblock(u.username)}>Unblock</Button></span>}
-          />
-        ) : (
-          <p className="muted">You haven't blocked anyone.</p>
-        )}
+        {(d) =>
+          d.items.length ? (
+            <UserList
+              items={d.items}
+              extra={(u) => (
+                <span>
+                  <Button kind="link small" type="button" onClick={() => unblock(u.username)}>
+                    Unblock
+                  </Button>
+                </span>
+              )}
+            />
+          ) : (
+            <p className="muted">You haven't blocked anyone.</p>
+          )
+        }
       </Async>
     </Section>
   );
@@ -365,27 +490,40 @@ function SignInMethods() {
   const error = OAUTH_ERRORS[sp.get("oauth") ?? ""];
   const linked = sp.get("linked");
   if (!q.data?.providers.length) return null;
-  const connectedCount = q.data.providers.filter(p => p.connected).length;
+  const connectedCount = q.data.providers.filter((p) => p.connected).length;
   const lastWayIn = !me!.hasPassword && connectedCount === 1;
 
-  const disconnect = (id: string) => act.run(async () => {
-    await api<Ok>("/me/logins/unlink", { body: { provider: id } });
-    setSp({}, { replace: true });
-    q.reload();
-  });
+  const disconnect = (id: string) =>
+    act.run(async () => {
+      await api<Ok>("/me/logins/unlink", { body: { provider: id } });
+      setSp({}, { replace: true });
+      q.reload();
+    });
 
   return (
     <Section title="Sign-in methods">
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
       {linked && !error && <p className="form-ok">Connected. You can now log in with it.</p>}
       <ul className="plain">
-        {q.data.providers.map(p => (
+        {q.data.providers.map((p) => (
           <li key={p.id} className="row between">
             <span className="oauth-row">
-              <span className={`oauth-chip oauth-${p.id}`}><OAuthMark id={p.id} /></span>
+              <span className={`oauth-chip oauth-${p.id}`}>
+                <OAuthMark id={p.id} />
+              </span>
               <b>{p.label}</b>{" "}
               <span className="muted small">
-                {p.connected ? <>{p.connected.name || "connected"}, since {date(p.connected.since)}</> : "not connected"}
+                {p.connected ? (
+                  <>
+                    {p.connected.name || "connected"}, since {date(p.connected.since)}
+                  </>
+                ) : (
+                  "not connected"
+                )}
               </span>
             </span>
             {p.connected ? (
@@ -398,7 +536,9 @@ function SignInMethods() {
                 Disconnect
               </Button>
             ) : (
-              <Button kind="btn ghost small" href={oauthStart(p.id, "link")}>Connect</Button>
+              <Button kind="btn ghost small" href={oauthStart(p.id, "link")}>
+                Connect
+              </Button>
             )}
           </li>
         ))}
@@ -420,10 +560,11 @@ function AccountSettings() {
   const delAct = useAction();
   const c = useConfirm();
 
-  const resendLink = () => resend.run(async () => {
-    await api<Ok>("/me/verify", { body: {} });
-    return `Sent a new link to ${me!.email}.`;
-  });
+  const resendLink = () =>
+    resend.run(async () => {
+      await api<Ok>("/me/verify", { body: {} });
+      return `Sent a new link to ${me!.email}.`;
+    });
 
   const submitEmail = (e: FormEvent) => {
     e.preventDefault();
@@ -457,11 +598,12 @@ function AccountSettings() {
       body: "Your profile, scrobbles, loved tracks, playlists and shouts will be gone for good. This can't be undone.",
       action: "Delete my account",
       danger: true,
-      run: () => delAct.run(async () => {
-        await api<Ok>("/me/delete", { body: { password: del } });
-        setMe(null);
-        nav("/");
-      }),
+      run: () =>
+        delAct.run(async () => {
+          await api<Ok>("/me/delete", { body: { password: del } });
+          setMe(null);
+          nav("/");
+        }),
     });
   };
 
@@ -471,37 +613,64 @@ function AccountSettings() {
       <Section title="Email">
         <form className="form" onSubmit={submitEmail}>
           <p className="muted small">
-            {me!.emailVerified
-              ? <>{me!.email} is confirmed.</>
-              : <>{me!.email} is not confirmed yet. <Button kind="link small" type="button" onClick={resendLink}>Send the link again</Button></>}
+            {me!.emailVerified ? (
+              <>{me!.email} is confirmed.</>
+            ) : (
+              <>
+                {me!.email} is not confirmed yet.{" "}
+                <Button kind="link small" type="button" onClick={resendLink}>
+                  Send the link again
+                </Button>
+              </>
+            )}
             {me!.pendingEmail && <> Waiting for you to confirm {me!.pendingEmail}.</>}
           </p>
           {resend.note}
-          <label>Email address<Input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+          <label>
+            Email address
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </label>
           {emailAct.note}
-          <Button kind="btn" loading={emailAct.busy}>Update email</Button>
+          <Button kind="btn" loading={emailAct.busy}>
+            Update email
+          </Button>
         </form>
       </Section>
       <Section title="Password">
         <form className="form" onSubmit={submitPassword}>
           {!me!.hasPassword && (
             <p className="muted small">
-              You signed up through another site, so your account has no password yet. Set one to log in without it, or to use scrobbler apps
-              that ask for a username and password.
+              You signed up through another site, so your account has no password yet. Set one to log in without it, or
+              to use scrobbler apps that ask for a username and password.
             </p>
           )}
           {me!.hasPassword && (
             <label>
               Current password
-              <Input type="password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} required autoComplete="current-password" />
+              <Input
+                type="password"
+                value={pw.current}
+                onChange={(e) => setPw({ ...pw, current: e.target.value })}
+                required
+                autoComplete="current-password"
+              />
             </label>
           )}
           <label>
             New password
-            <Input type="password" value={pw.next} onChange={e => setPw({ ...pw, next: e.target.value })} required minLength={8} autoComplete="new-password" />
+            <Input
+              type="password"
+              value={pw.next}
+              onChange={(e) => setPw({ ...pw, next: e.target.value })}
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
           </label>
           {pwAct.note}
-          <Button kind="btn" loading={pwAct.busy}>{me!.hasPassword ? "Change password" : "Set password"}</Button>
+          <Button kind="btn" loading={pwAct.busy}>
+            {me!.hasPassword ? "Change password" : "Set password"}
+          </Button>
         </form>
       </Section>
       <SignInMethods />
@@ -510,7 +679,9 @@ function AccountSettings() {
           <p>This permanently removes your profile, scrobbles, loved tracks, playlists and shouts.</p>
           <ConfirmField value={del} onChange={setDel} />
           {delAct.note}
-          <Button kind="btn danger" loading={delAct.busy}>Delete my account</Button>
+          <Button kind="btn danger" loading={delAct.busy}>
+            Delete my account
+          </Button>
         </form>
       </Section>
     </>
@@ -537,7 +708,14 @@ const selectContents = (e: MouseEvent<HTMLElement>) => {
   getSelection()?.addRange(r);
 };
 
-function SpotifySetup({ redirectUri, initial, playback, onConnect, busy, note }: {
+function SpotifySetup({
+  redirectUri,
+  initial,
+  playback,
+  onConnect,
+  busy,
+  note,
+}: {
   redirectUri: string;
   initial: string;
   playback: boolean;
@@ -549,11 +727,12 @@ function SpotifySetup({ redirectUri, initial, playback, onConnect, busy, note }:
   const [copied, setCopied] = useState(false);
   const [play, setPlay] = useState(playback);
 
-  const copy = () => copyText(redirectUri).then(ok => {
-    if (!ok) return;
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  });
+  const copy = () =>
+    copyText(redirectUri).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -562,35 +741,62 @@ function SpotifySetup({ redirectUri, initial, playback, onConnect, busy, note }:
 
   return (
     <>
-      <p>Spotify only lets each app be used by a few people, so you connect through your own free Spotify app. It takes about two minutes:</p>
+      <p>
+        Spotify only lets each app be used by a few people, so you connect through your own free Spotify app. It takes
+        about two minutes:
+      </p>
       <ol className="steps">
         <li>
-          Open the <a href={SPOTIFY_DASHBOARD} target="_blank" rel="noreferrer">Spotify developer dashboard</a> and log in with your
-          Spotify account. Accept the developer terms if asked.
+          Open the{" "}
+          <a href={SPOTIFY_DASHBOARD} target="_blank" rel="noreferrer">
+            Spotify developer dashboard
+          </a>{" "}
+          and log in with your Spotify account. Accept the developer terms if asked.
         </li>
-        <li>Click <b>Create app</b>. Any name and description will do, such as "My Sonosphere scrobbler".</li>
-        <li>Under <b>Redirect URIs</b>, paste this address exactly and click <b>Add</b>:
+        <li>
+          Click <b>Create app</b>. Any name and description will do, such as "My Sonosphere scrobbler".
+        </li>
+        <li>
+          Under <b>Redirect URIs</b>, paste this address exactly and click <b>Add</b>:
           <span className="copy-row">
             <code onClick={selectContents}>{redirectUri}</code>
-            <Button kind="btn ghost small" type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</Button>
+            <Button kind="btn ghost small" type="button" onClick={copy}>
+              {copied ? "Copied" : "Copy"}
+            </Button>
           </span>
         </li>
         <li>
-          Under <b>Which API/SDKs are you planning to use?</b>, tick <b>Web API</b> (and <b>Web Playback SDK</b> to play music here),
-          agree to the terms and click <b>Save</b>.
+          Under <b>Which API/SDKs are you planning to use?</b>, tick <b>Web API</b> (and <b>Web Playback SDK</b> to play
+          music here), agree to the terms and click <b>Save</b>.
         </li>
-        <li>Open the app's <b>Settings</b>, copy its <b>Client ID</b> and paste it below. You don't need the client secret.</li>
+        <li>
+          Open the app's <b>Settings</b>, copy its <b>Client ID</b> and paste it below. You don't need the client
+          secret.
+        </li>
       </ol>
       <form className="form" onSubmit={submit}>
         <label>
           Client ID
-          <Input value={id} onChange={e => setId(e.target.value)} required maxLength={64} placeholder="32 letters and numbers" autoComplete="off" spellCheck={false} />
+          <Input
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            required
+            maxLength={64}
+            placeholder="32 letters and numbers"
+            autoComplete="off"
+            spellCheck={false}
+          />
         </label>
         <label className="check">
-          <Input type="checkbox" checked={play} onChange={e => setPlay(e.target.checked)} /> Also play music here through Spotify instead of videos (needs Spotify Premium)
+          <Input type="checkbox" checked={play} onChange={(e) => setPlay(e.target.checked)} /> Also play music here
+          through Spotify instead of videos (needs Spotify Premium)
         </label>
         {note}
-        <div className="row"><Button kind="btn" loading={busy}>Connect Spotify</Button></div>
+        <div className="row">
+          <Button kind="btn" loading={busy}>
+            Connect Spotify
+          </Button>
+        </div>
       </form>
       <p className="muted small">
         Only the Spotify account that created the app can use it straight away. To connect a different one, add it under{" "}
@@ -609,39 +815,52 @@ function SpotifySettings() {
   const [redo, setRedo] = useState(false);
   const outcome = SPOTIFY_OUTCOME[sp.get("spotify") ?? ""];
 
-  const connect = (clientId: string, playback: boolean) => act.run(async () => {
-    const body: SpotifyConnectBody = { clientId, playback };
-    const r = await api<SpotifyConnect>("/spotify/connect", { body });
-    window.location.href = r.url;
-  });
+  const connect = (clientId: string, playback: boolean) =>
+    act.run(async () => {
+      const body: SpotifyConnectBody = { clientId, playback };
+      const r = await api<SpotifyConnect>("/spotify/connect", { body });
+      window.location.href = r.url;
+    });
 
-  const sync = (s: SpotifyOn) => act.run(async () => {
-    const r = await api<SpotifySynced>("/spotify/sync", { method: "POST" });
-    q.setData({ ...s, link: r.link });
-    if (r.imported) return `Imported ${plural(r.imported, "play")}.`;
-    return r.link.restingUntil ? "Spotify asked us to wait, so nothing was imported." : "Nothing new to import.";
-  });
+  const sync = (s: SpotifyOn) =>
+    act.run(async () => {
+      const r = await api<SpotifySynced>("/spotify/sync", { method: "POST" });
+      q.setData({ ...s, link: r.link });
+      if (r.imported) return `Imported ${plural(r.imported, "play")}.`;
+      return r.link.restingUntil ? "Spotify asked us to wait, so nothing was imported." : "Nothing new to import.";
+    });
 
-  const disconnect = () => act.run(async () => {
-    await api<Ok>("/spotify", { method: "DELETE" });
-    setSp({}, { replace: true });
-    setRedo(false);
-    q.reload();
-  });
+  const disconnect = () =>
+    act.run(async () => {
+      await api<Ok>("/spotify", { method: "DELETE" });
+      setSp({}, { replace: true });
+      setRedo(false);
+      q.reload();
+    });
 
   const linked = (s: SpotifyOn, l: SpotifyLink) => (
     <>
-      <p>Connected as <b>{l.account.name}</b> <span className="muted small">since {date(l.connectedAt)}</span></p>
+      <p>
+        Connected as <b>{l.account.name}</b> <span className="muted small">since {date(l.connectedAt)}</span>
+      </p>
       {l.broken ? (
         <p className="form-error">{l.broken}</p>
       ) : (
         <>
           <p className="muted small">
-            {l.lastImport ? <>Last import {ago(l.lastImport)} · {num(l.imported)} plays imported</> : "Importing your recent plays..."}.
-            New plays are picked up every few minutes.
+            {l.lastImport ? (
+              <>
+                Last import {ago(l.lastImport)} · {num(l.imported)} plays imported
+              </>
+            ) : (
+              "Importing your recent plays..."
+            )}
+            . New plays are picked up every few minutes.
           </p>
           {l.restingUntil && (
-            <p className="muted small">Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.</p>
+            <p className="muted small">
+              Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.
+            </p>
           )}
           <p className="muted small">
             {l.playback
@@ -650,17 +869,32 @@ function SpotifySettings() {
           </p>
         </>
       )}
-      {l.broken || redo
-        ? <SpotifySetup redirectUri={s.redirectUri} initial={l.clientId} playback={l.playback} onConnect={connect} busy={act.busy} note={act.note} />
-        : act.note}
+      {l.broken || redo ? (
+        <SpotifySetup
+          redirectUri={s.redirectUri}
+          initial={l.clientId}
+          playback={l.playback}
+          onConnect={connect}
+          busy={act.busy}
+          note={act.note}
+        />
+      ) : (
+        act.note
+      )}
       <div className="row">
         {!l.broken && !redo && (
           <>
-            <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>
-            <Button kind="btn ghost" onClick={() => setRedo(true)}>Change app</Button>
+            <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>
+              Import now
+            </Button>
+            <Button kind="btn ghost" onClick={() => setRedo(true)}>
+              Change app
+            </Button>
           </>
         )}
-        <Button kind="btn ghost" onClick={disconnect}>Disconnect</Button>
+        <Button kind="btn ghost" onClick={disconnect}>
+          Disconnect
+        </Button>
       </div>
     </>
   );
@@ -676,22 +910,41 @@ function SpotifySettings() {
   return (
     <Service name="Spotify" blurb="Import what you play on Spotify" badge={badge} open={!!outcome}>
       <Async q={q}>
-        {d => !d.enabled ? (
-          <p className="muted">Scrobbling from Spotify is disabled.</p>
-        ) : (
-          <div className="spotify">
-            {outcome && !(outcome.ok && d.link?.broken) && <p className={outcome.ok ? "form-ok" : "form-error"}>{outcome.text}</p>}
-            {d.link
-              ? linked(d, d.link)
-              : <SpotifySetup redirectUri={d.redirectUri} initial="" playback={false} onConnect={connect} busy={act.busy} note={act.note} />}
-          </div>
-        )}
+        {(d) =>
+          !d.enabled ? (
+            <p className="muted">Scrobbling from Spotify is disabled.</p>
+          ) : (
+            <div className="spotify">
+              {outcome && !(outcome.ok && d.link?.broken) && (
+                <p className={outcome.ok ? "form-ok" : "form-error"}>{outcome.text}</p>
+              )}
+              {d.link ? (
+                linked(d, d.link)
+              ) : (
+                <SpotifySetup
+                  redirectUri={d.redirectUri}
+                  initial=""
+                  playback={false}
+                  onConnect={connect}
+                  busy={act.busy}
+                  note={act.note}
+                />
+              )}
+            </div>
+          )
+        }
       </Async>
     </Service>
   );
 }
 
-function Service({ name, blurb, badge, open, children }: {
+function Service({
+  name,
+  blurb,
+  badge,
+  open,
+  children,
+}: {
   name: string;
   blurb: string;
   badge: ReactNode;
@@ -701,8 +954,11 @@ function Service({ name, blurb, badge, open, children }: {
   const [shown, setShown] = useState(open);
   return (
     <div className={`card service${shown ? " open" : ""}`}>
-      <button type="button" className="service-head" aria-expanded={shown} onClick={() => setShown(v => !v)}>
-        <span className="service-name"><b>{name}</b><span className="muted small">{blurb}</span></span>
+      <button type="button" className="service-head" aria-expanded={shown} onClick={() => setShown((v) => !v)}>
+        <span className="service-name">
+          <b>{name}</b>
+          <span className="muted small">{blurb}</span>
+        </span>
         {badge}
         <Ico.ChevDown />
       </button>
@@ -722,13 +978,14 @@ function AppSettings() {
 
   const revoke = (key: string) => api<AppOk>("/apps/revoke", { body: { key } }).then(q.reload);
 
-  const askDelete = (a: ApiApp) => c.ask({
-    title: `Delete “${a.name}”?`,
-    body: "Apps using this key will stop working.",
-    action: "Delete",
-    danger: true,
-    run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload),
-  });
+  const askDelete = (a: ApiApp) =>
+    c.ask({
+      title: `Delete “${a.name}”?`,
+      body: "Apps using this key will stop working.",
+      action: "Delete",
+      danger: true,
+      run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload),
+    });
 
   const create = (e: FormEvent) => {
     e.preventDefault();
@@ -749,62 +1006,110 @@ function AppSettings() {
     <>
       {c.dialog}
       <Section title="Streaming services">
-        <div className="services"><SpotifySettings /></div>
+        <div className="services">
+          <SpotifySettings />
+        </div>
       </Section>
       <Section title="Connected applications">
-        <p>To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed. <Link to="/help#pano-scrobbler">Setup details</Link>.</p>
+        <p>
+          To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter{" "}
+          <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed.{" "}
+          <Link to="/help#pano-scrobbler">Setup details</Link>.
+        </p>
         <Async q={q}>
-          {d => d.sessions.length ? (
-            <ul className="plain">
-              {d.sessions.map(s => (
-                <li key={s.key} className="row between">
-                  <span>
-                    <b>{s.app}</b>{" "}
-                    <span className="muted small">connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}</span>
-                  </span>
-                  <Button kind="btn ghost small" onClick={() => revoke(s.key)}>Disconnect</Button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">No applications can scrobble to your account yet.</p>
-          )}
+          {(d) =>
+            d.sessions.length ? (
+              <ul className="plain">
+                {d.sessions.map((s) => (
+                  <li key={s.key} className="row between">
+                    <span>
+                      <b>{s.app}</b>{" "}
+                      <span className="muted small">
+                        connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}
+                      </span>
+                    </span>
+                    <Button kind="btn ghost small" onClick={() => revoke(s.key)}>
+                      Disconnect
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">No applications can scrobble to your account yet.</p>
+            )
+          }
         </Async>
       </Section>
       <Section title="Your API accounts" more="/developers" moreLabel="API docs">
         <Async q={q}>
-          {d => d.items.length ? (
-            <ul className="plain api-apps">
-              {d.items.map(a => (
-                <li key={a.id}>
-                  <details className="api-app">
-                    <summary><Ico.Chevron /><b>{a.name}</b><span className="muted small">{a.apiKey.slice(0, 8)}…</span></summary>
-                    {a.description && <p className="muted small">{a.description}</p>}
-                    <dl className="keys">
-                      <dt>API key</dt><dd><code>{a.apiKey}</code></dd>
-                      <dt>Shared secret</dt><dd><code>{a.secret}</code></dd>
-                      <dt>Callback URL</dt><dd><CallbackField app={a} onSaved={q.reload} /></dd>
-                    </dl>
-                    <Button kind="link small" onClick={() => askDelete(a)}>Delete API account</Button>
-                  </details>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">Create an API account to get a key and shared secret.</p>
-          )}
+          {(d) =>
+            d.items.length ? (
+              <ul className="plain api-apps">
+                {d.items.map((a) => (
+                  <li key={a.id}>
+                    <details className="api-app">
+                      <summary>
+                        <Ico.Chevron />
+                        <b>{a.name}</b>
+                        <span className="muted small">{a.apiKey.slice(0, 8)}…</span>
+                      </summary>
+                      {a.description && <p className="muted small">{a.description}</p>}
+                      <dl className="keys">
+                        <dt>API key</dt>
+                        <dd>
+                          <code>{a.apiKey}</code>
+                        </dd>
+                        <dt>Shared secret</dt>
+                        <dd>
+                          <code>{a.secret}</code>
+                        </dd>
+                        <dt>Callback URL</dt>
+                        <dd>
+                          <CallbackField app={a} onSaved={q.reload} />
+                        </dd>
+                      </dl>
+                      <Button kind="link small" onClick={() => askDelete(a)}>
+                        Delete API account
+                      </Button>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">Create an API account to get a key and shared secret.</p>
+            )
+          }
         </Async>
         <form className="form" onSubmit={create}>
-          <label>Application name<Input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} required maxLength={60} /></label>
-          <label>Description (optional)<Input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} maxLength={300} /></label>
+          <label>
+            Application name
+            <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required maxLength={60} />
+          </label>
+          <label>
+            Description (optional)
+            <Input
+              value={f.description}
+              onChange={(e) => setF({ ...f, description: e.target.value })}
+              maxLength={300}
+            />
+          </label>
           <label>
             Callback URL (optional)
-            <Input value={f.callbackUrl} onChange={e => setF({ ...f, callbackUrl: e.target.value })} maxLength={500} placeholder="https://example.com/callback" />
+            <Input
+              value={f.callbackUrl}
+              onChange={(e) => setF({ ...f, callbackUrl: e.target.value })}
+              maxLength={500}
+              placeholder="https://example.com/callback"
+            />
           </label>
-          <p className="muted small">For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.</p>
+          <p className="muted small">
+            For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.
+          </p>
           {robot.view}
           {act.note}
-          <Button kind="btn" loading={act.busy}>Create API account</Button>
+          <Button kind="btn" loading={act.busy}>
+            Create API account
+          </Button>
         </form>
       </Section>
     </>
@@ -827,8 +1132,18 @@ function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
 
   return (
     <form className="callback-field" onSubmit={submit}>
-      <Input value={v} onChange={e => setV(e.target.value)} maxLength={500} placeholder="None" aria-label="Callback URL" />
-      {v.trim() !== saved && <Button kind="btn small" loading={act.busy}>Save</Button>}
+      <Input
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        maxLength={500}
+        placeholder="None"
+        aria-label="Callback URL"
+      />
+      {v.trim() !== saved && (
+        <Button kind="btn small" loading={act.busy}>
+          Save
+        </Button>
+      )}
       {act.note}
     </form>
   );
@@ -841,14 +1156,20 @@ function ConfirmField({ value, onChange }: { value: string; onChange: (v: string
     return (
       <label>
         Confirm with your password
-        <Input type="password" value={value} onChange={e => onChange(e.target.value)} required autoComplete="current-password" />
+        <Input
+          type="password"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required
+          autoComplete="current-password"
+        />
       </label>
     );
   }
   return (
     <label>
       Type your username ({me!.username}) to confirm
-      <Input value={value} onChange={e => onChange(e.target.value)} required autoComplete="off" />
+      <Input value={value} onChange={(e) => onChange(e.target.value)} required autoComplete="off" />
     </label>
   );
 }
@@ -863,14 +1184,17 @@ function DataSettings() {
     e.preventDefault();
     c.ask({
       title: me?.impersonating ? `Delete all of ${me.username}'s scrobbles?` : "Delete all of your scrobbles?",
-      body: me?.impersonating ? `${me.username}'s whole listening history will be removed. This can't be undone and is logged in the audit log.` : "Your whole listening history will be removed. This can't be undone.",
+      body: me?.impersonating
+        ? `${me.username}'s whole listening history will be removed. This can't be undone and is logged in the audit log.`
+        : "Your whole listening history will be removed. This can't be undone.",
       action: "Delete all scrobbles",
       danger: true,
-      run: () => act.run(async () => {
-        const r = await api<ScrobblesCleared>("/me/clear-scrobbles", { body: { password: pw } });
-        setPw("");
-        return `Deleted ${plural(r.deleted, "scrobble")}.`;
-      }),
+      run: () =>
+        act.run(async () => {
+          const r = await api<ScrobblesCleared>("/me/clear-scrobbles", { body: { password: pw } });
+          setPw("");
+          return `Deleted ${plural(r.deleted, "scrobble")}.`;
+        }),
     });
   };
 
@@ -880,26 +1204,47 @@ function DataSettings() {
       <Section title="Export your scrobbles">
         <p>Download every scrobble with artist, album, track and timestamp.</p>
         <div className="row">
-          <Button kind="btn" href="/api/me/export?format=csv" download>Download CSV</Button>
-          <Button kind="btn ghost" href="/api/me/export?format=json" download>Download JSON</Button>
+          <Button kind="btn" href="/api/me/export?format=csv" download>
+            Download CSV
+          </Button>
+          <Button kind="btn ghost" href="/api/me/export?format=json" download>
+            Download JSON
+          </Button>
         </div>
       </Section>
       <Section title="Export your loved tracks">
         <p>Download the tracks you’ve loved, with the date you loved each one.</p>
         <div className="row">
-          <Button kind="btn" href="/api/me/export?format=csv&what=loved" download>Download CSV</Button>
-          <Button kind="btn ghost" href="/api/me/export?format=json&what=loved" download>Download JSON</Button>
+          <Button kind="btn" href="/api/me/export?format=csv&what=loved" download>
+            Download CSV
+          </Button>
+          <Button kind="btn ghost" href="/api/me/export?format=json&what=loved" download>
+            Download JSON
+          </Button>
         </div>
       </Section>
       <Section title="Import">
-        <p>Bring scrobbles or loved tracks in from a CSV or JSON file on the <Link to="/scrobble">Scrobble page</Link>.</p>
+        <p>
+          Bring scrobbles or loved tracks in from a CSV or JSON file on the <Link to="/scrobble">Scrobble page</Link>.
+        </p>
       </Section>
       <Section title="Clear listening history">
         <form className="form" onSubmit={submit}>
-          <p>Removes every scrobble from {me?.impersonating ? `${me.username}'s` : "your"} library. Loved tracks, tags and playlists are kept.</p>
-          {me?.impersonating ? <p className="muted small">You are acting as {me.username}; no password is needed. This deletion is logged in the audit log.</p> : <ConfirmField value={pw} onChange={setPw} />}
+          <p>
+            Removes every scrobble from {me?.impersonating ? `${me.username}'s` : "your"} library. Loved tracks, tags
+            and playlists are kept.
+          </p>
+          {me?.impersonating ? (
+            <p className="muted small">
+              You are acting as {me.username}; no password is needed. This deletion is logged in the audit log.
+            </p>
+          ) : (
+            <ConfirmField value={pw} onChange={setPw} />
+          )}
           {act.note}
-          <Button kind="btn danger" loading={act.busy}>Delete all scrobbles</Button>
+          <Button kind="btn danger" loading={act.busy}>
+            Delete all scrobbles
+          </Button>
         </form>
       </Section>
     </>

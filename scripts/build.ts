@@ -4,7 +4,9 @@ import tailwind from "bun-plugin-tailwind";
 import { STAFF_BUNDLE_MARK } from "../src/admin/index";
 
 let gitSha = process.env.SENTRY_RELEASE || process.env.GIT_SHA || "unknown";
-try { if (gitSha === "unknown") gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim(); } catch {}
+try {
+  if (gitSha === "unknown") gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+} catch {}
 
 const out = "dist";
 await rm(out, { recursive: true, force: true });
@@ -36,7 +38,7 @@ const relative = (path: string) => path.slice(path.indexOf(`/${out}/`) + out.len
 // Bun inlines every font subset into the stylesheet, which blocks the first paint; as files, a browser fetches only
 // the subsets the page's text needs
 const INLINE_FONT = /url\(data:font\/(woff2?);base64,([A-Za-z0-9+/=]+)\)/g;
-for (const file of result.outputs.filter(f => f.path.endsWith(".css"))) {
+for (const file of result.outputs.filter((f) => f.path.endsWith(".css"))) {
   const css = await file.text();
   const fonts: [string, Buffer][] = [];
   const rewritten = css.replace(INLINE_FONT, (_, ext: string, data: string) => {
@@ -61,13 +63,11 @@ for (const file of result.outputs) {
 // staff code must not be in what everyone downloads: stop if that cannot be shown
 if (!staff.length) die("Build failed: no file carries the staff portal mark, so it cannot be walled off.");
 const html = await Bun.file(`${out}/index.html`).text();
-const leaked = staff.filter(name => html.includes(name));
+const leaked = staff.filter((name) => html.includes(name));
 if (leaked.length) die(`Build failed: the page loads staff-only files for everyone: ${leaked.join(", ")}`);
 
 // the portal styles itself with utilities from the main stylesheet, so nothing loads a second one
-const unloaded = result.outputs
-  .map(f => relative(f.path))
-  .filter(n => n.endsWith(".css") && !html.includes(n));
+const unloaded = result.outputs.map((f) => relative(f.path)).filter((n) => n.endsWith(".css") && !html.includes(n));
 if (unloaded.length) die(`Build failed: nothing loads these stylesheets: ${unloaded.join(", ")}`);
 await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff }));
 await Bun.write(`${out}/assets/social-card.png`, Bun.file("brand/social-card.png"));
@@ -77,4 +77,6 @@ const size = (names: string[]) => {
   return `${(bytes / 1024).toFixed(0)} KB`;
 };
 const plural = staff.length === 1 ? "" : "s";
-console.log(`built ${result.outputs.length} files: app ${size(open)}, staff portal ${size(staff)} (${staff.length} file${plural})`);
+console.log(
+  `built ${result.outputs.length} files: app ${size(open)}, staff portal ${size(staff)} (${staff.length} file${plural})`
+);

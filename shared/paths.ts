@@ -1,4 +1,5 @@
-export const enc = (s: string) => encodeURIComponent(s.replace(/[%+]/g, c => encodeURIComponent(c))).replace(/%20/g, "+");
+export const enc = (s: string) =>
+  encodeURIComponent(s.replace(/[%+]/g, (c) => encodeURIComponent(c))).replace(/%20/g, "+");
 export const dec = (s: string | undefined) => {
   const t = (s || "").replace(/\+/g, " ");
   try {

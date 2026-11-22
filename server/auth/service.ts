@@ -43,7 +43,8 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
 }
 
 export const MIN_PASSWORD = 8;
-export const hashPassword = (password: string): Promise<string> => Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
+export const hashPassword = (password: string): Promise<string> =>
+  Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
 export const passwordMatches = async (u: User, password: string): Promise<boolean> =>
   !!u.passwordHash && !!password && Bun.password.verify(password, u.passwordHash);
 
@@ -74,7 +75,12 @@ export async function checkNewAccount(username: string, email: string): Promise<
   if (await repo.emailTaken(email)) bad("An account with that email already exists");
 }
 // An empty passwordHash makes an account that signs in only through OAuth until a password is set.
-export async function createAccount(username: string, email: string, passwordHash: string, emailVerified = false): Promise<User> {
+export async function createAccount(
+  username: string,
+  email: string,
+  passwordHash: string,
+  emailVerified = false
+): Promise<User> {
   const id = await repo.createUser(username, email, passwordHash, emailVerified);
   // an account named in ADMIN_USERS becomes staff the moment it exists
   await syncAdmins();

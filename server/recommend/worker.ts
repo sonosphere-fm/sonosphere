@@ -41,9 +41,12 @@ async function refreshArtist(id: number) {
     repo.sessionNeighbours(id, SEQ_SAMPLE, SEQ_GAP),
   ]);
   await repo.saveNorm("seq", id, seq.total);
-  const dots = new Map(others.map(o => [o.id, o.dot]));
-  const order = new Map(seq.rows.map(r => [r.id, r.w]));
-  const topSequenced = seq.rows.sort((a, b) => b.w - a.w).slice(0, CANDIDATES / 2).map(r => r.id);
+  const dots = new Map(others.map((o) => [o.id, o.dot]));
+  const order = new Map(seq.rows.map((r) => [r.id, r.w]));
+  const topSequenced = seq.rows
+    .sort((a, b) => b.w - a.w)
+    .slice(0, CANDIDATES / 2)
+    .map((r) => r.id);
   const ids = [...new Set([...dots.keys(), ...topSequenced])];
   if (!ids.length) {
     await repo.saveSimilar(id, []);
@@ -97,7 +100,7 @@ async function refreshUser(id: number) {
   const shortlist = [...rough.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, SHORTLIST)
-    .map(e => e[0]);
+    .map((e) => e[0]);
   if (!shortlist.length) {
     await repo.saveNeighbours(id, []);
     return;
@@ -127,8 +130,14 @@ export async function refreshTaste(budgetMs = 200): Promise<boolean> {
     const batch = await repo.due(50);
     if (!batch.length) return false;
     // norms first, so items in the batch are compared using each other's fresh figures
-    await repo.refreshNorms("artist", batch.filter(b => b.kind === "artist").map(b => b.id));
-    await repo.refreshNorms("user", batch.filter(b => b.kind === "user").map(b => b.id));
+    await repo.refreshNorms(
+      "artist",
+      batch.filter((b) => b.kind === "artist").map((b) => b.id)
+    );
+    await repo.refreshNorms(
+      "user",
+      batch.filter((b) => b.kind === "user").map((b) => b.id)
+    );
     for (const item of batch) {
       if (item.kind === "artist") await refreshArtist(item.id);
       else await refreshUser(item.id);
@@ -153,8 +162,8 @@ function trainModel(): Promise<TrainResult | null> {
     const worker = new Worker(new URL("./als-worker.ts", import.meta.url).href);
     try {
       const reply = await new Promise<WorkerReply>((resolve, reject) => {
-        worker.onmessage = ev => resolve(ev.data);
-        worker.onerror = ev => reject(ev);
+        worker.onmessage = (ev) => resolve(ev.data);
+        worker.onerror = (ev) => reject(ev);
         worker.postMessage({ url: repo.databaseUrl });
       });
       if (!reply.ok || !reply.result) {

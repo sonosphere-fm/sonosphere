@@ -1,6 +1,17 @@
 import { and, asc, eq, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "../db/client";
-import { blocks, dmFlags, dmMessages, dmThreads, follows, lovedTracks, reports, scrobbles, users, userTrust } from "../db/schema";
+import {
+  blocks,
+  dmFlags,
+  dmMessages,
+  dmThreads,
+  follows,
+  lovedTracks,
+  reports,
+  scrobbles,
+  users,
+  userTrust,
+} from "../db/schema";
 import { first } from "../util";
 import type { User } from "../users/repo";
 
@@ -33,8 +44,14 @@ export async function signals(u: User): Promise<Signals> {
     listeningDays: await tally(sql`SELECT COUNT(DISTINCT ${scrobbles.playedAt} / 86400) AS n FROM ${scrobbles}
       WHERE ${scrobbles.userId} = ${u.id} AND ${scrobbles.source} <> 'import' AND ${scrobbles.playedAt} >= ${u.registeredAt}`),
     trustedFollowers: await db.$count(follows, and(eq(follows.followeeId, u.id), trusted(sql`${follows.followerId}`))),
-    acceptedRequests: await db.$count(dmThreads, and(eq(dmThreads.requesterId, u.id), eq(dmThreads.status, "active"), trusted(other))),
-    reachedOut: await db.$count(dmThreads, and(mine, sql`${dmThreads.requesterId} <> ${u.id}`, trusted(sql`${dmThreads.requesterId}`))),
+    acceptedRequests: await db.$count(
+      dmThreads,
+      and(eq(dmThreads.requesterId, u.id), eq(dmThreads.status, "active"), trusted(other))
+    ),
+    reachedOut: await db.$count(
+      dmThreads,
+      and(mine, sql`${dmThreads.requesterId} <> ${u.id}`, trusted(sql`${dmThreads.requesterId}`))
+    ),
     loved: await db.$count(lovedTracks, eq(lovedTracks.userId, u.id)),
     declined: await db.$count(dmThreads, and(eq(dmThreads.requesterId, u.id), eq(dmThreads.status, "declined"))),
     blockedBy: await db.$count(blocks, eq(blocks.blockedId, u.id)),
@@ -47,22 +64,28 @@ export async function signals(u: User): Promise<Signals> {
 
 // Accounts old enough to leave probation, least recently checked first.
 export const probationDue = (registeredBefore: number, limit: number): Promise<User[]> =>
-  db.select({ user: users })
+  db
+    .select({ user: users })
     .from(users)
     .leftJoin(userTrust, eq(userTrust.userId, users.id))
-    .where(and(
-      isNull(userTrust.clearedAt),
-      or(isNull(userTrust.held), eq(userTrust.held, false)),
-      eq(users.isAdmin, false),
-      eq(users.banned, false),
-      lte(users.registeredAt, registeredBefore),
-    ))
+    .where(
+      and(
+        isNull(userTrust.clearedAt),
+        or(isNull(userTrust.held), eq(userTrust.held, false)),
+        eq(users.isAdmin, false),
+        eq(users.banned, false),
+        lte(users.registeredAt, registeredBefore)
+      )
+    )
     .orderBy(sql`${userTrust.checkedAt} ASC NULLS FIRST`, asc(users.id))
     .limit(limit)
-    .then(rows => rows.map(r => r.user));
+    .then((rows) => rows.map((r) => r.user));
 
 export async function saveTrust(userId: number, row: Partial<Omit<Trust, "userId">>): Promise<void> {
-  await db.insert(userTrust).values({ userId, ...row }).onConflictDoUpdate({ target: userTrust.userId, set: row });
+  await db
+    .insert(userTrust)
+    .values({ userId, ...row })
+    .onConflictDoUpdate({ target: userTrust.userId, set: row });
 }
 
 export const probationSql = sql<boolean>`NOT ${users.isAdmin} AND NOT EXISTS (

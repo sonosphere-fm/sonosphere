@@ -17,7 +17,13 @@ const REASONS: [string, string][] = [
   ["other", "Something else"],
 ];
 
-export function ReportButton({ type, id, label = "Report", open: forced, onClose }: {
+export function ReportButton({
+  type,
+  id,
+  label = "Report",
+  open: forced,
+  onClose,
+}: {
   type: "shout" | "wiki" | "journal" | "user" | "dm" | "group";
   id: number;
   label?: string;
@@ -47,26 +53,46 @@ export function ReportButton({ type, id, label = "Report", open: forced, onClose
   };
   return (
     <>
-      {forced === undefined && <Button kind="link small" type="button" onClick={() => setOpen(true)}>{label}</Button>}
+      {forced === undefined && (
+        <Button kind="link small" type="button" onClick={() => setOpen(true)}>
+          {label}
+        </Button>
+      )}
       {shown && (
         <Modal title="Report to moderators" onClose={close}>
           {sent ? (
             <div className="form">
               <p>Thanks. A moderator will take a look.</p>
-              <Button kind="btn" type="button" onClick={close}>Done</Button>
+              <Button kind="btn" type="button" onClick={close}>
+                Done
+              </Button>
             </div>
           ) : (
             <form className="form" onSubmit={submit}>
               {(type === "dm" || type === "group") && (
-                <p className="muted small">Moderators will see the reported message and a few around it. {type === "dm" ? "The other person isn't notified." : "No one in the group is notified."}</p>
+                <p className="muted small">
+                  Moderators will see the reported message and a few around it.{" "}
+                  {type === "dm" ? "The other person isn't notified." : "No one in the group is notified."}
+                </p>
               )}
-              <label>Reason<Select label="Reason" value={reason} onChange={setReason} options={REASONS} /></label>
+              <label>
+                Reason
+                <Select label="Reason" value={reason} onChange={setReason} options={REASONS} />
+              </label>
               <label>
                 Additional details
-                <Textarea rows={3} placeholder="Optional" value={detail} onChange={e => setDetail(e.target.value)} maxLength={1000} />
+                <Textarea
+                  rows={3}
+                  placeholder="Optional"
+                  value={detail}
+                  onChange={(e) => setDetail(e.target.value)}
+                  maxLength={1000}
+                />
               </label>
               {act.note}
-              <Button kind="btn" loading={act.busy}>Submit report</Button>
+              <Button kind="btn" loading={act.busy}>
+                Submit report
+              </Button>
             </form>
           )}
         </Modal>
@@ -74,7 +100,12 @@ export function ReportButton({ type, id, label = "Report", open: forced, onClose
     </>
   );
 }
-export function Shoutbox({ type, id, limit = 20, word = "post" }: {
+export function Shoutbox({
+  type,
+  id,
+  limit = 20,
+  word = "post",
+}: {
   type: ItemType;
   id: number;
   limit?: number;
@@ -106,52 +137,71 @@ export function Shoutbox({ type, id, limit = 20, word = "post" }: {
         <Textarea
           rows={2}
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           placeholder={wall ? "Write on the wall…" : "Leave a comment…"}
           aria-label={`Your ${word}`}
           maxLength={1000}
         />
-        <Button kind="btn" loading={act.busy} disabled={!text.trim()}>{wall ? "Post" : "Comment"}</Button>
+        <Button kind="btn" loading={act.busy} disabled={!text.trim()}>
+          {wall ? "Post" : "Comment"}
+        </Button>
       </form>
     );
   } else {
-    compose = <p className="muted"><Link to="/login">Log in</Link> to {wall ? "write on the wall" : "leave a comment"}.</p>;
+    compose = (
+      <p className="muted">
+        <Link to="/login">Log in</Link> to {wall ? "write on the wall" : "leave a comment"}.
+      </p>
+    );
   }
   return (
     <div className="shoutbox">
       {compose}
       {act.note}
-      <Async q={q}>{d => (
-        <>
-          {d.items.length === 0 && <Empty>{wall ? "No posts yet." : "No comments yet."} Be the first.</Empty>}
-          <ul className="shouts">
-            {d.items.map(s => (
-              <li key={s.id}>
-                <Avatar user={s.author} />
-                <div className="grow">
-                  <div>
-                    <Link className="strong" to={userUrl(s.author.username)}>{s.author.username}</Link> <UserLabels name={s.author.username} />{" "}
-                    <span className="muted small" title={dateTime(s.createdAt)}>{ago(s.createdAt)}</span>
+      <Async q={q}>
+        {(d) => (
+          <>
+            {d.items.length === 0 && <Empty>{wall ? "No posts yet." : "No comments yet."} Be the first.</Empty>}
+            <ul className="shouts">
+              {d.items.map((s) => (
+                <li key={s.id}>
+                  <Avatar user={s.author} />
+                  <div className="grow">
+                    <div>
+                      <Link className="strong" to={userUrl(s.author.username)}>
+                        {s.author.username}
+                      </Link>{" "}
+                      <UserLabels name={s.author.username} />{" "}
+                      <span className="muted small" title={dateTime(s.createdAt)}>
+                        {ago(s.createdAt)}
+                      </span>
+                    </div>
+                    <p>{s.body}</p>
                   </div>
-                  <p>{s.body}</p>
-                </div>
-                <span className="inline-flex gap-2.5 whitespace-nowrap">
-                  {me && me.username !== s.author.username && <ReportButton type="shout" id={s.id} />}
-                  {me && (me.username === s.author.username || d.canModerate) && (
-                    <Button kind="link small" onClick={() => remove(s.id)}>Delete</Button>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {d.total > limit && (
-            <div className="row">
-              <Button kind="btn ghost small" disabled={page <= 1} onClick={() => setPage(page - 1)}><Ico.Left /> Newer</Button>
-              <Button kind="btn ghost small" disabled={page * limit >= d.total} onClick={() => setPage(page + 1)}>Older <Ico.Right /></Button>
-            </div>
-          )}
-        </>
-      )}</Async>
+                  <span className="inline-flex gap-2.5 whitespace-nowrap">
+                    {me && me.username !== s.author.username && <ReportButton type="shout" id={s.id} />}
+                    {me && (me.username === s.author.username || d.canModerate) && (
+                      <Button kind="link small" onClick={() => remove(s.id)}>
+                        Delete
+                      </Button>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {d.total > limit && (
+              <div className="row">
+                <Button kind="btn ghost small" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                  <Ico.Left /> Newer
+                </Button>
+                <Button kind="btn ghost small" disabled={page * limit >= d.total} onClick={() => setPage(page + 1)}>
+                  Older <Ico.Right />
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </Async>
     </div>
   );
 }

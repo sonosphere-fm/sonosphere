@@ -5,8 +5,16 @@ import { moveCropDrag, type CropDrag, type Point } from "./crop-drag";
 type Source = { url: string; width: number; height: number };
 const center: Point = { x: 0, y: 0 };
 
-export function ImageCropper({ file, kind, onClose, onSave }: {
-  file: File; kind: "avatar" | "banner"; onClose: () => void; onSave: (image: Blob) => Promise<void>;
+export function ImageCropper({
+  file,
+  kind,
+  onClose,
+  onSave,
+}: {
+  file: File;
+  kind: "avatar" | "banner";
+  onClose: () => void;
+  onSave: (image: Blob) => Promise<void>;
 }) {
   const banner = kind === "banner";
   const aspect = banner ? 4 : 1;
@@ -30,10 +38,16 @@ export function ImageCropper({ file, kind, onClose, onSave }: {
     const move = (e: globalThis.PointerEvent) => {
       const d = drag.current;
       if (!d || d.id !== e.pointerId) return;
-      if (e.pointerType === "mouse" && !(e.buttons & 1)) { end(); return; }
+      if (e.pointerType === "mouse" && !(e.buttons & 1)) {
+        end();
+        return;
+      }
       if (e.cancelable) e.preventDefault();
       const p = moveCropDrag(d, e.pointerId, { x: e.clientX, y: e.clientY });
-      if (p) { currentOffset.current = p; setOffset(p); }
+      if (p) {
+        currentOffset.current = p;
+        setOffset(p);
+      }
     };
     const end = (e?: globalThis.PointerEvent) => {
       if (!drag.current || (e && e.pointerId !== drag.current.id)) return;
@@ -64,10 +78,15 @@ export function ImageCropper({ file, kind, onClose, onSave }: {
         setError("This image is too large. Choose one under 40 megapixels.");
       } else setSource({ url, width: image.naturalWidth, height: image.naturalHeight });
     };
-    image.onerror = () => { if (active) setError("This picture couldn't be opened. Try a PNG, JPEG or WebP image."); };
+    image.onerror = () => {
+      if (active) setError("This picture couldn't be opened. Try a PNG, JPEG or WebP image.");
+    };
     if (file.size > 8_000_000) setError("Choose an image smaller than 8 MB.");
     else image.src = url;
-    return () => { active = false; URL.revokeObjectURL(url); };
+    return () => {
+      active = false;
+      URL.revokeObjectURL(url);
+    };
   }, [file]);
 
   const width = source ? (rotation % 180 ? source.height : source.width) : 1;
@@ -80,8 +99,15 @@ export function ImageCropper({ file, kind, onClose, onSave }: {
     const y = Math.max(0, (height * s - 1 / aspect) / 2);
     return { x: Math.max(-x, Math.min(x, p.x)), y: Math.max(-y, Math.min(y, p.y)) };
   };
-  const changeZoom = (z: number) => { setZoom(z); setPosition(bound(currentOffset.current, z)); };
-  const reset = () => { setRotation(0); setZoom(1); setPosition(center); };
+  const changeZoom = (z: number) => {
+    setZoom(z);
+    setPosition(bound(currentOffset.current, z));
+  };
+  const reset = () => {
+    setRotation(0);
+    setZoom(1);
+    setPosition(center);
+  };
   const save = async () => {
     if (!source || busy) return;
     setBusy(true);
@@ -97,58 +123,152 @@ export function ImageCropper({ file, kind, onClose, onSave }: {
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Your browser couldn't prepare the picture.");
       ctx.translate(edge / 2 + offset.x * edge, canvas.height / 2 + offset.y * edge);
-      ctx.rotate(rotation * Math.PI / 180);
-      ctx.drawImage(image, -source.width * scale * edge / 2, -source.height * scale * edge / 2, source.width * scale * edge, source.height * scale * edge);
-      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("Couldn't export this picture.")), "image/webp", .92));
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(
+        image,
+        (-source.width * scale * edge) / 2,
+        (-source.height * scale * edge) / 2,
+        source.width * scale * edge,
+        source.height * scale * edge
+      );
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't export this picture."))), "image/webp", 0.92)
+      );
       await onSave(blob);
       onClose();
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
-    finally { setBusy(false); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
-  return <Modal title={banner ? "Crop your banner" : "Crop your picture"} width={720} onClose={() => { if (!busy) onClose(); }}>
-    <div className="image-cropper" aria-busy={busy}>
-      <div className={`crop-workspace ${banner ? "is-banner" : "is-avatar"} ${dragging ? "is-dragging" : ""}`}>
-        <div className="crop-frame" style={{ aspectRatio: aspect }} tabIndex={source && !busy ? 0 : -1}
-          role="group" aria-label="Image framing. Drag to reposition or use arrow keys. Hold Shift for larger steps."
-          onKeyDown={e => {
-            if (!source || busy || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
-            e.preventDefault();
-            const step = e.shiftKey ? .05 : .01;
-            const p = currentOffset.current;
-            setPosition(bound({ x: p.x + (e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0), y: p.y + (e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0) }));
-          }}
-          onPointerDown={e => {
-            if (!source || busy || e.button !== 0 || drag.current) return;
-            e.preventDefault();
-            e.currentTarget.focus({ preventScroll: true });
-            e.currentTarget.setPointerCapture(e.pointerId);
-            drag.current = {
-              id: e.pointerId, last: { x: e.clientX, y: e.clientY }, offset: currentOffset.current,
-              frameWidth: e.currentTarget.getBoundingClientRect().width,
-              limit: { x: Math.max(0, (width * scale - 1) / 2), y: Math.max(0, (height * scale - 1 / aspect) / 2) },
-            };
-            setDragging(true);
-          }} onPointerUp={e => {
-            if (drag.current?.id !== e.pointerId) return;
-            drag.current = null;
-            setDragging(false);
-            if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
-          }} onDragStart={e => e.preventDefault()}>
-          {source ? <img className="crop-photo" src={source.url} draggable={false} alt=""
-            style={{ width: `${source.width * scale * 100}%`, height: `${source.height * scale * aspect * 100}%`, left: `${50 + offset.x * 100}%`, top: `${50 + offset.y * aspect * 100}%`, transform: `translate(-50%, -50%) rotate(${rotation}deg)` }} />
-            : <span className="crop-loading">{error ? "Choose another picture to continue" : "Opening your picture…"}</span>}
-          <div className="crop-guides" aria-hidden="true"><i /><i /><i /><i /></div>
-          {!banner && <div className="crop-circle" aria-hidden="true" />}
+  return (
+    <Modal
+      title={banner ? "Crop your banner" : "Crop your picture"}
+      width={720}
+      onClose={() => {
+        if (!busy) onClose();
+      }}
+    >
+      <div className="image-cropper" aria-busy={busy}>
+        <div className={`crop-workspace ${banner ? "is-banner" : "is-avatar"} ${dragging ? "is-dragging" : ""}`}>
+          <div
+            className="crop-frame"
+            style={{ aspectRatio: aspect }}
+            tabIndex={source && !busy ? 0 : -1}
+            role="group"
+            aria-label="Image framing. Drag to reposition or use arrow keys. Hold Shift for larger steps."
+            onKeyDown={(e) => {
+              if (!source || busy || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+              e.preventDefault();
+              const step = e.shiftKey ? 0.05 : 0.01;
+              const p = currentOffset.current;
+              setPosition(
+                bound({
+                  x: p.x + (e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0),
+                  y: p.y + (e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0),
+                })
+              );
+            }}
+            onPointerDown={(e) => {
+              if (!source || busy || e.button !== 0 || drag.current) return;
+              e.preventDefault();
+              e.currentTarget.focus({ preventScroll: true });
+              e.currentTarget.setPointerCapture(e.pointerId);
+              drag.current = {
+                id: e.pointerId,
+                last: { x: e.clientX, y: e.clientY },
+                offset: currentOffset.current,
+                frameWidth: e.currentTarget.getBoundingClientRect().width,
+                limit: { x: Math.max(0, (width * scale - 1) / 2), y: Math.max(0, (height * scale - 1 / aspect) / 2) },
+              };
+              setDragging(true);
+            }}
+            onPointerUp={(e) => {
+              if (drag.current?.id !== e.pointerId) return;
+              drag.current = null;
+              setDragging(false);
+              if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+            }}
+            onDragStart={(e) => e.preventDefault()}
+          >
+            {source ? (
+              <img
+                className="crop-photo"
+                src={source.url}
+                draggable={false}
+                alt=""
+                style={{
+                  width: `${source.width * scale * 100}%`,
+                  height: `${source.height * scale * aspect * 100}%`,
+                  left: `${50 + offset.x * 100}%`,
+                  top: `${50 + offset.y * aspect * 100}%`,
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                }}
+              />
+            ) : (
+              <span className="crop-loading">
+                {error ? "Choose another picture to continue" : "Opening your picture…"}
+              </span>
+            )}
+            <div className="crop-guides" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            {!banner && <div className="crop-circle" aria-hidden="true" />}
+          </div>
+        </div>
+        <div className="crop-controls">
+          <label className="crop-zoom">
+            <span>
+              Zoom <output>{Math.round(zoom * 100)}%</output>
+            </span>
+            <input
+              type="range"
+              min="1"
+              max="4"
+              step=".01"
+              value={zoom}
+              disabled={!source || busy}
+              onChange={(e) => changeZoom(Number(e.target.value))}
+            />
+          </label>
+          <div className="crop-tools">
+            <button
+              type="button"
+              disabled={!source || busy}
+              onClick={() => {
+                setRotation((r) => (r + 90) % 360);
+                setPosition(center);
+                setZoom(1);
+              }}
+              aria-label="Rotate picture 90 degrees clockwise"
+            >
+              ↻ <span>Rotate</span>
+            </button>
+            <button type="button" disabled={!source || busy} onClick={reset}>
+              Reset
+            </button>
+          </div>
+        </div>
+        {file.type === "image/gif" && <p className="crop-hint">Animated images are saved as a still image.</p>}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="crop-footer">
+          <Button kind="btn ghost" type="button" disabled={busy} onClick={onClose}>
+            Cancel
+          </Button>
+          <Button kind="btn" type="button" disabled={!source} loading={busy} onClick={save}>
+            {banner ? "Save banner" : "Save picture"}
+          </Button>
         </div>
       </div>
-      <div className="crop-controls">
-        <label className="crop-zoom"><span>Zoom <output>{Math.round(zoom * 100)}%</output></span><input type="range" min="1" max="4" step=".01" value={zoom} disabled={!source || busy} onChange={e => changeZoom(Number(e.target.value))} /></label>
-        <div className="crop-tools"><button type="button" disabled={!source || busy} onClick={() => { setRotation(r => (r + 90) % 360); setPosition(center); setZoom(1); }} aria-label="Rotate picture 90 degrees clockwise">↻ <span>Rotate</span></button><button type="button" disabled={!source || busy} onClick={reset}>Reset</button></div>
-      </div>
-      {file.type === "image/gif" && <p className="crop-hint">Animated images are saved as a still image.</p>}
-      {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="crop-footer"><Button kind="btn ghost" type="button" disabled={busy} onClick={onClose}>Cancel</Button><Button kind="btn" type="button" disabled={!source} loading={busy} onClick={save}>{banner ? "Save banner" : "Save picture"}</Button></div>
-    </div>
-  </Modal>;
+    </Modal>
+  );
 }

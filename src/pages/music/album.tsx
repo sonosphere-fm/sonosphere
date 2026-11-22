@@ -9,10 +9,21 @@ import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
 import { UploadImage } from "./shared";
 import type { AlbumPage as AlbumData } from "../../../shared/catalog";
-import { MusicHero, HeroStat, releaseDate, YourScrobbles, About, ByArtist, Trend, Listeners, TrendingBand, SIDE_LINKS } from "./entity";
+import {
+  MusicHero,
+  HeroStat,
+  releaseDate,
+  YourScrobbles,
+  About,
+  ByArtist,
+  Trend,
+  Listeners,
+  TrendingBand,
+  SIDE_LINKS,
+} from "./entity";
 
-const AdminTools = lazy(() => import("../../admin/page-tools").then(m => ({ default: m.AdminTools })));
-const TracklistTool = lazy(() => import("../../admin/page-tools").then(m => ({ default: m.TracklistTool })));
+const AdminTools = lazy(() => import("../../admin/page-tools").then((m) => ({ default: m.AdminTools })));
+const TracklistTool = lazy(() => import("../../admin/page-tools").then((m) => ({ default: m.TracklistTool })));
 
 function albumFacts(a: AlbumData) {
   const facts: [string, ReactNode][] = [];
@@ -30,68 +41,101 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
   const { me } = useAuth();
   useTitle(q.data ? `${q.data.title} - ${q.data.artist}` : album);
   return (
-    <Async q={q}>{a => (
-      <>
-        <MusicHero
-          image={a.image ?? a.artistImage}
-          cover={!!a.image}
-          title={a.title}
-          over={<Link to={artistUrl(a.artist)}>{a.artist}</Link>}
-          tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />}
-          actions={
-            <>
-              <PlayButton queue={a.tracks} label="Play album" />
-              {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
-              {me?.admin && <Suspense fallback={null}><AdminTools kind="album" item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} /></Suspense>}
-            </>
-          }
-          stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>}
-        />
-        <div className="wrap page mpage">
-          <Pane>
-            {tab === "wiki" ? <WikiPage type="album" id={a.id} title={a.title} /> : (
-              <div className="cols">
-                <div className="main">
-                  <YourScrobbles count={a.userPlaycount} />
-                  <About wiki={a.wiki} to={`${base}/+wiki`} facts={albumFacts(a)}>
-                    <Tagger type="album" id={a.id} tags={a.tags} myTags={a.myTags} />
-                  </About>
-                  <Section
-                    title="Tracklist"
-                    aside={
-                      <>
-                        {me?.admin && <Suspense fallback={null}><TracklistTool item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} /></Suspense>}
-                        <PlayButton queue={a.tracks} />
-                      </>
-                    }
-                  >
-                    <TrackList items={a.tracks} numbered showArtist={false} showDuration count="listeners" />
-                  </Section>
-                  <Listeners items={a.topListeners} />
-                  <Section title="Wall"><Shoutbox type="album" id={a.id} limit={10} /></Section>
-                  {a.otherAlbums.length > 0 && (
-                    <Section title={`More by ${a.artist}`} more={`${artistUrl(a.artist)}/+albums`} moreLabel="View all albums" foot>
-                      <Grid below kind="album" cols={4} items={a.otherAlbums.slice(0, 4)} />
+    <Async q={q}>
+      {(a) => (
+        <>
+          <MusicHero
+            image={a.image ?? a.artistImage}
+            cover={!!a.image}
+            title={a.title}
+            over={<Link to={artistUrl(a.artist)}>{a.artist}</Link>}
+            tabs={
+              <Tabs
+                items={[
+                  [base, "Overview", true],
+                  [`${base}/+wiki`, "Wiki"],
+                ]}
+              />
+            }
+            actions={
+              <>
+                <PlayButton queue={a.tracks} label="Play album" />
+                {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
+                {me?.admin && (
+                  <Suspense fallback={null}>
+                    <AdminTools kind="album" item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} />
+                  </Suspense>
+                )}
+              </>
+            }
+            stats={
+              <>
+                <HeroStat label="Listeners" value={a.listeners} />
+                <HeroStat label="Scrobbles" value={a.playcount} />
+              </>
+            }
+          />
+          <div className="wrap page mpage">
+            <Pane>
+              {tab === "wiki" ? (
+                <WikiPage type="album" id={a.id} title={a.title} />
+              ) : (
+                <div className="cols">
+                  <div className="main">
+                    <YourScrobbles count={a.userPlaycount} />
+                    <About wiki={a.wiki} to={`${base}/+wiki`} facts={albumFacts(a)}>
+                      <Tagger type="album" id={a.id} tags={a.tags} myTags={a.myTags} />
+                    </About>
+                    <Section
+                      title="Tracklist"
+                      aside={
+                        <>
+                          {me?.admin && (
+                            <Suspense fallback={null}>
+                              <TracklistTool item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} />
+                            </Suspense>
+                          )}
+                          <PlayButton queue={a.tracks} />
+                        </>
+                      }
+                    >
+                      <TrackList items={a.tracks} numbered showArtist={false} showDuration count="listeners" />
                     </Section>
-                  )}
+                    <Listeners items={a.topListeners} />
+                    <Section title="Wall">
+                      <Shoutbox type="album" id={a.id} limit={10} />
+                    </Section>
+                    {a.otherAlbums.length > 0 && (
+                      <Section
+                        title={`More by ${a.artist}`}
+                        more={`${artistUrl(a.artist)}/+albums`}
+                        moreLabel="View all albums"
+                        foot
+                      >
+                        <Grid below kind="album" cols={4} items={a.otherAlbums.slice(0, 4)} />
+                      </Section>
+                    )}
+                  </div>
+                  <aside className="side">
+                    <ByArtist name={a.artist} image={a.artistImage} />
+                    <Trend data={a.trend} />
+                    {a.mbid && (
+                      <Section title="Elsewhere">
+                        <p className={SIDE_LINKS}>
+                          <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">
+                            MusicBrainz
+                          </a>
+                        </p>
+                      </Section>
+                    )}
+                  </aside>
                 </div>
-                <aside className="side">
-                  <ByArtist name={a.artist} image={a.artistImage} />
-                  <Trend data={a.trend} />
-                  {a.mbid && (
-                    <Section title="Elsewhere">
-                      <p className={SIDE_LINKS}>
-                        <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a>
-                      </p>
-                    </Section>
-                  )}
-                </aside>
-              </div>
-            )}
-          </Pane>
-        </div>
-        {tab === "overview" && <TrendingBand />}
-      </>
-    )}</Async>
+              )}
+            </Pane>
+          </div>
+          {tab === "overview" && <TrendingBand />}
+        </>
+      )}
+    </Async>
   );
 }

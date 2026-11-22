@@ -8,7 +8,7 @@ const AUTOMATIC: Actor = { id: null, username: "Automatic" };
 async function typeAlbums() {
   const rows = await repo.untypedAlbums(src.mbLocal() ? 500 : 5);
   if (!rows.length) return;
-  const types = await src.mbReleaseTypes(rows.map(r => r.mbid!));
+  const types = await src.mbReleaseTypes(rows.map((r) => r.mbid!));
   for (const r of rows) await repo.setReleaseType(r.id, (types.get(r.mbid!) ?? "").toLowerCase());
 }
 

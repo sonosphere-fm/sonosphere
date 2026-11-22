@@ -14,7 +14,8 @@ export function timeBucket(seconds: AnyColumn, bucket: Bucket, offsetSeconds = 0
 
 export const flag = (condition: SQL): SQL<number> => sql<number>`(CASE WHEN ${condition} THEN 1 ELSE 0 END)`;
 
-export const jsonField = (column: AnyColumn, key: string): SQL<string | null> => sql<string | null>`(${column}::jsonb ->> ${key})`;
+export const jsonField = (column: AnyColumn, key: string): SQL<string | null> =>
+  sql<string | null>`(${column}::jsonb ->> ${key})`;
 
 /** `pattern` comes from like() in server/util.ts. */
 export const matches = (column: AnyColumn | SQL, pattern: string): SQL => sql`${column} ILIKE ${pattern} ESCAPE '\\'`;

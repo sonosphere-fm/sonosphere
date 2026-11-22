@@ -17,7 +17,7 @@ async function load(): Promise<Loaded | null> {
     at: info.at,
     k,
     quality: info.quality,
-    ids: rows.map(r => r.id),
+    ids: rows.map((r) => r.id),
     vecs,
     index: new Map(rows.map((r, i) => [r.id, i])),
   };

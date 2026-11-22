@@ -17,7 +17,7 @@ import type { MeResponse, Ok } from "../../shared/auth";
 
 export const router = new Router();
 
-router.patch<ProfileSaved>("/api/me", async c => {
+router.patch<ProfileSaved>("/api/me", async (c) => {
   const u = need(c);
   const b = c.body;
   const website = clean(b.website ?? u.website, 200);
@@ -36,26 +36,36 @@ router.patch<ProfileSaved>("/api/me", async c => {
   // what others read on the profile waits for a confirmed address; privacy settings and a new email never do
   const realname = clean(b.realname ?? u.realname, 60);
   const pronouns = clean(b.pronouns ?? u.pronouns, 30);
-  const about = String(b.about ?? u.about).trim().slice(0, 2000);
+  const about = String(b.about ?? u.about)
+    .trim()
+    .slice(0, 2000);
   const country = clean(b.country ?? u.country, 60);
-  const publicChanged = realname !== u.realname || pronouns !== u.pronouns || about !== u.about
-    || country !== u.country || website !== u.website;
+  const publicChanged =
+    realname !== u.realname ||
+    pronouns !== u.pronouns ||
+    about !== u.about ||
+    country !== u.country ||
+    website !== u.website;
   if (publicChanged) confirmed(u);
 
-  const dmPolicy = b.dmPolicy === undefined
-    ? undefined
-    : oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you");
-  const emailNotify = b.emailNotify === undefined
-    ? undefined
-    : oneOf(b.emailNotify, EMAIL_MODES.map(m => m[0])) ?? bad("Pick how often to get emails");
+  const dmPolicy =
+    b.dmPolicy === undefined ? undefined : (oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you"));
+  const emailNotify =
+    b.emailNotify === undefined
+      ? undefined
+      : (oneOf(
+          b.emailNotify,
+          EMAIL_MODES.map((m) => m[0])
+        ) ?? bad("Pick how often to get emails"));
   let emailMuted: string | undefined;
   if (Array.isArray(b.emailMuted)) {
     const picked: unknown[] = b.emailMuted;
-    emailMuted = EMAIL_KINDS.map(k => k[0]).filter(k => picked.includes(k)).join(",");
+    emailMuted = EMAIL_KINDS.map((k) => k[0])
+      .filter((k) => picked.includes(k))
+      .join(",");
   }
-  const theme = b.theme === undefined
-    ? undefined
-    : oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme");
+  const theme =
+    b.theme === undefined ? undefined : (oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme"));
   await repo.updateProfile(u.id, {
     realname,
     pronouns,
@@ -74,20 +84,23 @@ router.patch<ProfileSaved>("/api/me", async c => {
   return { user: await me((await findById(u.id)) ?? missing("User"), c.actor) };
 });
 
-router.post<MeResponse>("/api/me/stop-impersonating", async c => {
+router.post<MeResponse>("/api/me/stop-impersonating", async (c) => {
   const actor = c.actor ?? fail(401, "You need to log in to do that");
   const user = await me(actor);
   if (isAdmin(actor) && c.user && actor.id !== c.user.id) {
     await audit(actor, {
-      action: "user.impersonate.stop", targetType: "user", targetId: c.user.id,
-      label: c.user.username, subjectId: c.user.id,
+      action: "user.impersonate.stop",
+      targetType: "user",
+      targetId: c.user.id,
+      label: c.user.username,
+      subjectId: c.user.id,
     });
   }
   c.headers.append("Set-Cookie", clearActAsCookie());
   return { user };
 });
 
-router.post<Ok>("/api/me/password", async c => {
+router.post<Ok>("/api/me/password", async (c) => {
   const u = need(c);
   const next = String(c.body.next || "");
   // an account made through another site sets its first password without one
@@ -99,36 +112,54 @@ router.post<Ok>("/api/me/password", async c => {
   return { ok: true };
 });
 
-router.post<Ok>("/api/me/delete", async c => {
+router.post<Ok>("/api/me/delete", async (c) => {
   const u = need(c);
-  if (!(await confirmedBy(u, String(c.body.password || "")))) bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
+  if (!(await confirmedBy(u, String(c.body.password || ""))))
+    bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
   await repo.deleteAccount(u.id);
   // the sessions went with the account; this only clears the cookie
   await endSession(c.headers);
   return { ok: true };
 });
 
-router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async c => {
+router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async (c) => {
   const u = need(c);
   const actor = c.actor && isAdmin(c.actor) && c.actor.id !== u.id ? c.actor : null;
-  if (!actor && !(await confirmedBy(u, String(c.body.password || "")))) bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
-  const deleted = await deleteAllScrobbles(u.id, actor ? (tx, deleted) => auditTx(tx, actor, {
-    action: "user.clear-scrobbles", targetType: "user", targetId: u.id, label: u.username, subjectId: u.id,
-    note: "Cleared while acting as this user", data: { deleted },
-  }) : undefined);
+  if (!actor && !(await confirmedBy(u, String(c.body.password || ""))))
+    bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
+  const deleted = await deleteAllScrobbles(
+    u.id,
+    actor
+      ? (tx, deleted) =>
+          auditTx(tx, actor, {
+            action: "user.clear-scrobbles",
+            targetType: "user",
+            targetId: u.id,
+            label: u.username,
+            subjectId: u.id,
+            note: "Cleared while acting as this user",
+            data: { deleted },
+          })
+      : undefined
+  );
   return { deleted };
 });
 
-router.get("/api/me/export", async c => {
+router.get("/api/me/export", async (c) => {
   const u = need(c);
-  await throttle(`export:${u.id}`, 10, 3600, "You have downloaded your data a few times already. Try again in an hour.");
+  await throttle(
+    `export:${u.id}`,
+    10,
+    3600,
+    "You have downloaded your data a few times already. Try again in an hour."
+  );
   const loved = c.q.get("what") === "loved";
   const csv = c.q.get("format") === "csv";
   const rows = loved ? await exportLoved(u.id) : await exportScrobbles(u.id);
   const quoted = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   let body: string;
   if (csv) {
-    const lines = rows.map(r => [r.artist, r.album, r.track, r.timestamp].map(quoted).join(","));
+    const lines = rows.map((r) => [r.artist, r.album, r.track, r.timestamp].map(quoted).join(","));
     body = "artist,album,track,timestamp\n" + lines.join("\n");
   } else {
     body = JSON.stringify(rows, null, 1);

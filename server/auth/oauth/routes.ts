@@ -50,7 +50,7 @@ function failTo(c: Ctx, intent: State["intent"], code: string): Response {
   return go(c, intent === "link" ? `/settings/account?oauth=${code}` : `/login?oauth=${code}`);
 }
 
-router.get("/api/auth/oauth/:provider/start", async c => {
+router.get("/api/auth/oauth/:provider/start", async (c) => {
   const p = providerById(c.params[0]!);
   const intent = c.q.get("intent") === "link" ? "link" : "login";
   if (!p) return failTo(c, intent, "off");
@@ -77,7 +77,7 @@ router.get("/api/auth/oauth/:provider/start", async c => {
   return go(c, u.toString());
 });
 
-router.get("/api/auth/oauth/:provider/callback", async c => {
+router.get("/api/auth/oauth/:provider/callback", async (c) => {
   // the state has to come back to the browser that set off, once, within ten minutes
   const sent = c.q.get("state") || "";
   const mine = cookieOf(c, "oauth_state");
@@ -154,16 +154,20 @@ async function pendingOf(c: Ctx): Promise<Pending | null> {
 
 // Their handle at the provider, cut down to what usernames here allow.
 function suggest(name: string): string {
-  const s = name.split("@")[0]!.replace(/[^a-zA-Z0-9_-]/g, "").replace(/^[^a-zA-Z]+/, "").slice(0, 15);
+  const s = name
+    .split("@")[0]!
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .replace(/^[^a-zA-Z]+/, "")
+    .slice(0, 15);
   return USERNAME.test(s) ? s : "";
 }
 
-router.get<OAuthPending>("/api/auth/oauth/pending", async c => {
+router.get<OAuthPending>("/api/auth/oauth/pending", async (c) => {
   const pd = (await pendingOf(c)) ?? bad("This sign-up has expired. Start again from the join page.");
   return { provider: providerLabel(pd.provider), username: suggest(pd.name), email: pd.email };
 });
 
-router.post<OAuthCreated>("/api/auth/oauth/complete", async c => {
+router.post<OAuthCreated>("/api/auth/oauth/complete", async (c) => {
   await limit(`signup:${ipOf(c.req)}`, 5, 3600, "Too many sign-ups from here. Try again later.");
   const t = cookieOf(c, "oauth_ticket");
   const key = `oauth:pending:${digest(t)}`;
@@ -182,25 +186,25 @@ router.post<OAuthCreated>("/api/auth/oauth/complete", async c => {
   return { user: await me(u), next: pd.next };
 });
 
-router.get<Logins>("/api/me/logins", async c => {
+router.get<Logins>("/api/me/logins", async (c) => {
   const u = need(c);
   const links = await repo.linksOf(u.id);
-  const ids = [...new Set([...PROVIDERS.map(p => p.id), ...links.map(l => l.provider)])];
-  const providers = ids.map(id => {
-    const l = links.find(x => x.provider === id);
+  const ids = [...new Set([...PROVIDERS.map((p) => p.id), ...links.map((l) => l.provider)])];
+  const providers = ids.map((id) => {
+    const l = links.find((x) => x.provider === id);
     return { id, label: providerLabel(id), connected: l ? { name: l.name, since: l.createdAt } : null };
   });
   return { hasPassword: !!u.passwordHash, providers };
 });
 
-router.post<Ok>("/api/me/logins/unlink", async c => {
+router.post<Ok>("/api/me/logins/unlink", async (c) => {
   const u = need(c);
   const provider = String(c.body.provider || "");
   const links = await repo.linksOf(u.id);
-  if (!links.some(l => l.provider === provider)) bad("That isn't connected");
+  if (!links.some((l) => l.provider === provider)) bad("That isn't connected");
   if (!u.passwordHash && links.length === 1) bad("Set a password first, or you won't be able to log in");
   await repo.removeLink(u.id, provider);
   return { ok: true };
 });
 
-export const oauthProviders = () => PROVIDERS.map(p => ({ id: p.id, label: p.label }));
+export const oauthProviders = () => PROVIDERS.map((p) => ({ id: p.id, label: p.label }));

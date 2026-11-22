@@ -1,15 +1,58 @@
 // A merge moves everything that points at the source over to the target, dropping the source's copy where the
 // target already has the same row. The per-listener tallies (user_artists etc.) are kept in step by the triggers
 // on `scrobbles`, so they are not touched here.
-import { and, asc, count, countDistinct, desc, eq, inArray, isNull, ne, notExists, notInArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  notExists,
+  notInArray,
+  or,
+  sql,
+  type AnyColumn,
+  type SQL,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn, type Tx } from "../db/client";
 import {
-  albumFolds, albums, albumTracks, artists, auditLog, eventArtists, lovedTracks, nowPlaying, obsessions, playlistTracks, scrobbles, shouts, similarArtists,
-  taggings, tags, tracks, userAlbums, userArtists, userTracks, wikiLocks, wikis,
+  albumFolds,
+  albums,
+  albumTracks,
+  artists,
+  auditLog,
+  eventArtists,
+  lovedTracks,
+  nowPlaying,
+  obsessions,
+  playlistTracks,
+  scrobbles,
+  shouts,
+  similarArtists,
+  taggings,
+  tags,
+  tracks,
+  userAlbums,
+  userArtists,
+  userTracks,
+  wikiLocks,
+  wikis,
 } from "../db/schema";
 import type { AuditEntry } from "../site/audit";
-import type { AdminTag, CatalogueDetails, CatalogueItem, TracklistTrack, CatalogueKind, DuplicateArtist, OrphanItem } from "../../shared/admin-content";
+import type {
+  AdminTag,
+  CatalogueDetails,
+  CatalogueItem,
+  TracklistTrack,
+  CatalogueKind,
+  DuplicateArtist,
+  OrphanItem,
+} from "../../shared/admin-content";
 import { auditTx } from "../site/audit";
 import { bad } from "../http";
 import { getOrCreateTrackTx } from "../catalog/repo";
@@ -34,13 +77,15 @@ async function catRowTx(conn: Conn, kind: Kind, id: number): Promise<CatRow | nu
     return a ? { ...a, artist: null, artistId: null } : null;
   }
   if (kind === "album") {
-    const [al] = await conn.select({ id: albums.id, label: albums.title, artist: artists.name, artistId: albums.artistId })
+    const [al] = await conn
+      .select({ id: albums.id, label: albums.title, artist: artists.name, artistId: albums.artistId })
       .from(albums)
       .innerJoin(artists, eq(artists.id, albums.artistId))
       .where(eq(albums.id, id));
     return al ?? null;
   }
-  const [t] = await conn.select({ id: tracks.id, label: tracks.title, artist: artists.name, artistId: tracks.artistId })
+  const [t] = await conn
+    .select({ id: tracks.id, label: tracks.title, artist: artists.name, artistId: tracks.artistId })
     .from(tracks)
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .where(eq(tracks.id, id));
@@ -53,7 +98,12 @@ export const describe = (r: CatRow) => (r.artist === null ? r.label : `${r.label
 const artistTracks = () => number(db.select({ c: count() }).from(tracks).where(eq(tracks.artistId, artists.id)));
 const artistAlbums = () => number(db.select({ c: count() }).from(albums).where(eq(albums.artistId, artists.id)));
 const artistPlays = () =>
-  number(db.select({ c: tally(userArtists.plays) }).from(userArtists).where(eq(userArtists.artistId, artists.id))).as("scrobbles");
+  number(
+    db
+      .select({ c: tally(userArtists.plays) })
+      .from(userArtists)
+      .where(eq(userArtists.artistId, artists.id))
+  ).as("scrobbles");
 
 const albumOrArtist = (pattern: string) => or(matches(albums.titleNorm, pattern), matches(artists.nameNorm, pattern));
 const trackOrArtist = (pattern: string) => or(matches(tracks.titleNorm, pattern), matches(artists.nameNorm, pattern));
@@ -61,15 +111,16 @@ const trackOrArtist = (pattern: string) => or(matches(tracks.titleNorm, pattern)
 export async function search(kind: Kind, pattern: string, pg: Page): Promise<CatalogueItem[]> {
   if (kind === "artist") {
     const plays = artistPlays();
-    return db.select({
-      id: artists.id,
-      name: artists.name,
-      artist: nothing,
-      createdAt: artists.createdAt,
-      tracks: artistTracks(),
-      albums: artistAlbums(),
-      scrobbles: plays,
-    })
+    return db
+      .select({
+        id: artists.id,
+        name: artists.name,
+        artist: nothing,
+        createdAt: artists.createdAt,
+        tracks: artistTracks(),
+        albums: artistAlbums(),
+        scrobbles: plays,
+      })
       .from(artists)
       .where(matches(artists.nameNorm, pattern))
       .orderBy(desc(plays), artists.nameNorm)
@@ -77,17 +128,23 @@ export async function search(kind: Kind, pattern: string, pg: Page): Promise<Cat
       .offset(pg.offset);
   }
   if (kind === "album") {
-    const plays = number(db.select({ c: tally(userAlbums.plays) }).from(userAlbums).where(eq(userAlbums.albumId, albums.id))).as("scrobbles");
+    const plays = number(
+      db
+        .select({ c: tally(userAlbums.plays) })
+        .from(userAlbums)
+        .where(eq(userAlbums.albumId, albums.id))
+    ).as("scrobbles");
     const albumTrackCount = number(db.select({ c: count() }).from(tracks).where(eq(tracks.albumId, albums.id)));
-    return db.select({
-      id: albums.id,
-      name: albums.title,
-      artist: artists.name,
-      createdAt: albums.createdAt,
-      tracks: albumTrackCount,
-      albums: nothing,
-      scrobbles: plays,
-    })
+    return db
+      .select({
+        id: albums.id,
+        name: albums.title,
+        artist: artists.name,
+        createdAt: albums.createdAt,
+        tracks: albumTrackCount,
+        albums: nothing,
+        scrobbles: plays,
+      })
       .from(albums)
       .innerJoin(artists, eq(artists.id, albums.artistId))
       .where(albumOrArtist(pattern))
@@ -95,16 +152,22 @@ export async function search(kind: Kind, pattern: string, pg: Page): Promise<Cat
       .limit(pg.limit)
       .offset(pg.offset);
   }
-  const plays = number(db.select({ c: tally(userTracks.plays) }).from(userTracks).where(eq(userTracks.trackId, tracks.id))).as("scrobbles");
-  return db.select({
-    id: tracks.id,
-    name: tracks.title,
-    artist: artists.name,
-    createdAt: tracks.createdAt,
-    tracks: nothing,
-    albums: nothing,
-    scrobbles: plays,
-  })
+  const plays = number(
+    db
+      .select({ c: tally(userTracks.plays) })
+      .from(userTracks)
+      .where(eq(userTracks.trackId, tracks.id))
+  ).as("scrobbles");
+  return db
+    .select({
+      id: tracks.id,
+      name: tracks.title,
+      artist: artists.name,
+      createdAt: tracks.createdAt,
+      tracks: nothing,
+      albums: nothing,
+      scrobbles: plays,
+    })
     .from(tracks)
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .where(trackOrArtist(pattern))
@@ -118,13 +181,32 @@ export function searchCount(kind: Kind, pattern: string): Promise<number> {
     return total(db.select({ c: count() }).from(artists).where(matches(artists.nameNorm, pattern)));
   }
   if (kind === "album") {
-    return total(db.select({ c: count() }).from(albums).innerJoin(artists, eq(artists.id, albums.artistId)).where(albumOrArtist(pattern)));
+    return total(
+      db
+        .select({ c: count() })
+        .from(albums)
+        .innerJoin(artists, eq(artists.id, albums.artistId))
+        .where(albumOrArtist(pattern))
+    );
   }
-  return total(db.select({ c: count() }).from(tracks).innerJoin(artists, eq(artists.id, tracks.artistId)).where(trackOrArtist(pattern)));
+  return total(
+    db
+      .select({ c: count() })
+      .from(tracks)
+      .innerJoin(artists, eq(artists.id, tracks.artistId))
+      .where(trackOrArtist(pattern))
+  );
 }
 
 export const artistsWithCounts = (): Promise<DuplicateArtist[]> =>
-  db.select({ id: artists.id, name: artists.name, scrobbles: artistPlays(), tracks: artistTracks(), albums: artistAlbums() })
+  db
+    .select({
+      id: artists.id,
+      name: artists.name,
+      scrobbles: artistPlays(),
+      tracks: artistTracks(),
+      albums: artistAlbums(),
+    })
     .from(artists)
     .orderBy(artists.id);
 
@@ -136,27 +218,46 @@ async function moveItemRefsTx(tx: Tx, type: Kind, src: number, dst: number): Pro
     sql`COALESCE(${g.userId}, 0) = COALESCE(${taggings.userId}, 0)`,
     eq(g.tagId, taggings.tagId),
     eq(g.itemType, type),
-    eq(g.itemId, dst),
+    eq(g.itemId, dst)
   );
   const srcTaggings = and(eq(taggings.itemType, type), eq(taggings.itemId, src));
-  await tx.update(taggings).set({ itemId: dst }).where(and(srcTaggings, notExists(tx.select({ one }).from(g).where(sameTagging))));
+  await tx
+    .update(taggings)
+    .set({ itemId: dst })
+    .where(and(srcTaggings, notExists(tx.select({ one }).from(g).where(sameTagging))));
   await tx.delete(taggings).where(srcTaggings);
 
-  const [top] = await tx.select({ v: sql<number>`COALESCE(MAX(${wikis.version}), 0)` })
+  const [top] = await tx
+    .select({ v: sql<number>`COALESCE(MAX(${wikis.version}), 0)` })
     .from(wikis)
     .where(and(eq(wikis.itemType, type), eq(wikis.itemId, src)));
   const srcTop = top?.v ?? 0;
   if (srcTop) {
     // the destination's versions move above the source's history so its text stays current
-    await tx.update(wikis).set({ version: sql`${wikis.version} + ${srcTop}` }).where(and(eq(wikis.itemType, type), eq(wikis.itemId, dst)));
-    await tx.update(wikis).set({ itemId: dst }).where(and(eq(wikis.itemType, type), eq(wikis.itemId, src)));
+    await tx
+      .update(wikis)
+      .set({ version: sql`${wikis.version} + ${srcTop}` })
+      .where(and(eq(wikis.itemType, type), eq(wikis.itemId, dst)));
+    await tx
+      .update(wikis)
+      .set({ itemId: dst })
+      .where(and(eq(wikis.itemType, type), eq(wikis.itemId, src)));
   }
 
-  await tx.update(shouts).set({ targetId: dst }).where(and(eq(shouts.targetType, type), eq(shouts.targetId, src)));
+  await tx
+    .update(shouts)
+    .set({ targetId: dst })
+    .where(and(eq(shouts.targetType, type), eq(shouts.targetId, src)));
 
-  const dstLocked = tx.select({ one }).from(l).where(and(eq(l.itemType, type), eq(l.itemId, dst)));
+  const dstLocked = tx
+    .select({ one })
+    .from(l)
+    .where(and(eq(l.itemType, type), eq(l.itemId, dst)));
   const srcLock = and(eq(wikiLocks.itemType, type), eq(wikiLocks.itemId, src));
-  await tx.update(wikiLocks).set({ itemId: dst }).where(and(srcLock, notExists(dstLocked)));
+  await tx
+    .update(wikiLocks)
+    .set({ itemId: dst })
+    .where(and(srcLock, notExists(dstLocked)));
   await tx.delete(wikiLocks).where(srcLock);
 }
 
@@ -171,29 +272,49 @@ async function mergeTrackTx(tx: Tx, src: number, dst: number): Promise<void> {
   const at = alias(albumTracks, "at");
 
   // a play already on the destination (same listener, same second) is a duplicate and is dropped
-  const dupPlay = tx.select({ one }).from(x)
+  const dupPlay = tx
+    .select({ one })
+    .from(x)
     .where(and(eq(x.userId, scrobbles.userId), eq(x.trackId, dst), eq(x.playedAt, scrobbles.playedAt)));
-  await tx.update(scrobbles).set({ trackId: dst, artistId: d.artistId }).where(and(eq(scrobbles.trackId, src), notExists(dupPlay)));
+  await tx
+    .update(scrobbles)
+    .set({ trackId: dst, artistId: d.artistId })
+    .where(and(eq(scrobbles.trackId, src), notExists(dupPlay)));
   await tx.delete(scrobbles).where(eq(scrobbles.trackId, src));
 
-  const dupLove = tx.select({ one }).from(lv).where(and(eq(lv.userId, lovedTracks.userId), eq(lv.trackId, dst)));
-  await tx.update(lovedTracks).set({ trackId: dst }).where(and(eq(lovedTracks.trackId, src), notExists(dupLove)));
+  const dupLove = tx
+    .select({ one })
+    .from(lv)
+    .where(and(eq(lv.userId, lovedTracks.userId), eq(lv.trackId, dst)));
+  await tx
+    .update(lovedTracks)
+    .set({ trackId: dst })
+    .where(and(eq(lovedTracks.trackId, src), notExists(dupLove)));
   await tx.delete(lovedTracks).where(eq(lovedTracks.trackId, src));
 
-  const dupListing = tx.select({ one }).from(at).where(and(eq(at.albumId, albumTracks.albumId), eq(at.trackId, dst)));
-  await tx.update(albumTracks).set({ trackId: dst }).where(and(eq(albumTracks.trackId, src), notExists(dupListing)));
+  const dupListing = tx
+    .select({ one })
+    .from(at)
+    .where(and(eq(at.albumId, albumTracks.albumId), eq(at.trackId, dst)));
+  await tx
+    .update(albumTracks)
+    .set({ trackId: dst })
+    .where(and(eq(albumTracks.trackId, src), notExists(dupListing)));
   await tx.delete(albumTracks).where(eq(albumTracks.trackId, src));
 
   await tx.update(playlistTracks).set({ trackId: dst }).where(eq(playlistTracks.trackId, src));
   await tx.update(obsessions).set({ trackId: dst }).where(eq(obsessions.trackId, src));
   await tx.update(nowPlaying).set({ trackId: dst }).where(eq(nowPlaying.trackId, src));
   await moveItemRefsTx(tx, "track", src, dst);
-  await tx.update(tracks).set({
-    basePlaycount: sql`${tracks.basePlaycount} + ${s.basePlaycount}`,
-    baseListeners: atLeast(tracks.baseListeners, s.baseListeners),
-    duration: sql`CASE WHEN ${tracks.duration} = 0 THEN ${s.duration} ELSE ${tracks.duration} END`,
-    albumId: sql`COALESCE(${tracks.albumId}, ${s.albumId})`,
-  }).where(eq(tracks.id, dst));
+  await tx
+    .update(tracks)
+    .set({
+      basePlaycount: sql`${tracks.basePlaycount} + ${s.basePlaycount}`,
+      baseListeners: atLeast(tracks.baseListeners, s.baseListeners),
+      duration: sql`CASE WHEN ${tracks.duration} = 0 THEN ${s.duration} ELSE ${tracks.duration} END`,
+      albumId: sql`COALESCE(${tracks.albumId}, ${s.albumId})`,
+    })
+    .where(eq(tracks.id, dst));
   await tx.delete(tracks).where(eq(tracks.id, src));
 }
 
@@ -202,22 +323,32 @@ async function mergeAlbumTx(tx: Tx, src: number, dst: number): Promise<void> {
   if (!s) return;
   const at = alias(albumTracks, "at");
   await tx.update(tracks).set({ albumId: dst }).where(eq(tracks.albumId, src));
-  const dupListing = tx.select({ one }).from(at).where(and(eq(at.albumId, dst), eq(at.trackId, albumTracks.trackId)));
-  await tx.update(albumTracks).set({ albumId: dst }).where(and(eq(albumTracks.albumId, src), notExists(dupListing)));
+  const dupListing = tx
+    .select({ one })
+    .from(at)
+    .where(and(eq(at.albumId, dst), eq(at.trackId, albumTracks.trackId)));
+  await tx
+    .update(albumTracks)
+    .set({ albumId: dst })
+    .where(and(eq(albumTracks.albumId, src), notExists(dupListing)));
   await tx.delete(albumTracks).where(eq(albumTracks.albumId, src));
   await tx.update(scrobbles).set({ albumId: dst }).where(eq(scrobbles.albumId, src));
   await tx.update(nowPlaying).set({ albumId: dst }).where(eq(nowPlaying.albumId, src));
   await moveItemRefsTx(tx, "album", src, dst);
   await tx.update(albumFolds).set({ albumId: dst }).where(eq(albumFolds.albumId, src));
-  await tx.insert(albumFolds)
+  await tx
+    .insert(albumFolds)
     .values({ artistId: s.artistId, titleNorm: s.titleNorm, albumId: dst })
     .onConflictDoUpdate({ target: [albumFolds.artistId, albumFolds.titleNorm], set: { albumId: dst } });
-  await tx.update(albums).set({
-    basePlaycount: sql`${albums.basePlaycount} + ${s.basePlaycount}`,
-    baseListeners: atLeast(albums.baseListeners, s.baseListeners),
-    imageId: sql`COALESCE(${albums.imageId}, ${s.imageId})`,
-    releaseDate: sql`COALESCE(${albums.releaseDate}, ${s.releaseDate})`,
-  }).where(eq(albums.id, dst));
+  await tx
+    .update(albums)
+    .set({
+      basePlaycount: sql`${albums.basePlaycount} + ${s.basePlaycount}`,
+      baseListeners: atLeast(albums.baseListeners, s.baseListeners),
+      imageId: sql`COALESCE(${albums.imageId}, ${s.imageId})`,
+      releaseDate: sql`COALESCE(${albums.releaseDate}, ${s.releaseDate})`,
+    })
+    .where(eq(albums.id, dst));
   await tx.delete(albums).where(eq(albums.id, src));
 }
 
@@ -228,11 +359,15 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
   let moved = 0;
   if (!s) return { merged, moved };
 
-  const srcTracks = await tx.select({ id: tracks.id, titleNorm: tracks.titleNorm }).from(tracks)
+  const srcTracks = await tx
+    .select({ id: tracks.id, titleNorm: tracks.titleNorm })
+    .from(tracks)
     .where(eq(tracks.artistId, src))
     .orderBy(tracks.id);
   for (const t of srcTracks) {
-    const [twin] = await tx.select({ id: tracks.id }).from(tracks)
+    const [twin] = await tx
+      .select({ id: tracks.id })
+      .from(tracks)
       .where(and(eq(tracks.artistId, dst), eq(tracks.titleNorm, t.titleNorm)));
     if (twin) {
       await mergeTrackTx(tx, t.id, twin.id);
@@ -243,11 +378,15 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
     }
   }
 
-  const srcAlbums = await tx.select({ id: albums.id, titleNorm: albums.titleNorm }).from(albums)
+  const srcAlbums = await tx
+    .select({ id: albums.id, titleNorm: albums.titleNorm })
+    .from(albums)
     .where(eq(albums.artistId, src))
     .orderBy(albums.id);
   for (const a of srcAlbums) {
-    const [twin] = await tx.select({ id: albums.id }).from(albums)
+    const [twin] = await tx
+      .select({ id: albums.id })
+      .from(albums)
       .where(and(eq(albums.artistId, dst), eq(albums.titleNorm, a.titleNorm)));
     if (twin) {
       await mergeAlbumTx(tx, a.id, twin.id);
@@ -262,32 +401,58 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
 
   const o = alias(similarArtists, "o");
   const ea = alias(eventArtists, "ea");
-  const dupSimilarFrom = tx.select({ one }).from(o).where(and(eq(o.artistId, dst), eq(o.similarId, similarArtists.similarId)));
-  const dupSimilarTo = tx.select({ one }).from(o).where(and(eq(o.artistId, similarArtists.artistId), eq(o.similarId, dst)));
-  await tx.update(similarArtists).set({ artistId: dst }).where(and(eq(similarArtists.artistId, src), notExists(dupSimilarFrom)));
-  await tx.update(similarArtists).set({ similarId: dst }).where(and(eq(similarArtists.similarId, src), notExists(dupSimilarTo)));
-  await tx.delete(similarArtists).where(or(
-    eq(similarArtists.artistId, src),
-    eq(similarArtists.similarId, src),
-    eq(similarArtists.artistId, similarArtists.similarId),
-  ));
+  const dupSimilarFrom = tx
+    .select({ one })
+    .from(o)
+    .where(and(eq(o.artistId, dst), eq(o.similarId, similarArtists.similarId)));
+  const dupSimilarTo = tx
+    .select({ one })
+    .from(o)
+    .where(and(eq(o.artistId, similarArtists.artistId), eq(o.similarId, dst)));
+  await tx
+    .update(similarArtists)
+    .set({ artistId: dst })
+    .where(and(eq(similarArtists.artistId, src), notExists(dupSimilarFrom)));
+  await tx
+    .update(similarArtists)
+    .set({ similarId: dst })
+    .where(and(eq(similarArtists.similarId, src), notExists(dupSimilarTo)));
+  await tx
+    .delete(similarArtists)
+    .where(
+      or(
+        eq(similarArtists.artistId, src),
+        eq(similarArtists.similarId, src),
+        eq(similarArtists.artistId, similarArtists.similarId)
+      )
+    );
 
-  const dupEvent = tx.select({ one }).from(ea).where(and(eq(ea.eventId, eventArtists.eventId), eq(ea.artistId, dst)));
-  await tx.update(eventArtists).set({ artistId: dst }).where(and(eq(eventArtists.artistId, src), notExists(dupEvent)));
+  const dupEvent = tx
+    .select({ one })
+    .from(ea)
+    .where(and(eq(ea.eventId, eventArtists.eventId), eq(ea.artistId, dst)));
+  await tx
+    .update(eventArtists)
+    .set({ artistId: dst })
+    .where(and(eq(eventArtists.artistId, src), notExists(dupEvent)));
   await tx.delete(eventArtists).where(eq(eventArtists.artistId, src));
 
   await moveItemRefsTx(tx, "artist", src, dst);
-  await tx.update(artists).set({
-    basePlaycount: sql`${artists.basePlaycount} + ${s.basePlaycount}`,
-    baseListeners: atLeast(artists.baseListeners, s.baseListeners),
-    imageId: sql`COALESCE(${artists.imageId}, ${s.imageId})`,
-  }).where(eq(artists.id, dst));
+  await tx
+    .update(artists)
+    .set({
+      basePlaycount: sql`${artists.basePlaycount} + ${s.basePlaycount}`,
+      baseListeners: atLeast(artists.baseListeners, s.baseListeners),
+      imageId: sql`COALESCE(${artists.imageId}, ${s.imageId})`,
+    })
+    .where(eq(artists.id, dst));
   await tx.delete(artists).where(eq(artists.id, src));
   return { merged, moved };
 }
 
 export const tracklist = (albumId: number): Promise<TracklistTrack[]> =>
-  db.select({ id: tracks.id, name: tracks.title, artist: artists.name })
+  db
+    .select({ id: tracks.id, name: tracks.title, artist: artists.name })
     .from(albumTracks)
     .innerJoin(tracks, eq(tracks.id, albumTracks.trackId))
     .innerJoin(artists, eq(artists.id, tracks.artistId))
@@ -296,7 +461,10 @@ export const tracklist = (albumId: number): Promise<TracklistTrack[]> =>
 
 export async function details(kind: Kind, id: number): Promise<CatalogueDetails> {
   if (kind === "artist") {
-    const [a] = await db.select({ mbid: artists.mbid, spotifyId: artists.spotifyId }).from(artists).where(eq(artists.id, id));
+    const [a] = await db
+      .select({ mbid: artists.mbid, spotifyId: artists.spotifyId })
+      .from(artists)
+      .where(eq(artists.id, id));
     return a ?? {};
   }
   if (kind === "album") {
@@ -308,8 +476,14 @@ export async function details(kind: Kind, id: number): Promise<CatalogueDetails>
   return t ?? {};
 }
 
-export async function setDetails(kind: Kind, id: number, set: CatalogueDetails, actor: Actor, entry: AuditEntry): Promise<void> {
-  await transact(async tx => {
+export async function setDetails(
+  kind: Kind,
+  id: number,
+  set: CatalogueDetails,
+  actor: Actor,
+  entry: AuditEntry
+): Promise<void> {
+  await transact(async (tx) => {
     if (kind === "artist") await tx.update(artists).set(set).where(eq(artists.id, id));
     else if (kind === "album") await tx.update(albums).set(set).where(eq(albums.id, id));
     else await tx.update(tracks).set(set).where(eq(tracks.id, id));
@@ -318,7 +492,14 @@ export async function setDetails(kind: Kind, id: number, set: CatalogueDetails, 
 }
 
 export async function auditEntry(id: number) {
-  const [e] = await db.select({ id: auditLog.id, action: auditLog.action, targetType: auditLog.targetType, targetId: auditLog.targetId, data: auditLog.data })
+  const [e] = await db
+    .select({
+      id: auditLog.id,
+      action: auditLog.action,
+      targetType: auditLog.targetType,
+      targetId: auditLog.targetId,
+      data: auditLog.data,
+    })
     .from(auditLog)
     .where(eq(auditLog.id, id));
   return e ? { ...e, data: JSON.parse(e.data) as Record<string, unknown> } : null;
@@ -337,20 +518,27 @@ export async function setTracklist(
   album: CatRow,
   entries: TracklistEntry[],
   actor: Actor,
-  entry: (trackIds: number[]) => AuditEntry,
+  entry: (trackIds: number[]) => AuditEntry
 ): Promise<void> {
   const albumId = album.id;
-  await transact(async tx => {
+  await transact(async (tx) => {
     const trackIds: number[] = [];
-    for (const e of entries) trackIds.push(typeof e === "number" ? e : await getOrCreateTrackTx(tx, album.artistId!, e));
+    for (const e of entries)
+      trackIds.push(typeof e === "number" ? e : await getOrCreateTrackTx(tx, album.artistId!, e));
     if (new Set(trackIds).size !== trackIds.length) bad("A track is listed twice");
     await tx.delete(albumTracks).where(eq(albumTracks.albumId, albumId));
     if (trackIds.length) {
       await tx.insert(albumTracks).values(trackIds.map((trackId, i) => ({ albumId, trackId, position: i + 1 })));
-      await tx.update(tracks).set({ albumId }).where(and(inArray(tracks.id, trackIds), isNull(tracks.albumId)));
+      await tx
+        .update(tracks)
+        .set({ albumId })
+        .where(and(inArray(tracks.id, trackIds), isNull(tracks.albumId)));
     }
     const removed = trackIds.length ? notInArray(tracks.id, trackIds) : undefined;
-    await tx.update(tracks).set({ albumId: null }).where(and(eq(tracks.albumId, albumId), removed));
+    await tx
+      .update(tracks)
+      .set({ albumId: null })
+      .where(and(eq(tracks.albumId, albumId), removed));
     await tx.update(albums).set({ tracklistLocked: true }).where(eq(albums.id, albumId));
     await auditTx(tx, actor, entry(trackIds));
   });
@@ -364,9 +552,9 @@ export async function merge(
   src: number,
   dst: number,
   actor: Actor,
-  entry: (detail: MergeDetail) => AuditEntry,
+  entry: (detail: MergeDetail) => AuditEntry
 ): Promise<{ detail: MergeDetail; artists: number[] }> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     let detail: MergeDetail = {};
     let changed = [dst];
     if (kind === "artist") {
@@ -375,8 +563,11 @@ export async function merge(
       await mergeAlbumTx(tx, src, dst);
       changed = [];
     } else {
-      const rows = await tx.select({ id: tracks.artistId }).from(tracks).where(inArray(tracks.id, [src, dst]));
-      changed = rows.map(t => t.id);
+      const rows = await tx
+        .select({ id: tracks.artistId })
+        .from(tracks)
+        .where(inArray(tracks.id, [src, dst]));
+      changed = rows.map((t) => t.id);
       await mergeTrackTx(tx, src, dst);
     }
     await auditTx(tx, actor, entry(detail));
@@ -387,13 +578,17 @@ export async function merge(
 // For albums and tracks, a clash is only with the same artist.
 export async function nameClash(kind: Kind, row: CatRow, nameNorm: string): Promise<number | null> {
   if (kind === "artist") {
-    const [a] = await db.select({ id: artists.id }).from(artists)
+    const [a] = await db
+      .select({ id: artists.id })
+      .from(artists)
       .where(and(eq(artists.nameNorm, nameNorm), ne(artists.id, row.id)))
       .limit(1);
     return a?.id ?? null;
   }
   const table = kind === "album" ? albums : tracks;
-  const [r] = await db.select({ id: table.id }).from(table)
+  const [r] = await db
+    .select({ id: table.id })
+    .from(table)
     .where(and(eq(table.artistId, row.artistId ?? 0), eq(table.titleNorm, nameNorm), ne(table.id, row.id)))
     .limit(1);
   return r?.id ?? null;
@@ -407,11 +602,27 @@ export async function rename(kind: Kind, id: number, name: string, nameNorm: str
 
 const unused = (column: AnyColumn, by: AnyColumn) => notExists(db.select({ one }).from(by.table).where(eq(by, column)));
 
-const unreferenced = (type: Kind, id: AnyColumn) => and(
-  notExists(db.select({ one }).from(taggings).where(and(eq(taggings.itemType, type), eq(taggings.itemId, id)))),
-  notExists(db.select({ one }).from(wikis).where(and(eq(wikis.itemType, type), eq(wikis.itemId, id)))),
-  notExists(db.select({ one }).from(shouts).where(and(eq(shouts.targetType, type), eq(shouts.targetId, id)))),
-);
+const unreferenced = (type: Kind, id: AnyColumn) =>
+  and(
+    notExists(
+      db
+        .select({ one })
+        .from(taggings)
+        .where(and(eq(taggings.itemType, type), eq(taggings.itemId, id)))
+    ),
+    notExists(
+      db
+        .select({ one })
+        .from(wikis)
+        .where(and(eq(wikis.itemType, type), eq(wikis.itemId, id)))
+    ),
+    notExists(
+      db
+        .select({ one })
+        .from(shouts)
+        .where(and(eq(shouts.targetType, type), eq(shouts.targetId, id)))
+    )
+  );
 
 // Items that came with imported play counts only qualify when `imported` is set.
 function orphan(kind: Kind, imported: boolean): SQL | undefined {
@@ -425,7 +636,7 @@ function orphan(kind: Kind, imported: boolean): SQL | undefined {
       unused(tracks.id, obsessions.trackId),
       unused(tracks.id, nowPlaying.trackId),
       unreferenced("track", tracks.id),
-      fresh,
+      fresh
     );
   }
   if (kind === "album") {
@@ -435,7 +646,7 @@ function orphan(kind: Kind, imported: boolean): SQL | undefined {
       unused(albums.id, albumTracks.albumId),
       unused(albums.id, nowPlaying.albumId),
       unreferenced("album", albums.id),
-      fresh,
+      fresh
     );
   }
   return and(
@@ -444,27 +655,48 @@ function orphan(kind: Kind, imported: boolean): SQL | undefined {
     unused(artists.id, scrobbles.artistId),
     unused(artists.id, eventArtists.artistId),
     unreferenced("artist", artists.id),
-    fresh,
+    fresh
   );
 }
 
 export async function orphans(kind: Kind, imported: boolean, limit: number): Promise<OrphanItem[]> {
   if (kind === "artist") {
-    return db.select({ id: artists.id, name: artists.name, artist: nothing, createdAt: artists.createdAt, basePlaycount: artists.basePlaycount })
+    return db
+      .select({
+        id: artists.id,
+        name: artists.name,
+        artist: nothing,
+        createdAt: artists.createdAt,
+        basePlaycount: artists.basePlaycount,
+      })
       .from(artists)
       .where(orphan(kind, imported))
       .orderBy(desc(artists.createdAt))
       .limit(limit);
   }
   if (kind === "album") {
-    return db.select({ id: albums.id, name: albums.title, artist: artists.name, createdAt: albums.createdAt, basePlaycount: albums.basePlaycount })
+    return db
+      .select({
+        id: albums.id,
+        name: albums.title,
+        artist: artists.name,
+        createdAt: albums.createdAt,
+        basePlaycount: albums.basePlaycount,
+      })
       .from(albums)
       .innerJoin(artists, eq(artists.id, albums.artistId))
       .where(orphan(kind, imported))
       .orderBy(desc(albums.createdAt))
       .limit(limit);
   }
-  return db.select({ id: tracks.id, name: tracks.title, artist: artists.name, createdAt: tracks.createdAt, basePlaycount: tracks.basePlaycount })
+  return db
+    .select({
+      id: tracks.id,
+      name: tracks.title,
+      artist: artists.name,
+      createdAt: tracks.createdAt,
+      basePlaycount: tracks.basePlaycount,
+    })
     .from(tracks)
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .where(orphan(kind, imported))
@@ -481,14 +713,16 @@ export async function deleteOrphans(
   kind: Kind,
   ids: number[],
   actor: Actor,
-  entry: (ids: number[], names: string[]) => AuditEntry,
+  entry: (ids: number[], names: string[]) => AuditEntry
 ): Promise<number> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     const table = tableOf(kind);
-    const rows = await tx.select({ id: table.id }).from(table)
+    const rows = await tx
+      .select({ id: table.id })
+      .from(table)
       .where(and(inArray(table.id, ids), orphan(kind, true)))
       .orderBy(table.id);
-    const still = rows.map(r => r.id);
+    const still = rows.map((r) => r.id);
     const names: string[] = [];
     for (const id of still) {
       const row = await catRowTx(tx, kind, id);
@@ -509,7 +743,8 @@ export function tagRows(pattern: string | null, byName: boolean, pg: Page): Prom
   const uses = count(taggings.tagId).as("uses");
   const imported = sql<number | null>`SUM(CASE WHEN ${taggings.userId} IS NULL THEN 1 ELSE 0 END)`;
   const order = byName ? [asc(tags.nameNorm)] : [desc(uses), asc(tags.nameNorm)];
-  return db.select({ id: tags.id, name: tags.name, uses, users: countDistinct(taggings.userId), imported })
+  return db
+    .select({ id: tags.id, name: tags.name, uses, users: countDistinct(taggings.userId), imported })
     .from(tags)
     .leftJoin(taggings, eq(taggings.tagId, tags.id))
     .where(tagWhere(pattern))
@@ -524,7 +759,7 @@ export const tagCount = (pattern: string | null): Promise<number> =>
 
 // Returns how many uses the tag had.
 export async function deleteTag(id: number, actor: Actor, entry: (uses: number) => AuditEntry): Promise<number> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     const uses = await total(tx.select({ c: count() }).from(taggings).where(eq(taggings.tagId, id)));
     await tx.delete(taggings).where(eq(taggings.tagId, id));
     await tx.delete(wikis).where(and(eq(wikis.itemType, "tag"), eq(wikis.itemId, id)));

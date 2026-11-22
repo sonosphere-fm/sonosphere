@@ -5,7 +5,21 @@ import { Button } from "../../kit";
 import { Markdown } from "../../md";
 import { StationButton } from "../../player";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { api, artistUrl, date, invalidateAll, dec, num, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
+import {
+  api,
+  artistUrl,
+  date,
+  invalidateAll,
+  dec,
+  num,
+  prefetch,
+  qs,
+  trackUrl,
+  useApi,
+  useAuth,
+  userUrl,
+  useTitle,
+} from "../../lib";
 import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
@@ -23,8 +37,23 @@ import { Report } from "./report";
 import { People, Neighbours, Loved, Obsessions, Playlists, UserTags } from "./social";
 
 type Tab =
-  | "overview" | "library" | "library-artist" | "report" | "following" | "followers" | "loved" | "obsessions" | "playlists"
-  | "events" | "neighbours" | "tags" | "shoutbox" | "journal" | "journal-new" | "journal-post" | "journal-edit";
+  | "overview"
+  | "library"
+  | "library-artist"
+  | "report"
+  | "following"
+  | "followers"
+  | "loved"
+  | "obsessions"
+  | "playlists"
+  | "events"
+  | "neighbours"
+  | "tags"
+  | "shoutbox"
+  | "journal"
+  | "journal-new"
+  | "journal-post"
+  | "journal-edit";
 
 const LISTENING_TABS: Tab[] = ["library", "library-artist", "report", "loved", "neighbours"];
 
@@ -49,7 +78,7 @@ function profileTabs(u: Profile, base: string, locked: boolean) {
   if (!locked) return tabs;
   // A private listener's profile has no listening tabs, numbers or station for anyone else.
   const listening = new Set([`${base}/listening-report`, `${base}/library`, `${base}/loved`, `${base}/soundalikes`]);
-  return tabs.filter(t => !listening.has(t[0]));
+  return tabs.filter((t) => !listening.has(t[0]));
 }
 
 function ProfileStats({ u, base, locked }: { u: Profile; base: string; locked: boolean }) {
@@ -70,8 +99,12 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
   if (mine) {
     return (
       <>
-        <Button kind="btn ghost" href="/settings">Edit profile</Button>
-        <Button kind="btn ghost" href="/scrobble">Scrobble manually</Button>
+        <Button kind="btn ghost" href="/settings">
+          Edit profile
+        </Button>
+        <Button kind="btn ghost" href="/scrobble">
+          Scrobble manually
+        </Button>
       </>
     );
   }
@@ -79,7 +112,11 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
     <>
       {!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={onChange} />}
       {!u.hidden && <StationButton type="library" name={u.username} label="Play library" ghost />}
-      {me && !u.blocked && <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>Message</Button>}
+      {me && !u.blocked && (
+        <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>
+          Message
+        </Button>
+      )}
       {me && <ProfileMenu u={u} onChange={onChange} />}
     </>
   );
@@ -93,63 +130,84 @@ export function UserPage({ tab }: { tab: Tab }) {
   const { me } = useAuth();
   useTitle(q.data ? `${q.data.username}'s music profile` : name);
   return (
-    <Async q={q}>{u => {
-      const mine = me?.username === u.username;
-      const locked = u.locked && !mine;
-      const details = [u.realname, u.pronouns, u.country].filter(Boolean).join(" · ");
-      const sub = <>{details}{details && " · "}scrobbling since {date(u.registeredAt)}</>;
-      return (
-        <>
-          <Hero
-            tabs={<Tabs items={profileTabs(u, base, locked)} />}
-            banner={u.banner}
-            art={<Art image={u.image} kind="user" />}
-            kicker={u.followsYou ? "Follows you" : "Listener"}
-            title={<>{u.username}<UserLabels name={u.username} all /></>}
-            sub={sub}
-            stats={<ProfileStats u={u} base={base} locked={locked} />}
-            actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}
-          />
-          <div className="wrap page">
-            {u.blocked && (
-              <p className="notice">
-                You've blocked {u.username}. They can't follow you or post on your profile, and you won't see their wall posts.{" "}
-                <Button kind="link" type="button" onClick={() => setBlock(u.username, false).then(q.reload)}>Unblock</Button>
-              </p>
-            )}
-            {u.suspended && (mine || me?.admin) && (
-              <p className="notice">
-                {mine
-                  ? "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work."
-                  : `${u.username} is suspended from posting.`}
-              </p>
-            )}
-            <Pane>
-              {tab === "journal" && <Journal name={u.username} mine={mine} />}
-              {tab === "journal-post" && <JournalPost name={u.username} id={Number(p.post)} mine={mine} />}
-              {tab === "journal-new" && (mine ? <JournalEditor name={u.username} /> : <Empty>Only {u.username} can write here.</Empty>)}
-              {tab === "journal-edit" && (
-                mine ? <JournalEditor name={u.username} id={Number(p.post)} /> : <Empty>Only {u.username} can edit this post.</Empty>
+    <Async q={q}>
+      {(u) => {
+        const mine = me?.username === u.username;
+        const locked = u.locked && !mine;
+        const details = [u.realname, u.pronouns, u.country].filter(Boolean).join(" · ");
+        const sub = (
+          <>
+            {details}
+            {details && " · "}scrobbling since {date(u.registeredAt)}
+          </>
+        );
+        return (
+          <>
+            <Hero
+              tabs={<Tabs items={profileTabs(u, base, locked)} />}
+              banner={u.banner}
+              art={<Art image={u.image} kind="user" />}
+              kicker={u.followsYou ? "Follows you" : "Listener"}
+              title={
+                <>
+                  {u.username}
+                  <UserLabels name={u.username} all />
+                </>
+              }
+              sub={sub}
+              stats={<ProfileStats u={u} base={base} locked={locked} />}
+              actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}
+            />
+            <div className="wrap page">
+              {u.blocked && (
+                <p className="notice">
+                  You've blocked {u.username}. They can't follow you or post on your profile, and you won't see their
+                  wall posts.{" "}
+                  <Button kind="link" type="button" onClick={() => setBlock(u.username, false).then(q.reload)}>
+                    Unblock
+                  </Button>
+                </p>
               )}
-              {tab === "overview" && <Overview u={u} mine={mine} locked={locked} />}
-              {locked && LISTENING_TABS.includes(tab) && <Empty>{u.username} keeps their listening private.</Empty>}
-              {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
-              {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
-              {tab === "report" && !locked && <Report name={u.username} type={p.type === "year" ? "year" : "week"} />}
-              {tab === "following" && <People path={`/user/following${qs({ name })}`} empty={`${u.username} isn't following anyone yet.`} />}
-              {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty="No followers yet." />}
-              {tab === "loved" && !locked && <Loved name={u.username} />}
-              {tab === "obsessions" && <Obsessions name={u.username} mine={mine} />}
-              {tab === "playlists" && <Playlists name={u.username} mine={mine} />}
-              {tab === "events" && <UserEvents name={u.username} />}
-              {tab === "neighbours" && !locked && <Neighbours name={u.username} />}
-              {tab === "tags" && <UserTags name={u.username} />}
-              {tab === "shoutbox" && <Shoutbox type="user" id={u.id} />}
-            </Pane>
-          </div>
-        </>
-      );
-    }}</Async>
+              {u.suspended && (mine || me?.admin) && (
+                <p className="notice">
+                  {mine
+                    ? "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work."
+                    : `${u.username} is suspended from posting.`}
+                </p>
+              )}
+              <Pane>
+                {tab === "journal" && <Journal name={u.username} mine={mine} />}
+                {tab === "journal-post" && <JournalPost name={u.username} id={Number(p.post)} mine={mine} />}
+                {tab === "journal-new" &&
+                  (mine ? <JournalEditor name={u.username} /> : <Empty>Only {u.username} can write here.</Empty>)}
+                {tab === "journal-edit" &&
+                  (mine ? (
+                    <JournalEditor name={u.username} id={Number(p.post)} />
+                  ) : (
+                    <Empty>Only {u.username} can edit this post.</Empty>
+                  ))}
+                {tab === "overview" && <Overview u={u} mine={mine} locked={locked} />}
+                {locked && LISTENING_TABS.includes(tab) && <Empty>{u.username} keeps their listening private.</Empty>}
+                {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
+                {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
+                {tab === "report" && !locked && <Report name={u.username} type={p.type === "year" ? "year" : "week"} />}
+                {tab === "following" && (
+                  <People path={`/user/following${qs({ name })}`} empty={`${u.username} isn't following anyone yet.`} />
+                )}
+                {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty="No followers yet." />}
+                {tab === "loved" && !locked && <Loved name={u.username} />}
+                {tab === "obsessions" && <Obsessions name={u.username} mine={mine} />}
+                {tab === "playlists" && <Playlists name={u.username} mine={mine} />}
+                {tab === "events" && <UserEvents name={u.username} />}
+                {tab === "neighbours" && !locked && <Neighbours name={u.username} />}
+                {tab === "tags" && <UserTags name={u.username} />}
+                {tab === "shoutbox" && <Shoutbox type="user" id={u.id} />}
+              </Pane>
+            </div>
+          </>
+        );
+      }}
+    </Async>
   );
 }
 
@@ -162,15 +220,23 @@ function ProfileMenu({ u, onChange }: { u: Profile; onChange: () => void }) {
     onChange();
   };
   const toggleBlock = () => setBlock(u.username, !u.blocked).then(done);
-  const toggleSuspend = () => api<SuspendResult>("/mod/suspend", { body: { username: u.username, suspended: !u.suspended } }).then(done);
+  const toggleSuspend = () =>
+    api<SuspendResult>("/mod/suspend", { body: { username: u.username, suspended: !u.suspended } }).then(done);
 
-  const button = { label: `More actions for ${u.username}`, variant: "secondary", className: "more-btn", children: <Ico.More /> } as const;
+  const button = {
+    label: `More actions for ${u.username}`,
+    variant: "secondary",
+    className: "more-btn",
+    children: <Ico.More />,
+  } as const;
   return (
     <>
       <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} button={button}>
         <DropdownMenuItem label={u.blocked ? "Unblock user" : "Block user"} onClick={toggleBlock} />
         <DropdownMenuItem label="Report profile" onClick={() => setReporting(true)} />
-        {me?.admin && <DropdownMenuItem label={u.suspended ? "Lift suspension" : "Suspend from posting"} onClick={toggleSuspend} />}
+        {me?.admin && (
+          <DropdownMenuItem label={u.suspended ? "Lift suspension" : "Suspend from posting"} onClick={toggleSuspend} />
+        )}
       </DropdownMenu>
       <ReportButton type="user" id={u.id} open={reporting} onClose={() => setReporting(false)} />
     </>
@@ -181,9 +247,18 @@ function UserEvents({ name }: { name: string }) {
   const q = useApi<UserEventList>(`/user/events${qs({ name })}`);
   return (
     <Async q={q}>
-      {d => d.items.length
-        ? <EventList items={d.items} />
-        : <Empty>No events yet. <Link to="/events">Find something to go to <Ico.Right /></Link></Empty>}
+      {(d) =>
+        d.items.length ? (
+          <EventList items={d.items} />
+        ) : (
+          <Empty>
+            No events yet.{" "}
+            <Link to="/events">
+              Find something to go to <Ico.Right />
+            </Link>
+          </Empty>
+        )
+      }
     </Async>
   );
 }
@@ -193,10 +268,17 @@ function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: bool
   return (
     <div className="cols">
       <div className="main">
-        <Section title="Listening"><Empty>{u.username} keeps their listening private.</Empty></Section>
-        <Section title="Wall" more={`${userUrl(u.username)}/wall`} moreLabel="Whole wall"><Shoutbox type="user" id={u.id} limit={5} /></Section>
+        <Section title="Listening">
+          <Empty>{u.username} keeps their listening private.</Empty>
+        </Section>
+        <Section title="Wall" more={`${userUrl(u.username)}/wall`} moreLabel="Whole wall">
+          <Shoutbox type="user" id={u.id} limit={5} />
+        </Section>
       </div>
-      <aside className="side"><About u={u} /><Earworm u={u} /></aside>
+      <aside className="side">
+        <About u={u} />
+        <Earworm u={u} />
+      </aside>
     </div>
   );
 }
@@ -208,7 +290,11 @@ function About({ u }: { u: Profile }) {
       <div className="profile-about">
         <Markdown text={u.about} />
         {u.website && (
-          <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>
+          <p>
+            <a href={u.website} rel="nofollow noopener noreferrer" target="_blank">
+              {u.website.replace(/^https?:\/\//, "")}
+            </a>
+          </p>
         )}
       </div>
     </Section>
@@ -221,10 +307,16 @@ function Earworm({ u }: { u: Profile }) {
   return (
     <Section title="Current earworm" more={`${userUrl(u.username)}/earworms`} moreLabel="All">
       <div className="obsession">
-        <Link to={trackUrl(o.artist, o.title)}><Art image={o.image} /></Link>
+        <Link to={trackUrl(o.artist, o.title)}>
+          <Art image={o.image} />
+        </Link>
         <div>
-          <Link className="strong" to={trackUrl(o.artist, o.title)}>{o.title}</Link>
-          <Link className="muted" to={artistUrl(o.artist)}>{o.artist}</Link>
+          <Link className="strong" to={trackUrl(o.artist, o.title)}>
+            {o.title}
+          </Link>
+          <Link className="muted" to={artistUrl(o.artist)}>
+            {o.artist}
+          </Link>
           {o.comment && <p className="small">“{o.comment}”</p>}
         </div>
       </div>
@@ -236,12 +328,21 @@ function Compatibility({ taste }: { taste: NonNullable<Profile["taste"]> }) {
   return (
     <Section title="Your compatibility">
       <div className="taste">
-        <div className="taste-bar"><span style={{ width: `${Math.max(4, taste.score * 100)}%` }} /></div>
+        <div className="taste-bar">
+          <span style={{ width: `${Math.max(4, taste.score * 100)}%` }} />
+        </div>
         <b>{taste.label}</b>
       </div>
       {taste.artists.length > 0 ? (
         <p className="small">
-          You both listen to {taste.artists.map((a, i) => <span key={a.name}>{i > 0 && ", "}<Link to={artistUrl(a.name)}>{a.name}</Link></span>)}.
+          You both listen to{" "}
+          {taste.artists.map((a, i) => (
+            <span key={a.name}>
+              {i > 0 && ", "}
+              <Link to={artistUrl(a.name)}>{a.name}</Link>
+            </span>
+          ))}
+          .
         </p>
       ) : (
         <p className="muted small">No artists in common yet.</p>
@@ -256,8 +357,14 @@ function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean
   if (!mine) return <Empty>No scrobbles yet.</Empty>;
   return (
     <Empty>
-      Nothing scrobbled yet. Press play on any track, <Link to="/scrobble">scrobble manually</Link>, or connect a scrobbler from{" "}
-      <Link to="/settings/applications">Settings<Arrow say=", " />Applications</Link>.
+      Nothing scrobbled yet. Press play on any track, <Link to="/scrobble">scrobble manually</Link>, or connect a
+      scrobbler from{" "}
+      <Link to="/settings/applications">
+        Settings
+        <Arrow say=", " />
+        Applications
+      </Link>
+      .
     </Empty>
   );
 }
@@ -280,19 +387,28 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
     <div className="cols">
       <div className="main">
         <Section title="Recent tracks" more={`${base}/library`} moreLabel="More tracks">
-          <Async q={recent}>{d => <RecentTracks d={d} u={u} mine={mine} />}</Async>
+          <Async q={recent}>{(d) => <RecentTracks d={d} u={u} mine={mine} />}</Async>
         </Section>
-        <div className="toolbar"><h2>Top music</h2><PeriodPicker def="7day" /></div>
+        <div className="toolbar">
+          <h2>Top music</h2>
+          <PeriodPicker def="7day" />
+        </div>
         <Section title="Top artists" more={`${base}/library/artists?period=${period}`}>
-          <Async q={artists}>{d => <Grid kind="artist" cols={4} items={d.items} sub={a => `${num(a.playcount)} scrobbles`} />}</Async>
+          <Async q={artists}>
+            {(d) => <Grid kind="artist" cols={4} items={d.items} sub={(a) => `${num(a.playcount)} scrobbles`} />}
+          </Async>
         </Section>
         <Section title="Top albums" more={`${base}/library/albums?period=${period}`}>
-          <Async q={albums}>{d => <Grid kind="album" cols={4} items={d.items} sub={a => `${num(a.playcount)} scrobbles`} />}</Async>
+          <Async q={albums}>
+            {(d) => <Grid kind="album" cols={4} items={d.items} sub={(a) => `${num(a.playcount)} scrobbles`} />}
+          </Async>
         </Section>
         <Section title="Top tracks" more={`${base}/library/tracks?period=${period}`}>
-          <Async q={tracks}>{d => <TrackList items={d.items} rank={1} count="playcount" />}</Async>
+          <Async q={tracks}>{(d) => <TrackList items={d.items} rank={1} count="playcount" />}</Async>
         </Section>
-        <Section title="Wall" more={`${base}/wall`} moreLabel="Whole wall"><Shoutbox type="user" id={u.id} limit={5} /></Section>
+        <Section title="Wall" more={`${base}/wall`} moreLabel="Whole wall">
+          <Shoutbox type="user" id={u.id} limit={5} />
+        </Section>
       </div>
       <aside className="side">
         <About u={u} />
@@ -300,11 +416,21 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
         <Earworm u={u} />
         <Section title="Library">
           <ul className="plain">
-            <li><Link to={`${base}/library/artists`}>{num(u.artistCount)} artists</Link></li>
-            <li><Link to={`${base}/library/albums`}>{num(u.albumCount)} albums</Link></li>
-            <li><Link to={`${base}/library/tracks`}>{num(u.trackCount)} tracks</Link></li>
-            <li><Link to={`${base}/listening-report/week`}>Weekly listening report</Link></li>
-            <li><Link to={`${base}/listening-report/year`}>Yearly listening report</Link></li>
+            <li>
+              <Link to={`${base}/library/artists`}>{num(u.artistCount)} artists</Link>
+            </li>
+            <li>
+              <Link to={`${base}/library/albums`}>{num(u.albumCount)} albums</Link>
+            </li>
+            <li>
+              <Link to={`${base}/library/tracks`}>{num(u.trackCount)} tracks</Link>
+            </li>
+            <li>
+              <Link to={`${base}/listening-report/week`}>Weekly listening report</Link>
+            </li>
+            <li>
+              <Link to={`${base}/listening-report/year`}>Yearly listening report</Link>
+            </li>
           </ul>
         </Section>
       </aside>

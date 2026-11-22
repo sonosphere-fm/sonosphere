@@ -7,7 +7,19 @@ import { canSee } from "./users/service";
 import type { ListeningEvent } from "../shared/live";
 import * as Sentry from "@sentry/bun";
 
-export type SocketData = { userId: number; actorId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number; publicUserId?: number; publicOrigin?: string };
+export type SocketData = {
+  userId: number;
+  actorId: number;
+  token: string;
+  ip: string;
+  listening: Set<number>;
+  listenVersion: number;
+  typedAt: number;
+  msgs: number;
+  windowAt: number;
+  publicUserId?: number;
+  publicOrigin?: string;
+};
 type Sock = ServerWebSocket<SocketData>;
 const sockets = new Map<number, Set<Sock>>();
 const MAX_PER_USER = 6;
@@ -38,9 +50,21 @@ export async function upgrade(req: Request, server: Server<SocketData>): Promise
   const { user, actor } = await viewerOf(req);
   if (token && !actor) return new Response("Unauthorized", { status: 401 });
   const ip = ipOf(req);
-  const connections = user ? sockets.get(user.id)?.size ?? 0 : [...sockets.get(0) ?? []].filter(ws => ws.data.ip === ip).length;
+  const connections = user
+    ? (sockets.get(user.id)?.size ?? 0)
+    : [...(sockets.get(0) ?? [])].filter((ws) => ws.data.ip === ip).length;
   if (connections >= MAX_PER_USER) return new Response("Too many connections", { status: 429 });
-  const data: SocketData = { userId: user?.id ?? 0, actorId: actor?.id ?? 0, token, ip, listening: new Set(), listenVersion: 0, typedAt: 0, msgs: 0, windowAt: Date.now() };
+  const data: SocketData = {
+    userId: user?.id ?? 0,
+    actorId: actor?.id ?? 0,
+    token,
+    ip,
+    listening: new Set(),
+    listenVersion: 0,
+    typedAt: 0,
+    msgs: 0,
+    windowAt: Date.now(),
+  };
   return server.upgrade(req, { data }) ? undefined : new Response("Expected a WebSocket", { status: 426 });
 }
 
@@ -86,15 +110,29 @@ export const websocket = {
       return;
     }
     if (msg.t === "listen") {
-      if (!Array.isArray(msg.names) || msg.names.length > 8 || msg.names.some(n => typeof n !== "string" || n.length > 60)) return;
+      if (
+        !Array.isArray(msg.names) ||
+        msg.names.length > 8 ||
+        msg.names.some((n) => typeof n !== "string" || n.length > 60)
+      )
+        return;
       const version = ++d.listenVersion;
       d.listening.clear();
-      Promise.all(msg.names.map(name => findByName(name as string))).then(users => {
-        if (version !== d.listenVersion) return;
-        d.listening = new Set(users.filter(u => u && !u.banned).map(u => u!.id));
-        // Refresh after subscribing as well, closing the gap between the initial GET and subscription.
-        for (const id of d.listening) deliverListening(ws, id, "scrobbles").catch(e => { console.error("live listening:", e); Sentry.captureException(e); });
-      }).catch(e => { console.error("live subscriptions:", e); Sentry.captureException(e); });
+      Promise.all(msg.names.map((name) => findByName(name as string)))
+        .then((users) => {
+          if (version !== d.listenVersion) return;
+          d.listening = new Set(users.filter((u) => u && !u.banned).map((u) => u!.id));
+          // Refresh after subscribing as well, closing the gap between the initial GET and subscription.
+          for (const id of d.listening)
+            deliverListening(ws, id, "scrobbles").catch((e) => {
+              console.error("live listening:", e);
+              Sentry.captureException(e);
+            });
+        })
+        .catch((e) => {
+          console.error("live subscriptions:", e);
+          Sentry.captureException(e);
+        });
       return;
     }
     if (!d.userId) return;
@@ -122,9 +160,11 @@ type Fanout = { u: number; e?: object; bye?: true } | { listening: number; chang
 const listeningSubscribers = new Set<(userId: number) => void>();
 export function onListeningChange(fn: (userId: number) => void) {
   listeningSubscribers.add(fn);
-  return () => { listeningSubscribers.delete(fn); };
+  return () => {
+    listeningSubscribers.delete(fn);
+  };
 }
-subscribe("live", raw => {
+subscribe("live", (raw) => {
   let m: Fanout;
   try {
     m = JSON.parse(raw) as Fanout;
@@ -133,9 +173,14 @@ subscribe("live", raw => {
   }
   if ("listening" in m) {
     for (const fn of listeningSubscribers) fn(m.listening);
-    for (const set of sockets.values()) for (const ws of set) {
-      if (ws.data.listening.has(m.listening)) deliverListening(ws, m.listening, m.change).catch(e => { console.error("live listening:", e); Sentry.captureException(e); });
-    }
+    for (const set of sockets.values())
+      for (const ws of set) {
+        if (ws.data.listening.has(m.listening))
+          deliverListening(ws, m.listening, m.change).catch((e) => {
+            console.error("live listening:", e);
+            Sentry.captureException(e);
+          });
+      }
     return;
   }
   const set = sockets.get(m.u);
@@ -152,7 +197,10 @@ subscribe("live", raw => {
   }
 });
 const send = (m: Fanout) => {
-  publish("live", JSON.stringify(m)).catch(e => { console.error("live update:", e); Sentry.captureException(e); });
+  publish("live", JSON.stringify(m)).catch((e) => {
+    console.error("live update:", e);
+    Sentry.captureException(e);
+  });
 };
 
 export function push(userId: number, event: object) {
@@ -161,9 +209,18 @@ export function push(userId: number, event: object) {
 
 async function deliverListening(ws: Sock, userId: number, change: ListeningEvent["change"]) {
   const [target, viewer] = await Promise.all([findById(userId), ws.data.userId ? findById(ws.data.userId) : null]);
-  if (!target || target.banned || (ws.data.userId && viewer?.id !== ws.data.userId) || !canSee(target, viewer) || !ws.data.listening.has(userId)) return;
+  if (
+    !target ||
+    target.banned ||
+    (ws.data.userId && viewer?.id !== ws.data.userId) ||
+    !canSee(target, viewer) ||
+    !ws.data.listening.has(userId)
+  )
+    return;
   const event: ListeningEvent = { t: "listening", userId, name: target.username, change };
-  try { ws.send(JSON.stringify(event)); } catch {}
+  try {
+    ws.send(JSON.stringify(event));
+  } catch {}
 }
 
 export function listeningChanged(userId: number, change: ListeningEvent["change"]) {

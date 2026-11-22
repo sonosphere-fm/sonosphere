@@ -34,7 +34,7 @@ async function station(type: string | null, name: string | null, c: Ctx): Promis
   return bad("Unknown station");
 }
 
-router.get<Station>("/api/station", async c => {
+router.get<Station>("/api/station", async (c) => {
   const s = await station(c.q.get("type"), c.q.get("name"), c);
   return s.tracks.length ? s : fail(404, EMPTY);
 });

@@ -6,7 +6,14 @@ import { attempt, exclusive, getJson, setAdd, setJson, setTake } from "../kv";
 import { isStaff } from "../site/roles";
 import { norm, now } from "../util";
 import * as Sentry from "@sentry/bun";
-import { findAlbum, findArtist, findTrack, type AlbumWithArtist, type Artist, type TrackWithArtist } from "../catalog/repo";
+import {
+  findAlbum,
+  findArtist,
+  findTrack,
+  type AlbumWithArtist,
+  type Artist,
+  type TrackWithArtist,
+} from "../catalog/repo";
 import * as repo from "./repo";
 import * as src from "./sources";
 import * as mbdb from "./mbdb";
@@ -43,7 +50,11 @@ const later = (what: string, job: () => Promise<unknown>) => {
 };
 
 /** False when the archive has no cover (or storage refused it). */
-async function storeCover(albumId: number, mbid: string, of: "release-group" | "release" = "release-group"): Promise<boolean> {
+async function storeCover(
+  albumId: number,
+  mbid: string,
+  of: "release-group" | "release" = "release-group"
+): Promise<boolean> {
   const bytes = await src.coverArt(mbid, of);
   if (!bytes) return false;
   try {
@@ -60,7 +71,12 @@ async function storeCover(albumId: number, mbid: string, of: "release-group" | "
 const showPicture = (p: src.Picture) => saveRemoteImage(p.url, p.width, p.height);
 
 /** Undefined when Spotify couldn't be asked now: the entry stays unasked and is asked again later. */
-async function askSpotify<T>(kind: "artist" | "album" | "track", id: number, spAt: number | null, ask: () => Promise<T | null>): Promise<T | null | undefined> {
+async function askSpotify<T>(
+  kind: "artist" | "album" | "track",
+  id: number,
+  spAt: number | null,
+  ask: () => Promise<T | null>
+): Promise<T | null | undefined> {
   if (spAt) return null;
   try {
     const r = await ask();
@@ -71,7 +87,12 @@ async function askSpotify<T>(kind: "artist" | "album" | "track", id: number, spA
     return undefined;
   }
 }
-async function askLastfm<T>(kind: "album" | "track", id: number, lfAt: number | null, ask: () => Promise<T | null>): Promise<T | null | undefined> {
+async function askLastfm<T>(
+  kind: "album" | "track",
+  id: number,
+  lfAt: number | null,
+  ask: () => Promise<T | null>
+): Promise<T | null | undefined> {
   if (lfAt) return null;
   try {
     const r = await ask();
@@ -85,16 +106,21 @@ async function askLastfm<T>(kind: "album" | "track", id: number, lfAt: number | 
 /** One Last.fm album lookup per album however many steps need it. */
 function albumOnLastfm(id: number, lfAt: number | null, artist: string, title: string) {
   let asked: Promise<src.LfAlbum | null> | null = null;
-  return () => (asked ??= askLastfm("album", id, lfAt, () => src.lfAlbum(artist, title)).then(r => r ?? null));
+  return () => (asked ??= askLastfm("album", id, lfAt, () => src.lfAlbum(artist, title)).then((r) => r ?? null));
 }
 const noLastfm = async () => null;
 function albumOnSpotify(id: number, spAt: number | null, artist: string, title: string) {
   let asked: Promise<src.SpAlbum | null> | null = null;
-  return () => (asked ??= askSpotify("album", id, spAt, () => src.spAlbum(artist, title)).then(r => r ?? null));
+  return () => (asked ??= askSpotify("album", id, spAt, () => src.spAlbum(artist, title)).then((r) => r ?? null));
 }
 
 /** The Cover Art Archive first (by MusicBrainz id, else via Last.fm's release), then Last.fm's picture, then Spotify's. */
-async function findCover(albumId: number, mbid: string | null, spotify: () => Promise<src.SpAlbum | null>, lastfm: () => Promise<src.LfAlbum | null>): Promise<void> {
+async function findCover(
+  albumId: number,
+  mbid: string | null,
+  spotify: () => Promise<src.SpAlbum | null>,
+  lastfm: () => Promise<src.LfAlbum | null>
+): Promise<void> {
   if (await getJson<number>(COVERS_PAUSED)) return;
   await repo.setAlbum(albumId, { coverAt: now() });
   try {
@@ -157,15 +183,18 @@ async function fromCatalogueCopy(a: { id: number; name: string; spotifyId: strin
 }
 
 /** From the catalogue copy, else Wikidata by MusicBrainz id, else Spotify (by the Spotify id MusicBrainz links, else by name). */
-async function artistPhoto(a: { id: number; name: string; spotifyId: string | null; spAt: number | null }, mbid: string | null) {
+async function artistPhoto(
+  a: { id: number; name: string; spotifyId: string | null; spAt: number | null },
+  mbid: string | null
+) {
   if (await fromCatalogueCopy(a, mbid)) return;
   if (mbid) {
     const found = await src.wikiPhotos([mbid]).then(
-      m => m.get(mbid) ?? null,
-      e => {
+      (m) => m.get(mbid) ?? null,
+      (e) => {
         quiet(`wikidata artist ${a.id}`)(e);
         return undefined;
-      },
+      }
     );
     if (found !== undefined) {
       const image = found ? { imageId: await showPicture(found) } : {};
@@ -200,7 +229,7 @@ async function fillAlbum(id: number, artist: string, hint?: src.MbAlbum | null):
     if (!list.length) {
       const sp = await spotify();
       if (sp) {
-        list = await src.spTrackList(sp.id).catch(e => {
+        list = await src.spTrackList(sp.id).catch((e) => {
           quiet(`album ${id} tracks`)(e);
           return [];
         });
@@ -218,15 +247,17 @@ async function fillTrack(id: number, artist: string): Promise<void> {
   if (!t || (t.duration && t.albumId)) return;
   const mb = await src.mbTrack(artist, t.title);
   let lf: src.LfTrack | null = null;
-  if (!mb?.album || !mb.seconds) lf = (await askLastfm("track", id, t.lfAt, () => src.lfTrack(artist, t.title))) ?? null;
+  if (!mb?.album || !mb.seconds)
+    lf = (await askLastfm("track", id, t.lfAt, () => src.lfTrack(artist, t.title))) ?? null;
   let sp: Awaited<ReturnType<typeof src.spTrack>> = null;
   if (!mb && !lf?.album) sp = (await askSpotify("track", id, t.spAt, () => src.spTrack(artist, t.title))) ?? null;
   const seconds = mb?.seconds || lf?.seconds || sp?.seconds || 0;
   if (!t.duration && seconds) await repo.setTrack(id, { duration: seconds });
   if (t.albumId) return;
-  const albumId = mb?.album || !lf?.album
-    ? await fileAlbum(t.artistId, artist, mb?.album ?? null, sp?.album ?? null)
-    : await lastfmAlbum(t.artistId, artist, lf.album);
+  const albumId =
+    mb?.album || !lf?.album
+      ? await fileAlbum(t.artistId, artist, mb?.album ?? null, sp?.album ?? null)
+      : await lastfmAlbum(t.artistId, artist, lf.album);
   if (albumId) await repo.setTrack(id, { albumId });
 }
 
@@ -234,13 +265,19 @@ async function fillTrack(id: number, artist: string): Promise<void> {
 async function lastfmAlbum(artistId: number, artist: string, al: NonNullable<src.LfTrack["album"]>): Promise<number> {
   const id = await repo.addAlbum(artistId, al.title, null);
   const row = await repo.albumRow(id);
-  if (row && !row.imageId && al.picture) await repo.setAlbum(id, { imageId: await showPicture(al.picture), coverAt: now() });
+  if (row && !row.imageId && al.picture)
+    await repo.setAlbum(id, { imageId: await showPicture(al.picture), coverAt: now() });
   if (await repo.claim("album", id, now() - MONTH)) await fillAlbum(id, artist);
   return id;
 }
 
 /** Files the album a track was found on, with its track list and cover. */
-async function fileAlbum(artistId: number, artist: string, mb: src.MbAlbum | null, sp: src.SpAlbum | null): Promise<number | null> {
+async function fileAlbum(
+  artistId: number,
+  artist: string,
+  mb: src.MbAlbum | null,
+  sp: src.SpAlbum | null
+): Promise<number | null> {
   if (mb) {
     const id = (await repo.albumByMbid(artistId, mb.mbid))?.id ?? (await repo.addAlbum(artistId, mb.title, mb.date));
     if (await repo.claim("album", id, now() - MONTH)) await fillAlbum(id, artist, mb);
@@ -262,7 +299,11 @@ async function fileAlbum(artistId: number, artist: string, mb: src.MbAlbum | nul
 export function refresh(viewer: Viewer | null, kind: "artist", row: Artist): void;
 export function refresh(viewer: Viewer | null, kind: "album", row: AlbumWithArtist): void;
 export function refresh(viewer: Viewer | null, kind: "track", row: TrackWithArtist): void;
-export function refresh(viewer: Viewer | null, kind: "artist" | "album" | "track", row: Artist | AlbumWithArtist | TrackWithArtist): void {
+export function refresh(
+  viewer: Viewer | null,
+  kind: "artist" | "album" | "track",
+  row: Artist | AlbumWithArtist | TrackWithArtist
+): void {
   if (!allowed(viewer) || (row.metaAt && row.metaAt > now() - MONTH)) return;
   later(`${kind} ${row.id}`, async () => {
     if (!(await quota(viewer)) || !(await repo.claim(kind, row.id, now() - MONTH))) return;
@@ -273,7 +314,13 @@ export function refresh(viewer: Viewer | null, kind: "artist" | "album" | "track
 }
 
 /** When the lookup ends in "not found" and the viewer may trigger lookups, tries to file the entry from outside. */
-async function orImport<T>(viewer: Viewer | null, lookup: () => Promise<T>, kind: string, key: string, fetch: () => Promise<T | null>): Promise<T> {
+async function orImport<T>(
+  viewer: Viewer | null,
+  lookup: () => Promise<T>,
+  kind: string,
+  key: string,
+  fetch: () => Promise<T | null>
+): Promise<T> {
   try {
     return await lookup();
   } catch (e) {
@@ -300,14 +347,18 @@ async function orImport<T>(viewer: Viewer | null, lookup: () => Promise<T>, kind
 const alias = (kind: string, key: string, to: string[]) => setJson(aliasKey(kind, key), to, MONTH * 1000);
 /** server/catalog/service.ts tries this spelling before giving up. */
 export const aliasOf = (kind: "artist" | "album" | "track", names: (string | null)[]) =>
-  getJson<string[]>(aliasKey(kind, names.map(n => norm(n || "")).join("\n")));
+  getJson<string[]>(aliasKey(kind, names.map((n) => norm(n || "")).join("\n")));
 
 const fillArtistLater = (artistId: number) =>
   later(`artist ${artistId}`, async () => {
     if (await repo.claim("artist", artistId, now() - MONTH)) await fillArtist(artistId);
   });
 
-export async function artistOrImport(name: string, viewer: Viewer | null, lookup: () => Promise<Artist>): Promise<Artist> {
+export async function artistOrImport(
+  name: string,
+  viewer: Viewer | null,
+  lookup: () => Promise<Artist>
+): Promise<Artist> {
   const key = norm(name);
   return orImport(viewer, lookup, "artist", key, async () => {
     const mb = await src.mbArtist(name);
@@ -324,7 +375,12 @@ export async function artistOrImport(name: string, viewer: Viewer | null, lookup
   });
 }
 
-export async function albumOrImport(artist: string, title: string, viewer: Viewer | null, lookup: () => Promise<AlbumWithArtist>): Promise<AlbumWithArtist> {
+export async function albumOrImport(
+  artist: string,
+  title: string,
+  viewer: Viewer | null,
+  lookup: () => Promise<AlbumWithArtist>
+): Promise<AlbumWithArtist> {
   const key = `${norm(artist)}\n${norm(title)}`;
   return orImport(viewer, lookup, "album", key, async () => {
     const fixed = correct(artist, "").artist || artist;
@@ -338,12 +394,18 @@ export async function albumOrImport(artist: string, title: string, viewer: Viewe
     const row = id ? await repo.albumRow(id) : null;
     if (!row) return null;
     fillArtistLater(artistId);
-    if (norm(artistName) !== norm(artist) || norm(row.title) !== norm(title)) await alias("album", key, [artistName, row.title]);
+    if (norm(artistName) !== norm(artist) || norm(row.title) !== norm(title))
+      await alias("album", key, [artistName, row.title]);
     return findAlbum(artistName, row.title);
   });
 }
 
-export async function trackOrImport(artist: string, title: string, viewer: Viewer | null, lookup: () => Promise<TrackWithArtist>): Promise<TrackWithArtist> {
+export async function trackOrImport(
+  artist: string,
+  title: string,
+  viewer: Viewer | null,
+  lookup: () => Promise<TrackWithArtist>
+): Promise<TrackWithArtist> {
   const key = `${norm(artist)}\n${norm(title)}`;
   return orImport(viewer, lookup, "track", key, async () => {
     const fixed = correct(artist, "").artist || artist;
@@ -355,19 +417,20 @@ export async function trackOrImport(artist: string, title: string, viewer: Viewe
     const artistId = await repo.addArtist(artistName);
     const id = await repo.addTrack(artistId, found.title, found.seconds);
     await repo.setTrack(id, { metaAt: now() });
-    const albumId = await fileAlbum(artistId, artistName, mb?.album ?? null, sp?.album ?? null).catch(e => {
+    const albumId = await fileAlbum(artistId, artistName, mb?.album ?? null, sp?.album ?? null).catch((e) => {
       quiet("track album")(e);
       return null;
     });
     const t = await repo.trackRow(id);
     if (albumId && t && !t.albumId) await repo.setTrack(id, { albumId });
     fillArtistLater(artistId);
-    if (norm(artistName) !== norm(artist) || norm(found.title) !== norm(title)) await alias("track", key, [artistName, found.title]);
+    if (norm(artistName) !== norm(artist) || norm(found.title) !== norm(title))
+      await alias("track", key, [artistName, found.title]);
     return findTrack(artistName, found.title);
   });
 }
 
-const namesFor = (rows: { artistId: number }[]) => repo.artistNames([...new Set(rows.map(r => r.artistId))]);
+const namesFor = (rows: { artistId: number }[]) => repo.artistNames([...new Set(rows.map((r) => r.artistId))]);
 
 let busy = false;
 async function tick() {
@@ -398,15 +461,17 @@ async function backfill() {
   if (filling) return;
   filling = true;
   try {
-    await exclusive("metadata-backfill", 10 * 60_000, () => src.inSpareTime(async () => {
-      const until = Date.now() + 18_000;
-      const due = now() - MONTH;
-      if (src.mbLocal()) {
-        await fillAllWanted(due);
-        await fillUnlooked(until, due);
-      }
-      await spotifyBackfill(until);
-    }));
+    await exclusive("metadata-backfill", 10 * 60_000, () =>
+      src.inSpareTime(async () => {
+        const until = Date.now() + 18_000;
+        const due = now() - MONTH;
+        if (src.mbLocal()) {
+          await fillAllWanted(due);
+          await fillUnlooked(until, due);
+        }
+        await spotifyBackfill(until);
+      })
+    );
   } catch (e) {
     quiet("backfill")(e);
   } finally {
@@ -436,14 +501,16 @@ async function fillUnlooked(until: number, due: number) {
     if (!artists.length && !albums.length && !tracks.length) break;
     const names = await namesFor([...albums, ...tracks]);
     await inParallel(4, [
-      ...artists.map(r => async () => {
+      ...artists.map((r) => async () => {
         if (await repo.claim("artist", r.id, due)) await fillArtist(r.id).catch(quiet(`artist ${r.id}`));
       }),
-      ...albums.map(r => async () => {
-        if (await repo.claim("album", r.id, due)) await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`));
+      ...albums.map((r) => async () => {
+        if (await repo.claim("album", r.id, due))
+          await fillAlbum(r.id, names.get(r.artistId) ?? "").catch(quiet(`album ${r.id}`));
       }),
-      ...tracks.map(r => async () => {
-        if (await repo.claim("track", r.id, due)) await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
+      ...tracks.map((r) => async () => {
+        if (await repo.claim("track", r.id, due))
+          await fillTrack(r.id, names.get(r.artistId) ?? "").catch(quiet(`track ${r.id}`));
       }),
     ]);
   }
@@ -471,7 +538,12 @@ async function fillWanted(kind: "artist" | "album" | "track", id: number, due: n
     const artist = (await repo.artistNames([al.artistId])).get(al.artistId) ?? "";
     if (await repo.claim("album", id, due)) return fillAlbum(id, artist);
     if (al.spAt && al.lfAt) return;
-    await findCover(id, null, albumOnSpotify(id, al.spAt, artist, al.title), albumOnLastfm(id, al.lfAt, artist, al.title));
+    await findCover(
+      id,
+      null,
+      albumOnSpotify(id, al.spAt, artist, al.title),
+      albumOnLastfm(id, al.lfAt, artist, al.title)
+    );
     return;
   }
   const t = await repo.trackRow(id);
@@ -562,12 +634,12 @@ async function wikidataBackfill() {
     await exclusive("metadata-wikidata", 5 * 60_000, async () => {
       const rows = await repo.wikidataDueArtists(50, now() - MONTH);
       if (!rows.length) return;
-      const photos = await src.wikiPhotos(rows.map(r => r.mbid!));
+      const photos = await src.wikiPhotos(rows.map((r) => r.mbid!));
       for (const r of rows) {
         const p = photos.get(r.mbid!);
         if (p) await repo.setArtist(r.id, { imageId: await showPicture(p) });
       }
-      await repo.wikidataAnswered(rows.map(r => r.id));
+      await repo.wikidataAnswered(rows.map((r) => r.id));
     });
   } catch (e) {
     quiet("wikidata backfill")(e);

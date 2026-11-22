@@ -11,7 +11,17 @@ import { artistLibrary, people, profile } from "./profile";
 import * as repo from "./repo";
 import { canSee, canSeeCharts, requireUser } from "./service";
 import type { Report } from "../../shared/listening";
-import type { FollowResult, Neighbours, People, Profile, UserArtistLibrary, UserLoved, UserRecent, UserTags, UserTop } from "../../shared/users";
+import type {
+  FollowResult,
+  Neighbours,
+  People,
+  Profile,
+  UserArtistLibrary,
+  UserLoved,
+  UserRecent,
+  UserTags,
+  UserTop,
+} from "../../shared/users";
 import { limit } from "../trust/service";
 import { wantCovers } from "../metadata/wanted";
 
@@ -20,13 +30,13 @@ export const router = new Router();
 const PRIVATE = "This user keeps their listening private";
 const KINDS = ["artists", "albums", "tracks"] as const;
 
-router.get<Profile>("/api/user", async c => {
+router.get<Profile>("/api/user", async (c) => {
   const u = await requireUser(c.q.get("name"));
   if (u.banned && !isStaff(c.user)) return missing("User");
   return profile(u, c.user);
 });
 
-router.get<UserRecent>("/api/user/recent", async c => {
+router.get<UserRecent>("/api/user/recent", async (c) => {
   const u = await requireUser(c.q.get("name"));
   const pg = paging(c.q);
   const [from, to] = range(c.q);
@@ -38,7 +48,7 @@ router.get<UserRecent>("/api/user/recent", async c => {
   return { ...plays, nowPlaying, ...pg };
 });
 
-router.get<UserTop>("/api/user/top", async c => {
+router.get<UserTop>("/api/user/top", async (c) => {
   const u = await requireUser(c.q.get("name"));
   const pg = paging(c.q);
   const [from, to] = range(c.q);
@@ -51,36 +61,36 @@ router.get<UserTop>("/api/user/top", async c => {
   return { ...chart, ...pg, counts };
 });
 
-router.get<UserArtistLibrary>("/api/user/library/artist", async c => {
+router.get<UserArtistLibrary>("/api/user/library/artist", async (c) => {
   const u = await requireUser(c.q.get("name"));
   if (!canSeeCharts(u, c.user)) fail(403, PRIVATE);
   return artistLibrary(u, await requireArtist(c.q.get("artist")), c.user?.id);
 });
 
-router.get<UserLoved>("/api/user/loved", async c => {
+router.get<UserLoved>("/api/user/loved", async (c) => {
   const u = await requireUser(c.q.get("name"));
   const pg = paging(c.q);
   if (!canSeeCharts(u, c.user)) return { items: [], total: 0, hidden: true, ...pg };
-  const items = wantCovers(await repo.lovedTracksOf(u.id, c.user?.id, pg.limit, pg.offset), r => r.id);
+  const items = wantCovers(await repo.lovedTracksOf(u.id, c.user?.id, pg.limit, pg.offset), (r) => r.id);
   return { items, total: await repo.lovedCount(u.id), ...pg };
 });
 
-router.get<People>("/api/user/following", async c => {
+router.get<People>("/api/user/following", async (c) => {
   const u = await requireUser(c.q.get("name"));
   return { items: await people(await repo.followingOf(u.id), c.user?.id) };
 });
 
-router.get<People>("/api/user/followers", async c => {
+router.get<People>("/api/user/followers", async (c) => {
   const u = await requireUser(c.q.get("name"));
   return { items: await people(await repo.followersOf(u.id), c.user?.id) };
 });
 
-router.get<Neighbours>("/api/user/neighbours", async c => {
+router.get<Neighbours>("/api/user/neighbours", async (c) => {
   const u = await requireUser(c.q.get("name"));
   return canSeeCharts(u, c.user) ? { items: await neighbours(u.id, 24) } : { items: [], hidden: true };
 });
 
-router.get<Report>("/api/user/report", async c => {
+router.get<Report>("/api/user/report", async (c) => {
   const u = await requireUser(c.q.get("name"));
   if (!canSee(u, c.user)) return fail(403, PRIVATE);
   const type = c.q.get("type") === "year" ? "year" : "week";
@@ -89,7 +99,7 @@ router.get<Report>("/api/user/report", async c => {
   return report(u.id, type, offset, tz, c.user?.id);
 });
 
-router.get<UserTags>("/api/user/tags", async c => {
+router.get<UserTags>("/api/user/tags", async (c) => {
   const u = await requireUser(c.q.get("name"));
   const tag = c.q.get("tag");
   if (!tag) return { items: await repo.tagsUsedBy(u.id) };
@@ -97,14 +107,14 @@ router.get<UserTags>("/api/user/tags", async c => {
   return { items: await repo.taggedBy(u.id, t.id) };
 });
 
-router.post<FollowResult>("/api/follow", async c => {
+router.post<FollowResult>("/api/follow", async (c) => {
   const u = need(c);
   await limit(u, `follow:${u.id}`, 100, 3600, "That is a lot of follows. Try again in a while.");
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
   const follow = c.body.follow !== false;
   if (t.id === u.id) bad("You can't follow yourself");
   if (follow) confirmed(u);
-  if (follow && await repo.blockedEither(u.id, t.id)) fail(403, "You can't follow this user");
+  if (follow && (await repo.blockedEither(u.id, t.id))) fail(403, "You can't follow this user");
   if (!follow) await repo.unfollow(u.id, t.id);
   else if (await repo.follow(u.id, t.id)) await notify(t.id, "follow", u.id);
   return { isFollowing: follow };

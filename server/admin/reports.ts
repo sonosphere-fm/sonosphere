@@ -15,7 +15,7 @@ const REASONS = ["spam", "abuse", "inappropriate", "impersonation", "other"] as 
 const TYPES = ["shout", "wiki", "journal", "user", "dm", "group"] as const;
 const DECISIONS = ["dismiss", "remove", "suspend", "mute"] as const;
 
-router.get<StaffReportList>("/api/admin/reports", async c => {
+router.get<StaffReportList>("/api/admin/reports", async (c) => {
   const me = staff(c);
   const status = oneOf(c.q.get("status"), STATUSES) ?? "open";
   const pg = paging(c.q);
@@ -32,10 +32,11 @@ router.get<StaffReportList>("/api/admin/reports", async c => {
     if (isDm) link = live && isAdmin(me) ? live.link : null;
     const dmExtra = isDm
       ? {
-        threadId: live?.threadId ?? null,
-        authorMuted: !!author?.dmMuted,
-        removed: r.targetType === "dm" ? await repo.messageRemoved(r.targetId) : await groupMessageRemoved(r.targetId),
-      }
+          threadId: live?.threadId ?? null,
+          authorMuted: !!author?.dmMuted,
+          removed:
+            r.targetType === "dm" ? await repo.messageRemoved(r.targetId) : await groupMessageRemoved(r.targetId),
+        }
       : {};
     items.push({
       id: r.id,
@@ -72,14 +73,14 @@ router.get<StaffReportList>("/api/admin/reports", async c => {
   };
 });
 
-router.post<ReportsClosed>("/api/admin/reports/bulk", async c => {
+router.post<ReportsClosed>("/api/admin/reports/bulk", async (c) => {
   const me = staff(c);
   const ids = idList(c.body.ids, 200);
   if (!ids.length) bad("Pick at least one report");
   return { closed: await repo.dismissAll(me, ids, note(c)) };
 });
 
-router.post<ReportResolved>("/api/admin/reports/:id", async c => {
+router.post<ReportResolved>("/api/admin/reports/:id", async (c) => {
   const me = staff(c);
   const r = (await repo.findReport(Number(c.params[0]))) ?? missing("Report");
   const action = oneOf(String(c.body.action), DECISIONS) ?? bad("Unknown action");

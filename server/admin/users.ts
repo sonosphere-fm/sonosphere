@@ -12,7 +12,16 @@ import { me } from "../auth/service";
 import { actAsCookie } from "../auth/session";
 import type { MeResponse } from "../../shared/auth";
 import type {
-  BanResult, NoteAdded, Ok, ProbationResult, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult, VerifyResult,
+  BanResult,
+  NoteAdded,
+  Ok,
+  ProbationResult,
+  RoleResult,
+  SessionsResult,
+  StaffUserList,
+  StaffUserPage,
+  SuspendResult,
+  VerifyResult,
 } from "../../shared/admin";
 
 export const router = new Router({ jsonOnly: true });
@@ -20,11 +29,26 @@ export const router = new Router({ jsonOnly: true });
 const placeholder = (u: { email: string }) => u.email.endsWith(".invalid");
 const unconfirmed = (u: { email: string; emailVerifiedAt: number | null }) => !u.emailVerifiedAt && !placeholder(u);
 
-const FILTERS = ["all", "staff", "admins", "moderators", "suspended", "banned", "reported", "unconfirmed", "probation"] as const;
+const FILTERS = [
+  "all",
+  "staff",
+  "admins",
+  "moderators",
+  "suspended",
+  "banned",
+  "reported",
+  "unconfirmed",
+  "probation",
+] as const;
 const SORTS = ["username", "registered", "scrobbles", "reports", "login"] as const;
 const ROLES = ["user", "moderator", "admin"] as const;
 
-const userAction = (action: string, t: { id: number; username: string }, note: string, data?: Record<string, unknown>) => ({
+const userAction = (
+  action: string,
+  t: { id: number; username: string },
+  note: string,
+  data?: Record<string, unknown>
+) => ({
   action,
   targetType: "user",
   targetId: t.id,
@@ -34,7 +58,7 @@ const userAction = (action: string, t: { id: number; username: string }, note: s
   ...(data ? { data } : {}),
 });
 
-router.post<MeResponse>("/api/admin/users/:name/impersonate", async c => {
+router.post<MeResponse>("/api/admin/users/:name/impersonate", async (c) => {
   const actor = adminOnly(c);
   const target = await targetUser(c.params[0]!);
   await canAct(actor, target, "impersonate");
@@ -45,7 +69,7 @@ router.post<MeResponse>("/api/admin/users/:name/impersonate", async c => {
   return { user };
 });
 
-router.get<StaffUserList>("/api/admin/users", async c => {
+router.get<StaffUserList>("/api/admin/users", async (c) => {
   const me = staff(c);
   const pg = paging(c.q);
   const term = (c.q.get("q") || "").trim();
@@ -59,7 +83,7 @@ router.get<StaffUserList>("/api/admin/users", async c => {
     limit: pg.limit,
     offset: pg.offset,
   });
-  const items = rows.map(u => ({
+  const items = rows.map((u) => ({
     id: u.id,
     username: u.username,
     realname: u.realname,
@@ -78,17 +102,19 @@ router.get<StaffUserList>("/api/admin/users", async c => {
   return { items, total, ...pg };
 });
 
-router.get<StaffUserPage>("/api/admin/users/:name", async c => {
+router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
   const me = staff(c);
   const u = await targetUser(c.params[0]!);
   const id = u.id;
   const shouts = await repo.recentShouts(id, 5);
-  const recentShouts = await Promise.all(shouts.map(async s => ({
-    id: s.id,
-    body: s.body,
-    createdAt: s.createdAt,
-    where: await pageOf(s.targetType, s.targetId),
-  })));
+  const recentShouts = await Promise.all(
+    shouts.map(async (s) => ({
+      id: s.id,
+      body: s.body,
+      createdAt: s.createdAt,
+      where: await pageOf(s.targetType, s.targetId),
+    }))
+  );
   return {
     user: {
       id,
@@ -125,7 +151,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async c => {
   };
 });
 
-router.post<SuspendResult>("/api/admin/users/:name/suspend", async c => {
+router.post<SuspendResult>("/api/admin/users/:name/suspend", async (c) => {
   const me = staff(c);
   const t = await targetUser(c.params[0]!);
   const suspended = c.body.suspended !== false;
@@ -136,7 +162,7 @@ router.post<SuspendResult>("/api/admin/users/:name/suspend", async c => {
   return { suspended };
 });
 
-router.post<BanResult>("/api/admin/users/:name/ban", async c => {
+router.post<BanResult>("/api/admin/users/:name/ban", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   const banned = c.body.banned !== false;
@@ -148,7 +174,7 @@ router.post<BanResult>("/api/admin/users/:name/ban", async c => {
   return { banned };
 });
 
-router.post<ProbationResult>("/api/admin/users/:name/probation", async c => {
+router.post<ProbationResult>("/api/admin/users/:name/probation", async (c) => {
   const me = staff(c);
   const t = await targetUser(c.params[0]!);
   const probation = c.body.probation !== false;
@@ -158,7 +184,7 @@ router.post<ProbationResult>("/api/admin/users/:name/probation", async c => {
   return { probation };
 });
 
-router.post<RoleResult>("/api/admin/users/:name/role", async c => {
+router.post<RoleResult>("/api/admin/users/:name/role", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   const role = oneOf(String(c.body.role), ROLES) ?? bad("Unknown role");
@@ -172,7 +198,7 @@ router.post<RoleResult>("/api/admin/users/:name/role", async c => {
   return { role };
 });
 
-router.post<VerifyResult>("/api/admin/users/:name/verify", async c => {
+router.post<VerifyResult>("/api/admin/users/:name/verify", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   if (t.emailVerifiedAt) return { verifiedAt: t.emailVerifiedAt };
@@ -183,7 +209,7 @@ router.post<VerifyResult>("/api/admin/users/:name/verify", async c => {
   return { verifiedAt: at };
 });
 
-router.post<SessionsResult>("/api/admin/users/:name/sessions", async c => {
+router.post<SessionsResult>("/api/admin/users/:name/sessions", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   await canAct(me, t, "sessions");
@@ -193,7 +219,7 @@ router.post<SessionsResult>("/api/admin/users/:name/sessions", async c => {
   return { revoked };
 });
 
-router.post<Ok>("/api/admin/users/:name/delete", async c => {
+router.post<Ok>("/api/admin/users/:name/delete", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   await canAct(me, t, "delete");
@@ -204,17 +230,19 @@ router.post<Ok>("/api/admin/users/:name/delete", async c => {
   return { ok: true };
 });
 
-router.post<NoteAdded>("/api/admin/users/:name/notes", async c => {
+router.post<NoteAdded>("/api/admin/users/:name/notes", async (c) => {
   const me = staff(c);
   const t = await targetUser(c.params[0]!);
-  const body = String(c.body.body ?? "").trim().slice(0, 2000);
+  const body = String(c.body.body ?? "")
+    .trim()
+    .slice(0, 2000);
   if (!body) bad("Write a note first");
   const id = await repo.addNote(t.id, me.id, body);
   await audit(me, userAction("note.add", t, body.slice(0, 200)));
   return { id };
 });
 
-router.delete<Ok>("/api/admin/notes/:id", async c => {
+router.delete<Ok>("/api/admin/notes/:id", async (c) => {
   const me = staff(c);
   const n = (await repo.findNote(Number(c.params[0]))) ?? missing("Note");
   if (n.authorId !== me.id && !isAdmin(me)) fail(403, "Only the note's author or an admin can delete it");

@@ -1,4 +1,13 @@
-import { useEffect, useId, useMemo, useRef, useState, type ComponentType, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import * as Flags from "country-flag-icons/react/3x2";
 import { api, num } from "../lib";
@@ -10,9 +19,9 @@ const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
 const FLAGS = Flags as unknown as Record<string, ComponentType<{ title?: string; className?: string }>>;
 const NOT_COUNTRIES = ["AC", "EU", "IC", "TA"];
 const COUNTRIES = Object.keys(FLAGS)
-  .filter(code => /^[A-Z]{2}$/.test(code) && !NOT_COUNTRIES.includes(code))
-  .map(code => ({ code, name: regionNames.of(code) ?? code }))
-  .filter(c => c.name !== c.code);
+  .filter((code) => /^[A-Z]{2}$/.test(code) && !NOT_COUNTRIES.includes(code))
+  .map((code) => ({ code, name: regionNames.of(code) ?? code }))
+  .filter((c) => c.name !== c.code);
 const ALIASES: Record<string, string> = {
   uk: "GB",
   "great britain": "GB",
@@ -29,9 +38,12 @@ const ALIASES: Record<string, string> = {
   "czech republic": "CZ",
   holland: "NL",
 };
-const byName = new Map<string, string>([...COUNTRIES.map(c => [c.name.toLowerCase(), c.code] as const), ...Object.entries(ALIASES)]);
+const byName = new Map<string, string>([
+  ...COUNTRIES.map((c) => [c.name.toLowerCase(), c.code] as const),
+  ...Object.entries(ALIASES),
+]);
 const codeOf = (name: string) => byName.get(name.trim().toLowerCase());
-const nameOf = (code: string) => COUNTRIES.find(c => c.code === code)?.name ?? "";
+const nameOf = (code: string) => COUNTRIES.find((c) => c.code === code)?.name ?? "";
 export function countryName(s: string) {
   const c = codeOf(s);
   return c ? nameOf(c) : "";
@@ -43,7 +55,18 @@ export function Flag({ code }: { code: string }) {
 
 const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 
-function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholder, required, maxLength }: {
+function Suggest({
+  label,
+  value,
+  onText,
+  onLeave,
+  rows,
+  onPick,
+  icon,
+  placeholder,
+  required,
+  maxLength,
+}: {
   label: string;
   value: string;
   onText: (v: string) => void;
@@ -78,7 +101,7 @@ function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholde
         return;
       }
       const step = e.key === "ArrowDown" ? 1 : rows.length - 1;
-      setHi(i => (i + step) % rows.length);
+      setHi((i) => (i + step) % rows.length);
     } else if (e.key === "Enter" && shown && rows[hi]) {
       e.preventDefault();
       pick(rows[hi]!);
@@ -129,14 +152,19 @@ function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholde
               role="option"
               aria-selected={i === hi}
               className={i === hi ? "on" : undefined}
-              onMouseDown={e => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setHi(i)}
               onClick={() => pick(r)}
             >
               {r.icon}
-              <span className="suggest-name">{r.label}{r.sub && <small>{r.sub}</small>}</span>
+              <span className="suggest-name">
+                {r.label}
+                {r.sub && <small>{r.sub}</small>}
+              </span>
               {r.count > 0 && (
-                <span className="suggest-count" title={`${num(r.count)} ${r.count === 1 ? "event" : "events"}`}>{num(r.count)}</span>
+                <span className="suggest-count" title={`${num(r.count)} ${r.count === 1 ? "event" : "events"}`}>
+                  {num(r.count)}
+                </span>
               )}
             </li>
           ))}
@@ -146,7 +174,14 @@ function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholde
   );
 }
 
-export function PlaceInput({ field, value, onChange, onPick, required, maxLength }: {
+export function PlaceInput({
+  field,
+  value,
+  onChange,
+  onPick,
+  required,
+  maxLength,
+}: {
   field: "venue" | "city";
   value: string;
   onChange: (v: string) => void;
@@ -158,9 +193,12 @@ export function PlaceInput({ field, value, onChange, onPick, required, maxLength
   useEffect(() => {
     let live = true;
     const load = () => {
-      api<EventPlaces>(`/events/places?field=${field}&q=${encodeURIComponent(value.trim())}`).then(r => {
-        if (live) setFound(r.items);
-      }, () => {});
+      api<EventPlaces>(`/events/places?field=${field}&q=${encodeURIComponent(value.trim())}`).then(
+        (r) => {
+          if (live) setFound(r.items);
+        },
+        () => {}
+      );
     };
     const t = setTimeout(load, 150);
     return () => {
@@ -170,13 +208,15 @@ export function PlaceInput({ field, value, onChange, onPick, required, maxLength
   }, [field, value]);
   const typed = value.trim().toLowerCase();
   const onlyMatchTyped = found.length === 1 && found[0]!.name.toLowerCase() === typed;
-  const rows: Row[] = onlyMatchTyped ? [] : found.map(p => ({
-    key: p.name,
-    label: p.name,
-    count: p.count,
-    place: p,
-    sub: [p.city, p.country].filter(Boolean).join(", ") || undefined,
-  }));
+  const rows: Row[] = onlyMatchTyped
+    ? []
+    : found.map((p) => ({
+        key: p.name,
+        label: p.name,
+        count: p.count,
+        place: p,
+        sub: [p.city, p.country].filter(Boolean).join(", ") || undefined,
+      }));
   const pick = (r: Row) => {
     onChange(r.label);
     if (r.place) onPick?.({ ...r.place, country: countryName(r.place.country || "") });
@@ -197,19 +237,22 @@ export function PlaceInput({ field, value, onChange, onPick, required, maxLength
 export function CountryInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   useEffect(() => {
-    api<EventPlaces>("/events/places?field=country").then(r => {
-      const m = new Map<string, number>();
-      for (const p of r.items) {
-        const c = codeOf(p.name);
-        if (c) m.set(c, (m.get(c) ?? 0) + p.count);
-      }
-      setCounts(m);
-    }, () => {});
+    api<EventPlaces>("/events/places?field=country").then(
+      (r) => {
+        const m = new Map<string, number>();
+        for (const p of r.items) {
+          const c = codeOf(p.name);
+          if (c) m.set(c, (m.get(c) ?? 0) + p.count);
+        }
+        setCounts(m);
+      },
+      () => {}
+    );
   }, []);
   const code = codeOf(value);
   const [text, setText] = useState(code ? nameOf(code) : value);
   useEffect(() => {
-    setText(t => {
+    setText((t) => {
       if (t && codeOf(t) === code) return t;
       return code ? nameOf(code) : value;
     });
@@ -223,8 +266,8 @@ export function CountryInput({ value, onChange }: { value: string; onChange: (v:
   const matches = (c: { code: string; name: string }) =>
     fold(c.name).includes(q) || Object.entries(ALIASES).some(([a, k]) => k === c.code && a.startsWith(q));
   const rows: Row[] = ranked
-    .filter(c => !q || picked || matches(c))
-    .map(c => ({ key: c.code, label: c.name, count: counts.get(c.code) ?? 0, icon: <Flag code={c.code} /> }));
+    .filter((c) => !q || picked || matches(c))
+    .map((c) => ({ key: c.code, label: c.name, count: counts.get(c.code) ?? 0, icon: <Flag code={c.code} /> }));
   const type = (t: string) => {
     setText(t);
     if (!t.trim()) onChange("");

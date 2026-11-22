@@ -14,7 +14,7 @@ let retriedAt = 0;
 let ready: Promise<unknown> | null = null;
 if (client) {
   const connecting = client.connect();
-  connecting.catch(e => warn(e));
+  connecting.catch((e) => warn(e));
   ready = Promise.race([connecting.catch(() => {}), Bun.sleep(2000)]).then(() => {
     ready = null;
   });
@@ -57,7 +57,7 @@ return 1`;
 export async function attempt(key: string, max: number, ms: number): Promise<boolean> {
   const t = Date.now();
   if (!client) {
-    const recent = (memWindows.get(key) ?? []).filter(x => x > t - ms);
+    const recent = (memWindows.get(key) ?? []).filter((x) => x > t - ms);
     memWindows.set(key, recent);
     if (recent.length >= max) return false;
     recent.push(t);
@@ -244,7 +244,7 @@ export async function exclusive<T>(name: string, ttlMs: number, job: () => Promi
 
 export const releaseAll = () => {
   closing = true;
-  return Promise.all([...held].map(r => r())).then(() => {});
+  return Promise.all([...held].map((r) => r())).then(() => {});
 };
 
 // subscriptions need their own connection and do not survive a reconnect, so they are remade on every connect
@@ -275,11 +275,11 @@ export function subscribe(channel: string, fn: (msg: string) => void): void {
     subscriber = new RedisClient(url, options);
     hot.__spinKv = [client, subscriber];
     subscriber.onconnect = () => {
-      for (const ch of remoteListeners.keys()) listen(ch).catch(e => warn(e));
+      for (const ch of remoteListeners.keys()) listen(ch).catch((e) => warn(e));
     };
-    subscriber.connect().catch(e => warn(e));
+    subscriber.connect().catch((e) => warn(e));
   } else if (isFirst) {
-    listen(channel).catch(e => warn(e));
+    listen(channel).catch((e) => warn(e));
   }
 }
 

@@ -8,7 +8,15 @@ import type { ItemType } from "../../shared/catalog";
 import type { ItemTags, TagCount, TagSuggestions } from "../../shared/tags";
 
 export function TagChips({ tags }: { tags: { name: string; count?: number }[] }) {
-  return <span className="chips">{tags.map(t => <Link key={t.name} className="chip" to={tagUrl(t.name)}>{t.name}</Link>)}</span>;
+  return (
+    <span className="chips">
+      {tags.map((t) => (
+        <Link key={t.name} className="chip" to={tagUrl(t.name)}>
+          {t.name}
+        </Link>
+      ))}
+    </span>
+  );
 }
 export function Tagger({ type, id, tags, myTags }: { type: ItemType; id: number; tags: TagCount[]; myTags: string[] }) {
   const { me } = useAuth();
@@ -22,9 +30,13 @@ export function Tagger({ type, id, tags, myTags }: { type: ItemType; id: number;
     <div className="flex flex-wrap gap-2.5 items-center col-span-full">
       {state.tags.length ? <TagChips tags={state.tags} /> : <span className="muted">No tags yet.</span>}
       {me && !open && (
-        <Button kind="chip add" onClick={() => setOpen(true)}><Ico.Plus /> {state.myTags.length ? "Edit my tags" : "Add tags"}</Button>
+        <Button kind="chip add" onClick={() => setOpen(true)}>
+          <Ico.Plus /> {state.myTags.length ? "Edit my tags" : "Add tags"}
+        </Button>
       )}
-      {me && open && <TagInput type={type} id={id} mine={state.myTags} onChange={setState} onDone={() => setOpen(false)} />}
+      {me && open && (
+        <TagInput type={type} id={id} mine={state.myTags} onChange={setState} onDone={() => setOpen(false)} />
+      )}
     </div>
   );
 }
@@ -32,7 +44,13 @@ type TagOpt = TagCount & { fresh?: boolean };
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
-function TagInput({ type, id, mine, onChange, onDone }: {
+function TagInput({
+  type,
+  id,
+  mine,
+  onChange,
+  onDone,
+}: {
   type: ItemType;
   id: number;
   mine: string[];
@@ -50,29 +68,28 @@ function TagInput({ type, id, mine, onChange, onDone }: {
   const q = text.trim().replace(/\s+/g, " ");
   useEffect(() => {
     const n = ++seq.current;
-    const load = () => api<TagSuggestions>(`/tags/suggest${qs({ q })}`)
-      .then(d => {
-        if (n === seq.current) setItems(d.items);
-      })
-      .catch(() => {});
+    const load = () =>
+      api<TagSuggestions>(`/tags/suggest${qs({ q })}`)
+        .then((d) => {
+          if (n === seq.current) setItems(d.items);
+        })
+        .catch(() => {});
     const t = setTimeout(load, q ? 120 : 0);
     return () => clearTimeout(t);
   }, [q]);
   useEffect(() => setActive(0), [q]);
-  const has = (n: string) => mine.some(t => same(t, n));
-  const known = items.filter(t => !has(t.name)).slice(0, 8);
-  const offerNew = q && !has(q) && !known.some(t => same(t.name, q));
+  const has = (n: string) => mine.some((t) => same(t, n));
+  const known = items.filter((t) => !has(t.name)).slice(0, 8);
+  const offerNew = q && !has(q) && !known.some((t) => same(t.name, q));
   const opts: TagOpt[] = offerNew ? [{ name: q, count: 0, fresh: true }, ...known] : known;
   const save = (body: { tags: string[] } | { tag: string }, path = "/tags") => {
     setError("");
     return api<ItemTags>(path, { body: { type, id, ...body } })
       .then(onChange)
-      .catch(e => setError(errorText(e)));
+      .catch((e) => setError(errorText(e)));
   };
   const add = (names: string[]) => {
-    const fresh = names
-      .map(s => s.trim())
-      .filter((s, i, a) => s && !has(s) && a.findIndex(x => same(x, s)) === i);
+    const fresh = names.map((s) => s.trim()).filter((s, i, a) => s && !has(s) && a.findIndex((x) => same(x, s)) === i);
     setText("");
     input.current?.focus();
     if (fresh.length) save({ tags: fresh });
@@ -83,7 +100,7 @@ function TagInput({ type, id, mine, onChange, onDone }: {
       e.preventDefault();
       setShow(true);
       const step = e.key === "ArrowDown" ? 1 : opts.length - 1;
-      if (opts.length) setActive(a => (a + step) % opts.length);
+      if (opts.length) setActive((a) => (a + step) % opts.length);
     } else if (e.key === "Enter") {
       e.preventDefault();
       const o = show ? opts[active] : undefined;
@@ -113,10 +130,17 @@ function TagInput({ type, id, mine, onChange, onDone }: {
     <div className="tag-edit">
       <div className="tag-row">
         <div className="tag-field" onMouseDown={focusField}>
-          {mine.map(t => (
+          {mine.map((t) => (
             <span key={t} className="tag-token">
               {t}
-              <button type="button" aria-label={`Remove tag ${t}`} title="Remove" onClick={() => save({ tag: t }, "/tags/remove")}><Ico.X /></button>
+              <button
+                type="button"
+                aria-label={`Remove tag ${t}`}
+                title="Remove"
+                onClick={() => save({ tag: t }, "/tags/remove")}
+              >
+                <Ico.X />
+              </button>
             </span>
           ))}
           <input
@@ -134,14 +158,18 @@ function TagInput({ type, id, mine, onChange, onDone }: {
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
-            onChange={e => typed(e.target.value)}
+            onChange={(e) => typed(e.target.value)}
             onKeyDown={onKey}
             onFocus={() => setShow(true)}
             onBlur={() => setShow(false)}
           />
           {openList && (
             <ul className="tag-suggest" id={listId} role="listbox" aria-label="Tag suggestions">
-              {!q && <li className="tag-suggest-head" role="presentation">Recent and popular</li>}
+              {!q && (
+                <li className="tag-suggest-head" role="presentation">
+                  Recent and popular
+                </li>
+              )}
               {opts.map((o, i) => (
                 <li
                   key={o.fresh ? "\0new" : o.name}
@@ -149,7 +177,7 @@ function TagInput({ type, id, mine, onChange, onDone }: {
                   role="option"
                   aria-selected={i === active}
                   className={i === active ? "active" : ""}
-                  onMouseDown={e => e.preventDefault()}
+                  onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => add([o.name])}
                 >
@@ -160,7 +188,9 @@ function TagInput({ type, id, mine, onChange, onDone }: {
             </ul>
           )}
         </div>
-        <Button kind="btn small ghost" onClick={onDone}>Done</Button>
+        <Button kind="btn small ghost" onClick={onDone}>
+          Done
+        </Button>
       </div>
       {error && <p className="form-error small">{error}</p>}
     </div>

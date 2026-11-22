@@ -6,13 +6,21 @@ import { norm, now } from "../util";
 import * as repo from "./repo";
 import { whereFrom } from "./where";
 import { addEvent, eventPage } from "./service";
-import type { AttendResult, EventCreated, EventList, EventOk, EventPage, EventPlaces, UserEvents } from "../../shared/events";
+import type {
+  AttendResult,
+  EventCreated,
+  EventList,
+  EventOk,
+  EventPage,
+  EventPlaces,
+  UserEvents,
+} from "../../shared/events";
 
 export const router = new Router();
 
 const ANSWERS = ["going", "interested"] as const;
 
-router.get<UserEvents>("/api/user/events", async c => {
+router.get<UserEvents>("/api/user/events", async (c) => {
   const u = await requireUser(c.q.get("name"));
   return { items: await repo.listEvents({ attendee: u.id }, c.user?.id, "desc", 100) };
 });
@@ -37,7 +45,7 @@ async function nearFilter(f: repo.Filter, headers: Headers): Promise<{ filter: r
   return { filter: tries[pick]!, near: { city: at.city, country: at.country, wide: pick > 0 } };
 }
 
-router.get<EventList>("/api/events", async c => {
+router.get<EventList>("/api/events", async (c) => {
   const pg = paging(c.q, 30);
   const when = c.q.get("when");
   const past = when === "past";
@@ -51,26 +59,26 @@ router.get<EventList>("/api/events", async c => {
   return { items, total: await repo.countEvents(f), near, ...pg };
 });
 
-router.get<EventPlaces>("/api/events/places", async c => {
+router.get<EventPlaces>("/api/events/places", async (c) => {
   const field = oneOf(c.q.get("field"), ["venue", "city", "country"] as const) ?? fail(400, "Unknown field");
   return { items: await repo.places(field, norm(c.q.get("q") || "").slice(0, 80)) };
 });
 
-router.get<EventPage>("/api/event/:id", c => eventPage(Number(c.params[0]), c.user));
+router.get<EventPage>("/api/event/:id", (c) => eventPage(Number(c.params[0]), c.user));
 
-router.post<EventCreated>("/api/events", async c => {
+router.post<EventCreated>("/api/events", async (c) => {
   const u = confirmed(need(c));
   await throttle(`event:${u.id}`, 10, 86_400, "You can add up to 10 events a day.");
   return { id: await addEvent(c.body, u) };
 });
 
-router.delete<EventOk>("/api/event/:id", async c => {
+router.delete<EventOk>("/api/event/:id", async (c) => {
   const deleted = await repo.deleteOwnEvent(Number(c.params[0]), need(c).id);
   if (!deleted) fail(403, "Only the creator can delete an event");
   return { ok: true };
 });
 
-router.post<AttendResult>("/api/event/:id/attend", async c => {
+router.post<AttendResult>("/api/event/:id/attend", async (c) => {
   const u = confirmed(need(c));
   const e = (await requireItem("event", c.params[0], ["event"])).row;
   const status = oneOf(c.body.status, ANSWERS);

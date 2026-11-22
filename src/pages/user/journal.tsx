@@ -7,7 +7,12 @@ import { ago, api, date, dateTime, invalidateAll, plural, qs, useApi, userUrl } 
 import { Async, Avatar, Empty, Pager, Section, useAction } from "../../ui/base";
 import { UserLabels } from "../../ui/user-labels";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
-import type { JournalDeleted, JournalList, JournalPost as JournalPostData, JournalSaved } from "../../../shared/journals";
+import type {
+  JournalDeleted,
+  JournalList,
+  JournalPost as JournalPostData,
+  JournalSaved,
+} from "../../../shared/journals";
 
 export function Journal({ name, mine }: { name: string; mine: boolean }) {
   const [sp] = useSearchParams();
@@ -22,27 +27,37 @@ export function Journal({ name, mine }: { name: string; mine: boolean }) {
       {mine && (
         <div className="toolbar">
           <h2>Your journal</h2>
-          <Button kind="btn" href={`${base}/new`}><Ico.Plus /> Write a post</Button>
+          <Button kind="btn" href={`${base}/new`}>
+            <Ico.Plus /> Write a post
+          </Button>
         </div>
       )}
       <Async q={q}>
-        {d => d.items.length ? (
-          <>
-            <ul className="journal-list">
-              {d.items.map(j => (
-                <li key={j.id}>
-                  <h3><Link to={`${base}/${j.id}`}>{j.title}</Link></h3>
-                  <p className="muted small">{date(j.createdAt)} · {plural(j.comments, "comment")}</p>
-                  <p className="prose">{plainMd(j.excerpt)}</p>
-                  <Link to={`${base}/${j.id}`}>Read post <Ico.Right /></Link>
-                </li>
-              ))}
-            </ul>
-            <Pager total={d.total} limit={d.limit} />
-          </>
-        ) : (
-          <Empty>{empty}</Empty>
-        )}
+        {(d) =>
+          d.items.length ? (
+            <>
+              <ul className="journal-list">
+                {d.items.map((j) => (
+                  <li key={j.id}>
+                    <h3>
+                      <Link to={`${base}/${j.id}`}>{j.title}</Link>
+                    </h3>
+                    <p className="muted small">
+                      {date(j.createdAt)} · {plural(j.comments, "comment")}
+                    </p>
+                    <p className="prose">{plainMd(j.excerpt)}</p>
+                    <Link to={`${base}/${j.id}`}>
+                      Read post <Ico.Right />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Pager total={d.total} limit={d.limit} />
+            </>
+          ) : (
+            <Empty>{empty}</Empty>
+          )
+        }
       </Async>
     </div>
   );
@@ -55,49 +70,68 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
   const [confirm, setConfirm] = useState(false);
   const act = useAction();
 
-  const remove = () => act.run(async () => {
-    await api<JournalDeleted>(`/journal/${id}`, { method: "DELETE" });
-    invalidateAll();
-    nav(base);
-  });
+  const remove = () =>
+    act.run(async () => {
+      await api<JournalDeleted>(`/journal/${id}`, { method: "DELETE" });
+      invalidateAll();
+      nav(base);
+    });
 
   let deleteControls;
   if (confirm) {
     deleteControls = (
       <>
-        <Button kind="btn danger small" type="button" loading={act.busy} onClick={remove}>Delete this post</Button>
-        <Button kind="link small" type="button" onClick={() => setConfirm(false)}>Keep it</Button>
+        <Button kind="btn danger small" type="button" loading={act.busy} onClick={remove}>
+          Delete this post
+        </Button>
+        <Button kind="link small" type="button" onClick={() => setConfirm(false)}>
+          Keep it
+        </Button>
       </>
     );
   } else {
-    deleteControls = <Button kind="btn ghost small" type="button" onClick={() => setConfirm(true)}>Delete</Button>;
+    deleteControls = (
+      <Button kind="btn ghost small" type="button" onClick={() => setConfirm(true)}>
+        Delete
+      </Button>
+    );
   }
 
   return (
-    <Async q={q}>{j => (
-      <article className="narrow-col journal-post">
-        <p><Link to={base}><Ico.Left /> {name}'s journal</Link></p>
-        <h1 className="page-title">{j.title}</h1>
-        <p className="muted small journal-by">
-          <Avatar user={j.author} size={28} /> <Link to={userUrl(j.author.username)}>{j.author.username}</Link> <UserLabels name={j.author.username} /> ·{" "}
-          <span title={dateTime(j.createdAt)}>{date(j.createdAt)}</span>
-          {j.updatedAt > j.createdAt + 60 && <> · edited {ago(j.updatedAt)}</>}
-        </p>
-        <Markdown text={j.body} />
-        <div className="row">
-          {mine ? (
-            <>
-              <Button kind="btn ghost small" href={`${base}/${id}/edit`}>Edit</Button>
-              {deleteControls}
-            </>
-          ) : (
-            <ReportButton type="journal" id={id} label="Report this post" />
-          )}
-        </div>
-        {act.note}
-        <Section title={`Comments (${j.comments})`}><Shoutbox type="journal" id={id} word="comment" /></Section>
-      </article>
-    )}</Async>
+    <Async q={q}>
+      {(j) => (
+        <article className="narrow-col journal-post">
+          <p>
+            <Link to={base}>
+              <Ico.Left /> {name}'s journal
+            </Link>
+          </p>
+          <h1 className="page-title">{j.title}</h1>
+          <p className="muted small journal-by">
+            <Avatar user={j.author} size={28} /> <Link to={userUrl(j.author.username)}>{j.author.username}</Link>{" "}
+            <UserLabels name={j.author.username} /> · <span title={dateTime(j.createdAt)}>{date(j.createdAt)}</span>
+            {j.updatedAt > j.createdAt + 60 && <> · edited {ago(j.updatedAt)}</>}
+          </p>
+          <Markdown text={j.body} />
+          <div className="row">
+            {mine ? (
+              <>
+                <Button kind="btn ghost small" href={`${base}/${id}/edit`}>
+                  Edit
+                </Button>
+                {deleteControls}
+              </>
+            ) : (
+              <ReportButton type="journal" id={id} label="Report this post" />
+            )}
+          </div>
+          {act.note}
+          <Section title={`Comments (${j.comments})`}>
+            <Shoutbox type="journal" id={id} word="comment" />
+          </Section>
+        </article>
+      )}
+    </Async>
   );
 }
 
@@ -127,15 +161,34 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
   return (
     <form className="form narrow-col journal-form" onSubmit={save}>
       <h2>{id ? "Edit post" : "New journal post"}</h2>
-      <label>Title<Input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} maxLength={120} required autoFocus={!id} /></label>
+      <label>
+        Title
+        <Input
+          value={f.title}
+          onChange={(e) => setF({ ...f, title: e.target.value })}
+          maxLength={120}
+          required
+          autoFocus={!id}
+        />
+      </label>
       <div className="field-block">
         <span className="field-label">Post</span>
-        <MdEditor label="Post" rows={16} value={f.body} onChange={body => setF(f => ({ ...f!, body }))} maxLength={20000} />
+        <MdEditor
+          label="Post"
+          rows={16}
+          value={f.body}
+          onChange={(body) => setF((f) => ({ ...f!, body }))}
+          maxLength={20000}
+        />
       </div>
       {act.note}
       <div className="row">
-        <Button kind="btn" loading={act.busy}>{id ? "Save changes" : "Publish"}</Button>
-        <Button kind="btn ghost" href={id ? `${base}/${id}` : base}>Cancel</Button>
+        <Button kind="btn" loading={act.busy}>
+          {id ? "Save changes" : "Publish"}
+        </Button>
+        <Button kind="btn ghost" href={id ? `${base}/${id}` : base}>
+          Cancel
+        </Button>
       </div>
     </form>
   );

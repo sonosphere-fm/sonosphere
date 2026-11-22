@@ -13,12 +13,19 @@ export async function metaValue(key: string): Promise<string | null> {
 
 // users.is_admin is the "is staff" flag; users.role says which kind.
 export async function setRole(userId: number, role: Role): Promise<void> {
-  await db.update(users).set({ isAdmin: role !== "user", role }).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({ isAdmin: role !== "user", role })
+    .where(eq(users.id, userId));
 }
 
 export async function adminCount(): Promise<number> {
-  const row = await first(db.select({ c: count() }).from(users)
-    .where(and(eq(users.isAdmin, true), ne(users.role, "moderator"), eq(users.banned, false))));
+  const row = await first(
+    db
+      .select({ c: count() })
+      .from(users)
+      .where(and(eq(users.isAdmin, true), ne(users.role, "moderator"), eq(users.banned, false)))
+  );
   return row?.c ?? 0;
 }
 
@@ -30,9 +37,12 @@ export async function promote(usernames: string[]): Promise<void> {
 export const storedSettings = (): Promise<{ key: string; value: string }[]> => db.select().from(siteSettings);
 
 export async function storeSettings(entries: [key: string, value: string][]): Promise<void> {
-  await transact(async tx => {
+  await transact(async (tx) => {
     for (const [key, value] of entries) {
-      await tx.insert(siteSettings).values({ key, value }).onConflictDoUpdate({ target: siteSettings.key, set: { value } });
+      await tx
+        .insert(siteSettings)
+        .values({ key, value })
+        .onConflictDoUpdate({ target: siteSettings.key, set: { value } });
     }
   });
 }
@@ -59,23 +69,24 @@ export function parseObject(json: string | null): Record<string, unknown> {
 export const auditSubject = alias(users, "audit_subject");
 
 export async function auditRows(where: SQL | undefined, limit: number, offset: number): Promise<AuditRow[]> {
-  const rows = await db.select({
-    id: auditLog.id,
-    actor: auditLog.actorName,
-    action: auditLog.action,
-    targetType: auditLog.targetType,
-    targetId: auditLog.targetId,
-    label: auditLog.targetLabel,
-    subject: auditSubject.username,
-    note: auditLog.note,
-    data: auditLog.data,
-    createdAt: auditLog.createdAt,
-  })
+  const rows = await db
+    .select({
+      id: auditLog.id,
+      actor: auditLog.actorName,
+      action: auditLog.action,
+      targetType: auditLog.targetType,
+      targetId: auditLog.targetId,
+      label: auditLog.targetLabel,
+      subject: auditSubject.username,
+      note: auditLog.note,
+      data: auditLog.data,
+      createdAt: auditLog.createdAt,
+    })
     .from(auditLog)
     .leftJoin(auditSubject, eq(auditSubject.id, auditLog.subjectId))
     .where(where)
     .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
     .limit(limit)
     .offset(offset);
-  return rows.map(a => ({ ...a, data: parseObject(a.data) }));
+  return rows.map((a) => ({ ...a, data: parseObject(a.data) }));
 }

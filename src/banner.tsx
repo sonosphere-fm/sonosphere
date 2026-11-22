@@ -20,7 +20,11 @@ export function SiteBanner() {
   const [site, setSite] = useState<SiteInfo | null>(null);
   const [hidden, setHidden] = useState<number>(readDismissed);
   useEffect(() => {
-    const load = () => { api<SiteInfo>("/site").then(setSite).catch(() => {}); };
+    const load = () => {
+      api<SiteInfo>("/site")
+        .then(setSite)
+        .catch(() => {});
+    };
     load();
     window.addEventListener("spin:site", load);
     return () => window.removeEventListener("spin:site", load);
@@ -39,7 +43,9 @@ export function SiteBanner() {
     <div className={`site-banner ${a.tone}`} role="status">
       <div className="wrap site-banner-in">
         <span>{a.text}</span>
-        <Button kind="site-banner-x" type="button" aria-label="Dismiss announcement" onClick={dismiss}><Ico.X /></Button>
+        <Button kind="site-banner-x" type="button" aria-label="Dismiss announcement" onClick={dismiss}>
+          <Ico.X />
+        </Button>
       </div>
     </div>
   );
@@ -63,13 +69,20 @@ export function ImpersonationBanner() {
       navigate(`/admin/users/${encodeURIComponent(target)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <div className="site-banner impersonation" role="status">
       <div className="wrap site-banner-in">
-        <span>Acting as <strong>{me.username}</strong> from {me.impersonating.by}'s account. {error && <span role="alert">{error}</span>}</span>
-        <button type="button" className="banner-link" disabled={busy} onClick={stop}>{busy ? "Returning…" : "Return to your account"}</button>
+        <span>
+          Acting as <strong>{me.username}</strong> from {me.impersonating.by}'s account.{" "}
+          {error && <span role="alert">{error}</span>}
+        </span>
+        <button type="button" className="banner-link" disabled={busy} onClick={stop}>
+          {busy ? "Returning…" : "Return to your account"}
+        </button>
       </div>
     </div>
   );
@@ -101,13 +114,18 @@ export function VerifyBanner() {
     setNote("Sending...");
     api<Ok>("/me/verify", { body: {} }).then(
       () => setNote(`Sent. Check ${me.email}.`),
-      e => setNote(e instanceof Error ? e.message : String(e)),
+      (e) => setNote(e instanceof Error ? e.message : String(e))
     );
   };
   const restrictions = (
     <>
-      {" "}Certain actions such as posting, sending messages, and following users are restricted until you confirm your email address.
-      Your account will be automatically purged if you do not verify your email address within <strong>{left} {left === 1 ? "day" : "days"}</strong>.
+      {" "}
+      Certain actions such as posting, sending messages, and following users are restricted until you confirm your email
+      address. Your account will be automatically purged if you do not verify your email address within{" "}
+      <strong>
+        {left} {left === 1 ? "day" : "days"}
+      </strong>
+      .
     </>
   );
   return (
@@ -116,9 +134,15 @@ export function VerifyBanner() {
         <span>
           Please confirm your email address using the link we sent to <strong>{me.email}</strong>.
           {!me.admin && restrictions}{" "}
-          {note || <button type="button" className="banner-link" onClick={resend}>Resend verification email</button>}
+          {note || (
+            <button type="button" className="banner-link" onClick={resend}>
+              Resend verification email
+            </button>
+          )}
         </span>
-        <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}><Ico.X /></Button>
+        <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}>
+          <Ico.X />
+        </Button>
       </div>
     </div>
   );

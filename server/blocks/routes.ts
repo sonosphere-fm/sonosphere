@@ -6,10 +6,10 @@ import type { BlockResult, Blocks } from "../../shared/blocks";
 
 export const router = new Router();
 
-router.get<Blocks>("/api/blocks", async c => ({ items: await repo.blockedBy(need(c).id) }));
+router.get<Blocks>("/api/blocks", async (c) => ({ items: await repo.blockedBy(need(c).id) }));
 
 // `block: false` in the body unblocks; anything else blocks.
-router.post<BlockResult>("/api/block", async c => {
+router.post<BlockResult>("/api/block", async (c) => {
   const u = need(c);
   await throttle(`block:${u.id}`, 60, 3600);
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);

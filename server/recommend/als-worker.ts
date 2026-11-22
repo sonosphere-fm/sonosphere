@@ -30,7 +30,7 @@ async function run(url: string): Promise<TrainResult> {
       SELECT artist_id AS id FROM user_artists
       GROUP BY artist_id HAVING COUNT(*) >= 2
       ORDER BY COUNT(*) DESC, artist_id LIMIT ${MAX_ARTISTS}`;
-    const artistIds = artistRows.map(r => r.id);
+    const artistIds = artistRows.map((r) => r.id);
     const itemOf = new Map(artistIds.map((id, i) => [id, i]));
 
     // every user's kept artists, most played first
@@ -50,7 +50,7 @@ async function run(url: string): Promise<TrainResult> {
         if (list.length < MAX_PER_USER) list.push({ item, plays: r.p });
       }
     }
-    const userIds = [...rows.keys()].filter(u => rows.get(u)!.length >= 2);
+    const userIds = [...rows.keys()].filter((u) => rows.get(u)!.length >= 2);
 
     // hold back one artist from a sample of users with enough history, to grade the model on
     const rand = rng(userIds.length * 7919 + artistIds.length);
@@ -109,7 +109,7 @@ async function run(url: string): Promise<TrainResult> {
       ...userIds.map((id, i) => ({ kind: "user", id, vec: vec(model.x, i) })),
       ...artistIds.map((id, i) => ({ kind: "artist", id, vec: vec(model.y, i) })),
     ];
-    await db.begin(async tx => {
+    await db.begin(async (tx) => {
       await tx`DELETE FROM taste_factors`;
       for (let i = 0; i < factors.length; i += 5000) {
         await tx`INSERT INTO taste_factors ${tx(factors.slice(i, i + 5000), "kind", "id", "vec")}`;

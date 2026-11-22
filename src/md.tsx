@@ -1,5 +1,25 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
-import { Code, LinkSimple, ListBullets, ListNumbers, Quotes, TextB, TextHTwo, TextItalic, TextStrikethrough, type Icon as PhIcon } from "@phosphor-icons/react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
+import {
+  Code,
+  LinkSimple,
+  ListBullets,
+  ListNumbers,
+  Quotes,
+  TextB,
+  TextHTwo,
+  TextItalic,
+  TextStrikethrough,
+  type Icon as PhIcon,
+} from "@phosphor-icons/react";
 
 type Inline =
   | { t: "text"; s: string }
@@ -9,7 +29,8 @@ type Inline =
   | { t: "auto"; url: string };
 
 // Groups: 1 code, 2 bold, 3 underline, 4 strike, 5 italic *, 6 italic _, 7+8 link text and url, 9 bare url.
-const INLINE = /(`[^`\n]+`)|\*\*([^\n]+?)\*\*(?!\*)|__([^\n]+?)__(?!_)|~~([^\n]+?)~~|\*(?=\S)([^*\n]+?)(?<=\S)\*|(?<![\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]*[^\s<>.,;:!?)\]'"*_~])/g;
+const INLINE =
+  /(`[^`\n]+`)|\*\*([^\n]+?)\*\*(?!\*)|__([^\n]+?)__(?!_)|~~([^\n]+?)~~|\*(?=\S)([^*\n]+?)(?<=\S)\*|(?<![\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]*[^\s<>.,;:!?)\]'"*_~])/g;
 
 function inline(s: string): Inline[] {
   const out: Inline[] = [];
@@ -52,25 +73,45 @@ function nodes(list: Inline[], key = ""): ReactNode[] {
   return list.map((n, i) => {
     const k = key + i;
     switch (n.t) {
-      case "text": return n.s;
-      case "code": return <code key={k}>{n.s}</code>;
-      case "b": return <strong key={k}>{nodes(n.kids, k)}</strong>;
-      case "i": return <em key={k}>{nodes(n.kids, k)}</em>;
-      case "u": return <u key={k}>{nodes(n.kids, k)}</u>;
-      case "s": return <s key={k}>{nodes(n.kids, k)}</s>;
-      case "link": return <a key={k} href={n.url} target="_blank" rel="nofollow noopener noreferrer">{nodes(n.kids, k)}</a>;
-      case "auto": return <a key={k} href={n.url} target="_blank" rel="nofollow noopener noreferrer">{n.url.replace(/^https?:\/\//, "")}</a>;
+      case "text":
+        return n.s;
+      case "code":
+        return <code key={k}>{n.s}</code>;
+      case "b":
+        return <strong key={k}>{nodes(n.kids, k)}</strong>;
+      case "i":
+        return <em key={k}>{nodes(n.kids, k)}</em>;
+      case "u":
+        return <u key={k}>{nodes(n.kids, k)}</u>;
+      case "s":
+        return <s key={k}>{nodes(n.kids, k)}</s>;
+      case "link":
+        return (
+          <a key={k} href={n.url} target="_blank" rel="nofollow noopener noreferrer">
+            {nodes(n.kids, k)}
+          </a>
+        );
+      case "auto":
+        return (
+          <a key={k} href={n.url} target="_blank" rel="nofollow noopener noreferrer">
+            {n.url.replace(/^https?:\/\//, "")}
+          </a>
+        );
     }
   });
 }
 
-const breaks = (rows: string[], key: string) => rows.flatMap((r, i) => {
-  const row = nodes(inline(r), `${key}-${i}-`);
-  return i ? [<br key={`${key}b${i}`} />, ...row] : row;
-});
+const breaks = (rows: string[], key: string) =>
+  rows.flatMap((r, i) => {
+    const row = nodes(inline(r), `${key}-${i}-`);
+    return i ? [<br key={`${key}b${i}`} />, ...row] : row;
+  });
 
 export function Markdown({ text, className = "prose" }: { text: string; className?: string }) {
-  const lines = String(text || "").replace(/\r\n?/g, "\n").split("\n").map(line);
+  const lines = String(text || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map(line);
   const out: ReactNode[] = [];
   let i = 0;
   while (i < lines.length) {
@@ -100,7 +141,13 @@ export function Markdown({ text, className = "prose" }: { text: string; classNam
       out.push(<blockquote key={k}>{breaks(run, k)}</blockquote>);
     } else {
       const L = kind === "ul" ? "ul" : "ol";
-      out.push(<L key={k}>{run.map((r, j) => <li key={j}>{nodes(inline(r), `${k}-${j}-`)}</li>)}</L>);
+      out.push(
+        <L key={k}>
+          {run.map((r, j) => (
+            <li key={j}>{nodes(inline(r), `${k}-${j}-`)}</li>
+          ))}
+        </L>
+      );
     }
   }
   return <div className={`${className} md`}>{out}</div>;
@@ -108,39 +155,51 @@ export function Markdown({ text, className = "prose" }: { text: string; classNam
 
 /** The text with the markup taken out, for one-line previews and excerpts. */
 export function plainMd(text: string): string {
-  const flat = (list: Inline[]): string => list.map(n => {
-    if (n.t === "text" || n.t === "code") return n.s;
-    if (n.t === "auto") return n.url;
-    return flat(n.kids);
-  }).join("");
-  return String(text || "").split("\n").map(s => {
-    const l = line(s);
-    return l.kind === "blank" ? "" : flat(inline(l.text));
-  }).join("\n");
+  const flat = (list: Inline[]): string =>
+    list
+      .map((n) => {
+        if (n.t === "text" || n.t === "code") return n.s;
+        if (n.t === "auto") return n.url;
+        return flat(n.kids);
+      })
+      .join("");
+  return String(text || "")
+    .split("\n")
+    .map((s) => {
+      const l = line(s);
+      return l.kind === "blank" ? "" : flat(inline(l.text));
+    })
+    .join("\n");
 }
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;" };
-const esc = (s: string) => s.replace(/[&<>]/g, c => ESCAPES[c]);
+const esc = (s: string) => s.replace(/[&<>]/g, (c) => ESCAPES[c]);
 const mark = (s: string) => `<span class="md-mark">${esc(s)}</span>`;
 
 function paint(list: Inline[]): string {
-  return list.map(n => {
-    switch (n.t) {
-      case "text": return esc(n.s);
-      case "code": return `${mark("`")}<code>${esc(n.s)}</code>${mark("`")}`;
-      case "link": return `${mark("[")}<span class="md-link">${paint(n.kids)}</span>${mark(`](${n.url})`)}`;
-      case "auto": return `<span class="md-link">${esc(n.url)}</span>`;
-      default: {
-        const tag = n.t === "b" ? "strong" : n.t === "i" ? "em" : n.t;
-        return `${mark(n.mark)}<${tag}>${paint(n.kids)}</${tag}>${mark(n.mark)}`;
+  return list
+    .map((n) => {
+      switch (n.t) {
+        case "text":
+          return esc(n.s);
+        case "code":
+          return `${mark("`")}<code>${esc(n.s)}</code>${mark("`")}`;
+        case "link":
+          return `${mark("[")}<span class="md-link">${paint(n.kids)}</span>${mark(`](${n.url})`)}`;
+        case "auto":
+          return `<span class="md-link">${esc(n.url)}</span>`;
+        default: {
+          const tag = n.t === "b" ? "strong" : n.t === "i" ? "em" : n.t;
+          return `${mark(n.mark)}<${tag}>${paint(n.kids)}</${tag}>${mark(n.mark)}`;
+        }
       }
-    }
-  }).join("");
+    })
+    .join("");
 }
 
 /** The source text, untouched, with spans around what the markup means. Its textContent is always the source. */
 function highlight(text: string): string {
-  const rows = text.split("\n").map(s => {
+  const rows = text.split("\n").map((s) => {
     const l = line(s);
     if (l.kind === "blank") return esc(s);
     if (l.kind === "p") return paint(inline(s));
@@ -193,28 +252,35 @@ function setSel(el: HTMLElement, [a, b]: Sel) {
 type Edit = (text: string, sel: Sel) => { text: string; sel: Sel };
 
 /** Wraps the selection in a marker, or unwraps it if it already is. */
-const wrap = (m: string, placeholder: string, close = m): Edit => (t, [a, b]) => {
-  if (t.slice(a - m.length, a) === m && t.slice(b, b + close.length) === close) {
-    return { text: t.slice(0, a - m.length) + t.slice(a, b) + t.slice(b + close.length), sel: [a - m.length, b - m.length] };
-  }
-  const inner = t.slice(a, b) || placeholder;
-  return { text: t.slice(0, a) + m + inner + close + t.slice(b), sel: [a + m.length, a + m.length + inner.length] };
-};
+const wrap =
+  (m: string, placeholder: string, close = m): Edit =>
+  (t, [a, b]) => {
+    if (t.slice(a - m.length, a) === m && t.slice(b, b + close.length) === close) {
+      return {
+        text: t.slice(0, a - m.length) + t.slice(a, b) + t.slice(b + close.length),
+        sel: [a - m.length, b - m.length],
+      };
+    }
+    const inner = t.slice(a, b) || placeholder;
+    return { text: t.slice(0, a) + m + inner + close + t.slice(b), sel: [a + m.length, a + m.length + inner.length] };
+  };
 
 const ANY_PREFIX = /^(#{1,3}\s+|>\s?|\s*[-*•]\s+|\s*\d{1,3}[.)]\s+)/;
 
 /** Puts a prefix on every selected line, or takes it off if they all have it. */
-const prefix = (make: (i: number) => string, test: RegExp): Edit => (t, [a, b]) => {
-  const from = t.lastIndexOf("\n", a - 1) + 1;
-  const end = t.indexOf("\n", b);
-  const to = end < 0 ? t.length : end;
-  const rows = t.slice(from, to).split("\n");
-  const on = rows.every(r => test.test(r));
-  const next = rows.map((r, i) => on ? r.replace(test, "") : make(i) + r.replace(ANY_PREFIX, "")).join("\n");
-  if (rows.length > 1) return { text: t.slice(0, from) + next + t.slice(to), sel: [from, from + next.length] };
-  const shift = next.length - (to - from);
-  return { text: t.slice(0, from) + next + t.slice(to), sel: [Math.max(from, a + shift), Math.max(from, b + shift)] };
-};
+const prefix =
+  (make: (i: number) => string, test: RegExp): Edit =>
+  (t, [a, b]) => {
+    const from = t.lastIndexOf("\n", a - 1) + 1;
+    const end = t.indexOf("\n", b);
+    const to = end < 0 ? t.length : end;
+    const rows = t.slice(from, to).split("\n");
+    const on = rows.every((r) => test.test(r));
+    const next = rows.map((r, i) => (on ? r.replace(test, "") : make(i) + r.replace(ANY_PREFIX, ""))).join("\n");
+    if (rows.length > 1) return { text: t.slice(0, from) + next + t.slice(to), sel: [from, from + next.length] };
+    const shift = next.length - (to - from);
+    return { text: t.slice(0, from) + next + t.slice(to), sel: [Math.max(from, a + shift), Math.max(from, b + shift)] };
+  };
 
 const insertLink: Edit = (t, [a, b]) => {
   const inner = t.slice(a, b) || "link text";
@@ -232,7 +298,7 @@ const TOOLS: { label: string; keys?: string; Icon: PhIcon; edit: Edit }[] = [
   { label: "Heading", Icon: TextHTwo, edit: prefix(() => "## ", /^#{1,3}\s+/) },
   { label: "Quote", Icon: Quotes, edit: prefix(() => "> ", /^>\s?/) },
   { label: "Bulleted list", Icon: ListBullets, edit: prefix(() => "- ", /^\s*[-*•]\s+/) },
-  { label: "Numbered list", Icon: ListNumbers, edit: prefix(i => `${i + 1}. `, /^\s*\d{1,3}[.)]\s+/) },
+  { label: "Numbered list", Icon: ListNumbers, edit: prefix((i) => `${i + 1}. `, /^\s*\d{1,3}[.)]\s+/) },
 ];
 
 /** Highlighted element selector to the toolbar button it lights up. */
@@ -317,14 +383,17 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
     return () => document.removeEventListener("selectionchange", scan);
   }, [scan]);
 
-  const draw = useCallback((t: string, sel: Sel | null) => {
-    const el = ref.current!;
-    text.current = t;
-    el.innerHTML = highlight(t);
-    el.dataset.empty = t ? "" : "1";
-    if (sel) setSel(el, [Math.min(sel[0], t.length), Math.min(sel[1], t.length)]);
-    scan();
-  }, [scan]);
+  const draw = useCallback(
+    (t: string, sel: Sel | null) => {
+      const el = ref.current!;
+      text.current = t;
+      el.innerHTML = highlight(t);
+      el.dataset.empty = t ? "" : "1";
+      if (sel) setSel(el, [Math.min(sel[0], t.length), Math.min(sel[1], t.length)]);
+      scan();
+    },
+    [scan]
+  );
 
   const remember = (typed: boolean, sel: Sel) => {
     const top = undo.current.at(-1);
@@ -354,7 +423,8 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
     const r = edit(text.current ?? "", sel);
     commit(r.text, r.sel, false, sel);
   };
-  const insert = (s: string) => apply((t, [a, b]) => ({ text: t.slice(0, a) + s + t.slice(b), sel: [a + s.length, a + s.length] }));
+  const insert = (s: string) =>
+    apply((t, [a, b]) => ({ text: t.slice(0, a) + s + t.slice(b), sel: [a + s.length, a + s.length] }));
 
   useLayoutEffect(() => {
     const el = ref.current!;
@@ -411,7 +481,7 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
       step(redo, undo);
       return;
     }
-    const tool = !e.shiftKey && TOOLS.find(t => t.keys === key);
+    const tool = !e.shiftKey && TOOLS.find((t) => t.keys === key);
     if (tool) {
       e.preventDefault();
       apply(tool.edit);
@@ -436,7 +506,7 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
             aria-pressed={active.has(label)}
             title={keys ? `${label} (${MOD_LABEL}${keys.toUpperCase()})` : label}
             aria-label={label}
-            onMouseDown={e => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => apply(edit)}
           >
             <Icon aria-hidden weight="bold" />
@@ -455,13 +525,23 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
         style={{ minHeight: `calc(${rows} * 1.6em + 22px)` }}
         onInput={onInput}
         onKeyDown={onKeyDown}
-        onCompositionStart={() => { composing.current = true; }}
-        onCompositionEnd={() => { composing.current = false; onInput(); }}
-        onPaste={e => { e.preventDefault(); insert(e.clipboardData.getData("text/plain").replace(/\r\n?/g, "\n")); }}
+        onCompositionStart={() => {
+          composing.current = true;
+        }}
+        onCompositionEnd={() => {
+          composing.current = false;
+          onInput();
+        }}
+        onPaste={(e) => {
+          e.preventDefault();
+          insert(e.clipboardData.getData("text/plain").replace(/\r\n?/g, "\n"));
+        }}
         onDrop={onDrop}
       />
       {maxLength && value.length > maxLength * 0.9 ? (
-        <div className="md-count">{value.length.toLocaleString()} / {maxLength.toLocaleString()}</div>
+        <div className="md-count">
+          {value.length.toLocaleString()} / {maxLength.toLocaleString()}
+        </div>
       ) : null}
     </div>
   );

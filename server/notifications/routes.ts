@@ -10,9 +10,9 @@ function details(json: string): Record<string, unknown> {
   return typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
 }
 
-router.get<Notifications>("/api/notifications", async c => {
+router.get<Notifications>("/api/notifications", async (c) => {
   const rows = await repo.latestFor(need(c).id);
-  const items = rows.map(n => ({
+  const items = rows.map((n) => ({
     id: n.id,
     type: n.type,
     data: details(n.data),
@@ -23,7 +23,7 @@ router.get<Notifications>("/api/notifications", async c => {
   return { items };
 });
 
-router.post<NotificationsRead>("/api/notifications/read", async c => {
+router.post<NotificationsRead>("/api/notifications/read", async (c) => {
   await repo.markAllRead(need(c).id);
   return { ok: true };
 });

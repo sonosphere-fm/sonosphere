@@ -12,8 +12,18 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
   const visible = canSee(u, viewer);
   const open = canSeeCharts(u, viewer);
   const [
-    stats, lovedCount, followers, following, isFollowing, followsYou,
-    nowPlaying, tasteMatch, obsessions, shouts, journalCount, blocked,
+    stats,
+    lovedCount,
+    followers,
+    following,
+    isFollowing,
+    followsYou,
+    nowPlaying,
+    tasteMatch,
+    obsessions,
+    shouts,
+    journalCount,
+    blocked,
   ] = await Promise.all([
     open ? listening.counts({ userId: u.id }) : { playcount: 0, artists: 0, albums: 0, tracks: 0 },
     open ? repo.lovedCount(u.id) : 0,
@@ -60,13 +70,15 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
 
 // Private listeners appear without their play count.
 export async function people(list: PublicUser[], viewerId: number | undefined): Promise<Person[]> {
-  const shut = await repo.privateAmong(list.map(p => p.id).filter(id => id !== viewerId));
-  return Promise.all(list.map(async p => ({
-    ...p,
-    ...(shut.has(p.id) ? {} : { playcount: await repo.playcount(p.id) }),
-    isFollowing: !!viewerId && await repo.isFollowing(viewerId, p.id),
-    lastTrack: await repo.lastTrack(p.id),
-  })));
+  const shut = await repo.privateAmong(list.map((p) => p.id).filter((id) => id !== viewerId));
+  return Promise.all(
+    list.map(async (p) => ({
+      ...p,
+      ...(shut.has(p.id) ? {} : { playcount: await repo.playcount(p.id) }),
+      isFollowing: !!viewerId && (await repo.isFollowing(viewerId, p.id)),
+      lastTrack: await repo.lastTrack(p.id),
+    }))
+  );
 }
 
 // Weeks run Monday to Sunday; the epoch fell on a Thursday.
@@ -77,7 +89,7 @@ async function trend(scope: listening.Scope, weeks: number): Promise<WeekCount[]
   const end = Math.floor((now() + THURSDAY) / WEEK);
   const firstWeek = end - weeks + 1;
   const series = await listening.series({ ...scope, from: firstWeek * WEEK - THURSDAY }, "week");
-  const rows = new Map(series.map(r => [Number(r.k), r.c]));
+  const rows = new Map(series.map((r) => [Number(r.k), r.c]));
   return Array.from({ length: weeks }, (_, i) => ({
     start: (firstWeek + i) * WEEK - THURSDAY,
     count: rows.get(firstWeek + i) || 0,
@@ -87,7 +99,7 @@ async function trend(scope: listening.Scope, weeks: number): Promise<WeekCount[]
 export async function artistLibrary(
   u: repo.User,
   a: { id: number; name: string; imageId: string | null },
-  viewerId: number | undefined,
+  viewerId: number | undefined
 ): Promise<UserArtistLibrary> {
   const scope: listening.Scope = { userId: u.id, artistId: a.id, viewerId };
   return {

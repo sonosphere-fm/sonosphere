@@ -5,7 +5,14 @@ import { clean } from "../util";
 import * as repo from "./repo";
 import { editScrobble, editScrobbles, importLoved, scrobbleMany, setNowPlaying, type ScrobbleInput } from "./service";
 import type { Ok } from "../../shared/auth";
-import type { Loved, LovedImported, ScopeCounts, ScrobbleEdited, ScrobbleResponse, ScrobblesDeleted } from "../../shared/listening";
+import type {
+  Loved,
+  LovedImported,
+  ScopeCounts,
+  ScrobbleEdited,
+  ScrobbleResponse,
+  ScrobblesDeleted,
+} from "../../shared/listening";
 
 export const router = new Router();
 
@@ -19,7 +26,7 @@ async function ownScrobble(c: Ctx) {
   return found ?? missing("Scrobble");
 }
 
-router.post<ScrobbleResponse>("/api/scrobble", async c => {
+router.post<ScrobbleResponse>("/api/scrobble", async (c) => {
   const u = need(c);
   await throttle(`scrobble-web:${u.id}`, 200, 3600, "Too many scrobbles from the website this hour. Try again later.");
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [c.body];
@@ -30,28 +37,29 @@ router.post<ScrobbleResponse>("/api/scrobble", async c => {
   let accepted = 0;
   results.forEach((r, i) => {
     if (r.accepted) accepted++;
-    else if (details.length < 20) details.push({ artist: inputs[i]?.artist, track: inputs[i]?.track, reason: r.reason });
+    else if (details.length < 20)
+      details.push({ artist: inputs[i]?.artist, track: inputs[i]?.track, reason: r.reason });
   });
   return { accepted, ignored: list.length - accepted, details };
 });
 
-router.post<Ok>("/api/nowplaying", async c => {
+router.post<Ok>("/api/nowplaying", async (c) => {
   const u = need(c);
   if (c.body.stop) await repo.clearNowPlaying(u.id);
   else if (!(await setNowPlaying(u.id, c.body))) bad("Artist and track are required");
   return { ok: true };
 });
 
-router.delete<Ok>("/api/scrobble/:id", async c => {
+router.delete<Ok>("/api/scrobble/:id", async (c) => {
   const u = need(c);
   const id = int(c.params[0]);
   if (id === null || !(await repo.deleteScrobble(u.id, id))) missing("Scrobble");
   return { ok: true };
 });
 
-router.get<ScopeCounts>("/api/scrobble/:id/scope", async c => repo.scopeCounts(await ownScrobble(c)));
+router.get<ScopeCounts>("/api/scrobble/:id/scope", async (c) => repo.scopeCounts(await ownScrobble(c)));
 
-router.patch<ScrobbleEdited>("/api/scrobble/:id", async c => {
+router.patch<ScrobbleEdited>("/api/scrobble/:id", async (c) => {
   const s = await ownScrobble(c);
   const scope = oneOf(c.body.scope, SCOPES);
   // with a scope, the same correction goes to every play sharing this one's track, album or artist
@@ -60,7 +68,7 @@ router.patch<ScrobbleEdited>("/api/scrobble/:id", async c => {
   return { ok: true, changed: 1 };
 });
 
-router.post<ScrobblesDeleted>("/api/scrobbles/delete", async c => {
+router.post<ScrobblesDeleted>("/api/scrobbles/delete", async (c) => {
   const u = need(c);
   const raw = Array.isArray(c.body.ids) ? c.body.ids : [];
   const ids = raw.map(Number).filter(Number.isInteger).slice(0, 1000);
@@ -68,7 +76,7 @@ router.post<ScrobblesDeleted>("/api/scrobbles/delete", async c => {
   return { deleted: await repo.deleteScrobbles(u.id, ids) };
 });
 
-router.post<LovedImported>("/api/love/import", async c => {
+router.post<LovedImported>("/api/love/import", async (c) => {
   const u = need(c);
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [];
   if (list.length > 5000) bad("At most 5000 loved tracks per request");
@@ -76,7 +84,7 @@ router.post<LovedImported>("/api/love/import", async c => {
   return { accepted, ignored: list.length - accepted };
 });
 
-router.post<Loved>("/api/love", async c => {
+router.post<Loved>("/api/love", async (c) => {
   const u = need(c);
   const loved = c.body.loved !== false;
   await throttle(`love:${u.id}`, 300, 3600);

@@ -29,8 +29,12 @@ export function AdminTools({ kind, item, onDone }: Props) {
   };
   return (
     <>
-      <Button kind="btn ghost" type="button" onClick={() => setOpen("details")}>Edit details</Button>
-      <Button kind="btn ghost" type="button" onClick={() => setOpen("rename")}>Rename</Button>
+      <Button kind="btn ghost" type="button" onClick={() => setOpen("details")}>
+        Edit details
+      </Button>
+      <Button kind="btn ghost" type="button" onClick={() => setOpen("rename")}>
+        Rename
+      </Button>
       {open === "details" && <DetailsDialog kind={kind} item={item} close={close} done={saved} />}
       {open === "rename" && <RenameDialog kind={kind} item={item} close={close} done={renamed} />}
     </>
@@ -46,7 +50,9 @@ export function TracklistTool({ item, onDone }: Omit<Props, "kind">) {
   };
   return (
     <>
-      <Button kind="link small" type="button" onClick={() => setOpen(true)}>Edit</Button>
+      <Button kind="link small" type="button" onClick={() => setOpen(true)}>
+        Edit
+      </Button>
       {open && <TracklistDialog item={item} close={() => setOpen(false)} done={saved} />}
     </>
   );

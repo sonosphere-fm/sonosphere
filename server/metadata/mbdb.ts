@@ -3,7 +3,9 @@ import type { ListedTrack, MbAlbum, MbArtist, MbTrack } from "./sources";
 
 const url = process.env.MBDB_URL || "";
 const g = globalThis as { __spinMbdb?: postgres.Sql };
-const sql = url ? (g.__spinMbdb ??= postgres(url, { max: 4, idle_timeout: 120, connect_timeout: 5, prepare: false })) : null;
+const sql = url
+  ? (g.__spinMbdb ??= postgres(url, { max: 4, idle_timeout: 120, connect_timeout: 5, prepare: false }))
+  : null;
 
 export const mbdbOn = !!sql;
 const db = () => {
@@ -13,11 +15,7 @@ const db = () => {
 
 // MusicBrainz spells with typographic hyphens and quotes ("Don’t", "Anti‐Hero"), scrobbles don't
 const tidy = (v: string | null) =>
-  (v ?? "")
-    .replace(/[‐‑]/g, "-")
-    .replace(/[‘’ʼ]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/…/g, "...");
+  (v ?? "").replace(/[‐‑]/g, "-").replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...");
 
 export async function artist(name: string): Promise<MbArtist | null> {
   // the name itself before an alias, then whoever has put out more
@@ -33,15 +31,34 @@ export async function artist(name: string): Promise<MbArtist | null> {
 
 const latin = (s: string) => /[a-z]/i.test(s);
 // their own name, unless it's in a script the search wasn't (青葉市子 found by typing "ichiko aoba"): then the alias that matched
-const shownName = (name: string, alias: string | null, typed: string) => (alias && latin(typed) && !latin(name) ? alias : name);
+const shownName = (name: string, alias: string | null, typed: string) =>
+  alias && latin(typed) && !latin(name) ? alias : name;
 
-export type ArtistHit = { mbid: string; name: string; key: string; exact: boolean; viaAlias: boolean; releases: number; spotify: boolean };
+export type ArtistHit = {
+  mbid: string;
+  name: string;
+  key: string;
+  exact: boolean;
+  viaAlias: boolean;
+  releases: number;
+  spotify: boolean;
+};
 
 /** Up to 60 prefix matches, best known first, for server/search/rank.ts to rerank. */
 export async function searchArtists(term: string): Promise<ArtistHit[]> {
   // mbkey() leaves only letters, digits and spaces, so nothing in it is a LIKE wildcard; artist_top lets a
   // two-letter search still find the best known among thousands of names
-  type Row = { id: number; mbid: string; name: string; key: string; alias: string | null; akey: string | null; releases: number; spotify: boolean; k: string };
+  type Row = {
+    id: number;
+    mbid: string;
+    name: string;
+    key: string;
+    alias: string | null;
+    akey: string | null;
+    releases: number;
+    spotify: boolean;
+    k: string;
+  };
   const rows = await db()<Row[]>`
     WITH hits AS (
       (SELECT id, NULL::text AS alias, NULL::text AS akey FROM artist_top WHERE key LIKE mbkey(${term}) || '%' AND length(mbkey(${term})) >= 2 ORDER BY n DESC LIMIT 150)
@@ -57,7 +74,7 @@ export async function searchArtists(term: string): Promise<ArtistHit[]> {
   return rows
     .sort((x, y) => y.releases - x.releases)
     .slice(0, 60)
-    .map(r => {
+    .map((r) => {
       const viaAlias = !r.key.startsWith(k);
       const name = tidy(shownName(r.name, viaAlias || !latin(r.name) ? r.alias : null, term));
       const matchedKey = viaAlias ? r.akey : r.key;
@@ -91,7 +108,12 @@ export async function searchTracks(term: string): Promise<TitleHit[]> {
     JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
     JOIN artist a ON a.id = acn.artist
     ORDER BY h.n DESC`;
-  return rows.map(r => ({ title: tidy(r.title), artist: tidy(r.artist), n: r.n, seconds: Math.round((r.length ?? 0) / 1000) }));
+  return rows.map((r) => ({
+    title: tidy(r.title),
+    artist: tidy(r.artist),
+    n: r.n,
+    seconds: Math.round((r.length ?? 0) / 1000),
+  }));
 }
 
 /** Albums, EPs and singles titled like the search, with how many releases each has had. */
@@ -109,11 +131,12 @@ export async function searchAlbums(term: string): Promise<TitleHit[]> {
     LEFT JOIN release_group_meta m ON m.id = rg.id
     ORDER BY rg.key = mbkey(${term}) DESC, n DESC
     LIMIT 60`;
-  return rows.map(r => ({ title: tidy(r.title), artist: tidy(r.artist), n: r.n, seconds: 0 }));
+  return rows.map((r) => ({ title: tidy(r.title), artist: tidy(r.artist), n: r.n, seconds: 0 }));
 }
 
 export async function spotifyId(mbid: string): Promise<string | null> {
-  const [r] = await db()`SELECT s.spotify FROM artist a JOIN artist_spotify s ON s.artist = a.id WHERE a.gid = ${mbid}::uuid LIMIT 1`;
+  const [r] =
+    await db()`SELECT s.spotify FROM artist a JOIN artist_spotify s ON s.artist = a.id WHERE a.gid = ${mbid}::uuid LIMIT 1`;
   return r?.spotify ?? null;
 }
 
@@ -127,7 +150,15 @@ const ALBUM = `
   JOIN artist_credit_name acn ON acn.artist_credit = rg.artist_credit AND acn.position = 0
   LEFT JOIN release_group_meta m ON m.id = rg.id
   LEFT JOIN rg_type t ON t.id = rg.type`;
-type AlbumRow = { mbid: string; title: string; artist: string; date: string | null; type: string; plain: boolean; releases: number };
+type AlbumRow = {
+  mbid: string;
+  title: string;
+  artist: string;
+  date: string | null;
+  type: string;
+  plain: boolean;
+  releases: number;
+};
 const albumOf = (r: AlbumRow): MbAlbum => ({
   mbid: r.mbid,
   title: tidy(r.title),
@@ -149,12 +180,15 @@ async function orUnfeat<T>(title: string, find: (title: string) => Promise<T | n
   return r ?? (bare && bare !== title ? find(bare) : null);
 }
 
-export const album = (artistName: string, title: string) => orUnfeat(title, t => albumAs(artistName, t));
+export const album = (artistName: string, title: string) => orUnfeat(title, (t) => albumAs(artistName, t));
 async function albumAs(artistName: string, title: string): Promise<MbAlbum | null> {
-  const rows = await db().unsafe<AlbumRow[]>(`${ALBUM}
+  const rows = await db().unsafe<AlbumRow[]>(
+    `${ALBUM}
     JOIN artist a ON a.id = acn.artist
     WHERE rg.key = mbkey($2) AND mbkey($2) <> '' AND (a.key = mbkey($1) OR mbkey(acn.name) = mbkey($1))
-    ORDER BY plain DESC, (t.name = 'Album') DESC, releases DESC, m.date NULLS LAST LIMIT 1`, [artistName, title]);
+    ORDER BY plain DESC, (t.name = 'Album') DESC, releases DESC, m.date NULLS LAST LIMIT 1`,
+    [artistName, title]
+  );
   return rows[0] ? albumOf(rows[0]) : null;
 }
 
@@ -170,16 +204,19 @@ export async function releaseTypes(mbids: string[]): Promise<Map<string, string>
     SELECT rg.gid::text AS mbid, coalesce(t.name, '') AS type
     FROM release_group rg LEFT JOIN rg_type t ON t.id = rg.type
     WHERE rg.gid = ANY(${mbids}::uuid[])`;
-  return new Map(rows.map(r => [r.mbid, r.type]));
+  return new Map(rows.map((r) => [r.mbid, r.type]));
 }
 
 /** Albums and EPs, oldest first. */
 export async function discography(mbid: string): Promise<MbAlbum[]> {
-  const rows = await db().unsafe<AlbumRow[]>(`SELECT * FROM (${ALBUM}
+  const rows = await db().unsafe<AlbumRow[]>(
+    `SELECT * FROM (${ALBUM}
     JOIN artist a ON a.id = acn.artist
     WHERE a.gid = $1::uuid AND t.name IN ('Album', 'EP')) x
-    WHERE plain ORDER BY date NULLS LAST, title LIMIT 150`, [mbid]);
-  return rows.map(albumOf).filter(a => a.title);
+    WHERE plain ORDER BY date NULLS LAST, title LIMIT 150`,
+    [mbid]
+  );
+  return rows.map(albumOf).filter((a) => a.title);
 }
 
 /** The names as MusicBrainz credits them, when the artist has a recording with that title. */
@@ -195,7 +232,7 @@ export async function recorded(artistName: string, title: string): Promise<{ art
   return r ? { artist: tidy(r.artist), title: tidy(r.title) } : null;
 }
 
-export const track = (artistName: string, title: string) => orUnfeat(title, t => trackAs(artistName, t));
+export const track = (artistName: string, title: string) => orUnfeat(title, (t) => trackAs(artistName, t));
 async function trackAs(artistName: string, title: string): Promise<MbTrack | null> {
   type Rec = { id: number; name: string; length: number | null; comment: string; video: boolean; artist: string };
   const recs = await db()<Rec[]>`
@@ -208,35 +245,41 @@ async function trackAs(artistName: string, title: string): Promise<MbTrack | nul
     ORDER BY r.id LIMIT 1500`;
   if (!recs.length) return null;
   // live takes, remixes and the like carry a note ("live, 1994"); the original may too ("explicit", "clean")
-  const studio = recs.filter(r => !r.video && !VARIANT.test(r.comment));
+  const studio = recs.filter((r) => !r.video && !VARIANT.test(r.comment));
   type Appearance = { recording: number; mbid: string; title: string; type: string; date: string | null };
-  const found = studio.length ? await db()<Appearance[]>`
+  const found = studio.length
+    ? await db()<Appearance[]>`
     SELECT t.recording, rg.gid::text AS mbid, rg.name AS title, pt.name AS type, w.date
     FROM track t JOIN medium md ON md.id = t.medium JOIN release rl ON rl.id = md.release
     JOIN release_status st ON st.id = rl.status AND st.name = 'Official'
     JOIN release_group rg ON rg.id = rl.release_group JOIN rg_type pt ON pt.id = rg.type AND pt.name IN ('Album', 'EP', 'Single')
     LEFT JOIN release_when w ON w.release = rl.id
-    WHERE t.recording IN ${db()(studio.map(r => r.id))}
-      AND NOT EXISTS (SELECT 1 FROM rg_secondary s WHERE s.release_group = rg.id)` : [];
+    WHERE t.recording IN ${db()(studio.map((r) => r.id))}
+      AND NOT EXISTS (SELECT 1 FROM rg_secondary s WHERE s.release_group = rg.id)`
+    : [];
   // on official albums, EPs and singles: the first album it came out on, else the first EP, else the single; an
   // album only counts within two years of the song's first release (not a budget collection decades later)
   const rank = (type: string) => (type === "Album" ? 0 : type === "EP" ? 1 : 2);
-  const dated = found.filter(f => f.date).map(f => ({ ...f, year: Number(f.date!.slice(0, 4)) }));
-  const firstYear = Math.min(...dated.map(f => f.year));
+  const dated = found.filter((f) => f.date).map((f) => ({ ...f, year: Number(f.date!.slice(0, 4)) }));
+  const firstYear = Math.min(...dated.map((f) => f.year));
   let best: (typeof dated)[number] | null = null;
   for (const f of dated) {
     if (rank(f.type) < 2 && f.year > firstYear + 2) continue;
-    const better = !best || rank(f.type) < rank(best.type) || (rank(f.type) === rank(best.type) && f.date! < best.date!);
+    const better =
+      !best || rank(f.type) < rank(best.type) || (rank(f.type) === rank(best.type) && f.date! < best.date!);
     if (better) best = f;
   }
-  const rec = (best && studio.find(r => r.id === best.recording)) ?? studio[0] ?? recs[0]!;
-  const seconds = Math.round((rec.length || studio.map(r => r.length || 0).find(n => n > 0) || 0) / 1000);
+  const rec = (best && studio.find((r) => r.id === best.recording)) ?? studio[0] ?? recs[0]!;
+  const seconds = Math.round((rec.length || studio.map((r) => r.length || 0).find((n) => n > 0) || 0) / 1000);
   const name = tidy(rec.artist);
-  const album = best ? { mbid: best.mbid, title: tidy(best.title), artist: name, date: best.date, type: best.type } : null;
+  const album = best
+    ? { mbid: best.mbid, title: tidy(best.title), artist: name, date: best.date, type: best.type }
+    : null;
   return { title: tidy(rec.name), artist: name, seconds, album };
 }
 
-const VARIANT = /\b(live|demo|remix|mix|edit|acoustic|instrumental|karaoke|a ?cappella|unplugged|session|rehearsal|reprise|alternate|alt|take|cover|dub|sped|slowed|nightcore|orchestral|piano)\b/i;
+const VARIANT =
+  /\b(live|demo|remix|mix|edit|acoustic|instrumental|karaoke|a ?cappella|unplugged|session|rehearsal|reprise|alternate|alt|take|cover|dub|sped|slowed|nightcore|orchestral|piano)\b/i;
 
 /** The first official release's tracks, video discs left out. */
 export async function trackList(rgid: string): Promise<ListedTrack[]> {
@@ -252,9 +295,7 @@ export async function trackList(rgid: string): Promise<ListedTrack[]> {
     FROM medium md LEFT JOIN medium_format f ON f.id = md.format JOIN track t ON t.medium = md.id JOIN recording r ON r.id = t.recording
     WHERE md.release = ${rel.id} AND coalesce(f.name, '') !~* 'dvd|blu-ray|video'
     ORDER BY md.position, t.position LIMIT 100`;
-  return rows
-    .map(r => ({ title: tidy(r.name), seconds: Math.round((r.length || 0) / 1000) }))
-    .filter(t => t.title);
+  return rows.map((r) => ({ title: tidy(r.name), seconds: Math.round((r.length || 0) / 1000) })).filter((t) => t.title);
 }
 
 /** Lineup is headliners first. */
@@ -284,10 +325,10 @@ export async function events(from: string, to: string, onlyArtists?: string[]): 
     FROM event_x e
     WHERE e.date BETWEEN ${from} AND ${to} AND e.type IN (1, 2) AND NOT e.cancelled
       ${byArtist}`;
-  return rows.map(r => ({
+  return rows.map((r) => ({
     ...r,
     name: tidy(r.name),
     venue: r.venue && tidy(r.venue),
-    lineup: (r.lineup ?? []).map(a => ({ mbid: a.mbid, name: tidy(a.name) })),
+    lineup: (r.lineup ?? []).map((a) => ({ mbid: a.mbid, name: tidy(a.name) })),
   }));
 }

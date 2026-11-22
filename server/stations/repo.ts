@@ -6,26 +6,35 @@ import { albums, artists, lovedTracks, scrobbles, taggings, tracks } from "../db
 import type { StationTrack } from "../../shared/stations";
 
 const lovedBy = (viewerId: number) =>
-  flag(exists(db.select({ one: sql`1` }).from(lovedTracks)
-    .where(and(eq(lovedTracks.userId, viewerId), eq(lovedTracks.trackId, tracks.id)))));
+  flag(
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(lovedTracks)
+        .where(and(eq(lovedTracks.userId, viewerId), eq(lovedTracks.trackId, tracks.id)))
+    )
+  );
 
 // Sampling plays rather than tracks means what they play most turns up most.
 export function randomPlays(userId: number, viewerId: number, sample: number): Promise<StationTrack[]> {
-  const plays = db.select({ trackId: scrobbles.trackId }).from(scrobbles)
+  const plays = db
+    .select({ trackId: scrobbles.trackId })
+    .from(scrobbles)
     .where(eq(scrobbles.userId, userId))
     .orderBy(randomOrder())
     .limit(sample)
     .as("p");
   const picked = db.selectDistinct({ trackId: plays.trackId }).from(plays).as("x");
-  return db.select({
-    id: tracks.id,
-    title: tracks.title,
-    duration: tracks.duration,
-    artist: artists.name,
-    album: albums.title,
-    image: trackImage(),
-    loved: lovedBy(viewerId),
-  })
+  return db
+    .select({
+      id: tracks.id,
+      title: tracks.title,
+      duration: tracks.duration,
+      artist: artists.name,
+      album: albums.title,
+      image: trackImage(),
+      loved: lovedBy(viewerId),
+    })
     .from(picked)
     .innerJoin(tracks, eq(tracks.id, picked.trackId))
     .innerJoin(artists, eq(artists.id, tracks.artistId))
@@ -47,10 +56,12 @@ export async function popularTracks(artistIds: number[], viewerId: number, pool:
 }
 
 export async function taggedArtists(tagId: number, limit: number): Promise<number[]> {
-  const rows = await db.select({ id: taggings.itemId }).from(taggings)
+  const rows = await db
+    .select({ id: taggings.itemId })
+    .from(taggings)
     .where(and(eq(taggings.tagId, tagId), eq(taggings.itemType, "artist")))
     .groupBy(taggings.itemId)
     .orderBy(desc(sql`SUM(${taggings.weight})`))
     .limit(limit);
-  return rows.map(r => r.id);
+  return rows.map((r) => r.id);
 }

@@ -27,15 +27,19 @@ export const adminUrl = (name: string) => `/admin/users/${encodeURIComponent(nam
 /** Sets several search params in one update. Any change but paging goes back to page 1. */
 export function useQuery() {
   const [sp, setSp] = useSearchParams();
-  const set = (patch: Record<string, string>) => setSp(prev => {
-    const n = new URLSearchParams(prev);
-    for (const [k, v] of Object.entries(patch)) {
-      if (v) n.set(k, v);
-      else n.delete(k);
-    }
-    if (!("page" in patch)) n.delete("page");
-    return n;
-  }, { preventScrollReset: true });
+  const set = (patch: Record<string, string>) =>
+    setSp(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v) n.set(k, v);
+          else n.delete(k);
+        }
+        if (!("page" in patch)) n.delete("page");
+        return n;
+      },
+      { preventScrollReset: true }
+    );
   return [sp, set] as const;
 }
 export function useRole(): Role {
@@ -79,19 +83,35 @@ function Confirm({ ask, close }: { ask: Ask; close: () => void }) {
         {ask.typed && (
           <label>
             Type <code className={CODE}>{ask.typed}</code> to confirm
-            <Input value={typed} onChange={e => setTyped(e.target.value)} aria-label="Confirmation" autoComplete="off" autoFocus />
+            <Input
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              aria-label="Confirmation"
+              autoComplete="off"
+              autoFocus
+            />
           </label>
         )}
         {ask.note !== false && (
           <label>
             {ask.note || "Note for the audit log"} <span className="muted small">Optional</span>
-            <Textarea rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={1000} aria-label="Note" />
+            <Textarea
+              rows={2}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={1000}
+              aria-label="Note"
+            />
           </label>
         )}
         {act.note}
         <div className="row">
-          <Button kind={ask.danger ? "btn danger" : "btn"} loading={act.busy} disabled={blocked}>{ask.action}</Button>
-          <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+          <Button kind={ask.danger ? "btn danger" : "btn"} loading={act.busy} disabled={blocked}>
+            {ask.action}
+          </Button>
+          <Button kind="btn ghost" type="button" onClick={close}>
+            Cancel
+          </Button>
         </div>
       </form>
     </Modal>
@@ -114,7 +134,11 @@ export function useAction2() {
       setBusy(false);
     }
   };
-  const note = error ? <p className="form-error" role="alert">{error}</p> : null;
+  const note = error ? (
+    <p className="form-error" role="alert">
+      {error}
+    </p>
+  ) : null;
   return { busy, run, note };
 }
 
@@ -128,9 +152,11 @@ export function useFlash() {
       setMsg({ ok: false, text: errorText(e) });
     }
   };
-  const note = msg
-    ? <p className={msg.ok ? "form-ok" : "form-error"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>
-    : null;
+  const note = msg ? (
+    <p className={msg.ok ? "form-ok" : "form-error"} role={msg.ok ? "status" : "alert"}>
+      {msg.text}
+    </p>
+  ) : null;
   return { run, set: setMsg, note };
 }
 export const FLAG: Record<string, string> = {
@@ -143,32 +169,29 @@ export const cx = (...parts: string[]) => parts.join(" ");
 
 export const COUNT = cx(
   "bg-site-accent text-site-on-accent text-[11px] font-bold leading-none",
-  "py-[3px] px-1.5 rounded-[9px]",
+  "py-[3px] px-1.5 rounded-[9px]"
 );
 export const NOTE = "block text-site-ink-2 italic mt-0.5";
 export const RED = "text-site-accent-dark";
 export const TYPE_LABEL = "text-[12px] font-semibold uppercase tracking-[.05em] text-site-muted";
 export const TOOLBAR = cx(
   "toolbar items-center",
-  "[&_.astryx-selector]:min-h-10 [&_.astryx-selector]:text-[15px] [&_.astryx-selector]:font-normal",
+  "[&_.astryx-selector]:min-h-10 [&_.astryx-selector]:text-[15px] [&_.astryx-selector]:font-normal"
 );
 export const TILES = "stats boxed [&_.stat-value]:text-[22px]";
 export const FACTS = cx(
   "grid grid-cols-[max-content_minmax(0,1fr)] gap-x-[14px] gap-y-1.5 m-0 text-[14px]",
-  "[&_dt]:text-site-muted [&_dt]:font-semibold [&_dd]:m-0",
+  "[&_dt]:text-site-muted [&_dt]:font-semibold [&_dd]:m-0"
 );
 export const WHO = "flex items-center gap-[10px]";
 export const USER_HEAD = "flex items-center gap-4 mb-[18px] flex-wrap";
 export const USER_HEAD_TITLE = "m-0 text-[26px]";
 export const USER_HEAD_SUB = "m-[2px_0_0]";
 export const PEOPLE = "list-none m-0 p-0";
-export const PERSON = cx(
-  "flex items-center gap-[10px] py-[7px]",
-  "border-b border-b-site-line last:[border-bottom:0]",
-);
+export const PERSON = cx("flex items-center gap-[10px] py-[7px]", "border-b border-b-site-line last:[border-bottom:0]");
 export const QUOTE = cx(
   "m-[0_0_10px] py-2 px-3 border-l-[3px] border-l-site-line bg-site-panel",
-  "whitespace-pre-wrap wrap-anywhere max-h-[200px] overflow-auto",
+  "whitespace-pre-wrap wrap-anywhere max-h-[200px] overflow-auto"
 );
 export const PICKED_BG = "bg-[light-dark(#fff7f6,#1f2659)]";
 export const CHECK = "check items-center text-[14px] m-0";
@@ -177,11 +200,11 @@ export const LINKISH = `${BARE_BUTTON} text-site-link text-left hover:underline`
 
 const FIELD_MIN = cx(
   "[&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px]",
-  "[&_.astryx-text-input]:min-w-[170px]",
+  "[&_.astryx-text-input]:min-w-[170px]"
 );
 export const FILTERBAR = cx(
   "flex flex-wrap items-center gap-[10px] mb-[14px] max-[860px]:*:flex-[1_1_160px]",
-  FIELD_MIN,
+  FIELD_MIN
 );
 const SEARCH_BOX = "[&_.search-field]:h-10 [&_.search-go]:w-[42px] [&_.search-go]:text-[16px]";
 export const SEARCH = `${SEARCH_BOX} min-w-[260px] flex-[0_1_340px] max-[860px]:min-w-0`;
@@ -192,7 +215,7 @@ export const LIST = `${LIST_BASE} [&>li]:py-3`;
 export const COMPACT_LIST = cx(
   LIST_BASE,
   "[&>li]:flex [&>li]:justify-between [&>li]:gap-x-[14px] [&>li]:gap-y-1.5 [&>li]:flex-wrap",
-  "[&>li]:py-2 [&>li]:text-[14px]",
+  "[&>li]:py-2 [&>li]:text-[14px]"
 );
 
 export const SCROLL = "overflow-x-auto mb-[14px]";
@@ -201,7 +224,7 @@ const TABLE_BASE = cx(
   "[&_th]:text-left [&_th]:text-[12px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em]",
   "[&_th]:text-site-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-b-site-line",
   "[&_th]:whitespace-nowrap [&_td]:border-b [&_td]:border-b-site-line",
-  "[&_.num]:text-right [&_.num]:tabular-nums",
+  "[&_.num]:text-right [&_.num]:tabular-nums"
 );
 export const TABLE = `${TABLE_BASE} [&_td]:p-2 [&_td]:align-middle`;
 export const LOG_TABLE = `${TABLE_BASE} [&_td]:p-2 [&_td]:align-top`;
@@ -209,7 +232,7 @@ export const COMPACT_TABLE = `${TABLE_BASE} [&_td]:p-1.5 [&_td]:align-top`;
 export const PICKED_ROW = "[&_td]:bg-[light-dark(#fff7f6,#1f2659)]";
 const SORT_BUTTON = cx(
   BARE_BUTTON,
-  "[color:inherit] [text-transform:inherit] tracking-[inherit] [&_.ico]:ml-1 [&_.ico]:size-[.85em]",
+  "[color:inherit] [text-transform:inherit] tracking-[inherit] [&_.ico]:ml-1 [&_.ico]:size-[.85em]"
 );
 export const sortButton = (on: boolean) => cx(SORT_BUTTON, on ? "text-site-ink" : "hover:text-site-ink");
 
@@ -244,7 +267,11 @@ const ACT = `inline-block py-0.5 [border:0] whitespace-nowrap ${TAG}`;
 export const act = (group: string) => `${ACT} ${ACT_TONE[group] ?? PLAIN_TONE}`;
 export const actButton = (group: string) => `${act(group)} cursor-pointer hover:brightness-95`;
 
-export function StatusBadges({ u }: { u: { role: Role; banned: boolean; suspended: boolean; unconfirmed?: boolean; probation?: boolean } }) {
+export function StatusBadges({
+  u,
+}: {
+  u: { role: Role; banned: boolean; suspended: boolean; unconfirmed?: boolean; probation?: boolean };
+}) {
   return (
     <>
       {u.role !== "user" && <Badge tone={u.role}>{ROLE[u.role]}</Badge>}

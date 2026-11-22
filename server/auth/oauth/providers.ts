@@ -67,7 +67,7 @@ const ALL: Provider[] = [
   },
 ];
 
-export const PROVIDERS = ALL.filter(p => p.clientId && p.clientSecret);
-export const providerById = (id: string) => PROVIDERS.find(p => p.id === id) ?? null;
+export const PROVIDERS = ALL.filter((p) => p.clientId && p.clientSecret);
+export const providerById = (id: string) => PROVIDERS.find((p) => p.id === id) ?? null;
 // Looks in ALL so accounts still linked to a provider since turned off get its label.
-export const providerLabel = (id: string) => ALL.find(p => p.id === id)?.label ?? id;
+export const providerLabel = (id: string) => ALL.find((p) => p.id === id)?.label ?? id;

@@ -12,7 +12,10 @@ import { latestWiki } from "../wiki/repo";
 import * as repo from "./repo";
 
 export class ApiError extends Error {
-  constructor(public code: number, message: string) {
+  constructor(
+    public code: number,
+    message: string
+  ) {
     super(message);
   }
 }
@@ -57,9 +60,9 @@ const UNSIGNED = ["format", "callback", "api_sig"];
 
 function signed({ p, app }: Call): void {
   const base = Object.keys(p)
-    .filter(k => !UNSIGNED.includes(k))
+    .filter((k) => !UNSIGNED.includes(k))
     .sort()
-    .map(k => k + String(p[k]))
+    .map((k) => k + String(p[k]))
     .join("");
   if (md5(base + app.secret) !== String(p.api_sig || "").toLowerCase()) fail(13, "Invalid method signature supplied");
 }
@@ -77,7 +80,8 @@ async function newSession(c: Call, userId: number): Promise<Reply> {
   return { session: { name: user.username, key: sk, subscriber: 0 } };
 }
 
-const artistOf = async (p: Params) => (await findArtist(text(p.artist))) ?? fail(6, "The artist you supplied could not be found");
+const artistOf = async (p: Params) =>
+  (await findArtist(text(p.artist))) ?? fail(6, "The artist you supplied could not be found");
 const trackOf = async (p: Params) => (await findTrack(text(p.artist), text(p.track))) ?? fail(6, "Track not found");
 const albumOf = async (p: Params) => (await findAlbum(text(p.artist), text(p.album))) ?? fail(6, "Album not found");
 const tagOf = async (p: Params) => (await findTag(text(p.tag))) ?? fail(6, "Tag not found");
@@ -95,7 +99,7 @@ const shut = (u: User) => (u.privateListening ? { items: [], total: 0 } : undefi
 const enc = (s: string) => encodeURIComponent(s).replace(/%20/g, "+");
 
 function img(id: string | null, origin: string) {
-  return ["small", "medium", "large", "extralarge"].map(size => {
+  return ["small", "medium", "large", "extralarge"].map((size) => {
     const small = size === "small" || size === "medium" ? "?s=small" : "";
     return { "#text": id ? `${origin}/api/image/${id}${small}` : "", size };
   });
@@ -117,7 +121,14 @@ const shortDate = (seconds: number) => new Date(seconds * 1000).toUTCString().sl
 const longDate = (seconds: number) => new Date(seconds * 1000).toUTCString();
 
 type ArtistRow = { name: string; image: string | null; playcount?: number; listeners?: number };
-type TrackRow = { title: string; duration: number; artist: string; image: string | null; playcount?: number; listeners?: number };
+type TrackRow = {
+  title: string;
+  duration: number;
+  artist: string;
+  image: string | null;
+  playcount?: number;
+  listeners?: number;
+};
 type AlbumRow = { title: string; artist: string; image: string | null; playcount?: number };
 type PlayRow = { title: string; artist: string; album: string | null; image: string | null };
 
@@ -171,7 +182,7 @@ const playShape = (c: Call, t: PlayRow, when: Reply) => ({
 
 async function tagsShape(c: Call, type: string, id: number) {
   const rows = await topTags(type, id, 50);
-  return { tag: rows.map(t => ({ name: t.name, count: t.count, url: tagUrl(c, t.name) })) };
+  return { tag: rows.map((t) => ({ name: t.name, count: t.count, url: tagUrl(c, t.name) })) };
 }
 
 function wikiShape(wiki: { content: string; createdAt: number } | null) {
@@ -188,7 +199,7 @@ async function tagMutation(c: Call, type: string, id: number, remove: boolean): 
   } else {
     const names = String(c.p.tags || "")
       .split(",")
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean)
       .slice(0, 10);
     await addTags(uid, type, id, names);
@@ -201,13 +212,13 @@ function searchResults(query: unknown, matches: Reply) {
 }
 
 const methods: Record<string, Method> = {
-  "auth.gettoken": async c => {
+  "auth.gettoken": async (c) => {
     signed(c);
     const token = rid(16);
     await repo.createToken(token, c.app.id);
     return { token };
   },
-  "auth.getsession": async c => {
+  "auth.getsession": async (c) => {
     signed(c);
     const t = (await repo.findToken(key(c.p.token), c.app.id)) ?? fail(4, "Invalid authentication token supplied");
     if (!t.userId) fail(14, "This token has not been authorized");
@@ -215,7 +226,7 @@ const methods: Record<string, Method> = {
     await repo.deleteToken(key(c.p.token));
     return newSession(c, t.userId);
   },
-  "auth.getmobilesession": async c => {
+  "auth.getmobilesession": async (c) => {
     signed(c);
     const u = await findByName(text(c.p.username));
     const ok = u && !u.banned && !!u.passwordHash && (await Bun.password.verify(text(c.p.password), u.passwordHash));
@@ -223,14 +234,15 @@ const methods: Record<string, Method> = {
     return newSession(c, u.id);
   },
 
-  "track.scrobble": async c => {
+  "track.scrobble": async (c) => {
     const uid = await session(c);
     const p = c.p;
-    const idx = p.artist !== undefined
-      ? [""]
-      : Array.from({ length: 50 }, (_, i) => `[${i}]`).filter(i => p["artist" + i] !== undefined);
+    const idx =
+      p.artist !== undefined
+        ? [""]
+        : Array.from({ length: 50 }, (_, i) => `[${i}]`).filter((i) => p["artist" + i] !== undefined);
     if (!idx.length) fail(6, "Invalid parameters - Your request is missing a required parameter");
-    const inputs = idx.map(i => ({
+    const inputs = idx.map((i) => ({
       artist: p["artist" + i],
       track: p["track" + i],
       album: p["album" + i],
@@ -252,7 +264,7 @@ const methods: Record<string, Method> = {
         ignoredMessage: { "#text": refused ?? "", code: refused === null ? "0" : "1" },
       };
     });
-    const accepted = out.filter(o => o.ignoredMessage.code === "0").length;
+    const accepted = out.filter((o) => o.ignoredMessage.code === "0").length;
     return {
       scrobbles: {
         scrobble: out.length === 1 ? out[0] : out,
@@ -260,7 +272,7 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "track.updatenowplaying": async c => {
+  "track.updatenowplaying": async (c) => {
     const uid = await session(c);
     const p = c.p;
     const saved = await setNowPlaying(uid, { artist: p.artist, track: p.track, album: p.album, duration: p.duration });
@@ -274,27 +286,29 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "track.love": async c => {
+  "track.love": async (c) => {
     const uid = await session(c);
     const p = c.p;
-    const r = (await resolve({ artist: p.artist, track: p.track, album: p.album, duration: p.duration })) ?? fail(6, "Invalid parameters");
+    const r =
+      (await resolve({ artist: p.artist, track: p.track, album: p.album, duration: p.duration })) ??
+      fail(6, "Invalid parameters");
     await setLoved(uid, r.trackId, true);
     return {};
   },
-  "track.unlove": async c => {
+  "track.unlove": async (c) => {
     const uid = await session(c);
     const t = await trackOf(c.p);
     await setLoved(uid, t.id, false);
     return {};
   },
-  "artist.addtags": async c => tagMutation(c, "artist", (await artistOf(c.p)).id, false),
-  "artist.removetag": async c => tagMutation(c, "artist", (await artistOf(c.p)).id, true),
-  "album.addtags": async c => tagMutation(c, "album", (await albumOf(c.p)).id, false),
-  "album.removetag": async c => tagMutation(c, "album", (await albumOf(c.p)).id, true),
-  "track.addtags": async c => tagMutation(c, "track", (await trackOf(c.p)).id, false),
-  "track.removetag": async c => tagMutation(c, "track", (await trackOf(c.p)).id, true),
+  "artist.addtags": async (c) => tagMutation(c, "artist", (await artistOf(c.p)).id, false),
+  "artist.removetag": async (c) => tagMutation(c, "artist", (await artistOf(c.p)).id, true),
+  "album.addtags": async (c) => tagMutation(c, "album", (await albumOf(c.p)).id, false),
+  "album.removetag": async (c) => tagMutation(c, "album", (await albumOf(c.p)).id, true),
+  "track.addtags": async (c) => tagMutation(c, "track", (await trackOf(c.p)).id, false),
+  "track.removetag": async (c) => tagMutation(c, "track", (await trackOf(c.p)).id, true),
 
-  "user.getinfo": async c => {
+  "user.getinfo": async (c) => {
     const me = c.p.sk ? await session(c) : undefined;
     const u = await userOf(c.p.user, me);
     const hidden = u.privateListening && u.id !== me;
@@ -316,7 +330,7 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "user.getrecenttracks": async c => {
+  "user.getrecenttracks": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = period(c.p, "overall");
     if (u.hideRecent || u.privateListening) {
@@ -324,41 +338,58 @@ const methods: Record<string, Method> = {
     }
     const r = await recent({ userId: u.id, from, to }, c.pg.limit, c.pg.offset);
     const np = c.pg.page === 1 ? await nowPlaying(u.id) : null;
-    const plays = r.items.map(t => playShape(c, t, { date: { uts: String(t.playedAt), "#text": shortDate(t.playedAt) } }));
+    const plays = r.items.map((t) =>
+      playShape(c, t, { date: { uts: String(t.playedAt), "#text": shortDate(t.playedAt) } })
+    );
     const track = np ? [playShape(c, np, { "@attr": { nowplaying: "true" } }), ...plays] : plays;
     return { recenttracks: { track, "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
-  "user.gettopartists": async c => {
+  "user.gettopartists": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = period(c.p);
-    const r = shut(u) ?? await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
-    return { topartists: { artist: ranked(r.items.map(artistShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
+    const r = shut(u) ?? (await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset));
+    return {
+      topartists: {
+        artist: ranked(r.items.map(artistShape(c)), c.pg),
+        "@attr": attr({ user: u.username }, c.pg, r.total),
+      },
+    };
   },
-  "user.gettopalbums": async c => {
+  "user.gettopalbums": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = period(c.p);
-    const r = shut(u) ?? await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
-    return { topalbums: { album: ranked(r.items.map(albumShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
+    const r = shut(u) ?? (await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset));
+    return {
+      topalbums: {
+        album: ranked(r.items.map(albumShape(c)), c.pg),
+        "@attr": attr({ user: u.username }, c.pg, r.total),
+      },
+    };
   },
-  "user.gettoptracks": async c => {
+  "user.gettoptracks": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = period(c.p);
-    const r = shut(u) ?? await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset);
-    return { toptracks: { track: ranked(r.items.map(trackShape(c)), c.pg), "@attr": attr({ user: u.username }, c.pg, r.total) } };
+    const r = shut(u) ?? (await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset));
+    return {
+      toptracks: {
+        track: ranked(r.items.map(trackShape(c)), c.pg),
+        "@attr": attr({ user: u.username }, c.pg, r.total),
+      },
+    };
   },
-  "user.getlovedtracks": async c => {
+  "user.getlovedtracks": async (c) => {
     const u = await userOf(c.p.user);
     const hidden = !!shut(u);
     const total = hidden ? 0 : await lovedCount(u.id);
     const rows = hidden ? [] : await repo.lovedPage(u.id, c.pg.limit, c.pg.offset);
-    const track = rows.map(t => ({ ...trackShape(c)(t), date: { uts: String(t.at), "#text": shortDate(t.at) } }));
+    const track = rows.map((t) => ({ ...trackShape(c)(t), date: { uts: String(t.at), "#text": shortDate(t.at) } }));
     return { lovedtracks: { track, "@attr": attr({ user: u.username }, c.pg, total) } };
   },
-  "user.getfriends": async c => {
+  "user.getfriends": async (c) => {
     const u = await userOf(c.p.user);
     const total = await followingCount(u.id);
     const rows = await repo.friendsPage(u.id, c.pg.limit, c.pg.offset);
-    const user = rows.map(f => ({
+    const user = rows.map((f) => ({
       name: f.username,
       realname: f.realname,
       country: f.country,
@@ -368,13 +399,13 @@ const methods: Record<string, Method> = {
     }));
     return { friends: { user, "@attr": attr({ user: u.username }, c.pg, total) } };
   },
-  "user.gettoptags": async c => {
+  "user.gettoptags": async (c) => {
     const u = await userOf(c.p.user);
     const rows = await repo.userTopTags(u.id, c.pg.limit);
-    return { toptags: { tag: rows.map(t => ({ name: t.name, count: String(t.count), url: tagUrl(c, t.name) })) } };
+    return { toptags: { tag: rows.map((t) => ({ name: t.name, count: String(t.count), url: tagUrl(c, t.name) })) } };
   },
 
-  "artist.getinfo": async c => {
+  "artist.getinfo": async (c) => {
     const a = await artistOf(c.p);
     const n = await counts({ artistId: a.id });
     const wiki = await latestWiki("artist", a.id);
@@ -384,7 +415,11 @@ const methods: Record<string, Method> = {
       const theirs = await counts({ artistId: a.id, userId: listener.id });
       mine = { userplaycount: String(theirs.playcount) };
     }
-    const similar = (await similarArtists(a.id, 5)).map(s => ({ name: s.name, url: artistUrl(c, s.name), image: img(s.image, c.origin) }));
+    const similar = (await similarArtists(a.id, 5)).map((s) => ({
+      name: s.name,
+      url: artistUrl(c, s.name),
+      image: img(s.image, c.origin),
+    }));
     const content = wiki?.content || "";
     return {
       artist: {
@@ -401,27 +436,29 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "artist.gettoptracks": async c => {
+  "artist.gettoptracks": async (c) => {
     const a = await artistOf(c.p);
     const r = await top("tracks", { artistId: a.id, global: true }, c.pg.limit, c.pg.offset);
-    return { toptracks: { track: ranked(r.items.map(trackShape(c)), c.pg), "@attr": attr({ artist: a.name }, c.pg, r.total) } };
+    return {
+      toptracks: { track: ranked(r.items.map(trackShape(c)), c.pg), "@attr": attr({ artist: a.name }, c.pg, r.total) },
+    };
   },
-  "artist.gettopalbums": async c => {
+  "artist.gettopalbums": async (c) => {
     const a = await artistOf(c.p);
     const r = await top("albums", { artistId: a.id, global: true }, c.pg.limit, c.pg.offset);
     return { topalbums: { album: r.items.map(albumShape(c)), "@attr": attr({ artist: a.name }, c.pg, r.total) } };
   },
-  "artist.getsimilar": async c => {
+  "artist.getsimilar": async (c) => {
     const a = await artistOf(c.p);
     const similar = await similarArtists(a.id, Math.min(100, c.pg.limit));
-    const artist = similar.map(s => ({ ...artistShape(c)(s), match: String(Number(s.match).toFixed(6)) }));
+    const artist = similar.map((s) => ({ ...artistShape(c)(s), match: String(Number(s.match).toFixed(6)) }));
     return { similarartists: { artist, "@attr": { artist: a.name } } };
   },
-  "artist.gettoptags": async c => {
+  "artist.gettoptags": async (c) => {
     const a = await artistOf(c.p);
     return { toptags: { ...(await tagsShape(c, "artist", a.id)), "@attr": { artist: a.name } } };
   },
-  "artist.search": async c => {
+  "artist.search": async (c) => {
     const pattern = `%${norm(text(c.p.artist))}%`;
     const rows = await repo.searchArtists(pattern, c.pg.limit, c.pg.offset);
     return {
@@ -434,12 +471,12 @@ const methods: Record<string, Method> = {
     };
   },
 
-  "album.getinfo": async c => {
+  "album.getinfo": async (c) => {
     const al = await albumOf(c.p);
     const n = await counts({ albumId: al.id });
     const wiki = await latestWiki("album", al.id);
     const list = await repo.albumTrackList(al.id);
-    const track = list.map(t => ({
+    const track = list.map((t) => ({
       name: t.title,
       duration: t.duration,
       url: trackUrl(c, al.artist, t.title),
@@ -461,14 +498,19 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "album.gettoptags": async c => {
+  "album.gettoptags": async (c) => {
     const al = await albumOf(c.p);
     return { toptags: { ...(await tagsShape(c, "album", al.id)), "@attr": { artist: al.artist, album: al.title } } };
   },
-  "album.search": async c => {
+  "album.search": async (c) => {
     const pattern = `%${norm(text(c.p.album))}%`;
     const rows = await repo.searchAlbums(pattern, c.pg.limit, c.pg.offset);
-    const album = rows.map(a => ({ name: a.title, artist: a.artist, url: albumUrl(c, a.artist, a.title), image: img(a.image, c.origin) }));
+    const album = rows.map((a) => ({
+      name: a.title,
+      artist: a.artist,
+      url: albumUrl(c, a.artist, a.title),
+      image: img(a.image, c.origin),
+    }));
     return {
       results: searchResults(c.p.album, {
         "opensearch:totalResults": String(await repo.countAlbums(pattern)),
@@ -477,7 +519,7 @@ const methods: Record<string, Method> = {
     };
   },
 
-  "track.getinfo": async c => {
+  "track.getinfo": async (c) => {
     const t = await trackOf(c.p);
     const n = await counts({ trackId: t.id });
     const wiki = await latestWiki("track", t.id);
@@ -504,20 +546,20 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "track.getsimilar": async c => {
+  "track.getsimilar": async (c) => {
     const t = await trackOf(c.p);
     const similar = await similarTracks(t.id, t.artistId, 0, Math.min(50, c.pg.limit));
     return { similartracks: { track: similar.map(trackShape(c)), "@attr": { artist: t.artist } } };
   },
-  "track.gettoptags": async c => {
+  "track.gettoptags": async (c) => {
     const t = await trackOf(c.p);
     return { toptags: { ...(await tagsShape(c, "track", t.id)), "@attr": { artist: t.artist, track: t.title } } };
   },
-  "track.search": async c => {
+  "track.search": async (c) => {
     const pattern = `%${norm(text(c.p.track))}%`;
     const artist = c.p.artist ? norm(text(c.p.artist)) : null;
     const rows = await repo.searchTracks(pattern, artist, c.pg.limit, c.pg.offset);
-    const track = rows.map(t => ({
+    const track = rows.map((t) => ({
       name: t.title,
       artist: t.artist,
       url: trackUrl(c, t.artist, t.title),
@@ -527,7 +569,7 @@ const methods: Record<string, Method> = {
     return { results: searchResults(c.p.track, { trackmatches: { track } }) };
   },
 
-  "tag.getinfo": async c => {
+  "tag.getinfo": async (c) => {
     const g = await tagOf(c.p);
     const wiki = await latestWiki("tag", g.id);
     const content = wiki?.content || "";
@@ -540,41 +582,48 @@ const methods: Record<string, Method> = {
       },
     };
   },
-  "tag.gettopartists": async c => {
+  "tag.gettopartists": async (c) => {
     const g = await tagOf(c.p);
     const rows = await repo.tagTopArtists(g.id, c.pg.limit, c.pg.offset);
-    const artist = rows.map(a => artistShape(c)({ name: a.name, image: a.image }));
+    const artist = rows.map((a) => artistShape(c)({ name: a.name, image: a.image }));
     return { topartists: { artist: ranked(artist, c.pg), "@attr": { tag: g.name } } };
   },
-  "tag.gettoptracks": async c => {
+  "tag.gettoptracks": async (c) => {
     const g = await tagOf(c.p);
     const artistIds = await repo.taggedArtistIds(g.id);
     const r = await top("tracks", { artistIds, global: true }, c.pg.limit, c.pg.offset);
     return { tracks: { track: ranked(r.items.map(trackShape(c)), c.pg), "@attr": { tag: g.name } } };
   },
-  "tag.gettopalbums": async c => {
+  "tag.gettopalbums": async (c) => {
     const g = await tagOf(c.p);
     const artistIds = await repo.taggedArtistIds(g.id);
     const r = await top("albums", { artistIds, global: true }, c.pg.limit, c.pg.offset);
     return { albums: { album: ranked(r.items.map(albumShape(c)), c.pg), "@attr": { tag: g.name } } };
   },
-  "chart.gettopartists": async c => {
+  "chart.gettopartists": async (c) => {
     const r = await top("artists", { global: true }, c.pg.limit, c.pg.offset);
     return { artists: { artist: r.items.map(artistShape(c)), "@attr": attr({}, c.pg, r.total) } };
   },
-  "chart.gettoptracks": async c => {
+  "chart.gettoptracks": async (c) => {
     const r = await top("tracks", { global: true }, c.pg.limit, c.pg.offset);
     return { tracks: { track: r.items.map(trackShape(c)), "@attr": attr({}, c.pg, r.total) } };
   },
-  "chart.gettoptags": async c => {
+  "chart.gettoptags": async (c) => {
     const rows = await repo.chartTopTags(c.pg.limit, c.pg.offset);
-    const tag = rows.map(t => ({ name: t.name, url: tagUrl(c, t.name), reach: String(t.reach), taggings: String(t.taggings) }));
+    const tag = rows.map((t) => ({
+      name: t.name,
+      url: tagUrl(c, t.name),
+      reach: String(t.reach),
+      taggings: String(t.taggings),
+    }));
     return { tags: { tag } };
   },
 };
 
 export async function call(p: Params, origin: string): Promise<Reply> {
-  const app = (await repo.appByKey(key(p.api_key))) ?? fail(10, "Invalid API key - You must be granted a valid key by this service");
+  const app =
+    (await repo.appByKey(key(p.api_key))) ??
+    fail(10, "Invalid API key - You must be granted a valid key by this service");
   const name = String(p.method || "").toLowerCase();
   const method = Object.hasOwn(methods, name) ? methods[name] : undefined;
   if (!method) fail(3, "Invalid Method - No method with that name in this package");

@@ -22,16 +22,17 @@ const inStatus = (status: ReportStatus): SQL | undefined => (status === "all" ? 
 export async function listReports(
   f: ReportFilter,
   limit: number,
-  offset: number,
+  offset: number
 ): Promise<{ rows: (ReportRow & { reporter: string | null; resolver: string | null })[]; total: number }> {
   const reporter = alias(users, "reporter");
   const resolver = alias(users, "resolver");
   const where = and(
     inStatus(f.status),
     f.type ? eq(reports.targetType, f.type) : undefined,
-    f.reason ? eq(reports.reason, f.reason) : undefined,
+    f.reason ? eq(reports.reason, f.reason) : undefined
   );
-  const rows = await db.select({ report: reports, reporter: reporter.username, resolver: resolver.username })
+  const rows = await db
+    .select({ report: reports, reporter: reporter.username, resolver: resolver.username })
     .from(reports)
     .leftJoin(reporter, eq(reporter.id, reports.reporterId))
     .leftJoin(resolver, eq(resolver.id, reports.resolvedBy))
@@ -40,7 +41,7 @@ export async function listReports(
     .limit(limit)
     .offset(offset);
   return {
-    rows: rows.map(r => ({ ...r.report, reporter: r.reporter, resolver: r.resolver })),
+    rows: rows.map((r) => ({ ...r.report, reporter: r.reporter, resolver: r.resolver })),
     total: await db.$count(reports, where),
   };
 }
@@ -48,22 +49,27 @@ export async function listReports(
 export async function facet(status: ReportStatus, by: "type" | "reason"): Promise<Record<string, number>> {
   const column = by === "type" ? reports.targetType : reports.reason;
   const rows = await db.select({ k: column, c: count() }).from(reports).where(inStatus(status)).groupBy(column);
-  return Object.fromEntries(rows.map(r => [r.k, r.c]));
+  return Object.fromEntries(rows.map((r) => [r.k, r.c]));
 }
 
 export const openCount = (): Promise<number> => db.$count(reports, eq(reports.status, "open"));
 
 export const otherOpen = (r: ReportRow): Promise<number> =>
-  db.$count(reports, and(
-    eq(reports.status, "open"),
-    eq(reports.targetType, r.targetType),
-    eq(reports.targetId, r.targetId),
-    ne(reports.id, r.id),
-  ));
+  db.$count(
+    reports,
+    and(
+      eq(reports.status, "open"),
+      eq(reports.targetType, r.targetType),
+      eq(reports.targetId, r.targetId),
+      ne(reports.id, r.id)
+    )
+  );
 
 // A removed direct message still exists for staff.
 export async function messageRemoved(id: number): Promise<boolean> {
-  const row = await first(db.select({ deletedAt: dmMessages.deletedAt }).from(dmMessages).where(eq(dmMessages.id, id)).limit(1));
+  const row = await first(
+    db.select({ deletedAt: dmMessages.deletedAt }).from(dmMessages).where(eq(dmMessages.id, id)).limit(1)
+  );
   return !!row?.deletedAt;
 }
 
@@ -80,7 +86,15 @@ const OUTCOME: Record<Decision, string> = {
 
 // Closes every open report about the same thing and returns how many. A removed direct message is pushed onto
 // `removed` so both people's open tabs can be told once the transaction commits.
-async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: string, configured: string[], removed: (Removed | GroupRemoved)[]): Promise<number> {
+async function decideTx(
+  tx: Tx,
+  me: User,
+  r: ReportRow,
+  action: Decision,
+  why: string,
+  configured: string[],
+  removed: (Removed | GroupRemoved)[]
+): Promise<number> {
   const t = await reportTargetTx(tx, r.targetType, r.targetId);
   let author: User | null = null;
   if (t?.authorId) {
@@ -115,7 +129,8 @@ async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: s
         note: why || `From report #${r.id}`,
       });
     }
-    if (r.targetType === "user" && action === "remove") bad("A profile can't be removed: suspend the account or dismiss the report");
+    if (r.targetType === "user" && action === "remove")
+      bad("A profile can't be removed: suspend the account or dismiss the report");
     const gone = await removeContentTx(tx, r.targetType, r.targetId, me.id);
     if (gone) removed.push(gone);
   }
@@ -133,18 +148,27 @@ async function decideTx(tx: Tx, me: User, r: ReportRow, action: Decision, why: s
   return closed;
 }
 
-export async function resolve(me: User, r: ReportRow, action: Decision, why: string, configured: string[]): Promise<number> {
+export async function resolve(
+  me: User,
+  r: ReportRow,
+  action: Decision,
+  why: string,
+  configured: string[]
+): Promise<number> {
   const removed: (Removed | GroupRemoved)[] = [];
-  const closed = await transact(tx => decideTx(tx, me, r, action, why, configured, removed));
+  const closed = await transact((tx) => decideTx(tx, me, r, action, why, configured, removed));
   await announceRemoved(removed);
   return closed;
 }
 
 export async function dismissAll(me: User, ids: number[], why: string): Promise<number> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     let closed = 0;
     for (const id of ids) {
-      const [r] = await tx.select().from(reports).where(and(eq(reports.id, id), eq(reports.status, "open")));
+      const [r] = await tx
+        .select()
+        .from(reports)
+        .where(and(eq(reports.id, id), eq(reports.status, "open")));
       if (r) closed += await decideTx(tx, me, r, "dismiss", why, [], []);
     }
     return closed;

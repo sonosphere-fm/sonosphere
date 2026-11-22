@@ -42,7 +42,8 @@ async function storeImage(c: Ctx, userId: number): Promise<string> {
   const full = "You have used all the space for your pictures.";
   const used = await repo.bytesBy(userId);
   if (used >= caps.userBytes) fail(403, full);
-  if (caps.siteBytes !== null && (await siteBytes()) >= caps.siteBytes) fail(503, "Picture uploads are paused for now.");
+  if (caps.siteBytes !== null && (await siteBytes()) >= caps.siteBytes)
+    fail(503, "Picture uploads are paused for now.");
   const data = await readCapped(c.req, MAX_BYTES);
   if (!data.length) bad("Empty upload");
   const img = await convert(data);
@@ -101,7 +102,7 @@ async function load(id: string, small: boolean): Promise<Picture | null> {
   return stored(repo.fileOf(img.key, small ? "small" : "large"));
 }
 
-router.get("/api/image/:id", async c => {
+router.get("/api/image/:id", async (c) => {
   await limit(`image:${ipOf(c.req)}`, 1500, 60, "Too many requests");
   const id = c.params[0] ?? "";
   if (!/^[0-9a-f]{32}$/.test(id)) missing("Image");
@@ -112,7 +113,7 @@ router.get("/api/image/:id", async c => {
 });
 
 // album art the player found on Spotify, given an address of ours like every other picture
-router.post<ImageSaved>("/api/image/art", async c => {
+router.post<ImageSaved>("/api/image/art", async (c) => {
   need(c);
   await limit(`art:${ipOf(c.req)}`, 300, 3600, "Too many requests");
   const url = String(c.body.url ?? "");
@@ -122,7 +123,7 @@ router.post<ImageSaved>("/api/image/art", async c => {
   return { image };
 });
 
-router.post<ImageSaved>("/api/image", async c => {
+router.post<ImageSaved>("/api/image", async (c) => {
   const u = confirmed(need(c));
   const type = c.q.get("type");
   if (type === "user" || type === "banner") {
@@ -137,7 +138,7 @@ router.post<ImageSaved>("/api/image", async c => {
   return { image };
 });
 
-router.delete<Ok>("/api/image", async c => {
+router.delete<Ok>("/api/image", async (c) => {
   const u = need(c);
   const type = c.q.get("type") ?? "user";
   if (type === "banner") await repo.setUserBanner(u.id, null);

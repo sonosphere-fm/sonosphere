@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Input } from "../kit";
 
-export function Suggest<T>({ value, onChange, onPick, search, text, row, placeholder, label, autoFocus }: {
+export function Suggest<T>({
+  value,
+  onChange,
+  onPick,
+  search,
+  text,
+  row,
+  placeholder,
+  label,
+  autoFocus,
+}: {
   value: string;
   onChange: (v: string) => void;
   onPick: (item: T) => void;
@@ -80,7 +90,7 @@ export function Suggest<T>({ value, onChange, onPick, search, text, row, placeho
               aria-selected={i === hi}
               className={i === hi ? "on" : ""}
               onMouseEnter={() => setHi(i)}
-              onMouseDown={e => {
+              onMouseDown={(e) => {
                 e.preventDefault();
                 pick(it);
               }}

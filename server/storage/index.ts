@@ -17,8 +17,15 @@ function s3Store(env: NodeJS.ProcessEnv): Store {
   const endpoint = env.S3_ENDPOINT || `https://s3.${env.S3_REGION || "us-east-1"}.amazonaws.com`;
   const accessKeyId = env.S3_ACCESS_KEY_ID;
   const secretAccessKey = env.S3_SECRET_ACCESS_KEY;
-  if (!accessKeyId || !secretAccessKey) throw new Error("S3_BUCKET is set but S3_ACCESS_KEY_ID or S3_SECRET_ACCESS_KEY is missing");
-  const client = new S3Client({ endpoint, bucket: env.S3_BUCKET, region: env.S3_REGION || "auto", accessKeyId, secretAccessKey });
+  if (!accessKeyId || !secretAccessKey)
+    throw new Error("S3_BUCKET is set but S3_ACCESS_KEY_ID or S3_SECRET_ACCESS_KEY is missing");
+  const client = new S3Client({
+    endpoint,
+    bucket: env.S3_BUCKET,
+    region: env.S3_REGION || "auto",
+    accessKeyId,
+    secretAccessKey,
+  });
   return {
     async put(key, data, type) {
       await client.write(checked(key), data, { type });
@@ -51,7 +58,7 @@ function localStore(env: NodeJS.ProcessEnv): Store {
       return (await f.exists()) ? new Uint8Array(await f.arrayBuffer()) : null;
     },
     async delete(key) {
-      await unlink(at(key)).catch(e => {
+      await unlink(at(key)).catch((e) => {
         if (e.code !== "ENOENT") throw e;
       });
     },

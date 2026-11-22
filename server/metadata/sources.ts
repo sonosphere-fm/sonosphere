@@ -16,10 +16,14 @@ const tidy = (v: unknown) =>
     .replace(/\u2026/g, "...");
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
-const objs = (v: unknown): Json[] => list(v).map(obj).filter((x): x is Json => !!x);
+const objs = (v: unknown): Json[] =>
+  list(v)
+    .map(obj)
+    .filter((x): x is Json => !!x);
 
 const loose = (s: string) =>
-  s.toLowerCase()
+  s
+    .toLowerCase()
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/&/g, "and")
@@ -28,7 +32,7 @@ const loose = (s: string) =>
     .replace(/^the /, "");
 const same = (a: string, b: string) => loose(a) === loose(b) && loose(a) !== "";
 
-const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Too busy right now: try again another time. */
 export class Busy extends Error {}
 
@@ -83,15 +87,18 @@ async function mb(path: string, params: Record<string, string>): Promise<Json | 
   return obj(await res.json().catch(() => null));
 }
 
-const phrase = (s: string) => `"${s.replace(/[\\"]/g, m => `\\${m}`)}"`;
-const credit = (v: unknown) => objs(v).map(c => tidy(c.name) + str(c.joinphrase)).join("");
+const phrase = (s: string) => `"${s.replace(/[\\"]/g, (m) => `\\${m}`)}"`;
+const credit = (v: unknown) =>
+  objs(v)
+    .map((c) => tidy(c.name) + str(c.joinphrase))
+    .join("");
 const firstArtist = (v: unknown) => tidy(objs(v)[0]?.name);
 
 export type MbArtist = { mbid: string; name: string };
 async function apiArtist(name: string): Promise<MbArtist | null> {
   const r = await mb("/artist", { query: `artist:${phrase(name)}`, limit: "8" });
   // the best-scoring name match; ties go to the first, which MusicBrainz ranks as the better known
-  const hit = objs(r?.artists).find(a => same(str(a.name), name) && num(a.score) >= 90);
+  const hit = objs(r?.artists).find((a) => same(str(a.name), name) && num(a.score) >= 90);
   return hit ? { mbid: str(hit.id), name: tidy(hit.name) } : null;
 }
 
@@ -113,12 +120,17 @@ const album = (g: Json): MbAlbum => ({
   type: str(g["primary-type"]),
 });
 // albums, EPs and singles; compilations, live recordings, remixes and the like are left out
-const plain = (g: Json) => ["Album", "EP", "Single"].includes(str(g["primary-type"])) && list(g["secondary-types"]).length === 0;
+const plain = (g: Json) =>
+  ["Album", "EP", "Single"].includes(str(g["primary-type"])) && list(g["secondary-types"]).length === 0;
 
 async function apiAlbum(artist: string, title: string): Promise<MbAlbum | null> {
-  const r = await mb("/release-group", { query: `releasegroup:${phrase(title)} AND artist:${phrase(artist)}`, limit: "10" });
-  const hits = objs(r?.["release-groups"])
-    .filter(g => same(str(g.title), title) && same(firstArtist(g["artist-credit"]), artist));
+  const r = await mb("/release-group", {
+    query: `releasegroup:${phrase(title)} AND artist:${phrase(artist)}`,
+    limit: "10",
+  });
+  const hits = objs(r?.["release-groups"]).filter(
+    (g) => same(str(g.title), title) && same(firstArtist(g["artist-credit"]), artist)
+  );
   const hit = hits.find(plain) ?? hits[0];
   return hit ? album(hit) : null;
 }
@@ -129,7 +141,7 @@ async function apiDiscography(mbid: string): Promise<MbAlbum[]> {
   return objs(r?.["release-groups"])
     .filter(plain)
     .map(album)
-    .filter(a => a.title)
+    .filter((a) => a.title)
     .sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999"));
 }
 
@@ -138,15 +150,16 @@ async function apiTrack(artist: string, title: string): Promise<MbTrack | null> 
   const base = `recording:${phrase(title)} AND artist:${phrase(artist)}`;
   const find = async (q: string) => {
     const r = await mb("/recording", { query: q, limit: "25" });
-    return objs(r?.recordings)
-      .filter(x => same(str(x.title), title) && same(firstArtist(x["artist-credit"]), artist) && num(x.score) >= 80);
+    return objs(r?.recordings).filter(
+      (x) => same(str(x.title), title) && same(firstArtist(x["artist-credit"]), artist) && num(x.score) >= 80
+    );
   };
   let hits = await find(`${base} AND status:official`);
   if (!hits.length) hits = await find(base);
   if (!hits.length) return null;
   // search ranks live takes, karaoke versions and compilations alongside the original, and often leaves the original
   // out: only a recording with no note ("live, 1994...") on an official album, EP or single counts, earliest first
-  const studio = hits.filter(h => !str(h.disambiguation) && !h.video);
+  const studio = hits.filter((h) => !str(h.disambiguation) && !h.video);
   let best: { rec: Json; g: Json; date: string; rank: number } | null = null;
   for (const rec of studio) {
     for (const rel of objs(rec.releases)) {
@@ -161,7 +174,7 @@ async function apiTrack(artist: string, title: string): Promise<MbTrack | null> 
     }
   }
   const rec = best?.rec ?? studio[0] ?? hits[0]!;
-  const ms = num(rec.length) || studio.map(h => num(h.length)).find(n => n > 0) || 0;
+  const ms = num(rec.length) || studio.map((h) => num(h.length)).find((n) => n > 0) || 0;
   const name = firstArtist(rec["artist-credit"]);
   let album: MbAlbum | null = null;
   if (best && best.rank < 2) {
@@ -183,7 +196,7 @@ async function apiTrackList(rgid: string): Promise<ListedTrack[]> {
   const pref = (c: string) => (c === "XW" ? 0 : c === "US" || c === "GB" ? 1 : 2);
   const byDate = (a: Json, b: Json) => (str(a.date) || "9999").localeCompare(str(b.date) || "9999");
   const releases = objs(r?.releases)
-    .filter(x => objs(x.media).some(m => objs(m.tracks).length))
+    .filter((x) => objs(x.media).some((m) => objs(m.tracks).length))
     .sort((a, b) => byDate(a, b) || pref(str(a.country)) - pref(str(b.country)));
   const pick = releases[0];
   if (!pick) return [];
@@ -213,18 +226,49 @@ async function own<T>(local: () => Promise<T>, api: () => Promise<T>): Promise<T
       return await local();
     } catch (e) {
       ownDownAt = Date.now();
-      console.error("MusicBrainz copy unavailable, asking musicbrainz.org for a minute:", e instanceof Error ? e.message : e);
+      console.error(
+        "MusicBrainz copy unavailable, asking musicbrainz.org for a minute:",
+        e instanceof Error ? e.message : e
+      );
     }
   }
   return api();
 }
-export const mbArtist = (name: string) => own(() => mbdb.artist(name), () => apiArtist(name));
-export const mbSpotifyId = (mbid: string) => own(() => mbdb.spotifyId(mbid), () => apiSpotifyId(mbid));
-export const mbAlbum = (artist: string, title: string) => own(() => mbdb.album(artist, title), () => apiAlbum(artist, title));
-export const mbDiscography = (mbid: string) => own(() => mbdb.discography(mbid), () => apiDiscography(mbid));
-export const mbTrack = (artist: string, title: string) => own(() => mbdb.track(artist, title), () => apiTrack(artist, title));
-export const mbTrackList = (rgid: string) => own(() => mbdb.trackList(rgid), () => apiTrackList(rgid));
-export const mbReleaseTypes = (mbids: string[]) => own(() => mbdb.releaseTypes(mbids), () => apiReleaseTypes(mbids));
+export const mbArtist = (name: string) =>
+  own(
+    () => mbdb.artist(name),
+    () => apiArtist(name)
+  );
+export const mbSpotifyId = (mbid: string) =>
+  own(
+    () => mbdb.spotifyId(mbid),
+    () => apiSpotifyId(mbid)
+  );
+export const mbAlbum = (artist: string, title: string) =>
+  own(
+    () => mbdb.album(artist, title),
+    () => apiAlbum(artist, title)
+  );
+export const mbDiscography = (mbid: string) =>
+  own(
+    () => mbdb.discography(mbid),
+    () => apiDiscography(mbid)
+  );
+export const mbTrack = (artist: string, title: string) =>
+  own(
+    () => mbdb.track(artist, title),
+    () => apiTrack(artist, title)
+  );
+export const mbTrackList = (rgid: string) =>
+  own(
+    () => mbdb.trackList(rgid),
+    () => apiTrackList(rgid)
+  );
+export const mbReleaseTypes = (mbids: string[]) =>
+  own(
+    () => mbdb.releaseTypes(mbids),
+    () => apiReleaseTypes(mbids)
+  );
 /** Whether lookups are cheap (our own copy) rather than one a second. */
 export const mbLocal = () => mbdb.mbdbOn && Date.now() - ownDownAt > 60_000;
 
@@ -232,12 +276,12 @@ const WDQS = "https://query.wikidata.org/sparql";
 
 /** Keyed by MusicBrainz id (P434), photo from Commons (P18). Throws when Wikidata can't answer. */
 export async function wikiPhotos(mbids: string[]): Promise<Map<string, Picture>> {
-  const ids = mbids.filter(m => /^[0-9a-f-]{36}$/.test(m));
+  const ids = mbids.filter((m) => /^[0-9a-f-]{36}$/.test(m));
   const out = new Map<string, Picture>();
   if (!ids.length) return out;
   await pausedFor("wikidata");
   await turn("wikidata", 1000);
-  const values = ids.map(m => `"${m}"`).join(" ");
+  const values = ids.map((m) => `"${m}"`).join(" ");
   const query = `SELECT ?mbid (SAMPLE(?img) AS ?image) WHERE { VALUES ?mbid { ${values} } ?item wdt:P434 ?mbid; wdt:P18 ?img. } GROUP BY ?mbid`;
   const res = await fetch(`${WDQS}?${new URLSearchParams({ query, format: "json" })}`, {
     headers: { "User-Agent": agent(), Accept: "application/sparql-results+json" },
@@ -254,13 +298,20 @@ export async function wikiPhotos(mbids: string[]): Promise<Map<string, Picture>>
     const img = str(obj(r.image)?.value);
     const file = /\/Special:FilePath\/(.+)$/.exec(img)?.[1];
     if (!mbid || !file) continue;
-    out.set(mbid, { url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=500`, width: null, height: null });
+    out.set(mbid, {
+      url: `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=500`,
+      width: null,
+      height: null,
+    });
   }
   return out;
 }
 
 /** The 1200px front cover from the Cover Art Archive; null when it has none. */
-export async function coverArt(mbid: string, of: "release-group" | "release" = "release-group"): Promise<Uint8Array | null> {
+export async function coverArt(
+  mbid: string,
+  of: "release-group" | "release" = "release-group"
+): Promise<Uint8Array | null> {
   await turn("caa", 250);
   const res = await fetch(`https://coverartarchive.org/${of}/${mbid}/front-1200`, {
     headers: { "User-Agent": agent() },
@@ -277,7 +328,6 @@ export async function coverArt(mbid: string, of: "release-group" | "release" = "
 // room, one call a second at most, and give up rather than wait.
 const lane = new AsyncLocalStorage<"spare">();
 export const inSpareTime = <T>(job: () => Promise<T>) => lane.run("spare", job);
-
 
 async function sp(path: string): Promise<Json | null> {
   if (!spotifyCatalogue()) throw new Busy("spotify");
@@ -301,8 +351,8 @@ const quoted = (s: string) => s.replace(/"/g, "");
 export type Picture = { url: string; width: number | null; height: number | null };
 // Spotify lists pictures largest first
 const picture = (v: unknown): Picture | null => {
-  const imgs = objs(v).filter(i => str(i.url).startsWith("https://"));
-  const i = imgs.find(x => num(x.width) <= 1000) ?? imgs[0];
+  const imgs = objs(v).filter((i) => str(i.url).startsWith("https://"));
+  const i = imgs.find((x) => num(x.width) <= 1000) ?? imgs[0];
   return i ? { url: str(i.url), width: num(i.width) || null, height: num(i.height) || null } : null;
 };
 
@@ -313,7 +363,7 @@ export async function spArtist(name: string, id?: string | null): Promise<SpArti
     a = await sp(`/artists/${encodeURIComponent(id)}`);
   } else {
     const r = await search("artist", `artist:"${quoted(name)}"`);
-    a = objs(obj(r?.artists)?.items).find(x => same(str(x.name), name)) ?? null;
+    a = objs(obj(r?.artists)?.items).find((x) => same(str(x.name), name)) ?? null;
   }
   return a && str(a.id) ? { id: str(a.id), name: tidy(a.name), picture: picture(a.images) } : null;
 }
@@ -330,24 +380,24 @@ const spAlbumOf = (a: Json): SpAlbum => ({
 export async function spAlbum(artist: string, title: string): Promise<SpAlbum | null> {
   const r = await search("album", `album:"${quoted(title)}" artist:"${quoted(artist)}"`);
   const items = objs(obj(r?.albums)?.items);
-  const hit = items.find(a => same(str(a.name), title) && objs(a.artists).some(x => same(str(x.name), artist)));
+  const hit = items.find((a) => same(str(a.name), title) && objs(a.artists).some((x) => same(str(x.name), artist)));
   return hit ? spAlbumOf(hit) : null;
 }
 
 export async function spTrackList(albumId: string): Promise<ListedTrack[]> {
   const r = await sp(`/albums/${encodeURIComponent(albumId)}/tracks?limit=50`);
   return objs(r?.items)
-    .map(t => ({ title: tidy(t.name), seconds: Math.round(num(t.duration_ms) / 1000) }))
-    .filter(t => t.title);
+    .map((t) => ({ title: tidy(t.name), seconds: Math.round(num(t.duration_ms) / 1000) }))
+    .filter((t) => t.title);
 }
 
 type SpTrack = { title: string; artist: string; seconds: number; album: SpAlbum | null };
 export async function spTrack(artist: string, title: string): Promise<SpTrack | null> {
   const r = await search("track", `track:"${quoted(title)}" artist:"${quoted(artist)}"`);
   const items = objs(obj(r?.tracks)?.items);
-  const hits = items.filter(t => same(str(t.name), title) && objs(t.artists).some(x => same(str(x.name), artist)));
+  const hits = items.filter((t) => same(str(t.name), title) && objs(t.artists).some((x) => same(str(x.name), artist)));
   // the album version over singles and compilations where there is one
-  const hit = hits.find(t => str(obj(t.album)?.album_type) === "album") ?? hits[0];
+  const hit = hits.find((t) => str(obj(t.album)?.album_type) === "album") ?? hits[0];
   if (!hit) return null;
   const al = obj(hit.album);
   return {
@@ -361,9 +411,17 @@ export async function spTrack(artist: string, title: string): Promise<SpTrack | 
 // Last.fm's artist pictures are all one placeholder, so none are taken. A key that is refused or fails rests and
 // the next in the pool is tried.
 const LASTFM_KEYS = [
-  "65fb65f79427db8ce5626269c0d7fa2b", "b78b45822bf96da886e41623cd85a280", "ad74f41f756691160923dbb55219c7cb", "63ee7f19c3ed5f781dcf7c810e5e6913",
-  "f3dcf9598625bbd0e657377b9f822465", "f27fb27503f9aa73c6f308fd9e3bc7f0", "f332496fd8c26c0ee467cbc72c76717a", "80bc71f587173ac1268627cde1021429",
-  "5e0318e76aed3ee67e256ee7b543caae", "1c577c2b8de945f82181a654317fc4e2", "5c22d0c4d4ed2d089c3523638c657d37",
+  "65fb65f79427db8ce5626269c0d7fa2b",
+  "b78b45822bf96da886e41623cd85a280",
+  "ad74f41f756691160923dbb55219c7cb",
+  "63ee7f19c3ed5f781dcf7c810e5e6913",
+  "f3dcf9598625bbd0e657377b9f822465",
+  "f27fb27503f9aa73c6f308fd9e3bc7f0",
+  "f332496fd8c26c0ee467cbc72c76717a",
+  "80bc71f587173ac1268627cde1021429",
+  "5e0318e76aed3ee67e256ee7b543caae",
+  "1c577c2b8de945f82181a654317fc4e2",
+  "5c22d0c4d4ed2d089c3523638c657d37",
 ];
 const keyRest = (i: number) => `lastfm-key-rest:${i}`;
 
@@ -377,7 +435,10 @@ function restSeconds(res: Response | null, body: Json | null): number {
 }
 
 /** Answers about the request itself (no such user, private profile) come back as they are; null when no key got through. */
-export async function lastfmCall(params: Record<string, string>, timeoutMs = 15_000): Promise<{ status: number; body: Json | null } | null> {
+export async function lastfmCall(
+  params: Record<string, string>,
+  timeoutMs = 15_000
+): Promise<{ status: number; body: Json | null } | null> {
   for (const [i, key] of LASTFM_KEYS.entries()) {
     if (await getJson<number>(keyRest(i))) continue;
     const q = new URLSearchParams({ ...params, api_key: key, format: "json" });
@@ -421,14 +482,14 @@ async function lastfm(method: string, params: Record<string, string>): Promise<J
 const lfPicture = (v: unknown): Picture | null => {
   const imgs = objs(v);
   for (const size of ["mega", "extralarge", "large", "medium"]) {
-    const url = str(imgs.find(i => str(i.size) === size)?.["#text"]);
+    const url = str(imgs.find((i) => str(i.size) === size)?.["#text"]);
     if (!url.startsWith("https://") || url.includes(LF_BLANK)) continue;
     const px = size === "mega" || size === "extralarge" ? 300 : null;
     return { url, width: px, height: px };
   }
   return null;
 };
-const lfMbid = (v: unknown) => /^[0-9a-f-]{36}$/.test(str(v)) ? str(v) : null;
+const lfMbid = (v: unknown) => (/^[0-9a-f-]{36}$/.test(str(v)) ? str(v) : null);
 
 type LfArtist = { name: string; mbid: string | null };
 export async function lfArtist(name: string): Promise<LfArtist | null> {
@@ -436,7 +497,13 @@ export async function lfArtist(name: string): Promise<LfArtist | null> {
   return a && same(str(a.name), name) ? { name: tidy(a.name), mbid: lfMbid(a.mbid) } : null;
 }
 
-export type LfAlbum = { title: string; artist: string; mbid: string | null; picture: Picture | null; tracks: ListedTrack[] };
+export type LfAlbum = {
+  title: string;
+  artist: string;
+  mbid: string | null;
+  picture: Picture | null;
+  tracks: ListedTrack[];
+};
 export async function lfAlbum(artist: string, title: string): Promise<LfAlbum | null> {
   const a = obj((await lastfm("album.getinfo", { artist, album: title }))?.album);
   if (!a || !same(str(a.name), title) || !same(str(a.artist), artist)) return null;
@@ -445,12 +512,17 @@ export async function lfAlbum(artist: string, title: string): Promise<LfAlbum | 
   const single = obj(raw);
   const rawTracks = Array.isArray(raw) ? objs(raw) : single ? [single] : [];
   const tracks = rawTracks
-    .map(t => ({ title: tidy(t.name), seconds: Math.round(Number(t.duration) || 0) }))
-    .filter(t => t.title);
+    .map((t) => ({ title: tidy(t.name), seconds: Math.round(Number(t.duration) || 0) }))
+    .filter((t) => t.title);
   return { title: tidy(a.name), artist: tidy(a.artist), mbid: lfMbid(a.mbid), picture: lfPicture(a.image), tracks };
 }
 
-export type LfTrack = { title: string; artist: string; seconds: number; album: { title: string; mbid: string | null; picture: Picture | null } | null };
+export type LfTrack = {
+  title: string;
+  artist: string;
+  seconds: number;
+  album: { title: string; mbid: string | null; picture: Picture | null } | null;
+};
 export async function lfTrack(artist: string, title: string): Promise<LfTrack | null> {
   const t = obj((await lastfm("track.getinfo", { artist, track: title }))?.track);
   if (!t || !same(str(t.name), title) || !same(str(obj(t.artist)?.name), artist)) return null;

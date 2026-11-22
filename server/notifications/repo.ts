@@ -6,9 +6,13 @@ import { mailNotice } from "./email";
 
 export async function notify(userId: number, type: string, actorId: number, data: object = {}): Promise<void> {
   if (userId === actorId) return;
-  const blocked = await first(db.select({ one: sql`1` }).from(blocks)
-    .where(and(eq(blocks.blockerId, userId), eq(blocks.blockedId, actorId)))
-    .limit(1));
+  const blocked = await first(
+    db
+      .select({ one: sql`1` })
+      .from(blocks)
+      .where(and(eq(blocks.blockerId, userId), eq(blocks.blockedId, actorId)))
+      .limit(1)
+  );
   if (blocked) return;
   await db.insert(notifications).values({ userId, type, actorId, data: JSON.stringify(data), createdAt: now() });
   await mailNotice(userId, type, actorId, data as Record<string, unknown>);
@@ -25,15 +29,16 @@ type NotificationRow = {
 };
 
 export const latestFor = (userId: number, limit = 100): Promise<NotificationRow[]> =>
-  db.select({
-    id: notifications.id,
-    type: notifications.type,
-    data: notifications.data,
-    read: notifications.read,
-    createdAt: notifications.createdAt,
-    username: users.username,
-    image: users.imageId,
-  })
+  db
+    .select({
+      id: notifications.id,
+      type: notifications.type,
+      data: notifications.data,
+      read: notifications.read,
+      createdAt: notifications.createdAt,
+      username: users.username,
+      image: users.imageId,
+    })
     .from(notifications)
     .leftJoin(users, eq(users.id, notifications.actorId))
     .where(eq(notifications.userId, userId))

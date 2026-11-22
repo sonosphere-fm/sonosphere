@@ -14,7 +14,7 @@ function shuffle<T>(a: T[]): T[] {
 }
 
 const libraryPicks = async (userId: number, viewerId: number, n: number): Promise<StationTrack[]> =>
-  wantCovers(shuffle(await repo.randomPlays(userId, viewerId, n * 5)).slice(0, n), t => t.id);
+  wantCovers(shuffle(await repo.randomPlays(userId, viewerId, n * 5)).slice(0, n), (t) => t.id);
 
 async function artistPicks(artistIds: number[], viewerId: number, per: number, pool = 6): Promise<StationTrack[]> {
   if (!artistIds.length) return [];
@@ -25,7 +25,10 @@ async function artistPicks(artistIds: number[], viewerId: number, per: number, p
     list.push(track);
     byArtist.set(artistId, list);
   }
-  return wantCovers([...byArtist.values()].flatMap(list => shuffle(list).slice(0, per)), t => t.id);
+  return wantCovers(
+    [...byArtist.values()].flatMap((list) => shuffle(list).slice(0, per)),
+    (t) => t.id
+  );
 }
 
 export const library = (userId: number, viewerId: number): Promise<StationTrack[]> =>
@@ -33,7 +36,13 @@ export const library = (userId: number, viewerId: number): Promise<StationTrack[
 
 async function recommendedPicks(userId: number, viewerId: number): Promise<StationTrack[]> {
   const artists = await recommendedArtists(userId, 30);
-  return shuffle(await artistPicks(artists.map(a => a.id), viewerId, 2));
+  return shuffle(
+    await artistPicks(
+      artists.map((a) => a.id),
+      viewerId,
+      2
+    )
+  );
 }
 
 export const recommended = async (userId: number, viewerId: number): Promise<StationTrack[]> =>
@@ -56,7 +65,7 @@ export async function mix(userId: number, viewerId: number): Promise<StationTrac
 
 // Opens with the artist, then wanders through the artists most like them.
 export async function artistRadio(artistId: number, viewerId: number): Promise<StationTrack[]> {
-  const similar = (await similarArtists(artistId, 20)).map(s => s.id);
+  const similar = (await similarArtists(artistId, 20)).map((s) => s.id);
   const own = await artistPicks([artistId], viewerId, 5, 12);
   const others = shuffle(await artistPicks(similar, viewerId, 2));
   return [...own.slice(0, 1), ...shuffle([...own.slice(1), ...others])].slice(0, BATCH);
