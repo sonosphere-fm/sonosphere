@@ -44,7 +44,7 @@ startMetadata();
 startEventSync();
 startImports();
 
-const DISCORD_INVITE = "https://discord.gg/nAjqvC3Ajq";
+const DISCORD_INVITE = "https://discord.gg/sonosphere";
 
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };
 
