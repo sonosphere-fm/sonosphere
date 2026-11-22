@@ -154,7 +154,7 @@ async function pendingOf(c: Ctx): Promise<Pending | null> {
 
 // Their handle at the provider, cut down to what usernames here allow.
 function suggest(name: string): string {
-  const s = name.replace(/[^a-zA-Z0-9_-]/g, "").replace(/^[^a-zA-Z]+/, "").slice(0, 15);
+  const s = name.split("@")[0]!.replace(/[^a-zA-Z0-9_-]/g, "").replace(/^[^a-zA-Z]+/, "").slice(0, 15);
   return USERNAME.test(s) ? s : "";
 }
 
