@@ -541,8 +541,24 @@ function App() {
   );
 }
 
+const STALE_BUILD = /dynamically imported module|Importing a module script failed/i;
+const RELOAD_KEY = "stale-build-reload";
+
+// a deploy replaces the old chunks, so a tab opened before it reloads once to pick up the new build
+function reloadOnStaleBuild(error: unknown) {
+  if (!STALE_BUILD.test(String(error))) return;
+  try {
+    if (Date.now() - Number(sessionStorage.getItem(RELOAD_KEY)) < 30_000) return;
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  } catch {
+    return;
+  }
+  location.reload();
+}
+
 createRoot(document.getElementById("root")!).render(
   <Sentry.ErrorBoundary
+    onError={reloadOnStaleBuild}
     fallback={({ resetError }) => (
       <div style={{ padding: 24 }}>
         <p>Something went wrong.</p>
