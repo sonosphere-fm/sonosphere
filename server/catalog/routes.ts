@@ -6,6 +6,7 @@ import { albumPage, artistPage, similarWithTags, trackPage } from "./pages";
 import * as repo from "./repo";
 import { albumOrImport, artistOrImport, refresh, trackOrImport } from "../metadata/service";
 import { requireAlbum, requireArtist, requireTrack } from "./service";
+import { wantBare } from "../metadata/wanted";
 
 export const router = new Router();
 
@@ -27,7 +28,8 @@ router.get<ArtistTracks>("/api/artist/tracks", async c => {
 router.get<ArtistAlbums>("/api/artist/albums", async c => {
   const a = await requireArtist(c.q.get("name"));
   const pg = paging(c.q, 48);
-  return { items: await repo.discography(a.id, pg.limit, pg.offset), total: await repo.albumCount(a.id), ...pg };
+  const items = wantBare("album", await repo.discography(a.id, pg.limit, pg.offset), r => r.id);
+  return { items, total: await repo.albumCount(a.id), ...pg };
 });
 
 router.get<ArtistSimilar>("/api/artist/similar", async c => {

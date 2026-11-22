@@ -1,4 +1,4 @@
-import { wantBare } from "../metadata/wanted";
+import { wantBare, wantCovers } from "../metadata/wanted";
 import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isNotNull, lt, ne, notExists, or, sql, type SQL } from "drizzle-orm";
 import { playImage, trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
@@ -755,12 +755,12 @@ export async function topAlbums(s: Scope, limit = 50, offset = 0): Promise<TopLi
 
 export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopList<TopTrack>> {
   const r = await topTracksRows(s, limit, offset);
-  wantBare("track", r.items, r => r.id);
+  wantCovers(r.items, r => r.id);
   return r;
 }
 
 export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
   const r = await recentRows(s, limit, offset);
-  wantBare("track", r.items, r => r.trackId);
+  wantCovers(r.items, r => r.trackId);
   return r;
 }

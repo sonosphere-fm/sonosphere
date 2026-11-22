@@ -5,9 +5,10 @@ import { latestWiki } from "../wiki/repo";
 import { clean, norm } from "../util";
 import type { ItemTags, TagCount, TagPage } from "../../shared/tags";
 import * as repo from "./repo";
+import { wantBare } from "../metadata/wanted";
 
 export async function tagPage(tag: Tag, viewerId: number | undefined): Promise<TagPage> {
-  const artists = await repo.taggedArtists(tag.id, 60);
+  const artists = wantBare("artist", await repo.taggedArtists(tag.id, 60), r => r.id);
   const artistIds = artists.map(a => a.id);
   return {
     id: tag.id,

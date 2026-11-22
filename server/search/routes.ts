@@ -4,6 +4,7 @@ import * as repo from "./repo";
 import * as mbdb from "../metadata/mbdb";
 import { rankArtists, rankTitles } from "./rank";
 import type { FoundAlbum, FoundArtist, FoundTrack, SearchResults } from "../../shared/search";
+import { wantBare, wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
@@ -17,10 +18,15 @@ router.get<SearchResults>("/api/search", async c => {
   await throttle(`search-h:${who}`, 1000, 3600, "Too many searches. Try again later.");
   const query = { term, limit: pg.limit, offset: pg.offset };
   const want = (t: string) => type === "all" || type === t;
+  const ours = {
+    artists: async () => wantBare("artist", await repo.searchArtists(query), r => r.id),
+    albums: async () => wantBare("album", await repo.searchAlbums(query), r => r.id),
+    tracks: async () => wantCovers(await repo.searchTracks(query, c.user?.id ?? 0), r => r.id),
+  };
   return {
-    artists: want("artists") ? await withMusicBrainz(await repo.searchArtists(query), term, pg.limit, pg.offset) : [],
-    albums: want("albums") ? await albumsToo(await repo.searchAlbums(query), term, pg.limit, pg.offset) : [],
-    tracks: want("tracks") ? await tracksToo(await repo.searchTracks(query, c.user?.id ?? 0), term, pg.limit, pg.offset) : [],
+    artists: want("artists") ? await withMusicBrainz(await ours.artists(), term, pg.limit, pg.offset) : [],
+    albums: want("albums") ? await albumsToo(await ours.albums(), term, pg.limit, pg.offset) : [],
+    tracks: want("tracks") ? await tracksToo(await ours.tracks(), term, pg.limit, pg.offset) : [],
     tags: want("tags") ? await repo.searchTags(query) : [],
     users: want("users") ? await repo.searchUsers(query) : [],
     ...pg,

@@ -7,6 +7,7 @@ import { now } from "../util";
 import * as repo from "./repo";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
 import type { TopAlbum } from "../../shared/listening";
+import { wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
@@ -64,7 +65,7 @@ router.get<Home>("/api/home", async c => {
   if (viewerId) {
     const [friends, friendLoves, thisWeek, lastWeek] = await Promise.all([
       friendActivity(viewerId),
-      repo.friendLoves(viewerId, 8),
+      repo.friendLoves(viewerId, 8).then(rows => wantCovers(rows, r => r.id)),
       counts({ userId: viewerId, from: since }),
       counts({ userId: viewerId, from: since - WEEK, to: since }),
     ]);
