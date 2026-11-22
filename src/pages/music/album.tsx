@@ -30,8 +30,8 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
     <Async q={q}>{a => (
       <>
         <MusicHero
-          image={a.artistImage ?? a.image}
-          soft={!a.artistImage}
+          image={a.image ?? a.artistImage}
+          cover={!!a.image}
           title={a.title}
           over={<Link to={artistUrl(a.artist)}>{a.artist}</Link>}
           tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />}

@@ -13,7 +13,7 @@ import type { WikiVersion } from "../../../shared/wiki";
 
 type MusicHeroProps = {
   image?: string | null;
-  soft?: boolean;
+  cover?: boolean;
   over?: ReactNode;
   title: ReactNode;
   actions?: ReactNode;
@@ -27,10 +27,10 @@ const MHERO = "hero bg-site-panel p-0 min-h-[300px] flex flex-col max-[700px]:mi
 const MHERO_INNER = "wrap flex-1 flex flex-col justify-end gap-3.5 pt-14 pb-[26px] *:max-w-[760px] max-[700px]:pt-7 max-[700px]:pb-[18px] max-[700px]:gap-3";
 const MHERO_OVER = "text-[18px] font-semibold -mb-2 max-[700px]:text-[15px] max-[700px]:-mb-1.5 [&_a]:text-site-link";
 
-export function MusicHero({ image, soft, over, title, actions, stats, cards, tabs, children }: MusicHeroProps) {
+export function MusicHero({ image, cover, over, title, actions, stats, cards, tabs, children }: MusicHeroProps) {
   return (
     <div className={MHERO}>
-      {image ? <ImageWithFallback className={soft ? "mhero-img soft" : "mhero-img"} src={imageUrl(image)} alt="" loading="eager" /> : null}
+      {image ? <ImageWithFallback className={cover ? "mhero-img cover" : "mhero-img"} src={imageUrl(image)} alt="" loading="eager" /> : null}
       <div className={MHERO_INNER}>
         {over && <div className={MHERO_OVER}>{over}</div>}
         <h1 className="text-[54px] leading-[1.05]">{title}</h1>

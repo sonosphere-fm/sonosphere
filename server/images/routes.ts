@@ -5,7 +5,7 @@ import { getJson, setJson } from "../kv";
 import { store } from "../storage";
 import { caps, spendRead } from "../storage/budget";
 import { convert } from "./process";
-import { fetchRemote, type Picture } from "./remote";
+import { fetchRemote, sized, type Picture } from "./remote";
 import * as repo from "./repo";
 import type { Ok } from "../../shared/auth";
 import type { ImageSaved } from "../../shared/images";
@@ -85,7 +85,12 @@ const artKey = (id: string) => `art:${id}`;
 
 // every picture comes from this address, whatever its source, so pages never reveal where one is kept
 async function load(id: string, small: boolean): Promise<Picture | null> {
-  const remote = (url: string) => fetchRemote(url).catch(() => null);
+  const get = (url: string) => fetchRemote(url).catch(() => null);
+  // not every picture has every size, so the address as saved is the fallback
+  const remote = async (url: string) => {
+    const want = sized(url, small);
+    return (await get(want)) ?? (want === url ? null : get(url));
+  };
   const img = await repo.findImage(id);
   if (!img) {
     const art = await getJson<string>(artKey(id));

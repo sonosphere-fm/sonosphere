@@ -632,8 +632,7 @@ p a, .prose a, .state a, li > a:only-child, .more, .hero-sub a { color: var(--li
 .listeners2 .userlist li { border-bottom: 0; padding: 6px 0; }
 .listeners2 .userlist .avatar { width: 44px !important; height: 44px !important; }
 .mpage .main > .section:last-child { padding-bottom: 0; }
-/* a small cover standing in for a missing artist photo: blur rather than show pixels */
-.mhero-img.soft { filter: blur(26px) saturate(1.1); top: -40px; bottom: -40px; right: -40px; opacity: .7; }
+.mhero-img.cover > img { object-position: center; }
 
 .suggest { position: relative; width: 100%; font-weight: 400; }
 .suggest-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 4px 0; background: var(--card); border: 1px solid var(--edge); border-radius: 0; max-height: 340px; overflow-y: auto; }
