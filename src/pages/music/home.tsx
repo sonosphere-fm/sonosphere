@@ -1,14 +1,16 @@
-import { Ico } from "../../icons";
+import { Ico, Spinner } from "../../icons";
 import { Suspense, useState } from "react";
+import { SiteBanner } from "../../banner";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
-import { artistUrl, date, num, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
+import { artistUrl, date, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
 import { Async, Avatar, Empty, Pane, Section } from "../../ui/base";
 import { UserLabels } from "../../ui/user-labels";
 import { RecCard, Grid, TrackList } from "../../ui/lists";
 import { EventList } from "../../ui/events";
 import { TagChips } from "../../ui/tags";
 import { StationRow } from "../../player";
+import { HomeHero, HomeHeroChart, HomeHeroStats } from "./home-hero";
 import { HomeTabs, mixRecs } from "./shared";
 import type { FriendActivity, FriendLove, Home as HomeData, Recommended } from "../../../shared/home";
 import type { UserRecent } from "../../../shared/users";
@@ -86,47 +88,6 @@ function PlayRows() {
   );
 }
 
-function Banner({ d }: { d: HomeData | null }) {
-  return (
-    <div className="banner">
-      <div className="wrap banner-inner">
-        <div className="banner-copy">
-          <h1>Track what you love.</h1>
-          <p>
-            Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that
-            match your taste.
-          </p>
-          <div className="row">
-            <Button kind="btn inverse" href="/join">
-              Join free
-            </Button>
-            <Button kind="btn outline-invert" href="/login">
-              Log in
-            </Button>
-          </div>
-          {d && d.stats.users >= 10 && (
-            <p className="banner-stats">Join {num(roundDown(d.stats.users))}+ users scrobbling on Sonosphere</p>
-          )}
-        </div>
-        {d && d.trendingTracks.length > 0 && (
-          <ol className="banner-chart">
-            <li className="banner-chart-head">Top tracks right now</li>
-            {d.trendingTracks.slice(0, 5).map((t, i) => (
-              <li key={t.id}>
-                <b>{i + 1}</b>
-                <Link to={trackUrl(t.artist, t.title)}>
-                  <strong>{t.title}</strong>
-                  <span>{t.artist}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: string }) {
   return (
     <Section title="Friends' listening" more={`${userUrl(me)}/following`} moreLabel="Following">
@@ -192,54 +153,87 @@ export function Home() {
     prefetch(RECOMMENDED);
     prefetch(recentOf(me.username));
   }
-  const q = useApi<HomeData>("/home");
   useTitle(me ? "Home" : "Track what you love");
   return (
     <>
-      {!me && <Banner d={q.data} />}
-      {me && <HomeTabs at="home" />}
-      <div className={me ? "wrap page home-page" : "wrap page"}>
-        <Async q={q}>
-          {(d) => {
-            const week = d.trendingPeriod === "week";
-            return (
-              <div className="cols">
-                <div className="main">
-                  {me && (
-                    <>
-                      <HomeFeed name={me.username} />
-                      <Suspense fallback={null}>
-                        <HomeRecent name={me.username} />
-                      </Suspense>
-                      {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={me.username} />}
-                    </>
-                  )}
-                  <Section title={week ? "Trending artists" : "Top artists"} more="/charts">
-                    <Grid kind="artist" cols={4} items={d.trendingArtists.slice(0, 8)} />
-                  </Section>
-                  <Section title={week ? "Top tracks this week" : "Top tracks"} more="/charts?kind=tracks">
-                    <TrackList items={d.trendingTracks} rank={1} count="listeners" />
-                  </Section>
-                  <Section title={week ? "Albums on the rise" : "Top albums"} more="/charts?kind=albums">
-                    <Grid kind="album" items={d.trendingAlbums} />
-                  </Section>
-                </div>
-                <aside className="side">
-                  {me && <PlayRows />}
-                  {me && d.friendLoves && d.friendLoves.length > 0 && <FriendLoves items={d.friendLoves} />}
-                  <Section title="Popular tags" more="/charts?kind=tags">
-                    <TagChips tags={d.tags} />
-                  </Section>
-                  <Section title="Upcoming events" more="/events">
-                    <EventList items={d.events} />
-                  </Section>
-                </aside>
-              </div>
-            );
-          }}
-        </Async>
-      </div>
+      {me ? (
+        <HomeTabs at="home" />
+      ) : (
+        <HomeHero
+          stats={
+            <Suspense fallback={null}>
+              <GuestStats />
+            </Suspense>
+          }
+          chart={
+            <Suspense fallback={<HomeHeroChart />}>
+              <GuestChart />
+            </Suspense>
+          }
+        />
+      )}
+      {!me && <SiteBanner />}
+      <Suspense fallback={me ? <Spinner page /> : <div role="status" aria-label="Loading music charts" />}>
+        <HomeContent name={me?.username} />
+      </Suspense>
     </>
+  );
+}
+
+function GuestStats() {
+  const { data } = useApi<HomeData>("/home");
+  return <HomeHeroStats users={data?.stats.users} />;
+}
+
+function GuestChart() {
+  const { data } = useApi<HomeData>("/home");
+  return <HomeHeroChart tracks={data?.trendingTracks ?? []} />;
+}
+
+function HomeContent({ name }: { name?: string }) {
+  const q = useApi<HomeData>("/home");
+  return (
+    <div className={name ? "wrap page home-page" : "wrap page"}>
+      <Async q={q}>
+        {(d) => {
+          const week = d.trendingPeriod === "week";
+          return (
+            <div className="cols">
+              <div className="main">
+                {name && (
+                  <>
+                    <HomeFeed name={name} />
+                    <Suspense fallback={null}>
+                      <HomeRecent name={name} />
+                    </Suspense>
+                    {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={name} />}
+                  </>
+                )}
+                <Section title={week ? "Trending artists" : "Top artists"} more="/charts">
+                  <Grid kind="artist" cols={4} items={d.trendingArtists.slice(0, 8)} />
+                </Section>
+                <Section title={week ? "Top tracks this week" : "Top tracks"} more="/charts?kind=tracks">
+                  <TrackList items={d.trendingTracks} rank={1} count="listeners" />
+                </Section>
+                <Section title={week ? "Albums on the rise" : "Top albums"} more="/charts?kind=albums">
+                  <Grid kind="album" items={d.trendingAlbums} />
+                </Section>
+              </div>
+              <aside className="side">
+                {name && <PlayRows />}
+                {name && d.friendLoves && d.friendLoves.length > 0 && <FriendLoves items={d.friendLoves} />}
+                <Section title="Popular tags" more="/charts?kind=tags">
+                  <TagChips tags={d.tags} />
+                </Section>
+                <Section title="Upcoming events" more="/events">
+                  <EventList items={d.events} />
+                </Section>
+              </aside>
+            </div>
+          );
+        }}
+      </Async>
+    </div>
   );
 }
 
@@ -252,10 +246,4 @@ function HomeRecent({ name }: { name: string }) {
       <TrackList items={q.data.items} nowPlaying={nowPlaying} time />
     </Section>
   );
-}
-
-// Rounds down to two significant figures (132 to 130, 1,532 to 1,500) so the claim never overstates.
-function roundDown(n: number) {
-  const p = Math.max(10, 10 ** (String(Math.floor(n)).length - 2));
-  return Math.floor(n / p) * p;
 }

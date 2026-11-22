@@ -21,28 +21,30 @@ async function load() {
     const file = Bun.file(`${DIST}/${path}`);
     assets.set(`/${path}`, { body: await file.arrayBuffer(), type: file.type, staff: staffOnly.has(path) });
   }
-  return { assets, html: await page.text() };
+  return { assets, html: await page.text(), guestHome: await Bun.file(`${DIST}/home.html`).text() };
 }
 
 const escapeScript = (json: string) =>
   json.replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, (c) => `\\u${c.charCodeAt(0).toString(16)}`);
 
 export async function appRoutes() {
-  const { assets, html } = await load();
+  const { assets, html, guestHome } = await load();
   const missing = () => new Response("Not found", { status: 404 });
 
   // the page embeds the viewer's account, so no shared cache may keep it
   const shell = async (req: Request) => {
+    const url = new URL(req.url);
     const [{ user: viewer, actor }, seo] = await Promise.all([
       viewerOf(req).catch(() => ({ user: null, actor: null })),
-      pageSeo(new URL(req.url)),
+      pageSeo(url),
     ]);
     const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer, actor) : null }));
     const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
-    const page = html
+    const publicHome = !viewer && /^\/+$/u.test(url.pathname);
+    const page = (publicHome ? guestHome : html)
       .replace('<html lang="en">', () => `<html lang="en"${scheme}>`)
       .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))
-      .replace(/<div id=["']?root["']?>/, (root) => root + seoContent(seo))
+      .replace(/<div id=["']?root["']?>/, (root) => (publicHome ? root : root + seoContent(seo)))
       .replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
     const headers = {
       "Content-Type": "text/html; charset=utf-8",

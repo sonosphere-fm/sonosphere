@@ -101,6 +101,19 @@ export function TrackList<R extends Row>({
   if (!rows.length) return <Empty>No tracks to show yet.</Empty>;
   return (
     <table className={compact ? "chartlist slim" : "chartlist"}>
+      <thead className="sr-only">
+        <tr>
+          {(rank !== undefined || numbered) && <th scope="col">{numbered ? "Position" : "Rank"}</th>}
+          <th scope="col">Playback</th>
+          <th scope="col">Artwork</th>
+          {!compact && <th scope="col">Love</th>}
+          <th scope="col">Track</th>
+          {showDuration && <th scope="col">Duration</th>}
+          {actions && <th scope="col">Actions</th>}
+          {count && <th scope="col">{count === "listeners" ? "Listeners" : "Scrobbles"}</th>}
+          {time && <th scope="col">Played</th>}
+        </tr>
+      </thead>
       <tbody>
         {rows.map((r, i) => (
           <tr key={r.id ?? `${r.artist}-${r.title}-${i}`} className={r._np ? "now" : ""}>
@@ -111,7 +124,11 @@ export function TrackList<R extends Row>({
               <PlayButton queue={queue} index={i} />
             </td>
             <td className="c-art">
-              <Link to={r.album ? albumUrl(r.artist, r.album) : trackUrl(r.artist, r.title)} tabIndex={-1}>
+              <Link
+                to={r.album ? albumUrl(r.artist, r.album) : trackUrl(r.artist, r.title)}
+                aria-label={r.album || r.title}
+                tabIndex={-1}
+              >
                 <Art image={r.image} />
               </Link>
             </td>

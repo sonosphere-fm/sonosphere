@@ -87,6 +87,12 @@ const Guidelines = lazy(() => import("./pages/legal").then((m) => ({ default: m.
 
 const AdminPage = lazy(() => import("./admin/index"));
 
+function HeaderAnnouncement() {
+  const { pathname } = useLocation();
+  const { me } = useAuth();
+  return me || !/^\/+$/u.test(pathname) ? <SiteBanner /> : null;
+}
+
 function Header() {
   const { me, setMe } = useAuth();
   const nav = useNavigate();
@@ -382,7 +388,7 @@ const footerCols =
   "grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-8 pt-9 pb-8 " +
   "max-[900px]:grid-cols-[repeat(auto-fit,minmax(128px,1fr))] max-[900px]:gap-x-5 max-[900px]:gap-y-6 " +
   "max-[600px]:gap-5 max-[600px]:pt-7 max-[600px]:pb-5";
-const colLink = "text-white hover:underline max-[600px]:inline-block max-[600px]:py-1.5";
+const colLink = "inline-flex min-h-6 min-w-6 items-center text-white hover:underline max-[600px]:py-1.5";
 const footerBase =
   "grid grid-cols-[1fr_auto_1fr] flex-wrap items-center gap-x-5 gap-y-2.5 py-5 " +
   "max-[720px]:grid-cols-1 max-[720px]:justify-items-center";
@@ -683,7 +689,7 @@ function lookAheadAt(e: Event) {
   const a = inApp(e);
   if (!a) return;
   const url = a.pathname + a.search;
-  for (const path of apisFor(url)) prefetch(path);
+  for (const path of apisFor(url)) prefetch(path, { artwork: true });
   ahead(url);
 }
 for (const type of ["mouseover", "touchstart", "focusin"]) {
@@ -848,7 +854,7 @@ function App() {
               <ScrollTop />
               <LookAhead />
               <Header />
-              <SiteBanner />
+              <HeaderAnnouncement />
               <ImpersonationBanner />
               <VerifyBanner />
               <main>
@@ -869,17 +875,28 @@ function reloadOnStaleBuild(error: unknown) {
 
 // Bun can re-evaluate this entry during HMR; keep one React root for the page.
 const g = globalThis as typeof globalThis & { __spinRoot?: ReturnType<typeof createRoot> };
-const root = (g.__spinRoot ??= createRoot(document.getElementById("root")!));
-root.render(
-  <Sentry.ErrorBoundary
-    onError={reloadOnStaleBuild}
-    fallback={({ resetError }) => (
-      <div style={{ padding: 24 }}>
-        <p>Something went wrong.</p>
-        <button onClick={() => resetError()}>Try again</button>
-      </div>
-    )}
-  >
-    <App />
-  </Sentry.ErrorBoundary>
-);
+// The guest shell can paint on its own. Wait for the app layout styles before replacing it.
+const stylesheet = document.querySelector<HTMLLinkElement>("#app-styles");
+function mount() {
+  const root = (g.__spinRoot ??= createRoot(document.getElementById("root")!));
+  root.render(
+    <Sentry.ErrorBoundary
+      onError={reloadOnStaleBuild}
+      fallback={({ resetError }) => (
+        <div style={{ padding: 24 }}>
+          <p>Something went wrong.</p>
+          <button onClick={() => resetError()}>Try again</button>
+        </div>
+      )}
+    >
+      <App />
+    </Sentry.ErrorBoundary>
+  );
+}
+
+if (stylesheet?.media === "print") {
+  stylesheet.addEventListener("load", mount, { once: true });
+  stylesheet.addEventListener("error", mount, { once: true });
+} else {
+  mount();
+}

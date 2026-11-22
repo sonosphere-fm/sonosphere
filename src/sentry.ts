@@ -7,7 +7,7 @@ import { failedBuildLink, isStaleBuild, recoverAsset } from "./asset-recovery";
 const release = process.env.NODE_ENV === "production" ? process.env.SENTRY_RELEASE : "dev";
 
 // The entry point runs again during Bun HMR; Replay must retain its existing client.
-if (!Sentry.getClient())
+if (!Sentry.getClient()) {
   Sentry.init({
     dsn: import.meta.env?.VITE_SENTRY_DSN || "https://871bed67ac8e4f45ad7eaa2c78c19646@rustrak.edideaur.works/2",
     environment: import.meta.env?.VITE_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
@@ -21,7 +21,6 @@ if (!Sentry.getClient())
         createRoutesFromChildren,
         matchRoutes,
       }),
-      Sentry.replayIntegration(),
     ],
     tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
     replaysSessionSampleRate: 0.1,
@@ -39,3 +38,14 @@ if (!Sentry.getClient())
       return event;
     },
   });
+
+  const loadReplay = () => {
+    void import("./sentry-replay").then(({ addReplay }) => addReplay()).catch(() => {});
+  };
+  const scheduleReplay = () => {
+    if ("requestIdleCallback" in window) requestIdleCallback(loadReplay);
+    else setTimeout(loadReplay, 0);
+  };
+  if (document.readyState === "complete") scheduleReplay();
+  else window.addEventListener("load", scheduleReplay, { once: true });
+}
