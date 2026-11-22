@@ -18,7 +18,10 @@ type SdkPlayer = {
   activateElement(): Promise<void>;
   addListener(ev: "ready" | "not_ready", cb: (e: { device_id: string }) => void): boolean;
   addListener(ev: "player_state_changed", cb: (s: SdkState | null) => void): boolean;
-  addListener(ev: "initialization_error" | "authentication_error" | "account_error", cb: (e: { message: string }) => void): boolean;
+  addListener(
+    ev: "initialization_error" | "authentication_error" | "account_error" | "playback_error",
+    cb: (e: { message: string }) => void,
+  ): boolean;
 };
 type SdkPlayerOptions = { name: string; getOAuthToken: (cb: (t: string) => void) => void; volume?: number };
 type Sdk = { Player: new (o: SdkPlayerOptions) => SdkPlayer };
@@ -69,7 +72,7 @@ const norm = (s: string) => s
 type SearchItem = { id: string; uri: string; name: string; artists: { name: string }[]; album?: { images?: { url: string }[] } };
 
 /** Null when the listener's link can't play (no playback access, no Premium...). */
-export async function openSpotify(on: { state: (s: SdkState) => void; lost: () => void }): Promise<SpotifyOut | null> {
+export async function openSpotify(on: { state: (s: SdkState) => void; lost: () => void; failed: () => void }): Promise<SpotifyOut | null> {
   if (!(await getToken())) return null;
   const S = await within(loadSdk(), 10_000);
   if (!S) return null;
@@ -93,6 +96,7 @@ export async function openSpotify(on: { state: (s: SdkState) => void; lost: () =
     setTimeout(() => resolve(false), 10_000);
   });
   player.addListener("not_ready", () => { device = ""; });
+  player.addListener("playback_error", () => on.failed());
   player.addListener("player_state_changed", s => { if (s) on.state(s); });
   const connected = await player.connect().catch(() => false);
   if (!connected || !(await ready)) {
