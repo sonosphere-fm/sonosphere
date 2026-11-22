@@ -3,7 +3,7 @@ import { lazy, useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Input, Textarea, useConfirm } from "../kit";
 import { Markdown } from "../md";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { api, dateTime, num, qs, useApi, useAuth, useParam, userUrl, useTitle } from "../lib";
+import { api, dateTime, num, qs, TITLES, useApi, useAuth, useParam, userUrl, useTitle } from "../lib";
 import type {
   Attendance,
   AttendResult,
@@ -54,7 +54,7 @@ export function EventsPage() {
   const q = useApi<Events>(
     `/events${qs({ when: when === "upcoming" ? undefined : when, mine, q: term, page: sp.get("page") })}`
   );
-  useTitle("Events");
+  useTitle(TITLES.events);
 
   const filter = (e: FormEvent) => {
     e.preventDefault();
@@ -257,7 +257,7 @@ export function EventAdd() {
   const nav = useNavigate();
   const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setF({ ...f, [k]: e.target.value });
-  useTitle("Add an event");
+  useTitle(TITLES.addEvent);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();

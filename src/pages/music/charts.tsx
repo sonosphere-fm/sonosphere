@@ -1,7 +1,19 @@
 import { Ico } from "../../icons";
 import { Button } from "../../kit";
 import { Link, useSearchParams } from "react-router-dom";
-import { albumUrl, artistUrl, num, prefetch, qs, tagUrl, trackUrl, useApi, useParam, useTitle } from "../../lib";
+import {
+  albumUrl,
+  artistUrl,
+  num,
+  prefetch,
+  qs,
+  tagUrl,
+  TITLES,
+  trackUrl,
+  useApi,
+  useParam,
+  useTitle,
+} from "../../lib";
 import { Art, Async, Empty, Pager, PeriodPicker, Section } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { RankList, TrackList } from "../../ui/lists";
@@ -239,6 +251,6 @@ function ChartList() {
 
 export function Charts() {
   const [sp] = useSearchParams();
-  useTitle("Charts");
+  useTitle(TITLES.charts);
   return LIST_KINDS.includes(sp.get("kind") || "") ? <ChartList /> : <ChartsOverview />;
 }

@@ -2,7 +2,7 @@ import { Arrow, Ico } from "../icons";
 import { useState } from "react";
 import { Button } from "../kit";
 import { Link, useSearchParams } from "react-router-dom";
-import { api, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
+import { api, qs, TITLES, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Async, Empty, useAction } from "../ui/base";
 import type { AppAuthorized, AppInfo } from "../../shared/apps";
 
@@ -28,7 +28,7 @@ export function Connect() {
   const q = useApi<AppInfo>(apiKey ? `/apps/lookup${qs({ api_key: apiKey })}` : null);
   const act = useAction();
   const [done, setDone] = useState(false);
-  useTitle("Connect an application");
+  useTitle(TITLES.connect);
 
   const allow = () =>
     act.run(async () => {

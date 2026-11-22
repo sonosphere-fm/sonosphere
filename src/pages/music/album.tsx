@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { albumUrl, artistUrl, dec, dur, plural, qs, useApi, useAuth, useTitle } from "../../lib";
+import { albumUrl, artistUrl, dec, dur, plural, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
 import { Async, Section, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
@@ -39,7 +39,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
   const base = albumUrl(artist, album);
   const q = useApi<AlbumData>(`/album${qs({ artist, album })}`);
   const { me } = useAuth();
-  useTitle(q.data ? `${q.data.title} - ${q.data.artist}` : album);
+  useTitle(releaseTitle(album, artist, tab === "wiki"));
   return (
     <Async q={q}>
       {(a) => (

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Button, Input } from "../kit";
 import { Link } from "react-router-dom";
 import { Spinner } from "../icons";
-import { api, num, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
+import { api, num, qs, TITLES, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Art, Async, Section, useAction } from "../ui/base";
 import { Suggest } from "../ui/suggest";
 import { TrackList } from "../ui/lists";
@@ -29,7 +29,7 @@ export function ScrobblePage() {
   const [f, setF] = useState({ artist: "", track: "", album: "", when: local() });
   const act = useAction();
   const recent = useApi<UserRecent>(`/user/recent${qs({ name: me!.username, limit: 5 })}`);
-  useTitle("Scrobble");
+  useTitle(TITLES.scrobble);
 
   // Matches by the artist already typed come first.
   const byTypedArtist = <T extends { artist: string }>(items: T[]) => {

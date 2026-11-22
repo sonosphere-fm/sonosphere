@@ -1,4 +1,16 @@
 import { albumUrl, artistUrl, dec, tagUrl, trackUrl, userUrl } from "../shared/paths";
+import {
+  ARTIST_TABS,
+  artistTitle,
+  fullTitle,
+  journalTitle,
+  releaseTitle,
+  searchTitle,
+  tagTitle,
+  TITLES,
+  USER_TABS,
+  userTitle,
+} from "../shared/titles";
 import { findItem } from "./catalog/repo";
 import { requireAlbum, requireArtist, requireTag, requireTrack } from "./catalog/service";
 import { listEvents } from "./events/repo";
@@ -11,66 +23,52 @@ import { canSee } from "./users/service";
 
 export const landing = {
   "/": [
-    "Sonosphere - Track what you love",
+    TITLES.guestHome,
     "Scrobble the music you play, explore your listening history, and discover artists through community charts and recommendations.",
   ],
-  "/charts": ["Music Charts", "Explore the artists, albums, and tracks the Sonosphere community is listening to."],
-  "/events": ["Concerts & Music Events", "Find upcoming concerts and festivals, browse lineups, and see who’s going."],
+  "/charts": [TITLES.charts, "Explore the artists, albums, and tracks the Sonosphere community is listening to."],
+  "/events": [TITLES.events, "Find upcoming concerts and festivals, browse lineups, and see who’s going."],
   "/help": [
-    "Scrobbling Help",
+    TITLES.help,
     "Set up scrobbling to Sonosphere from Spotify, Pano Scrobbler, and other Last.fm-compatible players.",
   ],
   "/developers": [
-    "Developer API Docs",
+    TITLES.developers,
     "Build with the Sonosphere API. Find authentication, scrobbling, and Last.fm compatibility documentation.",
   ],
-  "/terms": ["Terms of Service", "Read the terms for using Sonosphere."],
-  "/changelog": ["Changelog", "Read about the latest updates and fixes to Sonosphere."],
+  "/terms": [TITLES.terms, "Read the terms for using Sonosphere."],
+  "/changelog": [TITLES.changelog, "Read about the latest updates and fixes to Sonosphere."],
   "/privacy": [
-    "Privacy Policy",
+    TITLES.privacy,
     "Learn what data Sonosphere collects and how it handles your account and listening history.",
   ],
-  "/guidelines": ["Community Guidelines", "Read the guidelines for participating in the Sonosphere community."],
+  "/guidelines": [TITLES.guidelines, "Read the guidelines for participating in the Sonosphere community."],
 } as const;
 
 const accountPages: Record<string, string> = {
-  login: "Log In",
-  join: "Join Sonosphere",
-  forgot: "Recover Your Account",
-  reset: "Reset Password",
-  verify: "Verify Your Account",
-  settings: "Settings",
-  inbox: "Inbox",
-  messages: "Messages",
-  moderation: "Moderation",
-  admin: "Moderation",
-  recommended: "Recommendations",
-  scrobble: "Scrobble Music",
-  import: "Import Listening History",
-  connect: "Connect a Music Player",
+  login: TITLES.login,
+  join: TITLES.join,
+  forgot: TITLES.forgot,
+  reset: TITLES.reset,
+  verify: TITLES.verify,
+  settings: TITLES.settings,
+  inbox: TITLES.inbox,
+  messages: TITLES.messages,
+  moderation: TITLES.moderation,
+  admin: TITLES.moderation,
+  recommended: TITLES.recommended,
+  scrobble: TITLES.scrobble,
+  import: TITLES.import,
+  connect: TITLES.connect,
 };
 const artistTabs: Record<string, string> = {
-  "+tracks": "Top Tracks",
-  "+albums": "Albums",
-  "+similar": "Similar Artists",
-  "+wiki": "Biography",
-  "+listeners": "Listeners",
-  "+shoutbox": "Shoutbox",
-  "+wall": "Shoutbox",
-};
-const userTabs: Record<string, string> = {
-  library: "Music Library",
-  "listening-report": "Listening Report",
-  journal: "Journal",
-  following: "Following",
-  followers: "Followers",
-  loved: "Loved Tracks",
-  obsessions: "Obsessions",
-  playlists: "Playlists",
-  events: "Events",
-  neighbours: "Neighbours",
-  tags: "Tags",
-  shoutbox: "Shoutbox",
+  "+tracks": "tracks",
+  "+albums": "albums",
+  "+similar": "similar",
+  "+wiki": "wiki",
+  "+listeners": "listeners",
+  "+shoutbox": "shoutbox",
+  "+wall": "shoutbox",
 };
 const userAliases: Record<string, string> = { wall: "shoutbox", earworms: "obsessions", soundalikes: "neighbours" };
 const own = (map: object, key: string) => Object.hasOwn(map, key);
@@ -92,7 +90,7 @@ type Page = {
   schema?: Record<string, unknown>;
 };
 const missing: Page = {
-  title: "Page Not Found",
+  title: TITLES.notFound,
   description: "This page could not be found on Sonosphere.",
   status: 404,
 };
@@ -115,7 +113,7 @@ async function lookup(url: URL): Promise<Page> {
   if (key === "/search") {
     const query = summary(url.searchParams.get("q") || "");
     return {
-      title: query ? `Search for ${query}` : "Search Music",
+      title: searchTitle(query),
       description: "Search for artists, albums, tracks, and listeners on Sonosphere.",
       path: query ? `/search?${new URLSearchParams({ q: query })}` : "/search",
     };
@@ -133,7 +131,7 @@ async function lookup(url: URL): Promise<Page> {
         (family === "messages" && !third && (!second || ["to", "g"].includes(first.toLowerCase())))))
   )
     return account(accountPages[family]);
-  if (key === "/events/add") return account("Add a Music Event");
+  if (key === "/events/add") return account(TITLES.addEvent);
   if (!first || rest.length) return missing;
 
   if (family === "music") {
@@ -144,7 +142,7 @@ async function lookup(url: URL): Promise<Page> {
       const album = t.albumId ? await findItem("album", t.albumId) : null;
       const image = album?.imageId ?? (await findItem("artist", t.artistId))?.imageId;
       return {
-        title: `${t.title} by ${t.artist}${fourth ? " - Wiki" : ""}`,
+        title: releaseTitle(t.title, t.artist, !!fourth),
         description: `Discover “${t.title}” by ${t.artist}${album ? ` from ${album.title}` : ""}. See listening stats, tags, and similar tracks.`,
         path: trackUrl(t.artist, t.title),
         index: !fourth,
@@ -165,9 +163,9 @@ async function lookup(url: URL): Promise<Page> {
       const a = await requireArtist(name(first));
       const bio = tab === "+wiki";
       return {
-        title: artistTab ? `${a.name} - ${artistTab}` : `${a.name} - Music, Albums & Tracks`,
+        title: artistTitle(a.name, artistTab),
         description: artistTab
-          ? `Explore ${artistTab.toLowerCase()} for ${a.name} on Sonosphere.`
+          ? `Explore ${ARTIST_TABS[artistTab]!.toLowerCase()} for ${a.name} on Sonosphere.`
           : `Explore ${a.name}’s top tracks, albums, similar artists, and listening stats on Sonosphere.`,
         path: artistUrl(a.name) + (artistTab && !bio ? (tab === "+wall" ? "/+shoutbox" : `/${tab}`) : ""),
         index: !artistTab,
@@ -179,7 +177,7 @@ async function lookup(url: URL): Promise<Page> {
     if (!fourth && (!third || extra === "+wiki")) {
       const a = await requireAlbum(name(first), name(second));
       return {
-        title: `${a.title} by ${a.artist}${third ? " - Wiki" : ""}`,
+        title: releaseTitle(a.title, a.artist, !!third),
         description: `Explore ${a.title} by ${a.artist}, including its tracklist, listening stats, and community tags.`,
         path: albumUrl(a.artist, a.title),
         index: !third,
@@ -192,7 +190,7 @@ async function lookup(url: URL): Promise<Page> {
   if (family === "tag" && (!second || (tab === "+wiki" && !third))) {
     const tag = await requireTag(dec(decodeURIComponent(first)));
     return {
-      title: `${tag.name} Music${second ? " - Wiki" : ""}`,
+      title: tagTitle(tag.name, !!second),
       description: `Discover artists, albums, and tracks tagged ${tag.name} by Sonosphere listeners.`,
       path: tagUrl(tag.name),
       index: !second,
@@ -247,10 +245,10 @@ async function lookup(url: URL): Promise<Page> {
       canonicalTab === "journal" &&
       ((extra === "new" && !fourth) || (journalPost && fourth.toLowerCase() === "edit"))
     )
-      return account("Edit Journal");
+      return account(TITLES.editJournal);
     if (
       second &&
-      (!own(userTabs, canonicalTab) ||
+      (!own(USER_TABS, canonicalTab) ||
         !(
           libraryArtist ||
           (!fourth && (!third || canonicalTab === "library" || canonicalTab === "listening-report" || journalPost))
@@ -260,26 +258,26 @@ async function lookup(url: URL): Promise<Page> {
     const user = await findByName(decodeURIComponent(first));
     if (!user) return missing;
     if (user.suspended || !canSee(user, null))
-      return { title: "Listener Profile", description: "View this listener’s profile on Sonosphere." };
+      return { title: TITLES.profile, description: "View this listener’s profile on Sonosphere." };
     const base = userUrl(user.username);
     if (journalPost) {
       const post = await findJournal(idOf(third));
       if (!post || post.userId !== user.id) return missing;
       return {
-        title: `${post.title} - ${user.username}’s Journal`,
+        title: journalTitle(post.title, user.username),
         description: summary(post.body),
         path: `${base}/journal/${post.id}`,
         index: true,
       };
     }
-    const subpage = second ? userTabs[canonicalTab] : "Listener Profile";
+    const subpage = second ? USER_TABS[canonicalTab]! : TITLES.profile;
     const suffix = third
       ? libraryArtist
         ? `/music/${fourth}`
         : `/${encodeURIComponent(decodeURIComponent(third))}`
       : "";
     return {
-      title: `${user.username} - ${subpage}`,
+      title: userTitle(user.username, second ? canonicalTab : ""),
       description: `Explore ${user.username}’s ${second ? subpage.toLowerCase() : "listening activity and music library"} on Sonosphere.`,
       path: second ? `${base}/${canonicalTab}${suffix}` : base,
       index: !second,
@@ -302,9 +300,8 @@ export async function pageSeo(url: URL): Promise<Page> {
   }
 }
 
-const titleOf = (page: Page) => (page.title.startsWith("Sonosphere") ? page.title : `${page.title} | Sonosphere`);
 export function seoHead(page: Page): string {
-  const title = titleOf(page);
+  const title = fullTitle(page.title);
   const description = summary(page.description);
   const url = page.path ? absolute(page.path) : undefined;
   const customImage = page.image && /^[a-f0-9]{32}$/.test(page.image);

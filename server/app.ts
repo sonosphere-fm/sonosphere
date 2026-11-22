@@ -5,6 +5,7 @@ import { isStaff } from "./site/roles";
 import { pageSeo, seoContent, seoHead } from "./seo";
 import { crawlerRoutes } from "./sitemap";
 import { findByName } from "./users/repo";
+import { TITLES } from "../shared/titles";
 import { usernameRedirect } from "../shared/username-redirect";
 
 type Asset = { body: ArrayBuffer; type: string; staff: boolean };
@@ -47,7 +48,7 @@ export async function appRoutes() {
       if (location)
         return new Response(null, { status: 302, headers: { Location: location, "Cache-Control": "no-store" } });
     }
-    const [{ user: viewer, actor }, seo] = await Promise.all([
+    const [{ user: viewer, actor }, found] = await Promise.all([
       viewerOf(req).catch(() => ({ user: null, actor: null })),
       pageSeo(url),
     ]);
@@ -55,6 +56,7 @@ export async function appRoutes() {
     const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
     const home = /^\/+$/u.test(url.pathname);
     const publicHome = home && !viewer;
+    const seo = home && viewer ? { ...found, title: TITLES.home } : found;
     const page = (publicHome ? guestHome : html)
       .replace('<html lang="en">', () => `<html lang="en"${scheme}>`)
       .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))

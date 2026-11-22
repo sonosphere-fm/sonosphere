@@ -2,7 +2,7 @@ import { Ico } from "../../icons";
 import { useState, type FormEvent } from "react";
 import { Button, SearchField } from "../../kit";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { qs, useApi, useParam, useTitle } from "../../lib";
+import { qs, searchTitle, useApi, useParam, useTitle } from "../../lib";
 import { Async, Empty, Section } from "../../ui/base";
 import { Grid, TrackList, UserList } from "../../ui/lists";
 import { TagChips } from "../../ui/tags";
@@ -24,7 +24,7 @@ export function SearchPage() {
   const page = Number(sp.get("page")) || 1;
   const [type, setType] = useParam("type", "all");
   const q = useApi<SearchResults>(term ? `/search${qs({ q: term, type, page })}` : null);
-  useTitle(term ? `Search: ${term}` : "Search");
+  useTitle(searchTitle(term));
   const nav = useNavigate();
   const [box, setBox] = useState(term);
 

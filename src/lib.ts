@@ -1,3 +1,4 @@
+import { fullTitle } from "../shared/titles";
 import { createContext, useContext, useDeferredValue, useEffect, useReducer, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { DmClientMessage, DmEvent } from "../shared/dm";
@@ -177,6 +178,15 @@ export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, refr
 export const useAuth = () => useContext(AuthContext);
 
 export { enc, dec, artistUrl, albumUrl, trackUrl, userUrl, tagUrl } from "../shared/paths";
+export {
+  artistTitle,
+  journalTitle,
+  releaseTitle,
+  searchTitle,
+  tagTitle,
+  TITLES,
+  userTitle,
+} from "../shared/titles";
 export const imageUrl = (id: string, size: "large" | "small" = "large") =>
   `/api/image/${id}${size === "small" ? "?s=small" : ""}`;
 
@@ -252,9 +262,12 @@ export function useParam(name: string, def = ""): [string, (v: string) => void] 
   return [sp.get(name) || def, set];
 }
 
+export let titledPath = "";
 export function useTitle(title: string | null | undefined) {
   useEffect(() => {
-    if (title) document.title = `${title} | Sonosphere`;
+    if (!title) return;
+    document.title = fullTitle(title);
+    titledPath = window.location.pathname;
   }, [title]);
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { titledPath } from "./lib";
 
 export function PageMetadata() {
   const { pathname, search } = useLocation();
@@ -22,7 +23,7 @@ export function PageMetadata() {
         if (!html || controller.signal.aborted) return;
         const head = new DOMParser().parseFromString(html, "text/html").head;
         const title = head.querySelector("title")?.textContent;
-        if (title) document.title = title;
+        if (title && titledPath !== window.location.pathname) document.title = title;
         head
           .querySelectorAll("meta[data-seo], link[data-seo], script[type='application/ld+json'][data-seo]")
           .forEach((node) => document.head.append(node));

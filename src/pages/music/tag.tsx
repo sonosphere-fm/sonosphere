@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { dec, num, qs, tagUrl, useApi, useTitle } from "../../lib";
+import { dec, num, qs, tagTitle, tagUrl, useApi, useTitle } from "../../lib";
 import { Async, Section, Stat, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
 import { Shoutbox } from "../../ui/shoutbox";
@@ -13,7 +13,7 @@ export function TagPage({ tab }: { tab: "overview" | "wiki" }) {
   const name = dec(useParams().tag);
   const base = tagUrl(name);
   const q = useApi<TagData>(`/tag${qs({ name })}`);
-  useTitle(`${name} music`);
+  useTitle(tagTitle(name, tab === "wiki"));
   return (
     <Async q={q}>
       {(t) => (
