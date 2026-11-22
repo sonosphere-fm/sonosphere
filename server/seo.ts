@@ -25,6 +25,7 @@ export const landing = {
     "Build with the Sonosphere API. Find authentication, scrobbling, and Last.fm compatibility documentation.",
   ],
   "/terms": ["Terms of Service", "Read the terms for using Sonosphere."],
+  "/changelog": ["Changelog", "Read about the latest updates and fixes to Sonosphere."],
   "/privacy": [
     "Privacy Policy",
     "Learn what data Sonosphere collects and how it handles your account and listening history.",

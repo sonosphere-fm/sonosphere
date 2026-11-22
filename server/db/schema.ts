@@ -651,6 +651,20 @@ export const journals = pgTable(
   (table) => [index("journals_user").on(table.userId, table.createdAt)]
 );
 
+export const changelogPosts = pgTable(
+  "changelog_posts",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+    title: text().notNull(),
+    body: text().notNull(),
+    author: text().notNull(),
+    editor: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [index("changelog_posts_time").on(table.createdAt, table.id)]
+);
+
 export const auditLog = pgTable(
   "audit_log",
   {

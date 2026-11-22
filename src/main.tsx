@@ -80,6 +80,7 @@ const Recommended = lazy(() => import("./pages/recommended").then((m) => ({ defa
 const ScrobblePage = lazy(() => import("./pages/scrobble").then((m) => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then((m) => ({ default: m.Connect })));
 const Help = lazy(() => import("./pages/help").then((m) => ({ default: m.Help })));
+const Changelog = lazy(() => import("./pages/changelog").then((m) => ({ default: m.Changelog })));
 const Developers = lazy(() => import("./pages/developers").then((m) => ({ default: m.Developers })));
 const Terms = lazy(() => import("./pages/legal").then((m) => ({ default: m.Terms })));
 const PrivacyPolicy = lazy(() => import("./pages/legal").then((m) => ({ default: m.Privacy })));
@@ -308,6 +309,7 @@ function Footer() {
       "Developers",
       [
         ["API documentation", "/developers"],
+        ["Changelog", "/changelog"],
         ["API keys", "/settings/applications"],
       ],
     ],
@@ -660,6 +662,7 @@ function Pages() {
         }
       />
       <Route path="/help" element={<Help />} />
+      <Route path="/changelog" element={<Changelog />} />
       <Route path="/developers" element={<Developers />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />

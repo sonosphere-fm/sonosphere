@@ -12,6 +12,7 @@ import { Content } from "./content";
 import { Catalogue } from "./catalogue";
 import { Audit } from "./audit";
 import { SiteSettings } from "./settings";
+import { ChangelogEditor } from "./changelog";
 
 const SECTIONS: [string, string, boolean][] = [
   ["/admin", "Dashboard", false],
@@ -20,6 +21,7 @@ const SECTIONS: [string, string, boolean][] = [
   ["/admin/users", "Users", false],
   ["/admin/content", "Content", false],
   ["/admin/catalogue", "Catalogue", true],
+  ["/admin/changelog/new", "Changelog", true],
   ["/admin/audit", "Audit log", false],
   ["/admin/settings", "Site settings", true],
 ];
@@ -96,6 +98,8 @@ export function AdminPage() {
               <Route path="catalogue" element={adminOnly(<Catalogue />)} />
               <Route path="audit" element={<Audit />} />
               <Route path="settings" element={adminOnly(<SiteSettings />)} />
+              <Route path="changelog/new" element={adminOnly(<ChangelogEditor />)} />
+              <Route path="changelog/:id/edit" element={adminOnly(<ChangelogEditor />)} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Pane>
