@@ -18,7 +18,7 @@ FROM oven/bun:1.4.5-slim
 ARG GIT_SHA
 WORKDIR /app
 ENV NODE_ENV=production DATA_DIR=/data PORT=3000 SENTRY_RELEASE=$GIT_SHA
-COPY package.json LICENSE NOTICE ./
+COPY package.json ./
 COPY --from=deps /app/node_modules node_modules
 COPY server server
 COPY --from=build /app/server/changelog/history.json server/changelog/history.json
