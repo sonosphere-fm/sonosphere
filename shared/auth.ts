@@ -13,6 +13,7 @@ export type Me = {
   emailVerified: boolean;
   pendingEmail: string | null;
   hasPassword: boolean;
+  impersonating: { by: string } | null;
 };
 
 export type MeResponse = { user: Me | null };

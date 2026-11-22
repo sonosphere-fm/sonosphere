@@ -6,10 +6,10 @@ import { findById, type User } from "../users/repo";
 import { norm, rid } from "../util";
 import { pendingEmail } from "./email";
 import * as repo from "./repo";
-import { sessionCookie } from "./session";
+import { clearActAsCookie, sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
 
-export async function me(u: User): Promise<Me> {
+export async function me(u: User, actor?: User | null): Promise<Me> {
   return {
     id: u.id,
     username: u.username,
@@ -38,6 +38,7 @@ export async function me(u: User): Promise<Me> {
     emailVerified: !!u.emailVerifiedAt,
     pendingEmail: await pendingEmail(u.id),
     hasPassword: !!u.passwordHash,
+    impersonating: actor && actor.id !== u.id ? { by: actor.username } : null,
   };
 }
 
@@ -55,10 +56,12 @@ export async function startSession(headers: Headers, userId: number): Promise<vo
   const token = rid(24);
   await repo.createSession(token, userId);
   headers.append("Set-Cookie", sessionCookie(token));
+  headers.append("Set-Cookie", clearActAsCookie());
 }
 export async function endSession(headers: Headers, token = ""): Promise<void> {
   if (token) await repo.deleteSession(token);
   headers.append("Set-Cookie", sessionCookie("", 0));
+  headers.append("Set-Cookie", clearActAsCookie());
 }
 
 export const USERNAME = /^[a-zA-Z][a-zA-Z0-9_-]{1,14}$/;

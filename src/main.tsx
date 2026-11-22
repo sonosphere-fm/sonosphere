@@ -20,7 +20,7 @@ import { Art, Empty, Logo } from "./ui/base";
 import { Home } from "./pages/music/home";
 import { NotFound } from "./pages/notfound";
 import { Private } from "./pages/private";
-import { SiteBanner, VerifyBanner } from "./banner";
+import { ImpersonationBanner, SiteBanner, VerifyBanner } from "./banner";
 
 const ArtistPage = lazy(() => import("./pages/music/artist").then(m => ({ default: m.ArtistPage })));
 const AlbumPage = lazy(() => import("./pages/music/album").then(m => ({ default: m.AlbumPage })));
@@ -488,13 +488,23 @@ function App() {
   }, []);
   const refresh = useCallback(() => {
     api<MeResponse>("/me")
-      .then(r => setMeRaw(r.user))
+      .then(r => setMe(r.user))
       .catch(() => {})
       .finally(() => setReady(true));
-  }, []);
+  }, [setMe]);
   useEffect(() => { if (!boot) refresh(); }, [refresh]);
 
-  useEffect(() => { liveConnect(!!me?.id); }, [me?.id]);
+  useEffect(() => { liveConnect(!!me?.id, me?.id ?? 0); }, [me?.id]);
+  useEffect(() => {
+    if (!me?.impersonating) return;
+    const check = () => { if (document.visibilityState === "visible") refresh(); };
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, [me?.impersonating, refresh]);
   useEffect(() => {
     const onScrobble = () => { if (me) refreshListening(me.username); };
     window.addEventListener("spin:scrobble", onScrobble);
@@ -530,6 +540,7 @@ function App() {
           <LookAhead />
           <Header />
           <SiteBanner />
+          <ImpersonationBanner />
           <VerifyBanner />
           <main>
             <Routed />

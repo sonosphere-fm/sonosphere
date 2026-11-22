@@ -143,7 +143,7 @@ export async function publicNowPlaying(req: Request, server?: Server<SocketData>
     if (url.pathname.endsWith("/ws")) {
       checkCapacity(ipOf(req));
       const data: SocketData = {
-        userId: 0, token: "", ip: ipOf(req), listening: new Set(), listenVersion: 0, typedAt: 0, msgs: 0, windowAt: Date.now(),
+        userId: 0, actorId: 0, token: "", ip: ipOf(req), listening: new Set(), listenVersion: 0, typedAt: 0, msgs: 0, windowAt: Date.now(),
         publicUserId: user.id, publicOrigin: originOf(req),
       };
       if (server?.upgrade(req, { data })) return;

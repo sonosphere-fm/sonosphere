@@ -9,7 +9,7 @@ export const idList = (v: unknown, max: number): number[] =>
   (Array.isArray(v) ? v : []).map(Number).filter(Number.isFinite).slice(0, max);
 export const targetUser = (name: string): Promise<User> => requireUser(name);
 
-type AccountAction = "suspend" | "ban" | "role" | "delete" | "sessions" | "mute";
+type AccountAction = "suspend" | "ban" | "role" | "delete" | "sessions" | "mute" | "impersonate";
 const VERB: Record<AccountAction, string> = {
   suspend: "suspend",
   ban: "ban",
@@ -17,6 +17,7 @@ const VERB: Record<AccountAction, string> = {
   delete: "delete",
   sessions: "sign out",
   mute: "turn off messaging for",
+  impersonate: "act as",
 };
 
 // `configured` is configAdmins(), passed in so this can run inside a transaction.

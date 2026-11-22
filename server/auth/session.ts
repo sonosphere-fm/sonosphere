@@ -2,6 +2,11 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { sessions, users } from "../db/schema";
 import { digest } from "../util";
+import { isAdmin, isStaff } from "../site/roles";
+import { findById, type User } from "../users/repo";
+
+export const tokenOf = (req: Request) => /(?:^|;\s*)sid=([a-f0-9]+)/.exec(req.headers.get("cookie") || "")?.[1] || "";
+const actAsOf = (req: Request) => Number(/(?:^|;\s*)act_as=(\d+)(?:;|$)/.exec(req.headers.get("cookie") || "")?.[1]) || null;
 
 export async function sessionUser(token: string) {
   if (!token) return null;
@@ -14,3 +19,13 @@ export async function sessionUser(token: string) {
 
 const YEAR = 60 * 60 * 24 * 365;
 export const sessionCookie = (token: string, maxAge = YEAR) => `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+export const actAsCookie = (id: number) => `act_as=${id}; Path=/; HttpOnly; SameSite=Lax`;
+export const clearActAsCookie = () => "act_as=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";
+
+export async function viewerOf(req: Request): Promise<{ user: User | null; actor: User | null }> {
+  const actor = await sessionUser(tokenOf(req));
+  const id = actAsOf(req);
+  if (!actor || !id || !isAdmin(actor) || id === actor.id) return { user: actor, actor };
+  const target = await findById(id);
+  return { user: target && !target.banned && !isStaff(target) ? target : actor, actor };
+}

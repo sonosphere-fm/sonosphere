@@ -8,6 +8,9 @@ import { canAct, note, paging, targetUser } from "./common";
 import { pageOf } from "../moderation/repo";
 import * as repo from "./users.repo";
 import { setProbation, standing } from "../trust/service";
+import { me } from "../auth/service";
+import { actAsCookie } from "../auth/session";
+import type { MeResponse } from "../../shared/auth";
 import type {
   BanResult, NoteAdded, Ok, ProbationResult, RoleResult, SessionsResult, StaffUserList, StaffUserPage, SuspendResult, VerifyResult,
 } from "../../shared/admin";
@@ -29,6 +32,17 @@ const userAction = (action: string, t: { id: number; username: string }, note: s
   subjectId: t.id,
   note,
   ...(data ? { data } : {}),
+});
+
+router.post<MeResponse>("/api/admin/users/:name/impersonate", async c => {
+  const actor = adminOnly(c);
+  const target = await targetUser(c.params[0]!);
+  await canAct(actor, target, "impersonate");
+  if (target.banned) bad("You can't act as a banned account");
+  const user = await me(target, actor);
+  await audit(actor, userAction("user.impersonate", target, note(c)));
+  c.headers.append("Set-Cookie", actAsCookie(target.id));
+  return { user };
 });
 
 router.get<StaffUserList>("/api/admin/users", async c => {

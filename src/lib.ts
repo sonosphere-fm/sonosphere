@@ -227,6 +227,7 @@ type Outgoing = DmClientMessage | ListenMessage | { t: "ping" };
 const liveListeners = new Set<(e: LiveEvent) => void>();
 let sock: WebSocket | null = null;
 let liveWanted = false;
+let liveIdentity = 0;
 let liveTries = 0;
 let liveTimer: ReturnType<typeof setTimeout> | undefined;
 let livePing: ReturnType<typeof setInterval> | undefined;
@@ -332,13 +333,14 @@ function liveOpen() {
   };
 }
 
-export function liveConnect(on: boolean) {
-  if (on !== liveWanted) {
+export function liveConnect(on: boolean, identity = 0) {
+  if (on !== liveWanted || identity !== liveIdentity) {
     const previous = sock;
     sock = null;
     previous?.close();
   }
   liveWanted = on;
+  liveIdentity = identity;
   reconcileLive();
 }
 

@@ -3,14 +3,17 @@ import { deleteSessionsOf, emailTaken } from "../auth/repo";
 import { confirmedBy, endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
 import { confirmed, need } from "../guards";
-import { bad, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
+import { bad, fail, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
+import { clearActAsCookie } from "../auth/session";
+import { isAdmin } from "../site/roles";
+import { audit, auditTx } from "../site/audit";
 import { deleteAllScrobbles, exportLoved, exportScrobbles } from "../listening/repo";
 import { findById } from "../users/repo";
 import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
 import { clean, now } from "../util";
 import * as repo from "./repo";
 import type { ProfileSaved, ScrobblesCleared } from "../../shared/account";
-import type { Ok } from "../../shared/auth";
+import type { MeResponse, Ok } from "../../shared/auth";
 
 export const router = new Router();
 
@@ -68,7 +71,20 @@ router.patch<ProfileSaved>("/api/me", async c => {
     ...(emailMuted !== undefined && { emailMuted }),
     ...(theme && { theme }),
   });
-  return { user: await me((await findById(u.id)) ?? missing("User")) };
+  return { user: await me((await findById(u.id)) ?? missing("User"), c.actor) };
+});
+
+router.post<MeResponse>("/api/me/stop-impersonating", async c => {
+  const actor = c.actor ?? fail(401, "You need to log in to do that");
+  const user = await me(actor);
+  if (isAdmin(actor) && c.user && actor.id !== c.user.id) {
+    await audit(actor, {
+      action: "user.impersonate.stop", targetType: "user", targetId: c.user.id,
+      label: c.user.username, subjectId: c.user.id,
+    });
+  }
+  c.headers.append("Set-Cookie", clearActAsCookie());
+  return { user };
 });
 
 router.post<Ok>("/api/me/password", async c => {
@@ -94,8 +110,13 @@ router.post<Ok>("/api/me/delete", async c => {
 
 router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async c => {
   const u = need(c);
-  if (!(await confirmedBy(u, String(c.body.password || "")))) bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
-  return { deleted: await deleteAllScrobbles(u.id) };
+  const actor = c.actor && isAdmin(c.actor) && c.actor.id !== u.id ? c.actor : null;
+  if (!actor && !(await confirmedBy(u, String(c.body.password || "")))) bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
+  const deleted = await deleteAllScrobbles(u.id, actor ? (tx, deleted) => auditTx(tx, actor, {
+    action: "user.clear-scrobbles", targetType: "user", targetId: u.id, label: u.username, subjectId: u.id,
+    note: "Cleared while acting as this user", data: { deleted },
+  }) : undefined);
+  return { deleted };
 });
 
 router.get("/api/me/export", async c => {

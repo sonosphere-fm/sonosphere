@@ -1232,6 +1232,9 @@ html { scrollbar-color: var(--scroll) var(--bg); }
 /* ---------- announcement banner ---------- */
 .site-banner { background: light-dark(#e8eefc, #1b2466); color: light-dark(#1a2f63, #dfe3ff); border-bottom: 1px solid light-dark(#c9d6f5, #2a3796); font-size: 16px; line-height: 1.45; }
 .site-banner.warning { background: light-dark(#fff2d9, #2a2718); color: light-dark(#5c3900, #ffd98a); border-bottom-color: light-dark(#f0d9a8, #463f1f); }
+.site-banner.impersonation { background: light-dark(#fff2d9, #2a2718); color: light-dark(#5c3900, #ffd98a); border-bottom-color: light-dark(#f0d9a8, #463f1f); }
+.site-banner.impersonation .site-banner-in { flex-wrap: wrap; }
+.site-banner.impersonation button:disabled { cursor: progress; opacity: .5; }
 .site-banner-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .site-banner .site-banner-in { padding-top: 12px; padding-bottom: 12px; }
 .site-banner-in > span { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }

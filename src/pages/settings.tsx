@@ -853,6 +853,7 @@ function ConfirmField({ value, onChange }: { value: string; onChange: (v: string
 }
 
 function DataSettings() {
+  const { me } = useAuth();
   const [pw, setPw] = useState("");
   const act = useAction();
   const c = useConfirm();
@@ -860,8 +861,8 @@ function DataSettings() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     c.ask({
-      title: "Delete all of your scrobbles?",
-      body: "Your whole listening history will be removed. This can't be undone.",
+      title: me?.impersonating ? `Delete all of ${me.username}'s scrobbles?` : "Delete all of your scrobbles?",
+      body: me?.impersonating ? `${me.username}'s whole listening history will be removed. This can't be undone and is logged in the audit log.` : "Your whole listening history will be removed. This can't be undone.",
       action: "Delete all scrobbles",
       danger: true,
       run: () => act.run(async () => {
@@ -894,8 +895,8 @@ function DataSettings() {
       </Section>
       <Section title="Clear listening history">
         <form className="form" onSubmit={submit}>
-          <p>Removes every scrobble from your library. Loved tracks, tags and playlists are kept.</p>
-          <ConfirmField value={pw} onChange={setPw} />
+          <p>Removes every scrobble from {me?.impersonating ? `${me.username}'s` : "your"} library. Loved tracks, tags and playlists are kept.</p>
+          {me?.impersonating ? <p className="muted small">You are acting as {me.username}; no password is needed. This deletion is logged in the audit log.</p> : <ConfirmField value={pw} onChange={setPw} />}
           {act.note}
           <Button kind="btn danger" loading={act.busy}>Delete all scrobbles</Button>
         </form>

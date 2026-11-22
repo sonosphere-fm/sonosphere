@@ -15,7 +15,7 @@ const toConsent = (c: { url: URL }) => Response.redirect(`/connect${c.url.search
 router.get("/api/auth", toConsent);
 router.get("/api/auth/", toConsent);
 
-router.get<MeResponse>("/api/me", async c => ({ user: c.user ? await me(c.user) : null }));
+router.get<MeResponse>("/api/me", async c => ({ user: c.user ? await me(c.user, c.actor) : null }));
 
 router.get<AuthConfig>("/api/auth/config", () => ({ turnstile: turnstileSiteKey(), oauth: oauthProviders() }));
 

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import type { MeResponse } from "../../shared/auth";
 import { Ico } from "../icons";
 import { Button, SearchField, Select, Textarea } from "../kit";
 import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
@@ -148,7 +149,8 @@ const ACTIONS = "flex flex-col items-stretch gap-2 *:w-full";
 export function UserDetail() {
   const name = useParams().name!;
   const role = useRole();
-  const { refresh } = useAuth();
+  const { refresh, setMe } = useAuth();
+  const navigate = useNavigate();
   const [modal, ask] = useConfirm();
   const flash = useFlash();
   const q = useApi<StaffUserPage>(`/admin/users/${encodeURIComponent(name)}`);
@@ -163,6 +165,15 @@ export function UserDetail() {
       <Async q={q}>{d => {
         const u = d.user;
         const staffTarget = u.role !== "user";
+        const impersonate = () => ask({
+          title: `Act as ${u.username}`,
+          action: "Act as user",
+          body: <p>You will browse as {u.username} until you return to your account. Changes affect their account. Starting and stopping this session, and clearing their scrobbles, are logged.</p>,
+          run: note => api<MeResponse>(`/admin/users/${encodeURIComponent(u.username)}/impersonate`, { body: { note } }).then(r => {
+            setMe(r.user);
+            navigate(userUrl(u.username));
+          }),
+        });
         const locked = u.self || u.configAdmin;
         const post = (path: string, body: Record<string, unknown>) =>
           api<AccountReply>(`/admin/users/${encodeURIComponent(u.username)}/${path}`, { body }).then(() => {
@@ -291,6 +302,7 @@ export function UserDetail() {
                 <p className={`muted ${USER_HEAD_SUB}`}>{[u.realname, u.country].filter(Boolean).join(" · ") || "No name or country set"}</p>
               </div>
               {!u.banned && <Button kind="btn ghost small" href={userUrl(u.username)}>View profile <Ico.Right /></Button>}
+              {role === "admin" && !staffTarget && !locked && !u.banned && <Button kind="btn ghost small" type="button" onClick={impersonate}>Act as user</Button>}
             </div>
             {u.banned && (
               <p className="notice">
