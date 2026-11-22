@@ -451,6 +451,7 @@ export function UserDetail() {
               <div className="cols">
                 <div className="main">
                   {role === "admin" && <ManageUserLabels name={u.username} />}
+                  {role === "admin" && <ManageUsernames key={u.username} name={u.username} onChange={q.reload} />}
                   <Section title="Internal notes">
                     <p className="muted small">Only staff can see these.</p>
                     <form className={NOTE_FORM} onSubmit={addNote}>
@@ -807,3 +808,4 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
     </ul>
   );
 }
+import { ManageUsernames } from "./usernames";

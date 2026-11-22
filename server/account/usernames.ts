@@ -64,7 +64,9 @@ export async function changeUsername(
   userId: number,
   actor: { id: number; username: string },
   requested: unknown,
-  undo = false
+  undo = false,
+  adminOverride = false,
+  note = ""
 ) {
   return transact(async (tx) => {
     await lockUsernameClaims(tx);
@@ -77,7 +79,8 @@ export async function changeUsername(
       next = latest.previous;
       await tx.update(usernameHistory).set({ releasedAt: at, undoneAt: at }).where(eq(usernameHistory.id, latest.id));
     } else {
-      if (user.usernameChangeAfter > at) return fail(429, "You can change your username once every 7 days");
+      if (!adminOverride && user.usernameChangeAfter > at)
+        return fail(429, "You can change your username once every 7 days");
       if (typeof requested !== "string" || !USERNAME.test(requested))
         return bad("Usernames are 2–15 characters: letters, numbers, - and _, starting with a letter");
       next = requested;
@@ -106,7 +109,60 @@ export async function changeUsername(
       subjectId: userId,
       label: next,
       data: { previous: user.username, next },
+      note,
     });
     return updated!;
+  });
+}
+
+export async function heldUsernames(userId: number) {
+  return db
+    .select({ username: usernameHistory.previous, expiresAt: usernameHistory.reservedUntil })
+    .from(usernameHistory)
+    .where(
+      and(
+        eq(usernameHistory.userId, userId),
+        gt(usernameHistory.reservedUntil, now()),
+        isNull(usernameHistory.releasedAt)
+      )
+    );
+}
+
+export async function manageUsernames(
+  userId: number,
+  actor: { id: number; username: string },
+  action: "release" | "cooldown",
+  note: string
+) {
+  return transact(async (tx) => {
+    await lockUsernameClaims(tx);
+    const user = (await first(tx.select().from(users).where(eq(users.id, userId)).for("update"))) ?? missing("User");
+    const at = now();
+    let released: string[] = [];
+    if (action === "release") {
+      const rows = await tx
+        .update(usernameHistory)
+        .set({ releasedAt: at })
+        .where(
+          and(
+            eq(usernameHistory.userId, userId),
+            gt(usernameHistory.reservedUntil, at),
+            isNull(usernameHistory.releasedAt)
+          )
+        )
+        .returning({ username: usernameHistory.previous });
+      released = rows.map((row) => row.username);
+    } else {
+      await tx.update(users).set({ usernameChangeAfter: 0 }).where(eq(users.id, userId));
+    }
+    await auditTx(tx, actor, {
+      action: `user.username.${action}`,
+      targetType: "user",
+      targetId: userId,
+      subjectId: userId,
+      label: user.username,
+      note,
+      data: action === "release" ? { released } : { previous: user.usernameChangeAfter },
+    });
   });
 }
