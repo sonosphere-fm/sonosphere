@@ -38,7 +38,7 @@ export function countryName(s: string) {
 }
 export function Flag({ code }: { code: string }) {
   const F = FLAGS[code];
-  return F ? <F className="flag" /> : null;
+  return F ? <F className="w-[21px] h-[14px] flex-none block shadow-[0_0_0_1px_var(--inset)]" /> : null;
 }
 
 const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
@@ -105,7 +105,7 @@ function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholde
     onBlur: leave,
   };
   return (
-    <div className="suggest">
+    <div className="suggest relative w-full font-normal">
       <TextInput
         label={label}
         isLabelHidden
@@ -120,7 +120,7 @@ function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholde
         {...combobox}
       />
       {shown && (
-        <ul className="suggest-list" role="listbox" id={id} ref={list} aria-label={label}>
+        <ul className="absolute z-30 left-0 right-0 top-[calc(100%+4px)] m-0 p-[4px_0] list-none max-h-[280px] overflow-y-auto bg-card border border-line shadow-[0_6px_18px_light-dark(rgba(0,0,0,.14),rgba(0,0,0,.5))] rounded-none [scrollbar-width:thin] [scrollbar-color:var(--scroll-thin)_transparent]" role="listbox" id={id} ref={list} aria-label={label}>
           {rows.map((r, i) => (
             <li
               key={r.key}
@@ -128,15 +128,15 @@ function Suggest({ label, value, onText, onLeave, rows, onPick, icon, placeholde
               data-i={i}
               role="option"
               aria-selected={i === hi}
-              className={i === hi ? "on" : undefined}
+              className={"flex items-center gap-2.5 px-[12px] py-[7px] cursor-pointer font-medium text-ink " + (i === hi ? "bg-accent-faint" : "")}
               onMouseDown={e => e.preventDefault()}
               onMouseEnter={() => setHi(i)}
               onClick={() => pick(r)}
             >
               {r.icon}
-              <span className="suggest-name">{r.label}{r.sub && <small>{r.sub}</small>}</span>
+              <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{r.label}{r.sub && <small className="ml-2 text-muted font-normal text-[13px]">{r.sub}</small>}</span>
               {r.count > 0 && (
-                <span className="suggest-count" title={`${num(r.count)} ${r.count === 1 ? "event" : "events"}`}>{num(r.count)}</span>
+                <span className="text-muted text-[13px] tabular-nums" title={`${num(r.count)} ${r.count === 1 ? "event" : "events"}`}>{num(r.count)}</span>
               )}
             </li>
           ))}

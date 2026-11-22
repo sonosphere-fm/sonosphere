@@ -28,7 +28,8 @@
     "postgres": "^4.1.1",
     "react": "19",
     "react-dom": "19",
-    "react-router-dom": "6"
+    "react-router-dom": "6",
+    "tailwind-merge": "^3.7.1"
   },
   "devDependencies": {
     "@astryxdesign/cli": "^0.7.16",
@@ -36,8 +37,10 @@
     "@types/nodemailer": "^8.0.2",
     "@types/react": "19",
     "@types/react-dom": "19",
+    "bun-plugin-tailwind": "0.1.2",
     "cheerio": "^1.2.0",
     "drizzle-kit": "^0.31.11",
+    "tailwindcss": "4.1.14",
     "typescript": "^7.0.2"
   }
 }

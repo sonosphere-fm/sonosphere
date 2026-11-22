@@ -111,15 +111,15 @@ export function UserPage({ tab }: { tab: Tab }) {
             stats={<ProfileStats u={u} base={base} locked={locked} />}
             actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}
           />
-          <div className="wrap page">
+          <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
             {u.blocked && (
-              <p className="notice">
+              <p className="bg-[light-dark(#f6f3ee,#121636)] border-l-[3px] border-accent py-2.5 px-3.5 mb-5">
                 You've blocked {u.username}. They can't follow you or post on your profile, and you won't see their wall posts.{" "}
-                <Button kind="link" type="button" onClick={() => setBlock(u.username, false).then(q.reload)}>Unblock</Button>
+                <Button className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => setBlock(u.username, false).then(q.reload)}>Unblock</Button>
               </p>
             )}
             {u.suspended && (mine || me?.admin) && (
-              <p className="notice">
+              <p className="bg-[light-dark(#f6f3ee,#121636)] border-l-[3px] border-accent py-2.5 px-3.5 mb-5">
                 {mine
                   ? "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work."
                   : `${u.username} is suspended from posting.`}
@@ -192,12 +192,12 @@ function UserEvents({ name }: { name: string }) {
 function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: boolean }) {
   if (!locked) return <OpenOverview u={u} mine={mine} />;
   return (
-    <div className="cols">
-      <div className="main">
+    <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+      <div className="main min-w-0">
         <Section title="Listening"><Empty>{u.username} keeps their listening private.</Empty></Section>
         <Section title="Wall" more={`${userUrl(u.username)}/wall`} moreLabel="Whole wall"><Shoutbox type="user" id={u.id} limit={5} /></Section>
       </div>
-      <aside className="side"><About u={u} /><Earworm u={u} /></aside>
+      <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block"><About u={u} /><Earworm u={u} /></aside>
     </div>
   );
 }
@@ -206,7 +206,7 @@ function About({ u }: { u: Profile }) {
   if (!u.about && !u.website) return null;
   return (
     <Section title="About">
-      <div className="profile-about">
+      <div className="min-w-0 wrap-anywhere [&_.prose]:min-w-0 [&_.prose]:max-w-full [&_pre]:whitespace-pre-wrap [&_pre]:wrap-anywhere">
         <Markdown text={u.about} />
         {u.website && (
           <p><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{u.website.replace(/^https?:\/\//, "")}</a></p>
@@ -221,12 +221,12 @@ function Earworm({ u }: { u: Profile }) {
   if (!o) return null;
   return (
     <Section title="Current earworm" more={`${userUrl(u.username)}/earworms`} moreLabel="All">
-      <div className="obsession">
+      <div className="flex gap-3 items-start [&>a]:w-[84px] [&>a]:flex-none [&>div>*]:block [&>div>*]:overflow-hidden [&>div>*]:text-ellipsis [&_p]:my-1">
         <Link to={trackUrl(o.artist, o.title)}><Art image={o.image} /></Link>
         <div>
-          <Link className="strong" to={trackUrl(o.artist, o.title)}>{o.title}</Link>
-          <Link className="muted" to={artistUrl(o.artist)}>{o.artist}</Link>
-          {o.comment && <p className="small">“{o.comment}”</p>}
+          <Link className="font-semibold" to={trackUrl(o.artist, o.title)}>{o.title}</Link>
+          <Link className="text-muted" to={artistUrl(o.artist)}>{o.artist}</Link>
+          {o.comment && <p className="text-[13px]">“{o.comment}”</p>}
         </div>
       </div>
     </Section>
@@ -236,16 +236,16 @@ function Earworm({ u }: { u: Profile }) {
 function Compatibility({ taste }: { taste: NonNullable<Profile["taste"]> }) {
   return (
     <Section title="Your compatibility">
-      <div className="taste">
-        <div className="taste-bar"><span style={{ width: `${Math.max(4, taste.score * 100)}%` }} /></div>
+      <div className="mb-2">
+        <div className="block h-2 mb-1.5 bg-line [&>span]:block [&>span]:h-full [&>span]:bg-accent"><span style={{ width: `${Math.max(4, taste.score * 100)}%` }} /></div>
         <b>{taste.label}</b>
       </div>
       {taste.artists.length > 0 ? (
-        <p className="small">
+        <p className="text-[13px]">
           You both listen to {taste.artists.map((a, i) => <span key={a.name}>{i > 0 && ", "}<Link to={artistUrl(a.name)}>{a.name}</Link></span>)}.
         </p>
       ) : (
-        <p className="muted small">No artists in common yet.</p>
+        <p className="text-muted text-[13px]">No artists in common yet.</p>
       )}
     </Section>
   );
@@ -278,12 +278,12 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   const tracks = useApi<UserTop<TopTrack>>(paths[3]);
 
   return (
-    <div className="cols">
-      <div className="main">
+    <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+      <div className="main min-w-0">
         <Section title="Recent tracks" more={`${base}/library`} moreLabel="More tracks">
           <Async q={recent}>{d => <RecentTracks d={d} u={u} mine={mine} />}</Async>
         </Section>
-        <div className="toolbar"><h2>Top music</h2><PeriodPicker def="7day" /></div>
+        <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1"><h2>Top music</h2><PeriodPicker def="7day" /></div>
         <Section title="Top artists" more={`${base}/library/artists?period=${period}`}>
           <Async q={artists}>{d => <Grid kind="artist" cols={4} items={d.items} sub={a => `${num(a.playcount)} scrobbles`} />}</Async>
         </Section>
@@ -295,12 +295,12 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
         </Section>
         <Section title="Wall" more={`${base}/wall`} moreLabel="Whole wall"><Shoutbox type="user" id={u.id} limit={5} /></Section>
       </div>
-      <aside className="side">
+      <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
         <About u={u} />
         {u.taste && <Compatibility taste={u.taste} />}
         <Earworm u={u} />
         <Section title="Library">
-          <ul className="plain">
+          <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0">
             <li><Link to={`${base}/library/artists`}>{num(u.artistCount)} artists</Link></li>
             <li><Link to={`${base}/library/albums`}>{num(u.albumCount)} albums</Link></li>
             <li><Link to={`${base}/library/tracks`}>{num(u.trackCount)} tracks</Link></li>

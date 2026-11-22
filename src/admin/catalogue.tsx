@@ -27,8 +27,8 @@ export function Catalogue() {
   useTitle("Catalogue");
   return (
     <>
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           {[["duplicates", "Duplicate artists"], ["browse", "Rename and merge"], ["orphans", "Orphans"], ["tags", "Tags"]].map(([k, l]) => (
             <button key={k} type="button" className={tab === k ? "active" : ""} onClick={() => set({ tab: k === "duplicates" ? "" : k, kind: "", q: "" })}>
               {l}
@@ -49,7 +49,7 @@ function Duplicates() {
   return (
     <>
       {modal}
-      <p className="muted">
+      <p className="text-muted">
         Artists whose names only differ by case, accents, punctuation, “the” or “&amp;”. Pick the one to keep; the rest are merged into it with their
         tracks, albums, scrobbles, tags, wiki history and wall posts. Tracks and albums with the same title are combined.
       </p>
@@ -57,7 +57,7 @@ function Duplicates() {
       <Async q={q}>{d => {
         if (d.groups.length === 0) return <Empty>No likely duplicates.</Empty>;
         return (
-          <div className="adm-groups">
+          <div className="grid gap-3">
             {d.groups.map((g, gi) => {
               const keep = target[gi] ?? g[0].id;
               const kept = g.find(a => a.id === keep)!;
@@ -79,14 +79,14 @@ function Duplicates() {
                 run: mergeAll,
               });
               return (
-                <div key={g.map(a => a.id).join("-")} className="adm-group">
+                <div key={g.map(a => a.id).join("-")} className="border border-line px-3.5 pt-2.5 pb-3.5 [&_ul]:list-none [&_ul]:m-0 [&_ul]:mb-2.5 [&_ul]:p-0">
                   <ul>
                     {g.map(a => (
                       <li key={a.id}>
-                        <label className="adm-radio">
+                        <label className="flex items-center gap-2.5 py-1.5 flex-wrap cursor-pointer [&_input]:accent-accent">
                           <input type="radio" name={`dup-${gi}`} checked={a.id === keep} onChange={() => setTarget({ ...target, [gi]: a.id })} />
-                          <span className="grow"><b>{a.name}</b> <Link className="muted small" to={artistUrl(a.name)}>view</Link></span>
-                          <span className="muted small">{plural(a.scrobbles, "scrobble")} · {plural(a.tracks, "track")} · {plural(a.albums, "album")}</span>
+                          <span className="flex-1 min-w-0"><b>{a.name}</b> <Link className="text-muted text-[13px]" to={artistUrl(a.name)}>view</Link></span>
+                          <span className="text-muted text-[13px]">{plural(a.scrobbles, "scrobble")} · {plural(a.tracks, "track")} · {plural(a.albums, "album")}</span>
                         </label>
                       </li>
                     ))}
@@ -132,24 +132,24 @@ function Browse() {
   };
   return (
     <>
-      <div className="adm-filterbar">
+      <div className="flex flex-wrap items-center gap-2.5 mb-3.5 [&_.astryx-text-input]:min-w-[170px] [&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px] max-[861px]:[&>*]:flex-[1_1_160px]">
         <Select
           label="Kind"
           value={kind}
           onChange={v => set({ kind: v === "artist" ? "" : v })}
           options={[["artist", "Artists"], ["album", "Albums"], ["track", "Tracks"]]}
         />
-        <form className="adm-search" onSubmit={search}>
+        <form className="min-w-[260px] flex-[0_1_340px] [&_.search-field]:h-10 [&_.search-go]:w-[42px] [&_.search-go]:text-base [&.wide]:flex-1 [&.wide]:min-w-0 max-[861px]:flex-[1_1_100%] max-[861px]:min-w-0" onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder={`Search ${KIND_LABEL[kind].toLowerCase()}`} clearable />
         </form>
       </div>
       {flash.note}
       <Async q={q}>{d => (
         <>
-          <p className="muted small">{num(d.total)} {KIND_LABEL[kind].toLowerCase()}</p>
+          <p className="text-muted text-[13px]">{num(d.total)} {KIND_LABEL[kind].toLowerCase()}</p>
           {d.items.length === 0 ? <Empty>Nothing matches.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className="overflow-x-auto mb-3.5">
+              <table className="adm-table [&_th_button_.ico]:ml-1 [&_th_button_.ico]:size-[.85em] w-full border-collapse text-sm [&_td]:p-2 [&_td]:border-b [&_td]:border-line [&_td]:align-middle [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em] [&_th]:text-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-line [&_th]:whitespace-nowrap [&_th_button]:bg-transparent [&_th_button]:border-0 [&_th_button]:p-0 [&_th_button]:[font:inherit] [&_th_button]:text-inherit [&_th_button]:uppercase [&_th_button]:tracking-[.05em] [&_th_button]:cursor-pointer [&_th_button:hover]:text-ink [&_th_button.on]:text-ink [&_.num]:text-right [&_.num]:tabular-nums [&_.right]:text-right [&_.tick]:w-7 [&_.grow-cell]:w-full [&_tr.picked_td]:bg-[light-dark(#fff7f6,#1f2659)] [&.compact_td]:p-1.5 [&.compact_td]:align-top [&.adm-log_td]:align-top">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -164,15 +164,15 @@ function Browse() {
                 <tbody>
                   {d.items.map(it => (
                     <tr key={it.id}>
-                      <td><Link className="strong" to={itemUrl(kind, it)}>{it.name}</Link></td>
+                      <td><Link className="font-semibold" to={itemUrl(kind, it)}>{it.name}</Link></td>
                       {kind !== "artist" && <td>{it.artist}</td>}
                       {kind !== "track" && <td className="num">{num(it.tracks)}</td>}
                       {kind === "artist" && <td className="num">{num(it.albums)}</td>}
                       <td className="num">{num(it.scrobbles)}</td>
-                      <td className="num muted small">{it.id}</td>
-                      <td className="nowrap right">
-                        <Button kind="link small" type="button" onClick={() => setRename(it)}>Rename</Button>{" "}
-                        <Button kind="link small" type="button" onClick={() => setMerge(it)}>Merge into…</Button>
+                      <td className="num text-muted text-[13px]">{it.id}</td>
+                      <td className="whitespace-nowrap text-right">
+                        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => setRename(it)}>Rename</Button>{" "}
+                        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => setMerge(it)}>Merge into…</Button>
                       </td>
                     </tr>
                   ))}
@@ -203,13 +203,13 @@ function RenameDialog({ kind, item, close, done }: DialogProps) {
   };
   return (
     <Modal title={`Rename ${kind}`} onClose={close}>
-      <form className="form" onSubmit={submit}>
-        <p className="muted small">
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submit}>
+        <p className="text-muted text-[13px]">
           {item.artist ? `${item.name} by ${item.artist}` : item.name}. Every scrobble, tag and page follows the new name. If the name is taken, merge instead.
         </p>
         <label>New name<Input value={name} onChange={e => setName(e.target.value)} autoFocus aria-label="New name" /></label>
         {act.note}
-        <div className="row">
+        <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
           <Button kind="btn" loading={act.busy} disabled={!name.trim() || name.trim() === item.name}>Rename</Button>
           <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
         </div>
@@ -238,27 +238,27 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
   };
   return (
     <Modal title={`Merge ${kind}`} onClose={close}>
-      <div className="form">
-        <p className="small">
+      <div className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
+        <p className="text-[13px]">
           Move everything from <b>{item.name}</b>{item.artist && <> by {item.artist}</>} (#{item.id}) into another {kind}, then delete it.
         </p>
         {!pick ? (
           <>
-            <form className="adm-search wide" onSubmit={search}>
+            <form className="min-w-[260px] flex-[0_1_340px] [&_.search-field]:h-10 [&_.search-go]:w-[42px] [&_.search-go]:text-base [&.wide]:flex-1 [&.wide]:min-w-0 max-[861px]:flex-[1_1_100%] max-[861px]:min-w-0 wide" onSubmit={search}>
               <SearchField value={text} onChange={setText} placeholder={`Find the ${kind} to keep`} autoFocus />
             </form>
-            <Suspense fallback={<p className="muted small">Searching…</p>}>
+            <Suspense fallback={<p className="text-muted text-[13px]">Searching…</p>}>
               <MergeResults kind={kind} term={term} skip={item.id} onPick={setPick} />
             </Suspense>
           </>
         ) : (
-          <form className="form" onSubmit={submit}>
-            <p className="notice">
+          <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submit}>
+            <p className="bg-[light-dark(#f6f3ee,#121636)] border-l-[3px] border-accent py-2.5 px-3.5 mb-5">
               Merge <b>{item.name}</b> (#{item.id}, {num(item.scrobbles)} scrobbles) into <b>{pick.name}</b>
               {pick.artist && <> by {pick.artist}</>} (#{pick.id}, {num(pick.scrobbles)} scrobbles)? This can't be undone.
             </p>
             {act.note}
-            <div className="row">
+            <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
               <Button kind="btn danger" loading={act.busy}>Merge</Button>
               <Button kind="btn ghost" type="button" onClick={() => setPick(null)}>Pick another</Button>
             </div>
@@ -274,14 +274,14 @@ function MergeResults({ kind, term, skip, onPick }: { kind: string; term: string
   return (
     <Async q={q}>{d => {
       const items = d.items.filter(x => x.id !== skip);
-      if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
+      if (items.length === 0) return <p className="text-muted text-[13px]">No other {kind} matches.</p>;
       return (
-        <ul className="adm-list compact adm-pick">
+        <ul className="list-none m-0 p-0 [&>li]:py-3 [&>li]:border-b [&>li]:border-line [&>li_p]:m-0 [&>li_p]:mb-1 [&.compact>li]:flex [&.compact>li]:justify-between [&.compact>li]:gap-x-3.5 [&.compact>li]:gap-y-1.5 [&.compact>li]:flex-wrap [&.compact>li]:py-2 [&.compact>li]:text-sm [&_.c-name]:w-auto max-h-80 overflow-auto [&_li]:items-center">
           {items.map(x => (
             <li key={x.id}>
               <span>
-                <b>{x.name}</b>{x.artist && <span className="muted"> by {x.artist}</span>}{" "}
-                <span className="muted small">#{x.id} · {plural(x.scrobbles, "scrobble")}</span>
+                <b>{x.name}</b>{x.artist && <span className="text-muted"> by {x.artist}</span>}{" "}
+                <span className="text-muted text-[13px]">#{x.id} · {plural(x.scrobbles, "scrobble")}</span>
               </span>
               <Button kind="btn ghost small" type="button" onClick={() => onPick(x)}>Keep this</Button>
             </li>
@@ -330,18 +330,18 @@ function Orphans() {
   return (
     <>
       {modal}
-      <div className="adm-filterbar">
+      <div className="flex flex-wrap items-center gap-2.5 mb-3.5 [&_.astryx-text-input]:min-w-[170px] [&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px] max-[861px]:[&>*]:flex-[1_1_160px]">
         <Select
           label="Kind"
           value={kind}
           onChange={v => set({ kind: v === "track" ? "" : v })}
           options={[["track", "Tracks"], ["album", "Albums"], ["artist", "Artists"]]}
         />
-        <label className="check adm-check">
+        <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0! items-center! text-sm! m-0">
           <Input type="checkbox" checked={imported === "1"} onChange={e => set({ imported: e.target.checked ? "1" : "" })} /> Include imported items with play counts
         </label>
       </div>
-      <p className="muted small">
+      <p className="text-muted text-[13px]">
         Nobody has scrobbled, loved, tagged, written about or playlisted these{ORPHAN_EXTRA[kind] ?? ""}. Each one is checked again before it's deleted.
       </p>
       {flash.note}
@@ -350,24 +350,24 @@ function Orphans() {
         const toggleAll = () => setPicked(new Set(all ? [] : d.items.map(x => x.id)));
         return (
           <>
-            <div className="bulk-bar">
+            <div className="flex items-center gap-3 flex-wrap min-h-9 mt-0 mb-2 [&_p]:m-0">
               <b>{num(d.total)} orphaned {label}</b>
-              {d.total > d.items.length && <span className="muted small">(showing the newest {d.items.length})</span>}
-              {d.items.length > 0 && <Button kind="link small" type="button" onClick={toggleAll}>{all ? "Select none" : "Select all"}</Button>}
+              {d.total > d.items.length && <span className="text-muted text-[13px]">(showing the newest {d.items.length})</span>}
+              {d.items.length > 0 && <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={toggleAll}>{all ? "Select none" : "Select all"}</Button>}
               {picked.size > 0 && <Button kind="btn danger small" type="button" onClick={askDelete}>Delete {picked.size} selected</Button>}
             </div>
             {d.items.length === 0 ? <Empty>Nothing to clean up.</Empty> : (
-              <div className="adm-scroll">
-                <table className="adm-table">
+              <div className="overflow-x-auto mb-3.5">
+                <table className="adm-table [&_th_button_.ico]:ml-1 [&_th_button_.ico]:size-[.85em] w-full border-collapse text-sm [&_td]:p-2 [&_td]:border-b [&_td]:border-line [&_td]:align-middle [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em] [&_th]:text-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-line [&_th]:whitespace-nowrap [&_th_button]:bg-transparent [&_th_button]:border-0 [&_th_button]:p-0 [&_th_button]:[font:inherit] [&_th_button]:text-inherit [&_th_button]:uppercase [&_th_button]:tracking-[.05em] [&_th_button]:cursor-pointer [&_th_button:hover]:text-ink [&_th_button.on]:text-ink [&_.num]:text-right [&_.num]:tabular-nums [&_.right]:text-right [&_.tick]:w-7 [&_.grow-cell]:w-full [&_tr.picked_td]:bg-[light-dark(#fff7f6,#1f2659)] [&.compact_td]:p-1.5 [&.compact_td]:align-top [&.adm-log_td]:align-top">
                   <tbody>
                     {d.items.map(x => (
                       <tr key={x.id} className={picked.has(x.id) ? "picked" : ""}>
                         <td className="tick">
                           <Input type="checkbox" aria-label={`Select ${x.name}`} checked={picked.has(x.id)} onChange={e => togglePick(x.id, e.target.checked)} />
                         </td>
-                        <td><b>{x.name}</b>{x.artist && <span className="muted"> by {x.artist}</span>}</td>
-                        <td className="num muted small">{x.basePlaycount ? `${num(x.basePlaycount)} imported plays` : ""}</td>
-                        <td className="nowrap muted small">added {ago(x.createdAt)}</td>
+                        <td><b>{x.name}</b>{x.artist && <span className="text-muted"> by {x.artist}</span>}</td>
+                        <td className="num text-muted text-[13px]">{x.basePlaycount ? `${num(x.basePlaycount)} imported plays` : ""}</td>
+                        <td className="whitespace-nowrap text-muted text-[13px]">added {ago(x.createdAt)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -407,8 +407,8 @@ function Tags() {
   return (
     <>
       {modal}
-      <div className="adm-filterbar">
-        <form className="adm-search" onSubmit={search}>
+      <div className="flex flex-wrap items-center gap-2.5 mb-3.5 [&_.astryx-text-input]:min-w-[170px] [&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px] max-[861px]:[&>*]:flex-[1_1_160px]">
+        <form className="min-w-[260px] flex-[0_1_340px] [&_.search-field]:h-10 [&_.search-go]:w-[42px] [&_.search-go]:text-base [&.wide]:flex-1 [&.wide]:min-w-0 max-[861px]:flex-[1_1_100%] max-[861px]:min-w-0" onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder="Search tags" clearable />
         </form>
         <Select label="Sort" value={sort} onChange={v => set({ sort: v === "uses" ? "" : v })} options={[["uses", "Most used"], ["name", "A to Z"]]} />
@@ -417,8 +417,8 @@ function Tags() {
       <Async q={q}>{d => (
         <>
           {d.items.length === 0 ? <Empty>No tags match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className="overflow-x-auto mb-3.5">
+              <table className="adm-table [&_th_button_.ico]:ml-1 [&_th_button_.ico]:size-[.85em] w-full border-collapse text-sm [&_td]:p-2 [&_td]:border-b [&_td]:border-line [&_td]:align-middle [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em] [&_th]:text-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-line [&_th]:whitespace-nowrap [&_th_button]:bg-transparent [&_th_button]:border-0 [&_th_button]:p-0 [&_th_button]:[font:inherit] [&_th_button]:text-inherit [&_th_button]:uppercase [&_th_button]:tracking-[.05em] [&_th_button]:cursor-pointer [&_th_button:hover]:text-ink [&_th_button.on]:text-ink [&_.num]:text-right [&_.num]:tabular-nums [&_.right]:text-right [&_.tick]:w-7 [&_.grow-cell]:w-full [&_tr.picked_td]:bg-[light-dark(#fff7f6,#1f2659)] [&.compact_td]:p-1.5 [&.compact_td]:align-top [&.adm-log_td]:align-top">
                 <thead>
                   <tr>
                     <th>Tag</th>
@@ -431,11 +431,11 @@ function Tags() {
                 <tbody>
                   {d.items.map(g => (
                     <tr key={g.id}>
-                      <td><Link className="strong" to={tagUrl(g.name)}>{g.name}</Link></td>
+                      <td><Link className="font-semibold" to={tagUrl(g.name)}>{g.name}</Link></td>
                       <td className="num">{num(g.uses)}</td>
                       <td className="num">{num(g.users)}</td>
                       <td className="num">{num(g.imported ?? 0)}</td>
-                      <td className="right"><Button kind="link small" type="button" onClick={() => askDelete(g)}>Delete</Button></td>
+                      <td className="text-right"><Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => askDelete(g)}>Delete</Button></td>
                     </tr>
                   ))}
                 </tbody>

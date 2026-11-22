@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button, Input } from "../kit";
 import { ago, api, num, plural, qs, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager, Section } from "../ui/base";
-import { adminUrl, useQuery, useConfirm } from "./common";
+import { adminUrl, admBadge, useQuery, useConfirm } from "./common";
 import type { ContentList, JournalItem, Ok, ShoutItem, WikiHistory, WikiItem, WikiLocked, WikiLockList, WikiReverted } from "../../shared/admin-content";
 
 // a list holds one kind at a time, so rows are told apart by their fields
@@ -16,7 +16,7 @@ const DELETE_NAME: Record<string, string> = { wiki: "wiki revision", journal: "j
 
 function ReportCount({ n }: { n: number }) {
   if (n <= 0) return null;
-  return <> · <b className="adm-red">{plural(n, "open report")}</b></>;
+  return <> · <b className="text-accent-dark">{plural(n, "open report")}</b></>;
 }
 
 export function Content() {
@@ -65,41 +65,41 @@ export function Content() {
   return (
     <>
       {modal}
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           {[["shouts", "Wall posts"], ["journals", "Journals"], ["wikis", "Wiki revisions"]].map(([k, l]) => (
             <button key={k} type="button" className={kind === k ? "active" : ""} onClick={() => switchKind(k)}>{l}</button>
           ))}
         </nav>
       </div>
-      <form className="adm-filterbar" onSubmit={filter}>
+      <form className="flex flex-wrap items-center gap-2.5 mb-3.5 [&_.astryx-text-input]:min-w-[170px] [&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px] max-[861px]:[&>*]:flex-[1_1_160px]" onSubmit={filter}>
         <Input value={text} onChange={e => setText(e.target.value)} placeholder="Search text" aria-label="Search text" />
         <Input value={user} onChange={e => setUser(e.target.value)} placeholder="Author username" aria-label="Author" />
         <Button kind="btn small">Filter</Button>
         {kind === "wikis" && (
-          <label className="check adm-check">
+          <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0! items-center! text-sm! m-0">
             <Input type="checkbox" checked={locked === "1"} onChange={e => set({ locked: e.target.checked ? "1" : "" })} /> Locked pages only
           </label>
         )}
-        {(term || who) && <Button kind="link small" type="button" onClick={clear}>Clear</Button>}
+        {(term || who) && <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={clear}>Clear</Button>}
       </form>
       <Async q={q}>{d => (
         <>
-          <p className="muted small">{num(d.total)} found</p>
+          <p className="text-muted text-[13px]">{num(d.total)} found</p>
           {d.items.length === 0 && <Empty>Nothing matches.</Empty>}
-          <ul className="adm-list">
+          <ul className="list-none m-0 p-0 [&>li]:py-3 [&>li]:border-b [&>li]:border-line [&>li_p]:m-0 [&>li_p]:mb-1 [&.compact>li]:flex [&.compact>li]:justify-between [&.compact>li]:gap-x-3.5 [&.compact>li]:gap-y-1.5 [&.compact>li]:flex-wrap [&.compact>li]:py-2 [&.compact>li]:text-sm">
             {allItems(d).map(it => {
               if (isShout(it)) {
                 return (
                   <li key={it.id}>
-                    <p className="adm-body-text">{it.body}</p>
-                    <div className="row between">
-                      <span className="muted small">
+                    <p className="whitespace-pre-wrap wrap-anywhere">{it.body}</p>
+                    <div className="row flex gap-2.5 items-center flex-wrap justify-between">
+                      <span className="text-muted text-[13px]">
                         <Link to={adminUrl(it.author)}>{it.author}</Link> on{" "}
                         {it.page ? <Link to={it.page.link}>{it.page.label}</Link> : "a removed page"} · {ago(it.createdAt)}
                         <ReportCount n={it.reports} />
                       </span>
-                      <Button kind="link small" type="button" onClick={() => del("shout", it.id, <blockquote className="adm-quote">{it.body}</blockquote>)}>
+                      <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => del("shout", it.id, <blockquote className="m-0 mb-2.5 px-3 py-2 border-l-[3px] border-line bg-panel whitespace-pre-wrap max-h-[200px] overflow-auto">{it.body}</blockquote>)}>
                         Delete
                       </Button>
                     </div>
@@ -109,14 +109,14 @@ export function Content() {
               if (isJournal(it)) {
                 return (
                   <li key={it.id}>
-                    <p><Link className="strong" to={it.link || "#"}>{it.title}</Link></p>
-                    <p className="adm-body-text muted">{it.excerpt}</p>
-                    <div className="row between">
-                      <span className="muted small">
+                    <p><Link className="font-semibold" to={it.link || "#"}>{it.title}</Link></p>
+                    <p className="whitespace-pre-wrap wrap-anywhere text-muted">{it.excerpt}</p>
+                    <div className="row flex gap-2.5 items-center flex-wrap justify-between">
+                      <span className="text-muted text-[13px]">
                         <Link to={adminUrl(it.author)}>{it.author}</Link> · {ago(it.createdAt)} · {plural(it.comments, "comment")}
                         <ReportCount n={it.reports} />
                       </span>
-                      <Button kind="link small" type="button" onClick={() => del("journal", it.id, <p>“{it.title}” by {it.author}</p>)}>Delete</Button>
+                      <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => del("journal", it.id, <p>“{it.title}” by {it.author}</p>)}>Delete</Button>
                     </div>
                   </li>
                 );
@@ -129,26 +129,26 @@ export function Content() {
               return (
                 <li key={it.id}>
                   <p>
-                    {it.page ? <Link className="strong" to={it.page.link}>{it.page.label}</Link> : "Removed page"}{" "}
-                    <span className="adm-type">{it.itemType}</span>{" "}
-                    <span className="muted small">version {it.version}{it.latest ? " (current)" : ""}</span>
-                    {it.locked && <span className="adm-badge warn">Locked</span>}
+                    {it.page ? <Link className="font-semibold" to={it.page.link}>{it.page.label}</Link> : "Removed page"}{" "}
+                    <span className="text-xs font-semibold uppercase tracking-[.05em] text-muted">{it.itemType}</span>{" "}
+                    <span className="text-muted text-[13px]">version {it.version}{it.latest ? " (current)" : ""}</span>
+                    {it.locked && <span className={admBadge("warn")}>Locked</span>}
                   </p>
-                  <p className="adm-body-text muted">{it.excerpt}</p>
-                  <div className="row between">
-                    <span className="muted small">
+                  <p className="whitespace-pre-wrap wrap-anywhere text-muted">{it.excerpt}</p>
+                  <div className="row flex gap-2.5 items-center flex-wrap justify-between">
+                    <span className="text-muted text-[13px]">
                       {it.author ? <Link to={adminUrl(it.author)}>{it.author}</Link> : "deleted user"} · {ago(it.createdAt)}
                       <ReportCount n={it.reports} />
                     </span>
-                    <span className="row">
-                      <Button kind="link small" type="button" onClick={() => setWiki(showing ? null : key)}>
+                    <span className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
+                      <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => setWiki(showing ? null : key)}>
                         {showing ? "Hide history" : "History and lock"}
                       </Button>
-                      <Button kind="link small" type="button" onClick={() => del("wiki", it.id, revisionText)}>Delete revision</Button>
+                      <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => del("wiki", it.id, revisionText)}>Delete revision</Button>
                     </span>
                   </div>
                   {showing && (
-                    <Suspense fallback={<p className="muted small">Loading history…</p>}>
+                    <Suspense fallback={<p className="text-muted text-[13px]">Loading history…</p>}>
                       <WikiPanel type={it.itemType} id={it.itemId} onChange={wikiChanged} />
                     </Suspense>
                   )}
@@ -175,7 +175,7 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
   const setLock = (locked: boolean, note: string) => api<WikiLocked>("/admin/wiki/lock", { body: { type, id, locked, note } }).then(reload);
   const revert = (revision: number, note: string) => api<WikiReverted>("/admin/wiki/revert", { body: { revision, note } }).then(reload);
   return (
-    <div className="adm-wiki">
+    <div className="mt-2.5 p-3 bg-panel border border-line [&_.adm-table]:mt-2.5 [&_.adm-table]:bg-card">
       {modal}
       <Async q={q}>{d => {
         const toggleLock = () => {
@@ -198,8 +198,8 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
         };
         return (
           <>
-            <div className="row between">
-              <span className="small">
+            <div className="row flex gap-2.5 items-center flex-wrap justify-between">
+              <span className="text-[13px]">
                 {d.lock ? (
                   <>
                     <b>Locked</b> by {d.lock.by || "staff"} {ago(d.lock.at)}{d.lock.reason && <>: “{d.lock.reason}”</>}. Only staff can edit.
@@ -208,7 +208,7 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
               </span>
               <Button kind="btn ghost small" type="button" onClick={toggleLock}>{d.lock ? "Unlock" : "Lock"}</Button>
             </div>
-            <table className="adm-table compact">
+            <table className="adm-table [&_th_button_.ico]:ml-1 [&_th_button_.ico]:size-[.85em] compact w-full border-collapse text-sm [&_td]:p-2 [&_td]:border-b [&_td]:border-line [&_td]:align-middle [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em] [&_th]:text-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-line [&_th]:whitespace-nowrap [&_th_button]:bg-transparent [&_th_button]:border-0 [&_th_button]:p-0 [&_th_button]:[font:inherit] [&_th_button]:text-inherit [&_th_button]:uppercase [&_th_button]:tracking-[.05em] [&_th_button]:cursor-pointer [&_th_button:hover]:text-ink [&_th_button.on]:text-ink [&_.num]:text-right [&_.num]:tabular-nums [&_.right]:text-right [&_.tick]:w-7 [&_.grow-cell]:w-full [&_tr.picked_td]:bg-[light-dark(#fff7f6,#1f2659)] [&.compact_td]:p-1.5 [&.compact_td]:align-top [&.adm-log_td]:align-top [&_.c-name]:w-auto">
               <tbody>
                 {d.versions.map((v, i) => {
                   const askRevert = () => ask({
@@ -219,16 +219,16 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
                   });
                   return (
                     <tr key={v.id}>
-                      <td className="nowrap">v{v.version}{i === 0 && <span className="muted"> current</span>}</td>
+                      <td className="whitespace-nowrap">v{v.version}{i === 0 && <span className="text-muted"> current</span>}</td>
                       <td className="grow-cell">
-                        <button type="button" className="adm-linkish" onClick={() => setOpen(open === v.id ? null : v.id)}>
+                        <button type="button" className="bg-transparent border-0 p-0 [font:inherit] text-link text-left cursor-pointer hover:underline" onClick={() => setOpen(open === v.id ? null : v.id)}>
                           {v.content.slice(0, 90)}{v.content.length > 90 ? "…" : ""}
                         </button>
-                        {open === v.id && <pre className="adm-pre">{v.content}</pre>}
+                        {open === v.id && <pre className="whitespace-pre-wrap [font-family:inherit] [font-style:inherit] [font-weight:inherit] [line-height:inherit] text-[13px] mt-1.5 mb-0 p-2 bg-panel max-h-[260px] overflow-auto">{v.content}</pre>}
                       </td>
-                      <td className="nowrap muted small">{v.author || "deleted user"} · {ago(v.createdAt)}</td>
-                      <td className="nowrap">
-                        {i > 0 && <Button kind="link small" type="button" onClick={askRevert}>Revert to this</Button>}
+                      <td className="whitespace-nowrap text-muted text-[13px]">{v.author || "deleted user"} · {ago(v.createdAt)}</td>
+                      <td className="whitespace-nowrap">
+                        {i > 0 && <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={askRevert}>Revert to this</Button>}
                       </td>
                     </tr>
                   );
@@ -250,15 +250,15 @@ function Locks({ rev }: { rev: number }) {
   return (
     <Section title="Locked wikis">
       <Async q={q}>{d => {
-        if (d.items.length === 0) return <p className="muted">No wiki is locked.</p>;
+        if (d.items.length === 0) return <p className="text-muted">No wiki is locked.</p>;
         return (
-          <ul className="adm-list compact">
+          <ul className="list-none m-0 p-0 [&>li]:py-3 [&>li]:border-b [&>li]:border-line [&>li_p]:m-0 [&>li_p]:mb-1 [&.compact>li]:flex [&.compact>li]:justify-between [&.compact>li]:gap-x-3.5 [&.compact>li]:gap-y-1.5 [&.compact>li]:flex-wrap [&.compact>li]:py-2 [&.compact>li]:text-sm [&_.c-name]:w-auto">
             {d.items.map(l => (
               <li key={`${l.type}:${l.id}`}>
                 <span>
-                  {l.page ? <Link to={l.page.link}>{l.page.label}</Link> : "Removed page"} <span className="adm-type">{l.type}</span>
+                  {l.page ? <Link to={l.page.link}>{l.page.label}</Link> : "Removed page"} <span className="text-xs font-semibold uppercase tracking-[.05em] text-muted">{l.type}</span>
                 </span>
-                <span className="muted small">by {l.by || "staff"} · {ago(l.at)}{l.reason && <> · “{l.reason}”</>}</span>
+                <span className="text-muted text-[13px]">by {l.by || "staff"} · {ago(l.at)}{l.reason && <> · “{l.reason}”</>}</span>
               </li>
             ))}
           </ul>

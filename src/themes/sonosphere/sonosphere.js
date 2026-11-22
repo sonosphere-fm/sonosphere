@@ -9,7 +9,7 @@
 import { neutralTheme } from '@astryxdesign/theme-neutral';
 const themeIcons = neutralTheme["icons"];
 /**
- * sonosphere theme — built by `bunx astryx theme build`
+ * sonosphere theme — built by `bunx @astryxdesign/cli@0.7.16 theme build`
  * Import the CSS file alongside this module:
  *
  *   import { sonosphereTheme } from './sonosphere';
@@ -93,7 +93,7 @@ export const sonosphereTheme = {
     "--_astryx-pre-tempo-duration-slow-max": "0ms",
     "--_astryx-motion-tempo": "1",
     "--font-family-body": "\"Source Sans 3 Variable\", \"Helvetica Neue\", Arial, sans-serif",
-    "--font-family-heading": "\"Source Sans 3 Variable\", \"Helvetica Neue\", Arial, sans-serif",
+    "--font-family-heading": "\"Radio Canada Variable\", \"Helvetica Neue\", Arial, sans-serif",
     "--font-family-code": "ui-monospace, \"SF Mono\", Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
     "--color-syntax-keyword": "light-dark(#6b187c, #efa8ff)",
     "--color-syntax-string": "light-dark(#0b5615, #a4d6a3)",
@@ -114,24 +114,24 @@ export const sonosphereTheme = {
     "--color-syntax-diff-header": "transparent",
     "--color-syntax-added-marker": "var(--color-syntax-punctuation)",
     "--color-syntax-removed-marker": "var(--color-syntax-punctuation)",
-    "--color-background-surface": "light-dark(#ffffff, #1d1b16)",
-    "--color-background-body": "light-dark(#ffffff, #15130f)",
-    "--color-background-card": "light-dark(#ffffff, #1d1b16)",
-    "--color-background-popover": "light-dark(#ffffff, #24211b)",
-    "--color-background-muted": "light-dark(#f5f3ef, #221f1a)",
-    "--color-accent": "light-dark(#2438d6, #ffcf33)",
-    "--color-accent-muted": "light-dark(#fbe3e1, #3d3417)",
+    "--color-background-surface": "light-dark(#ffffff, #181d45)",
+    "--color-background-body": "light-dark(#ffffff, #0c0f27)",
+    "--color-background-card": "light-dark(#ffffff, #181d45)",
+    "--color-background-popover": "light-dark(#ffffff, #1d2352)",
+    "--color-background-muted": "light-dark(#f5f3ef, #121636)",
+    "--color-accent": "light-dark(#2438d6, #5468ff)",
+    "--color-accent-muted": "light-dark(#fbe3e1, #2a3796)",
     "--color-neutral": "light-dark(#0000000F, #ffffff1A)",
     "--color-overlay": "light-dark(#00000080, #000000CC)",
     "--color-overlay-hover": "light-dark(#0000000D, #ffffff0D)",
     "--color-overlay-pressed": "light-dark(#0000001A, #ffffff1A)",
-    "--color-text-primary": "light-dark(#171717, #ece6d9)",
-    "--color-text-secondary": "light-dark(#4a4a4a, #c8c1b2)",
-    "--color-text-disabled": "light-dark(#9a9a9a, #6f695e)",
+    "--color-text-primary": "light-dark(#171717, #f3efe4)",
+    "--color-text-secondary": "light-dark(#4a4a4a, #d3d0d8)",
+    "--color-text-disabled": "light-dark(#9a9a9a, #5e648f)",
     "--color-text-accent": "light-dark(#2438d6, #ffd257)",
     "--color-on-dark": "#ffffff",
     "--color-on-light": "#111111",
-    "--color-on-accent": "light-dark(#ffffff, #17150f)",
+    "--color-on-accent": "light-dark(#ffffff, #ffffff)",
     "--color-on-success": "light-dark(#ffffff, #111111)",
     "--color-on-error": "light-dark(#ffffff, #111111)",
     "--color-on-warning": "#111111",
@@ -139,26 +139,26 @@ export const sonosphereTheme = {
     "--color-info-muted": "light-dark(#b9d7ff, #88bcff3D)",
     "--color-on-info": "light-dark(#ffffff, #111111)",
     "--color-text-info": "light-dark(#0067ce, #a1caff)",
-    "--color-text-success": "light-dark(#1b7a3d, #6fcf8e)",
+    "--color-text-success": "light-dark(#1b7a3d, #6fd492)",
     "--color-text-warning": "light-dark(#836700, #eec448)",
-    "--color-text-error": "light-dark(#1a299f, #ff8a75)",
+    "--color-text-error": "light-dark(#1a299f, #ff8f7d)",
     "--color-on-info-muted": "light-dark(#003978, #a1caff)",
     "--color-on-success-muted": "light-dark(#00490b, #90ca90)",
     "--color-on-warning-muted": "light-dark(#4b3900, #eec448)",
     "--color-on-error-muted": "light-dark(#76000c, #ffaea7)",
     "--color-icon-accent": "light-dark(#2438d6, #ffd257)",
-    "--color-icon-primary": "light-dark(#171717, #ece6d9)",
-    "--color-icon-secondary": "light-dark(#767676, #9b9486)",
+    "--color-icon-primary": "light-dark(#171717, #f3efe4)",
+    "--color-icon-secondary": "light-dark(#767676, #9da2c6)",
     "--color-icon-disabled": "light-dark(#919191, #525252)",
-    "--color-success": "light-dark(#1b7a3d, #6fcf8e)",
+    "--color-success": "light-dark(#1b7a3d, #6fd492)",
     "--color-warning": "#ffce2f",
-    "--color-error": "light-dark(#1a299f, #ff8a75)",
+    "--color-error": "light-dark(#1a299f, #ff8f7d)",
     "--color-success-muted": "light-dark(#bce0bb, #90ca903D)",
     "--color-error-muted": "light-dark(#ffc4be, #ff98903D)",
     "--color-warning-muted": "light-dark(#fae19e, #e2b6233D)",
-    "--color-border": "light-dark(#e3e0db, #332f28)",
-    "--color-border-emphasized": "light-dark(#bdb9b2, #4a443b)",
-    "--color-skeleton": "light-dark(#d4d4d4, #525252)",
+    "--color-border": "light-dark(#e3e0db, #262c5e)",
+    "--color-border-emphasized": "light-dark(#bdb9b2, #3a4385)",
+    "--color-skeleton": "light-dark(#f1f1f1, #232a5e)",
     "--color-shadow": "light-dark(#0000001A, #0000004D)",
     "--color-tint-hover": "light-dark(#000000, #ffffff)",
     "--color-background-red": "light-dark(#ffc4be, #5b2b28)",
@@ -216,7 +216,7 @@ export const sonosphereTheme = {
     "--shadow-inset-success": "inset 0px 0px 0px 2px #2f7d334D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #f8d36a4D",
     "--shadow-inset-error": "inset 0px 0px 0px 2px #de47454D",
-    "--color-border-error": "light-dark(#1a299f, #ff8a75)",
+    "--color-border-error": "light-dark(#1a299f, #ff8f7d)",
     "--duration-exit": "0ms",
     "--_astryx-pre-tempo-duration-exit": "0ms"
   },
@@ -350,18 +350,20 @@ export const sonosphereTheme = {
       },
       "base": {
         "fontWeight": "600",
-        "borderRadius": "0px"
+        "borderRadius": "0px",
+        "whiteSpace": "nowrap",
+        "cursor": "pointer"
       },
       "variant:primary": {
         "backgroundColor": "var(--color-accent)",
         "color": "var(--color-on-accent)"
       },
       "variant:secondary": {
-        "backgroundColor": "transparent",
-        "color": "var(--color-text-primary)",
+        "backgroundColor": "var(--panel)",
+        "color": "var(--ink)",
         "borderWidth": "2px",
         "borderStyle": "solid",
-        "borderColor": "var(--color-text-primary)"
+        "borderColor": "var(--panel)"
       }
     },
     "badge": {
@@ -486,6 +488,51 @@ export const sonosphereTheme = {
       "base": {
         "padding": "var(--spacing-3)"
       }
+    },
+    "text-input": {
+      "base": {
+        "borderRadius": "0px",
+        "border": "1px solid var(--edge)",
+        "backgroundColor": "var(--card)",
+        "boxShadow": "inset 0 1px 3px var(--inset)",
+        "minHeight": "40px"
+      }
+    },
+    "text-area": {
+      "base": {
+        "borderRadius": "0px",
+        "border": "1px solid var(--edge)",
+        "backgroundColor": "var(--card)",
+        "boxShadow": "inset 0 1px 3px var(--inset)"
+      }
+    },
+    "selector": {
+      "base": {
+        "borderRadius": "0px",
+        "border": "1px solid var(--edge)",
+        "backgroundColor": "var(--card)",
+        "boxShadow": "inset 0 1px 3px var(--inset)",
+        "fontWeight": "500"
+      }
+    },
+    "field-label": {
+      "base": {
+        "fontFamily": "inherit"
+      }
+    },
+    "dropdown-menu": {
+      "base": {
+        "backgroundColor": "var(--card)",
+        "border": "1px solid var(--line)",
+        "borderRadius": "0px",
+        "boxShadow": "0 6px 18px light-dark(rgba(0, 0, 0, .14), rgba(0, 0, 0, .5))"
+      }
+    },
+    "dropdown-menu-item": {
+      "base": {
+        "borderRadius": "0px",
+        "fontWeight": "500"
+      }
     }
   },
   __onDark: {
@@ -542,7 +589,7 @@ export const sonosphereTheme = {
         "fallbacks": "\"Helvetica Neue\", Arial, sans-serif"
       },
       "heading": {
-        "family": "Source Sans 3 Variable",
+        "family": "Radio Canada Variable",
         "fallbacks": "\"Helvetica Neue\", Arial, sans-serif"
       },
       "code": {

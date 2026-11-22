@@ -13,7 +13,7 @@ export function SiteSettings() {
     q.setData(s);
     window.dispatchEvent(new Event("spin:site"));
   };
-  return <div className="adm-settings-page"><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></div>;
+  return <div className="flex flex-col gap-8 max-w-[640px] [&>.section]:mb-0"><Async q={q}>{d => <SettingsForm key={JSON.stringify(d)} initial={d} saved={saved} />}</Async><ManageLabelDefinitions /></div>;
 }
 type Fields = { registrationsOpen: boolean; announcement: string; announcementTone: string; maxShoutLength: string };
 function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: AdminSettings) => void }) {
@@ -52,14 +52,14 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
   return (
     <>
       {modal}
-      <form className="form adm-settings" onSubmit={submit}>
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full max-w-[640px] [&_.section]:mb-[18px] [&>.section:last-of-type]:mb-0 [&>.section>p:last-child]:mb-0 [&_input[type=number]]:max-w-[140px]" onSubmit={submit}>
         <Section title="Registrations">
-          <label className="check">
+          <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0!">
             <Input type="checkbox" checked={f.registrationsOpen} onChange={e => setF({ ...f, registrationsOpen: e.target.checked })} />{" "}
             <span>
               <b>Open for new sign-ups</b>
               <br />
-              <span className="muted small">When closed, the sign-up form refuses new accounts. Existing members can still log in.</span>
+              <span className="text-muted text-[13px]">When closed, the sign-up form refuses new accounts. Existing members can still log in.</span>
             </span>
           </label>
         </Section>
@@ -83,7 +83,7 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
               options={[["info", "Information"], ["warning", "Warning"]]}
             />
           </label>
-          <p className="muted small">Shown at the top of every page. People can dismiss it; changing the text shows it to them again.</p>
+          <p className="text-muted text-[13px]">Shown at the top of every page. People can dismiss it; changing the text shows it to them again.</p>
           {announcement && (
             <div className={`site-banner ${f.announcementTone} preview`}>
               <div className="site-banner-in"><span>{announcement}</span></div>
@@ -102,9 +102,9 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
               aria-label="Longest wall post"
             />
           </label>
-          <p className="muted small">Between 50 and 1000. Applies to wall posts and journal comments.</p>
+          <p className="text-muted text-[13px]">Between 50 and 1000. Applies to wall posts and journal comments.</p>
         </Section>
-        {msg && <p className="form-ok" role="status">{msg}</p>}
+        {msg && <p className="font-semibold m-0 text-ok" role="status">{msg}</p>}
         <Button kind="btn" disabled={!dirty}>Save settings</Button>
       </form>
     </>

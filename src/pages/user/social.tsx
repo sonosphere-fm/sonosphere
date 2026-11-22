@@ -22,8 +22,8 @@ function LastTrack({ u }: { u: Person }) {
   if (!u.lastTrack) return null;
   const t = u.lastTrack;
   return (
-    <span className="small">
-      <Link to={trackUrl(t.artist, t.title)}>{t.title}</Link> <span className="muted">- {t.artist} · {ago(t.playedAt)}</span>
+    <span className="text-[13px]">
+      <Link to={trackUrl(t.artist, t.title)}>{t.title}</Link> <span className="text-muted">- {t.artist} · {ago(t.playedAt)}</span>
     </span>
   );
 }
@@ -39,9 +39,9 @@ export function People({ path, empty }: { path: string; empty: string }) {
 
 function Match({ u }: { u: Neighbour }) {
   return (
-    <span className="small">
+    <span className="text-[13px]">
       <b>{Math.round(u.match * 100)}% match</b>
-      {u.shared.length > 0 && <span className="muted"> · both listen to {u.shared.map(a => a.name).join(", ")}</span>}
+      {u.shared.length > 0 && <span className="text-muted"> · both listen to {u.shared.map(a => a.name).join(", ")}</span>}
     </span>
   );
 }
@@ -50,7 +50,7 @@ export function Neighbours({ name }: { name: string }) {
   const q = useApi<NeighbourList>(`/user/neighbours${qs({ name })}`);
   return (
     <>
-      <p className="muted">Soundalikes are listeners whose libraries overlap most with {name}'s, recalculated from everyone's scrobbles.</p>
+      <p className="text-muted">Soundalikes are listeners whose libraries overlap most with {name}'s, recalculated from everyone's scrobbles.</p>
       <Async q={q}>
         {d => d.items.length
           ? <UserList items={d.items} extra={u => <Match u={u} />} />
@@ -68,7 +68,7 @@ export function Loved({ name }: { name: string }) {
     <Async q={q}>
       {d => d.total ? (
         <>
-          <p className="muted">{plural(d.total, "loved track")}</p>
+          <p className="text-muted">{plural(d.total, "loved track")}</p>
           <TrackList items={d.items.map(t => ({ ...t, playedAt: t.lovedAt }))} time />
           <Pager total={d.total} limit={d.limit} />
         </>
@@ -85,18 +85,18 @@ export function Obsessions({ name, mine }: { name: string; mine: boolean }) {
   return (
     <Async q={q}>
       {d => d.items.length ? (
-        <ul className="obsessions">
+        <ul className="list-none m-0 p-0 [&>li]:flex [&>li]:gap-3 [&>li]:items-center [&>li]:py-2.5 [&>li]:border-b [&>li]:border-line">
           {d.items.map((o, i) => (
-            <li key={o.id} className="obsession">
+            <li key={o.id} className="flex gap-3 items-start [&>a]:w-[84px] [&>a]:flex-none [&>div>*]:block [&>div>*]:overflow-hidden [&>div>*]:text-ellipsis [&_p]:my-1">
               <Link to={trackUrl(o.artist, o.title)}><Art image={o.image} /></Link>
-              <div className="grow">
-                {i === 0 && <span className="badge">Current</span>}
-                <Link className="strong" to={trackUrl(o.artist, o.title)}>{o.title}</Link>
-                <Link className="muted" to={artistUrl(o.artist)}>{o.artist}</Link>
+              <div className="flex-1 min-w-0">
+                {i === 0 && <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-ink text-bg">Current</span>}
+                <Link className="font-semibold" to={trackUrl(o.artist, o.title)}>{o.title}</Link>
+                <Link className="text-muted" to={artistUrl(o.artist)}>{o.artist}</Link>
                 {o.comment && <p>“{o.comment}”</p>}
-                <span className="muted small">{date(o.createdAt)}</span>
+                <span className="text-muted text-[13px]">{date(o.createdAt)}</span>
               </div>
-              {mine && <Button kind="link small" onClick={() => remove(o.id)}>Remove</Button>}
+              {mine && <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={() => remove(o.id)}>Remove</Button>}
             </li>
           ))}
         </ul>
@@ -124,7 +124,7 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
   return (
     <>
       {mine && (
-        <form className="inline-form" onSubmit={create}>
+        <form className="inline-form flex gap-2 items-center flex-wrap my-2.5 max-sm:[&>.field]:flex-[1_1_180px] max-sm:[&>.field]:min-w-0 max-sm:[&>.astryx-text-input]:flex-[1_1_180px] max-sm:[&>.astryx-text-input]:min-w-0 max-sm:[&>div:has(>.astryx-text-input)]:flex-[1_1_180px] max-sm:[&>div:has(>.astryx-text-input)]:min-w-0 coarse:[&>.astryx-button]:min-h-10 [&:has(.astryx-text-input)>.astryx-button]:min-h-10 [&:has(.astryx-text-input)>.astryx-button]:px-4 [&>.check]:items-center [&>.check]:gap-2 [&>.check]:ml-2.5 [&>.check]:leading-6 max-[641px]:[&>.check]:ml-0 max-sm:[&>.check]:basis-full max-sm:[&>.check]:min-h-10" onSubmit={create}>
           <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="New playlist title" aria-label="New playlist title" maxLength={100} />
           <Button kind="btn" loading={act.busy} disabled={!title.trim()}>Create playlist</Button>
           {act.note}
@@ -134,7 +134,7 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
         {d => d.items.length ? (
           <div className="grid below" data-cols={6} style={sixCols}>
             {d.items.map(p => (
-              <Link className="mcard album" key={p.id} to={`/playlist/${p.id}`}>
+              <Link className="mcard" key={p.id} to={`/playlist/${p.id}`}>
                 <Art image={p.image} />
                 <strong>{p.title}</strong>
                 <span>{plural(p.trackCount, "track")}</span>
@@ -163,15 +163,15 @@ export function UserTags({ name }: { name: string }) {
     if (tag) {
       return (
         <>
-          <div className="toolbar">
+          <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
             <h2>Tagged “<Link to={tagUrl(tag)}>{tag}</Link>” by {name}</h2>
-            <Button kind="link" onClick={() => setTag("")}><Ico.Left /> All tags</Button>
+            <Button className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={() => setTag("")}><Ico.Left /> All tags</Button>
           </div>
-          <ul className="plain">
+          <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0">
             {d.items.filter(isTagged).map(i => (
               <li key={i.type + i.id}>
-                <span className="badge">{i.type}</span> <Link className="strong" to={taggedUrl(i)}>{i.name}</Link>
-                {i.artist && <span className="muted"> - {i.artist}</span>}
+                <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-ink text-bg">{i.type}</span> <Link className="font-semibold" to={taggedUrl(i)}>{i.name}</Link>
+                {i.artist && <span className="text-muted"> - {i.artist}</span>}
               </li>
             ))}
           </ul>
@@ -180,8 +180,8 @@ export function UserTags({ name }: { name: string }) {
     }
     if (!d.items.length) return <Empty>{name} hasn't tagged anything yet.</Empty>;
     return (
-      <div className="chips">
-        {d.items.filter(isTagCount).map(t => <Button key={t.name} kind="chip" onClick={() => setTag(t.name)}>{t.name} <b>{t.count}</b></Button>)}
+      <div className="inline-flex flex-wrap gap-1.5">
+        {d.items.filter(isTagCount).map(t => <Button key={t.name} className="inline-block rounded-none bg-fill px-2.5 py-[3px] text-[13px] font-medium text-ink hover:bg-fill-hover hover:text-ink" onClick={() => setTag(t.name)}>{t.name} <b>{t.count}</b></Button>)}
       </div>
     );
   };

@@ -33,8 +33,8 @@ export function ThemeToggle() {
     } catch (error) { setMe(previous); throw error; }
   });
   const label = dark ? "Switch to light mode" : "Switch to dark mode";
-  return <span className="footer-theme">
-    <button type="button" className="theme-toggle" aria-label={label} title={label} onClick={toggle} disabled={act.busy}>
+  return <span className="inline-flex items-center gap-2.5">
+    <button type="button" className="inline-grid place-items-center w-[26px] h-[26px] p-0 bg-transparent text-[#f6f2e9] border border-[#6b665c] rounded-none hover:bg-[#3a372f] hover:text-sun hover:border-sun focus-visible:outline-sun disabled:cursor-progress disabled:opacity-60 [&_svg]:w-[14px] [&_svg]:h-[14px]" aria-label={label} title={label} onClick={toggle} disabled={act.busy}>
       {dark ? <Sun size={20} weight="bold" aria-hidden /> : <Moon size={20} weight="bold" aria-hidden />}
     </button>
     {act.note}

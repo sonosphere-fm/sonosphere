@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTitle } from "../lib";
+import { cn, docs, page, pageTitle, wrap } from "../ui/tw";
 
 const UPDATED = "November 21, 2026";
 const CONTACT = "legal@sonosp.here";
@@ -10,10 +11,10 @@ const D = ({ children }: { children: ReactNode }) => <b>"{children}"</b>;
 function Legal({ title, children }: { title: string; children: ReactNode }) {
   useTitle(title);
   return (
-    <div className="wrap page">
-      <h1 className="page-title">{title}</h1>
-      <div className="docs legal">
-        <p className="muted">Effective and last updated {UPDATED}</p>
+    <div className={cn(wrap, page)}>
+      <h1 className={pageTitle}>{title}</h1>
+      <div className={cn(docs, "max-w-[82ch] text-[14px] leading-[1.5] [&_p]:mb-2 [&_h2]:mt-[22px] [&_h2]:mb-1.5 [&_h2]:text-[16px] [&_ol]:list-none [&_ol]:mb-2 [&_ol]:pl-7 [&_ol]:counter-reset-[cl] [&_ol_li]:relative [&_ol_li]:my-0.5 [&_ol_li]:counter-increment-[cl] [&_ol_li]:before:content-['('counter(cl,lower-alpha)')'] [&_ol_li]:before:absolute [&_ol_li]:before:left-[-28px]")}>
+        <p className="text-muted">Effective and last updated {UPDATED}</p>
         {children}
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { Ico } from "./icons";
+import { cn } from "./ui/tw";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -71,7 +72,7 @@ function Num({ value, min, max, onChange, label, onEnter }: NumProps) {
   };
   return (
     <input
-      className="dp-num"
+      className="w-[46px] h-[38px] p-0 text-center [font-family:inherit] text-[17px] tabular-nums border border-edge rounded-none bg-card max-sm:h-11"
       inputMode="numeric"
       aria-label={label}
       value={draft ?? pad(value)}
@@ -252,35 +253,51 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
     return time ? `${d}, ${sel.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}` : d;
   })();
   const hint = placeholder ?? (time ? "Pick a date and time" : "Pick a date");
-  const popClass = "dp dp-pop" + (at?.up ? " up" : "") + (presets ? " with-presets" : "");
-  const dayClass = (d: Date) =>
-    "dp-day" + (d.getMonth() !== cur.getMonth() ? " out" : "") + (same(d, today) ? " today" : "") + (same(d, sel) ? " sel" : "");
+  // `at` is null on phones (480px and narrower), where the picker is a sheet along the bottom; elsewhere the
+  // presets, if any, sit in a column beside the calendar
+  const wide = !!(presets && at);
+  const popClass = cn(
+    "bg-card border border-[var(--art-glyph)] rounded-none text-[15px] text-ink [scroll-margin:16px]",
+    // the old .dp button reset, kept below every button's own utilities
+    "[:where(&)_button]:[font:inherit] [:where(&)_button]:text-inherit [:where(&)_button]:bg-transparent [:where(&)_button]:border-0 [:where(&)_button]:p-0 [:where(&)_button]:cursor-pointer [:where(&)_button:disabled]:cursor-not-allowed [:where(&)_button:focus-visible]:outline-2 [:where(&)_button:focus-visible]:outline-accent [:where(&)_button:focus-visible]:outline-offset-1",
+    at
+      ? "absolute z-[60] w-[316px] p-3"
+      : "fixed z-[60] left-0 right-0 bottom-0 w-auto p-4 pb-[calc(16px+env(safe-area-inset-bottom))] border-0 border-t-[3px] border-t-accent shadow-[0_0_0_100vmax_rgba(0,0,0,.4)]",
+    at?.up && "-translate-y-full",
+    wide && "grid grid-cols-[132px_1fr] w-[452px] p-0",
+  );
+  const dayClass = (d: Date) => cn(
+    "h-[38px] max-xs:h-11 rounded-none tabular-nums relative hover:bg-panel disabled:text-[light-dark(#d2d2d2,#3a4385)]",
+    d.getMonth() !== cur.getMonth() && "text-[light-dark(#a3a3a3,#5e648f)]",
+    same(d, today) && "font-bold text-link after:content-[''] after:absolute after:left-1/2 after:bottom-[5px] after:w-1 after:h-1 after:-ml-[2px] after:rounded-full after:bg-current",
+    same(d, sel) && "bg-accent text-on-accent font-bold hover:bg-accent",
+  );
 
   const popup = (
     <div className={popClass} ref={pop} role="dialog" aria-modal="true" aria-label={label} style={at ? { left: at.left, top: at.top } : undefined} onKeyDown={trap}>
       {presets && (
-        <div className="dp-presets">
-          {presets.map(([l, f]) => <button type="button" key={l} onClick={() => commit(f())}>{l}</button>)}
+        <div className={cn("flex flex-wrap gap-1.5 pb-3 mb-2.5 border-b border-line max-xs:flex-nowrap max-xs:overflow-x-auto", wide && "flex-col flex-nowrap gap-0.5 px-2 py-3 m-0 border-b-0 border-r bg-card")}>
+          {presets.map(([l, f]) => <button type="button" key={l} className={cn("px-2.5 py-1 rounded-none bg-panel text-sm font-medium hover:bg-line max-xs:flex-none max-xs:px-3 max-xs:py-2", wide && "bg-transparent text-left px-2.5 py-2 hover:bg-panel")} onClick={() => commit(f())}>{l}</button>)}
         </div>
       )}
-      <div className="dp-main">
-        <div className="dp-head">
+      <div className={wide ? "p-3" : undefined}>
+        <div className="flex items-center gap-1 mb-1.5">
           <button
             type="button"
-            className="dp-nav"
+            className="w-9 h-9 max-sm:w-11 max-sm:h-11 grid place-items-center rounded-none hover:bg-panel disabled:text-edge [&>svg]:w-5 [&>svg]:h-5"
             aria-label={mode === "days" ? "Previous month" : "Previous year"}
             disabled={noPrev}
             onClick={() => go(addMonths(cur, mode === "days" ? -1 : -12))}
           >
             <Ico.ChevLeft />
           </button>
-          <button type="button" className="dp-title" aria-live="polite" onClick={toggleMode}>
+          <button type="button" className="flex-1 inline-flex items-center justify-center gap-1 h-9 max-sm:h-11 rounded-none font-bold text-base hover:bg-panel [&>svg]:w-4 [&>svg]:h-4 text-muted" aria-live="polite" onClick={toggleMode}>
             {mode === "days" ? cur.toLocaleDateString(undefined, { month: "long", year: "numeric" }) : cur.getFullYear()}
             <Ico.ChevDown />
           </button>
           <button
             type="button"
-            className="dp-nav"
+            className="w-9 h-9 max-sm:w-11 max-sm:h-11 grid place-items-center rounded-none hover:bg-panel disabled:text-edge [&>svg]:w-5 [&>svg]:h-5"
             aria-label={mode === "days" ? "Next month" : "Next year"}
             disabled={noNext}
             onClick={() => go(addMonths(cur, mode === "days" ? 1 : 12))}
@@ -289,9 +306,9 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
           </button>
         </div>
         {mode === "days" ? (
-          <div className="dp-grid" ref={grid} role="grid" onKeyDown={gridKey}>
+          <div className="grid grid-cols-7 gap-0.5" ref={grid} role="grid" onKeyDown={gridKey}>
             {days.slice(0, 7).map(d => (
-              <span key={d.getDay()} className="dp-wd" aria-hidden>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</span>
+              <span key={d.getDay()} className="text-center text-xs font-semibold uppercase tracking-[.04em] text-muted py-1 pb-1.5" aria-hidden>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</span>
             ))}
             {days.map(d => (
               <button
@@ -311,7 +328,7 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
             ))}
           </div>
         ) : (
-          <div className="dp-months" ref={grid} onKeyDown={gridKey}>
+          <div className="grid grid-cols-3 gap-1.5 py-1.5" ref={grid} onKeyDown={gridKey}>
             {Array.from({ length: 12 }, (_, i) => new Date(cur.getFullYear(), i, 1)).map(d => {
               const dead = (!!lo && addMonths(d, 1) <= day0(lo)) || (!!hi && d > day0(hi));
               const on = d.getMonth() === cur.getMonth();
@@ -322,7 +339,7 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
                   disabled={dead}
                   tabIndex={on ? 0 : -1}
                   data-on={on ? "" : undefined}
-                  className={"dp-month" + (on ? " sel" : "")}
+                  className={cn("h-[52px] rounded-none font-medium hover:bg-panel disabled:text-[light-dark(#d2d2d2,#3a4385)]", on && "bg-accent text-on-accent font-bold hover:bg-accent")}
                   onClick={() => pickMonth(d)}
                 >
                   {d.toLocaleDateString(undefined, { month: "short" })}
@@ -332,8 +349,8 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
           </div>
         )}
         {time && (
-          <div className="dp-time">
-            <span className="dp-time-label">Time</span>
+          <div className="flex items-center gap-1.5 mt-2.5 pt-3 border-t border-line">
+            <span className="font-semibold text-sm mr-auto">Time</span>
             <Num
               label="Hour"
               value={H12 ? h % 12 || 12 : h}
@@ -345,20 +362,20 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
             <b>:</b>
             <Num label="Minute" value={m} min={0} max={59} onChange={n => setTime(h, n)} onEnter={close} />
             {H12 && (
-              <span className="dp-ampm" role="group" aria-label="AM or PM">
-                <button type="button" aria-pressed={!pm} onClick={() => pm && setTime(h - 12, m)}>AM</button>
-                <button type="button" aria-pressed={pm} onClick={() => !pm && setTime(h + 12, m)}>PM</button>
+              <span className="inline-flex ml-1.5 border border-edge rounded-none overflow-hidden" role="group" aria-label="AM or PM">
+                <button type="button" className={cn("w-[42px] h-9 text-sm font-semibold text-ink-2", !pm && "bg-ink text-bg")} aria-pressed={!pm} onClick={() => pm && setTime(h - 12, m)}>AM</button>
+                <button type="button" className={cn("w-[42px] h-9 text-sm font-semibold text-ink-2", pm && "bg-ink text-bg")} aria-pressed={pm} onClick={() => !pm && setTime(h + 12, m)}>PM</button>
               </span>
             )}
           </div>
         )}
-        <div className="dp-foot">
+        <div className="flex items-center gap-3.5 mt-3 empty:hidden">
           {!off(today) && (
-            <button type="button" className="dp-link" onClick={() => (time ? commit(new Date()) : pickDay(today))}>
+            <button type="button" className="text-link font-semibold text-sm hover:underline" onClick={() => (time ? commit(new Date()) : pickDay(today))}>
               {time ? "Now" : "Today"}
             </button>
           )}
-          {time && <button type="button" className="dp-done" onClick={() => close()}>Done</button>}
+          {time && <button type="button" className="ml-auto px-4.5 py-2 rounded-none bg-accent text-on-accent font-bold text-[13px] tracking-[.08em] uppercase hover:bg-accent-dark" onClick={() => close()}>Done</button>}
         </div>
       </div>
     </div>
@@ -366,7 +383,7 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
 
   return (
     <div
-      className={"dp" + (compact ? " compact" : "")}
+      className={cn("dp relative w-full font-normal [:where(&)_button]:[font:inherit] [:where(&)_button]:text-inherit [:where(&)_button]:bg-transparent [:where(&)_button]:border-0 [:where(&)_button]:p-0 [:where(&)_button]:cursor-pointer [:where(&)_button:disabled]:cursor-not-allowed [:where(&)_button:focus-visible]:outline-2 [:where(&)_button:focus-visible]:outline-accent [:where(&)_button:focus-visible]:outline-offset-1", compact && "inline-block w-auto")}
       ref={root}
       onKeyDown={e => {
         if (e.key === "Escape" && open) {
@@ -379,14 +396,18 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
       <button
         type="button"
         ref={trigger}
-        className={"dp-trigger native-input" + (open ? " open" : "")}
+        className={cn(
+          "dp-trigger flex items-center gap-2.5 w-full max-w-full px-3 py-2.5 text-base text-left border border-edge rounded-none bg-card shadow-[inset_0_1px_3px_var(--inset)] [&_.ico]:size-[18px] [&_.ico]:text-muted",
+          open && "border-accent shadow-[inset_0_1px_3px_var(--inset),0_0_0_3px_color-mix(in_srgb,var(--accent)_22%,transparent)]",
+          compact && "px-2.5 py-1.5 text-[15px] gap-2",
+        )}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={`${label}: ${shown || hint}`}
         onClick={() => (open ? close() : show())}
       >
         <Ico.Calendar />
-        <span className={shown ? "" : "ph"}>{shown || hint}</span>
+        <span className={shown ? "" : "text-muted"}>{shown || hint}</span>
       </button>
       {open && createPortal(popup, document.body)}
     </div>

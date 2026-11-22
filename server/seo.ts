@@ -189,5 +189,6 @@ export function seoHead(page: Page): string {
 export function seoContent(page: Page): string {
   if (!page.index) return "";
   const links = [["/", "Sonosphere"], ["/charts", "Music charts"], ["/events", "Concerts and events"], ["/developers", "Developer API"]];
-  return `<main class="wrap"><h1>${escape(page.title)}</h1><p>${escape(page.description)}</p><nav aria-label="Explore Sonosphere">${links.map(([path, name]) => `<p><a href="${path}">${name}</a></p>`).join("")}</nav></main>`;
+  // the same classes as `wrap` in src/ui/tw.ts
+  return `<main class="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4"><h1>${escape(page.title)}</h1><p>${escape(page.description)}</p><nav aria-label="Explore Sonosphere">${links.map(([path, name]) => `<p><a href="${path}">${name}</a></p>`).join("")}</nav></main>`;
 }

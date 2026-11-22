@@ -14,6 +14,7 @@ import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
 import type { SpotifyConnect, SpotifyConnectBody, SpotifyLink, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
 import { Ico } from "../icons";
 import { Art, Async, Section, useAction } from "../ui/base";
+import { cn, card } from "../ui/tw";
 import { ImageWithFallback } from "../ui/image";
 import { UserList } from "../ui/lists";
 import type { ThemePref } from "../theme";
@@ -33,12 +34,12 @@ export function Settings() {
   const tab = useParams().tab || "profile";
   useTitle("Settings");
   return (
-    <div className="wrap page">
-      <h1 className="page-title">Settings</h1>
-      <nav className="tabs">
+    <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Settings</h1>
+      <nav className="tabs flex flex-wrap gap-0.5 mb-6 *:h-auto *:rounded-none *:m-0 *:border-0 *:bg-transparent *:px-2.5 *:py-1.5 *:text-base *:font-medium *:text-ink-2 *:hover:bg-tint *:hover:text-ink *:hover:no-underline *:current:bg-sun *:current:text-on-sun *:current:font-bold max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:gap-x-[22px] max-md:gap-y-0 max-md:[&::-webkit-scrollbar]:hidden max-md:*:flex-none max-md:*:whitespace-nowrap">
         {TABS.map(([p, l]) => <NavLink key={p} to={`/settings${p}`} end>{l}</NavLink>)}
       </nav>
-      <div className="narrow-col">
+      <div className="max-w-[640px]">
         {tab === "profile" && <ProfileSettings />}
         {tab === "privacy" && <PrivacySettings />}
         {tab === "notifications" && <NotificationSettings />}
@@ -104,32 +105,32 @@ function ProfileSettings() {
   return (
     <>
       <Section title="Avatar">
-        <div className="avatar-edit">
-          <button type="button" className="avatar avatar-pick" aria-label="Change avatar" onClick={() => file.current?.click()} disabled={img.busy}>
+        <div className="flex items-center gap-5 max-xs:items-start max-xs:gap-3.5">
+          <button type="button" className="avatar block overflow-hidden rounded-full size-[88px] flex-none p-0 border-0 bg-panel cursor-pointer hover:opacity-[.88] disabled:cursor-progress max-xs:size-[72px]" aria-label="Change avatar" onClick={() => file.current?.click()} disabled={img.busy}>
             <Art image={me!.image} kind="user" />
           </button>
           <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} />
-          <div className="avatar-side">
-            <div className="avatar-actions">
+          <div className="flex flex-col gap-1.5 min-w-0 [&_p]:m-0">
+            <div className="flex items-center gap-3.5">
               <Button kind="btn small" loading={img.busy} onClick={() => file.current?.click()}>
                 {me!.image ? "Change picture" : "Upload picture"}
               </Button>
-              {me!.image && <button type="button" className="linklike muted" onClick={removeImage}>Remove</button>}
+              {me!.image && <button type="button" className="bg-transparent border-0 p-0 [font-family:inherit] [font-style:inherit] [font-weight:inherit] [line-height:inherit] text-sm cursor-pointer hover:underline text-muted" onClick={removeImage}>Remove</button>}
             </div>
-            <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB).</p>
+            <p className="text-muted text-[13px]">PNG, JPEG, WebP or GIF (max 8 MB).</p>
             {img.note}
           </div>
         </div>
       </Section>
       <BannerSettings />
       <Section title="Profile">
-        <form className="form" onSubmit={submit}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submit}>
           <label>Display name<Input value={f.realname} onChange={set("realname")} maxLength={60} /></label>
           <label>Pronouns<Input value={f.pronouns} onChange={set("pronouns")} placeholder="they/them" maxLength={30} /></label>
           <label>Country<Input value={f.country} onChange={set("country")} maxLength={60} /></label>
           <label>Website<Input type="url" value={f.website} onChange={set("website")} placeholder="https://" maxLength={200} /></label>
-          <div className="field-block">
-            <span className="field-label">About me</span>
+          <div className="flex flex-col gap-1 w-full">
+            <span className="font-semibold text-sm">About me</span>
             <MdEditor label="About me" rows={5} value={f.about} onChange={about => setF(f => ({ ...f, about }))} maxLength={2000} />
           </div>
           {act.note}
@@ -167,24 +168,24 @@ function BannerSettings() {
 
   return (
     <Section title="Banner">
-      <div className="banner-edit">
+      <div className="flex flex-col items-start gap-3 [&_p]:m-0">
         {me!.banner && (
           <ImageWithFallback
-            className="banner-preview"
+            className="block w-full aspect-[4/1] object-cover bg-panel"
             src={imageUrl(me!.banner)}
             alt="Your profile banner"
-            fallback={<span className="image-placeholder">Loading banner…</span>}
-            errorFallback={<span className="image-placeholder">Image unavailable</span>}
+            fallback={<span className="grid place-items-center size-full text-muted text-sm">Loading banner…</span>}
+            errorFallback={<span className="grid place-items-center size-full text-muted text-sm">Image unavailable</span>}
           />
         )}
         <Input ref={file} type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={upload} disabled={act.busy} />
-        <div className="avatar-actions">
+        <div className="flex items-center gap-3.5">
           <Button kind="btn small" type="button" loading={act.busy} onClick={() => file.current?.click()}>
             {me!.banner ? "Change banner" : "Upload banner"}
           </Button>
-          {me!.banner && <button type="button" className="linklike muted" disabled={act.busy} onClick={remove}>Remove banner</button>}
+          {me!.banner && <button type="button" className="bg-transparent border-0 p-0 [font-family:inherit] [font-style:inherit] [font-weight:inherit] [line-height:inherit] text-sm cursor-pointer hover:underline text-muted" disabled={act.busy} onClick={remove}>Remove banner</button>}
         </div>
-        <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to fit.</p>
+        <p className="text-muted text-[13px]">PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to fit.</p>
         {act.note}
       </div>
     </Section>
@@ -215,7 +216,7 @@ function Appearance() {
 
   return (
     <Section title="Appearance">
-      <div className="theme-pick" role="group" aria-label="Theme">
+      <div className="inline-flex mb-2.5 bg-fill p-[3px] gap-[3px] [&_button]:px-4 [&_button]:py-[7px] [&_button]:bg-transparent [&_button]:border-0 [&_button]:text-ink-2 [&_button]:[font-family:inherit] [&_button]:[font-style:inherit] [&_button]:[line-height:inherit] [&_button]:text-[15px] [&_button]:font-semibold [&_button]:cursor-pointer [&_button:hover]:bg-fill-hover [&_button:hover]:text-ink [&_button[aria-pressed=true]]:bg-card [&_button[aria-pressed=true]]:text-ink [&_button[aria-pressed=true]]:cursor-default" role="group" aria-label="Theme">
         {THEMES.map(([v, name]) => (
           <button key={v} type="button" aria-pressed={me!.theme === v} onClick={() => pick(v)}>{name}</button>
         ))}
@@ -240,9 +241,9 @@ function CheckOption({ checked, disabled, onChange, title, children }: {
   children: ReactNode;
 }) {
   return (
-    <label className="check">
+    <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0!">
       <Input type="checkbox" checked={checked} disabled={disabled} onChange={e => onChange(e.target.checked)} />{" "}
-      <span><b>{title}</b><br /><span className="muted small">{children}</span></span>
+      <span><b>{title}</b><br /><span className="text-muted text-[13px]">{children}</span></span>
     </label>
   );
 }
@@ -253,7 +254,7 @@ function PrivacySettings() {
   return (
     <>
       <Section title="Privacy">
-        <div className="form">
+        <div className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
           <CheckOption
             title="Hide recent listening"
             checked={me!.hideRecent || me!.privateListening}
@@ -299,9 +300,9 @@ function NotificationSettings() {
   };
   return (
     <Section title="Email notifications">
-      <div className="form">
+      <div className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
         {!me!.emailVerified && (
-          <p className="muted small">
+          <p className="text-muted text-[13px]">
             Emails only go to a confirmed address. Confirm {me!.email} under <Link to="/settings/account">Account</Link> to start getting them.
           </p>
         )}
@@ -314,13 +315,13 @@ function NotificationSettings() {
           />
         </label>
         {me!.emailNotify !== "instant" && !off && (
-          <p className="muted small">
+          <p className="text-muted text-[13px]">
             One email {me!.emailNotify === "daily" ? "a day" : "a week"} with whatever is still unread, and nothing when there's nothing new.
           </p>
         )}
-        <p className="field-label">Email me when</p>
+        <p className="font-semibold text-sm">Email me when</p>
         {EMAIL_KINDS.map(([k, l]) => (
-          <label key={k} className="check">
+          <label key={k} className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0!">
             <Input type="checkbox" checked={!off && !muted.has(k)} disabled={off} onChange={e => toggle(k, e.target.checked)} /> {l}
           </label>
         ))}
@@ -335,7 +336,7 @@ function BlockedUsers() {
   const unblock = (username: string) => api<BlockResult>("/block", { body: { username, block: false } }).then(q.reload);
   return (
     <Section title="Blocked users">
-      <p className="muted small">
+      <p className="text-muted text-[13px]">
         People you block can't follow you, write on your wall or comment on your journal, and their shouts are hidden from you everywhere.
         Block someone from the “…” menu on their profile.
       </p>
@@ -343,10 +344,10 @@ function BlockedUsers() {
         {d => d.items.length ? (
           <UserList
             items={d.items}
-            extra={u => <span><Button kind="link small" type="button" onClick={() => unblock(u.username)}>Unblock</Button></span>}
+            extra={u => <span><Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => unblock(u.username)}>Unblock</Button></span>}
           />
         ) : (
-          <p className="muted">You haven't blocked anyone.</p>
+          <p className="text-muted">You haven't blocked anyone.</p>
         )}
       </Async>
     </Section>
@@ -373,15 +374,15 @@ function SignInMethods() {
 
   return (
     <Section title="Sign-in methods">
-      {error && <p className="form-error" role="alert">{error}</p>}
-      {linked && !error && <p className="form-ok">Connected. You can now log in with it.</p>}
-      <ul className="plain">
+      {error && <p className="form-error font-semibold m-0 text-bad" role="alert">{error}</p>}
+      {linked && !error && <p className="font-semibold m-0 text-ok">Connected. You can now log in with it.</p>}
+      <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0">
         {q.data.providers.map(p => (
-          <li key={p.id} className="row between">
-            <span className="oauth-row">
-              <span className={`oauth-chip oauth-${p.id}`}><OAuthMark id={p.id} /></span>
+          <li key={p.id} className="row flex gap-2.5 items-center flex-wrap justify-between">
+            <span className="inline-flex items-center gap-2">
+              <span className={`inline-grid place-items-center size-7 bg-panel ${p.id === "discord" ? "bg-[#5865f2] text-white [&_.oauth-mark]:size-4" : "[&_.oauth-mark]:size-4"}`}><OAuthMark id={p.id} /></span>
               <b>{p.label}</b>{" "}
-              <span className="muted small">
+              <span className="text-muted text-[13px]">
                 {p.connected ? <>{p.connected.name || "connected"}, since {date(p.connected.since)}</> : "not connected"}
               </span>
             </span>
@@ -466,11 +467,11 @@ function AccountSettings() {
     <>
       {c.dialog}
       <Section title="Email">
-        <form className="form" onSubmit={submitEmail}>
-          <p className="muted small">
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submitEmail}>
+          <p className="text-muted text-[13px]">
             {me!.emailVerified
               ? <>{me!.email} is confirmed.</>
-              : <>{me!.email} is not confirmed yet. <Button kind="link small" type="button" onClick={resendLink}>Send the link again</Button></>}
+              : <>{me!.email} is not confirmed yet. <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={resendLink}>Send the link again</Button></>}
             {me!.pendingEmail && <> Waiting for you to confirm {me!.pendingEmail}.</>}
           </p>
           {resend.note}
@@ -480,9 +481,9 @@ function AccountSettings() {
         </form>
       </Section>
       <Section title="Password">
-        <form className="form" onSubmit={submitPassword}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submitPassword}>
           {!me!.hasPassword && (
-            <p className="muted small">
+            <p className="text-muted text-[13px]">
               You signed up through another site, so your account has no password yet. Set one to log in without it, or to use scrobbler apps
               that ask for a username and password.
             </p>
@@ -503,7 +504,7 @@ function AccountSettings() {
       </Section>
       <SignInMethods />
       <Section title="Delete account">
-        <form className="form" onSubmit={submitDelete}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submitDelete}>
           <p>This permanently removes your profile, scrobbles, loved tracks, playlists and shouts.</p>
           <ConfirmField value={del} onChange={setDel} />
           {delAct.note}
@@ -560,14 +561,14 @@ function SpotifySetup({ redirectUri, initial, playback, onConnect, busy, note }:
   return (
     <>
       <p>Spotify only lets each app be used by a few people, so you connect through your own free Spotify app. It takes about two minutes:</p>
-      <ol className="steps">
+      <ol className="m-0 mb-[18px] pl-[22px] list-decimal [&_li]:my-2 [&_li]:leading-[1.5] [&_li::marker]:font-bold [&_li::marker]:text-muted">
         <li>
           Open the <a href={SPOTIFY_DASHBOARD} target="_blank" rel="noreferrer">Spotify developer dashboard</a> and log in with your
           Spotify account. Accept the developer terms if asked.
         </li>
         <li>Click <b>Create app</b>. Any name and description will do, such as "My Sonosphere scrobbler".</li>
         <li>Under <b>Redirect URIs</b>, paste this address exactly and click <b>Add</b>:
-          <span className="copy-row">
+          <span className="flex flex-wrap items-center gap-2 mt-1.5 [&_code]:wrap-anywhere [&_code]:px-2 [&_code]:py-1 [&_code]:bg-fill">
             <code onClick={selectContents}>{redirectUri}</code>
             <Button kind="btn ghost small" type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</Button>
           </span>
@@ -578,18 +579,18 @@ function SpotifySetup({ redirectUri, initial, playback, onConnect, busy, note }:
         </li>
         <li>Open the app's <b>Settings</b>, copy its <b>Client ID</b> and paste it below. You don't need the client secret.</li>
       </ol>
-      <form className="form" onSubmit={submit}>
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submit}>
         <label>
           Client ID
           <Input value={id} onChange={e => setId(e.target.value)} required maxLength={64} placeholder="32 letters and numbers" autoComplete="off" spellCheck={false} />
         </label>
-        <label className="check">
+        <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0!">
           <Input type="checkbox" checked={play} onChange={e => setPlay(e.target.checked)} /> Also play music here through Spotify instead of videos (needs Spotify Premium)
         </label>
         {note}
-        <div className="row"><Button kind="btn" loading={busy}>Connect Spotify</Button></div>
+        <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2"><Button kind="btn" loading={busy}>Connect Spotify</Button></div>
       </form>
-      <p className="muted small">
+      <p className="text-muted text-[13px]">
         Only the Spotify account that created the app can use it straight away. To connect a different one, add it under{" "}
         <b>User Management</b> in the app's settings first.
       </p>
@@ -628,19 +629,19 @@ function SpotifySettings() {
 
   const linked = (s: SpotifyOn, l: SpotifyLink) => (
     <>
-      <p>Connected as <b>{l.account.name}</b> <span className="muted small">since {date(l.connectedAt)}</span></p>
+      <p>Connected as <b>{l.account.name}</b> <span className="text-muted text-[13px]">since {date(l.connectedAt)}</span></p>
       {l.broken ? (
-        <p className="form-error">{l.broken}</p>
+        <p className="form-error font-semibold m-0 text-bad">{l.broken}</p>
       ) : (
         <>
-          <p className="muted small">
+          <p className="text-muted text-[13px]">
             {l.lastImport ? <>Last import {ago(l.lastImport)} · {num(l.imported)} plays imported</> : "Importing your recent plays..."}.
             New plays are picked up every few minutes.
           </p>
           {l.restingUntil && (
-            <p className="muted small">Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.</p>
+            <p className="text-muted text-[13px]">Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.</p>
           )}
-          <p className="muted small">
+          <p className="text-muted text-[13px]">
             {l.playback
               ? "The player plays through Spotify when it has the track."
               : "The player uses videos. To play through Spotify (Premium) instead, choose Change app and tick the playback option."}
@@ -650,7 +651,7 @@ function SpotifySettings() {
       {l.broken || redo
         ? <SpotifySetup redirectUri={s.redirectUri} initial={l.clientId} playback={l.playback} onConnect={connect} busy={act.busy} note={act.note} />
         : act.note}
-      <div className="row">
+      <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
         {!l.broken && !redo && (
           <>
             <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>Import now</Button>
@@ -664,20 +665,20 @@ function SpotifySettings() {
 
   let badge = null;
   if (q.data) {
-    if (!q.data.enabled) badge = <span className="badge off">Disabled</span>;
-    else if (q.data.link?.broken) badge = <span className="badge warn">Needs attention</span>;
-    else if (q.data.link) badge = <span className="badge">Connected</span>;
-    else badge = <span className="badge off">Not connected</span>;
+    if (!q.data.enabled) badge = <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-fill text-muted">Disabled</span>;
+    else if (q.data.link?.broken) badge = <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-accent-tint text-ink">Needs attention</span>;
+    else if (q.data.link) badge = <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-ink text-bg">Connected</span>;
+    else badge = <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-fill text-muted">Not connected</span>;
   }
 
   return (
     <Service name="Spotify" blurb="Import what you play on Spotify" badge={badge} open={!!outcome}>
       <Async q={q}>
         {d => !d.enabled ? (
-          <p className="muted">Scrobbling from Spotify is disabled.</p>
+          <p className="text-muted">Scrobbling from Spotify is disabled.</p>
         ) : (
-          <div className="spotify">
-            {outcome && !(outcome.ok && d.link?.broken) && <p className={outcome.ok ? "form-ok" : "form-error"}>{outcome.text}</p>}
+          <div className="[&_p]:m-0 [&_p]:mb-2.5 [&_.row]:mt-4 [&_.row]:gap-2.5 [&_.form]:mb-3.5">
+            {outcome && !(outcome.ok && d.link?.broken) && <p className={outcome.ok ? "font-semibold m-0 text-ok" : "font-semibold m-0 text-bad"}>{outcome.text}</p>}
             {d.link
               ? linked(d, d.link)
               : <SpotifySetup redirectUri={d.redirectUri} initial="" playback={false} onConnect={connect} busy={act.busy} note={act.note} />}
@@ -697,13 +698,13 @@ function Service({ name, blurb, badge, open, children }: {
 }) {
   const [shown, setShown] = useState(open);
   return (
-    <div className={`card service${shown ? " open" : ""}`}>
-      <button type="button" className="service-head" aria-expanded={shown} onClick={() => setShown(v => !v)}>
-        <span className="service-name"><b>{name}</b><span className="muted small">{blurb}</span></span>
+    <div className={cn(card, "service p-0 [.service+&]:-mt-[1.5px]", shown && "open [&>button>svg]:rotate-180")}>
+      <button type="button" className="flex items-center gap-3 w-full p-3.5 px-[18px] bg-transparent border-0 [font:inherit] text-inherit text-left cursor-pointer hover:bg-accent-faint focus-visible:outline-none focus-visible:bg-accent-faint [&>svg]:text-muted" aria-expanded={shown} onClick={() => setShown(v => !v)}>
+        <span className="flex-1 flex flex-col gap-0.5"><b>{name}</b><span className="text-muted text-[13px]">{blurb}</span></span>
         {badge}
         <Ico.ChevDown />
       </button>
-      {shown && <div className="service-body">{children}</div>}
+      {shown && <div className="px-[18px] pb-[18px] pt-1">{children}</div>}
     </div>
   );
 }
@@ -746,59 +747,59 @@ function AppSettings() {
     <>
       {c.dialog}
       <Section title="Streaming services">
-        <div className="services"><SpotifySettings /></div>
+        <div><SpotifySettings /></div>
       </Section>
       <Section title="Connected applications">
         <p>To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed. <Link to="/developers#pano-scrobbler">Setup details</Link>.</p>
         <Async q={q}>
           {d => d.sessions.length ? (
-            <ul className="plain">
+            <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0">
               {d.sessions.map(s => (
-                <li key={s.key} className="row between">
+                <li key={s.key} className="row flex gap-2.5 items-center flex-wrap justify-between">
                   <span>
                     <b>{s.app}</b>{" "}
-                    <span className="muted small">connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}</span>
+                    <span className="text-muted text-[13px]">connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}</span>
                   </span>
                   <Button kind="btn ghost small" onClick={() => revoke(s.key)}>Disconnect</Button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="muted">No applications can scrobble to your account yet.</p>
+            <p className="text-muted">No applications can scrobble to your account yet.</p>
           )}
         </Async>
       </Section>
       <Section title="Your API accounts" more="/developers" moreLabel="API docs">
         <Async q={q}>
           {d => d.items.length ? (
-            <ul className="plain api-apps">
+            <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0 border-t border-line mb-5 [&>li]:border-b [&>li]:border-line">
               {d.items.map(a => (
                 <li key={a.id}>
-                  <details className="api-app">
-                    <summary><Ico.Chevron /><b>{a.name}</b><span className="muted small">{a.apiKey.slice(0, 8)}…</span></summary>
-                    {a.description && <p className="muted small">{a.description}</p>}
-                    <dl className="keys">
+                  <details className="[&>summary]:flex [&>summary]:items-center [&>summary]:gap-2.5 [&>summary]:py-3 [&>summary]:px-1 [&>summary]:cursor-pointer [&>summary]:list-none [&>summary::-webkit-details-marker]:hidden [&>summary:hover]:bg-fill [&>summary_svg]:size-3.5 [&>summary_svg]:flex-none [&>summary_svg]:text-muted [&[open]>summary_svg]:rotate-90 [&>:not(summary)]:ml-7 [&>p]:m-0 [&>p]:mb-1.5 [&_.keys]:items-center [&_.keys]:mb-2.5 [&>.astryx-button]:mb-3.5">
+                    <summary><Ico.Chevron /><b>{a.name}</b><span className="text-muted text-[13px]">{a.apiKey.slice(0, 8)}…</span></summary>
+                    {a.description && <p className="text-muted text-[13px]">{a.description}</p>}
+                    <dl className="keys grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mt-2 mb-0 text-sm [&_dd]:m-0 [&_dd]:wrap-anywhere [&_dt]:text-muted">
                       <dt>API key</dt><dd><code>{a.apiKey}</code></dd>
                       <dt>Shared secret</dt><dd><code>{a.secret}</code></dd>
                       <dt>Callback URL</dt><dd><CallbackField app={a} onSaved={q.reload} /></dd>
                     </dl>
-                    <Button kind="link small" onClick={() => askDelete(a)}>Delete API account</Button>
+                    <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={() => askDelete(a)}>Delete API account</Button>
                   </details>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="muted">Create an API account to get a key and shared secret.</p>
+            <p className="text-muted">Create an API account to get a key and shared secret.</p>
           )}
         </Async>
-        <form className="form" onSubmit={create}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={create}>
           <label>Application name<Input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} required maxLength={60} /></label>
           <label>Description (optional)<Input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} maxLength={300} /></label>
           <label>
             Callback URL (optional)
             <Input value={f.callbackUrl} onChange={e => setF({ ...f, callbackUrl: e.target.value })} maxLength={500} placeholder="https://example.com/callback" />
           </label>
-          <p className="muted small">For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.</p>
+          <p className="text-muted text-[13px]">For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.</p>
           {robot.view}
           {act.note}
           <Button kind="btn" loading={act.busy}>Create API account</Button>
@@ -823,7 +824,7 @@ function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
   };
 
   return (
-    <form className="callback-field" onSubmit={submit}>
+    <form className="flex flex-wrap items-center gap-2 max-w-[520px] [&_.astryx-text-input]:flex-1 [&_.astryx-text-input]:min-w-[200px] [&_.astryx-text-input]:h-8 [&_.astryx-text-input]:min-h-8 [&_input]:h-8 [&_input]:min-h-8 [&_input]:text-sm [&_input]:py-0 [&>.astryx-button]:h-8 [&>.astryx-button]:min-h-8 [&>.astryx-button]:py-0" onSubmit={submit}>
       <Input value={v} onChange={e => setV(e.target.value)} maxLength={500} placeholder="None" aria-label="Callback URL" />
       {v.trim() !== saved && <Button kind="btn small" loading={act.busy}>Save</Button>}
       {act.note}
@@ -875,14 +876,14 @@ function DataSettings() {
       {c.dialog}
       <Section title="Export your scrobbles">
         <p>Download every scrobble with artist, album, track and timestamp.</p>
-        <div className="row">
+        <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
           <Button kind="btn" href="/api/me/export?format=csv" download>Download CSV</Button>
           <Button kind="btn ghost" href="/api/me/export?format=json" download>Download JSON</Button>
         </div>
       </Section>
       <Section title="Export your loved tracks">
         <p>Download the tracks you’ve loved, with the date you loved each one.</p>
-        <div className="row">
+        <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
           <Button kind="btn" href="/api/me/export?format=csv&what=loved" download>Download CSV</Button>
           <Button kind="btn ghost" href="/api/me/export?format=json&what=loved" download>Download JSON</Button>
         </div>
@@ -891,7 +892,7 @@ function DataSettings() {
         <p>Bring scrobbles or loved tracks in from a CSV or JSON file on the <Link to="/scrobble">Scrobble page</Link>.</p>
       </Section>
       <Section title="Clear listening history">
-        <form className="form" onSubmit={submit}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={submit}>
           <p>Removes every scrobble from your library. Loved tracks, tags and playlists are kept.</p>
           <ConfirmField value={pw} onChange={setPw} />
           {act.note}

@@ -1,4 +1,5 @@
 import { rm } from "node:fs/promises";
+import tailwind from "bun-plugin-tailwind";
 import { execSync } from "node:child_process";
 import { STAFF_BUNDLE_MARK } from "../src/admin/index";
 
@@ -15,6 +16,7 @@ const result = await Bun.build({
   minify: true,
   sourcemap: "none",
   publicPath: "/",
+  plugins: [tailwind],
   naming: { entry: "[name].[ext]", chunk: "assets/[name]-[hash].[ext]", asset: "assets/[name]-[hash].[ext]" },
   define: { "process.env.NODE_ENV": '"production"', "process.env.SENTRY_RELEASE": JSON.stringify(gitSha) },
 });
@@ -29,7 +31,10 @@ if (!result.success) {
   process.exit(1);
 }
 
-const relative = (path: string) => path.slice(path.indexOf(`/${out}/`) + out.length + 2);
+const relative = (path: string) => {
+  const p = path.replaceAll("\\", "/");
+  return p.slice(p.indexOf(`/${out}/`) + out.length + 2);
+};
 
 const staff: string[] = [];
 const open: string[] = [];

@@ -25,20 +25,20 @@ const ICONS: Record<string, string> = {
 export function OAuthMark({ id }: { id: string }) {
   const icon = ICONS[id];
   if (!icon) return null;
-  return <svg className="oauth-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={icon} /></svg>;
+  return <svg className="oauth-mark w-5 h-5 flex-none" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={icon} /></svg>;
 }
 
 export function OAuthButtons({ providers, next }: { providers: OAuthProvider[]; next: string }) {
   if (!providers.length) return null;
   return (
-    <div className="oauth">
+    <div className="flex flex-col gap-2.5 self-stretch">
       {providers.map(p => (
-        <Button key={p.id} kind={`btn ghost oauth-btn oauth-${p.id}`} href={oauthStart(p.id, "login", next)}>
+        <Button key={p.id} kind="btn ghost" className={"w-full h-11 gap-2.5 justify-center" + (p.id === "discord" ? " bg-[#5865f2] border-[#5865f2] text-white hover:bg-[#4752c4] hover:border-[#4752c4] hover:text-white" : "")} href={oauthStart(p.id, "login", next)}>
           <OAuthMark id={p.id} />
           Continue with {p.label}
         </Button>
       ))}
-      <p className="oauth-or muted small"><span>or</span></p>
+      <p className="flex items-center gap-3 mt-1 text-muted text-[13px] before:content-[''] before:flex-1 before:border-t before:border-line after:content-[''] after:flex-1 after:border-t after:border-line"><span>or</span></p>
     </div>
   );
 }

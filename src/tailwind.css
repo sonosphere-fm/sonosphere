@@ -1,0 +1,102 @@
+/*
+ * Tailwind configuration for styles.css: theme values and variants only.
+ */
+
+/*
+ * Every colour is a CSS variable from styles.css, so light/dark switching keeps working. `reference inline`
+ * puts the variable straight into each utility and emits no --color-* or --font-* variables of its own:
+ * names like --color-accent and --color-on-accent are Astryx tokens, and Astryx components must keep reading
+ * Astryx's values (see `astryx docs styling-libraries/tailwind`).
+ */
+@theme reference inline {
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-faint: var(--accent-faint);
+  --color-link: var(--link);
+  --color-coal: var(--black);
+  --color-on-accent: var(--on-accent);
+  --color-on-sun: var(--on-sun);
+  --color-bar: var(--bar);
+  --color-bar-hover: var(--bar-hover);
+  --color-bar-fill-hover: var(--bar-fill-hover);
+  --color-banner: var(--banner);
+  --color-sun: var(--sun);
+  --color-sun-dark: var(--sun-dark);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-panel: var(--panel);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ok: var(--ok);
+  --color-bad: var(--bad);
+  --color-bad-tint: var(--bad-tint);
+  --color-inset: var(--inset);
+  --color-zebra: var(--zebra);
+  --color-tint: var(--tint);
+  --color-veil: var(--veil);
+  --color-veil-hover: var(--veil-hover);
+  --color-scroll: var(--scroll);
+  --color-scroll-thin: var(--scroll-thin);
+  --color-art-none: var(--art-none);
+  --color-art-glyph: var(--art-glyph);
+  --color-fill: var(--fill);
+  --color-fill-hover: var(--fill-hover);
+  --color-edge: var(--edge);
+
+  --font-sans: var(--font);
+  --font-display: var(--display);
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@theme {
+  /*
+   * the site's layout steps; `max-sm:` means "600px and narrower", `sm:` means "601px and wider".
+   * An arbitrary `max-[Npx]:` means narrower than N, so "860px and narrower" is written `max-[861px]:`.
+   */
+  /* font sizes only: line height is inherited (1.45 from body, 1.15 on headings) unless a leading-* says otherwise */
+  --text-*: initial;
+  --text-xs: .75rem;
+  --text-sm: .875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --breakpoint-*: initial;
+  --breakpoint-xs: 481px;
+  --breakpoint-sm: 601px;
+  --breakpoint-md: 701px;
+  --breakpoint-lg: 901px;
+  --breakpoint-xl: 1101px;
+
+  --animate-spin: spin .7s linear infinite;
+  --animate-eq: eq .9s ease-in-out infinite alternate;
+  --animate-appear: appear 0s linear .15s both;
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes eq { from { height: 3px; } to { height: 11px; } }
+  @keyframes appear { from { visibility: hidden; } to { visibility: visible; } }
+}
+
+/*
+ * Page regions that restyle what sits inside them. The region keeps its marker class (hero, side, ...) and
+ * descendants opt in with e.g. `hero:text-ink` or `side:text-[17px]`.
+ */
+@custom-variant hero (&:where(.hero *));
+@custom-variant side (&:where(.side *));
+@custom-variant banner (&:where(.banner *));
+@custom-variant mpage (&:where(.mpage *));
+@custom-variant three (&:where(.three *));
+@custom-variant toolbar (&:where(.toolbar *));
+
+/* NavLink marks its current page with `active` and aria-current; hand-made tabs set `active` themselves */
+@custom-variant current (&:is(.active, [aria-current="page"]));
+
+@custom-variant coarse (@media (pointer: coarse));
+@custom-variant touch (@media (hover: none));
+@custom-variant reduced (@media (prefers-reduced-motion: reduce));

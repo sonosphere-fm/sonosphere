@@ -28,9 +28,9 @@ const PlaceInput = lazy(() => import("../ui/country").then(m => ({ default: m.Pl
 const CountryInput = lazy(() => import("../ui/country").then(m => ({ default: m.CountryInput })));
 
 function NearNote({ near }: { near: Events["near"] }) {
-  if (!near) return <p className="muted small">We couldn't tell where you are from your connection.</p>;
+  if (!near) return <p className="text-muted text-[13px]">We couldn't tell where you are from your connection.</p>;
   return (
-    <p className="muted small">
+    <p className="text-muted text-[13px]">
       Roughly {near.city ? `${near.city}, ${near.country}` : near.country}, going by your connection
       {near.wide && ". Nothing close by yet, so these are a bit further out"}.
     </p>
@@ -53,22 +53,22 @@ export function EventsPage() {
   };
 
   return (
-    <div className="wrap page">
-      <div className="toolbar">
-        <h1 className="page-title">Events</h1>
+    <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Events</h1>
         <Button kind="btn" href="/events/add"><Ico.Plus /> Add event</Button>
       </div>
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           <Button kind={when !== "past" && when !== "near" ? "active" : ""} onClick={() => setWhen("upcoming")}>Upcoming</Button>
           <Button kind={when === "near" ? "active" : ""} onClick={() => setWhen("near")}>Near you</Button>
           <Button kind={when === "past" ? "active" : ""} onClick={() => setWhen("past")}>Past</Button>
         </nav>
-        <form className="inline-form" onSubmit={filter}>
+        <form className="inline-form flex gap-2 items-center flex-wrap my-2.5 max-sm:[&>.field]:flex-[1_1_180px] max-sm:[&>.field]:min-w-0 max-sm:[&>.astryx-text-input]:flex-[1_1_180px] max-sm:[&>.astryx-text-input]:min-w-0 max-sm:[&>div:has(>.astryx-text-input)]:flex-[1_1_180px] max-sm:[&>div:has(>.astryx-text-input)]:min-w-0 coarse:[&>.astryx-button]:min-h-10 [&:has(.astryx-text-input)>.astryx-button]:min-h-10 [&:has(.astryx-text-input)>.astryx-button]:px-4 [&>.check]:items-center [&>.check]:gap-2 [&>.check]:ml-2.5 [&>.check]:leading-6 max-[641px]:[&>.check]:ml-0 max-sm:[&>.check]:basis-full max-sm:[&>.check]:min-h-10" onSubmit={filter}>
           <Input value={text} onChange={e => setText(e.target.value)} placeholder="City, country or venue" aria-label="Filter events by place" />
           <Button kind="btn ghost small">Filter</Button>
           {me && (
-            <label className="check">
+            <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0!">
               <Input type="checkbox" checked={!!mine} onChange={e => setMine(e.target.checked ? "1" : "")} /> Artists I listen to
             </label>
           )}
@@ -137,9 +137,9 @@ export function EventPage() {
               </>
             }
           />
-          <div className="wrap page">
-            <div className="cols">
-              <div className="main">
+          <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+            <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+              <div className="main min-w-0">
                 <Section title="Line-up"><Grid kind="artist" cols={4} items={e.artists} /></Section>
                 {e.description && <Section title="Details"><Markdown text={e.description} /></Section>}
                 {e.url && (
@@ -151,14 +151,14 @@ export function EventPage() {
                 )}
                 <Section title="Wall"><Shoutbox type="event" id={e.id} /></Section>
               </div>
-              <aside className="side">
+              <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
                 <Section title={`Going (${e.going})`}>
-                  {e.attendees.going.length ? <UserList items={e.attendees.going} /> : <p className="muted">Nobody yet.</p>}
+                  {e.attendees.going.length ? <UserList items={e.attendees.going} /> : <p className="text-muted">Nobody yet.</p>}
                 </Section>
                 <Section title={`Interested (${e.interested})`}>
-                  {e.attendees.interested.length ? <UserList items={e.attendees.interested} /> : <p className="muted">Nobody yet.</p>}
+                  {e.attendees.interested.length ? <UserList items={e.attendees.interested} /> : <p className="text-muted">Nobody yet.</p>}
                 </Section>
-                <p className="muted small"><Listed e={e} /></p>
+                <p className="text-muted text-[13px]"><Listed e={e} /></p>
               </aside>
             </div>
           </div>
@@ -186,9 +186,9 @@ export function EventAdd() {
   };
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Add an event</h1>
-      <form className="form card" onSubmit={submit}>
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Add an event</h1>
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={submit}>
         <label>Line-up (comma separated, headliner first)<Input value={f.artists} onChange={set("artists")} required placeholder={LINEUP_HINT} /></label>
         <label>Title (optional)<Input value={f.title} onChange={set("title")} maxLength={120} placeholder="Defaults to “Headliner at Venue”" /></label>
         <label>
@@ -202,8 +202,8 @@ export function EventAdd() {
             onPick={pl => setF(p => ({ ...p, city: p.city || pl.city || "", country: p.country || pl.country || "" }))}
           />
         </label>
-        <div className="row">
-          <label className="grow">
+        <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
+          <label className="flex-1 min-w-0">
             City
             <PlaceInput
               field="city"
@@ -214,7 +214,7 @@ export function EventAdd() {
               onPick={pl => setF(p => ({ ...p, country: p.country || pl.country || "" }))}
             />
           </label>
-          <label className="grow">Country<CountryInput value={f.country} onChange={v => setF(p => ({ ...p, country: v }))} /></label>
+          <label className="flex-1 min-w-0">Country<CountryInput value={f.country} onChange={v => setF(p => ({ ...p, country: v }))} /></label>
         </div>
         <label>Date and time<DatePicker time label="Date and time" value={f.when} onChange={v => setF({ ...f, when: v })} defaultTime="20:00" /></label>
         <label>Link (optional)<Input type="url" value={f.url} onChange={set("url")} placeholder="https://" /></label>

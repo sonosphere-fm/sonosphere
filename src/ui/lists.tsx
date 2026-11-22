@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ago, albumUrl, api, artistUrl, dateTime, dur, num, tagUrl, trackUrl, useAuth, userUrl } from "../lib";
 import { PlayButton, type PTrack } from "../player";
 import { Art, Empty, Avatar } from "./base";
+import { cn, chartlist, chartlistSlim, cRank, cPlay, cLove, cArt, cName, cDur, cTime, cCount, cActions, cBar, bar, barFill, barNum, barNote, np, eq, mcard, grid, gridBelow, love, loveOn } from "./tw";
 import { UserLabels } from "./user-labels";
 import type { ChartTag } from "../../shared/home";
 import type { Loved, TopAlbum, TopArtist, TopTrack } from "../../shared/listening";
@@ -31,7 +32,8 @@ export function LoveButton({ track, loved, onChange, label }: {
   };
   return (
     <Button
-      kind={(label ? "btn ghost love" : "love") + (on ? " on" : "")}
+      kind={label ? "btn ghost" : "bare"}
+      className={cn(label ? "" : love, on && (label ? "border-accent text-link hero:text-ink" : loveOn))}
       aria-pressed={on}
       aria-label={on ? "Unlove this track" : "Love this track"}
       title={on ? "Unlove" : "Love"}
@@ -76,29 +78,29 @@ export function TrackList<R extends Row>({ items, count, rank, time, showArtist 
   const queue: PTrack[] = rows.map(r => ({ title: r.title, artist: r.artist, album: r.album, image: r.image, duration: r.duration }));
   if (!rows.length) return <Empty>No tracks to show yet.</Empty>;
   return (
-    <table className={compact ? "chartlist slim" : "chartlist"}>
+    <table className={cn(compact ? chartlistSlim : "", chartlist)}>
       <tbody>
         {rows.map((r, i) => (
           <tr key={r.id ?? `${r.artist}-${r.title}-${i}`} className={r._np ? "now" : ""}>
             {(rank !== undefined || numbered) && (
-              <td className="c-rank">{numbered ? r.position : rank! + i - (nowPlaying ? 1 : 0)}</td>
+              <td className={cRank}>{numbered ? r.position : rank! + i - (nowPlaying ? 1 : 0)}</td>
             )}
-            <td className="c-play"><PlayButton queue={queue} index={i} /></td>
-            <td className="c-art">
+            <td className={cPlay}><PlayButton queue={queue} index={i} /></td>
+            <td className={cArt}>
               <Link to={r.album ? albumUrl(r.artist, r.album) : trackUrl(r.artist, r.title)} tabIndex={-1}><Art image={r.image} /></Link>
             </td>
-            {!compact && <td className="c-love"><LoveButton track={r} loved={!!r.loved} /></td>}
-            <td className="c-name">
-              <Link className="strong" to={trackUrl(r.artist, r.title)}>{r.title}</Link>
-              {showArtist && <Link className="muted" to={artistUrl(r.artist)}>{r.artist}</Link>}
+            {!compact && <td className={cLove}><LoveButton track={r} loved={!!r.loved} /></td>}
+            <td className={cName}>
+              <Link className="font-semibold block truncate" to={trackUrl(r.artist, r.title)}>{r.title}</Link>
+              {showArtist && <Link className="text-muted text-sm block truncate" to={artistUrl(r.artist)}>{r.artist}</Link>}
             </td>
-            {showDuration && <td className="c-dur">{dur(r.duration || 0)}</td>}
-            {actions && <td className="c-actions">{actions(r)}</td>}
+            {showDuration && <td className={cDur}>{dur(r.duration || 0)}</td>}
+            {actions && <td className={cActions}>{actions(r)}</td>}
             {count && <CountCell value={r[count] || 0} max={max} unit={trackUnit(count, r[count])} plain={compact} />}
             {time && (
-              <td className="c-time">
+              <td className={cTime}>
                 {r._np
-                  ? <span className="np">Scrobbling now <i className="eq"><i /><i /><i /></i></span>
+                  ? <span className={np}>Scrobbling now <i className={eq}><i /><i /><i /></i></span>
                   : <span title={dateTime(r.playedAt!)}>{ago(r.playedAt!)}</span>}
               </td>
             )}
@@ -115,12 +117,12 @@ function trackUnit(count: "playcount" | "listeners", value: number | undefined) 
 }
 
 function CountCell({ value, max, unit, plain }: { value: number; max: number; unit: string; plain?: boolean }) {
-  if (plain) return <td className="c-count">{num(value)} {unit}</td>;
+  if (plain) return <td className={cCount}>{num(value)} {unit}</td>;
   return (
-    <td className="c-bar">
-      <span className="bar">
-        <span style={{ width: `${(value / max) * 100}%` }} />
-        <b>{num(value)}</b> <em>{unit}</em>
+    <td className={cBar}>
+      <span className={bar}>
+        <span className={barFill} style={{ width: `${(value / max) * 100}%` }} />
+        <b className={barNum}>{num(value)}</b> <em className={barNote}>{unit}</em>
       </span>
     </td>
   );
@@ -149,7 +151,7 @@ export function RankList({ items, kind, rank = 1, count = kind === "tag" ? "coun
   const max = Math.max(1, ...items.map(i => rankValue(i, count)));
   if (!items.length) return <Empty>Nothing to show for this period.</Empty>;
   return (
-    <table className={compact ? "chartlist slim" : "chartlist"}>
+    <table className={cn(compact ? chartlistSlim : "", chartlist)}>
       <tbody>
         {items.map((r, i) => {
           const name = "title" in r ? r.title : r.name;
@@ -158,15 +160,15 @@ export function RankList({ items, kind, rank = 1, count = kind === "tag" ? "coun
           const to = rankUrl(kind, name, artist);
           return (
             <tr key={"id" in r ? r.id : r.name}>
-              <td className="c-rank">{rank + i}</td>
+              <td className={cRank}>{rank + i}</td>
               {kind !== "tag" && (
-                <td className={kind === "artist" ? "c-art round" : "c-art"}>
+                <td className={cn(cArt, kind === "artist" ? "[&_.art]:rounded-none" : "")}>
                   <Link to={to} tabIndex={-1}><Art image={image} kind={kind} /></Link>
                 </td>
               )}
-              <td className="c-name">
-                <Link className="strong" to={to}>{name}</Link>
-                {kind === "album" && <Link className="muted" to={artistUrl(artist)}>{artist}</Link>}
+              <td className={cName}>
+                <Link className="font-semibold block truncate" to={to}>{name}</Link>
+                {kind === "album" && <Link className="text-muted text-sm block truncate" to={artistUrl(artist)}>{artist}</Link>}
               </td>
               <CountCell value={rankValue(r, count)} max={max} unit={RANK_UNIT[count]} plain={compact} />
             </tr>
@@ -193,7 +195,7 @@ function MediaCard({ kind, item, sub, below }: { kind: CardKind; item: CardItem;
     if (!caption && item.listeners != null) caption = <span>{listeners(item.listeners)}</span>;
     else if (!caption && kind === "album") caption = <span>{artist}</span>;
     return (
-      <Link className={`mcard ${kind}`} to={to}>
+      <Link className={cn(mcard, kind, kind === "artist" && "text-left")} to={to}>
         <Art image={item.image} kind={kind} />
         <strong>{name}</strong>
         {caption}
@@ -201,12 +203,12 @@ function MediaCard({ kind, item, sub, below }: { kind: CardKind; item: CardItem;
     );
   }
   return (
-    <Link className="rcard-img" to={to}>
+    <Link className="relative block text-white" to={to}>
       <Art image={item.image} kind={kind} />
-      <span className="rcard-cap">
-        <strong>{name}</strong>
-        {kind === "album" && <span>{artist}</span>}
-        {sub ? <span>{sub}</span> : kind === "artist" && item.listeners != null && <span>{listeners(item.listeners)}</span>}
+      <span className="absolute z-[1] left-3 right-3 bottom-2.5 flex flex-col [.cards:is([data-cols='5'],[data-cols='6'])_&]:left-[9px] [.cards:is([data-cols='5'],[data-cols='6'])_&]:right-[9px] [.cards:is([data-cols='5'],[data-cols='6'])_&]:bottom-2 side:[.cards_&]:left-[9px] side:[.cards_&]:right-[9px] side:[.cards_&]:bottom-2 max-sm:[.tiles_&]:left-2 max-sm:[.tiles_&]:right-2 max-sm:[.tiles_&]:bottom-2">
+        <strong className="text-lg [.tiles_&]:text-base leading-[1.2] truncate [.cards:is([data-cols='5'],[data-cols='6'])_&]:text-[15px] side:[.cards_&]:text-[15px] max-sm:[.tiles_&]:text-sm">{name}</strong>
+        {kind === "album" && <span className="text-[13px] opacity-[.88] truncate [.cards:is([data-cols='5'],[data-cols='6'])_&]:text-xs side:[.cards_&]:text-xs">{artist}</span>}
+        {sub ? <span className="text-[13px] opacity-[.88] truncate [.cards:is([data-cols='5'],[data-cols='6'])_&]:text-xs side:[.cards_&]:text-xs">{sub}</span> : kind === "artist" && item.listeners != null && <span className="text-[13px] opacity-[.88] truncate [.cards:is([data-cols='5'],[data-cols='6'])_&]:text-xs side:[.cards_&]:text-xs">{listeners(item.listeners)}</span>}
       </span>
     </Link>
   );
@@ -223,12 +225,12 @@ export function Grid<T extends CardItem>({ items, kind, sub, cols = 6, lead, flu
 }) {
   if (!items.length) return <Empty>Nothing to show yet.</Empty>;
   if (flush) {
-    return <div className="tiles">{items.map(it => <MediaCard key={it.id ?? cardName(it)} kind={kind} item={it} sub={sub?.(it)} />)}</div>;
+    return <div className="tiles grid grid-cols-4 gap-0 max-md:grid-cols-2 max-md:[&>:last-child:nth-child(2n+1)]:col-span-full max-md:[&>:last-child:nth-child(2n+1)_.art]:aspect-[2/1]">{items.map(it => <MediaCard key={it.id ?? cardName(it)} kind={kind} item={it} sub={sub?.(it)} />)}</div>;
   }
   const style: CSSProperties & { "--cols": number } = { "--cols": cols };
-  let className = "grid";
-  if (lead) className = "grid lead";
-  else if (below) className = "grid below";
+  let className = grid;
+  if (lead) className = cn(grid, "[&>:first-child]:col-span-2 [&>:first-child]:row-span-2 [&>:first-child_>_span>strong]:text-2xl max-md:[&>:first-child]:row-span-1 max-sm:[&>:first-child]:col-span-1");
+  else if (below) className = cn(grid, gridBelow);
   return (
     <div className={className} data-cols={cols} style={style}>
       {items.map(it => <MediaCard key={it.id ?? cardName(it)} kind={kind} item={it} sub={sub?.(it)} below={below} />)}
@@ -257,20 +259,20 @@ export function RecCard({ kind, item, because = [] }: {
   const { title, Badge } = REC_KIND[kind];
   const similar = because.map((b, i) => <span key={b}>{i > 0 && " & "}<Link to={artistUrl(b)}>{b}</Link></span>);
   return (
-    <article className="rec">
-      <div className="rec-img">
-        <Link className="rcard-img" to={to}>
+    <article className="break-inside-avoid mb-5 max-sm:mb-2.5">
+      <div className="relative">
+        <Link className="relative block text-white" to={to}>
           <Art image={item.image} kind={kind === "artist" ? "artist" : "album"} />
-          <span className="rcard-cap">
-            <strong>{name}{kind === "track" && duration > 0 && <i> ({dur(duration)})</i>}</strong>
-            {kind !== "artist" && <span>{artist}</span>}
-            {item.listeners != null && <span>{listeners(item.listeners)}</span>}
+          <span className="absolute z-[1] left-3 right-11 bottom-2.5 flex flex-col max-sm:left-2 max-sm:right-[30px] max-sm:bottom-2">
+            <strong className="text-lg leading-[1.2] whitespace-normal line-clamp-2 max-sm:text-sm">{name}{kind === "track" && duration > 0 && <i className="not-italic font-normal opacity-[.85]"> ({dur(duration)})</i>}</strong>
+            {kind !== "artist" && <span className="text-[13px] opacity-[.88] truncate max-sm:text-xs">{artist}</span>}
+            {item.listeners != null && <span className="text-[13px] opacity-[.88] truncate max-sm:text-xs max-sm:hidden">{listeners(item.listeners)}</span>}
           </span>
         </Link>
-        {kind === "track" && <PlayButton queue={[{ title: name, artist, album, image: item.image, duration }]} />}
-        <span className={`rec-badge ${kind}`} title={title}><Badge /></span>
+        {kind === "track" && <span className="absolute z-[2] top-2.5 left-2.5 [&_.astryx-button.play-btn]:w-9 [&_.astryx-button.play-btn]:h-9 [&_.astryx-button.play-btn]:bg-card [&_.astryx-button.play-btn]:text-ink [&_.astryx-button.play-btn]:border-edge"><PlayButton queue={[{ title: name, artist, album, image: item.image, duration }]} /></span>}
+        <span className={"absolute z-[2] right-2.5 bottom-[-14px] w-[30px] h-[30px] rounded-full grid place-items-center text-white border-2 border-white max-sm:w-6 max-sm:h-6 max-sm:right-1.5 max-sm:bottom-[-12px] [&>svg]:w-[15px] [&>svg]:h-[15px] max-sm:[&>svg]:w-4 max-sm:[&>svg]:h-4 " + (kind === "track" ? "bg-[#2f7fd6]" : kind === "artist" ? "bg-[#f08a1c]" : "bg-[#2e9d5b]")} title={title}><Badge /></span>
       </div>
-      <p className="rec-why">
+      <p className="m-0 px-3 py-3 bg-panel border border-line border-t-0 text-[13.5px] leading-[1.4] text-ink-2 max-sm:px-2 max-sm:py-2 max-sm:text-[12.5px]">
         {kind !== "artist" && <>By <Link to={artistUrl(artist)}>{artist}</Link>{similar.length > 0 && ", similar to "}</>}
         {kind === "artist" && similar.length > 0 && "Similar to "}
         {similar}
@@ -282,16 +284,16 @@ export function RecCard({ kind, item, because = [] }: {
 export function UserList<U extends PublicUser & { playcount?: number }>({ items, extra }: { items: U[]; extra?: (u: U) => ReactNode }) {
   if (!items.length) return <Empty>No one here yet.</Empty>;
   return (
-    <ul className="userlist">
+    <ul className="userlist list-none m-0 p-0 [.listeners2_&]:grid [.listeners2_&]:grid-cols-2 [.listeners2_&]:gap-x-7 max-md:[.listeners2_&]:grid-cols-1">
       {items.map(u => (
-        <li key={u.username}>
-          <Avatar user={u} size={56} />
-          <div className="grow">
-            <Link className="strong" to={userUrl(u.username)}>{u.username}</Link> <UserLabels name={u.username} />
-            {(u.realname || u.country) && <span className="muted small">{[u.realname, u.country].filter(Boolean).join(" · ")}</span>}
+        <li key={u.username} className="flex gap-3 items-center py-2.5 border-b border-line [.listeners2_&]:border-b-0 [.listeners2_&]:py-1.5">
+          <Avatar user={u} size={56} className="side:size-10! [.listeners2_&]:size-11!" />
+          <div className="flex-1 min-w-0 *:block *:overflow-hidden *:text-ellipsis">
+            <Link className="font-semibold" to={userUrl(u.username)}>{u.username}</Link> <UserLabels name={u.username} />
+            {(u.realname || u.country) && <span className="text-muted text-[13px]">{[u.realname, u.country].filter(Boolean).join(" · ")}</span>}
             {extra?.(u)}
           </div>
-          {u.playcount !== undefined && <span className="muted small nowrap">{num(u.playcount)} scrobbles</span>}
+          {u.playcount !== undefined && <span className="text-muted text-[13px] whitespace-nowrap">{num(u.playcount)} scrobbles</span>}
         </li>
       ))}
     </ul>

@@ -2,13 +2,14 @@ import { defineTheme } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral";
 
 const FONT = { family: "Source Sans 3 Variable", fallbacks: '"Helvetica Neue", Arial, sans-serif' };
-const NONE = "0 0 0 transparent";
+const DISPLAY = { family: "Radio Canada Variable", fallbacks: '"Helvetica Neue", Arial, sans-serif' };
+const NONE ="0 0 0 transparent";
 const OFF = "0ms";
 
 export const sonosphereTheme = defineTheme({
   name: "sonosphere",
   extends: neutralTheme,
-  typography: { scale: { base: 16, ratio: 1.2 }, body: FONT, heading: FONT },
+  typography: { scale: { base: 16, ratio: 1.2 }, body: FONT, heading: DISPLAY },
   radius: { base: 0, multiplier: 0 },
   tokens: {
     "--color-accent": ["#2438d6", "#5468ff"],
@@ -32,6 +33,7 @@ export const sonosphereTheme = defineTheme({
     "--color-text-error": ["#1a299f", "#ff8f7d"],
     "--color-border-error": ["#1a299f", "#ff8f7d"],
     "--color-success": ["#1b7a3d", "#6fd492"],
+    "--color-skeleton": ["#f1f1f1", "#232a5e"],
     "--color-text-success": ["#1b7a3d", "#6fd492"],
     "--radius-inner": "0px",
     "--radius-element": "0px",
@@ -52,18 +54,41 @@ export const sonosphereTheme = defineTheme({
     "--duration-slow-min": OFF,
     "--duration-slow-max": OFF,
   },
+  /*
+   * Component looks that hold everywhere. Anything that depends on where a component sits or on hover/focus
+   * (.hero, .banner, :not(.bare), :has(...)) can't be said here and stays in styles.css as data-attribute CSS.
+   * The --panel, --card... variables are the app palette from styles.css.
+   */
   components: {
     button: {
-      base: { fontWeight: "600", borderRadius: "0px" },
+      base: { fontWeight: "600", borderRadius: "0px", whiteSpace: "nowrap", cursor: "pointer" },
       "variant:primary": { backgroundColor: "var(--color-accent)", color: "var(--color-on-accent)" },
       "variant:secondary": {
-        backgroundColor: "transparent",
-        color: "var(--color-text-primary)",
+        backgroundColor: "var(--panel)",
+        color: "var(--ink)",
         borderWidth: "2px",
         borderStyle: "solid",
-        borderColor: "var(--color-text-primary)",
+        borderColor: "var(--panel)",
       },
       "variant:destructive": { backgroundColor: "var(--color-text-primary)", color: "var(--color-background-body)" },
+    },
+    "text-input": {
+      base: { borderRadius: "0px", border: "1px solid var(--edge)", backgroundColor: "var(--card)", boxShadow: "inset 0 1px 3px var(--inset)", minHeight: "40px" },
+    },
+    "text-area": {
+      base: { borderRadius: "0px", border: "1px solid var(--edge)", backgroundColor: "var(--card)", boxShadow: "inset 0 1px 3px var(--inset)" },
+    },
+    selector: {
+      base: { borderRadius: "0px", border: "1px solid var(--edge)", backgroundColor: "var(--card)", boxShadow: "inset 0 1px 3px var(--inset)", fontWeight: "500" },
+    },
+    "field-label": {
+      base: { fontFamily: "inherit" },
+    },
+    "dropdown-menu": {
+      base: { backgroundColor: "var(--card)", border: "1px solid var(--line)", borderRadius: "0px", boxShadow: "0 6px 18px light-dark(rgba(0, 0, 0, .14), rgba(0, 0, 0, .5))" },
+    },
+    "dropdown-menu-item": {
+      base: { borderRadius: "0px", fontWeight: "500" },
     },
   },
 });

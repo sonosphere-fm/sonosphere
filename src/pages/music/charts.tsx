@@ -1,4 +1,5 @@
 import { Ico } from "../../icons";
+import { colsEven } from "../../ui/tw";
 import { Button } from "../../kit";
 import { Link, useSearchParams } from "react-router-dom";
 import { albumUrl, artistUrl, num, prefetch, qs, tagUrl, trackUrl, useApi, useParam, useTitle } from "../../lib";
@@ -37,24 +38,24 @@ function ChartCol(props: ChartColProps) {
   const [top, ...rest] = items;
   const lead = kind !== "tag" && top;
   return (
-    <section className="chartcol" id={`top-${kind}s`}>
-      <h2 className="chart-title"><Link to={more}>{title}</Link></h2>
+    <section className="min-w-0 mb-10 max-sm:mb-7 scroll-mt-[70px]" id={`top-${kind}s`}>
+      <h2 className="mb-3.5 text-[30px] font-bold tracking-[-.015em] max-sm:text-2xl [&_a:hover]:text-ink [&_a:hover]:underline"><Link to={more}>{title}</Link></h2>
       {!items.length ? <Empty>Nothing charted for this period yet.</Empty> : (
         <>
           {lead && (
-            <Link className="chart-top" to={itemUrl(kind, lead)}>
+            <Link className="relative block text-white [&>.art]:aspect-[16/11] hover:text-white hover:[&_strong]:underline max-sm:[&>.art]:aspect-video" to={itemUrl(kind, lead)}>
               {art(lead)}
-              <span className="chart-top-strip">
+              <span className="absolute inset-x-0 bottom-0 flex items-center gap-3 p-2.5 px-3 bg-[rgba(0,0,0,.72)] [&_b]:w-[22px] [&_b]:flex-none [&_b]:text-center [&_b]:text-[15px] [&_b]:font-normal [&_b]:tabular-nums [&_strong]:block [&_strong]:truncate [&_strong]:leading-[1.3] [&_.item-text>span]:block [&_.item-text>span]:truncate [&_.item-text>span]:text-sm [&_.item-text>span]:leading-[1.3] [&_.item-text>span]:text-[#d6d6d6]">
                 <b>1</b>
-                <span className={kind === "artist" ? "thumb round" : "thumb"}>{art(lead)}</span>
-                <span className="grow"><strong>{itemName(lead)}</strong>{kind !== "artist" && <span>{itemArtist(lead)}</span>}</span>
+                <span className={kind === "artist" ? "block flex-none w-11 [&_.art]:rounded-none round" : "block flex-none w-11 [&_.art]:rounded-none"}>{art(lead)}</span>
+                <span className="item-text flex-1 min-w-0"><strong>{itemName(lead)}</strong>{kind !== "artist" && <span>{itemArtist(lead)}</span>}</span>
               </span>
             </Link>
           )}
           {props.kind === "track"
             ? <TrackList compact items={lead ? props.items.slice(1) : props.items} rank={lead ? 2 : 1} count="listeners" />
             : <RankList compact kind={props.kind} items={lead ? rest : items} rank={lead ? 2 : 1} count={kind === "tag" ? "count" : "listeners"} />}
-          <Link className="more" to={more}>More {title.toLowerCase()} <Ico.Right /></Link>
+          <Link className="more whitespace-nowrap text-link text-sm font-semibold hover:underline [&_.ico]:align-[-0.15em]" to={more}>More {title.toLowerCase()} <Ico.Right /></Link>
         </>
       )}
     </section>
@@ -76,27 +77,27 @@ function ChartsOverview() {
   const p = period === "overall" ? "" : `&period=${period}`;
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ block: "start" });
   return (
-    <div className="wrap page">
-      <h1 className="page-title">Charts</h1>
-      <nav className="tabs">
+    <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Charts</h1>
+      <nav className="tabs flex flex-wrap gap-0.5 mb-6 *:h-auto *:rounded-none *:m-0 *:border-0 *:bg-transparent *:px-2.5 *:py-1.5 *:text-base *:font-medium *:text-ink-2 *:hover:bg-tint *:hover:text-ink *:hover:no-underline *:current:bg-sun *:current:text-on-sun *:current:font-bold max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:gap-x-[22px] max-md:gap-y-0 max-md:[&::-webkit-scrollbar]:hidden max-md:*:flex-none max-md:*:whitespace-nowrap">
         {CHART_PERIODS.map(([k, l]) => <Button key={k} kind={k === period ? "active" : ""} onClick={() => setPeriod(k)}>{l}</Button>)}
       </nav>
-      <p className="jump">
+      <p className="flex items-baseline gap-x-[18px] gap-y-1 flex-wrap my-[-10px] mb-[26px] text-sm [&>span]:text-muted [&_.astryx-button]:p-0 [&_.astryx-button]:h-auto [&_.astryx-button]:text-sm [&_.astryx-button]:font-medium [&_.astryx-button]:text-link [&_.astryx-button:hover]:underline max-sm:mb-[18px]">
         <span>Jump to:</span>
-        {JUMPS.map(([id, l]) => <Button key={id} kind="link" type="button" onClick={() => jump(id)}>{l}</Button>)}
+        {JUMPS.map(([id, l]) => <Button key={id} className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => jump(id)}>{l}</Button>)}
       </p>
-      <div className="cols">
-        <div className="main">
-          <div className="cols even">
+      <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+        <div className="main min-w-0">
+          <div className={colsEven}>
             <ChartCol title="Top Tracks" kind="track" items={tracks.data?.items ?? []} more={`/charts?kind=tracks${p}`} />
             <ChartCol title="Top Artists" kind="artist" items={artists.data?.items ?? []} more={`/charts?kind=artists${p}`} />
           </div>
-          <div className="cols even">
+          <div className={colsEven}>
             <ChartCol title="Top Albums" kind="album" items={albums.data?.items ?? []} more={`/charts?kind=albums${p}`} />
-            <ChartCol title="Top Tags" kind="tag" items={tags.data?.items ?? []} more="/charts?kind=tags" />
+            <ChartCol kind="tag" title="Top Tags" items={tags.data?.items ?? []} more="/charts?kind=tags" />
           </div>
         </div>
-        <aside className="side">
+        <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
           <Section title="Coming up" more="/events"><EventList items={home.data?.events ?? []} /></Section>
           <Section title="Popular tags" more="/charts?kind=tags"><TagChips tags={home.data?.tags ?? []} /></Section>
         </aside>
@@ -107,14 +108,14 @@ function ChartsOverview() {
 
 function TagTable({ tags, from }: { tags: ChartTag[]; from: number }) {
   return (
-    <table className="chartlist">
+    <table className="w-full border-collapse [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-middle max-sm:[&_td]:px-1 [&_tr:nth-child(even)_td]:bg-zebra [&_tr:hover_td]:bg-panel [&_tr.now_td]:bg-accent-tint">
       <tbody>
         {tags.map((t, i) => (
           <tr key={t.name}>
-            <td className="c-rank">{from + i}</td>
-            <td className="c-name"><Link className="strong" to={tagUrl(t.name)}>{t.name}</Link></td>
-            <td className="c-bar">
-              <span className="bar">
+            <td className="w-[34px] text-right text-sm font-semibold text-muted tabular-nums max-sm:w-[22px]">{from + i}</td>
+            <td className="w-full max-w-0 [&_a]:block [&_a]:truncate [&_span]:block [&_span]:truncate"><Link className="font-semibold" to={tagUrl(t.name)}>{t.name}</Link></td>
+            <td className="w-[1%] max-sm:text-right">
+              <span className="relative block h-7 leading-7 pl-2 text-sm whitespace-nowrap text-ink">
                 <span style={{ width: `${(t.count / tags[0].count) * 100}%` }} />
                 <b>{num(t.count)}</b> <em>taggings</em>
               </span>
@@ -134,10 +135,10 @@ function ChartList() {
   const from = (page - 1) * 50 + 1;
   const q = useApi<ChartsData>(`/charts${qs({ kind, period: kind === "tags" ? undefined : period, page, limit: 50 })}`);
   return (
-    <div className="wrap page">
-      <h1 className="page-title">Charts</h1>
-      <div className="toolbar">
-        <nav className="tabs">
+    <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Charts</h1>
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs flex flex-wrap gap-0.5 mb-6 *:h-auto *:rounded-none *:m-0 *:border-0 *:bg-transparent *:px-2.5 *:py-1.5 *:text-base *:font-medium *:text-ink-2 *:hover:bg-tint *:hover:text-ink *:hover:no-underline *:current:bg-sun *:current:text-on-sun *:current:font-bold max-md:flex-nowrap max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:gap-x-[22px] max-md:gap-y-0 max-md:[&::-webkit-scrollbar]:hidden max-md:*:flex-none max-md:*:whitespace-nowrap">
           {["", ...LIST_KINDS].map(k => (
             <Button key={k} kind={k === kind ? "active" : ""} onClick={() => setKind(k)}>{k ? `Top ${k}` : "Overview"}</Button>
           ))}

@@ -18,9 +18,9 @@ export function Journal({ name, mine }: { name: string; mine: boolean }) {
     ? "You haven't written anything yet. A journal is for longer thoughts: gig write-ups, lists, what you've had on repeat."
     : `${name} hasn't written any journal posts yet.`;
   return (
-    <div className="narrow-col">
+    <div className="max-w-[640px]">
       {mine && (
-        <div className="toolbar">
+        <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
           <h2>Your journal</h2>
           <Button kind="btn" href={`${base}/new`}><Ico.Plus /> Write a post</Button>
         </div>
@@ -28,12 +28,12 @@ export function Journal({ name, mine }: { name: string; mine: boolean }) {
       <Async q={q}>
         {d => d.items.length ? (
           <>
-            <ul className="journal-list">
+            <ul className="list-none m-0 p-0 [&_li]:py-[18px] [&_li]:border-b [&_li]:border-line [&_li:first-child]:pt-0 [&_h3]:m-0 [&_h3]:mb-0.5 [&_h3]:text-[22px] [&_p]:m-0 [&_p]:mb-2">
               {d.items.map(j => (
                 <li key={j.id}>
                   <h3><Link to={`${base}/${j.id}`}>{j.title}</Link></h3>
-                  <p className="muted small">{date(j.createdAt)} · {plural(j.comments, "comment")}</p>
-                  <p className="prose">{plainMd(j.excerpt)}</p>
+                  <p className="text-muted text-[13px]">{date(j.createdAt)} · {plural(j.comments, "comment")}</p>
+                  <p className="prose max-w-[68ch] leading-[1.6] whitespace-pre-line [&_a]:text-link [&_a:hover]:underline">{plainMd(j.excerpt)}</p>
                   <Link to={`${base}/${j.id}`}>Read post <Ico.Right /></Link>
                 </li>
               ))}
@@ -66,7 +66,7 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
     deleteControls = (
       <>
         <Button kind="btn danger small" type="button" loading={act.busy} onClick={remove}>Delete this post</Button>
-        <Button kind="link small" type="button" onClick={() => setConfirm(false)}>Keep it</Button>
+        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => setConfirm(false)}>Keep it</Button>
       </>
     );
   } else {
@@ -75,16 +75,16 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
 
   return (
     <Async q={q}>{j => (
-      <article className="narrow-col journal-post">
+      <article className="max-w-[640px] [&_.prose]:text-[17px] [&_.prose]:leading-[1.6] [&_.prose]:my-[18px] [&_.prose]:mb-[22px] [&_.row]:mb-7">
         <p><Link to={base}><Ico.Left /> {name}'s journal</Link></p>
-        <h1 className="page-title">{j.title}</h1>
-        <p className="muted small journal-by">
+        <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">{j.title}</h1>
+        <p className="text-muted text-[13px] flex items-center gap-1.5 flex-wrap">
           <Avatar user={j.author} size={28} /> <Link to={userUrl(j.author.username)}>{j.author.username}</Link> <UserLabels name={j.author.username} /> ·{" "}
           <span title={dateTime(j.createdAt)}>{date(j.createdAt)}</span>
           {j.updatedAt > j.createdAt + 60 && <> · edited {ago(j.updatedAt)}</>}
         </p>
         <Markdown text={j.body} />
-        <div className="row">
+        <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
           {mine ? (
             <>
               <Button kind="btn ghost small" href={`${base}/${id}/edit`}>Edit</Button>
@@ -125,15 +125,15 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
   };
 
   return (
-    <form className="form narrow-col journal-form" onSubmit={save}>
+    <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full max-w-[640px] journal-form" onSubmit={save}>
       <h2>{id ? "Edit post" : "New journal post"}</h2>
       <label>Title<Input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} maxLength={120} required autoFocus={!id} /></label>
-      <div className="field-block">
-        <span className="field-label">Post</span>
+      <div className="flex flex-col gap-1 w-full">
+        <span className="font-semibold text-sm">Post</span>
         <MdEditor label="Post" rows={16} value={f.body} onChange={body => setF(f => ({ ...f!, body }))} maxLength={20000} />
       </div>
       {act.note}
-      <div className="row">
+      <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
         <Button kind="btn" loading={act.busy}>{id ? "Save changes" : "Publish"}</Button>
         <Button kind="btn ghost" href={id ? `${base}/${id}` : base}>Cancel</Button>
       </div>

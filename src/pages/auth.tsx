@@ -77,9 +77,9 @@ export function useTurnstile(action: string) {
   };
 
   const view = key ? (
-    <div className="turnstile">
+    <div className="w-full min-h-[65px]">
       <div ref={box} />
-      {failed && <p className="form-error" role="alert">The robot check could not load. Refresh the page and try again.</p>}
+      {failed && <p className="form-error font-semibold m-0 text-bad" role="alert">The robot check could not load. Refresh the page and try again.</p>}
     </div>
   ) : null;
 
@@ -88,7 +88,7 @@ export function useTurnstile(action: string) {
 
 function Agreement() {
   return (
-    <p className="muted small">
+    <p className="text-muted text-[13px]">
       By creating an account you agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and{" "}
       <Link to="/privacy" target="_blank">Privacy Policy</Link>, and confirm you are at least 13.
     </p>
@@ -127,10 +127,10 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   };
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">{login ? "Log in" : "Join Sonosphere"}</h1>
-      <form className="form card" onSubmit={submit}>
-        {oauthError && <p className="form-error" role="alert">{oauthError}</p>}
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">{login ? "Log in" : "Join Sonosphere"}</h1>
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={submit}>
+        {oauthError && <p className="form-error font-semibold m-0 text-bad" role="alert">{oauthError}</p>}
         <OAuthButtons providers={config?.oauth ?? []} next={next} />
         <label>
           {login ? "Username or email" : "Username"}
@@ -189,20 +189,20 @@ export function OAuthJoinPage() {
   let body = null;
   if (q.error) {
     body = (
-      <div className="card form">
-        <p className="form-error" role="alert">{q.error.message}</p>
+      <div className="p-[18px] mb-4 bg-card flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
+        <p className="form-error font-semibold m-0 text-bad" role="alert">{q.error.message}</p>
         <p><Link to="/join">Back to the join page</Link></p>
       </div>
     );
   } else if (q.data) {
     body = (
-      <form className="form card" onSubmit={submit}>
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={submit}>
         <p>You're signing up with {q.data.provider} as <strong>{q.data.email}</strong>. Pick a username to finish.</p>
         <label>
           Username
           <Input value={username} onChange={e => setName(e.target.value)} autoComplete="username" required autoFocus maxLength={15} />
         </label>
-        <p className="muted small">
+        <p className="text-muted text-[13px]">
           2 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in Settings, which some scrobbler apps need.
         </p>
         <Agreement />
@@ -213,8 +213,8 @@ export function OAuthJoinPage() {
   }
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Join Sonosphere</h1>
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Join Sonosphere</h1>
       {body}
     </div>
   );
@@ -242,15 +242,15 @@ export function ForgotPage() {
   };
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Reset your password</h1>
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Reset your password</h1>
       {sent ? (
-        <div className="card form">
+        <div className="p-[18px] mb-4 bg-card flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
           <p>If an account uses <strong>{sent}</strong>, a link to choose a new password is on its way. It works for one hour.</p>
-          <p className="muted small">Nothing after a few minutes? Check your spam folder, or make sure you used the address you signed up with.</p>
+          <p className="text-muted text-[13px]">Nothing after a few minutes? Check your spam folder, or make sure you used the address you signed up with.</p>
         </div>
       ) : (
-        <form className="form card" onSubmit={submit}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={submit}>
           <p>Enter the email address on your account and we will send you a link to choose a new password.</p>
           <label>Email<Input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required autoFocus /></label>
           {robot.view}
@@ -282,20 +282,20 @@ export function ResetPage() {
   };
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Choose a new password</h1>
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Choose a new password</h1>
       {token ? (
-        <form className="form card" onSubmit={submit}>
+        <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={submit}>
           <label>
             New password
             <Input type="password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="new-password" required minLength={8} autoFocus />
           </label>
-          <p className="muted small">At least 8 characters. You will be signed out everywhere else.</p>
+          <p className="text-muted text-[13px]">At least 8 characters. You will be signed out everywhere else.</p>
           {act.note}
           <Button kind="btn" loading={act.busy}>Save password</Button>
         </form>
       ) : (
-        <div className="card form">
+        <div className="p-[18px] mb-4 bg-card flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
           <p>This link is missing its code. Open the link from the email again, or <Link to="/forgot">ask for a new one</Link>.</p>
         </div>
       )}
@@ -338,7 +338,7 @@ export function VerifyPage() {
   } else {
     body = (
       <>
-        <p className="form-error" role="alert">{state}</p>
+        <p className="form-error font-semibold m-0 text-bad" role="alert">{state}</p>
         <p>
           {me
             ? <>You can send a new link from <Link to="/settings/account">your account settings</Link>.</>
@@ -349,9 +349,9 @@ export function VerifyPage() {
   }
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Confirm your email</h1>
-      <div className="card form">{body}</div>
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Confirm your email</h1>
+      <div className="p-[18px] mb-4 bg-card flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">{body}</div>
     </div>
   );
 }

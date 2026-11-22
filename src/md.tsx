@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
+import { cn, prose as proseTw } from "./ui/tw";
 import { Code, LinkSimple, ListBullets, ListNumbers, Quotes, TextB, TextHTwo, TextItalic, TextStrikethrough, type Icon as PhIcon } from "@phosphor-icons/react";
 
 type Inline =
@@ -69,7 +70,7 @@ const breaks = (rows: string[], key: string) => rows.flatMap((r, i) => {
   return i ? [<br key={`${key}b${i}`} />, ...row] : row;
 });
 
-export function Markdown({ text, className = "prose" }: { text: string; className?: string }) {
+export function Markdown({ text, className = proseTw }: { text: string; className?: string }) {
   const lines = String(text || "").replace(/\r\n?/g, "\n").split("\n").map(line);
   const out: ReactNode[] = [];
   let i = 0;
@@ -103,7 +104,7 @@ export function Markdown({ text, className = "prose" }: { text: string; classNam
       out.push(<L key={k}>{run.map((r, j) => <li key={j}>{nodes(inline(r), `${k}-${j}-`)}</li>)}</L>);
     }
   }
-  return <div className={`${className} md`}>{out}</div>;
+  return <div className={cn(className, "whitespace-normal [&>:first-child]:mt-0 [&>:last-child]:mb-0 [&_p]:mb-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_blockquote]:mb-4 [&_ul]:pl-6 [&_ol]:pl-6 [&_ul]:list-disc [&_ol]:list-decimal [&_li]:my-[.15em] [&_h2]:text-[1.35em] [&_h2]:mt-[1.3em] [&_h2]:mb-[.45em] [&_h3]:text-[1.15em] [&_h3]:mt-[1.2em] [&_h3]:mb-[.4em] [&_h4]:text-[1em] [&_h4]:mt-[1.1em] [&_h4]:mb-[.35em] [&_blockquote]:py-[2px] [&_blockquote]:pl-[14px] [&_blockquote]:border-l-[3px] [&_blockquote]:border-l-[light-dark(#d6d6d6,#3a4385)] [&_blockquote]:text-ink-2 [&_code]:font-mono [&_code]:text-[.88em] [&_code]:bg-panel [&_code]:px-[5px] [&_code]:py-px [&_code]:rounded-none [&_a]:text-link [&_a]:wrap-anywhere [&_a:hover]:underline")}>{out}</div>;
 }
 
 /** The text with the markup taken out, for one-line previews and excerpts. */
@@ -426,13 +427,17 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
 
   const active = new Set(on.split("|"));
   return (
-    <div className="md-editor">
-      <div className="md-tools" role="toolbar" aria-label="Formatting">
+    <div className="w-full border border-edge rounded-none bg-card focus-within:border-accent focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_22%,transparent)]">
+      <div className="flex flex-wrap gap-0.5 p-[5px_6px] border-b border-line bg-panel rounded-tr-[4px]" role="toolbar" aria-label="Formatting">
         {TOOLS.map(({ label, keys, Icon, edit }, i) => (
           <button
             key={label}
             type="button"
-            className={`md-tool${i === 5 ? " gap" : ""}${active.has(label) ? " on" : ""}`}
+            className={cn(
+              "grid place-items-center w-8 h-[30px] p-0 border-0 rounded-none bg-transparent text-ink-2 cursor-pointer hover:bg-line hover:text-ink focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px] [&_svg]:w-4 [&_svg]:h-4",
+              i === 5 && "ml-[9px] relative before:content-[''] before:absolute before:left-[-6px] before:top-[6px] before:bottom-[6px] before:w-px before:bg-[light-dark(#d6d6d6,#3a4385)]",
+              active.has(label) && "bg-ink text-bg hover:bg-ink hover:text-bg"
+            )}
             aria-pressed={active.has(label)}
             title={keys ? `${label} (${MOD_LABEL}${keys.toUpperCase()})` : label}
             aria-label={label}
@@ -445,7 +450,7 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
       </div>
       <div
         ref={ref}
-        className="md-input md"
+        className="p-[10px_12px] text-base font-normal leading-[1.6] whitespace-pre-wrap wrap-anywhere outline-0 max-h-[70vh] overflow-y-auto shadow-none rounded-br-[4px] rounded-bl-[4px] [&_.md-mark]:text-[light-dark(#a3a3a3,#5e648f)] [&_.md-mark]:font-normal [&_.md-mark]:not-italic [&_.md-mark]:no-underline [&_.md-h]:font-bold [&_.md-link]:text-link"
         role="textbox"
         aria-multiline="true"
         aria-label={label}
@@ -461,7 +466,7 @@ export function MdEditor({ value, onChange, rows = 10, maxLength, label, placeho
         onDrop={onDrop}
       />
       {maxLength && value.length > maxLength * 0.9 ? (
-        <div className="md-count">{value.length.toLocaleString()} / {maxLength.toLocaleString()}</div>
+        <div className="px-2.5 py-1 text-xs text-muted text-right border-t border-line">{value.length.toLocaleString()} / {maxLength.toLocaleString()}</div>
       ) : null}
     </div>
   );

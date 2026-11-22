@@ -56,8 +56,8 @@ function albumSub(x: ArtistData["topAlbums"][number]) {
 function Overview({ a, base }: { a: ArtistData; base: string }) {
   const { me } = useAuth();
   return (
-    <div className="cols">
-      <div className="main">
+    <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+      <div className="main min-w-0">
         <YourScrobbles count={a.userPlaycount} to={me ? `${userUrl(me.username)}/library/music/${enc(a.name)}` : undefined} />
         <About wiki={a.wiki} to={`${base}/+wiki`} facts={[["Albums", num(a.albumCount)], ["Tracks", num(a.trackCount)], ["Wall posts", num(a.shoutCount)]]}>
           <Tagger type="artist" id={a.id} tags={a.tags} myTags={a.myTags} />
@@ -74,7 +74,7 @@ function Overview({ a, base }: { a: ArtistData; base: string }) {
           <Grid below kind="artist" cols={6} items={a.similar} />
         </Section>
       </div>
-      <aside className="side">
+      <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
         {a.similar.length > 0 && (
           <Section title="Similar to">
             <Grid below kind="artist" cols={3} items={a.similar.slice(0, 3)} sub={x => <span>{short(x.listeners)} listeners</span>} />
@@ -84,12 +84,12 @@ function Overview({ a, base }: { a: ArtistData; base: string }) {
         <Section title="Upcoming events">
           {a.events.length
             ? <EventList items={a.events} />
-            : <p className="muted">We don't have any upcoming events for this artist right now.</p>}
-          <p className="side-links"><Link to="/events/add"><Ico.Plus /> Add event</Link><Link to="/events">View all events</Link></p>
+            : <p className="text-muted">We don't have any upcoming events for this artist right now.</p>}
+          <p className="side-links flex gap-3.5 mt-3 mb-0 text-sm [&_a+a]:pl-3.5 [&_a+a]:border-l [&_a+a]:border-line"><Link to="/events/add"><Ico.Plus /> Add event</Link><Link to="/events">View all events</Link></p>
         </Section>
         {(a.mbid || a.spotifyId) && (
           <Section title="Elsewhere">
-            <p className="side-links">
+            <p className="side-links flex gap-3.5 mt-3 mb-0 text-sm [&_a+a]:pl-3.5 [&_a+a]:border-l [&_a+a]:border-line">
               {a.mbid && <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a>}
               {a.spotifyId && <a href={`https://open.spotify.com/artist/${a.spotifyId}`} target="_blank" rel="noreferrer">Spotify</a>}
             </p>
@@ -134,7 +134,7 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
             stats={<><HeroStat label="Listeners" value={a.listeners} /><HeroStat label="Scrobbles" value={a.playcount} /></>}
             cards={tab === "overview" && (a.latestAlbum || top) ? <HeroCards a={a} top={top} /> : null}
           />
-          <div className="wrap page mpage">
+          <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 mpage [&_.cols]:grid-cols-[minmax(0,1fr)_300px] [&_.cols]:gap-11 max-lg:[&_.cols]:grid-cols-[minmax(0,1fr)] max-lg:[&_.cols]:gap-0 [&_.cols:has(>.side:empty)]:grid-cols-[minmax(0,1fr)] [&_.side]:bg-transparent [&_.side]:p-0 [&_.side]:border-t-0 [&_.side:empty]:hidden [&_.section-head]:items-center [&_.section-head]:mb-4 [&_.section-head_h2]:text-2xl [&_.section-head_h2]:font-bold [&_.section-head_h2]:shrink-0 [&_.section-head_h2_a]:text-inherit [&_.section-head_.head-right]:ml-auto [&_.side_.section-head_h2]:text-xl [&_.main>.section]:mb-0 [&_.main>.section]:pt-0 [&_.main>.section]:pb-[34px] [&_.main>.section:first-child]:pt-0 [&_.main>.yours+.section]:pt-0 [&_.main>.section:last-child]:pb-0 [&_.state.empty]:bg-transparent [&_.state.empty]:p-0 [&_.state.empty]:pt-1 [&_.state.empty]:text-left [&_.state.empty]:text-[15px] max-lg:[&_.side]:pt-[26px] max-md:[&_.section-head_h2]:text-xl max-lg:[&_.side>.section:has(.cards.below_.mcard.artist)]:hidden [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
             <Pane>
               {tab === "overview" && <Overview a={a} base={base} />}
               {tab === "tracks" && <ArtistTracks name={a.name} />}
@@ -161,7 +161,7 @@ function ArtistTopTracks({ name, base, initial }: { name: string; base: string; 
   const aside = (
     <>
       <PlayButton queue={items} />
-      <span className="head-right"><Select label="Time period" value={period} onChange={setPeriod} options={PERIODS} /></span>
+      <span className="head-right ml-auto"><Select label="Time period" value={period} onChange={setPeriod} options={PERIODS} /></span>
     </>
   );
 
@@ -184,7 +184,7 @@ function ArtistTracks({ name }: { name: string }) {
   const q = useApi<ArtistTracksData>(`/artist/tracks${qs({ name, period, page })}`);
   return (
     <>
-      <div className="toolbar"><h2>Top tracks</h2><PeriodPicker /></div>
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1"><h2>Top tracks</h2><PeriodPicker /></div>
       <Async q={q}>
         {d => (
           <>
@@ -223,16 +223,16 @@ function ArtistSimilar({ name }: { name: string }) {
   return (
     <Async q={q}>
       {d => d.items.length ? (
-        <ul className="similar">
+        <ul className="list-none m-0 p-0 [&_li]:flex [&_li]:gap-3 [&_li]:items-center [&_li]:py-2.5 [&_li]:border-b [&_li]:border-line [&_.item-text>*]:block [&_.item-text>*]:overflow-hidden [&_.item-text>*]:text-ellipsis">
           {d.items.map(s => (
             <li key={s.id}>
-              <Link to={artistUrl(s.name)} className="similar-art"><Art image={s.image} kind="artist" /></Link>
-              <div className="grow">
-                <Link className="strong" to={artistUrl(s.name)}>{s.name}</Link>
-                <span className="muted small">{num(s.listeners)} listeners</span>
+              <Link to={artistUrl(s.name)} className="w-[72px] flex-none max-sm:w-14 [&_.art]:rounded-none"><Art image={s.image} kind="artist" /></Link>
+              <div className="item-text flex-1 min-w-0">
+                <Link className="font-semibold" to={artistUrl(s.name)}>{s.name}</Link>
+                <span className="text-muted text-[13px]">{num(s.listeners)} listeners</span>
                 <TagChips tags={s.tags.map(n => ({ name: n }))} />
               </div>
-              <div className="match" title={`${Math.round(s.match * 100)}% match`}>
+              <div className="block h-2 w-[160px] flex-none bg-line max-lg:w-[70px] [&_span]:block [&_span]:h-full [&_span]:bg-accent" title={`${Math.round(s.match * 100)}% match`}>
                 <span style={{ width: `${Math.min(100, s.match * 100)}%` }} />
               </div>
             </li>

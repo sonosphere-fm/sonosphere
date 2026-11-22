@@ -10,12 +10,12 @@ const text = (v: unknown) => (typeof v === "string" ? v : "");
 
 function Quote({ body }: { body: string }) {
   if (!body) return null;
-  return <>: <span className="muted">“{body}”</span></>;
+  return <>: <span className="text-muted">“{body}”</span></>;
 }
 
 function Message({ n, me }: { n: Notification; me: string }) {
   const actor = (
-    <><Link className="strong inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
+    <><Link className="font-semibold inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
       {n.type === "follow" ? n.actor.username : n.actor.username || "Someone"}
     </Link>{n.actor.username && <UserLabels name={n.actor.username} />}</>
   );
@@ -48,18 +48,18 @@ export function Inbox() {
   }, [q.data]);
 
   return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Inbox</h1>
+    <div className="w-full mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 max-w-[560px] [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Inbox</h1>
       <Async q={q}>
         {d => d.items.length ? (
-          <ul className="feed">
+          <ul className="list-none m-0 p-0 [&_li]:flex [&_li]:gap-3 [&_li]:items-center [&_li]:py-2.5 [&_li]:border-b [&_li]:border-line [&_.item-text>*]:block [&_.item-text>*]:overflow-hidden [&_.item-text>*]:text-ellipsis [&_li.unread]:bg-accent-faint [&_li.unread]:border-l-[3px] [&_li.unread]:border-l-accent [&_li.unread]:pl-2.5">
             {d.items.map(n => (
               <li key={n.id} className={n.read ? "" : "unread"}>
                 {n.actor.username
                   ? <Avatar user={{ username: n.actor.username, image: n.actor.image }} />
-                  : <span className="avatar" />}
-                <div className="grow"><Message n={n} me={me!.username} /></div>
-                <span className="muted small nowrap">{ago(n.createdAt)}</span>
+                  : <span className="avatar block flex-none overflow-hidden rounded-full bg-panel" />}
+                <div className="item-text flex-1 min-w-0"><Message n={n} me={me!.username} /></div>
+                <span className="text-muted text-[13px] whitespace-nowrap">{ago(n.createdAt)}</span>
               </li>
             ))}
           </ul>

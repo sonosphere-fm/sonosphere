@@ -65,18 +65,18 @@ export function PlaylistPage() {
         <>
           {c.dialog}
           <Hero art={<Art image={p.tracks[0]?.image} />} kicker="Playlist" title={p.title} sub={sub} actions={actions}>
-            {p.description && <p className="prose">{p.description}</p>}
+            {p.description && <p className="prose max-w-[68ch] leading-[1.6] whitespace-pre-line [&_a]:text-link [&_a:hover]:underline">{p.description}</p>}
           </Hero>
-          <div className="wrap page">
+          <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
             {edit && (
-              <form className="form card" onSubmit={saveDetails}>
+              <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={saveDetails}>
                 <label>Title<Input value={edit.title} onChange={e => setEdit({ ...edit, title: e.target.value })} required maxLength={100} /></label>
                 <label>
                   Description
                   <Textarea rows={3} value={edit.description} onChange={e => setEdit({ ...edit, description: e.target.value })} maxLength={500} />
                 </label>
                 {act.note}
-                <div className="row">
+                <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
                   <Button kind="btn" loading={act.busy}>Save</Button>
                   <Button type="button" kind="btn ghost" onClick={() => setEdit(null)}>Cancel</Button>
                 </div>
@@ -88,14 +88,14 @@ export function PlaylistPage() {
                 numbered
                 showDuration
                 actions={p.mine
-                  ? r => r._np ? null : <Button kind="link small" onClick={() => removeEntry(r.entryId)}>Remove</Button>
+                  ? r => r._np ? null : <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={() => removeEntry(r.entryId)}>Remove</Button>
                   : undefined}
               />
             ) : (
               <Empty>This playlist is empty.{p.mine && " Add tracks below, or use “+ Playlist” on any track page."}</Empty>
             )}
             {p.mine && (
-              <form className="inline-form" onSubmit={addTrack}>
+              <form className="inline-form flex gap-2 items-center flex-wrap my-2.5 max-sm:[&>.field]:flex-[1_1_180px] max-sm:[&>.field]:min-w-0 max-sm:[&>.astryx-text-input]:flex-[1_1_180px] max-sm:[&>.astryx-text-input]:min-w-0 max-sm:[&>div:has(>.astryx-text-input)]:flex-[1_1_180px] max-sm:[&>div:has(>.astryx-text-input)]:min-w-0 coarse:[&>.astryx-button]:min-h-10 [&:has(.astryx-text-input)>.astryx-button]:min-h-10 [&:has(.astryx-text-input)>.astryx-button]:px-4 [&>.check]:items-center [&>.check]:gap-2 [&>.check]:ml-2.5 [&>.check]:leading-6 max-[641px]:[&>.check]:ml-0 max-sm:[&>.check]:basis-full max-sm:[&>.check]:min-h-10" onSubmit={addTrack}>
                 <Input value={add.artist} onChange={e => setAdd({ ...add, artist: e.target.value })} placeholder="Artist" aria-label="Artist" required />
                 <Input value={add.track} onChange={e => setAdd({ ...add, track: e.target.value })} placeholder="Track" aria-label="Track" required />
                 <Button kind="btn" loading={act.busy}>Add track</Button>

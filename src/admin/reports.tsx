@@ -93,8 +93,8 @@ export function Reports() {
   return (
     <>
       {modal}
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           {[["open", "Open"], ["closed", "Resolved"], ["all", "All"]].map(([k, l]) => (
             <button key={k} type="button" className={status === k ? "active" : ""} onClick={() => set({ status: k === "open" ? "" : k })}>
               {l}{k === "open" && q.data ? ` (${q.data.open})` : ""}
@@ -102,7 +102,7 @@ export function Reports() {
           ))}
         </nav>
         {counts && (
-          <div className="row adm-filters">
+          <div className="row flex items-center flex-wrap gap-2.5">
             <Select
               label="Type"
               value={type}
@@ -123,8 +123,8 @@ export function Reports() {
         return (
           <>
             {open.length > 0 && (
-              <div className="bulk-bar">
-                <label className="check adm-check">
+              <div className="flex items-center gap-3 flex-wrap min-h-9 mt-0 mb-2 [&_p]:m-0">
+                <label className="check flex! flex-row! items-start gap-2.5 font-normal! text-[15px] [&_input]:w-4! [&_input]:mt-[3px] [&_input]:flex-none [&_input[type=checkbox]]:h-4! [&_input[type=checkbox]]:min-h-0! [&_input[type=checkbox]]:p-0! items-center! text-sm! m-0">
                   <Input
                     type="checkbox"
                     aria-label="Select all on this page"
@@ -141,18 +141,18 @@ export function Reports() {
             {d.items.length === 0 && (
               <Empty>{status === "open" ? "Nothing waiting. Reports from listeners show up here." : "No reports match."}</Empty>
             )}
-            <ul className="reports adm-reports">
+            <ul className="reports list-none m-0 p-0 [&>li]:px-3 [&>li]:py-3.5 [&>li]:border-b [&>li]:border-line [&_li.picked]:bg-[light-dark(#fff7f6,#1f2659)] [&_blockquote]:wrap-anywhere [&_.report-head]:gap-2 [&_.report-head]:flex-wrap [&_.report-head]:items-center">
               {d.items.map(r => {
                 const dm = r.type === "dm" || r.type === "group";
                 const canRemove = r.exists && r.type !== "user" && !r.removed;
                 const canMute = r.exists && dm && r.author && !r.authorStaff && !r.authorMuted && !r.authorBanned;
                 const canSuspend = r.exists && r.author && !r.authorStaff && !r.authorSuspended && !r.authorBanned;
                 let authorState = null;
-                if (r.authorBanned) authorState = <span className="muted"> (banned)</span>;
-                else if (r.authorSuspended) authorState = <span className="muted"> (suspended)</span>;
+                if (r.authorBanned) authorState = <span className="text-muted"> (banned)</span>;
+                else if (r.authorSuspended) authorState = <span className="text-muted"> (suspended)</span>;
                 return (
                   <li key={r.id} className={picked.has(r.id) ? "picked" : ""}>
-                    <div className="report-head row">
+                    <div className="report-head row flex gap-2.5 items-center flex-wrap">
                       {r.status === "open" && (
                         <Input
                           type="checkbox"
@@ -161,29 +161,29 @@ export function Reports() {
                           onChange={e => togglePick(r.id, e.target.checked)}
                         />
                       )}
-                      <span className="badge">{REASON[r.reason] || r.reason}</span>
-                      <span className="adm-type">{TYPE[r.type]}</span>
+                      <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-ink text-bg">{REASON[r.reason] || r.reason}</span>
+                      <span className="text-xs font-semibold uppercase tracking-[.05em] text-muted">{TYPE[r.type]}</span>
                       <b>{r.where}</b>
-                      {!r.exists && <span className="muted">· no longer exists</span>}
-                      {r.removed && <span className="muted">· removed from the conversation</span>}
-                      {r.others > 0 && r.status === "open" && <span className="adm-pill">+{plural(r.others, "more report")}</span>}
+                      {!r.exists && <span className="text-muted">· no longer exists</span>}
+                      {r.removed && <span className="text-muted">· removed from the conversation</span>}
+                      {r.others > 0 && r.status === "open" && <span className="text-xs font-semibold text-accent-dark">+{plural(r.others, "more report")}</span>}
                     </div>
-                    <blockquote className={dm ? "adm-dm-snap" : undefined}>{r.text || <span className="muted">(empty)</span>}</blockquote>
-                    <p className="small">
+                    <blockquote className={dm ? "whitespace-pre-wrap" : undefined}>{r.text || <span className="text-muted">(empty)</span>}</blockquote>
+                    <p className="text-[13px]">
                       {AUTHOR_PREFIX[r.type] ?? "Written by "}
                       {r.author ? <Link to={adminUrl(r.author)}>{r.author}</Link> : "a deleted user"}
                       {authorState}
-                      {r.authorMuted && <span className="muted"> (messaging off)</span>}
-                      {r.authorStaff && <span className="muted"> (staff)</span>}
+                      {r.authorMuted && <span className="text-muted"> (messaging off)</span>}
+                      {r.authorStaff && <span className="text-muted"> (staff)</span>}
                       {" · "}reported by {r.reporter ? <Link to={adminUrl(r.reporter)}>{r.reporter}</Link> : "a deleted user"}{" "}
                       <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>
                       {r.link && (
                         <> · <Link to={dm ? `${r.link}?report=${r.id}` : r.link}>{dm ? "Open transcript" : "View in context"} <Ico.Right /></Link></>
                       )}
                     </p>
-                    {r.detail && <p className="small"><b>Reporter's note:</b> {r.detail}</p>}
+                    {r.detail && <p className="text-[13px]"><b>Reporter's note:</b> {r.detail}</p>}
                     {r.status === "open" ? (
-                      <div className="row">
+                      <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2">
                         <Button kind="btn ghost small" type="button" onClick={() => decide(r, "dismiss")}>Dismiss</Button>
                         {canRemove && (
                           <Button kind="btn ghost small" type="button" onClick={() => decide(r, "remove")}>
@@ -200,9 +200,9 @@ export function Reports() {
                         )}
                       </div>
                     ) : (
-                      <p className="muted small">
+                      <p className="text-muted text-[13px]">
                         Resolved {ago(r.resolvedAt ?? 0)} by {r.resolver || "a deleted moderator"}: {r.outcome}
-                        {r.note && <span className="adm-note">“{r.note}”</span>}
+                        {r.note && <span className="block text-ink-2 italic mt-0.5">“{r.note}”</span>}
                       </p>
                     )}
                   </li>

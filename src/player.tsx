@@ -422,25 +422,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={value}>
       {children}
-      <div className={t ? "vplayer" : "vplayer off"} role="region" aria-label="Player" aria-hidden={!t}>
-        <button type="button" className="vplayer-x" aria-label="Close player" onClick={close}><Ico.X /></button>
-        <div className="vplayer-screen">
-          <div className="vplayer-video" ref={mount} style={{ visibility: state.status === "ready" && !state.spotify ? "visible" : "hidden" }} />
+      <div className={t ? "fixed right-6 bottom-6 z-40 w-[360px] max-w-[calc(100vw-24px)] shadow-[0_8px_28px_rgba(0,0,0,.35)] max-sm:right-3 max-sm:bottom-3 max-sm:w-[260px]" : "hidden"} role="region" aria-label="Player" aria-hidden={!t}>
+        <button type="button" className="absolute right-0 top-[-36px] w-7 h-7 grid place-items-center border-0 bg-[#4a4a4a] text-white cursor-pointer hover:bg-[#5a5a5a] [&>svg]:w-4 [&>svg]:h-4" aria-label="Close player" onClick={close}><Ico.X /></button>
+        <div className="relative aspect-[16/9] bg-black">
+          <div className="absolute inset-0" ref={mount} style={{ visibility: state.status === "ready" && !state.spotify ? "visible" : "hidden" }} />
           {showCover && <Cover key={`${state.index}:${state.status}`} src={coverSrc} />}
-          {!showCover && state.status !== "ready" && <div className="vplayer-blank"><Mark /></div>}
+          {!showCover && state.status !== "ready" && <div className="absolute inset-0 grid place-items-center text-white"><Mark /></div>}
         </div>
         <SeekBar position={state.position} length={live(state.status) ? state.length : 0} onSeek={seek} />
         {t && (
-          <div className="vplayer-bar">
-            <div className="vplayer-meta">
-              {state.station && <small><Ico.Scrobble /> {state.station.title}</small>}
+          <div className="flex items-center gap-1 min-h-[62px] py-2 px-2.5 pl-4 bg-[#222] text-white max-sm:min-h-[52px] max-sm:pl-3 max-sm:gap-0">
+            <div className="flex-1 min-w-0 leading-[1.3] text-[15px]">
+              {state.station && <small className="block text-[11px] font-bold uppercase tracking-[.06em] text-[#ff8d8d] [&>svg]:w-3 [&>svg]:h-3 [&>svg]:align-[-1px]"><Ico.Scrobble /> {state.station.title}</small>}
               <TrackMeta track={t} status={state.status} spotify={!!state.spotify} scrobbled={!!me && state.scrobbled} />
             </div>
-            <button type="button" aria-label="Previous track" disabled={!live(state.status)} onClick={prev}><Ico.Prev /></button>
-            <button type="button" aria-label={state.playing ? "Pause" : "Play"} disabled={!live(state.status)} onClick={toggle}>
+            <button type="button" className="flex-none w-10 h-10 grid place-items-center border-0 bg-transparent text-white cursor-pointer hover:text-[#d4d4d4] disabled:text-[#6b6b6b] disabled:cursor-default [&>svg]:w-5 [&>svg]:h-5" aria-label="Previous track" disabled={!live(state.status)} onClick={prev}><Ico.Prev /></button>
+            <button type="button" className="flex-none w-10 h-10 grid place-items-center border-0 bg-transparent text-white cursor-pointer hover:text-[#d4d4d4] disabled:text-[#6b6b6b] disabled:cursor-default [&>svg]:w-5 [&>svg]:h-5" aria-label={state.playing ? "Pause" : "Play"} disabled={!live(state.status)} onClick={toggle}>
               {state.playing ? <Ico.Pause /> : <Ico.Play />}
             </button>
-            <button type="button" aria-label="Next track" disabled={!hasNext} onClick={next}><Ico.Next /></button>
+            <button type="button" className="flex-none w-10 h-10 grid place-items-center border-0 bg-transparent text-white cursor-pointer hover:text-[#d4d4d4] disabled:text-[#6b6b6b] disabled:cursor-default [&>svg]:w-5 [&>svg]:h-5" aria-label="Next track" disabled={!hasNext} onClick={next}><Ico.Next /></button>
             <ExternalLink track={t} spotifyId={state.spotify?.id} videoId={state.videoId} />
           </div>
         )}
@@ -454,10 +454,10 @@ function TrackMeta({ track, status, spotify, scrobbled }: { track: PTrack; statu
   if (status === "finding") return <span>Finding “{track.title}”…</span>;
   return (
     <>
-      <Link to={trackUrl(track.artist, track.title)} className="strong">{track.title}</Link>
-      <span>
-        <Link to={artistUrl(track.artist)}>{track.artist}</Link>
-        {spotify ? <em> · on Spotify</em> : scrobbled && <em> · <Ico.Check /> Scrobbled</em>}
+      <Link to={trackUrl(track.artist, track.title)} className="font-semibold text-white hover:text-white block truncate">{track.title}</Link>
+      <span className="text-[#c8c8c8]">
+        <Link to={artistUrl(track.artist)} className="text-[#c8c8c8] hover:text-[#e6e6e6] text-[13.5px]">{track.artist}</Link>
+        {spotify ? <em className="not-italic text-[13px] text-[#7fdc9c]"> · on Spotify</em> : scrobbled && <em className="not-italic text-[13px] text-[#7fdc9c]"> · <Ico.Check /> Scrobbled</em>}
       </span>
     </>
   );
@@ -465,18 +465,18 @@ function TrackMeta({ track, status, spotify, scrobbled }: { track: PTrack; statu
 
 function ExternalLink({ track, spotifyId, videoId }: { track: PTrack; spotifyId?: string; videoId: string | null }) {
   if (spotifyId) return (
-    <a href={`https://open.spotify.com/track/${spotifyId}`} target="_blank" rel="noreferrer" aria-label="Open in Spotify" title="Open in Spotify">
+    <a href={`https://open.spotify.com/track/${spotifyId}`} target="_blank" rel="noreferrer" aria-label="Open in Spotify" title="Open in Spotify" className="flex-none w-10 h-10 grid place-items-center border-0 bg-transparent text-white cursor-pointer hover:text-[#d4d4d4] [&>svg]:w-5 [&>svg]:h-5">
       <SpotifyMark />
     </a>
   );
   if (videoId) return (
-    <a href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank" rel="noreferrer" aria-label="Watch on YouTube" title="Watch on YouTube">
+    <a href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank" rel="noreferrer" aria-label="Watch on YouTube" title="Watch on YouTube" className="flex-none w-10 h-10 grid place-items-center border-0 bg-transparent text-white cursor-pointer hover:text-[#d4d4d4] [&>svg]:w-5 [&>svg]:h-5">
       <VideoMark />
     </a>
   );
   const search = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${track.artist} ${track.title}`)}`;
   return (
-    <a href={search} target="_blank" rel="noreferrer" aria-label="Search on YouTube" title="Search on YouTube">
+    <a href={search} target="_blank" rel="noreferrer" aria-label="Search on YouTube" title="Search on YouTube" className="flex-none w-10 h-10 grid place-items-center border-0 bg-transparent text-white cursor-pointer hover:text-[#d4d4d4] [&>svg]:w-5 [&>svg]:h-5">
       <VideoMark />
     </a>
   );
@@ -498,7 +498,7 @@ const SpotifyMark = () => (
 
 /** The track's cover, or the logo when there is none or it fails to load. */
 function Cover({ src }: { src: string | null }) {
-  return <ImageWithFallback className="vplayer-art" src={src} alt="" loading="eager" fallback={<span className="vplayer-blank"><Mark /></span>} />;
+  return <ImageWithFallback className="absolute inset-0 w-full h-full object-contain" src={src} alt="" loading="eager" fallback={<span className="absolute inset-0 grid place-items-center text-white"><Mark /></span>} />;
 }
 
 function SeekBar({ position, length, onSeek }: { position: number; length: number; onSeek: (sec: number) => void }) {
@@ -528,7 +528,7 @@ function SeekBar({ position, length, onSeek }: { position: number; length: numbe
 
   return (
     <div
-      className={length ? "vplayer-progress seekable" : "vplayer-progress"}
+      className={"relative h-1 bg-[#6b6b6b] touch-none group " + (length ? "cursor-pointer before:content-[''] before:absolute before:inset-[-8px_0]" : "")}
       role="slider"
       aria-label="Seek"
       tabIndex={length ? 0 : -1}
@@ -543,8 +543,8 @@ function SeekBar({ position, length, onSeek }: { position: number; length: numbe
       onPointerCancel={() => setDrag(null)}
       onKeyDown={onKeyDown}
     >
-      <div style={{ width: `${Math.min(100, shown * 100)}%` }} />
-      {length > 0 && <span className="vplayer-time">{shownTime}</span>}
+      <div className="h-full bg-accent" style={{ width: `${Math.min(100, shown * 100)}%` }} />
+      {length > 0 && <span className="absolute right-1.5 bottom-2 px-1.5 py-px text-xs text-white bg-black/60 pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">{shownTime}</span>}
     </div>
   );
 }
@@ -591,7 +591,7 @@ export function StationButton({ type, name, label, ghost }: { type: StationType;
       <Button kind={ghost ? "btn ghost" : "btn"} type="button" loading={busy} onClick={click}>
         {active ? <><Ico.Pause /> Pause</> : <><Ico.Scrobble /> {label}</>}
       </Button>
-      {error && <span className="form-error station-error" role="alert">{error}</span>}
+      {error && <span className="form-error font-semibold text-bad self-center m-0" role="alert">{error}</span>}
     </>
   );
 }
@@ -612,7 +612,7 @@ export function StationRow({ type, label }: { type: "library" | "recommended" | 
       <Button kind={"play-btn" + (on ? " on" : "")} type="button" aria-label={active ? "Pause" : label} onClick={click}>
         {active ? <Ico.Pause /> : <Ico.Play />}
       </Button>
-      <span>{label}{error && <small className="form-error" role="alert"> {error}</small>}</span>
+      <span>{label}{error && <small className="font-semibold text-bad" role="alert"> {error}</small>}</span>
     </li>
   );
 }

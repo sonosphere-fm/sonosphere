@@ -4,7 +4,7 @@ import { Ico } from "../icons";
 import { Button, SearchField, Select, Textarea } from "../kit";
 import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, useTitle } from "../lib";
 import { Async, Avatar, Empty, Pager, Section, errorText } from "../ui/base";
-import { adminUrl, useQuery, useRole, useConfirm, useFlash, FLAG, StatusBadges } from "./common";
+import { adminUrl, admBadge, useQuery, useRole, useConfirm, useFlash, FLAG, StatusBadges } from "./common";
 import type { DmFlagList, DmMessageDeleted, DmMuteResult, DmPerson, DmSummary, DmThreadHead, DmThreadList, DmTranscript, DmTranscriptMessage, Ok, SuspendResult } from "../../shared/admin";
 
 // Moderators see the spam flags; only admins can list or read conversations. The server checks both, asks for a reason
@@ -24,28 +24,28 @@ export function FlagCount() {
     return () => window.removeEventListener("spin:dmflags", f);
   }, []);
   if (!q.data?.openFlags) return null;
-  return <span className="adm-count" title="Open spam flags">{q.data.openFlags}</span>;
+  return <span className="bg-accent text-on-accent text-[11px] font-bold leading-none px-1.5 py-[3px] rounded-[9px]" title="Open spam flags">{q.data.openFlags}</span>;
 }
 
 type LivePerson = Extract<DmPerson, { username: string }>;
 const isLive = (u: DmPerson): u is LivePerson => u.username !== null;
 
 function DmStatus({ s }: { s: string }) {
-  return <span className={`adm-badge ${DM_STATUS[s]?.[1] ?? ""}`}>{DM_STATUS[s]?.[0] ?? s}</span>;
+  return <span className={admBadge(`${DM_STATUS[s]?.[1] ?? ""}`)}>{DM_STATUS[s]?.[0] ?? s}</span>;
 }
 
 function Pair({ users }: { users: DmPerson[] }) {
   return (
-    <span className="adm-pair">
+    <span className="inline-flex flex-wrap items-center gap-2 [&_.adm-who]:gap-2">
       {users.map((u, i) => (
-        <span key={u.id ?? i} className="adm-who">
-          {i > 0 && <span className="muted small">and</span>}
+        <span key={u.id ?? i} className="adm-who flex items-center gap-2.5">
+          {i > 0 && <span className="text-muted text-[13px]">and</span>}
           {u.username ? (
             <>
               <Avatar user={u} size={24} />
-              <Link className="strong" to={adminUrl(u.username)}>{u.username}</Link>
+              <Link className="font-semibold" to={adminUrl(u.username)}>{u.username}</Link>
             </>
-          ) : <span className="muted">deleted account</span>}
+          ) : <span className="text-muted">deleted account</span>}
         </span>
       ))}
     </span>
@@ -63,8 +63,8 @@ export function Messages() {
   const tabs: [string, string][] = role === "admin" ? [["threads", "Conversations"], ["flags", "Spam flags"]] : [["flags", "Spam flags"]];
   return (
     <>
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           {tabs.map(([k, l]) => (
             <button key={k} type="button" className={tab === k ? "active" : ""} onClick={() => set({ tab: k === "threads" ? "" : k, q: "", user: "", status: "" })}>
               {l}
@@ -91,11 +91,11 @@ function Threads() {
   };
   return (
     <>
-      <p className="muted small">
+      <p className="text-muted text-[13px]">
         Conversations are private. This list shows who talks to whom but no text; opening one asks for a reason and is written to the audit log.
       </p>
-      <div className="adm-filterbar">
-        <form className="adm-search" onSubmit={search}>
+      <div className="flex flex-wrap items-center gap-2.5 mb-3.5 [&_.astryx-text-input]:min-w-[170px] [&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px] max-[861px]:[&>*]:flex-[1_1_160px]">
+        <form className="min-w-[260px] flex-[0_1_340px] [&_.search-field]:h-10 [&_.search-go]:w-[42px] [&_.search-go]:text-base [&.wide]:flex-1 [&.wide]:min-w-0 max-[861px]:flex-[1_1_100%] max-[861px]:min-w-0" onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder="Either person's username" label="Search conversations" clearable />
         </form>
         <Select
@@ -107,13 +107,13 @@ function Threads() {
       </div>
       <Async q={q}>{d => (
         <>
-          <p className="muted small">
+          <p className="text-muted text-[13px]">
             {plural(d.total, "conversation")}{d.user && <> with <Link to={adminUrl(d.user)}>{d.user}</Link></>}{term && <> matching “{term}”</>}
-            {d.user && <> · <Button kind="link small" type="button" onClick={() => set({ user: "" })}>Show everyone's</Button></>}
+            {d.user && <> · <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => set({ user: "" })}>Show everyone's</Button></>}
           </p>
           {d.items.length === 0 ? <Empty>No conversations match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className="overflow-x-auto mb-3.5">
+              <table className="adm-table [&_th_button_.ico]:ml-1 [&_th_button_.ico]:size-[.85em] w-full border-collapse text-sm [&_td]:p-2 [&_td]:border-b [&_td]:border-line [&_td]:align-middle [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em] [&_th]:text-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-line [&_th]:whitespace-nowrap [&_th_button]:bg-transparent [&_th_button]:border-0 [&_th_button]:p-0 [&_th_button]:[font:inherit] [&_th_button]:text-inherit [&_th_button]:uppercase [&_th_button]:tracking-[.05em] [&_th_button]:cursor-pointer [&_th_button:hover]:text-ink [&_th_button.on]:text-ink [&_.num]:text-right [&_.num]:tabular-nums [&_.right]:text-right [&_.tick]:w-7 [&_.grow-cell]:w-full [&_tr.picked_td]:bg-[light-dark(#fff7f6,#1f2659)] [&.compact_td]:p-1.5 [&.compact_td]:align-top [&.adm-log_td]:align-top">
                 <thead>
                   <tr>
                     <th>Between</th>
@@ -129,12 +129,12 @@ function Threads() {
                   {d.items.map(t => (
                     <tr key={t.id}>
                       <td><Pair users={t.users} /></td>
-                      <td className="nowrap"><DmStatus s={t.status} />{t.requester && <span className="muted small"> from {t.requester}</span>}</td>
-                      <td className="num">{num(t.messages)}{t.deleted > 0 && <span className="muted small"> ({num(t.deleted)} deleted)</span>}</td>
-                      <td className="num">{t.reports ? <b className="adm-red">{t.reports}</b> : <span className="muted">0</span>}</td>
-                      <td className="nowrap" title={dateTime(t.createdAt)}>{date(t.createdAt)}</td>
-                      <td className="nowrap muted" title={dateTime(t.lastAt)}>{ago(t.lastAt)}</td>
-                      <td className="right"><Button kind="btn ghost small" href={`/admin/messages/${t.id}`}>Open</Button></td>
+                      <td className="whitespace-nowrap"><DmStatus s={t.status} />{t.requester && <span className="text-muted text-[13px]"> from {t.requester}</span>}</td>
+                      <td className="num">{num(t.messages)}{t.deleted > 0 && <span className="text-muted text-[13px]"> ({num(t.deleted)} deleted)</span>}</td>
+                      <td className="num">{t.reports ? <b className="text-accent-dark">{t.reports}</b> : <span className="text-muted">0</span>}</td>
+                      <td className="whitespace-nowrap" title={dateTime(t.createdAt)}>{date(t.createdAt)}</td>
+                      <td className="whitespace-nowrap text-muted" title={dateTime(t.lastAt)}>{ago(t.lastAt)}</td>
+                      <td className="text-right"><Button kind="btn ghost small" href={`/admin/messages/${t.id}`}>Open</Button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -235,7 +235,7 @@ export function Transcript() {
     danger: true,
     body: (
       <>
-        <blockquote className="adm-quote">{m.body}</blockquote>
+        <blockquote className="m-0 mb-2.5 px-3 py-2 border-l-[3px] border-line bg-panel whitespace-pre-wrap max-h-[200px] overflow-auto">{m.body}</blockquote>
         <p>It disappears for both people at once. It stays visible here, marked as deleted by you.{m.reports ? " Its open reports are closed." : ""}</p>
       </>
     ),
@@ -268,8 +268,8 @@ export function Transcript() {
   if (!data) {
     return (
       <>
-        <p className="small"><Link to="/admin/messages"><Ico.Left /> All conversations</Link></p>
-        {error ? <Empty>{error}</Empty> : <p className="muted">Loading…</p>}
+        <p className="text-[13px]"><Link to="/admin/messages"><Ico.Left /> All conversations</Link></p>
+        {error ? <Empty>{error}</Empty> : <p className="text-muted">Loading…</p>}
       </>
     );
   }
@@ -280,24 +280,24 @@ export function Transcript() {
   return (
     <>
       {modal}
-      <p className="small"><Link to="/admin/messages"><Ico.Left /> All conversations</Link></p>
-      <div className="adm-user-head">
-        <div className="grow">
-          <h2 className="adm-dm-title"><Pair users={t.users} /></h2>
-          <p className="muted">
+      <p className="text-[13px]"><Link to="/admin/messages"><Ico.Left /> All conversations</Link></p>
+      <div className="flex items-center gap-4 mb-[18px] flex-wrap [&_h2]:m-0 [&_h2]:text-[26px] [&_p]:m-0 [&_p]:mt-0.5">
+        <div className="flex-1 min-w-0">
+          <h2 className="m-0 mb-1 text-[22px]"><Pair users={t.users} /></h2>
+          <p className="text-muted">
             <DmStatus s={t.status} /> Started by {t.requester || "a deleted account"} {ago(t.createdAt)} · last message {ago(t.lastAt)}
           </p>
         </div>
       </div>
-      <div className="cols">
-        <div className="main">
+      <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+        <div className="main min-w-0">
           {data.locked ? (
             <Section title="Read this conversation">
               <p>
                 Direct messages are private. Opening this one writes your name, the time, who the conversation is between and your reason to the audit log,
                 where other staff can see it. Access lasts {minutes} minutes, then you'll be asked again.
               </p>
-              <form className="form adm-dm-open" onSubmit={submitReason}>
+              <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full adm-dm-open" onSubmit={submitReason}>
                 <label>
                   Reason
                   <Textarea
@@ -310,23 +310,23 @@ export function Transcript() {
                     autoFocus
                   />
                 </label>
-                {error && <p className="form-error" role="alert">{error}</p>}
-                <div className="row"><Button kind="btn" loading={busy} disabled={reason.trim().length < 3}>Open conversation</Button></div>
+                {error && <p className="form-error font-semibold m-0 text-bad" role="alert">{error}</p>}
+                <div className="row flex gap-2.5 items-center flex-wrap max-sm:hero:gap-2"><Button kind="btn" loading={busy} disabled={reason.trim().length < 3}>Open conversation</Button></div>
               </form>
             </Section>
           ) : (
             <Section title="Transcript">
-              <p className="muted small">
+              <p className="text-muted text-[13px]">
                 Opened {ago(data.openedAt)}: “{data.reason}”. Messages removed by either person or by staff are shown here but hidden from both people.
               </p>
               {flash.note}
               {more && (
-                <div className="adm-dm-more">
+                <div className="flex justify-center mt-0 mb-3">
                   <Button kind="btn ghost small" type="button" loading={busy} onClick={() => loadOlder(msgs[0].id)}>Load older messages</Button>
                 </div>
               )}
               {msgs.length === 0 ? <Empty>No messages.</Empty> : (
-                <ol className="adm-dm">
+                <ol className="list-none m-0 p-0 flex flex-col gap-1.5 [&_li]:px-3.5 [&_li]:py-2.5 [&_li]:bg-panel [&_li]:rounded [&_li]:max-w-[88%] [&_li.hi]:self-end [&_li.hi]:bg-card [&_li.gone]:bg-[light-dark(#fbeeee,#3a1e34)]">
                   {msgs.map(m => {
                     const who = byId[m.from];
                     const name = who?.username ?? "deleted account";
@@ -334,15 +334,15 @@ export function Transcript() {
                     const deletedBy = m.bySender ? `${name}, the sender` : m.deletedBy || "staff";
                     return (
                       <li key={m.id} className={[m.deletedAt ? "gone" : "", side].join(" ")}>
-                        <div className="adm-dm-meta">
-                          {who?.username ? <Link className="strong" to={adminUrl(name)}>{name}</Link> : <b>{name}</b>}
-                          <span className="muted small" title={dateTime(m.at)}>{dateTime(m.at)}</span>
-                          {m.reports > 0 && <span className="adm-badge warn">{plural(m.reports, "open report")}</span>}
-                          {m.deletedAt && <span className="adm-badge">Deleted</span>}
-                          {!m.deletedAt && <Button kind="link small" type="button" onClick={() => deleteMessage(m)}>Delete</Button>}
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-1 [&_.adm-badge]:ml-0">
+                          {who?.username ? <Link className="font-semibold" to={adminUrl(name)}>{name}</Link> : <b>{name}</b>}
+                          <span className="text-muted text-[13px]" title={dateTime(m.at)}>{dateTime(m.at)}</span>
+                          {m.reports > 0 && <span className={admBadge("warn")}>{plural(m.reports, "open report")}</span>}
+                          {m.deletedAt && <span className={admBadge()}>Deleted</span>}
+                          {!m.deletedAt && <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => deleteMessage(m)}>Delete</Button>}
                         </div>
-                        <p className="adm-dm-body">{m.body}</p>
-                        {m.deletedAt && <p className="muted small">Deleted by {deletedBy} {ago(m.deletedAt)}</p>}
+                        <p className="m-0 whitespace-pre-wrap wrap-anywhere [.gone_&]:text-[light-dark(#6b5151,#d8b4c0)]">{m.body}</p>
+                        {m.deletedAt && <p className="text-muted text-[13px]">Deleted by {deletedBy} {ago(m.deletedAt)}</p>}
                       </li>
                     );
                   })}
@@ -351,29 +351,29 @@ export function Transcript() {
             </Section>
           )}
         </div>
-        <aside className="side">
+        <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
           <Section title="Conversation">
-            <dl className="adm-facts">
+            <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3.5 gap-y-1.5 m-0 text-sm [&_dt]:text-muted [&_dt]:font-semibold [&_dd]:m-0">
               <dt>Status</dt>
               <dd>{DM_STATUS[t.status]?.[0] ?? t.status}{t.status !== "active" && t.requester ? `, sent by ${t.requester}` : ""}</dd>
               <dt>Started</dt><dd>{dateTime(t.createdAt)}</dd>
               <dt>Last message</dt><dd>{dateTime(t.lastAt)}</dd>
               <dt>Messages</dt><dd>{num(t.messages)}{t.deleted ? `, ${num(t.deleted)} deleted` : ""}</dd>
               <dt>Open reports</dt>
-              <dd>{t.reports ? <Link to="/admin/reports?type=dm"><b className="adm-red">{t.reports}</b></Link> : "None"}</dd>
+              <dd>{t.reports ? <Link to="/admin/reports?type=dm"><b className="text-accent-dark">{t.reports}</b></Link> : "None"}</dd>
             </dl>
           </Section>
           <Section title="People">
-            <ul className="adm-people adm-dm-people">
+            <ul className="list-none m-0 p-0 [&_li]:flex [&_li]:items-center [&_li]:gap-2.5 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0 [&_li]:flex-wrap">
               {t.users.filter(isLive).map(u => (
                 <li key={u.id}>
                   <Avatar user={u} size={32} />
-                  <span className="grow">
-                    <Link className="strong" to={adminUrl(u.username)}>{u.username}</Link> <StatusBadges u={u} />
-                    {u.dmMuted && <span className="adm-badge warn">Messaging off</span>}
+                  <span className="flex-1 min-w-0">
+                    <Link className="font-semibold" to={adminUrl(u.username)}>{u.username}</Link> <StatusBadges u={u} />
+                    {u.dmMuted && <span className={admBadge("warn")}>Messaging off</span>}
                   </span>
                   {u.role === "user" && !u.banned && (
-                    <Button kind="link small" type="button" onClick={() => toggleMute(u)}>
+                    <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={() => toggleMute(u)}>
                       {u.dmMuted ? "Allow messaging" : "Turn off messaging"}
                     </Button>
                   )}
@@ -403,12 +403,12 @@ function Flags() {
   return (
     <>
       {modal}
-      <p className="muted small">
+      <p className="text-muted text-[13px]">
         The message limits raise a flag when someone sends the same text to many people, starts a lot of new conversations, or hits the daily cap. The
         message that tripped it is shown as a sample.
       </p>
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           {[["open", "Open"], ["resolved", "Resolved"], ["all", "All"]].map(([k, l]) => (
             <button key={k} type="button" className={status === k ? "active" : ""} onClick={() => set({ status: k === "open" ? "" : k })}>
               {l}{k === "open" && q.data ? ` (${q.data.open})` : ""}
@@ -419,7 +419,7 @@ function Flags() {
       <Async q={q}>{d => (
         <>
           {d.items.length === 0 && <Empty>{status === "open" ? "No open spam flags." : "No flags match."}</Empty>}
-          <ul className="adm-list adm-flags">
+          <ul className="list-none m-0 p-0 [&>li]:py-3 [&>li]:border-b [&>li]:border-line [&>li_p]:m-0 [&>li_p]:mb-1 [&.compact>li]:flex [&.compact>li]:justify-between [&.compact>li]:gap-x-3.5 [&.compact>li]:gap-y-1.5 [&.compact>li]:flex-wrap [&.compact>li]:py-2 [&.compact>li]:text-sm adm-flags">
             {d.items.map(f => {
               const u = f.user;
               const plain = u.role === "user";
@@ -452,19 +452,19 @@ function Flags() {
               });
               return (
                 <li key={f.id}>
-                  <div className="row adm-flag-head">
-                    <span className="badge">{FLAG[f.kind] ?? f.kind}</span>
-                    <Link className="strong" to={adminUrl(u.username)}>{u.username}</Link>
+                  <div className="row gap-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                    <span className="inline-block text-[11px] uppercase tracking-[.05em] px-1.5 py-px font-medium bg-ink text-bg">{FLAG[f.kind] ?? f.kind}</span>
+                    <Link className="font-semibold" to={adminUrl(u.username)}>{u.username}</Link>
                     <StatusBadges u={u} />
-                    {u.dmMuted && <span className="adm-badge warn">Messaging off</span>}
-                    <span className="muted small" title={dateTime(f.createdAt)}>{ago(f.createdAt)}</span>
+                    {u.dmMuted && <span className={admBadge("warn")}>Messaging off</span>}
+                    <span className="text-muted text-[13px]" title={dateTime(f.createdAt)}>{ago(f.createdAt)}</span>
                   </div>
-                  <p className="small">{f.detail}{f.detail && " · "}{plural(f.threadsDay, "new conversation")} in the last day</p>
-                  {f.sample && <blockquote className="adm-quote">{f.sample}</blockquote>}
+                  <p className="text-[13px]">{f.detail}{f.detail && " · "}{plural(f.threadsDay, "new conversation")} in the last day</p>
+                  {f.sample && <blockquote className="m-0 mb-2.5 px-3 py-2 border-l-[3px] border-line bg-panel whitespace-pre-wrap max-h-[200px] overflow-auto">{f.sample}</blockquote>}
                   {f.resolvedAt ? (
-                    <p className="muted small">Resolved {ago(f.resolvedAt)} by {f.resolver || "a deleted staff account"}</p>
+                    <p className="text-muted text-[13px]">Resolved {ago(f.resolvedAt)} by {f.resolver || "a deleted staff account"}</p>
                   ) : (
-                    <div className="row adm-flag-act">
+                    <div className="row items-center flex flex-wrap gap-2 mt-2">
                       <Button kind="btn ghost small" type="button" onClick={resolve}>Resolve</Button>
                       {d.canRead && <Button kind="btn ghost small" href={`/admin/messages${qs({ user: u.username })}`}>Their conversations</Button>}
                       {plain && !u.banned && (u.dmMuted ? (
@@ -482,7 +482,7 @@ function Flags() {
           <Pager total={d.total} limit={d.limit} />
         </>
       )}</Async>
-      {role !== "admin" && <p className="muted small">Only admins can read conversations. Reported messages are in the reports queue.</p>}
+      {role !== "admin" && <p className="text-muted text-[13px]">Only admins can read conversations. Reported messages are in the reports queue.</p>}
     </>
   );
 }

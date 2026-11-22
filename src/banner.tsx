@@ -5,6 +5,18 @@ import { useLocation } from "react-router-dom";
 import { api, useAuth } from "./lib";
 import type { SiteInfo } from "../shared/admin";
 import { UNVERIFIED_DAYS, type Ok } from "../shared/auth";
+import { cn, wrap } from "./ui/tw";
+
+/** Strip across the top of the page; the admin settings preview shows announcements with these too. */
+export const bannerBox = (tone: string) => cn(
+  "text-base leading-[1.45] border-b",
+  tone === "warning"
+    ? "bg-[light-dark(#fff2d9,#2a2718)] text-[light-dark(#5c3900,#ffd98a)] border-b-[light-dark(#f0d9a8,#463f1f)]"
+    : "bg-[light-dark(#e8eefc,#1b2466)] text-[light-dark(#1a2f63,#dfe3ff)] border-b-[light-dark(#c9d6f5,#2a3796)]",
+);
+/** Row inside `bannerBox`: the message, then any buttons. */
+export const bannerRow = "flex items-center justify-between gap-3 [&>span]:flex-1 [&>span]:min-w-0 [&>span]:wrap-anywhere [&>span]:whitespace-pre-wrap";
+const bannerX = "flex-none bg-transparent border-0 text-inherit p-1 cursor-pointer opacity-75 hover:opacity-100";
 
 const DISMISSED = "spin.announcement.dismissed";
 
@@ -36,10 +48,10 @@ export function SiteBanner() {
     }
   };
   return (
-    <div className={`site-banner ${a.tone}`} role="status">
-      <div className="wrap site-banner-in">
+    <div className={bannerBox(a.tone)} role="status">
+      <div className={cn(wrap, bannerRow, "py-3")}>
         <span>{a.text}</span>
-        <Button kind="site-banner-x" type="button" aria-label="Dismiss announcement" onClick={dismiss}><Ico.X /></Button>
+        <Button className={bannerX} type="button" aria-label="Dismiss announcement" onClick={dismiss}><Ico.X /></Button>
       </div>
     </div>
   );
@@ -83,14 +95,14 @@ export function VerifyBanner() {
     </>
   );
   return (
-    <div className="site-banner warning" role="status">
-      <div className="wrap site-banner-in">
+    <div className={bannerBox("warning")} role="status">
+      <div className={cn(wrap, bannerRow, "py-3")}>
         <span>
           Please confirm your email address using the link we sent to <strong>{me.email}</strong>.
           {!me.admin && restrictions}{" "}
-          {note || <button type="button" className="banner-link" onClick={resend}>Resend verification email</button>}
+          {note || <button type="button" className="flex-none bg-transparent border-0 text-inherit p-0 cursor-pointer [font-family:inherit] [font-style:inherit] [font-size:inherit] [line-height:inherit] font-semibold underline" onClick={resend}>Resend verification email</button>}
         </span>
-        <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}><Ico.X /></Button>
+        <Button className={bannerX} type="button" aria-label="Hide for now" onClick={dismiss}><Ico.X /></Button>
       </div>
     </div>
   );

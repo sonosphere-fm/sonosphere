@@ -126,7 +126,7 @@ export function Lyrics({ track }: { track: PTrack }) {
   if (found === false) return null;
   return (
     <div hidden={!found}>
-      <Section title="Lyrics"><div className="lyrics-box">{ready && <am-lyrics ref={ref} />}</div></Section>
+      <Section title="Lyrics"><div className="h-[440px] bg-panel overflow-hidden">{ready && <am-lyrics ref={ref} />}</div></Section>
     </div>
   );
 }

@@ -43,9 +43,9 @@ export const Ico = {
 
 /** An arrow between two words, as in "old > new". Screen readers hear `say`. */
 export const Arrow = ({ say = "to" }: { say?: string }) => (
-  <span className="arrow">
-    <ArrowRight className="ico" aria-hidden weight="bold" />
-    <span className="sr">{say}</span>
+  <span>
+    <ArrowRight className="ico size-[.85em] mx-[.3em] align-[-0.1em]" aria-hidden weight="bold" />
+    <span className="sr-only">{say}</span>
   </span>
 );
 
@@ -58,7 +58,14 @@ export const arrowed = (s: string | null) => {
 };
 
 export const Spinner = ({ page }: { page?: boolean }) => (
-  <div className={page ? "spinner page-spinner" : "spinner"} role="status" aria-label="Loading">
+  // a page spinner stays invisible for its first 150ms so fast pages never flash it
+  <div
+    className={page
+      ? "spinner flex justify-center py-24 text-link animate-appear [#root>&]:animate-none [&_svg]:size-8 [&_svg]:animate-spin"
+      : "spinner [&_svg]:size-5 [&_svg]:animate-spin"}
+    role="status"
+    aria-label="Loading"
+  >
     <CircleNotch aria-hidden weight="bold" />
   </div>
 );

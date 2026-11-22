@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { cn } from "./tw";
 
 type ImageProps = {
   src?: string | null;
@@ -17,7 +18,7 @@ export function ImageWithFallback(props: ImageProps) {
 function ImageState({ src, alt, className = "", fallback = null, errorFallback = fallback, loading = "lazy" }: ImageProps) {
   const [state, setState] = useState<"loading" | "loaded" | "error">(src ? "loading" : "error");
   return (
-    <span className={`image-frame ${className}`} data-state={state}>
+    <span className={cn("block relative overflow-hidden [&>img]:absolute [&>img]:inset-0 [&>img]:w-full [&>img]:h-full [&>img]:object-cover [&:not([data-state=loaded])>img]:opacity-0", className)} data-state={state}>
       {state !== "loaded" && (state === "error" ? errorFallback : fallback)}
       {src && state !== "error" && (
         <img

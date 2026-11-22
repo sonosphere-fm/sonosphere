@@ -17,6 +17,7 @@ import type { MeResponse } from "../shared/auth";
 import { applyDmEvent } from "./dm";
 import { PlayerProvider } from "./player";
 import { Art, Empty, Logo } from "./ui/base";
+import { cn, avatar, dot, more, page, pageTitle, wrap } from "./ui/tw";
 import { Home } from "./pages/music/home";
 import { NotFound } from "./pages/notfound";
 import { Private } from "./pages/private";
@@ -77,11 +78,11 @@ function Header() {
   };
 
   if (open) return (
-    <header className="site-header searching">
-      <form className="header-search wrap" onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }} onBlur={closeOnBlur}>
-        <input autoFocus value={term} onChange={e => setTerm(e.target.value)} placeholder="Search for music…" aria-label="Search for music" />
-        <button type="button" className="header-search-x" aria-label="Close search" onClick={close}><Ico.X /></button>
-        <button type="submit" className="header-search-go" aria-label="Search"><Ico.Search /></button>
+    <header className="site-header bg-bar text-white sticky top-0 z-[100] p-0 [&_:focus-visible]:outline-sun">
+      <form className={cn(wrap, "flex items-center h-[54px]")} onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }} onBlur={closeOnBlur}>
+        <input autoFocus value={term} onChange={e => setTerm(e.target.value)} placeholder="Search for music…" aria-label="Search for music" className="flex-1 min-w-0 h-[38px] bg-card text-ink border-0 outline-0 [font-family:inherit] [font-style:inherit] [font-weight:inherit] [line-height:inherit] text-base px-3.5 shadow-[inset_0_1px_3px_rgba(23,21,15,.22)] max-md:px-3 placeholder:text-muted" />
+        <button type="button" className="order-3 grid place-items-center flex-none w-10 h-[38px] ml-1.5 border-0 bg-transparent text-white opacity-80 cursor-pointer hover:opacity-100 focus-visible:opacity-100 [&_svg]:size-[18px]" aria-label="Close search" onClick={close}><Ico.X /></button>
+        <button type="submit" className="search-go order-2 grid place-items-center flex-none w-11 h-[38px] p-0 border-0 bg-sun text-on-sun cursor-pointer hover:bg-sun-dark focus-visible:bg-sun-dark [&_svg]:size-[18px]" aria-label="Search"><Ico.Search /></button>
       </form>
     </header>
   );
@@ -91,24 +92,24 @@ function Header() {
   const menuButton = me && {
     label: `${me.username} menu`,
     variant: "ghost" as const,
-    className: "menu-toggle",
+    className: "size-[38px] min-w-0 p-0 ml-1.5 rounded-none text-white hover:bg-bar-hover aria-expanded:bg-bar-hover focus-visible:outline-0! focus-visible:bg-white/12",
     children: (
       <>
-        <span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>
-        {badge > 0 && <b className="dot">{badge}</b>}
+        <span className={avatar} style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>
+        {badge > 0 && <b className={cn(dot, "absolute -top-0.5 -right-1 bg-sun text-on-sun shadow-[0_0_0_2px_var(--bar)]")}>{badge}</b>}
       </>
     ),
   };
 
   return (
-    <header className="site-header">
-      <div className="wrap">
-        <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
-        <nav className="site-nav" aria-label="Main">
-          <Button kind="nav-search" type="button" aria-label="Search" onClick={() => setOpen(true)}><Ico.Search /></Button>
-          <NavLink to="/" end>Home</NavLink>
-          <NavLink to="/charts">Charts</NavLink>
-          <NavLink to="/events">Events</NavLink>
+    <header className="site-header bg-bar text-white sticky top-0 z-[100] [&_:focus-visible]:outline-sun">
+      <div className={cn(wrap, "flex items-center gap-2 h-[54px] max-[861px]:relative")}>
+        <Link to="/" className="flex items-center gap-2 font-display text-[26px] font-bold tracking-[-.02em] text-sun hover:text-sun max-[521px]:text-[22px]" aria-label="Sonosphere home"><Logo /></Link>
+        <nav className="flex items-center gap-0.5 self-stretch flex-1 justify-end min-w-0" aria-label="Main">
+          <Button type="button" aria-label="Search" className="inline-flex items-center justify-center w-10 h-10 p-0 text-white text-[19px] rounded-full hover:bg-bar-hover hover:text-white" onClick={() => setOpen(true)}><Ico.Search /></Button>
+          <NavLink to="/" end className={cn(navLink, "max-[521px]:hidden")}>Home</NavLink>
+          <NavLink to="/charts" className={navLink}>Charts</NavLink>
+          <NavLink to="/events" className={cn(navLink, !me && "max-[401px]:hidden")}>Events</NavLink>
           {me && menuButton ? (
             <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480} button={menuButton}>
               <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
@@ -134,8 +135,8 @@ function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <NavLink to="/login">Log in</NavLink>
-              <Link to="/join" className="join">Join</Link>
+              <NavLink to="/login" className={navLink}>Log in</NavLink>
+              <Link to="/join" className="flex items-center h-[34px] self-center max-[521px]:flex-none max-[521px]:whitespace-nowrap ml-2 px-4 bg-sun text-on-sun hover:bg-white hover:text-on-sun rounded-none text-[13px] font-bold uppercase tracking-[.04em] max-[521px]:ml-1 max-[521px]:px-3">Join</Link>
             </>
           )}
         </nav>
@@ -143,6 +144,10 @@ function Header() {
     </header>
   );
 }
+
+/** A main navigation link; the current page gets an accent underline. */
+const navLink = "flex items-center h-full px-3 text-[15px] font-medium text-white hover:bg-bar-hover hover:text-white current:bg-transparent current:text-white current:shadow-[inset_0_-4px_0_var(--sun)] "
+  + "max-[861px]:px-2 max-[861px]:text-sm max-[521px]:flex-none max-[521px]:whitespace-nowrap max-[401px]:px-[7px]";
 
 type LinkColumn = [string, [string, string][]];
 
@@ -163,25 +168,25 @@ function Footer() {
     ...account,
   ];
   return (
-    <footer className="site-footer">
-      <div className="wrap footer-cols">
+    <footer className="site-footer bg-coal text-[#b4b4b4] text-[14px] pb-8 mt-0">
+      <div className={cn(wrap, "grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-8 pt-9 pb-8 max-lg:grid-cols-[repeat(auto-fit,minmax(128px,1fr))] max-lg:gap-x-5 max-lg:gap-y-6 max-sm:gap-5 max-sm:pt-7 max-sm:pb-5")}>
         {cols.map(([title, links]) => (
           <nav key={title} aria-label={title}>
-            <h2>{title}</h2>
-            <ul>{links.map(([label, to]) => <li key={label}><Link to={to}>{label}</Link></li>)}</ul>
+            <h2 className="text-[#9c968a] font-sans text-[11px] font-semibold uppercase tracking-[.08em] mb-2">{title}</h2>
+            <ul className="list-none grid gap-0.5 p-0 m-0 max-sm:gap-0">{links.map(([label, to]) => <li key={label}><Link to={to} className="text-[#f6f2e9] hover:text-white hover:underline max-sm:inline-block max-sm:py-1.5">{label}</Link></li>)}</ul>
           </nav>
         ))}
       </div>
-      <div className="footer-base">
-        <div className="wrap">
-          <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
+      <div className="text-[#8a8a8a] text-xs">
+        <div className={cn(wrap, "flex items-center gap-[18px] py-5 flex-wrap max-sm:gap-x-3.5 max-sm:gap-y-2")}>
+          <Link to="/" className="flex items-center gap-2 font-display text-xs font-bold tracking-[-.02em] text-sun no-underline hover:text-sun hover:no-underline" aria-label="Sonosphere home"><Logo /></Link>
           <ThemeToggle />
-          <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
-          <span className="footer-legal">
-            <Link to="/terms">Terms</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/guidelines">Guidelines</Link>
-            <a href="mailto:support@sonosp.here">Contact</a>
+          <span className="ml-auto font-sans max-md:ml-0 max-md:w-full">© {new Date().getFullYear()} Sonosphere</span>
+          <span className="flex gap-3.5">
+            <Link to="/terms" className="text-[#8a8a8a] hover:text-white hover:underline">Terms</Link>
+            <Link to="/privacy" className="text-[#8a8a8a] hover:text-white hover:underline">Privacy</Link>
+            <Link to="/guidelines" className="text-[#8a8a8a] hover:text-white hover:underline">Guidelines</Link>
+            <a href="mailto:support@sonosp.here" className="text-[#8a8a8a] hover:text-white hover:underline">Contact</a>
           </span>
         </div>
       </div>
@@ -264,8 +269,8 @@ function apisFor(url: string): string[] {
 function Staff() {
   const { me } = useAuth();
   if (!me?.admin) return (
-    <div className="wrap page narrow">
-      <h1 className="page-title">Admin</h1>
+    <div className={cn(wrap, page, "max-w-[560px]")}>
+      <h1 className={pageTitle}>Admin</h1>
       <Empty>This area is for moderators and admins.</Empty>
     </div>
   );
@@ -470,7 +475,7 @@ function App() {
 
   if (!ready) return (
     <>
-      <header className="site-header"><div className="wrap"><span className="logo"><Logo /></span></div></header>
+      <header className="site-header bg-bar text-white sticky top-0 z-[100]"><div className={cn(wrap, "flex items-center gap-2 h-[54px]")}><span className="flex items-center gap-2 font-display text-[26px] font-bold tracking-[-.02em] text-sun max-[521px]:text-[22px]"><Logo /></span></div></header>
       <Spinner page />
     </>
   );

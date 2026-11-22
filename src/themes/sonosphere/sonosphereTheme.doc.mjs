@@ -3,6 +3,6 @@ export default {
   type: 'theme',
   name: 'sonosphere',
   displayName: 'Sonosphere',
-  description: 'Sonosphere: red accent, Barlow, square corners, flat surfaces, no motion.',
+  description: 'Sonosphere: blue accent, Source Sans 3 with Radio Canada headings, square corners, flat surfaces, no motion.',
   maintained: false,
 };

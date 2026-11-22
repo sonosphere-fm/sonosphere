@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { colsEven } from "../ui/tw";
 import { Button, Input } from "../kit";
 import { Link } from "react-router-dom";
 import { Arrow, Spinner } from "../icons";
@@ -143,20 +144,20 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
 
   if (job.status === "done") {
     return (
-      <p className="form-ok">
+      <p className="font-semibold m-0 text-ok">
         Imported {plural(job.accepted, "scrobble")} from {what}{skipped > 0 ? `, skipped ${num(skipped)} duplicates/errors` : ""}.
       </p>
     );
   }
   if (job.status === "failed") {
     return (
-      <p className="form-error">
+      <p className="form-error font-semibold m-0 text-bad">
         The import from {what} stopped: {job.error} {job.accepted > 0 && `${plural(job.accepted, "scrobble")} imported before that stay.`}
       </p>
     );
   }
   if (job.status === "cancelled") {
-    return <p className="muted">The import from {what} was cancelled{job.accepted > 0 ? ` after ${plural(job.accepted, "scrobble")}` : ""}.</p>;
+    return <p className="text-muted">The import from {what} was cancelled{job.accepted > 0 ? ` after ${plural(job.accepted, "scrobble")}` : ""}.</p>;
   }
 
   let heading = `Matching ${what} to the catalogue…`;
@@ -164,12 +165,12 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
   else if (job.phase === "loved") heading = `Importing loved tracks from ${what}…`;
 
   return (
-    <div className="import-progress" role="status">
-      <div className="import-head"><Spinner />
+    <div className="grid gap-2.5 [&_.btn]:justify-self-start" role="status">
+      <div className="flex items-center gap-2.5 [&_.spinner_svg]:size-[18px] [&_.spinner_svg]:text-link"><Spinner />
         <b>{heading}</b>
       </div>
-      <div className="import-track"><span style={{ width: `${job.status === "queued" ? 0 : Math.max(pct, 1)}%` }} /></div>
-      <p className="muted small">
+      <div className="h-2 rounded bg-panel overflow-hidden [&>span]:block [&>span]:h-full [&>span]:rounded [&>span]:bg-accent"><span style={{ width: `${job.status === "queued" ? 0 : Math.max(pct, 1)}%` }} /></div>
+      <p className="text-muted text-[13px]">
         {num(job.done)} of {job.total ? `about ${num(job.total)}` : "?"} done{job.accepted ? `, ${num(job.accepted)} added` : ""}.
         This carries on in the background: you can close the page and come back.
       </p>
@@ -285,12 +286,12 @@ export function ScrobblePage() {
   }, [job?.status]);
 
   return (
-    <div className="wrap page">
-      <h1 className="page-title">Scrobble</h1>
-      <div className="cols even">
+    <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Scrobble</h1>
+      <div className={colsEven}>
         <div>
           <Section title="Scrobble a track manually">
-            <form className="form card" onSubmit={submit}>
+            <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full p-[18px] mb-4 bg-card" onSubmit={submit}>
               <label>Track
                 <Suggest
                   label="Track"
@@ -309,7 +310,7 @@ export function ScrobblePage() {
                   )}
                 />
               </label>
-              <div className="pair">
+              <div className="grid grid-cols-2 gap-3.5 w-full max-[561px]:grid-cols-1 [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:min-w-0">
                 <label>Artist
                   <Suggest
                     label="Artist"
@@ -326,7 +327,7 @@ export function ScrobblePage() {
                     )}
                   />
                 </label>
-                <label><span>Album <span className="muted opt">optional</span></span>
+                <label><span>Album <span className="text-muted font-normal text-[13px] ml-1">optional</span></span>
                   <Suggest
                     label="Album"
                     value={f.album}
@@ -356,7 +357,7 @@ export function ScrobblePage() {
               {act.note}
               <Button kind="btn" loading={act.busy} disabled={!f.artist.trim() || !f.track.trim()}>Scrobble</Button>
             </form>
-            <p className="muted small">Pick a match to fill in the rest, or type anything: music that isn't in the catalogue yet is added automatically.</p>
+            <p className="text-muted text-[13px]">Pick a match to fill in the rest, or type anything: music that isn't in the catalogue yet is added automatically.</p>
           </Section>
           <Section title="Your latest scrobbles" more={`${userUrl(me!.username)}/library`}>
             <Async q={recent}>{d => <TrackList items={d.items} time />}</Async>
@@ -364,11 +365,11 @@ export function ScrobblePage() {
         </div>
         <div>
           <Section title="Import your history">
-            <div className="card form">
+            <div className="p-[18px] mb-4 bg-card flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full">
               {job && job.status !== "uploading" && <ImportProgress job={job} onCancel={cancel} />}
               {!busy && (
                 <>
-                  <form className="lastfm-import" onSubmit={fromLastfm}>
+                  <form className="flex gap-2.5 items-end flex-wrap [&_label]:flex-[1_1_220px]" onSubmit={fromLastfm}>
                     <label>
                       Last.fm username
                       <Input value={lfm} onChange={e => setLfm(e.target.value)} placeholder="Your Last.fm username" autoComplete="off" maxLength={40} />
@@ -376,7 +377,7 @@ export function ScrobblePage() {
                     <Button kind="btn" loading={lfmAct.busy} disabled={!lfm.trim()}>Import from Last.fm</Button>
                   </form>
                   {lfmAct.note}
-                  <p className="muted small">
+                  <p className="text-muted text-[13px]">
                     Scrobbles and loved tracks are imported to your profile. Large imports may take a while but you are free to close the page
                     once the import starts.
                   </p>
@@ -384,7 +385,7 @@ export function ScrobblePage() {
                     Or import scrobbles or loved tracks from a CSV/JSON file. CSV columns: <code>artist, album, track, timestamp</code> (Unix
                     seconds or ISO date; only artist and track are required).
                   </p>
-                  <div className="tabs sub" role="group" aria-label="What the file contains">
+                  <div className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full" role="group" aria-label="What the file contains">
                     <button type="button" className={what === "scrobbles" ? "active" : ""} aria-pressed={what === "scrobbles"} onClick={() => setWhat("scrobbles")}>
                       Scrobbles
                     </button>
@@ -396,15 +397,15 @@ export function ScrobblePage() {
                   {rows && (
                     <>
                       <p><b>{plural(rows.length, noun)}</b> found in {fileName}. First rows:</p>
-                      <table className="chartlist compact">
+                      <table className="w-full border-collapse [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-middle max-sm:[&_td]:px-1 [&_tr:nth-child(even)_td]:bg-zebra [&_tr:hover_td]:bg-panel [&_tr.now_td]:bg-accent-tint [&_.c-name]:w-auto">
                         <tbody>
                           {rows.slice(0, 5).map((r, i) => (
                             <tr key={i}>
-                              <td className="c-name">
-                                <span className="strong">{r.track}</span>
-                                <span className="muted">{r.artist}{r.album && ` · ${r.album}`}</span>
+                              <td className="w-full max-w-0 [&_a]:block [&_a]:truncate [&_span]:block [&_span]:truncate">
+                                <span className="font-semibold">{r.track}</span>
+                                <span className="text-muted">{r.artist}{r.album && ` · ${r.album}`}</span>
                               </td>
-                              <td className="c-time">{r.timestamp ? dateTime(r.timestamp) : what === "loved" ? "" : "now"}</td>
+                              <td className="w-[150px] text-right text-sm whitespace-nowrap text-muted tabular-nums max-lg:w-auto max-sm:w-[76px] max-sm:min-w-[76px] max-sm:whitespace-normal max-sm:text-xs max-sm:leading-[1.25]">{r.timestamp ? dateTime(r.timestamp) : what === "loved" ? "" : "now"}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -412,7 +413,7 @@ export function ScrobblePage() {
                       <Button kind="btn" loading={imp.busy} onClick={runImport}>
                         {imp.busy ? progress || "Uploading…" : `Import ${plural(rows.length, noun)}`}
                       </Button>
-                      {imp.busy && <p className="muted small">Keep this page open until the upload finishes; after that it carries on without it.</p>}
+                      {imp.busy && <p className="text-muted text-[13px]">Keep this page open until the upload finishes; after that it carries on without it.</p>}
                     </>
                   )}
                   {imp.note}

@@ -5,17 +5,18 @@ import { Markdown, MdEditor, plainMd } from "../md";
 import { Link } from "react-router-dom";
 import { api, date, qs, useApi, useAuth, userUrl } from "../lib";
 import { Empty, Async, useAction } from "./base";
+import { cn, cols, side, plain, form, fieldBlock, fieldLabel, more, linkBtn, linkBtnOn } from "./tw";
 import { ReportButton } from "./shoutbox";
 import type { ItemType } from "../../shared/catalog";
 import type { WikiHistory, WikiSaved, WikiVersion } from "../../shared/wiki";
 
 export function WikiSummary({ wiki, to }: { wiki: Pick<WikiVersion, "content"> | null; to: string }) {
-  if (!wiki) return <p className="muted">There's no wiki for this yet. <Link to={to}>Start it <Ico.Right /></Link></p>;
+  if (!wiki) return <p className="text-muted">There's no wiki for this yet. <Link to={to}>Start it <Ico.Right /></Link></p>;
   const plain = plainMd(wiki.content).replace(/\n{2,}/g, "\n\n").trim();
   const short = plain.length > 420;
   const text = short ? plain.slice(0, 420).replace(/\s+\S*$/, "") + "… " : plain + " ";
   return (
-    <p className="wiki-summary">
+    <p className="wiki-summary max-w-[72ch] leading-[1.6] mb-[26px]">
       {text}
       <Link to={to}>{short ? "Read more" : "View wiki"} <Ico.Right /></Link>
     </p>
@@ -45,12 +46,12 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
         setEditing(true);
       };
       return (
-        <div className="cols">
-          <div className="main">
+        <div className={cols}>
+          <div>
             {editing ? (
-              <form onSubmit={save} className="form">
-                <div className="field-block">
-                  <span className="field-label">Wiki for {title}</span>
+              <form onSubmit={save} className={form}>
+                <div className={fieldBlock}>
+                  <span className={fieldLabel}>Wiki for {title}</span>
                   <MdEditor label={`Wiki for ${title}`} rows={14} value={text} onChange={setText} maxLength={20000} autoFocus />
                 </div>
                 {act.note}
@@ -63,7 +64,7 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
               <>
                 {current ? <Markdown text={current.content} /> : <Empty>Nobody has written a wiki for {title} yet.</Empty>}
                 {current && (
-                  <p className="muted small">
+                  <p className="text-muted text-[13px]">
                     Version {current.version} · edited by{" "}
                     {current.author ? <Link to={userUrl(current.author)}>{current.author}</Link> : "a deleted user"}{" "}
                     on {date(current.createdAt)}
@@ -71,7 +72,7 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
                   </p>
                 )}
                 {me ? (
-                  <div className="wiki-actions">
+                  <div className="mt-5">
                     <Button kind="btn" onClick={edit}>{current ? "Edit wiki" : "Write the wiki"}</Button>
                   </div>
                 ) : (
@@ -80,19 +81,19 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
               </>
             )}
           </div>
-          <aside className="side">
+          <aside className={side}>
             <h3>History</h3>
             {versions.length ? (
-              <ul className="plain">
+              <ul className={plain}>
                 {versions.map(v => (
                   <li key={v.id}>
-                    <Button kind={"link" + (v === current ? " on" : "")} onClick={() => setShown(v.version)}>Version {v.version}</Button>{" "}
-                    <span className="muted small">{v.author || "deleted"} · {date(v.createdAt)}</span>
+                    <Button className={cn(linkBtn, v === current && linkBtnOn)} onClick={() => setShown(v.version)}>Version {v.version}</Button>{" "}
+                    <span className="text-muted text-[13px]">{v.author || "deleted"} · {date(v.createdAt)}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="muted">No versions yet.</p>
+              <p className="text-muted">No versions yet.</p>
             )}
           </aside>
         </div>

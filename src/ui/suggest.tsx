@@ -61,7 +61,7 @@ export function Suggest<T>({ value, onChange, onPick, search, text, row, placeho
     setOpen(true);
   };
   return (
-    <div className="suggest" onKeyDown={key} onFocus={() => setOpen(true)} onBlur={blur}>
+    <div className="suggest relative w-full font-normal" onKeyDown={key} onFocus={() => setOpen(true)} onBlur={blur}>
       <Input
         value={value}
         onChange={type}
@@ -72,13 +72,13 @@ export function Suggest<T>({ value, onChange, onPick, search, text, row, placeho
         maxLength={255}
       />
       {open && items.length > 0 && (
-        <ul className="suggest-list" role="listbox" aria-label={`${label} suggestions`}>
+        <ul className="absolute z-30 left-0 right-0 top-[calc(100%+4px)] m-0 p-[4px_0] list-none max-h-[280px] overflow-y-auto bg-card border border-line shadow-[0_6px_18px_light-dark(rgba(0,0,0,.14),rgba(0,0,0,.5))] rounded-none [scrollbar-width:thin] [scrollbar-color:var(--scroll-thin)_transparent]" role="listbox" aria-label={`${label} suggestions`}>
           {items.map((it, i) => (
             <li
               key={i}
               role="option"
               aria-selected={i === hi}
-              className={i === hi ? "on" : ""}
+              className={"flex items-center gap-2.5 px-3 py-[7px] cursor-pointer font-medium text-ink " + (i === hi ? "bg-accent-faint" : "")}
               onMouseEnter={() => setHi(i)}
               onMouseDown={e => {
                 e.preventDefault();

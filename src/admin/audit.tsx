@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button, Input, Select } from "../kit";
 import { ago, dateTime, plural, qs, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
-import { REASON, ROLE, adminUrl, useQuery, FLAG } from "./common";
+import { REASON, ROLE, adminUrl, admAct, useQuery, FLAG } from "./common";
 import type { AuditRow } from "../../shared/admin";
 import type { AuditList as AuditPage } from "../../shared/admin-content";
 
@@ -86,23 +86,23 @@ function auditUserLink(a: AuditRow) {
 export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }) {
   if (!items.length) return <Empty>{empty}</Empty>;
   return (
-    <ul className="adm-audit">
+    <ul className="list-none m-0 p-0 [&_li]:flex [&_li]:gap-3 [&_li]:items-baseline [&_li]:py-2.5 [&_li]:border-b [&_li]:border-line [&_li]:text-sm [&_li]:flex-wrap [&_li>.item-text]:min-w-0 [&_li>.item-text]:flex-[1_1_240px] [&_li>.item-text]:wrap-anywhere">
       {items.map(a => {
         const extra = details(a);
         const userLink = auditUserLink(a);
         let target: ReactNode = <b>{arrowed(a.label || a.targetType)}</b>;
-        if (userLink) target = <Link className="strong" to={userLink}>{arrowed(a.label || a.subject)}</Link>;
-        else if (a.targetType === "dm_thread") target = <Link className="strong" to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link>;
+        if (userLink) target = <Link className="font-semibold" to={userLink}>{arrowed(a.label || a.subject)}</Link>;
+        else if (a.targetType === "dm_thread") target = <Link className="font-semibold" to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link>;
         return (
           <li key={a.id}>
-            <span className={`adm-act act-${actionGroup(a.action)}`}>{actionLabel(a.action)}</span>
-            <span className="grow">
+            <span className={admAct(actionGroup(a.action))}>{actionLabel(a.action)}</span>
+            <span className="item-text flex-1 min-w-0">
               {target}
               {a.subject && a.targetType !== "user" && <> · <Link to={adminUrl(a.subject)}>{a.subject}</Link></>}
-              {extra && <span className="muted"> · {extra}</span>}
-              {a.note && <span className="adm-note">“{a.note}”</span>}
+              {extra && <span className="text-muted"> · {extra}</span>}
+              {a.note && <span className="block text-ink-2 italic mt-0.5">“{a.note}”</span>}
             </span>
-            <span className="muted small nowrap" title={dateTime(a.createdAt)}>{a.actor} · {ago(a.createdAt)}</span>
+            <span className="text-muted text-[13px] whitespace-nowrap" title={dateTime(a.createdAt)}>{a.actor} · {ago(a.createdAt)}</span>
           </li>
         );
       })}
@@ -143,47 +143,47 @@ export function Audit() {
       }
       return (
         <>
-          <form className="adm-filterbar" onSubmit={filter}>
+          <form className="flex flex-wrap items-center gap-2.5 mb-3.5 [&_.astryx-text-input]:min-w-[170px] [&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px] max-[861px]:[&>*]:flex-[1_1_160px]" onSubmit={filter}>
             <Select label="Staff member" value={actor} onChange={v => set({ actor: v })} options={actorOptions} />
             <Select label="Action" value={action} onChange={v => set({ action: v })} options={actionOptions} />
             <Input value={user} onChange={e => setUser(e.target.value)} placeholder="About user" aria-label="About user" />
             <Input value={text} onChange={e => setText(e.target.value)} placeholder="Search target or note" aria-label="Search" />
             <Button kind="btn small">Filter</Button>
-            {(actor || action || who || term) && <Button kind="link small" type="button" onClick={clear}>Clear</Button>}
+            {(actor || action || who || term) && <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={clear}>Clear</Button>}
           </form>
-          <p className="muted small">{plural(d.total, "entry").replace("entrys", "entries")}</p>
+          <p className="text-muted text-[13px]">{plural(d.total, "entry").replace("entrys", "entries")}</p>
           {d.items.length === 0 ? <Empty>No entries match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table adm-log">
+            <div className="overflow-x-auto mb-3.5">
+              <table className="adm-table [&_th_button_.ico]:ml-1 [&_th_button_.ico]:size-[.85em] adm-log w-full border-collapse text-sm [&_td]:p-2 [&_td]:border-b [&_td]:border-line [&_td]:align-middle [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em] [&_th]:text-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-line [&_th]:whitespace-nowrap [&_th_button]:bg-transparent [&_th_button]:border-0 [&_th_button]:p-0 [&_th_button]:[font:inherit] [&_th_button]:text-inherit [&_th_button]:uppercase [&_th_button]:tracking-[.05em] [&_th_button]:cursor-pointer [&_th_button:hover]:text-ink [&_th_button.on]:text-ink [&_.num]:text-right [&_.num]:tabular-nums [&_.right]:text-right [&_.tick]:w-7 [&_.grow-cell]:w-full [&_tr.picked_td]:bg-[light-dark(#fff7f6,#1f2659)] [&.compact_td]:p-1.5 [&.compact_td]:align-top [&.adm-log_td]:align-top adm-log">
                 <thead><tr><th>When</th><th>Staff</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
                 <tbody>
                   {d.items.map(a => {
                     const extra = details(a);
                     const userLink = auditUserLink(a);
-                    let target: ReactNode = <span className="muted">{a.targetType}</span>;
+                    let target: ReactNode = <span className="text-muted">{a.targetType}</span>;
                     if (userLink) target = <Link to={userLink}>{arrowed(a.label || a.subject)}</Link>;
                     else if (a.targetType === "dm_thread") target = <Link to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link>;
                     else if (a.label) target = arrowed(a.label);
                     return (
                       <tr key={a.id}>
-                        <td className="nowrap small" title={dateTime(a.createdAt)}>{dateTime(a.createdAt)}</td>
+                        <td className="whitespace-nowrap text-[13px]" title={dateTime(a.createdAt)}>{dateTime(a.createdAt)}</td>
                         <td>
-                          <button type="button" className="adm-linkish" onClick={() => set({ actor: a.actor })}>{a.actor}</button>
+                          <button type="button" className="bg-transparent border-0 p-0 [font:inherit] text-link text-left cursor-pointer hover:underline" onClick={() => set({ actor: a.actor })}>{a.actor}</button>
                         </td>
                         <td>
-                          <button type="button" className={`adm-act act-${actionGroup(a.action)}`} onClick={() => set({ action: a.action })}>
+                          <button type="button" className={admAct(actionGroup(a.action))} onClick={() => set({ action: a.action })}>
                             {actionLabel(a.action)}
                           </button>
                         </td>
                         <td>
                           {target}
                           {a.subject && a.targetType !== "user" && (
-                            <span className="muted small"> · <Link to={adminUrl(a.subject)}>{a.subject}</Link></span>
+                            <span className="text-muted text-[13px]"> · <Link to={adminUrl(a.subject)}>{a.subject}</Link></span>
                           )}
                         </td>
-                        <td className="small">
-                          {extra && <span className="muted">{extra}</span>}
-                          {a.note && <span className="adm-note">“{a.note}”</span>}
+                        <td className="text-[13px]">
+                          {extra && <span className="text-muted">{extra}</span>}
+                          {a.note && <span className="block text-ink-2 italic mt-0.5">“{a.note}”</span>}
                         </td>
                       </tr>
                     );

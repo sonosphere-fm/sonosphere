@@ -24,10 +24,10 @@ export function Developers() {
   const origin = window.location.origin;
   useTitle("API");
   return (
-    <div className="wrap page">
-      <h1 className="page-title">Sonosphere API</h1>
-      <div className="cols">
-        <div className="main prose docs">
+    <div className="w-full max-w-[1180px] mx-auto px-5 max-sm:px-4 pt-6 pb-12 max-sm:pt-[18px] max-sm:pb-8 [&_h2]:tracking-[-.015em] [&_h2]:font-bold">
+      <h1 className="page-title mb-[18px] font-display font-bold text-[36px] tracking-[-.025em] max-sm:text-[26px]">Sonosphere API</h1>
+      <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+        <div className="prose main min-w-0 max-w-[68ch] leading-[1.6] [&_a]:text-link [&_a:hover]:underline whitespace-normal [&_h2]:mt-[26px] [&_h2]:mb-2.5 [&_pre]:whitespace-pre">
           <p>Sonosphere exposes a web-service API that follows the Last.fm 2.0 protocol, so existing scrobbler code usually works by pointing it at a different root URL.</p>
           <p>For a live “now playing” widget on your website, use the <a href="#public-now-playing">public now-playing API</a>. JSON, Server-Sent Events and WebSockets are available without an API key or login, including from other websites.</p>
           <h2>Root URL</h2>
@@ -148,14 +148,14 @@ const data = await response.json();`}</pre>
           <p>Open streams recheck public visibility on updates and at least every 15 seconds. If listening becomes private or the account becomes unavailable, the stream sends <code>{`{"t":"unavailable"}`}</code> (an <code>unavailable</code> SSE event) and closes. SSE sends comment keepalives; WebSockets send <code>{`{"t":"ping"}`}</code> every 15 seconds. Each reconnection starts with the latest snapshot; past events are not replayed and <code>Last-Event-ID</code> is not used.</p>
           <p>Updates are pushed when Sonosphere receives listening activity. Spotify currently checks for the playing song about once a minute, so a Spotify song change may take that long to appear. These streams report now-playing state; they do not expose a user's full scrobble history.</p>
         </div>
-        <aside className="side">
+        <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
           <h3>Public live API</h3>
-          <ul className="plain"><li><a href="#public-now-playing">Now-playing snapshots, SSE and WebSockets</a></li></ul>
+          <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0"><li><a href="#public-now-playing">Now-playing snapshots, SSE and WebSockets</a></li></ul>
           <h3>Methods</h3>
           {METHODS.map(([group, list]) => (
-            <div key={group} className="methods">
+            <div key={group} className="[&_ul_li]:py-[3px] [&_ul_li]:border-0">
               <h4>{group}</h4>
-              <ul className="plain">{list.map(m => <li key={m}><code>{m}</code></li>)}</ul>
+              <ul className="list-none m-0 p-0 [&_li]:py-[7px] [&_li]:border-b [&_li]:border-line [&_li:last-child]:border-b-0">{list.map(m => <li key={m}><code>{m}</code></li>)}</ul>
             </div>
           ))}
         </aside>

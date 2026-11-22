@@ -1,4 +1,5 @@
 import { DatePicker } from "../../datepicker";
+import { bar, barFill, barNote, barNum, cBar, cName } from "../../ui/tw";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Input, Select, Modal } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -48,10 +49,10 @@ function DateRange() {
   });
 
   return (
-    <span className="daterange">
+    <span className="flex items-center gap-x-3.5 gap-y-2 flex-wrap text-[15px] text-muted [&>label]:inline-flex [&>label]:items-center [&>label]:gap-2 [&_:is(.dp-trigger,.astryx-selector)]:h-[34px] [&_:is(.dp-trigger,.astryx-selector)]:min-h-[34px] [&_:is(.dp-trigger,.astryx-selector)]:py-0 [&_:is(.dp-trigger,.astryx-selector)]:px-3 [&_:is(.dp-trigger,.astryx-selector)]:text-[15px] [&_:is(.dp-trigger,.astryx-selector)]:font-normal [&_:is(.dp-trigger,.astryx-selector)]:text-ink [&_.dp-trigger_.ico]:size-4">
       <label>From <DatePicker compact label="From" placeholder="Any date" value={from} onChange={v => set("from", v)} max={to || "now"} /></label>
       <label>to <DatePicker compact label="To" placeholder="Any date" value={to} onChange={v => set("to", v)} min={from || undefined} max="now" /></label>
-      {from || to ? <Button kind="link" onClick={clear}>Clear</Button> : <PeriodPicker />}
+      {from || to ? <Button className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={clear}>Clear</Button> : <PeriodPicker />}
     </span>
   );
 }
@@ -85,7 +86,7 @@ function EditScrobble({ row, onClose, onSaved }: { row: RecentTrack; onClose: ()
 
   return (
     <Modal title="Edit scrobble" onClose={onClose}>
-      <form className="form" onSubmit={save}>
+      <form className="form flex flex-col gap-3.5 items-start [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:font-semibold [&>label]:text-sm [&>label]:w-full [&_.row]:w-full [&_.row>label]:flex [&_.row>label]:flex-col [&_.row>label]:gap-1 [&_.row>label]:font-semibold [&_.row>label]:text-sm [&_.row>label]:w-full [&_label_:is(input,textarea)]:font-normal [&_label_:is(input,textarea)]:text-base [&_label_:is(input,textarea)]:w-full" onSubmit={save}>
         {options.length > 1 && (
           <label>Apply to<Select label="Apply to" value={scope} onChange={v => setScope(toScope(v))} options={options} /></label>
         )}
@@ -93,12 +94,12 @@ function EditScrobble({ row, onClose, onSaved }: { row: RecentTrack; onClose: ()
         {field("artist", "Artist")}
         {scope !== "artist" && field("album", "Album")}
         {scope === "artist" && (
-          <p className="muted small">
+          <p className="text-muted text-[13px]">
             Every scrobble of {row.artist} in your library moves to the artist you enter. Track and album names stay as they are.
           </p>
         )}
         {scope === "album" && (
-          <p className="muted small">Every scrobble from {row.album || "this album"} gets this artist and album. Track names stay as they are.</p>
+          <p className="text-muted text-[13px]">Every scrobble from {row.album || "this album"} gets this artist and album. Track names stay as they are.</p>
         )}
         {act.note}
         <Button kind="btn" loading={act.busy}>{n > 1 ? `Update ${num(n)} scrobbles` : "Save"}</Button>
@@ -174,11 +175,11 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     return (
       <>
         <b>{picked.size} selected</b>
-        <Button kind="link small" type="button" onClick={toggleAll}>{all ? "Select none" : "Select all on this page"}</Button>
+        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={toggleAll}>{all ? "Select none" : "Select all on this page"}</Button>
         {confirm
           ? <Button kind="btn danger small" type="button" loading={bulk.busy} onClick={removePicked}>Yes, delete {plural(picked.size, "scrobble")}</Button>
           : <Button kind="btn ghost small" type="button" disabled={!picked.size} onClick={() => setConfirm(true)}>Delete selected</Button>}
-        <Button kind="link small" type="button" onClick={stopPicking}>Cancel</Button>
+        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" type="button" onClick={stopPicking}>Cancel</Button>
         {bulk.note}
       </>
     );
@@ -190,9 +191,9 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
       return <Input type="checkbox" aria-label={`Select ${r.title}`} checked={picked.has(r.id)} onChange={e => pick(r.id, e.target.checked)} />;
     }
     return (
-      <span className="row-actions">
-        <Button kind="link small" onClick={() => setEditing(r)}>Edit</Button>
-        <Button kind="link small" onClick={() => removeOne(r.id)}>Delete</Button>
+      <span className="inline-flex gap-2.5 invisible [tr:hover_&]:visible [tr:focus-within_&]:visible max-sm:visible touch:visible">
+        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={() => setEditing(r)}>Edit</Button>
+        <Button kind="small" className="bg-transparent border-0 p-0 text-link font-semibold hover:underline" onClick={() => removeOne(r.id)}>Delete</Button>
       </span>
     );
   };
@@ -216,8 +217,8 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
 
   return (
     <>
-      <div className="toolbar">
-        <nav className="tabs sub">
+      <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
+        <nav className="tabs sub flex flex-wrap mb-6 *:hover:no-underline *:current:font-medium gap-1 *:m-0 *:h-auto *:rounded-none *:border-0 *:bg-fill *:px-[11px] *:py-[5px] *:text-[11px] *:font-medium *:uppercase *:tracking-[.05em] *:text-ink *:hover:bg-fill-hover *:hover:text-ink *:current:bg-ink *:current:text-bg max-md:toolbar:max-w-full">
           {LIBRARY_TABS.map(([p, l]) => (
             <Link key={p} className={(p.slice(1) || "scrobbles") === kind ? "active" : ""} to={base + p + search}>{l}</Link>
           ))}
@@ -228,8 +229,8 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
       <Async q={q}>
         {d => (
           <>
-            <p className="muted">{summary(d, kind)}</p>
-            {mine && kind === "scrobbles" && d.items.length > 0 && <div className="bulk-bar">{bulkBar(d)}</div>}
+            <p className="text-muted">{summary(d, kind)}</p>
+            {mine && kind === "scrobbles" && d.items.length > 0 && <div className="flex items-center gap-3 flex-wrap min-h-9 mt-0 mb-2 [&_p]:m-0">{bulkBar(d)}</div>}
             {list(d)}
             <Pager total={d.total} limit={50} />
           </>
@@ -243,17 +244,17 @@ function LibraryArtists({ items, name, rank }: { items: TopArtist[]; name: strin
   const max = Math.max(1, ...items.map(i => i.playcount));
   if (!items.length) return <Empty>Nothing to show for this period.</Empty>;
   return (
-    <table className="chartlist">
+    <table className="w-full border-collapse [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-middle max-sm:[&_td]:px-1 [&_tr:nth-child(even)_td]:bg-zebra [&_tr:hover_td]:bg-panel [&_tr.now_td]:bg-accent-tint">
       <tbody>
         {items.map((a, i) => (
           <tr key={a.id}>
-            <td className="c-rank">{rank + i}</td>
-            <td className="c-art"><Link to={artistUrl(a.name)} tabIndex={-1}><Art image={a.image} kind="artist" /></Link></td>
-            <td className="c-name"><Link className="strong" to={artistUrl(a.name)}>{a.name}</Link></td>
-            <td className="c-bar">
-              <Link className="bar" to={`${userUrl(name)}/library/music/${enc(a.name)}`}>
-                <span style={{ width: `${(a.playcount / max) * 100}%` }} />
-                <b>{num(a.playcount)}</b> <em>scrobbles</em>
+            <td className="w-[34px] text-right text-sm font-semibold text-muted tabular-nums max-sm:w-[22px]">{rank + i}</td>
+            <td className="w-[52px] max-sm:w-[44px] [&_.art]:w-[38px]"><Link to={artistUrl(a.name)} tabIndex={-1}><Art image={a.image} kind="artist" /></Link></td>
+            <td className={cName}><Link className="font-semibold" to={artistUrl(a.name)}>{a.name}</Link></td>
+            <td className={cBar}>
+              <Link className={bar} to={`${userUrl(name)}/library/music/${enc(a.name)}`}>
+                <span className={barFill} style={{ width: `${(a.playcount / max) * 100}%` }} />
+                <b className={barNum}>{num(a.playcount)}</b> <em className={barNote}>scrobbles</em>
               </Link>
             </td>
           </tr>
@@ -268,23 +269,23 @@ export function LibraryArtist({ name, artist }: { name: string; artist: string }
   return (
     <Async q={q}>{d => (
       <>
-        <div className="toolbar">
+        <div className="toolbar flex items-center justify-between gap-3.5 flex-wrap mb-3.5 max-sm:items-stretch max-sm:flex-col [&_.page-title]:mb-0 [&_.tabs]:mb-0 [&_.tabs]:flex-1">
           <h2><Link to={`${userUrl(name)}/library/artists`}>Library</Link> / <Link to={artistUrl(d.artist.name)}>{d.artist.name}</Link></h2>
         </div>
         {d.counts.playcount === 0 ? <Empty>{name} hasn't scrobbled {d.artist.name} yet.</Empty> : (
           <>
-            <div className="stats boxed">
+            <div className="stats boxed flex flex-wrap gap-0 mb-7 bg-panel *:flex-1 *:min-w-[140px] *:px-[18px] *:py-3.5 max-sm:*:min-w-1/2 max-sm:*:border-b max-sm:*:border-line">
               <Stat label="Scrobbles" value={num(d.counts.playcount)} />
               <Stat label="Albums" value={num(d.counts.albums)} />
               <Stat label="Tracks" value={num(d.counts.tracks)} />
               <Stat label="First scrobbled" value={date(d.first ?? 0)} />
             </div>
             <Section title="Scrobbles over the last year"><BarChart data={weekTrend(d.trend)} height={120} every={8} /></Section>
-            <div className="cols">
-              <div className="main">
+            <div className="cols grid grid-cols-[minmax(0,1fr)_320px] gap-10 items-start max-xl:grid-cols-[minmax(0,1fr)_280px] max-xl:gap-7 max-lg:grid-cols-[minmax(0,1fr)] max-lg:gap-2">
+              <div className="main min-w-0">
                 <Section title="Tracks"><TrackList items={d.tracks} rank={1} count="playcount" showArtist={false} /></Section>
               </div>
-              <aside className="side">
+              <aside className="side min-w-0 max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-7 max-lg:items-start max-lg:[&>:not(section)]:col-span-full max-lg:[&>section]:mb-6 max-lg:[&>section]:min-w-0 max-sm:block">
                 <Section title="Albums"><Grid kind="album" cols={2} items={d.albums} sub={a => `${num(a.playcount)} scrobbles`} /></Section>
               </aside>
             </div>
