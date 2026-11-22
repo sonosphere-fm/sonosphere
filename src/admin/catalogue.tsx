@@ -313,25 +313,38 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
     setList(next);
   };
   const add = (it: CatalogueItem) => setList([...list, { id: it.id, name: it.name, artist: it.artist ?? "" }]);
+  // new tracks get a temporary negative id until saving creates them
+  const addNew = () => {
+    setList([...list, { id: -Date.now(), name: term, artist: item.artist ?? "" }]);
+    setText("");
+    setTerm(item.artist ?? "");
+  };
+  const listed = list.some(t => t.name.toLowerCase() === term.toLowerCase());
+  const offerNew = term !== "" && term !== item.artist && !listed;
   const search = (e: FormEvent) => {
     e.preventDefault();
     setTerm(text.trim());
   };
   const save = () => act.run(async () => {
-    await api<Ok>("/admin/catalogue/tracklist", { body: { id: item.id, tracks: ids } });
+    const tracks = list.map(t => (t.id > 0 ? t.id : t.name));
+    await api<Ok>("/admin/catalogue/tracklist", { body: { id: item.id, tracks } });
     done(`Saved the track list of “${item.name}” (${plural(list.length, "track")}).`);
   });
   return (
     <div className="form">
       <p className="muted small">
-        {item.name} by {item.artist}. Once saved, scrobbles stop adding tracks to this album, so removed tracks stay off.
+        {item.name} by {item.artist}. Once saved, scrobbles stop adding tracks to this album, so removed tracks stay off. To add a song nobody has scrobbled yet, search its title and add it as a new track.
       </p>
       {list.length === 0 ? <p className="muted small">No tracks.</p> : (
-        <ol className="list-none w-full m-0 p-0 max-h-[320px] overflow-auto">
+        <ol className="list-none w-full m-0 p-0 max-h-[40vh] overflow-auto">
           {list.map((t, i) => (
             <li key={t.id} className={TRACK_ROW}>
               <span className="muted small w-6 text-right">{i + 1}</span>
-              <span className="grow">{t.name}{t.artist !== item.artist && <span className="muted"> by {t.artist}</span>}</span>
+              <span className="grow">
+                {t.name}
+                {t.artist !== item.artist && <span className="muted"> by {t.artist}</span>}
+                {t.id < 0 && <span className="muted small"> new</span>}
+              </span>
               <Button kind="link small" type="button" aria-label={`Move ${t.name} up`} disabled={i === 0} onClick={() => move(i, -1)}><Ico.SortUp /></Button>
               <Button kind="link small" type="button" aria-label={`Move ${t.name} down`} disabled={i === list.length - 1} onClick={() => move(i, 1)}><Ico.SortDown /></Button>
               <Button kind="link small" type="button" onClick={() => setList(list.filter(x => x.id !== t.id))}>Remove</Button>
@@ -339,17 +352,20 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
           ))}
         </ol>
       )}
-      <form className={WIDE_SEARCH} onSubmit={search}>
-        <SearchField value={text} onChange={setText} placeholder="Find a track to add" />
-      </form>
-      <Suspense fallback={<p className="muted small">Searching…</p>}>
-        <MergeResults kind="track" term={term} fallback={item.artist} skip={ids} pickLabel="Add" onPick={add} />
-      </Suspense>
       {act.note}
       <div className="row">
         <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>Save</Button>
         <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
       </div>
+      <form className={WIDE_SEARCH} onSubmit={search}>
+        <SearchField value={text} onChange={setText} placeholder="Find a track to add" />
+      </form>
+      {offerNew && (
+        <Button kind="btn ghost small" type="button" onClick={addNew}>Add “{term}” as a new track</Button>
+      )}
+      <Suspense fallback={<p className="muted small">Searching…</p>}>
+        <MergeResults kind="track" term={term} fallback={item.artist} skip={ids} pickLabel="Add" onPick={add} />
+      </Suspense>
     </div>
   );
 }

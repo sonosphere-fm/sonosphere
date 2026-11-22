@@ -102,6 +102,13 @@ router.post<Ok>("/api/admin/catalogue/rename", async c => {
 
 const MAX_TRACKS = 300;
 
+// an existing track's id, or the title of a new one
+function entryOf(v: unknown): repo.TracklistEntry {
+  if (typeof v === "number" && Number.isInteger(v)) return v;
+  const title = typeof v === "string" ? clean(v) : "";
+  return title || bad("A new track needs a title");
+}
+
 router.get<Tracklist>("/api/admin/catalogue/tracklist", async c => {
   adminOnly(c);
   const a = await item("album", Number(c.q.get("id")));
@@ -111,19 +118,21 @@ router.get<Tracklist>("/api/admin/catalogue/tracklist", async c => {
 router.post<Ok>("/api/admin/catalogue/tracklist", async c => {
   const me = adminOnly(c);
   const a = await item("album", Number(c.body.id));
-  const ids = idList(c.body.tracks, MAX_TRACKS + 1);
-  if (ids.length > MAX_TRACKS) bad(`An album can list at most ${MAX_TRACKS} tracks`);
-  if (new Set(ids).size !== ids.length) bad("A track is listed twice");
-  if ((await repo.existingTracks(ids)) !== ids.length) bad("A track no longer exists. Reload and try again.");
+  const raw: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [];
+  if (raw.length > MAX_TRACKS) bad(`An album can list at most ${MAX_TRACKS} tracks`);
+  const entries = raw.map(entryOf);
+  const ids = entries.filter(e => typeof e === "number");
+  if ((await repo.existingTracks(ids)) !== new Set(ids).size) bad("A track no longer exists. Reload and try again.");
   const before = await repo.tracklist(a.id);
-  await repo.setTracklist(a.id, ids, me, {
+  const why = note(c);
+  await repo.setTracklist(a, entries, me, after => ({
     action: "catalogue.tracklist",
     targetType: "album",
     targetId: a.id,
-    label: `${repo.describe(a)} (${before.length} → ${ids.length} tracks)`,
-    note: note(c),
-    data: { from: before.map(t => t.id), to: ids },
-  });
+    label: `${repo.describe(a)} (${before.length} → ${after.length} tracks)`,
+    note: why,
+    data: { from: before.map(t => t.id), to: after },
+  }));
   return { ok: true };
 });
 
