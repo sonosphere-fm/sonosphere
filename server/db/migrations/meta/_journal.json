@@ -183,6 +183,13 @@
       "when": 1795327911924,
       "tag": "0025_tracklist_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795327911925,
+      "tag": "0026_bulk_scrobble_delete",
+      "breakpoints": true
     }
   ]
 }
