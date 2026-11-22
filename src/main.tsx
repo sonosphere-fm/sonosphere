@@ -20,6 +20,7 @@ import "./sentry";
 import { createRoot } from "react-dom/client";
 import { PageMetadata } from "./page-metadata";
 import * as Sentry from "@sentry/react";
+import { isStaleBuild, recoverAsset } from "./asset-recovery";
 import {
   BrowserRouter,
   Link,
@@ -862,22 +863,14 @@ function App() {
   );
 }
 
-const STALE_BUILD = /dynamically imported module|Importing a module script failed/i;
-const RELOAD_KEY = "stale-build-reload";
-
-// a deploy replaces the old chunks, so a tab opened before it reloads once to pick up the new build
 function reloadOnStaleBuild(error: unknown) {
-  if (!STALE_BUILD.test(String(error))) return;
-  try {
-    if (Date.now() - Number(sessionStorage.getItem(RELOAD_KEY)) < 30_000) return;
-    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
-  } catch {
-    return;
-  }
-  location.reload();
+  if (isStaleBuild(error)) recoverAsset();
 }
 
-createRoot(document.getElementById("root")!).render(
+// Bun can re-evaluate this entry during HMR; keep one React root for the page.
+const g = globalThis as typeof globalThis & { __spinRoot?: ReturnType<typeof createRoot> };
+const root = (g.__spinRoot ??= createRoot(document.getElementById("root")!));
+root.render(
   <Sentry.ErrorBoundary
     onError={reloadOnStaleBuild}
     fallback={({ resetError }) => (

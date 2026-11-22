@@ -16,10 +16,20 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     body: hasJson ? JSON.stringify(opts.body) : opts.raw,
     credentials: "same-origin",
   });
-  const data: unknown = await res.json().catch(() => ({ error: "Unexpected response from server" }));
+  if (res.status === 204) return undefined as T;
+  let data: unknown;
+  try {
+    const type = res.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+    if (type !== "application/json" && !type?.endsWith("+json")) throw new Error("Expected JSON");
+    data = await res.json();
+  } catch {
+    throw Object.assign(new Error("Unexpected response from server"), { status: res.status });
+  }
   if (!res.ok) {
-    const hasMessage = data && typeof data === "object" && "error" in data && typeof data.error === "string";
-    const message = hasMessage ? (data.error as string) : "Request failed";
+    const message =
+      data && typeof data === "object" && "error" in data && typeof data.error === "string"
+        ? data.error
+        : "Request failed";
     throw Object.assign(new Error(message), { status: res.status });
   }
   return data as T;
