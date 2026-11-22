@@ -266,6 +266,8 @@ async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
     );
   }
   if (res.status === 204) return null;
+  // Spotify's own 5xx is as transient as a slowdown: skip this poll and try again on the next
+  if (res.status >= 500) throw new Slowed();
   if (!res.ok) throw new Error(`Spotify ${path} answered ${res.status}`);
   return obj(await res.json().catch(() => null));
 }

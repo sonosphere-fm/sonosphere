@@ -283,16 +283,27 @@ export async function wikiPhotos(mbids: string[]): Promise<Map<string, Picture>>
   await turn("wikidata", 1000);
   const values = ids.map((m) => `"${m}"`).join(" ");
   const query = `SELECT ?mbid (SAMPLE(?img) AS ?image) WHERE { VALUES ?mbid { ${values} } ?item wdt:P434 ?mbid; wdt:P18 ?img. } GROUP BY ?mbid`;
-  const res = await fetch(`${WDQS}?${new URLSearchParams({ query, format: "json" })}`, {
-    headers: { "User-Agent": agent(), Accept: "application/sparql-results+json" },
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (res.status === 429) {
-    await pause("wikidata", Number(res.headers.get("retry-after")) || 60);
-    throw new Busy("wikidata");
+  let payload: unknown;
+  try {
+    const res = await fetch(`${WDQS}?${new URLSearchParams({ query, format: "json" })}`, {
+      headers: { "User-Agent": agent(), Accept: "application/sparql-results+json" },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.status === 429 || res.status >= 500) {
+      await pause("wikidata", Number(res.headers.get("retry-after")) || 60);
+      throw new Busy("wikidata");
+    }
+    if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
+    payload = await res.json();
+  } catch (e) {
+    // Wikidata is slow under load; another query soon would only add to it
+    if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      await pause("wikidata", 60);
+      throw new Busy("wikidata");
+    }
+    throw e;
   }
-  if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
-  const rows = objs(obj(obj(await res.json())?.results)?.bindings);
+  const rows = objs(obj(obj(payload)?.results)?.bindings);
   for (const r of rows) {
     const mbid = str(obj(r.mbid)?.value);
     const img = str(obj(r.image)?.value);
@@ -312,12 +323,17 @@ export async function coverArt(
   mbid: string,
   of: "release-group" | "release" = "release-group"
 ): Promise<Uint8Array | null> {
+  await pausedFor("caa");
   await turn("caa", 250);
   const res = await fetch(`https://coverartarchive.org/${of}/${mbid}/front-1200`, {
     headers: { "User-Agent": agent() },
     signal: AbortSignal.timeout(30_000),
   });
   if (res.status === 404) return null;
+  if (res.status === 429) {
+    await pause("caa", Number(res.headers.get("retry-after")) || 60);
+    throw new Busy("caa");
+  }
   if (!res.ok) throw new Error(`Cover Art Archive answered ${res.status}`);
   if (Number(res.headers.get("content-length")) > 15_000_000) return null;
   const bytes = new Uint8Array(await res.arrayBuffer());

@@ -1,6 +1,7 @@
 import { S3Client } from "bun";
 import { mkdir, unlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { retryS3Delete } from "./retry";
 
 interface Store {
   put(key: string, data: Uint8Array, type: string): Promise<void>;
@@ -40,7 +41,8 @@ function s3Store(env: NodeJS.ProcessEnv): Store {
       }
     },
     async delete(key) {
-      await client.delete(checked(key));
+      const validKey = checked(key);
+      await retryS3Delete(() => client.delete(validKey));
     },
   };
 }
