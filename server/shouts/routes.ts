@@ -8,7 +8,7 @@ import { limit } from "../trust/service";
 
 export const router = new Router();
 
-router.get<ShoutList>("/api/shouts", async c => {
+router.get<ShoutList>("/api/shouts", async (c) => {
   const it = await requireItem(c.q.get("type"), c.q.get("id"));
   const pg = paging(c.q, 20, 50);
   const viewerId = c.user?.id ?? 0;
@@ -21,7 +21,7 @@ router.get<ShoutList>("/api/shouts", async c => {
   };
 });
 
-router.post<ShoutPosted>("/api/shouts", async c => {
+router.post<ShoutPosted>("/api/shouts", async (c) => {
   const u = confirmed(poster(c));
   await limit(u, `shout:${u.id}`, 10, 300, "Slow down a little before posting again.");
   await limit(u, `shout-h:${u.id}`, 60, 3600, "You have posted a lot in the last hour. Try again later.");
@@ -29,7 +29,7 @@ router.post<ShoutPosted>("/api/shouts", async c => {
   return { id: await post(u, it, c.body.body) };
 });
 
-router.delete<ShoutDeleted>("/api/shouts/:id", async c => {
+router.delete<ShoutDeleted>("/api/shouts/:id", async (c) => {
   const u = need(c);
   const id = Number(c.params[0]);
   const s = (Number.isSafeInteger(id) ? await repo.findShout(id) : null) ?? missing("Post");

@@ -10,8 +10,9 @@ async function findVideos(artist: string, track: string): Promise<string[]> {
   const query = `${artist} ${track}`;
   const key = process.env.YOUTUBE_API_KEY;
   if (key) {
-    const url = "https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoEmbeddable=true&maxResults=5"
-      + `&q=${encodeURIComponent(query)}&key=${key}`;
+    const url =
+      "https://www.googleapis.com/youtube/v3/search?part=id&type=video&videoEmbeddable=true&maxResults=5" +
+      `&q=${encodeURIComponent(query)}&key=${key}`;
     const r = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!r.ok) throw new Error(`YouTube API ${r.status}`);
     const data: unknown = await r.json();

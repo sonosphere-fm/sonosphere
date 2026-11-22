@@ -18,18 +18,27 @@ export async function claim(kind: Kind, id: number, staleBefore: number): Promis
   return rows.length > 0;
 }
 
-export const addArtist = (name: string) => transact(tx => getOrCreateArtistTx(tx, name));
+export const addArtist = (name: string) => transact((tx) => getOrCreateArtistTx(tx, name));
 export const addAlbum = (artistId: number, title: string, date: string | null) =>
-  transact(tx => getOrCreateAlbumTx(tx, artistId, title, date));
+  transact((tx) => getOrCreateAlbumTx(tx, artistId, title, date));
 export const addTrack = (artistId: number, title: string, seconds: number) =>
-  transact(tx => getOrCreateTrackTx(tx, artistId, title, seconds));
+  transact((tx) => getOrCreateTrackTx(tx, artistId, title, seconds));
 
-export async function setArtist(id: number, set: { mbid?: string; spotifyId?: string; imageId?: string; metaAt?: number; wdAt?: number }) {
+export async function setArtist(
+  id: number,
+  set: { mbid?: string; spotifyId?: string; imageId?: string; metaAt?: number; wdAt?: number }
+) {
   if (Object.keys(set).length) await db.update(artists).set(set).where(eq(artists.id, id));
 }
-export async function setAlbum(id: number, set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number | null; metaAt?: number }) {
+export async function setAlbum(
+  id: number,
+  set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number | null; metaAt?: number }
+) {
   if (!Object.keys(set).length) return;
-  await db.update(albums).set(set.mbid ? { ...set, releaseType: null } : set).where(eq(albums.id, id));
+  await db
+    .update(albums)
+    .set(set.mbid ? { ...set, releaseType: null } : set)
+    .where(eq(albums.id, id));
 }
 export async function setTrack(id: number, set: { duration?: number; albumId?: number; metaAt?: number }) {
   if (Object.keys(set).length) await db.update(tracks).set(set).where(eq(tracks.id, id));
@@ -39,7 +48,13 @@ export const artistRow = (id: number) => first(db.select().from(artists).where(e
 export const albumRow = (id: number) => first(db.select().from(albums).where(eq(albums.id, id)).limit(1));
 export const trackRow = (id: number) => first(db.select().from(tracks).where(eq(tracks.id, id)).limit(1));
 export const albumByMbid = (artistId: number, mbid: string) =>
-  first(db.select().from(albums).where(and(eq(albums.artistId, artistId), eq(albums.mbid, mbid))).limit(1));
+  first(
+    db
+      .select()
+      .from(albums)
+      .where(and(eq(albums.artistId, artistId), eq(albums.mbid, mbid)))
+      .limit(1)
+  );
 
 export async function trackListSize(albumId: number): Promise<number> {
   const rows = await db.select({ id: albumTracks.trackId }).from(albumTracks).where(eq(albumTracks.albumId, albumId));
@@ -47,10 +62,15 @@ export async function trackListSize(albumId: number): Promise<number> {
 }
 
 /** Tracks already on the album that the published list doesn't have (a bonus track someone scrobbled) go after it. */
-export async function setTrackList(albumId: number, artistId: number, list: { title: string; seconds: number }[]): Promise<void> {
-  await transact(async tx => {
+export async function setTrackList(
+  albumId: number,
+  artistId: number,
+  list: { title: string; seconds: number }[]
+): Promise<void> {
+  await transact(async (tx) => {
     const place = (trackId: number, position: number) =>
-      tx.update(albumTracks)
+      tx
+        .update(albumTracks)
         .set({ position })
         .where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, trackId)));
     const ids: number[] = [];
@@ -69,12 +89,15 @@ export async function setTrackList(albumId: number, artistId: number, list: { ti
 }
 
 /** Adds the albums not filed yet (matched by name or MusicBrainz id) and returns how many. */
-export async function addDiscography(artistId: number, list: { mbid: string; title: string; date: string | null }[]): Promise<number> {
+export async function addDiscography(
+  artistId: number,
+  list: { mbid: string; title: string; date: string | null }[]
+): Promise<number> {
   const known = await db
     .select({ mbid: albums.mbid })
     .from(albums)
     .where(and(eq(albums.artistId, artistId), isNotNull(albums.mbid)));
-  const have = new Set(known.map(k => k.mbid));
+  const have = new Set(known.map((k) => k.mbid));
   let added = 0;
   for (const a of list) {
     if (have.has(a.mbid)) continue;
@@ -91,7 +114,14 @@ export async function addDiscography(artistId: number, list: { mbid: string; tit
 /** Albums with a MusicBrainz id but no cover that were never searched for one, oldest first. */
 export const coverless = (limit: number) =>
   db
-    .select({ id: albums.id, mbid: albums.mbid, title: albums.title, artistId: albums.artistId, spAt: albums.spAt, lfAt: albums.lfAt })
+    .select({
+      id: albums.id,
+      mbid: albums.mbid,
+      title: albums.title,
+      artistId: albums.artistId,
+      spAt: albums.spAt,
+      lfAt: albums.lfAt,
+    })
     .from(albums)
     .where(and(isNotNull(albums.mbid), isNull(albums.imageId), isNull(albums.coverAt)))
     .orderBy(asc(albums.id))
@@ -100,7 +130,7 @@ export const coverless = (limit: number) =>
 export async function artistNames(ids: number[]) {
   if (!ids.length) return new Map<number, string>();
   const rows = await db.select({ id: artists.id, name: artists.name }).from(artists).where(inArray(artists.id, ids));
-  return new Map(rows.map(r => [r.id, r.name]));
+  return new Map(rows.map((r) => [r.id, r.name]));
 }
 
 /** Found or not, Spotify isn't asked again. */
@@ -130,10 +160,14 @@ export async function catalogueCopyPicture(spotifyId: string | null, name: strin
     ? await first(db.select(pic).from(spotifyArtistPics).where(eq(spotifyArtistPics.spotifyId, spotifyId)))
     : null;
   if (byId) return byId;
-  return first(db.select(pic).from(spotifyArtistPics)
-    .where(eq(spotifyArtistPics.nameNorm, norm(name)))
-    .orderBy(desc(spotifyArtistPics.followers))
-    .limit(1));
+  return first(
+    db
+      .select(pic)
+      .from(spotifyArtistPics)
+      .where(eq(spotifyArtistPics.nameNorm, norm(name)))
+      .orderBy(desc(spotifyArtistPics.followers))
+      .limit(1)
+  );
 }
 
 export const picturelessArtists = (after: number, limit: number) =>
@@ -150,23 +184,27 @@ export const spotifyDueArtists = (limit: number) =>
   db
     .select({ id: artists.id })
     .from(artists)
-    .where(and(
-      isNull(artists.imageId),
-      isNull(artists.spAt),
-      isNotNull(artists.metaAt),
-      or(isNull(artists.mbid), isNotNull(artists.wdAt)),
-    ))
+    .where(
+      and(
+        isNull(artists.imageId),
+        isNull(artists.spAt),
+        isNotNull(artists.metaAt),
+        or(isNull(artists.mbid), isNotNull(artists.wdAt))
+      )
+    )
     .orderBy(asc(artists.id))
     .limit(limit);
 export const spotifyDueAlbums = (limit: number) =>
   db
     .select({ id: albums.id, artistId: albums.artistId, title: albums.title })
     .from(albums)
-    .where(and(
-      isNull(albums.imageId),
-      isNull(albums.spAt),
-      or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt))),
-    ))
+    .where(
+      and(
+        isNull(albums.imageId),
+        isNull(albums.spAt),
+        or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt)))
+      )
+    )
     .orderBy(asc(albums.id))
     .limit(limit);
 export const spotifyDueTracks = (limit: number) =>
@@ -187,11 +225,13 @@ export const lastfmDueAlbums = (limit: number) =>
   db
     .select({ id: albums.id, artistId: albums.artistId, title: albums.title })
     .from(albums)
-    .where(and(
-      isNull(albums.imageId),
-      isNull(albums.lfAt),
-      or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt))),
-    ))
+    .where(
+      and(
+        isNull(albums.imageId),
+        isNull(albums.lfAt),
+        or(isNotNull(albums.coverAt), and(isNull(albums.mbid), isNotNull(albums.metaAt)))
+      )
+    )
     .orderBy(asc(albums.id))
     .limit(limit);
 export const lastfmDueTracks = (limit: number) =>

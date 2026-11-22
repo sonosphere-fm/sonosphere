@@ -5,13 +5,24 @@ import { wikiLock } from "../wiki/repo";
 import { note, paging } from "./common";
 import { pageOf, reportTarget } from "../moderation/repo";
 import * as repo from "./content.repo";
-import type { ContentList, JournalItem, Ok, PageRef, ShoutItem, WikiHistory, WikiItem, WikiLocked, WikiLockList, WikiReverted } from "../../shared/admin-content";
+import type {
+  ContentList,
+  JournalItem,
+  Ok,
+  PageRef,
+  ShoutItem,
+  WikiHistory,
+  WikiItem,
+  WikiLocked,
+  WikiLockList,
+  WikiReverted,
+} from "../../shared/admin-content";
 
 export const router = new Router({ jsonOnly: true });
 
 const excerpt = (s: string, n = 280) => (s.length > n ? s.slice(0, n).replace(/\s+\S*$/, "") + "…" : s);
 
-router.get<ContentList>("/api/admin/content", async c => {
+router.get<ContentList>("/api/admin/content", async (c) => {
   staff(c);
   const kind = c.q.get("kind") || "shouts";
   const pg = paging(c.q, 25);
@@ -74,14 +85,14 @@ router.get<ContentList>("/api/admin/content", async c => {
   return bad("Unknown content kind");
 });
 
-router.post<Ok>("/api/admin/content/delete", async c => {
+router.post<Ok>("/api/admin/content/delete", async (c) => {
   const me = staff(c);
   const kind = String(c.body.kind);
   const id = Number(c.body.id);
   const why = note(c);
   if (!["shout", "journal", "wiki"].includes(kind)) bad("Unknown content kind");
   const t = (await reportTarget(kind, id)) ?? missing("That content");
-  await repo.removeContent(kind, id, me, why, closedReports => ({
+  await repo.removeContent(kind, id, me, why, (closedReports) => ({
     action: `${kind}.delete`,
     targetType: kind,
     targetId: id,
@@ -99,7 +110,7 @@ async function wikiPage(type: string, id: number): Promise<PageRef> {
   return (await pageOf(type, id)) ?? missing("Page");
 }
 
-router.get<WikiHistory>("/api/admin/wiki", async c => {
+router.get<WikiHistory>("/api/admin/wiki", async (c) => {
   staff(c);
   const type = c.q.get("type") || "";
   const id = Number(c.q.get("id"));
@@ -114,7 +125,7 @@ router.get<WikiHistory>("/api/admin/wiki", async c => {
   };
 });
 
-router.post<WikiReverted>("/api/admin/wiki/revert", async c => {
+router.post<WikiReverted>("/api/admin/wiki/revert", async (c) => {
   const me = staff(c);
   const w = (await repo.wikiRevision(Number(c.body.revision))) ?? missing("Revision");
   const page = await wikiPage(w.itemType, w.itemId);
@@ -132,7 +143,7 @@ router.post<WikiReverted>("/api/admin/wiki/revert", async c => {
   return { version: top + 1 };
 });
 
-router.post<WikiLocked>("/api/admin/wiki/lock", async c => {
+router.post<WikiLocked>("/api/admin/wiki/lock", async (c) => {
   const me = staff(c);
   const type = String(c.body.type);
   const id = Number(c.body.id);
@@ -150,7 +161,7 @@ router.post<WikiLocked>("/api/admin/wiki/lock", async c => {
   return { locked };
 });
 
-router.get<WikiLockList>("/api/admin/wiki/locks", async c => {
+router.get<WikiLockList>("/api/admin/wiki/locks", async (c) => {
   staff(c);
   const items: WikiLockList["items"] = [];
   for (const l of await repo.lockRows()) {

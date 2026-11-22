@@ -16,21 +16,22 @@ type Turnstile = {
 
 let script: Promise<Turnstile> | null = null;
 
-const loadTurnstile = () => script ??= new Promise<Turnstile>((ok, no) => {
-  const s = document.createElement("script");
-  s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-  s.async = true;
-  s.onload = () => {
-    const t = (window as unknown as { turnstile?: Turnstile }).turnstile;
-    if (t) ok(t);
-    else no(new Error("no turnstile"));
-  };
-  s.onerror = () => {
-    script = null;
-    no(new Error("Turnstile did not load"));
-  };
-  document.head.append(s);
-});
+const loadTurnstile = () =>
+  (script ??= new Promise<Turnstile>((ok, no) => {
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async = true;
+    s.onload = () => {
+      const t = (window as unknown as { turnstile?: Turnstile }).turnstile;
+      if (t) ok(t);
+      else no(new Error("no turnstile"));
+    };
+    s.onerror = () => {
+      script = null;
+      no(new Error("Turnstile did not load"));
+    };
+    document.head.append(s);
+  }));
 
 // Each token works once, so callers reset after a refused submit.
 export function useTurnstile(action: string) {
@@ -44,26 +45,29 @@ export function useTurnstile(action: string) {
   useEffect(() => {
     if (!key || !box.current) return;
     let gone = false;
-    loadTurnstile().then(t => {
-      if (gone || !box.current) return;
-      const theme = document.documentElement.dataset.theme;
-      const id = t.render(box.current, {
-        sitekey: key,
-        action,
-        size: "flexible",
-        theme: theme === "dark" || theme === "light" ? theme : "auto",
-        callback: (v: string) => {
-          setToken(v);
-          setFailed(false);
-        },
-        "expired-callback": () => setToken(""),
-        "error-callback": () => {
-          setToken("");
-          setFailed(true);
-        },
-      });
-      widget.current = { t, id };
-    }, () => setFailed(true));
+    loadTurnstile().then(
+      (t) => {
+        if (gone || !box.current) return;
+        const theme = document.documentElement.dataset.theme;
+        const id = t.render(box.current, {
+          sitekey: key,
+          action,
+          size: "flexible",
+          theme: theme === "dark" || theme === "light" ? theme : "auto",
+          callback: (v: string) => {
+            setToken(v);
+            setFailed(false);
+          },
+          "expired-callback": () => setToken(""),
+          "error-callback": () => {
+            setToken("");
+            setFailed(true);
+          },
+        });
+        widget.current = { t, id };
+      },
+      () => setFailed(true)
+    );
     return () => {
       gone = true;
       if (widget.current) widget.current.t.remove(widget.current.id);
@@ -79,7 +83,11 @@ export function useTurnstile(action: string) {
   const view = key ? (
     <div className="turnstile">
       <div ref={box} />
-      {failed && <p className="form-error" role="alert">The robot check could not load. Refresh the page and try again.</p>}
+      {failed && (
+        <p className="form-error" role="alert">
+          The robot check could not load. Refresh the page and try again.
+        </p>
+      )}
     </div>
   ) : null;
 
@@ -89,8 +97,15 @@ export function useTurnstile(action: string) {
 function Agreement() {
   return (
     <p className="muted small">
-      By creating an account you agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and{" "}
-      <Link to="/privacy" target="_blank">Privacy Policy</Link>, and confirm you are at least 13.
+      By creating an account you agree to the{" "}
+      <Link to="/terms" target="_blank">
+        Terms of Service
+      </Link>{" "}
+      and{" "}
+      <Link to="/privacy" target="_blank">
+        Privacy Policy
+      </Link>
+      , and confirm you are at least 13.
     </p>
   );
 }
@@ -130,14 +145,28 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
     <div className="wrap page narrow">
       <h1 className="page-title">{login ? "Log in" : "Join Sonosphere"}</h1>
       <form className="form card" onSubmit={submit}>
-        {oauthError && <p className="form-error" role="alert">{oauthError}</p>}
+        {oauthError && (
+          <p className="form-error" role="alert">
+            {oauthError}
+          </p>
+        )}
         <OAuthButtons providers={config?.oauth ?? []} next={next} />
         <label>
           {login ? "Username or email" : "Username"}
-          <Input value={f.username} onChange={set("username")} autoComplete="username" required autoFocus maxLength={login ? 200 : 15} />
+          <Input
+            value={f.username}
+            onChange={set("username")}
+            autoComplete="username"
+            required
+            autoFocus
+            maxLength={login ? 200 : 15}
+          />
         </label>
         {!login && (
-          <label>Email<Input type="email" value={f.email} onChange={set("email")} autoComplete="email" required /></label>
+          <label>
+            Email
+            <Input type="email" value={f.email} onChange={set("email")} autoComplete="email" required />
+          </label>
         )}
         <label>
           Password
@@ -153,15 +182,23 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
         {robot.view}
         {!login && <Agreement />}
         {act.note}
-        <Button kind="btn" loading={act.busy}>{login ? "Log in" : "Create account"}</Button>
+        <Button kind="btn" loading={act.busy}>
+          {login ? "Log in" : "Create account"}
+        </Button>
       </form>
       {login ? (
         <>
-          <p><Link to="/forgot">Forgot your password?</Link></p>
-          <p>New here? <Link to={`/join${qs({ next: sp.get("next") })}`}>Create an account</Link>.</p>
+          <p>
+            <Link to="/forgot">Forgot your password?</Link>
+          </p>
+          <p>
+            New here? <Link to={`/join${qs({ next: sp.get("next") })}`}>Create an account</Link>.
+          </p>
         </>
       ) : (
-        <p>Already have an account? <Link to={`/login${qs({ next: sp.get("next") })}`}>Log in</Link>.</p>
+        <p>
+          Already have an account? <Link to={`/login${qs({ next: sp.get("next") })}`}>Log in</Link>.
+        </p>
       )}
     </div>
   );
@@ -190,24 +227,40 @@ export function OAuthJoinPage() {
   if (q.error) {
     body = (
       <div className="card form">
-        <p className="form-error" role="alert">{q.error.message}</p>
-        <p><Link to="/join">Back to the join page</Link></p>
+        <p className="form-error" role="alert">
+          {q.error.message}
+        </p>
+        <p>
+          <Link to="/join">Back to the join page</Link>
+        </p>
       </div>
     );
   } else if (q.data) {
     body = (
       <form className="form card" onSubmit={submit}>
-        <p>You're signing up with {q.data.provider} as <strong>{q.data.email}</strong>. Pick a username to finish.</p>
+        <p>
+          You're signing up with {q.data.provider} as <strong>{q.data.email}</strong>. Pick a username to finish.
+        </p>
         <label>
           Username
-          <Input value={username} onChange={e => setName(e.target.value)} autoComplete="username" required autoFocus maxLength={15} />
+          <Input
+            value={username}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="username"
+            required
+            autoFocus
+            maxLength={15}
+          />
         </label>
         <p className="muted small">
-          2 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in Settings, which some scrobbler apps need.
+          2 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in
+          Settings, which some scrobbler apps need.
         </p>
         <Agreement />
         {act.note}
-        <Button kind="btn" loading={act.busy}>Create account</Button>
+        <Button kind="btn" loading={act.busy}>
+          Create account
+        </Button>
       </form>
     );
   }
@@ -246,19 +299,38 @@ export function ForgotPage() {
       <h1 className="page-title">Reset your password</h1>
       {sent ? (
         <div className="card form">
-          <p>If an account uses <strong>{sent}</strong>, a link to choose a new password is on its way. It works for one hour.</p>
-          <p className="muted small">Nothing after a few minutes? Check your spam folder, or make sure you used the address you signed up with.</p>
+          <p>
+            If an account uses <strong>{sent}</strong>, a link to choose a new password is on its way. It works for one
+            hour.
+          </p>
+          <p className="muted small">
+            Nothing after a few minutes? Check your spam folder, or make sure you used the address you signed up with.
+          </p>
         </div>
       ) : (
         <form className="form card" onSubmit={submit}>
           <p>Enter the email address on your account and we will send you a link to choose a new password.</p>
-          <label>Email<Input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required autoFocus /></label>
+          <label>
+            Email
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+              autoFocus
+            />
+          </label>
           {robot.view}
           {act.note}
-          <Button kind="btn" loading={act.busy}>Send reset link</Button>
+          <Button kind="btn" loading={act.busy}>
+            Send reset link
+          </Button>
         </form>
       )}
-      <p><Link to="/login">Back to log in</Link></p>
+      <p>
+        <Link to="/login">Back to log in</Link>
+      </p>
     </div>
   );
 }
@@ -288,15 +360,28 @@ export function ResetPage() {
         <form className="form card" onSubmit={submit}>
           <label>
             New password
-            <Input type="password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="new-password" required minLength={8} autoFocus />
+            <Input
+              type="password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              autoFocus
+            />
           </label>
           <p className="muted small">At least 8 characters. You will be signed out everywhere else.</p>
           {act.note}
-          <Button kind="btn" loading={act.busy}>Save password</Button>
+          <Button kind="btn" loading={act.busy}>
+            Save password
+          </Button>
         </form>
       ) : (
         <div className="card form">
-          <p>This link is missing its code. Open the link from the email again, or <Link to="/forgot">ask for a new one</Link>.</p>
+          <p>
+            This link is missing its code. Open the link from the email again, or{" "}
+            <Link to="/forgot">ask for a new one</Link>.
+          </p>
         </div>
       )}
     </div>
@@ -308,7 +393,7 @@ export function VerifyPage() {
   const token = sp.get("token") || "";
   const { me, refresh } = useAuth();
   const [state, setState] = useState<"working" | "done" | string>(
-    token ? "working" : "This link is missing its code. Open the link from the email again.",
+    token ? "working" : "This link is missing its code. Open the link from the email again."
   );
   useTitle("Confirm your email");
   const started = useRef(false);
@@ -321,7 +406,7 @@ export function VerifyPage() {
         setState("done");
         refresh();
       },
-      e => setState(e instanceof Error ? e.message : String(e)),
+      (e) => setState(e instanceof Error ? e.message : String(e))
     );
   }, [token]);
 
@@ -338,11 +423,17 @@ export function VerifyPage() {
   } else {
     body = (
       <>
-        <p className="form-error" role="alert">{state}</p>
+        <p className="form-error" role="alert">
+          {state}
+        </p>
         <p>
-          {me
-            ? <>You can send a new link from <Link to="/settings/account">your account settings</Link>.</>
-            : <Link to="/login">Log in</Link>}
+          {me ? (
+            <>
+              You can send a new link from <Link to="/settings/account">your account settings</Link>.
+            </>
+          ) : (
+            <Link to="/login">Log in</Link>
+          )}
         </p>
       </>
     );

@@ -27,16 +27,21 @@ export async function post(author: Viewer, it: Item, text: unknown): Promise<num
   const id = await repo.addShout(author.id, it.type, it.row.id, body);
   if (it.type === "user") await notify(it.row.id, "shout", author.id, { body: body.slice(0, 140) });
   if (it.type === "journal") {
-    await notify(it.row.userId, "comment", author.id, { body: body.slice(0, 140), journalId: it.row.id, title: it.row.title });
+    await notify(it.row.userId, "comment", author.id, {
+      body: body.slice(0, 140),
+      journalId: it.row.id,
+      title: it.row.title,
+    });
   }
   return id;
 }
 
 // The author or the owner of the profile or journal may delete a post; staff may delete any, and that is audited.
 export async function remove(by: Viewer, s: repo.ShoutRow): Promise<void> {
-  const mine = s.authorId === by.id
-    || (s.targetType === "user" && s.targetId === by.id)
-    || (s.targetType === "journal" && (await findItem("journal", s.targetId))?.userId === by.id);
+  const mine =
+    s.authorId === by.id ||
+    (s.targetType === "user" && s.targetId === by.id) ||
+    (s.targetType === "journal" && (await findItem("journal", s.targetId))?.userId === by.id);
   if (!mine && !by.isAdmin) fail(403, "You can't delete that post");
   await repo.deleteShout(s.id);
   if (mine) return;

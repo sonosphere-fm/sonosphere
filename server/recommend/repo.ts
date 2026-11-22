@@ -2,7 +2,23 @@ import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { trackImage } from "../catalog/art";
 import { db, transact } from "../db/client";
 export { databaseUrl } from "../db/client";
-import { albums, artists, lovedTracks, meta, scrobbles, similarArtists, taggings, tasteFactors, tasteNorms, tasteQueue, tracks, userArtists, userNeighbours, userTracks, users } from "../db/schema";
+import {
+  albums,
+  artists,
+  lovedTracks,
+  meta,
+  scrobbles,
+  similarArtists,
+  taggings,
+  tasteFactors,
+  tasteNorms,
+  tasteQueue,
+  tracks,
+  userArtists,
+  userNeighbours,
+  userTracks,
+  users,
+} from "../db/schema";
 import type { TopTrack } from "../../shared/listening";
 import { now } from "../util";
 import { flag } from "../db/dialect";
@@ -14,11 +30,15 @@ const WATERMARK = "taste_watermark";
 const rowsOf = async <T>(query: SQL): Promise<T[]> => [...(await db.execute(query))] as T[];
 const maxScrobbleId = sql<number>`COALESCE(MAX(${scrobbles.id}), 0)`;
 const listenerCount = sql<number>`((SELECT COUNT(*) FROM ${userArtists} WHERE ${userArtists.artistId} = ${artists.id}) + ${artists.baseListeners})`;
-const idList = (ids: number[]) => sql.join(ids.map(id => sql`${id}`), sql`, `);
+const idList = (ids: number[]) =>
+  sql.join(
+    ids.map((id) => sql`${id}`),
+    sql`, `
+  );
 
 /** Queues every artist and user scrobbled since the last call. Returns how many scrobbles were new. */
 export async function queueChanged(): Promise<number> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     const mark = (await tx.select({ value: meta.value }).from(meta).where(eq(meta.key, WATERMARK)))[0];
     const last = (await tx.select({ id: maxScrobbleId }).from(scrobbles))[0]?.id ?? 0;
     const at = now();
@@ -35,12 +55,19 @@ export async function queueChanged(): Promise<number> {
       const from = Number(mark.value) || 0;
       if (last <= from) return 0;
       const fresh = and(sql`${scrobbles.id} > ${from}`, sql`${scrobbles.id} <= ${last}`);
-      const artistRows = tx.selectDistinct({ kind: artistKind, id: scrobbles.artistId, queuedAt }).from(scrobbles).where(fresh);
-      const userRows = tx.selectDistinct({ kind: userKind, id: scrobbles.userId, queuedAt }).from(scrobbles).where(fresh);
+      const artistRows = tx
+        .selectDistinct({ kind: artistKind, id: scrobbles.artistId, queuedAt })
+        .from(scrobbles)
+        .where(fresh);
+      const userRows = tx
+        .selectDistinct({ kind: userKind, id: scrobbles.userId, queuedAt })
+        .from(scrobbles)
+        .where(fresh);
       await tx.insert(tasteQueue).select(artistRows).onConflictDoNothing();
       await tx.insert(tasteQueue).select(userRows).onConflictDoNothing();
     }
-    await tx.insert(meta)
+    await tx
+      .insert(meta)
       .values({ key: WATERMARK, value: String(last) })
       .onConflictDoUpdate({ target: meta.key, set: { value: String(last) } });
     return last - (Number(mark?.value) || 0);
@@ -52,11 +79,12 @@ export async function queue(kind: Kind, id: number) {
 }
 
 export async function due(limit: number): Promise<{ kind: Kind; id: number }[]> {
-  const rows = await db.select({ kind: tasteQueue.kind, id: tasteQueue.id })
+  const rows = await db
+    .select({ kind: tasteQueue.kind, id: tasteQueue.id })
     .from(tasteQueue)
     .orderBy(asc(tasteQueue.queuedAt))
     .limit(limit);
-  return rows.map(r => ({ kind: r.kind === "user" ? "user" : "artist", id: r.id }));
+  return rows.map((r) => ({ kind: r.kind === "user" ? "user" : "artist", id: r.id }));
 }
 
 export async function done(kind: Kind, id: number) {
@@ -70,25 +98,30 @@ export async function refreshNorms(kind: Kind, ids: number[]) {
   const rows = await db.select({ id: key, norm }).from(userArtists).where(inArray(key, ids)).groupBy(key);
   if (!rows.length) return;
   const at = now();
-  await db.insert(tasteNorms)
-    .values(rows.map(r => ({ kind, id: r.id, norm: r.norm, computedAt: at })))
-    .onConflictDoUpdate({ target: [tasteNorms.kind, tasteNorms.id], set: { norm: sql`excluded.norm`, computedAt: at } });
+  await db
+    .insert(tasteNorms)
+    .values(rows.map((r) => ({ kind, id: r.id, norm: r.norm, computedAt: at })))
+    .onConflictDoUpdate({
+      target: [tasteNorms.kind, tasteNorms.id],
+      set: { norm: sql`excluded.norm`, computedAt: at },
+    });
 }
 
 /** Stored figures of one kind, without computing missing ones. */
 export async function storedNorms(kind: string, ids: number[]): Promise<Map<number, number>> {
   if (!ids.length) return new Map();
-  const rows = await db.select({ id: tasteNorms.id, norm: tasteNorms.norm })
+  const rows = await db
+    .select({ id: tasteNorms.id, norm: tasteNorms.norm })
     .from(tasteNorms)
     .where(and(eq(tasteNorms.kind, kind), inArray(tasteNorms.id, ids)));
-  return new Map(rows.map(r => [r.id, r.norm]));
+  return new Map(rows.map((r) => [r.id, r.norm]));
 }
 
 /** Stored vector lengths, computing any that are missing. */
 export async function norms(kind: Kind, ids: number[]): Promise<Map<number, number>> {
   if (!ids.length) return new Map();
   let found = await storedNorms(kind, ids);
-  const absent = ids.filter(id => !found.has(id));
+  const absent = ids.filter((id) => !found.has(id));
   if (absent.length) {
     await refreshNorms(kind, absent);
     found = await storedNorms(kind, ids);
@@ -97,7 +130,8 @@ export async function norms(kind: Kind, ids: number[]): Promise<Map<number, numb
 }
 
 export async function saveNorm(kind: string, id: number, norm: number) {
-  await db.insert(tasteNorms)
+  await db
+    .insert(tasteNorms)
     .values({ kind, id, norm, computedAt: now() })
     .onConflictDoUpdate({ target: [tasteNorms.kind, tasteNorms.id], set: { norm, computedAt: now() } });
 }
@@ -113,14 +147,15 @@ export async function artistOverlap(artistId: number, fans: number, limit: numbe
   return {
     own: rows[0]?.own ?? 0,
     fans: rows[0]?.fans ?? 0,
-    others: rows.map(r => ({ id: r.id, dot: r.dot })),
+    others: rows.map((r) => ({ id: r.id, dot: r.dot })),
   };
 }
 
 export async function artistTagSets(ids: number[]): Promise<Map<number, Set<number>>> {
   const sets = new Map<number, Set<number>>();
   if (!ids.length) return sets;
-  const rows = await db.selectDistinct({ artist: taggings.itemId, tag: taggings.tagId })
+  const rows = await db
+    .selectDistinct({ artist: taggings.itemId, tag: taggings.tagId })
     .from(taggings)
     .where(and(eq(taggings.itemType, "artist"), inArray(taggings.itemId, ids)));
   for (const r of rows) {
@@ -139,14 +174,18 @@ export async function artistTagSets(ids: number[]): Promise<Map<number, Set<numb
  * own refresh. Matches that came with imported data are left alone.
  */
 export async function saveSimilar(artistId: number, matches: { id: number; score: number }[]) {
-  await transact(async tx => {
-    await tx.delete(similarArtists).where(and(eq(similarArtists.artistId, artistId), eq(similarArtists.source, "computed")));
+  await transact(async (tx) => {
+    await tx
+      .delete(similarArtists)
+      .where(and(eq(similarArtists.artistId, artistId), eq(similarArtists.source, "computed")));
     if (!matches.length) return;
-    await tx.insert(similarArtists)
-      .values(matches.map(m => ({ artistId, similarId: m.id, score: m.score })))
+    await tx
+      .insert(similarArtists)
+      .values(matches.map((m) => ({ artistId, similarId: m.id, score: m.score })))
       .onConflictDoNothing();
-    await tx.insert(similarArtists)
-      .values(matches.map(m => ({ artistId: m.id, similarId: artistId, score: m.score })))
+    await tx
+      .insert(similarArtists)
+      .values(matches.map((m) => ({ artistId: m.id, similarId: artistId, score: m.score })))
       .onConflictDoUpdate({
         target: [similarArtists.artistId, similarArtists.similarId],
         set: { score: sql`excluded.score` },
@@ -156,7 +195,8 @@ export async function saveSimilar(artistId: number, matches: { id: number; score
 }
 
 export async function similarIds(artistId: number, limit: number) {
-  return db.select({ id: similarArtists.similarId, score: similarArtists.score })
+  return db
+    .select({ id: similarArtists.similarId, score: similarArtists.score })
     .from(similarArtists)
     .where(eq(similarArtists.artistId, artistId))
     .orderBy(desc(similarArtists.score), asc(similarArtists.similarId))
@@ -164,13 +204,14 @@ export async function similarIds(artistId: number, limit: number) {
 }
 
 export async function similarArtistRows(artistId: number, limit: number) {
-  return db.select({
-    id: artists.id,
-    name: artists.name,
-    image: artists.imageId,
-    match: similarArtists.score,
-    listeners: listenerCount,
-  })
+  return db
+    .select({
+      id: artists.id,
+      name: artists.name,
+      image: artists.imageId,
+      match: similarArtists.score,
+      listeners: listenerCount,
+    })
     .from(similarArtists)
     .innerJoin(artists, eq(artists.id, similarArtists.similarId))
     .where(eq(similarArtists.artistId, artistId))
@@ -179,7 +220,8 @@ export async function similarArtistRows(artistId: number, limit: number) {
 }
 
 export async function topWeights(userId: number, limit: number) {
-  return db.select({ artist: userArtists.artistId, plays: userArtists.plays, w: sql<number>`${weight(userArtists.plays)}` })
+  return db
+    .select({ artist: userArtists.artistId, plays: userArtists.plays, w: sql<number>`${weight(userArtists.plays)}` })
     .from(userArtists)
     .where(eq(userArtists.userId, userId))
     .orderBy(desc(userArtists.plays), asc(userArtists.artistId))
@@ -187,7 +229,8 @@ export async function topWeights(userId: number, limit: number) {
 }
 
 export async function topListeners(artistId: number, limit: number) {
-  return db.select({ user: userArtists.userId, w: sql<number>`${weight(userArtists.plays)}` })
+  return db
+    .select({ user: userArtists.userId, w: sql<number>`${weight(userArtists.plays)}` })
     .from(userArtists)
     .where(eq(userArtists.artistId, artistId))
     .orderBy(desc(userArtists.plays))
@@ -202,28 +245,30 @@ export async function userOverlap(userId: number, others: number[], depth: numbe
     SELECT y.user_id AS id, SUM(mine.w * ln(1 + y.plays)) AS dot
     FROM mine JOIN ${userArtists} y ON y.artist_id = mine.artist_id
     WHERE y.user_id IN (${idList(others)}) GROUP BY y.user_id`);
-  return new Map(rows.map(r => [r.id, r.dot]));
+  return new Map(rows.map((r) => [r.id, r.dot]));
 }
 
 export async function saveNeighbours(userId: number, matches: { id: number; score: number }[]) {
-  await transact(async tx => {
+  await transact(async (tx) => {
     await tx.delete(userNeighbours).where(eq(userNeighbours.userId, userId));
     if (!matches.length) return;
-    await tx.insert(userNeighbours)
-      .values(matches.map(m => ({ userId, neighbourId: m.id, score: m.score })))
+    await tx
+      .insert(userNeighbours)
+      .values(matches.map((m) => ({ userId, neighbourId: m.id, score: m.score })))
       .onConflictDoNothing();
   });
 }
 
 export async function neighbourRows(userId: number, limit: number) {
-  return db.select({
-    id: users.id,
-    username: users.username,
-    realname: users.realname,
-    country: users.country,
-    image: users.imageId,
-    match: userNeighbours.score,
-  })
+  return db
+    .select({
+      id: users.id,
+      username: users.username,
+      realname: users.realname,
+      country: users.country,
+      image: users.imageId,
+      match: userNeighbours.score,
+    })
     .from(userNeighbours)
     .innerJoin(users, eq(users.id, userNeighbours.neighbourId))
     .where(and(eq(userNeighbours.userId, userId), eq(users.privateListening, false)))
@@ -249,7 +294,8 @@ export async function userSimilarity(a: number, b: number): Promise<number> {
 }
 
 export async function library(userId: number) {
-  return db.select({ id: userArtists.artistId, name: artists.name, c: userArtists.plays })
+  return db
+    .select({ id: userArtists.artistId, name: artists.name, c: userArtists.plays })
     .from(userArtists)
     .innerJoin(artists, eq(artists.id, userArtists.artistId))
     .where(eq(userArtists.userId, userId))
@@ -258,14 +304,16 @@ export async function library(userId: number) {
 
 export async function similarFor(artistIds: number[]) {
   if (!artistIds.length) return [];
-  return db.select({ from: similarArtists.artistId, id: similarArtists.similarId, score: similarArtists.score })
+  return db
+    .select({ from: similarArtists.artistId, id: similarArtists.similarId, score: similarArtists.score })
     .from(similarArtists)
     .where(inArray(similarArtists.artistId, artistIds));
 }
 
 export async function artistCards(ids: number[]) {
   if (!ids.length) return [];
-  return db.select({ id: artists.id, name: artists.name, image: artists.imageId, listeners: listenerCount })
+  return db
+    .select({ id: artists.id, name: artists.name, image: artists.imageId, listeners: listenerCount })
     .from(artists)
     .where(inArray(artists.id, ids));
 }
@@ -274,7 +322,11 @@ export async function artistCards(ids: number[]) {
  * Artists played straight before or after this one by the same person (within `gap` seconds), from its latest
  * `sample` plays. Each person counts with diminishing returns, so one listener's habit does not swamp the rest.
  */
-export async function sessionNeighbours(artistId: number, sample: number, gap: number): Promise<{ total: number; rows: { id: number; w: number }[] }> {
+export async function sessionNeighbours(
+  artistId: number,
+  sample: number,
+  gap: number
+): Promise<{ total: number; rows: { id: number; w: number }[] }> {
   const rows = await rowsOf<{ id: number; w: number }>(sql`
     WITH s AS (SELECT user_id, played_at FROM ${scrobbles} WHERE artist_id = ${artistId} ORDER BY played_at DESC LIMIT ${sample}),
     nb AS (
@@ -304,7 +356,10 @@ export async function neighbourArtists(userId: number, neighbours: number, per: 
 }
 
 export async function neighbourCount(userId: number): Promise<number> {
-  const rows = await db.select({ c: sql<number>`COUNT(*)` }).from(userNeighbours).where(eq(userNeighbours.userId, userId));
+  const rows = await db
+    .select({ c: sql<number>`COUNT(*)` })
+    .from(userNeighbours)
+    .where(eq(userNeighbours.userId, userId));
   return rows[0]?.c ?? 0;
 }
 
@@ -335,17 +390,18 @@ export async function unplayedTopTracks(artistIds: number[], userId: number, per
 
 export async function trackCards(ids: number[], viewerId: number): Promise<TopTrack[]> {
   if (!ids.length) return [];
-  return db.select({
-    id: tracks.id,
-    title: tracks.title,
-    duration: tracks.duration,
-    artist: artists.name,
-    album: albums.title,
-    image: trackImage(),
-    playcount: sql<number>`${tracks.basePlaycount} + COALESCE((SELECT SUM(plays) FROM ${userTracks} WHERE track_id = ${tracks.id}), 0)`,
-    listeners: sql<number>`${tracks.baseListeners} + (SELECT COUNT(*) FROM ${userTracks} WHERE track_id = ${tracks.id})`,
-    loved: flag(sql`EXISTS (SELECT 1 FROM ${lovedTracks} WHERE user_id = ${viewerId} AND track_id = ${tracks.id})`),
-  })
+  return db
+    .select({
+      id: tracks.id,
+      title: tracks.title,
+      duration: tracks.duration,
+      artist: artists.name,
+      album: albums.title,
+      image: trackImage(),
+      playcount: sql<number>`${tracks.basePlaycount} + COALESCE((SELECT SUM(plays) FROM ${userTracks} WHERE track_id = ${tracks.id}), 0)`,
+      listeners: sql<number>`${tracks.baseListeners} + (SELECT COUNT(*) FROM ${userTracks} WHERE track_id = ${tracks.id})`,
+      loved: flag(sql`EXISTS (SELECT 1 FROM ${lovedTracks} WHERE user_id = ${viewerId} AND track_id = ${tracks.id})`),
+    })
     .from(tracks)
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .leftJoin(albums, eq(albums.id, tracks.albumId))
@@ -367,14 +423,16 @@ export async function modelInfo(): Promise<ModelInfo | null> {
 const floats = (b: Uint8Array) => new Float32Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
 
 export async function artistVectors(): Promise<{ id: number; vec: Float32Array }[]> {
-  const rows = await db.select({ id: tasteFactors.id, vec: tasteFactors.vec })
+  const rows = await db
+    .select({ id: tasteFactors.id, vec: tasteFactors.vec })
     .from(tasteFactors)
     .where(eq(tasteFactors.kind, "artist"));
-  return rows.map(r => ({ id: r.id, vec: floats(r.vec) }));
+  return rows.map((r) => ({ id: r.id, vec: floats(r.vec) }));
 }
 
 export async function userVector(userId: number): Promise<Float32Array | null> {
-  const rows = await db.select({ vec: tasteFactors.vec })
+  const rows = await db
+    .select({ vec: tasteFactors.vec })
     .from(tasteFactors)
     .where(and(eq(tasteFactors.kind, "user"), eq(tasteFactors.id, userId)));
   return rows[0] ? floats(rows[0].vec) : null;

@@ -5,7 +5,11 @@ import { attempt, hits } from "./kv";
 import { isStaff } from "./site/roles";
 
 export class HttpError extends Error {
-  constructor(public status: number, message: string, public retryAfter = 0) {
+  constructor(
+    public status: number,
+    message: string,
+    public retryAfter = 0
+  ) {
     super(message);
   }
 }
@@ -18,7 +22,16 @@ export const missing = (what: string): never => fail(404, `${what} not found`);
 export type Viewer = typeof users.$inferSelect;
 /** A JSON request body before validation: handlers must check each field they read. */
 export type Body = Record<string, unknown>;
-export type Ctx = { req: Request; url: URL; q: URLSearchParams; user: Viewer | null; actor: Viewer | null; body: Body; params: string[]; headers: Headers };
+export type Ctx = {
+  req: Request;
+  url: URL;
+  q: URLSearchParams;
+  user: Viewer | null;
+  actor: Viewer | null;
+  body: Body;
+  params: string[];
+  headers: Headers;
+};
 type Handler<R = unknown> = (c: Ctx) => R | Response | Promise<R | Response>;
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 type Options = {
@@ -40,10 +53,18 @@ export class Router {
     for (const o of others) this.routes.push(...o.routes);
     return this;
   }
-  get<R>(path: string, fn: Handler<R>) { this.on("GET", path, fn); }
-  post<R>(path: string, fn: Handler<R>) { this.on("POST", path, fn); }
-  patch<R>(path: string, fn: Handler<R>) { this.on("PATCH", path, fn); }
-  delete<R>(path: string, fn: Handler<R>) { this.on("DELETE", path, fn); }
+  get<R>(path: string, fn: Handler<R>) {
+    this.on("GET", path, fn);
+  }
+  post<R>(path: string, fn: Handler<R>) {
+    this.on("POST", path, fn);
+  }
+  patch<R>(path: string, fn: Handler<R>) {
+    this.on("PATCH", path, fn);
+  }
+  delete<R>(path: string, fn: Handler<R>) {
+    this.on("DELETE", path, fn);
+  }
 
   handle = async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
@@ -57,7 +78,16 @@ export class Router {
         const m = r.re.exec(url.pathname);
         if (!m) continue;
         const body = await readBody(req, r.jsonOnly);
-        const c: Ctx = { req, url, q: url.searchParams, user, actor, body, params: m.slice(1).map(decodeURIComponent), headers };
+        const c: Ctx = {
+          req,
+          url,
+          q: url.searchParams,
+          user,
+          actor,
+          body,
+          params: m.slice(1).map(decodeURIComponent),
+          headers,
+        };
         const out = await r.fn(c);
         return out instanceof Response ? out : new Response(JSON.stringify(out), { headers });
       }
@@ -78,23 +108,48 @@ export class Router {
 export const ipOf = (req: Request) => req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
 
 /** Sliding window, at most an hour long. */
-export async function limit(key: string, max: number, seconds: number, msg = "Too many attempts. Wait a few minutes and try again."): Promise<void> {
+export async function limit(
+  key: string,
+  max: number,
+  seconds: number,
+  msg = "Too many attempts. Wait a few minutes and try again."
+): Promise<void> {
   if (!(await attempt(key, max, seconds * 1000))) fail(429, msg);
 }
 
 /** Fixed window: cheaper than limit(), and `seconds` may be any length. */
-export async function throttle(key: string, max: number, seconds: number, msg = "You are going a bit fast. Wait a moment and try again."): Promise<void> {
+export async function throttle(
+  key: string,
+  max: number,
+  seconds: number,
+  msg = "You are going a bit fast. Wait a moment and try again."
+): Promise<void> {
   const wait = await hits(key, max, seconds);
   if (wait) throw new HttpError(429, msg, wait);
 }
 
 // Site-wide request budget against scraping. Pictures have their own limit (images/routes.ts).
 const READS = {
-  visitor: [[120, 60], [2000, 3600], [10_000, 86_400]],
-  member: [[300, 60], [6000, 3600], [40_000, 86_400]],
+  visitor: [
+    [120, 60],
+    [2000, 3600],
+    [10_000, 86_400],
+  ],
+  member: [
+    [300, 60],
+    [6000, 3600],
+    [40_000, 86_400],
+  ],
 } as const;
-const WRITES = [[60, 60], [600, 3600], [3000, 86_400]] as const;
-const PER_ADDRESS = [[600, 60], [12_000, 3600]] as const;
+const WRITES = [
+  [60, 60],
+  [600, 3600],
+  [3000, 86_400],
+] as const;
+const PER_ADDRESS = [
+  [600, 60],
+  [12_000, 3600],
+] as const;
 const SLOW = "You are going too fast. Wait a little and try again.";
 
 async function budget(req: Request, url: URL, user: Viewer | null): Promise<void> {
@@ -126,7 +181,11 @@ function hostOf(origin: string) {
 }
 
 const trustedHosts = new Set(
-  (process.env.TRUSTED_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean).map(hostOf),
+  (process.env.TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(hostOf)
 );
 
 function crossSite(req: Request, url: URL) {

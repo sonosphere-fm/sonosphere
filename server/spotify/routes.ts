@@ -10,9 +10,9 @@ export const router = new Router();
 const redirect = (location: string) =>
   new Response(null, { status: 302, headers: { Location: location, "Cache-Control": "no-store" } });
 
-router.get<SpotifyStatus>("/api/spotify", c => spotify.status(need(c).id, c.req));
+router.get<SpotifyStatus>("/api/spotify", (c) => spotify.status(need(c).id, c.req));
 
-router.post<SpotifyConnect>("/api/spotify/connect", async c => {
+router.post<SpotifyConnect>("/api/spotify/connect", async (c) => {
   const u = need(c);
   const redirectUri = spotify.redirectFor(c.req) ?? fail(404, "Spotify is disabled");
   const clientId = clean(c.body.clientId, 64);
@@ -25,7 +25,7 @@ router.post<SpotifyConnect>("/api/spotify/connect", async c => {
 });
 
 /** Spotify sends the browser here after the listener approves (or declines). */
-router.get("/api/spotify/callback", async c => {
+router.get("/api/spotify/callback", async (c) => {
   const hop = await spotify.callbackHop(c.user?.id ?? null, c.q);
   if (hop) return redirect(hop);
   const outcome = await spotify.finishConnect(c.user?.id ?? null, c.q);
@@ -33,19 +33,19 @@ router.get("/api/spotify/callback", async c => {
 });
 
 /** For the in-browser player. Spotify tokens last an hour, so this is asked for rarely. */
-router.get<SpotifyPlayerToken>("/api/spotify/token", async c => {
+router.get<SpotifyPlayerToken>("/api/spotify/token", async (c) => {
   const u = need(c);
   await limit(`spotify-token:${u.id}`, 30, 3600, "Too many requests to Spotify. Try again later.");
   return spotify.playerToken(u.id);
 });
 
-router.post<SpotifySynced>("/api/spotify/sync", async c => {
+router.post<SpotifySynced>("/api/spotify/sync", async (c) => {
   const u = need(c);
   await limit(`spotify-sync:${u.id}`, 1, 30, "Wait a moment before importing again");
   return (await spotify.syncNow(u.id)) ?? fail(404, "Spotify is not connected");
 });
 
-router.delete<Ok>("/api/spotify", async c => {
+router.delete<Ok>("/api/spotify", async (c) => {
   await spotify.disconnect(need(c).id);
   return { ok: true };
 });

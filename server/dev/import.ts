@@ -95,7 +95,8 @@ function parseDate(s: string): Date | null {
   let y = 0;
   let h = 12;
   let mi = 0;
-  const dayFirst = /(\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?,?\s+(\d{4})(?:,?\s+(?:at\s+)?(\d{1,2}):(\d{2})\s*(am|pm))?/i.exec(s);
+  const dayFirst =
+    /(\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?,?\s+(\d{4})(?:,?\s+(?:at\s+)?(\d{1,2}):(\d{2})\s*(am|pm))?/i.exec(s);
   if (dayFirst) {
     d = Number(dayFirst[1]);
     mo = MONTHS.indexOf(dayFirst[2]!.toLowerCase());
@@ -133,7 +134,10 @@ function seconds(s: string) {
 }
 
 /** Awaits `fn` on each element in turn (cheerio's own .each does not wait for promises). Returning false stops. */
-async function eachSeq<T>(sel: cheerio.Cheerio<T> | T[], fn: (i: number, el: T) => Promise<unknown> | unknown): Promise<void> {
+async function eachSeq<T>(
+  sel: cheerio.Cheerio<T> | T[],
+  fn: (i: number, el: T) => Promise<unknown> | unknown
+): Promise<void> {
   const els = Array.isArray(sel) ? sel : sel.toArray();
   for (let i = 0; i < els.length; i++) {
     if ((await fn(i, els[i]!)) === false) break;
@@ -141,7 +145,10 @@ async function eachSeq<T>(sel: cheerio.Cheerio<T> | T[], fn: (i: number, el: T) 
 }
 
 /** Like cheerio's .map(...).get(), one element at a time: arrays are flattened and nulls dropped. */
-async function mapSeq<T, R>(sel: cheerio.Cheerio<T> | T[], fn: (i: number, el: T) => Promise<R | R[] | null | undefined>): Promise<R[]> {
+async function mapSeq<T, R>(
+  sel: cheerio.Cheerio<T> | T[],
+  fn: (i: number, el: T) => Promise<R | R[] | null | undefined>
+): Promise<R[]> {
   const out: R[] = [];
   await eachSeq(sel, async (i, el) => {
     const r = await fn(i, el);
@@ -156,9 +163,19 @@ function prose($: Page, el: cheerio.BasicAcceptedElems<AnyNode>): string {
   const c = $(el).clone();
   c.find("script, style, .wiki-block-cta, a.wiki-block-cta, .factbox").remove();
   c.find("br").replaceWith("\n");
-  const paras = c.find("p").length ? c.find("p").map((_, p) => $(p).text()).get() : [c.text()];
+  const paras = c.find("p").length
+    ? c
+        .find("p")
+        .map((_, p) => $(p).text())
+        .get()
+    : [c.text()];
   return paras
-    .map(p => p.replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim())
+    .map((p) =>
+      p
+        .replace(/[ \t]+/g, " ")
+        .replace(/\s*\n\s*/g, "\n")
+        .trim()
+    )
     .filter(Boolean)
     .join("\n\n")
     .replace(/…?\s*read more\s*$/i, "…")
@@ -182,22 +199,48 @@ function summary($: Page) {
 }
 
 // the site's stock "no picture" images
-const PLACEHOLDER = /^(818148bf682d429dc215c1705eb27b98|2a96cbd8b46e442fc41c2b86b821562f|c6f59c1e5e7240a4c0d427abd71f3dbb|4128a6eb29f94943c9d206c08e625904)/;
-const MIME: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp" };
+const PLACEHOLDER =
+  /^(818148bf682d429dc215c1705eb27b98|2a96cbd8b46e442fc41c2b86b821562f|c6f59c1e5e7240a4c0d427abd71f3dbb|4128a6eb29f94943c9d206c08e625904)/;
+const MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+};
 // every block that names an artist, album or track
 const ITEMS = [
-  ".chartlist-row", ".grid-items-item", ".artist-top-albums-item", ".catalogue-overview-similar-artists-item", ".similar-albums-item",
-  ".track-similar-tracks-item", ".big-artist-list-item", ".resource-list--release-list-item", ".resource-list--sidebar-item",
-  ".globalchart-item", ".weeklychart-item", ".music-releases-item", ".music-more-artists-item", ".column-tracks-item", ".source-album",
-  ".similar-items-body-item", ".similar-items-sidebar-item", ".recs-feed-item", ".artist-header-featured-items-item", ".featured-item",
+  ".chartlist-row",
+  ".grid-items-item",
+  ".artist-top-albums-item",
+  ".catalogue-overview-similar-artists-item",
+  ".similar-albums-item",
+  ".track-similar-tracks-item",
+  ".big-artist-list-item",
+  ".resource-list--release-list-item",
+  ".resource-list--sidebar-item",
+  ".globalchart-item",
+  ".weeklychart-item",
+  ".music-releases-item",
+  ".music-more-artists-item",
+  ".column-tracks-item",
+  ".source-album",
+  ".similar-items-body-item",
+  ".similar-items-sidebar-item",
+  ".recs-feed-item",
+  ".artist-header-featured-items-item",
+  ".featured-item",
 ].join(", ");
 const RANK = { track: 3, album: 2, artist: 1 };
-const ALBUM_DATE = ".artist-top-albums-item-aux-text, .resource-list--release-list-item-aux-text, .music-releases-item-aux-text";
+const ALBUM_DATE =
+  ".artist-top-albums-item-aux-text, .resource-list--release-list-item-aux-text, .music-releases-item-aux-text";
 
 export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = console.log) {
   const root = resolve(dir);
   if (!existsSync(root)) throw new Error(`Import folder not found: ${root}`);
-  const files = readdirSync(root).filter(f => f.endsWith(".html")).sort();
+  const files = readdirSync(root)
+    .filter((f) => f.endsWith(".html"))
+    .sort();
   const password = process.env.IMPORT_PASSWORD || rid(6);
   const [ownerHash, lockedHash] = await Promise.all([
     Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 }),
@@ -328,7 +371,11 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
       const id = found;
       const set = async (field: EventText, v: string | undefined, max = 200) => {
         const whole = field === "description";
-        const s = whole ? String(v || "").trim().slice(0, max) : clean(v, max);
+        const s = whole
+          ? String(v || "")
+              .trim()
+              .slice(0, max)
+          : clean(v, max);
         if (s) await w.setEventText(id, field, s, whole);
       };
       await set("venue", e.venue);
@@ -337,7 +384,7 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
       await set("url", e.url, 500);
       await set("description", e.description, 8000);
       if (e.starts && e.exact) await w.setEventStart(id, e.starts);
-      const lineup = (e.lineup || []).map(n => clean(n)).filter(Boolean);
+      const lineup = (e.lineup || []).map((n) => clean(n)).filter(Boolean);
       await eachSeq(lineup, async (i, name) => w.addEventArtist(id, await w.artist(name), i));
       return id;
     }
@@ -355,17 +402,27 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
         const iso = row.find(".events-list-item-date").attr("content");
         const at = iso ? new Date(iso.slice(0, 10) + "T12:00:00") : day;
         if (!key || !at || isNaN(at.getTime())) return;
-        const named = row.find("[itemprop=performer] [itemprop=name]").map((_, x) => text($(x).text())).get();
+        const named = row
+          .find("[itemprop=performer] [itemprop=name]")
+          .map((_, x) => text($(x).text()))
+          .get();
         const lineup = named.length ? named : text(row.find(".events-list-item-event--lineup").text()).split(/,\s+/);
-        const title = text(row.find(".events-list-item-event--title").text())
-          || text(link.find("[itemprop=name]").first().text())
-          || text(link.text())
-          || lineup[0];
-        const address = text(row.find(".events-list-item-venue [itemprop=address]").first().text()).split(/,\s*/).filter(Boolean);
-        const venue = text(row.find(".events-list-item-venue--title, .events-list-item-venue [itemprop=name]").first().text());
-        const city = text(row.find(".events-list-item-venue--city, [itemprop=addressLocality]").first().text()) || address[0];
-        const country = text(row.find(".events-list-item-venue--country, [itemprop=addressCountry]").first().text())
-          || (address.length > 1 ? address[address.length - 1] : "");
+        const title =
+          text(row.find(".events-list-item-event--title").text()) ||
+          text(link.find("[itemprop=name]").first().text()) ||
+          text(link.text()) ||
+          lineup[0];
+        const address = text(row.find(".events-list-item-venue [itemprop=address]").first().text())
+          .split(/,\s*/)
+          .filter(Boolean);
+        const venue = text(
+          row.find(".events-list-item-venue--title, .events-list-item-venue [itemprop=name]").first().text()
+        );
+        const city =
+          text(row.find(".events-list-item-venue--city, [itemprop=addressLocality]").first().text()) || address[0];
+        const country =
+          text(row.find(".events-list-item-venue--country, [itemprop=addressCountry]").first().text()) ||
+          (address.length > 1 ? address[address.length - 1] : "");
         await event(key, { title, starts: unix(at), lineup, venue, city, country });
       });
     }
@@ -374,7 +431,11 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
       const found: Ent[] = [];
       await eachSeq($(ITEMS), async (_, el) => {
         const item = $(el);
-        const refs: Ref[] = item.find("a[href]").map((_, a) => musicRef($(a).attr("href"))).get().filter(isRef);
+        const refs: Ref[] = item
+          .find("a[href]")
+          .map((_, a) => musicRef($(a).attr("href")))
+          .get()
+          .filter(isRef);
         const play = item.find("[data-track-url]").first();
         if (play.length) {
           const r = musicRef(play.attr("data-track-url"));
@@ -390,7 +451,7 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
         if (!lead) return;
         const target = musicRef(item.find("a.link-block-target").first().attr("href"));
         let main: Ref;
-        if (item.is(".chartlist-row")) main = refs.find(r => r.kind === "track") || lead;
+        if (item.is(".chartlist-row")) main = refs.find((r) => r.kind === "track") || lead;
         else main = target || [...refs].sort((a, b) => RANK[b.kind] - RANK[a.kind])[0]!;
         const e = await make(main);
         found.push(e);
@@ -419,7 +480,8 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
       const artistId = await w.albumArtist(albumId);
       if (artistId === undefined) throw new Error(`Album ${albumId} has gone missing`);
       await eachSeq($(".chartlist-row"), async (i, tr) => {
-        const href = $(tr).find(".chartlist-name a").attr("href") || $(tr).find("[data-track-url]").attr("data-track-url");
+        const href =
+          $(tr).find(".chartlist-name a").attr("href") || $(tr).find("[data-track-url]").attr("data-track-url");
         const r = musicRef(href);
         if (r?.kind !== "track") return;
         const trackArtist = norm(r.artist) ? await w.artist(r.artist) : artistId;
@@ -482,7 +544,9 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
         country: text($("[itemprop=addressCountry]").first().text()),
         url: $(".qa-event-link a").attr("href"),
         description: prose($, $(".qa-event-description").first()),
-        lineup: $("[itemprop=performer]").map((_, li) => text($(li).find("a.link-block-target, [itemprop=name]").first().text())).get(),
+        lineup: $("[itemprop=performer]")
+          .map((_, li) => text($(li).find("a.link-block-target, [itemprop=name]").first().text()))
+          .get(),
       });
       await eachSeq($("[itemprop=performer]"), async (_, li) => {
         const a = await ensure(musicRef($(li).find("a[href]").first().attr("href")));
@@ -493,7 +557,9 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
 
     async function ownerPage($: Page, file: string, ns: string, me: number) {
       if (ns === "user_overview") {
-        const since = /scrobbling since\s+(.+)/i.exec(text($(".header-scrobble-since, .header-title-secondary").text()))?.[1];
+        const since = /scrobbling since\s+(.+)/i.exec(
+          text($(".header-scrobble-since, .header-title-secondary").text())
+        )?.[1];
         const sinceDate = parseDate(since || "");
         if (sinceDate) await w.setRegistered(me, unix(sinceDate));
         const real = text($(".header-title-display-name").first().text());
@@ -547,17 +613,19 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
     }
 
     const pages = files
-      .map(f => {
+      .map((f) => {
         const file = join(root, f);
         const $ = cheerio.load(readFileSync(file, "utf8"));
         const ns = /namespace--(\S+)/.exec($("body").attr("class") || "")?.[1] || "";
         const url = $("link[rel=canonical]").attr("href") || "";
         return { file, $, ns, url };
       })
-      .filter(p => /^(music|tag|user|events_(overview|event|festival)|charts|home|search)/.test(p.ns))
+      .filter((p) => /^(music|tag|user|events_(overview|event|festival)|charts|home|search)/.test(p.ns))
       // attendance pages need their event first
       .sort((a, b) => Number(a.ns.includes("attendance")) - Number(b.ns.includes("attendance")));
-    owner = userOf(pages.find(p => p.ns === "user_overview")?.url) || userOf(pages.find(p => p.ns.startsWith("user_"))?.url);
+    owner =
+      userOf(pages.find((p) => p.ns === "user_overview")?.url) ||
+      userOf(pages.find((p) => p.ns.startsWith("user_"))?.url);
     const me = owner ? await user(owner) : 0;
 
     for (const { file, $, ns, url } of pages) {
@@ -576,12 +644,18 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
 
       if (self && /^music_(artist|album|track)_overview$/.test(ns)) {
         await headerStats($, self);
-        pageTags($).slice(0, 12).forEach((t, i) => tag(self, t, 100 - i * 8));
+        pageTags($)
+          .slice(0, 12)
+          .forEach((t, i) => tag(self, t, 100 - i * 8));
         wiki(self.kind, self.id, summary($), false);
       }
       if (self && ns === "music_artist_overview") {
         await eachSeq($(".catalogue-overview-similar-artists-item"), async (i, li) => {
-          const href = $(li).find("a[href]").map((_, a) => $(a).attr("href")).get().find(h => musicRef(h));
+          const href = $(li)
+            .find("a[href]")
+            .map((_, a) => $(a).attr("href"))
+            .get()
+            .find((h) => musicRef(h));
           const s = await ensure(musicRef(href));
           if (s?.kind !== "artist" || s.id === self.id) return;
           await w.addSimilar(self.id, s.id, Math.max(0.3, 0.95 - i * 0.05));
@@ -594,7 +668,10 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
           const d = seconds($(dt).next("dd").text());
           if (d) await w.setDuration(self.id, d, false);
         });
-        const albumHref = $(".source-album a[href]").map((_, a) => $(a).attr("href")).get().find(h => musicRef(h)?.kind === "album");
+        const albumHref = $(".source-album a[href]")
+          .map((_, a) => $(a).attr("href"))
+          .get()
+          .find((h) => musicRef(h)?.kind === "album");
         const al = await ensure(musicRef(albumHref));
         if (al) await w.setTrackAlbum(self.id, al.id, false);
       }
@@ -637,12 +714,19 @@ export async function importPages(dir = IMPORT_DIR, log: (s: string) => void = c
   while (await refreshTaste()) {}
 
   log(`Imported ${root}`);
-  log("  " + Object.entries(stats).map(([k, v]) => `${v} ${k}`).join(" · "));
+  log(
+    "  " +
+      Object.entries(stats)
+        .map(([k, v]) => `${v} ${k}`)
+        .join(" · ")
+  );
   if (owner) {
     const note = `Sonosphere dev login (created by the one-time import)\nusername: ${owner}\npassword: ${password}\n`;
     mkdirSync("data", { recursive: true });
     writeFileSync("data/dev-login.txt", note, { mode: 0o600 });
-    log(`  Log in as "${owner}" with password "${password}" (also saved to data/dev-login.txt; change it in Settings).`);
+    log(
+      `  Log in as "${owner}" with password "${password}" (also saved to data/dev-login.txt; change it in Settings).`
+    );
   }
   return { owner, stats };
 }
@@ -651,6 +735,6 @@ if (import.meta.main) {
   if ((await imported()) && !process.argv.includes("--force")) {
     console.log("Already imported. Run `bun run reset` to empty the database and import again.");
   } else {
-    await importPages(process.argv.slice(2).find(a => !a.startsWith("--")) || IMPORT_DIR);
+    await importPages(process.argv.slice(2).find((a) => !a.startsWith("--")) || IMPORT_DIR);
   }
 }

@@ -19,15 +19,16 @@ const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?
 const shoutWhere = (f: ContentFilter) => and(byAuthor(f), f.term ? contains(shouts.body, f.term) : undefined);
 
 export const shoutRows = (f: ContentFilter, pg: Page) =>
-  db.select({
-    id: shouts.id,
-    body: shouts.body,
-    author: users.username,
-    createdAt: shouts.createdAt,
-    targetType: shouts.targetType,
-    targetId: shouts.targetId,
-    reports: openReports("shout", shouts.id),
-  })
+  db
+    .select({
+      id: shouts.id,
+      body: shouts.body,
+      author: users.username,
+      createdAt: shouts.createdAt,
+      targetType: shouts.targetType,
+      targetId: shouts.targetId,
+      reports: openReports("shout", shouts.id),
+    })
     .from(shouts)
     .innerJoin(users, eq(users.id, shouts.authorId))
     .where(shoutWhere(f))
@@ -42,16 +43,17 @@ const journalWhere = (f: ContentFilter) =>
   and(byAuthor(f), f.term ? or(contains(journals.title, f.term), contains(journals.body, f.term)) : undefined);
 
 export const journalRows = (f: ContentFilter, pg: Page) =>
-  db.select({
-    id: journals.id,
-    title: journals.title,
-    body: journals.body,
-    author: users.username,
-    createdAt: journals.createdAt,
-    updatedAt: journals.updatedAt,
-    comments: sql<number>`(SELECT COUNT(*) FROM ${shouts} WHERE ${shouts.targetType} = 'journal' AND ${shouts.targetId} = ${journals.id})`,
-    reports: openReports("journal", journals.id),
-  })
+  db
+    .select({
+      id: journals.id,
+      title: journals.title,
+      body: journals.body,
+      author: users.username,
+      createdAt: journals.createdAt,
+      updatedAt: journals.updatedAt,
+      comments: sql<number>`(SELECT COUNT(*) FROM ${shouts} WHERE ${shouts.targetType} = 'journal' AND ${shouts.targetId} = ${journals.id})`,
+      reports: openReports("journal", journals.id),
+    })
     .from(journals)
     .innerJoin(users, eq(users.id, journals.userId))
     .where(journalWhere(f))
@@ -60,34 +62,45 @@ export const journalRows = (f: ContentFilter, pg: Page) =>
     .offset(pg.offset);
 
 export const journalCount = (f: ContentFilter) =>
-  total(db.select({ c: count() }).from(journals).innerJoin(users, eq(users.id, journals.userId)).where(journalWhere(f)));
+  total(
+    db.select({ c: count() }).from(journals).innerJoin(users, eq(users.id, journals.userId)).where(journalWhere(f))
+  );
 
 const lockOn = (type: AnyColumn, id: AnyColumn) =>
-  exists(db.select({ one: sql`1` }).from(wikiLocks).where(and(eq(wikiLocks.itemType, type), eq(wikiLocks.itemId, id))));
+  exists(
+    db
+      .select({ one: sql`1` })
+      .from(wikiLocks)
+      .where(and(eq(wikiLocks.itemType, type), eq(wikiLocks.itemId, id)))
+  );
 
-const wikiWhere = (f: ContentFilter) => and(
-  byAuthor(f),
-  f.term ? contains(wikis.content, f.term) : undefined,
-  f.locked ? lockOn(wikis.itemType, wikis.itemId) : undefined,
-);
+const wikiWhere = (f: ContentFilter) =>
+  and(
+    byAuthor(f),
+    f.term ? contains(wikis.content, f.term) : undefined,
+    f.locked ? lockOn(wikis.itemType, wikis.itemId) : undefined
+  );
 
 // `top` is the newest version number of the same page.
 export function wikiRows(f: ContentFilter, pg: Page) {
   const other = alias(wikis, "other");
-  const newest = db.select({ v: max(other.version) }).from(other)
+  const newest = db
+    .select({ v: max(other.version) })
+    .from(other)
     .where(and(eq(other.itemType, wikis.itemType), eq(other.itemId, wikis.itemId)));
-  return db.select({
-    id: wikis.id,
-    itemType: wikis.itemType,
-    itemId: wikis.itemId,
-    version: wikis.version,
-    content: wikis.content,
-    author: users.username,
-    createdAt: wikis.createdAt,
-    top: sql<number>`(${newest})`,
-    locked: sql<number>`${lockOn(wikis.itemType, wikis.itemId)}`,
-    reports: openReports("wiki", wikis.id),
-  })
+  return db
+    .select({
+      id: wikis.id,
+      itemType: wikis.itemType,
+      itemId: wikis.itemId,
+      version: wikis.version,
+      content: wikis.content,
+      author: users.username,
+      createdAt: wikis.createdAt,
+      top: sql<number>`(${newest})`,
+      locked: sql<number>`${lockOn(wikis.itemType, wikis.itemId)}`,
+      reports: openReports("wiki", wikis.id),
+    })
     .from(wikis)
     .leftJoin(users, eq(users.id, wikis.authorId))
     .where(wikiWhere(f))
@@ -104,9 +117,9 @@ export async function removeContent(
   id: number,
   actor: { id: number; username: string },
   why: string,
-  entry: (closedReports: number) => AuditEntry,
+  entry: (closedReports: number) => AuditEntry
 ): Promise<void> {
-  await transact(async tx => {
+  await transact(async (tx) => {
     await removeContentTx(tx, kind, id, actor.id);
     const closed = await closeReportsTx(tx, kind, id, "content removed", actor.id, why);
     await auditTx(tx, actor, entry(closed));
@@ -124,7 +137,14 @@ export async function wikiItemExists(type: WikiType, id: number): Promise<boolea
 }
 
 export const wikiVersions = (type: string, id: number) =>
-  db.select({ id: wikis.id, version: wikis.version, content: wikis.content, createdAt: wikis.createdAt, author: users.username })
+  db
+    .select({
+      id: wikis.id,
+      version: wikis.version,
+      content: wikis.content,
+      createdAt: wikis.createdAt,
+      author: users.username,
+    })
     .from(wikis)
     .leftJoin(users, eq(users.id, wikis.authorId))
     .where(and(eq(wikis.itemType, type), eq(wikis.itemId, id)))
@@ -136,17 +156,27 @@ export async function wikiRevision(id: number) {
 }
 
 export async function topVersion(type: string, id: number): Promise<number> {
-  const [row] = await db.select({ v: max(wikis.version) }).from(wikis).where(and(eq(wikis.itemType, type), eq(wikis.itemId, id)));
+  const [row] = await db
+    .select({ v: max(wikis.version) })
+    .from(wikis)
+    .where(and(eq(wikis.itemType, type), eq(wikis.itemId, id)));
   return row?.v ?? 0;
 }
 
-export async function addWikiVersion(type: string, id: number, content: string, authorId: number, version: number): Promise<void> {
+export async function addWikiVersion(
+  type: string,
+  id: number,
+  content: string,
+  authorId: number,
+  version: number
+): Promise<void> {
   await db.insert(wikis).values({ itemType: type, itemId: id, content, authorId, version, createdAt: now() });
 }
 
 export async function lockWiki(type: string, id: number, by: number, reason: string): Promise<void> {
   const lock = { lockedBy: by, reason, createdAt: now() };
-  await db.insert(wikiLocks)
+  await db
+    .insert(wikiLocks)
     .values({ itemType: type, itemId: id, ...lock })
     .onConflictDoUpdate({ target: [wikiLocks.itemType, wikiLocks.itemId], set: lock });
 }
@@ -156,7 +186,14 @@ export async function unlockWiki(type: string, id: number): Promise<void> {
 }
 
 export const lockRows = () =>
-  db.select({ type: wikiLocks.itemType, id: wikiLocks.itemId, by: users.username, reason: wikiLocks.reason, at: wikiLocks.createdAt })
+  db
+    .select({
+      type: wikiLocks.itemType,
+      id: wikiLocks.itemId,
+      by: users.username,
+      reason: wikiLocks.reason,
+      at: wikiLocks.createdAt,
+    })
     .from(wikiLocks)
     .leftJoin(users, eq(users.id, wikiLocks.lockedBy))
     .orderBy(desc(wikiLocks.createdAt));

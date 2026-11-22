@@ -2,7 +2,11 @@ import { and, eq } from "drizzle-orm";
 import { db, type Conn, type Tx } from "../db/client";
 import { albums, artists, events, journals, reports, shouts, tags, tracks, users, wikis } from "../db/schema";
 import { reportedMessageTx, softDeleteTx, type Removed } from "../dm/repo";
-import { reportedMessageTx as reportedGroupMessageTx, softDeleteTx as softDeleteGroupTx, type GroupRemoved } from "../dm/groups.repo";
+import {
+  reportedMessageTx as reportedGroupMessageTx,
+  softDeleteTx as softDeleteGroupTx,
+  type GroupRemoved,
+} from "../dm/groups.repo";
 import { dropJournalTx } from "../journals/repo";
 import { parseObject } from "../site/repo";
 import { now } from "../util";
@@ -16,7 +20,8 @@ export function snapshotOf(json: string | null): { text?: string; where?: string
   return { text: text(s.text), where: text(s.where), author: text(s.author) };
 }
 
-const urlPart = (s: string) => encodeURIComponent(s.replace(/[%+]/g, x => encodeURIComponent(x))).replace(/%20/g, "+");
+const urlPart = (s: string) =>
+  encodeURIComponent(s.replace(/[%+]/g, (x) => encodeURIComponent(x))).replace(/%20/g, "+");
 
 async function pageOfTx(conn: Conn, type: string, id: number): Promise<PageRef | null> {
   if (type === "user") {
@@ -28,13 +33,17 @@ async function pageOfTx(conn: Conn, type: string, id: number): Promise<PageRef |
     return a ? { label: a.name, link: `/music/${urlPart(a.name)}` } : null;
   }
   if (type === "album") {
-    const [a] = await conn.select({ title: albums.title, name: artists.name }).from(albums)
+    const [a] = await conn
+      .select({ title: albums.title, name: artists.name })
+      .from(albums)
       .innerJoin(artists, eq(artists.id, albums.artistId))
       .where(eq(albums.id, id));
     return a ? { label: `${a.title} by ${a.name}`, link: `/music/${urlPart(a.name)}/${urlPart(a.title)}` } : null;
   }
   if (type === "track") {
-    const [t] = await conn.select({ title: tracks.title, name: artists.name }).from(tracks)
+    const [t] = await conn
+      .select({ title: tracks.title, name: artists.name })
+      .from(tracks)
       .innerJoin(artists, eq(artists.id, tracks.artistId))
       .where(eq(tracks.id, id));
     return t ? { label: `${t.title} by ${t.name}`, link: `/music/${urlPart(t.name)}/_/${urlPart(t.title)}` } : null;
@@ -48,7 +57,9 @@ async function pageOfTx(conn: Conn, type: string, id: number): Promise<PageRef |
     return e ? { label: e.title, link: `/event/${id}` } : null;
   }
   if (type === "journal") {
-    const [j] = await conn.select({ title: journals.title, username: users.username }).from(journals)
+    const [j] = await conn
+      .select({ title: journals.title, username: users.username })
+      .from(journals)
       .innerJoin(users, eq(users.id, journals.userId))
       .where(eq(journals.id, id));
     return j ? { label: `“${j.title}”`, link: `/user/${encodeURIComponent(j.username)}/journal/${id}` } : null;
@@ -147,7 +158,12 @@ export const reportTarget = (type: string, id: number): Promise<ReportTarget | n
 
 // For a direct message it hides rather than deletes, and returns who to tell: pass that to
 // `announceRemoved` from server/dm/service.ts after commit.
-export async function removeContentTx(tx: Tx, type: string, id: number, by: number): Promise<Removed | GroupRemoved | null> {
+export async function removeContentTx(
+  tx: Tx,
+  type: string,
+  id: number,
+  by: number
+): Promise<Removed | GroupRemoved | null> {
   if (type === "shout") await tx.delete(shouts).where(eq(shouts.id, id));
   else if (type === "wiki") await tx.delete(wikis).where(eq(wikis.id, id));
   else if (type === "journal") await dropJournalTx(tx, id);
@@ -157,8 +173,16 @@ export async function removeContentTx(tx: Tx, type: string, id: number, by: numb
 }
 
 // Returns how many reports were open.
-export async function closeReportsTx(conn: Conn, type: string, id: number, outcome: string, by: number, why = ""): Promise<number> {
-  const closed = await conn.update(reports)
+export async function closeReportsTx(
+  conn: Conn,
+  type: string,
+  id: number,
+  outcome: string,
+  by: number,
+  why = ""
+): Promise<number> {
+  const closed = await conn
+    .update(reports)
     .set({ status: "closed", outcome, resolvedBy: by, resolvedAt: now(), resolutionNote: why })
     .where(and(eq(reports.status, "open"), eq(reports.targetType, type), eq(reports.targetId, id)))
     .returning({ id: reports.id });

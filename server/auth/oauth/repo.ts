@@ -6,16 +6,32 @@ import { first, now } from "../../util";
 export type Link = typeof oauthAccounts.$inferSelect;
 
 export const findLink = (provider: string, subject: string): Promise<Link | null> =>
-  first(db.select().from(oauthAccounts).where(and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.subject, subject))).limit(1));
+  first(
+    db
+      .select()
+      .from(oauthAccounts)
+      .where(and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.subject, subject)))
+      .limit(1)
+  );
 export const linkOf = (userId: number, provider: string): Promise<Link | null> =>
-  first(db.select().from(oauthAccounts).where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider))).limit(1));
-export const linksOf = (userId: number): Promise<Link[]> => db.select().from(oauthAccounts).where(eq(oauthAccounts.userId, userId));
+  first(
+    db
+      .select()
+      .from(oauthAccounts)
+      .where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider)))
+      .limit(1)
+  );
+export const linksOf = (userId: number): Promise<Link[]> =>
+  db.select().from(oauthAccounts).where(eq(oauthAccounts.userId, userId));
 
 export async function addLink(provider: string, subject: string, userId: number, name: string): Promise<void> {
   await db.insert(oauthAccounts).values({ provider, subject, userId, name: name.slice(0, 100), createdAt: now() });
 }
 export async function renameLink(provider: string, subject: string, name: string): Promise<void> {
-  await db.update(oauthAccounts).set({ name: name.slice(0, 100) }).where(and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.subject, subject)));
+  await db
+    .update(oauthAccounts)
+    .set({ name: name.slice(0, 100) })
+    .where(and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.subject, subject)));
 }
 export async function removeLink(userId: number, provider: string): Promise<void> {
   await db.delete(oauthAccounts).where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider)));

@@ -3,7 +3,10 @@ import { configAdmins, isAdmin, isStaff } from "../site/roles";
 import { requireUser } from "../users/service";
 import type { User } from "../users/repo";
 
-export const note = (c: Ctx): string => String(c.body.note ?? "").trim().slice(0, 1000);
+export const note = (c: Ctx): string =>
+  String(c.body.note ?? "")
+    .trim()
+    .slice(0, 1000);
 export const paging = (q: URLSearchParams, def = 25) => pageInput(q, def, 100);
 export const idList = (v: unknown, max: number): number[] =>
   (Array.isArray(v) ? v : []).map(Number).filter(Number.isFinite).slice(0, max);

@@ -7,18 +7,19 @@ import { now } from "../util";
 import type { Obsession } from "../../shared/obsessions";
 
 export function obsessionsOf(userId: number, viewerId = 0, limit = 50): Promise<Obsession[]> {
-  return db.select({
-    id: obsessions.id,
-    comment: obsessions.comment,
-    createdAt: obsessions.createdAt,
-    trackId: tracks.id,
-    title: tracks.title,
-    duration: tracks.duration,
-    artist: artists.name,
-    album: albums.title,
-    image: trackImage(),
-    loved: lovedBy(viewerId),
-  })
+  return db
+    .select({
+      id: obsessions.id,
+      comment: obsessions.comment,
+      createdAt: obsessions.createdAt,
+      trackId: tracks.id,
+      title: tracks.title,
+      duration: tracks.duration,
+      artist: artists.name,
+      album: albums.title,
+      image: trackImage(),
+      loved: lovedBy(viewerId),
+    })
     .from(obsessions)
     .innerJoin(tracks, eq(tracks.id, obsessions.trackId))
     .innerJoin(artists, eq(artists.id, tracks.artistId))
@@ -29,7 +30,8 @@ export function obsessionsOf(userId: number, viewerId = 0, limit = 50): Promise<
 }
 
 export async function addObsession(userId: number, trackId: number, comment: string): Promise<number> {
-  const [row] = await db.insert(obsessions)
+  const [row] = await db
+    .insert(obsessions)
     .values({ userId, trackId, comment, createdAt: now() })
     .returning({ id: obsessions.id });
   if (!row) throw new Error("Obsession was not saved");

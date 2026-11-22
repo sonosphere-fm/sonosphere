@@ -1,10 +1,50 @@
-import { and, asc, count, desc, eq, exists, getTableColumns, gt, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  exists,
+  getTableColumns,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db, transact, type Tx } from "../db/client";
 import { flag } from "../db/dialect";
-import { albumFolds, albums, albumTracks, artists, eventArtists, eventAttendance, events, journals, lovedTracks, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
+import {
+  albumFolds,
+  albums,
+  albumTracks,
+  artists,
+  eventArtists,
+  eventAttendance,
+  events,
+  journals,
+  lovedTracks,
+  tags,
+  tracks,
+  userAlbums,
+  userArtists,
+  userTracks,
+  users,
+} from "../db/schema";
 import { openListener, publicCols } from "../users/repo";
 import { clean, first, norm, now } from "../util";
-import type { ArtistAlbum, ArtistAlbumWithPlays, EventSummary, ItemType, LatestAlbum, Listener, OtherAlbum, TrackAlbum } from "../../shared/catalog";
+import type {
+  ArtistAlbum,
+  ArtistAlbumWithPlays,
+  EventSummary,
+  ItemType,
+  LatestAlbum,
+  Listener,
+  OtherAlbum,
+  TrackAlbum,
+} from "../../shared/catalog";
 
 export type Artist = typeof artists.$inferSelect;
 type Album = typeof albums.$inferSelect;
@@ -23,37 +63,51 @@ export type ItemRows = {
 };
 
 export const findArtist = (name: string): Promise<Artist | null> =>
-  first(db.select().from(artists).where(eq(artists.nameNorm, norm(name))).limit(1));
+  first(
+    db
+      .select()
+      .from(artists)
+      .where(eq(artists.nameNorm, norm(name)))
+      .limit(1)
+  );
 
 export const findAlbum = (artist: string, title: string): Promise<AlbumWithArtist | null> =>
   first(
-    db.select({ ...getTableColumns(albums), artist: artists.name })
+    db
+      .select({ ...getTableColumns(albums), artist: artists.name })
       .from(albums)
       .innerJoin(artists, eq(artists.id, albums.artistId))
       .where(and(eq(artists.nameNorm, norm(artist)), eq(albums.titleNorm, norm(title))))
-      .limit(1),
+      .limit(1)
   );
 
 export const findTrack = (artist: string, title: string): Promise<TrackWithArtist | null> =>
   first(
-    db.select({ ...getTableColumns(tracks), artist: artists.name })
+    db
+      .select({ ...getTableColumns(tracks), artist: artists.name })
       .from(tracks)
       .innerJoin(artists, eq(artists.id, tracks.artistId))
       .where(and(eq(artists.nameNorm, norm(artist)), eq(tracks.titleNorm, norm(title))))
-      .limit(1),
+      .limit(1)
   );
 
 export const findTag = (name: string): Promise<Tag | null> =>
-  first(db.select().from(tags).where(eq(tags.nameNorm, norm(name))).limit(1));
+  first(
+    db
+      .select()
+      .from(tags)
+      .where(eq(tags.nameNorm, norm(name)))
+      .limit(1)
+  );
 
 const byId: { [K in ItemType]: (id: number) => Promise<ItemRows[K] | null> } = {
-  artist: id => first(db.select().from(artists).where(eq(artists.id, id)).limit(1)),
-  album: id => first(db.select().from(albums).where(eq(albums.id, id)).limit(1)),
-  track: id => first(db.select().from(tracks).where(eq(tracks.id, id)).limit(1)),
-  tag: id => first(db.select().from(tags).where(eq(tags.id, id)).limit(1)),
-  user: id => first(db.select().from(users).where(eq(users.id, id)).limit(1)),
-  event: id => first(db.select().from(events).where(eq(events.id, id)).limit(1)),
-  journal: id => first(db.select().from(journals).where(eq(journals.id, id)).limit(1)),
+  artist: (id) => first(db.select().from(artists).where(eq(artists.id, id)).limit(1)),
+  album: (id) => first(db.select().from(albums).where(eq(albums.id, id)).limit(1)),
+  track: (id) => first(db.select().from(tracks).where(eq(tracks.id, id)).limit(1)),
+  tag: (id) => first(db.select().from(tags).where(eq(tags.id, id)).limit(1)),
+  user: (id) => first(db.select().from(users).where(eq(users.id, id)).limit(1)),
+  event: (id) => first(db.select().from(events).where(eq(events.id, id)).limit(1)),
+  journal: (id) => first(db.select().from(journals).where(eq(journals.id, id)).limit(1)),
 };
 export const ITEM_TYPES = Object.keys(byId) as ItemType[];
 export const findItem = <K extends ItemType>(type: K, id: number): Promise<ItemRows[K] | null> => byId[type](id);
@@ -62,23 +116,32 @@ export async function getOrCreateArtistTx(tx: Tx, name: string): Promise<number>
   const n = norm(name);
   const [row] = await tx.select({ id: artists.id }).from(artists).where(eq(artists.nameNorm, n));
   if (row) return row.id;
-  const [created] = await tx.insert(artists)
+  const [created] = await tx
+    .insert(artists)
     .values({ name: clean(name), nameNorm: n, createdAt: now() })
     .returning({ id: artists.id });
   return created.id;
 }
 
-export async function getOrCreateAlbumTx(tx: Tx, artistId: number, title: string, releaseDate: string | null = null): Promise<number> {
+export async function getOrCreateAlbumTx(
+  tx: Tx,
+  artistId: number,
+  title: string,
+  releaseDate: string | null = null
+): Promise<number> {
   const n = norm(title);
-  const [row] = await tx.select({ id: albums.id })
+  const [row] = await tx
+    .select({ id: albums.id })
     .from(albums)
     .where(and(eq(albums.artistId, artistId), eq(albums.titleNorm, n)));
   if (row) return row.id;
-  const [folded] = await tx.select({ id: albumFolds.albumId })
+  const [folded] = await tx
+    .select({ id: albumFolds.albumId })
     .from(albumFolds)
     .where(and(eq(albumFolds.artistId, artistId), eq(albumFolds.titleNorm, n)));
   if (folded) return folded.id;
-  const [created] = await tx.insert(albums)
+  const [created] = await tx
+    .insert(albums)
     .values({ artistId, title: clean(title), titleNorm: n, releaseDate, createdAt: now() })
     .returning({ id: albums.id });
   return created.id;
@@ -88,24 +151,38 @@ export async function getOrCreateAlbumTx(tx: Tx, artistId: number, title: string
  * A known track gains the duration or album if it had none. When an album is given the track is added to its
  * track list (at `position`, or at the end), unless an admin has locked that list.
  */
-export async function getOrCreateTrackTx(tx: Tx, artistId: number, title: string, duration = 0, albumId: number | null = null, position?: number): Promise<number> {
+export async function getOrCreateTrackTx(
+  tx: Tx,
+  artistId: number,
+  title: string,
+  duration = 0,
+  albumId: number | null = null,
+  position?: number
+): Promise<number> {
   const n = norm(title);
-  const [row] = await tx.select({ id: tracks.id, duration: tracks.duration, albumId: tracks.albumId })
+  const [row] = await tx
+    .select({ id: tracks.id, duration: tracks.duration, albumId: tracks.albumId })
     .from(tracks)
     .where(and(eq(tracks.artistId, artistId), eq(tracks.titleNorm, n)));
   let id: number;
   if (!row) {
-    const [created] = await tx.insert(tracks)
+    const [created] = await tx
+      .insert(tracks)
       .values({ artistId, title: clean(title), titleNorm: n, duration: duration | 0, albumId, createdAt: now() })
       .returning({ id: tracks.id });
     id = created.id;
   } else {
     id = row.id;
-    if (!row.duration && duration > 0) await tx.update(tracks).set({ duration: duration | 0 }).where(eq(tracks.id, id));
+    if (!row.duration && duration > 0)
+      await tx
+        .update(tracks)
+        .set({ duration: duration | 0 })
+        .where(eq(tracks.id, id));
   }
   if (!albumId) return id;
 
-  const [listed] = await tx.select({ trackId: albumTracks.trackId })
+  const [listed] = await tx
+    .select({ trackId: albumTracks.trackId })
     .from(albumTracks)
     .where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, id)));
   if (!listed) {
@@ -116,7 +193,8 @@ export async function getOrCreateTrackTx(tx: Tx, artistId: number, title: string
   if (!listed) {
     let pos = position;
     if (pos === undefined) {
-      const [last] = await tx.select({ p: sql<number>`COALESCE(MAX(${albumTracks.position}), 0) + 1` })
+      const [last] = await tx
+        .select({ p: sql<number>`COALESCE(MAX(${albumTracks.position}), 0) + 1` })
         .from(albumTracks)
         .where(eq(albumTracks.albumId, albumId));
       pos = last?.p ?? 1;
@@ -140,7 +218,7 @@ export async function resolveTrackTx(tx: Tx, names: TrackNames): Promise<TrackRe
   return { artistId, trackId, albumId: known?.albumId ?? null };
 }
 
-export const resolveTrack = (names: TrackNames): Promise<TrackRef> => transact(tx => resolveTrackTx(tx, names));
+export const resolveTrack = (names: TrackNames): Promise<TrackRef> => transact((tx) => resolveTrackTx(tx, names));
 
 const single = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
 
@@ -156,7 +234,8 @@ const albumCard = { id: albums.id, title: albums.title, image: albums.imageId };
 export async function topListeners(kind: "artist" | "album" | "track", id: number, limit: number): Promise<Listener[]> {
   const open = openListener();
   if (kind === "artist") {
-    return db.select({ ...publicCols, playcount: userArtists.plays })
+    return db
+      .select({ ...publicCols, playcount: userArtists.plays })
       .from(userArtists)
       .innerJoin(users, eq(users.id, userArtists.userId))
       .where(and(eq(userArtists.artistId, id), open))
@@ -164,14 +243,16 @@ export async function topListeners(kind: "artist" | "album" | "track", id: numbe
       .limit(limit);
   }
   if (kind === "album") {
-    return db.select({ ...publicCols, playcount: userAlbums.plays })
+    return db
+      .select({ ...publicCols, playcount: userAlbums.plays })
       .from(userAlbums)
       .innerJoin(users, eq(users.id, userAlbums.userId))
       .where(and(eq(userAlbums.albumId, id), open))
       .orderBy(desc(userAlbums.plays))
       .limit(limit);
   }
-  return db.select({ ...publicCols, playcount: userTracks.plays })
+  return db
+    .select({ ...publicCols, playcount: userTracks.plays })
     .from(userTracks)
     .innerJoin(users, eq(users.id, userTracks.userId))
     .where(and(eq(userTracks.trackId, id), open))
@@ -180,11 +261,15 @@ export async function topListeners(kind: "artist" | "album" | "track", id: numbe
 }
 
 const releases = (artistId: number, singles: boolean) =>
-  and(eq(albums.artistId, artistId), singles ? eq(albums.releaseType, "single") : or(isNull(albums.releaseType), ne(albums.releaseType, "single")));
+  and(
+    eq(albums.artistId, artistId),
+    singles ? eq(albums.releaseType, "single") : or(isNull(albums.releaseType), ne(albums.releaseType, "single"))
+  );
 
 export async function popularAlbums(artistId: number, singles: boolean, limit: number): Promise<ArtistAlbum[]> {
   const listeners = albumListeners.as("listeners");
-  return db.select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name, listeners, trackCount: albumSize })
+  return db
+    .select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name, listeners, trackCount: albumSize })
     .from(albums)
     .innerJoin(artists, eq(artists.id, albums.artistId))
     .where(releases(artistId, singles))
@@ -192,10 +277,23 @@ export async function popularAlbums(artistId: number, singles: boolean, limit: n
     .limit(limit);
 }
 
-export async function discography(artistId: number, singles: boolean, limit: number, offset: number): Promise<ArtistAlbumWithPlays[]> {
+export async function discography(
+  artistId: number,
+  singles: boolean,
+  limit: number,
+  offset: number
+): Promise<ArtistAlbumWithPlays[]> {
   const listeners = albumListeners.as("listeners");
   const playcount = albumPlays.as("playcount");
-  return db.select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name, playcount, listeners, trackCount: albumSize })
+  return db
+    .select({
+      ...albumCard,
+      releaseDate: albums.releaseDate,
+      artist: artists.name,
+      playcount,
+      listeners,
+      trackCount: albumSize,
+    })
     .from(albums)
     .innerJoin(artists, eq(artists.id, albums.artistId))
     .where(releases(artistId, singles))
@@ -206,17 +304,19 @@ export async function discography(artistId: number, singles: boolean, limit: num
 
 export const latestAlbum = (artistId: number): Promise<LatestAlbum | null> =>
   first(
-    db.select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name })
+    db
+      .select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name })
       .from(albums)
       .innerJoin(artists, eq(artists.id, albums.artistId))
       .where(and(eq(albums.artistId, artistId), isNotNull(albums.releaseDate)))
       .orderBy(desc(albums.releaseDate))
-      .limit(1),
+      .limit(1)
   );
 
 export async function otherAlbums(artistId: number, exceptAlbumId: number, limit: number): Promise<OtherAlbum[]> {
   const listeners = albumListeners.as("listeners");
-  return db.select({ ...albumCard, artist: artists.name, listeners })
+  return db
+    .select({ ...albumCard, artist: artists.name, listeners })
     .from(albums)
     .innerJoin(artists, eq(artists.id, albums.artistId))
     .where(and(eq(albums.artistId, artistId), ne(albums.id, exceptAlbumId)))
@@ -229,21 +329,31 @@ export const albumCount = (artistId: number, singles: boolean): Promise<number> 
 export const trackCount = (artistId: number): Promise<number> =>
   single(db.select({ c: count() }).from(tracks).where(eq(tracks.artistId, artistId)));
 
-type TrackListRow = { position: number; id: number; title: string; duration: number; playcount: number; listeners: number; loved: number };
+type TrackListRow = {
+  position: number;
+  id: number;
+  title: string;
+  duration: number;
+  playcount: number;
+  listeners: number;
+  loved: number;
+};
 
 export async function trackList(albumId: number, viewerId: number): Promise<TrackListRow[]> {
-  const lovedByViewer = db.select({ one: sql`1` })
+  const lovedByViewer = db
+    .select({ one: sql`1` })
     .from(lovedTracks)
     .where(and(eq(lovedTracks.userId, viewerId), eq(lovedTracks.trackId, tracks.id)));
-  return db.select({
-    position: albumTracks.position,
-    id: tracks.id,
-    title: tracks.title,
-    duration: tracks.duration,
-    playcount: trackPlays,
-    listeners: trackListeners,
-    loved: flag(exists(lovedByViewer)),
-  })
+  return db
+    .select({
+      position: albumTracks.position,
+      id: tracks.id,
+      title: tracks.title,
+      duration: tracks.duration,
+      playcount: trackPlays,
+      listeners: trackListeners,
+      loved: flag(exists(lovedByViewer)),
+    })
     .from(albumTracks)
     .innerJoin(tracks, eq(tracks.id, albumTracks.trackId))
     .where(eq(albumTracks.albumId, albumId))
@@ -251,26 +361,29 @@ export async function trackList(albumId: number, viewerId: number): Promise<Trac
 }
 
 export async function albumsWithTrack(trackId: number, artist: string): Promise<TrackAlbum[]> {
-  const rows = await db.select(albumCard)
+  const rows = await db
+    .select(albumCard)
     .from(albumTracks)
     .innerJoin(albums, eq(albums.id, albumTracks.albumId))
     .where(eq(albumTracks.trackId, trackId));
-  return rows.map(r => ({ ...r, artist }));
+  return rows.map((r) => ({ ...r, artist }));
 }
 
 export const trackPlaysBy = (trackId: number, userId: number): Promise<number> =>
   single(
-    db.select({ c: sql<number>`COALESCE(SUM(${userTracks.plays}), 0)` })
+    db
+      .select({ c: sql<number>`COALESCE(SUM(${userTracks.plays}), 0)` })
       .from(userTracks)
-      .where(and(eq(userTracks.trackId, trackId), eq(userTracks.userId, userId))),
+      .where(and(eq(userTracks.trackId, trackId), eq(userTracks.userId, userId)))
   );
 
 export const hasLoved = async (userId: number, trackId: number): Promise<boolean> => {
   const row = await first(
-    db.select({ one: sql`1` })
+    db
+      .select({ one: sql`1` })
       .from(lovedTracks)
       .where(and(eq(lovedTracks.userId, userId), eq(lovedTracks.trackId, trackId)))
-      .limit(1),
+      .limit(1)
   );
   return !!row;
 };
@@ -279,7 +392,12 @@ export const loveCount = (trackId: number): Promise<number> =>
   single(db.select({ c: count() }).from(lovedTracks).where(eq(lovedTracks.trackId, trackId)));
 
 /** Events an artist plays that start after `after`, soonest first, with the viewer's own answer to each. */
-export async function eventsWithArtist(artistId: number, after: number, viewerId: number, limit: number): Promise<EventSummary[]> {
+export async function eventsWithArtist(
+  artistId: number,
+  after: number,
+  viewerId: number,
+  limit: number
+): Promise<EventSummary[]> {
   const answers = (status: string) => sql<number>`(
     SELECT COUNT(*) FROM ${eventAttendance}
     WHERE ${eventAttendance.eventId} = ${events.id} AND ${eventAttendance.status} = ${status}
@@ -288,22 +406,26 @@ export async function eventsWithArtist(artistId: number, after: number, viewerId
     SELECT ${eventAttendance.status} FROM ${eventAttendance}
     WHERE ${eventAttendance.eventId} = ${events.id} AND ${eventAttendance.userId} = ${viewerId}
   )`;
-  const withArtist = db.select({ id: eventArtists.eventId }).from(eventArtists).where(eq(eventArtists.artistId, artistId));
-  const rows = await db.select({
-    id: events.id,
-    title: events.title,
-    venue: events.venue,
-    city: events.city,
-    country: events.country,
-    startsAt: events.startsAt,
-    description: events.description,
-    url: events.url,
-    creator: users.username,
-    source: events.source,
-    going: answers("going"),
-    interested: answers("interested"),
-    status: mine,
-  })
+  const withArtist = db
+    .select({ id: eventArtists.eventId })
+    .from(eventArtists)
+    .where(eq(eventArtists.artistId, artistId));
+  const rows = await db
+    .select({
+      id: events.id,
+      title: events.title,
+      venue: events.venue,
+      city: events.city,
+      country: events.country,
+      startsAt: events.startsAt,
+      description: events.description,
+      url: events.url,
+      creator: users.username,
+      source: events.source,
+      going: answers("going"),
+      interested: answers("interested"),
+      status: mine,
+    })
     .from(events)
     .leftJoin(users, eq(users.id, events.creatorId))
     .where(and(gt(events.startsAt, after), inArray(events.id, withArtist)))
@@ -311,7 +433,8 @@ export async function eventsWithArtist(artistId: number, after: number, viewerId
     .limit(limit);
   const out: EventSummary[] = [];
   for (const e of rows) {
-    const lineup = await db.select({ name: artists.name, image: artists.imageId })
+    const lineup = await db
+      .select({ name: artists.name, image: artists.imageId })
       .from(eventArtists)
       .innerJoin(artists, eq(artists.id, eventArtists.artistId))
       .where(eq(eventArtists.eventId, e.id))

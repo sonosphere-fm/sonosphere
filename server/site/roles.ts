@@ -16,7 +16,7 @@ export const isAdmin = (u: Account | null | undefined) => roleOf(u) === "admin";
 export async function configAdmins(): Promise<string[]> {
   const names = (process.env.ADMIN_USERS || "")
     .split(",")
-    .map(s => s.trim().toLowerCase())
+    .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   try {
     const marker: unknown = JSON.parse((await metaValue("import")) || "{}");

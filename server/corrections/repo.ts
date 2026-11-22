@@ -13,7 +13,11 @@ function titled(tx: Tx, table: typeof albums | typeof tracks, artistId: number) 
   const byTitle = (n: string) => and(eq(table.artistId, artistId), eq(table.titleNorm, n));
   return {
     recase: async (n: string, title: string) => {
-      const rows = await tx.update(table).set({ title }).where(and(byTitle(n), ne(table.title, title))).returning({ id: table.id });
+      const rows = await tx
+        .update(table)
+        .set({ title })
+        .where(and(byTitle(n), ne(table.title, title)))
+        .returning({ id: table.id });
       return rows.length;
     },
     has: async (n: string) => {
@@ -21,7 +25,11 @@ function titled(tx: Tx, table: typeof albums | typeof tracks, artistId: number) 
       return !!rows[0];
     },
     rename: async (n: string, title: string) => {
-      const rows = await tx.update(table).set({ title, titleNorm: norm(title) }).where(byTitle(n)).returning({ id: table.id });
+      const rows = await tx
+        .update(table)
+        .set({ title, titleNorm: norm(title) })
+        .where(byTitle(n))
+        .returning({ id: table.id });
       return rows.length;
     },
   };
@@ -32,7 +40,7 @@ function titled(tx: Tx, table: typeof albums | typeof tracks, artistId: number) 
  * alone and counted as a clash. `status` gives the text saved as the record of this sweep.
  */
 export async function sweep(r: Renames, status: (result: SweepResult) => string): Promise<SweepResult> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     let fixed = 0;
     let renamed = 0;
     let clashes = 0;
@@ -42,7 +50,9 @@ export async function sweep(r: Renames, status: (result: SweepResult) => string)
     };
 
     for (const [n, name] of r.artistCase) {
-      const rows = await tx.update(artists).set({ name })
+      const rows = await tx
+        .update(artists)
+        .set({ name })
         .where(and(eq(artists.nameNorm, n), ne(artists.name, name)))
         .returning({ id: artists.id });
       fixed += rows.length;
@@ -53,7 +63,9 @@ export async function sweep(r: Renames, status: (result: SweepResult) => string)
         clashes++;
         continue;
       }
-      const rows = await tx.update(artists).set({ name, nameNorm: norm(name) })
+      const rows = await tx
+        .update(artists)
+        .set({ name, nameNorm: norm(name) })
         .where(eq(artists.nameNorm, n))
         .returning({ id: artists.id });
       renamed += rows.length;

@@ -27,8 +27,14 @@ export function score(u: User, s: repo.Signals): Point[] {
   const points: Point[] = [
     { label: "Confirmed email", points: u.emailVerifiedAt ? 10 : 0 },
     { label: `Listened on ${plural(s.listeningDays, "day")} since joining`, points: Math.min(30, s.listeningDays * 3) },
-    { label: `Followed by ${plural(s.trustedFollowers, "trusted member")}`, points: Math.min(40, s.trustedFollowers * 8) },
-    { label: `${plural(s.acceptedRequests, "message request")} accepted by trusted members`, points: Math.min(32, s.acceptedRequests * 8) },
+    {
+      label: `Followed by ${plural(s.trustedFollowers, "trusted member")}`,
+      points: Math.min(40, s.trustedFollowers * 8),
+    },
+    {
+      label: `${plural(s.acceptedRequests, "message request")} accepted by trusted members`,
+      points: Math.min(32, s.acceptedRequests * 8),
+    },
     { label: `Messaged first by ${plural(s.reachedOut, "trusted member")}`, points: Math.min(20, s.reachedOut * 5) },
     { label: plural(s.loved, "loved track"), points: Math.min(10, Math.floor(s.loved / 5)) },
     { label: `${plural(s.declined, "message request")} declined`, points: -5 * s.declined },
@@ -36,7 +42,7 @@ export function score(u: User, s: repo.Signals): Point[] {
     { label: plural(s.reported, "report"), points: -10 * s.reported },
     { label: plural(s.flagged, "spam flag"), points: -10 * s.flagged },
   ];
-  return points.filter(p => p.points !== 0);
+  return points.filter((p) => p.points !== 0);
 }
 
 export const total = (points: Point[]) => points.reduce((sum, p) => sum + p.points, 0);

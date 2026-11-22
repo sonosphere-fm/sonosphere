@@ -20,4 +20,9 @@ export const adminOnly = (c: Ctx): Viewer => {
 };
 
 export const confirmed = (u: Viewer): Viewer =>
-  u.emailVerifiedAt || isStaff(u) ? u : fail(403, "Please confirm your email address first. You should have received a verification email. If you didn't, you can resend it from Settings, under Account.");
+  u.emailVerifiedAt || isStaff(u)
+    ? u
+    : fail(
+        403,
+        "Please confirm your email address first. You should have received a verification email. If you didn't, you can resend it from Settings, under Account."
+      );

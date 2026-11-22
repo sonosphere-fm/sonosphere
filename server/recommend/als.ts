@@ -81,7 +81,16 @@ function solve(a: Float64Array, b: Float64Array, k: number, out: Float32Array, a
 }
 
 /** Fixes `fixed` (fixedRows × k) and solves every row of `free` against it. */
-function halfStep(rows: number, ptr: Int32Array, idx: Int32Array, val: Float32Array, fixed: Float32Array, fixedRows: number, free: Float32Array, o: Options) {
+function halfStep(
+  rows: number,
+  ptr: Int32Array,
+  idx: Int32Array,
+  val: Float32Array,
+  fixed: Float32Array,
+  fixedRows: number,
+  free: Float32Array,
+  o: Options
+) {
   const k = o.k;
   const gram = new Float64Array(k * k);
   const a = new Float64Array(k * k);

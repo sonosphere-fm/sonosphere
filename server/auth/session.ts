@@ -6,11 +6,14 @@ import { isAdmin, isStaff } from "../site/roles";
 import { findById, type User } from "../users/repo";
 
 export const tokenOf = (req: Request) => /(?:^|;\s*)sid=([a-f0-9]+)/.exec(req.headers.get("cookie") || "")?.[1] || "";
-const actAsOf = (req: Request) => Number(/(?:^|;\s*)act_as=(\d+)(?:;|$)/.exec(req.headers.get("cookie") || "")?.[1]) || null;
+const actAsOf = (req: Request) =>
+  Number(/(?:^|;\s*)act_as=(\d+)(?:;|$)/.exec(req.headers.get("cookie") || "")?.[1]) || null;
 
 export async function sessionUser(token: string) {
   if (!token) return null;
-  const [row] = await db.select({ user: users }).from(sessions)
+  const [row] = await db
+    .select({ user: users })
+    .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.token, digest(token)), eq(users.banned, false)))
     .limit(1);
@@ -18,7 +21,8 @@ export async function sessionUser(token: string) {
 }
 
 const YEAR = 60 * 60 * 24 * 365;
-export const sessionCookie = (token: string, maxAge = YEAR) => `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+export const sessionCookie = (token: string, maxAge = YEAR) =>
+  `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
 export const actAsCookie = (id: number) => `act_as=${id}; Path=/; HttpOnly; SameSite=Lax`;
 export const clearActAsCookie = () => "act_as=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";
 

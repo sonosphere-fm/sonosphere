@@ -18,13 +18,15 @@ export function PlaylistPage() {
   const c = useConfirm();
   useTitle(q.data?.title);
 
-  const askDelete = (p: PlaylistData) => c.ask({
-    title: "Delete this playlist?",
-    body: `“${p.title}” will be gone for good.`,
-    action: "Delete playlist",
-    danger: true,
-    run: () => api<PlaylistOk>(`/playlist/${id}`, { method: "DELETE" }).then(() => nav(`${userUrl(p.owner)}/playlists`)),
-  });
+  const askDelete = (p: PlaylistData) =>
+    c.ask({
+      title: "Delete this playlist?",
+      body: `“${p.title}” will be gone for good.`,
+      action: "Delete playlist",
+      danger: true,
+      run: () =>
+        api<PlaylistOk>(`/playlist/${id}`, { method: "DELETE" }).then(() => nav(`${userUrl(p.owner)}/playlists`)),
+    });
 
   const saveDetails = (e: FormEvent) => {
     e.preventDefault();
@@ -44,67 +46,124 @@ export function PlaylistPage() {
     });
   };
 
-  const removeEntry = (entryId: number) => api<PlaylistOk>(`/playlist/${id}/tracks/${entryId}`, { method: "DELETE" }).then(q.reload);
+  const removeEntry = (entryId: number) =>
+    api<PlaylistOk>(`/playlist/${id}/tracks/${entryId}`, { method: "DELETE" }).then(q.reload);
 
   return (
-    <Async q={q}>{p => {
-      const length = dur(p.tracks.reduce((s, t) => s + t.duration, 0)) || "0:00";
-      const sub = <>by <Link to={userUrl(p.owner)}>{p.owner}</Link> · {plural(p.tracks.length, "track")} · {length}</>;
-      const actions = (
-        <>
-          <PlayButton queue={p.tracks} label="Play playlist" />
-          {p.mine && (
-            <>
-              <Button kind="btn ghost" onClick={() => setEdit({ title: p.title, description: p.description })}>Edit details</Button>
-              <Button kind="btn ghost" onClick={() => askDelete(p)}>Delete</Button>
-            </>
-          )}
-        </>
-      );
-      return (
-        <>
-          {c.dialog}
-          <Hero art={<Art image={p.tracks[0]?.image} />} kicker="Playlist" title={p.title} sub={sub} actions={actions}>
-            {p.description && <p className="prose">{p.description}</p>}
-          </Hero>
-          <div className="wrap page">
-            {edit && (
-              <form className="form card" onSubmit={saveDetails}>
-                <label>Title<Input value={edit.title} onChange={e => setEdit({ ...edit, title: e.target.value })} required maxLength={100} /></label>
-                <label>
-                  Description
-                  <Textarea rows={3} value={edit.description} onChange={e => setEdit({ ...edit, description: e.target.value })} maxLength={500} />
-                </label>
-                {act.note}
-                <div className="row">
-                  <Button kind="btn" loading={act.busy}>Save</Button>
-                  <Button type="button" kind="btn ghost" onClick={() => setEdit(null)}>Cancel</Button>
-                </div>
-              </form>
-            )}
-            {p.tracks.length ? (
-              <TrackList
-                items={p.tracks.map((t, i) => ({ ...t, position: i + 1 }))}
-                numbered
-                showDuration
-                actions={p.mine
-                  ? r => r._np ? null : <Button kind="link small" onClick={() => removeEntry(r.entryId)}>Remove</Button>
-                  : undefined}
-              />
-            ) : (
-              <Empty>This playlist is empty.{p.mine && " Add tracks below, or use “+ Playlist” on any track page."}</Empty>
-            )}
+    <Async q={q}>
+      {(p) => {
+        const length = dur(p.tracks.reduce((s, t) => s + t.duration, 0)) || "0:00";
+        const sub = (
+          <>
+            by <Link to={userUrl(p.owner)}>{p.owner}</Link> · {plural(p.tracks.length, "track")} · {length}
+          </>
+        );
+        const actions = (
+          <>
+            <PlayButton queue={p.tracks} label="Play playlist" />
             {p.mine && (
-              <form className="inline-form" onSubmit={addTrack}>
-                <Input value={add.artist} onChange={e => setAdd({ ...add, artist: e.target.value })} placeholder="Artist" aria-label="Artist" required />
-                <Input value={add.track} onChange={e => setAdd({ ...add, track: e.target.value })} placeholder="Track" aria-label="Track" required />
-                <Button kind="btn" loading={act.busy}>Add track</Button>
-                {!edit && act.note}
-              </form>
+              <>
+                <Button kind="btn ghost" onClick={() => setEdit({ title: p.title, description: p.description })}>
+                  Edit details
+                </Button>
+                <Button kind="btn ghost" onClick={() => askDelete(p)}>
+                  Delete
+                </Button>
+              </>
             )}
-          </div>
-        </>
-      );
-    }}</Async>
+          </>
+        );
+        return (
+          <>
+            {c.dialog}
+            <Hero
+              art={<Art image={p.tracks[0]?.image} />}
+              kicker="Playlist"
+              title={p.title}
+              sub={sub}
+              actions={actions}
+            >
+              {p.description && <p className="prose">{p.description}</p>}
+            </Hero>
+            <div className="wrap page">
+              {edit && (
+                <form className="form card" onSubmit={saveDetails}>
+                  <label>
+                    Title
+                    <Input
+                      value={edit.title}
+                      onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+                      required
+                      maxLength={100}
+                    />
+                  </label>
+                  <label>
+                    Description
+                    <Textarea
+                      rows={3}
+                      value={edit.description}
+                      onChange={(e) => setEdit({ ...edit, description: e.target.value })}
+                      maxLength={500}
+                    />
+                  </label>
+                  {act.note}
+                  <div className="row">
+                    <Button kind="btn" loading={act.busy}>
+                      Save
+                    </Button>
+                    <Button type="button" kind="btn ghost" onClick={() => setEdit(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+              {p.tracks.length ? (
+                <TrackList
+                  items={p.tracks.map((t, i) => ({ ...t, position: i + 1 }))}
+                  numbered
+                  showDuration
+                  actions={
+                    p.mine
+                      ? (r) =>
+                          r._np ? null : (
+                            <Button kind="link small" onClick={() => removeEntry(r.entryId)}>
+                              Remove
+                            </Button>
+                          )
+                      : undefined
+                  }
+                />
+              ) : (
+                <Empty>
+                  This playlist is empty.{p.mine && " Add tracks below, or use “+ Playlist” on any track page."}
+                </Empty>
+              )}
+              {p.mine && (
+                <form className="inline-form" onSubmit={addTrack}>
+                  <Input
+                    value={add.artist}
+                    onChange={(e) => setAdd({ ...add, artist: e.target.value })}
+                    placeholder="Artist"
+                    aria-label="Artist"
+                    required
+                  />
+                  <Input
+                    value={add.track}
+                    onChange={(e) => setAdd({ ...add, track: e.target.value })}
+                    placeholder="Track"
+                    aria-label="Track"
+                    required
+                  />
+                  <Button kind="btn" loading={act.busy}>
+                    Add track
+                  </Button>
+                  {!edit && act.note}
+                </form>
+              )}
+            </div>
+          </>
+        );
+      }}
+    </Async>
   );
 }

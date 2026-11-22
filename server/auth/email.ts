@@ -15,7 +15,7 @@ const LIFE: Record<Kind, number> = { verify: 3 * 86400, change: 3 * 86400, reset
 
 async function issue(userId: number, kind: Kind, email: string): Promise<string> {
   const token = rid(32);
-  await db.transaction(async tx => {
+  await db.transaction(async (tx) => {
     await tx.delete(emailTokens).where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, kind)));
     await tx.insert(emailTokens).values({
       hash: digest(token),
@@ -31,14 +31,22 @@ async function issue(userId: number, kind: Kind, email: string): Promise<string>
 
 async function take(token: unknown, kinds: Kind[]) {
   if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return null;
-  const [row] = await db.delete(emailTokens).where(eq(emailTokens.hash, digest(token))).returning();
+  const [row] = await db
+    .delete(emailTokens)
+    .where(eq(emailTokens.hash, digest(token)))
+    .returning();
   if (!row || row.expiresAt < now() || !kinds.includes(row.kind as Kind)) return null;
   return row as typeof row & { kind: Kind };
 }
 
 export async function pendingEmail(userId: number): Promise<string | null> {
-  const row = await first(db.select({ email: emailTokens.email }).from(emailTokens)
-    .where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, "change"), gt(emailTokens.expiresAt, now()))).limit(1));
+  const row = await first(
+    db
+      .select({ email: emailTokens.email })
+      .from(emailTokens)
+      .where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, "change"), gt(emailTokens.expiresAt, now())))
+      .limit(1)
+  );
   return row?.email ?? null;
 }
 
@@ -53,8 +61,8 @@ export async function startEmailChange(u: User, email: string): Promise<void> {
 }
 
 export async function confirmEmail(token: unknown): Promise<User> {
-  const t = await take(token, ["verify", "change"]) ?? fail(400, "That link has expired or was already used");
-  const u = await findById(t.userId) ?? fail(400, "That link has expired or was already used");
+  const t = (await take(token, ["verify", "change"])) ?? fail(400, "That link has expired or was already used");
+  const u = (await findById(t.userId)) ?? fail(400, "That link has expired or was already used");
   if (t.kind === "verify") {
     if (u.email !== t.email) fail(400, "That link is for an address this account no longer uses");
     if (!u.emailVerifiedAt) {
@@ -79,11 +87,17 @@ export async function requestReset(email: string): Promise<void> {
 }
 
 export async function resetPassword(token: unknown, passwordHash: string): Promise<User> {
-  const t = await take(token, ["reset"]) ?? fail(400, "That reset link has expired or was already used. Ask for a new one.");
-  const u = await findById(t.userId) ?? fail(400, "That reset link has expired or was already used. Ask for a new one.");
-  if (u.email !== t.email) fail(400, "That reset link was sent to an address this account no longer uses. Ask for a new one.");
+  const t =
+    (await take(token, ["reset"])) ?? fail(400, "That reset link has expired or was already used. Ask for a new one.");
+  const u =
+    (await findById(t.userId)) ?? fail(400, "That reset link has expired or was already used. Ask for a new one.");
+  if (u.email !== t.email)
+    fail(400, "That reset link was sent to an address this account no longer uses. Ask for a new one.");
   // the link reached the address, so it counts as confirmed
-  await db.update(users).set({ passwordHash, emailVerifiedAt: u.emailVerifiedAt ?? now() }).where(eq(users.id, u.id));
+  await db
+    .update(users)
+    .set({ passwordHash, emailVerifiedAt: u.emailVerifiedAt ?? now() })
+    .where(eq(users.id, u.id));
   await deleteSessionsOf(u.id);
   await send(mail.passwordChangedMail(u.email, u.username));
   return (await findById(u.id))!;
@@ -97,13 +111,17 @@ export async function dropExpiredEmailTokens(): Promise<void> {
 }
 // Imported profiles have placeholder addresses (@x.invalid) that can never be confirmed, so they are kept.
 export async function purgeUnverified(): Promise<void> {
-  const due = await db.select({ id: users.id, username: users.username }).from(users)
-    .where(and(
-      isNull(users.emailVerifiedAt),
-      lt(users.registeredAt, now() - UNVERIFIED_DAYS * 86400),
-      eq(users.isAdmin, false),
-      notLike(users.email, "%.invalid"),
-    ))
+  const due = await db
+    .select({ id: users.id, username: users.username })
+    .from(users)
+    .where(
+      and(
+        isNull(users.emailVerifiedAt),
+        lt(users.registeredAt, now() - UNVERIFIED_DAYS * 86400),
+        eq(users.isAdmin, false),
+        notLike(users.email, "%.invalid")
+      )
+    )
     .limit(200);
   const purged: string[] = [];
   for (const u of due) {

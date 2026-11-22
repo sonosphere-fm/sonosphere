@@ -28,9 +28,11 @@ let versions: Record<string, string> = {};
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const str = (v: unknown) => (typeof v === "string" ? clean(v) : "");
-const isMbid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);
+const isMbid = (v: unknown): v is string =>
+  typeof v === "string" && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);
 // each file carries a "version" entry that is not data
-const entries = (o: unknown): [string, unknown][] => (isObject(o) ? Object.entries(o).filter(([k]) => k !== "version") : []);
+const entries = (o: unknown): [string, unknown][] =>
+  isObject(o) ? Object.entries(o).filter(([k]) => k !== "version") : [];
 const field = (v: unknown, key: string): unknown => (isObject(v) ? v[key] : undefined);
 
 function put(k: string, v: string, same: Map<string, string>, other: Map<string, string>) {
@@ -51,7 +53,10 @@ function build(raw: store.Raw): Tables {
 
   // "bob marley;the wailers" -> "Bob Marley & The Wailers", however the pair was joined
   for (const [k, v] of entries(raw.combined)) {
-    const parts = str(k).split(";").map(s => s.trim()).filter(Boolean);
+    const parts = str(k)
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const name = str(v);
     if (parts.length < 2 || !name) continue;
     for (const sep of [";", "; ", ", ", " & ", " and ", " / "]) {
@@ -99,7 +104,7 @@ function build(raw: store.Raw): Tables {
 
 function load(raw: store.Raw) {
   tables = build(raw);
-  versions = Object.fromEntries(store.SOURCES.map(k => [k, String(field(raw[k], "version") ?? "")]));
+  versions = Object.fromEntries(store.SOURCES.map((k) => [k, String(field(raw[k], "version") ?? "")]));
 }
 
 export function correct(artist: string, track: string, album = ""): { artist: string; track: string; album: string } {
@@ -134,8 +139,8 @@ async function sweep(): Promise<repo.SweepResult> {
     titles: [...titles.values()].reduce((s, t) => s + t.fix.size + t.move.size, 0),
     mbids: artistMbid.size + albumMbid.size,
   };
-  return repo.sweep({ artistCase, artistMove, titles }, r =>
-    JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules }),
+  return repo.sweep({ artistCase, artistMove, titles }, (r) =>
+    JSON.stringify({ at: now(), versions, fixed: r.fixed, renamed: r.renamed, clashes: r.clashes, rules })
   );
 }
 

@@ -29,7 +29,7 @@ let running = 0;
 const waiting: (() => void)[] = [];
 
 async function slot<T>(job: () => Promise<T>): Promise<T> {
-  if (running >= MAX_RUNNING) await new Promise<void>(resolve => waiting.push(resolve));
+  if (running >= MAX_RUNNING) await new Promise<void>((resolve) => waiting.push(resolve));
   running++;
   try {
     return await job();
@@ -68,7 +68,8 @@ export async function convert(input: Uint8Array): Promise<Converted> {
   if (!sniff(input)) fail(400, "Upload a PNG, JPEG, WebP or GIF image");
   const out = await slot(() => runChild(input));
   if (out.error) fail(400, REASONS[out.error] ?? "That file could not be read as an image");
-  if (!isEdge(out.width) || !isEdge(out.height) || !isWebp(out.large) || !isWebp(out.small)) fail(500, PROCESSING_FAILED);
+  if (!isEdge(out.width) || !isEdge(out.height) || !isWebp(out.large) || !isWebp(out.small))
+    fail(500, PROCESSING_FAILED);
   return {
     width: out.width,
     height: out.height,

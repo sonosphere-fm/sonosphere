@@ -15,27 +15,53 @@ export async function deleteSessionsOf(userId: number, keep = ""): Promise<void>
 }
 
 export const findByLogin = (ident: string): Promise<User | null> =>
-  first(db.select().from(users).where(or(eq(users.usernameNorm, ident), eq(users.email, ident))).limit(1));
+  first(
+    db
+      .select()
+      .from(users)
+      .where(or(eq(users.usernameNorm, ident), eq(users.email, ident)))
+      .limit(1)
+  );
 
 export async function usernameTaken(username: string): Promise<boolean> {
-  const row = await first(db.select({ one: sql`1` }).from(users).where(eq(users.usernameNorm, norm(username))).limit(1));
+  const row = await first(
+    db
+      .select({ one: sql`1` })
+      .from(users)
+      .where(eq(users.usernameNorm, norm(username)))
+      .limit(1)
+  );
   return !!row;
 }
 
 export async function emailTaken(email: string, exceptId = 0): Promise<boolean> {
-  const row = await first(db.select({ one: sql`1` }).from(users).where(and(eq(users.email, email), ne(users.id, exceptId))).limit(1));
+  const row = await first(
+    db
+      .select({ one: sql`1` })
+      .from(users)
+      .where(and(eq(users.email, email), ne(users.id, exceptId)))
+      .limit(1)
+  );
   return !!row;
 }
 
-export async function createUser(username: string, email: string, passwordHash: string, emailVerified = false): Promise<number> {
-  const [row] = await db.insert(users).values({
-    username,
-    usernameNorm: norm(username),
-    email,
-    passwordHash,
-    registeredAt: now(),
-    emailVerifiedAt: emailVerified ? now() : null,
-  }).returning({ id: users.id });
+export async function createUser(
+  username: string,
+  email: string,
+  passwordHash: string,
+  emailVerified = false
+): Promise<number> {
+  const [row] = await db
+    .insert(users)
+    .values({
+      username,
+      usernameNorm: norm(username),
+      email,
+      passwordHash,
+      registeredAt: now(),
+      emailVerifiedAt: emailVerified ? now() : null,
+    })
+    .returning({ id: users.id });
   if (!row) throw new Error("The new account was not stored");
   return row.id;
 }
@@ -43,7 +69,11 @@ export async function createUser(username: string, email: string, passwordHash: 
 export const openReportCount = async (): Promise<number> =>
   (await first(db.select({ c: count() }).from(reports).where(eq(reports.status, "open"))))?.c ?? 0;
 export async function unreadCount(userId: number): Promise<number> {
-  const row = await first(db.select({ c: count() }).from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.read, false))));
+  const row = await first(
+    db
+      .select({ c: count() })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.read, false)))
+  );
   return row?.c ?? 0;
 }

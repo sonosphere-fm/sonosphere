@@ -8,7 +8,7 @@ import { wantBare, wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
-router.get<SearchResults>("/api/search", async c => {
+router.get<SearchResults>("/api/search", async (c) => {
   const term = norm(c.q.get("q") || "");
   const type = c.q.get("type") || "all";
   const pg = paging(c.q, type === "all" ? 8 : 32, 50);
@@ -19,9 +19,9 @@ router.get<SearchResults>("/api/search", async c => {
   const query = { term, limit: pg.limit, offset: pg.offset };
   const want = (t: string) => type === "all" || type === t;
   const ours = {
-    artists: async () => wantBare("artist", await repo.searchArtists(query), r => r.id),
-    albums: async () => wantBare("album", await repo.searchAlbums(query), r => r.id),
-    tracks: async () => wantCovers(await repo.searchTracks(query, c.user?.id ?? 0), r => r.id),
+    artists: async () => wantBare("artist", await repo.searchArtists(query), (r) => r.id),
+    albums: async () => wantBare("album", await repo.searchAlbums(query), (r) => r.id),
+    tracks: async () => wantCovers(await repo.searchTracks(query, c.user?.id ?? 0), (r) => r.id),
   };
   return {
     artists: want("artists") ? await withMusicBrainz(await ours.artists(), term, pg.limit, pg.offset) : [],
@@ -35,10 +35,15 @@ router.get<SearchResults>("/api/search", async c => {
 
 // MusicBrainz gets 800ms (a fresh connection through the tunnel takes most of that); past that the page shows ours alone.
 const inTime = <T>(ask: () => Promise<T[]>): Promise<T[]> =>
-  Promise.race([ask().catch(() => []), new Promise<T[]>(r => setTimeout(() => r([]), 800))]);
+  Promise.race([ask().catch(() => []), new Promise<T[]>((r) => setTimeout(() => r([]), 800))]);
 const askable = (offset: number) => mbdb.mbdbOn && offset === 0;
 
-async function withMusicBrainz(found: FoundArtist[], term: string, limit: number, offset: number): Promise<FoundArtist[]> {
+async function withMusicBrainz(
+  found: FoundArtist[],
+  term: string,
+  limit: number,
+  offset: number
+): Promise<FoundArtist[]> {
   if (!askable(offset)) return found;
   return rankArtists(found, await inTime(() => mbdb.searchArtists(term)), term, limit);
 }
@@ -46,13 +51,27 @@ async function withMusicBrainz(found: FoundArtist[], term: string, limit: number
 async function albumsToo(found: FoundAlbum[], term: string, limit: number, offset: number): Promise<FoundAlbum[]> {
   if (!askable(offset)) return found;
   const theirs = await inTime(() => mbdb.searchAlbums(term));
-  return rankTitles(found, theirs, term, limit, h => ({ id: 0, title: h.title, artist: h.artist, image: null, listeners: 0 }));
+  return rankTitles(found, theirs, term, limit, (h) => ({
+    id: 0,
+    title: h.title,
+    artist: h.artist,
+    image: null,
+    listeners: 0,
+  }));
 }
 
 async function tracksToo(found: FoundTrack[], term: string, limit: number, offset: number): Promise<FoundTrack[]> {
   if (!askable(offset)) return found;
   const theirs = await inTime(() => mbdb.searchTracks(term));
-  return rankTitles(found, theirs, term, limit, h => ({
-    id: 0, title: h.title, artist: h.artist, album: null, image: null, duration: h.seconds, listeners: 0, playcount: 0, loved: 0,
+  return rankTitles(found, theirs, term, limit, (h) => ({
+    id: 0,
+    title: h.title,
+    artist: h.artist,
+    album: null,
+    image: null,
+    duration: h.seconds,
+    listeners: 0,
+    playcount: 0,
+    loved: 0,
   }));
 }

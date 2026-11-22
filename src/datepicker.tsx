@@ -42,7 +42,14 @@ const H12 = (() => {
 type Bound = string | "now" | undefined;
 const bound = (b: Bound) => (b === "now" ? new Date() : parse(b));
 
-type NumProps = { value: number; min: number; max: number; onChange: (n: number) => void; label: string; onEnter: () => void };
+type NumProps = {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (n: number) => void;
+  label: string;
+  onEnter: () => void;
+};
 
 /** Two-digit number box: type it, or step with the arrow keys (it wraps round). */
 function Num({ value, min, max, onChange, label, onEnter }: NumProps) {
@@ -50,7 +57,7 @@ function Num({ value, min, max, onChange, label, onEnter }: NumProps) {
   const step = (n: number) => {
     const span = max - min + 1;
     setDraft(null);
-    onChange((((value - min + n) % span) + span) % span + min);
+    onChange(((((value - min + n) % span) + span) % span) + min);
   };
   const type = (raw: string) => {
     const t = raw.replace(/\D/g, "").slice(-2);
@@ -75,9 +82,9 @@ function Num({ value, min, max, onChange, label, onEnter }: NumProps) {
       inputMode="numeric"
       aria-label={label}
       value={draft ?? pad(value)}
-      onFocus={e => e.target.select()}
+      onFocus={(e) => e.target.select()}
       onBlur={() => setDraft(null)}
-      onChange={e => type(e.target.value)}
+      onChange={(e) => type(e.target.value)}
       onKeyDown={onKeyDown}
     />
   );
@@ -98,7 +105,18 @@ type DatePickerProps = {
   defaultTime?: string;
 };
 
-export function DatePicker({ value, onChange, label, time, min, max, placeholder, presets, compact, defaultTime = "" }: DatePickerProps) {
+export function DatePicker({
+  value,
+  onChange,
+  label,
+  time,
+  min,
+  max,
+  placeholder,
+  presets,
+  compact,
+  defaultTime = "",
+}: DatePickerProps) {
   const sel = parse(value);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"days" | "months">("days");
@@ -160,7 +178,7 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
   const trap = (e: KeyboardEvent) => {
     if (e.key !== "Tab") return;
     const f = [...pop.current!.querySelectorAll<HTMLElement>('button:not(:disabled):not([tabindex="-1"]), input')];
-    const i = f.findIndex(el => el === document.activeElement);
+    const i = f.findIndex((el) => el === document.activeElement);
     if (e.shiftKey ? i <= 0 : i === f.length - 1) {
       e.preventDefault();
       f[e.shiftKey ? f.length - 1 : 0]?.focus();
@@ -200,15 +218,24 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
     const months = mode === "months";
     const year = e.shiftKey || months;
     switch (e.key) {
-      case "ArrowLeft": return months ? addMonths(cur, -1) : addDays(cur, -1);
-      case "ArrowRight": return months ? addMonths(cur, 1) : addDays(cur, 1);
-      case "ArrowUp": return months ? addMonths(cur, -3) : addDays(cur, -7);
-      case "ArrowDown": return months ? addMonths(cur, 3) : addDays(cur, 7);
-      case "Home": return addDays(cur, -wd);
-      case "End": return addDays(cur, 6 - wd);
-      case "PageUp": return addMonths(cur, year ? -12 : -1);
-      case "PageDown": return addMonths(cur, year ? 12 : 1);
-      default: return null;
+      case "ArrowLeft":
+        return months ? addMonths(cur, -1) : addDays(cur, -1);
+      case "ArrowRight":
+        return months ? addMonths(cur, 1) : addDays(cur, 1);
+      case "ArrowUp":
+        return months ? addMonths(cur, -3) : addDays(cur, -7);
+      case "ArrowDown":
+        return months ? addMonths(cur, 3) : addDays(cur, 7);
+      case "Home":
+        return addDays(cur, -wd);
+      case "End":
+        return addDays(cur, 6 - wd);
+      case "PageUp":
+        return addMonths(cur, year ? -12 : -1);
+      case "PageDown":
+        return addMonths(cur, year ? 12 : 1);
+      default:
+        return null;
     }
   };
   const gridKey = (e: KeyboardEvent) => {
@@ -243,24 +270,40 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
     if (diff === 0) d = "Today";
     else if (diff === -1) d = "Yesterday";
     else if (diff === 1) d = "Tomorrow";
-    else d = sel.toLocaleDateString(undefined, {
-      weekday: compact ? undefined : "short",
-      day: "numeric",
-      month: "short",
-      year: sel.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
-    });
+    else
+      d = sel.toLocaleDateString(undefined, {
+        weekday: compact ? undefined : "short",
+        day: "numeric",
+        month: "short",
+        year: sel.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
+      });
     return time ? `${d}, ${sel.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}` : d;
   })();
   const hint = placeholder ?? (time ? "Pick a date and time" : "Pick a date");
   const popClass = "dp dp-pop" + (at?.up ? " up" : "") + (presets ? " with-presets" : "");
   const dayClass = (d: Date) =>
-    "dp-day" + (d.getMonth() !== cur.getMonth() ? " out" : "") + (same(d, today) ? " today" : "") + (same(d, sel) ? " sel" : "");
+    "dp-day" +
+    (d.getMonth() !== cur.getMonth() ? " out" : "") +
+    (same(d, today) ? " today" : "") +
+    (same(d, sel) ? " sel" : "");
 
   const popup = (
-    <div className={popClass} ref={pop} role="dialog" aria-modal="true" aria-label={label} style={at ? { left: at.left, top: at.top } : undefined} onKeyDown={trap}>
+    <div
+      className={popClass}
+      ref={pop}
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+      style={at ? { left: at.left, top: at.top } : undefined}
+      onKeyDown={trap}
+    >
       {presets && (
         <div className="dp-presets">
-          {presets.map(([l, f]) => <button type="button" key={l} onClick={() => commit(f())}>{l}</button>)}
+          {presets.map(([l, f]) => (
+            <button type="button" key={l} onClick={() => commit(f())}>
+              {l}
+            </button>
+          ))}
         </div>
       )}
       <div className="dp-main">
@@ -275,7 +318,9 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
             <Ico.ChevLeft />
           </button>
           <button type="button" className="dp-title" aria-live="polite" onClick={toggleMode}>
-            {mode === "days" ? cur.toLocaleDateString(undefined, { month: "long", year: "numeric" }) : cur.getFullYear()}
+            {mode === "days"
+              ? cur.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+              : cur.getFullYear()}
             <Ico.ChevDown />
           </button>
           <button
@@ -290,10 +335,12 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
         </div>
         {mode === "days" ? (
           <div className="dp-grid" ref={grid} role="grid" onKeyDown={gridKey}>
-            {days.slice(0, 7).map(d => (
-              <span key={d.getDay()} className="dp-wd" aria-hidden>{d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</span>
+            {days.slice(0, 7).map((d) => (
+              <span key={d.getDay()} className="dp-wd" aria-hidden>
+                {d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}
+              </span>
             ))}
-            {days.map(d => (
+            {days.map((d) => (
               <button
                 type="button"
                 key={ymd(d)}
@@ -302,7 +349,12 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
                 tabIndex={same(d, cur) ? 0 : -1}
                 aria-pressed={same(d, sel)}
                 aria-current={same(d, today) ? "date" : undefined}
-                aria-label={d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                aria-label={d.toLocaleDateString(undefined, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
                 className={dayClass(d)}
                 onClick={() => pickDay(d)}
               >
@@ -312,7 +364,7 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
           </div>
         ) : (
           <div className="dp-months" ref={grid} onKeyDown={gridKey}>
-            {Array.from({ length: 12 }, (_, i) => new Date(cur.getFullYear(), i, 1)).map(d => {
+            {Array.from({ length: 12 }, (_, i) => new Date(cur.getFullYear(), i, 1)).map((d) => {
               const dead = (!!lo && addMonths(d, 1) <= day0(lo)) || (!!hi && d > day0(hi));
               const on = d.getMonth() === cur.getMonth();
               return (
@@ -339,15 +391,19 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
               value={H12 ? h % 12 || 12 : h}
               min={H12 ? 1 : 0}
               max={H12 ? 12 : 23}
-              onChange={n => setTime(H12 ? (n % 12) + (pm ? 12 : 0) : n, m)}
+              onChange={(n) => setTime(H12 ? (n % 12) + (pm ? 12 : 0) : n, m)}
               onEnter={close}
             />
             <b>:</b>
-            <Num label="Minute" value={m} min={0} max={59} onChange={n => setTime(h, n)} onEnter={close} />
+            <Num label="Minute" value={m} min={0} max={59} onChange={(n) => setTime(h, n)} onEnter={close} />
             {H12 && (
               <span className="dp-ampm" role="group" aria-label="AM or PM">
-                <button type="button" aria-pressed={!pm} onClick={() => pm && setTime(h - 12, m)}>AM</button>
-                <button type="button" aria-pressed={pm} onClick={() => !pm && setTime(h + 12, m)}>PM</button>
+                <button type="button" aria-pressed={!pm} onClick={() => pm && setTime(h - 12, m)}>
+                  AM
+                </button>
+                <button type="button" aria-pressed={pm} onClick={() => !pm && setTime(h + 12, m)}>
+                  PM
+                </button>
               </span>
             )}
           </div>
@@ -358,7 +414,11 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
               {time ? "Now" : "Today"}
             </button>
           )}
-          {time && <button type="button" className="dp-done" onClick={() => close()}>Done</button>}
+          {time && (
+            <button type="button" className="dp-done" onClick={() => close()}>
+              Done
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -368,13 +428,15 @@ export function DatePicker({ value, onChange, label, time, min, max, placeholder
     <div
       className={"dp" + (compact ? " compact" : "")}
       ref={root}
-      onKeyDown={e => {
+      onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
           e.stopPropagation();
           close();
         }
       }}
-      onBlur={e => { if (e.relatedTarget && !inside(e.relatedTarget)) setOpen(false); }}
+      onBlur={(e) => {
+        if (e.relatedTarget && !inside(e.relatedTarget)) setOpen(false);
+      }}
     >
       <button
         type="button"

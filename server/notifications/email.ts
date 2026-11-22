@@ -17,7 +17,12 @@ const muted = (u: User) => new Set(u.emailMuted.split(",").filter(Boolean));
 const reachable = (u: User) => !!u.emailVerifiedAt && !u.banned && !u.email.endsWith(".invalid");
 const wantsNow = (u: User, kind: EmailKind) => reachable(u) && u.emailNotify === "instant" && !muted(u).has(kind);
 
-function describe(to: User, type: string, actor: string | null, data: Record<string, unknown>): NoticeLine & { button: string } | null {
+function describe(
+  to: User,
+  type: string,
+  actor: string | null,
+  data: Record<string, unknown>
+): (NoticeLine & { button: string }) | null {
   const who = actor ?? "Someone";
   const quote = str(data.body) || undefined;
   if (type === "follow") {
@@ -34,7 +39,12 @@ function describe(to: User, type: string, actor: string | null, data: Record<str
   return null;
 }
 
-export async function mailNotice(userId: number, type: string, actorId: number, data: Record<string, unknown>): Promise<void> {
+export async function mailNotice(
+  userId: number,
+  type: string,
+  actorId: number,
+  data: Record<string, unknown>
+): Promise<void> {
   try {
     const to = await findById(userId);
     if (!to || !wantsNow(to, type as EmailKind)) return;
@@ -49,15 +59,34 @@ export async function mailNotice(userId: number, type: string, actorId: number, 
 }
 
 // At most once an hour per conversation.
-export async function mailMessage(to: User, from: string, threadId: number | string, request: boolean, body: string): Promise<void> {
+export async function mailMessage(
+  to: User,
+  from: string,
+  threadId: number | string,
+  request: boolean,
+  body: string
+): Promise<void> {
   try {
     if (!wantsNow(to, "message")) return;
     if (!(await attempt(`mail-dm:${to.id}:${threadId}`, 1, 3600_000))) return;
     if (request) {
-      await send(noticeMail(to.email, { line: `${from} sent you a message request`, url: `${SITE_URL}/messages/requests`, button: "See the request" }));
+      await send(
+        noticeMail(to.email, {
+          line: `${from} sent you a message request`,
+          url: `${SITE_URL}/messages/requests`,
+          button: "See the request",
+        })
+      );
     } else {
       const quote = body.length > 200 ? `${body.slice(0, 200)}…` : body;
-      await send(noticeMail(to.email, { line: `${from} sent you a message`, quote, url: `${SITE_URL}/messages`, button: "Read it" }));
+      await send(
+        noticeMail(to.email, {
+          line: `${from} sent you a message`,
+          quote,
+          url: `${SITE_URL}/messages`,
+          button: "Read it",
+        })
+      );
     }
   } catch (e) {
     console.error("message mail:", e);
@@ -73,16 +102,20 @@ export async function sendDigests(): Promise<void> {
   const isDue = or(
     isNull(users.digestAt),
     and(eq(users.emailNotify, "daily"), lte(users.digestAt, t - PERIOD.daily)),
-    and(eq(users.emailNotify, "weekly"), lte(users.digestAt, t - PERIOD.weekly)),
+    and(eq(users.emailNotify, "weekly"), lte(users.digestAt, t - PERIOD.weekly))
   );
-  const due = await db.select().from(users)
-    .where(and(
-      inArray(users.emailNotify, ["daily", "weekly"]),
-      isNotNull(users.emailVerifiedAt),
-      eq(users.banned, false),
-      notLike(users.email, "%.invalid"),
-      isDue,
-    ))
+  const due = await db
+    .select()
+    .from(users)
+    .where(
+      and(
+        inArray(users.emailNotify, ["daily", "weekly"]),
+        isNotNull(users.emailVerifiedAt),
+        eq(users.banned, false),
+        notLike(users.email, "%.invalid"),
+        isDue
+      )
+    )
     .orderBy(asc(users.digestAt))
     .limit(200);
   for (const u of due) {
@@ -91,20 +124,23 @@ export async function sendDigests(): Promise<void> {
     // first pass after picking a digest: start counting from now
     if (since === null) continue;
     const off = [...muted(u)];
-    const rows = await db.select({ type: notifications.type, data: notifications.data, actor: users.username })
+    const rows = await db
+      .select({ type: notifications.type, data: notifications.data, actor: users.username })
       .from(notifications)
       .leftJoin(users, eq(users.id, notifications.actorId))
-      .where(and(
-        eq(notifications.userId, u.id),
-        gt(notifications.createdAt, since),
-        eq(notifications.read, false),
-        off.length ? notInArray(notifications.type, off) : undefined,
-      ))
+      .where(
+        and(
+          eq(notifications.userId, u.id),
+          gt(notifications.createdAt, since),
+          eq(notifications.read, false),
+          off.length ? notInArray(notifications.type, off) : undefined
+        )
+      )
       .orderBy(desc(notifications.createdAt))
       .limit(200);
     const lines = rows
-      .map(r => describe(u, r.type, r.actor, JSON.parse(r.data) as Record<string, unknown>))
-      .filter(x => x !== null);
+      .map((r) => describe(u, r.type, r.actor, JSON.parse(r.data) as Record<string, unknown>))
+      .filter((x) => x !== null);
     if (!off.includes("message")) {
       const direct = await unreadSince(u.id, since);
       const group = await groupUnreadSince(u.id, since);

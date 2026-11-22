@@ -19,12 +19,13 @@ async function params(req: Request, url: URL): Promise<Params> {
   return p;
 }
 
-const esc = (s: unknown) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const esc = (s: unknown) =>
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const fields = (v: object): [string, unknown][] => Object.entries(v);
 
 // Arrays repeat the element, "@attr" holds its attributes and "#text" its own text.
 function toXml(name: string, v: unknown): string {
-  if (Array.isArray(v)) return v.map(x => toXml(name, x)).join("");
+  if (Array.isArray(v)) return v.map((x) => toXml(name, x)).join("");
   if (v === null || typeof v !== "object") return `<${name}>${esc(v ?? "")}</${name}>`;
   let attrs = "";
   let inner = "";
@@ -51,7 +52,9 @@ const headers = (json: boolean) => ({
 
 function ok(json: boolean, body: Reply): Response {
   if (json) return new Response(JSON.stringify(body), { headers: headers(json) });
-  const inner = fields(body).map(([k, v]) => toXml(k, v)).join("");
+  const inner = fields(body)
+    .map(([k, v]) => toXml(k, v))
+    .join("");
   return new Response(`${XML}<lfm status="ok">${inner}</lfm>`, { headers: headers(json) });
 }
 

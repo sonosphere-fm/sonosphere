@@ -51,7 +51,7 @@ async function slowDown(clientId: string, group: Group, asked: number, reason: s
   await setJson(strikeKey(clientId), strikes, MAX_REST * 1000);
   await setJson(pauseKey(clientId, group), now() + seconds, seconds * 1000);
   console.warn(
-    `spotify: app ${clientId.slice(0, 6)} refused ${path.split("?")[0]} (${reason || "no reason"}, Retry-After ${asked}), resting ${group} ${seconds}s, strike ${strikes}`,
+    `spotify: app ${clientId.slice(0, 6)} refused ${path.split("?")[0]} (${reason || "no reason"}, Retry-After ${asked}), resting ${group} ${seconds}s, strike ${strikes}`
   );
 }
 
@@ -85,7 +85,13 @@ export function redirectFor(req: Request): string | null {
   return `${proto}://${host}/api/spotify/callback`;
 }
 
-export async function connectUrl(userId: number, clientId: string, redirectUri: string, origin: string, playback = false): Promise<string> {
+export async function connectUrl(
+  userId: number,
+  clientId: string,
+  redirectUri: string,
+  origin: string,
+  playback = false
+): Promise<string> {
   const state = rid(16);
   const verifier = b64url(Buffer.from(crypto.getRandomValues(new Uint8Array(48))));
   await repo.savePending({ state, userId, clientId, verifier, redirectUri, origin, createdAt: now() });
@@ -112,9 +118,12 @@ async function tokenRequest(clientId: string, params: Record<string, string>): P
   });
   const data = obj(await res.json().catch(() => null));
   const error = str(data?.error);
-  if (res.status === 400 && error === "invalid_grant") throw new Revoked("Spotify access was withdrawn. Connect again to resume.");
+  if (res.status === 400 && error === "invalid_grant")
+    throw new Revoked("Spotify access was withdrawn. Connect again to resume.");
   if (error === "invalid_client") {
-    throw new Revoked("Spotify no longer recognises your app's client ID. Check the app on Spotify's dashboard, then connect again.");
+    throw new Revoked(
+      "Spotify no longer recognises your app's client ID. Check the app on Spotify's dashboard, then connect again."
+    );
   }
   if (!res.ok || !data || !str(data.access_token)) throw new Error(`Spotify token request failed (${res.status})`);
   return {
@@ -151,7 +160,10 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
       redirect_uri: pending.redirectUri,
       code_verifier: pending.verifier,
     });
-    const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${t.access}` }, signal: AbortSignal.timeout(15_000) });
+    const res = await fetch(`${API}/me`, {
+      headers: { Authorization: `Bearer ${t.access}` },
+      signal: AbortSignal.timeout(15_000),
+    });
     // the Spotify account is not on the app's user list
     if (res.status === 403) return "forbidden";
     const me = obj(await res.json().catch(() => null));
@@ -174,7 +186,11 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
       createdAt: now(),
     });
     const link = await repo.findLink(pending.userId);
-    if (link) importRecent(link).catch(e => { console.error("Spotify import:", e); Sentry.captureException(e); });
+    if (link)
+      importRecent(link).catch((e) => {
+        console.error("Spotify import:", e);
+        Sentry.captureException(e);
+      });
     return "connected";
   } catch (e) {
     console.error("Spotify sign-in:", e);
@@ -212,7 +228,7 @@ async function accessToken(link: repo.Link, force = false): Promise<string> {
       return t.access;
     });
     if (token !== null) return token;
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 300));
   }
   throw new Slowed();
 }
@@ -245,7 +261,9 @@ async function request(link: repo.Link, path: string): Promise<Response> {
 async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
   const res = await request(link, path);
   if (res.status === 403) {
-    throw new Revoked("Spotify refused access. Check that your Spotify account is listed under User Management in your app, then connect again.");
+    throw new Revoked(
+      "Spotify refused access. Check that your Spotify account is listed under User Management in your app, then connect again."
+    );
   }
   if (res.status === 204) return null;
   if (!res.ok) throw new Error(`Spotify ${path} answered ${res.status}`);
@@ -280,8 +298,12 @@ async function importRecent(link: repo.Link): Promise<number> {
     }
     if (!plays.length) return 0;
     plays.sort((a, b) => a.at - b.at);
-    const results = await scrobbleMany(link.userId, plays.map(p => p.input), "spotify");
-    const added = results.filter(r => r.accepted).length;
+    const results = await scrobbleMany(
+      link.userId,
+      plays.map((p) => p.input),
+      "spotify"
+    );
+    const added = results.filter((r) => r.accepted).length;
     if (added) await markActive(link.userId);
     link.cursor = plays[plays.length - 1]!.at;
     await repo.updateLink(link.userId, { cursor: link.cursor, imported: link.imported + added, importedAt: now() });
@@ -293,7 +315,9 @@ async function importRecent(link: repo.Link): Promise<number> {
 }
 
 async function mirrorPlaying(link: repo.Link) {
-  await repo.updateLink(link.userId, { playingAt: await nextPoll(link, PLAYING_EVERY, IDLE_PLAYING_EVERY, IDLE_AFTER) });
+  await repo.updateLink(link.userId, {
+    playingAt: await nextPoll(link, PLAYING_EVERY, IDLE_PLAYING_EVERY, IDLE_AFTER),
+  });
   try {
     const reply = await spotifyGet(link, "/me/player/currently-playing");
     const mirrored = `spotify-playing:${link.userId}`;
@@ -314,10 +338,16 @@ async function mirrorPlaying(link: repo.Link) {
 
 function failed(link: repo.Link, e: unknown): number {
   if (e instanceof Revoked) {
-    repo.updateLink(link.userId, { broken: e.message }).catch(err => { console.error(err); Sentry.captureException(err); });
+    repo.updateLink(link.userId, { broken: e.message }).catch((err) => {
+      console.error(err);
+      Sentry.captureException(err);
+    });
     return 0;
   }
-  if (!(e instanceof Slowed)) { console.error(`Spotify (user ${link.userId}):`, e); Sentry.captureException(e); }
+  if (!(e instanceof Slowed)) {
+    console.error(`Spotify (user ${link.userId}):`, e);
+    Sentry.captureException(e);
+  }
   return 0;
 }
 
@@ -334,11 +364,11 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
   if (spare && (await getJson<number>("spotify-busy"))) throw new NoCapacity();
   if (!spare) await setJson("spotify-busy", 1, 3000);
   const links = await repo.workingLinks();
-  const used = await Promise.all(links.map(l => getJson<number>(`spotify-used:${l.clientId}`)));
+  const used = await Promise.all(links.map((l) => getJson<number>(`spotify-used:${l.clientId}`)));
   const order = links
     .map((l, i) => ({ l, at: used[i] ?? 0, r: Math.random() }))
     .sort((a, b) => a.at - b.at || a.r - b.r)
-    .map(x => x.l);
+    .map((x) => x.l);
   const until = Date.now() + 5000;
   const tried = new Set<number>();
   for (let i = 0; i < order.length; i++) {
@@ -349,7 +379,7 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
     if (!(await attempt(`spotify-turn:${link.clientId}`, 1, 400))) {
       // every free app was just used: wait for the next turn (a few seconds at most)
       if (!spare && i === order.length - 1 && Date.now() < until) {
-        await new Promise(r => setTimeout(r, 150));
+        await new Promise((r) => setTimeout(r, 150));
         i = -1;
       }
       continue;

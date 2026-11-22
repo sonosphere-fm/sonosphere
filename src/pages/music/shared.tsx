@@ -41,7 +41,15 @@ export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, 
   );
 }
 
-export function UploadImage({ type, id, onDone }: { type: "artist" | "album" | "user"; id?: number; onDone: () => void }) {
+export function UploadImage({
+  type,
+  id,
+  onDone,
+}: {
+  type: "artist" | "album" | "user";
+  id?: number;
+  onDone: () => void;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const act = useAction();
 
@@ -59,7 +67,9 @@ export function UploadImage({ type, id, onDone }: { type: "artist" | "album" | "
   return (
     <>
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={upload} />
-      <Button kind="btn ghost" type="button" loading={act.busy} onClick={() => input.current?.click()}>Upload image</Button>
+      <Button kind="btn ghost" type="button" loading={act.busy} onClick={() => input.current?.click()}>
+        Upload image
+      </Button>
       {act.note}
     </>
   );
@@ -84,14 +94,22 @@ export function TopTabs({ children }: { children: ReactNode }) {
 }
 
 export function HomeTabs({ at }: { at: HomeTab }) {
-  return <TopTabs>{HOME_TABS.map(([k, l, to]) => <Link key={k} className={at === k ? "active" : ""} to={to}>{l}</Link>)}</TopTabs>;
+  return (
+    <TopTabs>
+      {HOME_TABS.map(([k, l, to]) => (
+        <Link key={k} className={at === k ? "active" : ""} to={to}>
+          {l}
+        </Link>
+      ))}
+    </TopTabs>
+  );
 }
 
 type MixedRec = { kind: "artist" | "album" | "track"; item: Recommendation | TopAlbum | TopTrack; because: string[] };
 
 // Interleaves one artist, one track and one album per round.
 export function mixRecs(d: Pick<Recommended, "artists" | "tracks" | "albums">, limit = 15) {
-  const why = new Map(d.artists.map(a => [a.name, a.because]));
+  const why = new Map(d.artists.map((a) => [a.name, a.because]));
   const out: MixedRec[] = [];
   for (let i = 0; out.length < limit && (i < d.artists.length || i < d.tracks.length || i < d.albums.length); i++) {
     const artist = d.artists[i];

@@ -41,13 +41,17 @@ async function actTx(tx: Tx, a: Act): Promise<number> {
     if (hit) return hit.id;
   }
   const id = await getOrCreateArtistTx(tx, a.name);
-  if (a.mbid) await tx.update(artists).set({ mbid: a.mbid }).where(and(eq(artists.id, id), isNull(artists.mbid)));
+  if (a.mbid)
+    await tx
+      .update(artists)
+      .set({ mbid: a.mbid })
+      .where(and(eq(artists.id, id), isNull(artists.mbid)));
   return id;
 }
 
 /** Returns the artists on the bill. */
 async function upsert(e: Found): Promise<number[]> {
-  return transact(async tx => {
+  return transact(async (tx) => {
     const row = {
       title: clean(e.title, 200) || "Untitled event",
       venue: clean(e.venue, 120),
@@ -58,7 +62,8 @@ async function upsert(e: Found): Promise<number[]> {
       lat: e.lat,
       lon: e.lon,
     };
-    const [{ id }] = await tx.insert(events)
+    const [{ id }] = await tx
+      .insert(events)
       .values({ ...row, source: e.source, sourceId: e.sourceId, createdAt: now() })
       .onConflictDoUpdate({ target: [events.source, events.sourceId], set: row })
       .returning({ id: events.id });
@@ -68,7 +73,10 @@ async function upsert(e: Found): Promise<number[]> {
       const artistId = await actTx(tx, a);
       if (ids.includes(artistId)) continue;
       ids.push(artistId);
-      await tx.insert(eventArtists).values({ eventId: id, artistId, position: ids.length - 1 }).onConflictDoNothing();
+      await tx
+        .insert(eventArtists)
+        .values({ eventId: id, artistId, position: ids.length - 1 })
+        .onConflictDoNothing();
     }
     return ids;
   });
@@ -76,10 +84,12 @@ async function upsert(e: Found): Promise<number[]> {
 
 /** Drops events starting after `from` that the source no longer lists. */
 async function dropGone(source: Found["source"], from: number, kept: string[]) {
-  const listed = await db.select({ id: events.id, sid: events.sourceId }).from(events)
+  const listed = await db
+    .select({ id: events.id, sid: events.sourceId })
+    .from(events)
     .where(and(eq(events.source, source), gte(events.startsAt, from)));
   const keep = new Set(kept);
-  const drop = listed.filter(g => !keep.has(g.sid ?? "")).map(g => g.id);
+  const drop = listed.filter((g) => !keep.has(g.sid ?? "")).map((g) => g.id);
   for (let i = 0; i < drop.length; i += 500) {
     await db.delete(events).where(inArray(events.id, drop.slice(i, i + 500)));
   }
@@ -116,13 +126,13 @@ async function syncMusicBrainz(): Promise<{ upcoming: number; past: number; drop
   const upcoming = await mbdb.events(day(soon), day(t + 548 * 86400));
   // the past year only for artists we know, so the catalogue doesn't fill with strangers
   const knownRows = await db.select({ mbid: artists.mbid }).from(artists).where(sql`${artists.mbid} IS NOT NULL`);
-  const known = knownRows.map(r => r.mbid!);
+  const known = knownRows.map((r) => r.mbid!);
   const past = known.length ? await mbdb.events(day(t - 365 * 86400), day(soon - 86400), known) : [];
   const added: number[] = [];
   for (const e of [...upcoming, ...past]) {
     if (e.lineup.length) added.push(...(await upsert(fromMb(e))));
   }
-  const listed = upcoming.filter(e => e.lineup.length).map(e => e.gid);
+  const listed = upcoming.filter((e) => e.lineup.length).map((e) => e.gid);
   const dropped = await dropGone("musicbrainz", soon, listed);
   want("artist", [...new Set(added)]);
   return { upcoming: upcoming.length, past: past.length, dropped };
@@ -145,18 +155,24 @@ type TmEvent = {
 
 /** Null if Ticketmaster couldn't be asked. */
 async function ticketmaster(name: string): Promise<Found[] | null> {
-  const q = new URLSearchParams({ apikey: TM_KEY, keyword: name, classificationName: "music", size: "100", sort: "date,asc" });
+  const q = new URLSearchParams({
+    apikey: TM_KEY,
+    keyword: name,
+    classificationName: "music",
+    size: "100",
+    sort: "date,asc",
+  });
   const url = `https://app.ticketmaster.com/discovery/v2/events.json?${q}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) }).catch(() => null);
   if (!res?.ok) return null;
-  const body = await res.json().catch(() => null) as { _embedded?: { events?: TmEvent[] } } | null;
+  const body = (await res.json().catch(() => null)) as { _embedded?: { events?: TmEvent[] } } | null;
   const key = looseKey(name);
   const out: Found[] = [];
   for (const e of body?._embedded?.events ?? []) {
     const acts = e._embedded?.attractions ?? [];
     const v = e._embedded?.venues?.[0];
     const start = e.dates?.start;
-    if (!acts.some(a => looseKey(a.name) === key)) continue;
+    if (!acts.some((a) => looseKey(a.name) === key)) continue;
     if (e.dates?.status?.code === "cancelled" || !start?.localDate) continue;
     const lat = Number(v?.location?.latitude);
     const lon = Number(v?.location?.longitude);
@@ -175,7 +191,7 @@ async function ticketmaster(name: string): Promise<Found[] | null> {
       url: e.url ?? "",
       lat: has ? lat : null,
       lon: has ? lon : null,
-      lineup: acts.map(a => ({ name: a.name })),
+      lineup: acts.map((a) => ({ name: a.name })),
     });
   }
   return out;
@@ -185,9 +201,12 @@ async function ticketmaster(name: string): Promise<Found[] | null> {
 async function ticketmasterTick() {
   const asked = (await getJson<Record<string, number>>("tm-asked")) ?? {};
   const t = now();
-  const fresh = Object.keys(asked).filter(k => asked[k]! > t - 3 * 86400).map(Number);
+  const fresh = Object.keys(asked)
+    .filter((k) => asked[k]! > t - 3 * 86400)
+    .map(Number);
   const plays = sql<number>`sum(${userArtists.plays})`;
-  const [next] = await db.select({ id: artists.id, name: artists.name })
+  const [next] = await db
+    .select({ id: artists.id, name: artists.name })
     .from(userArtists)
     .innerJoin(artists, eq(artists.id, userArtists.artistId))
     .where(fresh.length ? sql`${artists.id} NOT IN ${fresh}` : undefined)
@@ -202,12 +221,13 @@ async function ticketmasterTick() {
   await setJson("tm-asked", { ...kept, [next.id]: t }, 4 * 86400_000);
   const added: number[] = [];
   for (const e of found) added.push(...(await upsert(e)));
-  const theirs = await db.select({ id: events.id, sid: events.sourceId })
+  const theirs = await db
+    .select({ id: events.id, sid: events.sourceId })
     .from(events)
     .innerJoin(eventArtists, eq(eventArtists.eventId, events.id))
     .where(and(eq(events.source, "ticketmaster"), eq(eventArtists.artistId, next.id), gte(events.startsAt, t)));
-  const ids = new Set(found.map(f => f.sourceId));
-  const gone = theirs.filter(r => !ids.has(r.sid ?? "")).map(r => r.id);
+  const ids = new Set(found.map((f) => f.sourceId));
+  const gone = theirs.filter((r) => !ids.has(r.sid ?? "")).map((r) => r.id);
   if (gone.length) await db.delete(events).where(inArray(events.id, gone));
   want("artist", [...new Set(added)]);
 }
@@ -225,7 +245,8 @@ export function startEventSync() {
   };
   const quiet = (e: unknown) => {
     console.error("events:", e);
-    const isNetwork = e instanceof TypeError || (e instanceof Error && /fetch|network|aborted|timeout/i.test(e.message));
+    const isNetwork =
+      e instanceof TypeError || (e instanceof Error && /fetch|network|aborted|timeout/i.test(e.message));
     if (!isNetwork) Sentry.captureException(e);
   };
   const runDaily = () => {

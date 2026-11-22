@@ -14,7 +14,14 @@ export function ImageWithFallback(props: ImageProps) {
   return <ImageState key={props.src} {...props} />;
 }
 
-function ImageState({ src, alt, className = "", fallback = null, errorFallback = fallback, loading = "lazy" }: ImageProps) {
+function ImageState({
+  src,
+  alt,
+  className = "",
+  fallback = null,
+  errorFallback = fallback,
+  loading = "lazy",
+}: ImageProps) {
   const [state, setState] = useState<"loading" | "loaded" | "error">(src ? "loading" : "error");
   return (
     <span className={`image-frame ${className}`} data-state={state}>
@@ -25,7 +32,7 @@ function ImageState({ src, alt, className = "", fallback = null, errorFallback =
           alt={alt}
           loading={loading}
           aria-hidden={state !== "loaded"}
-          onLoad={e => setState(e.currentTarget.naturalWidth > 0 ? "loaded" : "error")}
+          onLoad={(e) => setState(e.currentTarget.naturalWidth > 0 ? "loaded" : "error")}
           onError={() => setState("error")}
         />
       )}

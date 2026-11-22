@@ -51,10 +51,11 @@ type Found = { key: string } | { url: string } | { mime: string; data: Uint8Arra
 // `data` holds the original bytes of pictures uploaded before object storage
 export async function findImage(id: string): Promise<Found | null> {
   const row = await first(
-    db.select({ key: images.key, url: images.url, mime: images.mime, data: images.data })
+    db
+      .select({ key: images.key, url: images.url, mime: images.mime, data: images.data })
       .from(images)
       .where(eq(images.id, id))
-      .limit(1),
+      .limit(1)
   );
   if (!row) return null;
   if (row.key) return { key: row.key };
@@ -98,12 +99,13 @@ const unused = and(
   notExists(db.select({ x: sql`1` }).from(users).where(eq(users.imageId, images.id))),
   notExists(db.select({ x: sql`1` }).from(users).where(eq(users.bannerId, images.id))),
   notExists(db.select({ x: sql`1` }).from(artists).where(eq(artists.imageId, images.id))),
-  notExists(db.select({ x: sql`1` }).from(albums).where(eq(albums.imageId, images.id))),
+  notExists(db.select({ x: sql`1` }).from(albums).where(eq(albums.imageId, images.id)))
 );
 
 // pictures younger than an hour are left alone: one just uploaded is not attached yet
 export async function sweepUnused(): Promise<void> {
-  const rows = await db.select({ id: images.id, key: images.key })
+  const rows = await db
+    .select({ id: images.id, key: images.key })
     .from(images)
     .where(and(unused, lt(images.createdAt, now() - 3600)))
     .orderBy(images.id)

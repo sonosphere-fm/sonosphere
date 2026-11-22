@@ -25,7 +25,7 @@ async function load() {
 }
 
 const escapeScript = (json: string) =>
-  json.replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, c => `\\u${c.charCodeAt(0).toString(16)}`);
+  json.replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, (c) => `\\u${c.charCodeAt(0).toString(16)}`);
 
 export async function appRoutes() {
   const { assets, html } = await load();
@@ -33,15 +33,22 @@ export async function appRoutes() {
 
   // the page embeds the viewer's account, so no shared cache may keep it
   const shell = async (req: Request) => {
-    const [{ user: viewer, actor }, seo] = await Promise.all([viewerOf(req).catch(() => ({ user: null, actor: null })), pageSeo(new URL(req.url))]);
+    const [{ user: viewer, actor }, seo] = await Promise.all([
+      viewerOf(req).catch(() => ({ user: null, actor: null })),
+      pageSeo(new URL(req.url)),
+    ]);
     const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer, actor) : null }));
     const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
     const page = html
-      .replace("<html lang=\"en\">", () => `<html lang="en"${scheme}>`)
+      .replace('<html lang="en">', () => `<html lang="en"${scheme}>`)
       .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))
-      .replace(/<div id=["']?root["']?>/, root => root + seoContent(seo))
+      .replace(/<div id=["']?root["']?>/, (root) => root + seoContent(seo))
       .replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
-    const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-cache", Vary: "Cookie" };
+    const headers = {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "private, no-cache",
+      Vary: "Cookie",
+    };
     return new Response(page, { headers, status: seo.status ?? 200 });
   };
 
@@ -59,11 +66,18 @@ export async function appRoutes() {
     const found = assets.get(path);
     if (!found) return missing();
     if (!found.staff) {
-      return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": path === "/assets/social-card.png" ? "public, max-age=86400" : `public, ${FOREVER}` } });
+      return new Response(found.body, {
+        headers: {
+          "Content-Type": found.type,
+          "Cache-Control": path === "/assets/social-card.png" ? "public, max-age=86400" : `public, ${FOREVER}`,
+        },
+      });
     }
     const { actor: viewer } = await viewerOf(req);
     if (!viewer || !isStaff(viewer)) return missing();
-    return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": `private, ${FOREVER}`, Vary: "Cookie" } });
+    return new Response(found.body, {
+      headers: { "Content-Type": found.type, "Cache-Control": `private, ${FOREVER}`, Vary: "Cookie" },
+    });
   };
 
   return { ...crawlerRoutes, "/page-metadata": metadata, "/assets/*": asset, "/*": shell };

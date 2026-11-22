@@ -1,7 +1,19 @@
 import { and, count, countDistinct, desc, eq, gte, isNull, ne, sql } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import { db } from "../db/client";
-import { albums, artists, dmFlags, journals, reports, scrobbles, shouts, tracks, users, wikiLocks, wikis } from "../db/schema";
+import {
+  albums,
+  artists,
+  dmFlags,
+  journals,
+  reports,
+  scrobbles,
+  shouts,
+  tracks,
+  users,
+  wikiLocks,
+  wikis,
+} from "../db/schema";
 import { timeBucket } from "../db/dialect";
 import { publicCols } from "../users/repo";
 import type { Dashboard, DayCount } from "../../shared/admin";
@@ -11,7 +23,10 @@ const DAY = 86400;
 export async function totals(t: number): Promise<Dashboard["totals"]> {
   const week = t - 7 * DAY;
   const staffOnly = and(eq(users.isAdmin, true), eq(users.banned, false));
-  const active = await db.select({ c: countDistinct(scrobbles.userId) }).from(scrobbles).where(gte(scrobbles.playedAt, week));
+  const active = await db
+    .select({ c: countDistinct(scrobbles.userId) })
+    .from(scrobbles)
+    .where(gte(scrobbles.playedAt, week));
   return {
     users: await db.$count(users),
     newUsers7: await db.$count(users, gte(users.registeredAt, week)),
@@ -40,7 +55,7 @@ export async function totals(t: number): Promise<Dashboard["totals"]> {
 async function perDay(table: PgTable, time: PgColumn, from: number): Promise<Map<string, number>> {
   const day = timeBucket(time, "day");
   const rows = await db.select({ d: day, c: count() }).from(table).where(gte(time, from)).groupBy(sql`1`);
-  return new Map(rows.map(r => [String(r.d), r.c]));
+  return new Map(rows.map((r) => [String(r.d), r.c]));
 }
 
 function series(from: number, days: number, ...counts: Map<string, number>[]): DayCount[] {
@@ -66,7 +81,8 @@ export async function activity(from: number, days: number): Promise<Dashboard["s
 }
 
 export const newestUsers = (limit: number): Promise<Dashboard["recentUsers"]> =>
-  db.select({ ...publicCols, registeredAt: users.registeredAt })
+  db
+    .select({ ...publicCols, registeredAt: users.registeredAt })
     .from(users)
     .orderBy(desc(users.registeredAt), desc(users.id))
     .limit(limit);

@@ -30,9 +30,17 @@ function Recs() {
   const q = useApi<Recommended>(RECOMMENDED);
   return (
     <Async q={q}>
-      {d => d.artists.length
-        ? <div className="recs">{mixRecs(d).map(r => <RecCard key={r.kind + r.item.id} {...r} />)}</div>
-        : <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>}
+      {(d) =>
+        d.artists.length ? (
+          <div className="recs">
+            {mixRecs(d).map((r) => (
+              <RecCard key={r.kind + r.item.id} {...r} />
+            ))}
+          </div>
+        ) : (
+          <Empty>You need to scrobble a few more tracks before we can recommend you anything.</Empty>
+        )
+      }
     </Async>
   );
 }
@@ -51,12 +59,19 @@ function HomeFeed({ name }: { name: string }) {
     <>
       {!hidden && (
         <div className="welcome relative pr-10 mb-6">
-          <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}><Ico.X /></Button>
+          <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}>
+            <Ico.X />
+          </Button>
           <h1 className="text-[24px] m-0 mb-2 max-[600px]:text-[20px]">Welcome to Sonosphere, {name}!</h1>
-          <p className="m-0 text-site-ink-2 max-w-[62ch]">The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble more music.</p>
+          <p className="m-0 text-site-ink-2 max-w-[62ch]">
+            The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble
+            more music.
+          </p>
         </div>
       )}
-      <Pane><Recs /></Pane>
+      <Pane>
+        <Recs />
+      </Pane>
     </>
   );
 }
@@ -77,12 +92,21 @@ function Banner({ d }: { d: HomeData | null }) {
       <div className="wrap banner-inner">
         <div className="banner-copy">
           <h1>Track what you love.</h1>
-          <p>Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.</p>
+          <p>
+            Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that
+            match your taste.
+          </p>
           <div className="row">
-            <Button kind="btn inverse" href="/join">Join free</Button>
-            <Button kind="btn outline-invert" href="/login">Log in</Button>
+            <Button kind="btn inverse" href="/join">
+              Join free
+            </Button>
+            <Button kind="btn outline-invert" href="/login">
+              Log in
+            </Button>
           </div>
-          {d && d.stats.users >= 10 && <p className="banner-stats">Join {num(roundDown(d.stats.users))}+ users scrobbling on Sonosphere</p>}
+          {d && d.stats.users >= 10 && (
+            <p className="banner-stats">Join {num(roundDown(d.stats.users))}+ users scrobbling on Sonosphere</p>
+          )}
         </div>
         {d && d.trendingTracks.length > 0 && (
           <ol className="banner-chart">
@@ -90,7 +114,10 @@ function Banner({ d }: { d: HomeData | null }) {
             {d.trendingTracks.slice(0, 5).map((t, i) => (
               <li key={t.id}>
                 <b>{i + 1}</b>
-                <Link to={trackUrl(t.artist, t.title)}><strong>{t.title}</strong><span>{t.artist}</span></Link>
+                <Link to={trackUrl(t.artist, t.title)}>
+                  <strong>{t.title}</strong>
+                  <span>{t.artist}</span>
+                </Link>
               </li>
             ))}
           </ol>
@@ -104,19 +131,33 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
   return (
     <Section title="Friends' listening" more={`${userUrl(me)}/following`} moreLabel="Following">
       <ul className="feed">
-        {friends.slice(0, 8).map(f => (
+        {friends.slice(0, 8).map((f) => (
           <li key={f.user.username}>
             <Avatar user={f.user} />
             <div className="grow">
-              <Link className="strong" to={userUrl(f.user.username)}>{f.user.username}</Link> <UserLabels name={f.user.username} />
+              <Link className="strong" to={userUrl(f.user.username)}>
+                {f.user.username}
+              </Link>{" "}
+              <UserLabels name={f.user.username} />
               <span>
-                <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link> <span className="muted">by</span>{" "}
-                <Link to={artistUrl(f.track.artist)}>{f.track.artist}</Link>
+                <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link>{" "}
+                <span className="muted">by</span> <Link to={artistUrl(f.track.artist)}>{f.track.artist}</Link>
               </span>
             </div>
-            {f.nowPlaying
-              ? <span className="np small">Scrobbling now <i className="eq"><i /><i /><i /></i></span>
-              : "playedAt" in f.track && <span className="muted small">{date(f.track.playedAt, { day: "numeric", month: "short" })}</span>}
+            {f.nowPlaying ? (
+              <span className="np small">
+                Scrobbling now{" "}
+                <i className="eq">
+                  <i />
+                  <i />
+                  <i />
+                </i>
+              </span>
+            ) : (
+              "playedAt" in f.track && (
+                <span className="muted small">{date(f.track.playedAt, { day: "numeric", month: "short" })}</span>
+              )
+            )}
           </li>
         ))}
       </ul>
@@ -128,11 +169,16 @@ function FriendLoves({ items }: { items: FriendLove[] }) {
   return (
     <Section title="Loved by friends">
       <ul className="plain">
-        {items.map(t => (
+        {items.map((t) => (
           <li key={t.user + t.id}>
-            <Link className="strong" to={trackUrl(t.artist, t.title)}>{t.title}</Link> <span className="muted">- {t.artist}</span>
+            <Link className="strong" to={trackUrl(t.artist, t.title)}>
+              {t.title}
+            </Link>{" "}
+            <span className="muted">- {t.artist}</span>
             <br />
-            <span className="muted small"><Ico.Heart on /> <Link to={userUrl(t.user)}>{t.user}</Link></span>
+            <span className="muted small">
+              <Ico.Heart on /> <Link to={userUrl(t.user)}>{t.user}</Link>
+            </span>
           </li>
         ))}
       </ul>
@@ -153,37 +199,45 @@ export function Home() {
       {!me && <Banner d={q.data} />}
       {me && <HomeTabs at="home" />}
       <div className={me ? "wrap page home-page" : "wrap page"}>
-        <Async q={q}>{d => {
-          const week = d.trendingPeriod === "week";
-          return (
-            <div className="cols">
-              <div className="main">
-                {me && (
-                  <>
-                    <HomeFeed name={me.username} />
-                    <Suspense fallback={null}><HomeRecent name={me.username} /></Suspense>
-                    {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={me.username} />}
-                  </>
-                )}
-                <Section title={week ? "Trending artists" : "Top artists"} more="/charts">
-                  <Grid kind="artist" cols={4} items={d.trendingArtists.slice(0, 8)} />
-                </Section>
-                <Section title={week ? "Top tracks this week" : "Top tracks"} more="/charts?kind=tracks">
-                  <TrackList items={d.trendingTracks} rank={1} count="listeners" />
-                </Section>
-                <Section title={week ? "Albums on the rise" : "Top albums"} more="/charts?kind=albums">
-                  <Grid kind="album" items={d.trendingAlbums} />
-                </Section>
+        <Async q={q}>
+          {(d) => {
+            const week = d.trendingPeriod === "week";
+            return (
+              <div className="cols">
+                <div className="main">
+                  {me && (
+                    <>
+                      <HomeFeed name={me.username} />
+                      <Suspense fallback={null}>
+                        <HomeRecent name={me.username} />
+                      </Suspense>
+                      {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={me.username} />}
+                    </>
+                  )}
+                  <Section title={week ? "Trending artists" : "Top artists"} more="/charts">
+                    <Grid kind="artist" cols={4} items={d.trendingArtists.slice(0, 8)} />
+                  </Section>
+                  <Section title={week ? "Top tracks this week" : "Top tracks"} more="/charts?kind=tracks">
+                    <TrackList items={d.trendingTracks} rank={1} count="listeners" />
+                  </Section>
+                  <Section title={week ? "Albums on the rise" : "Top albums"} more="/charts?kind=albums">
+                    <Grid kind="album" items={d.trendingAlbums} />
+                  </Section>
+                </div>
+                <aside className="side">
+                  {me && <PlayRows />}
+                  {me && d.friendLoves && d.friendLoves.length > 0 && <FriendLoves items={d.friendLoves} />}
+                  <Section title="Popular tags" more="/charts?kind=tags">
+                    <TagChips tags={d.tags} />
+                  </Section>
+                  <Section title="Upcoming events" more="/events">
+                    <EventList items={d.events} />
+                  </Section>
+                </aside>
               </div>
-              <aside className="side">
-                {me && <PlayRows />}
-                {me && d.friendLoves && d.friendLoves.length > 0 && <FriendLoves items={d.friendLoves} />}
-                <Section title="Popular tags" more="/charts?kind=tags"><TagChips tags={d.tags} /></Section>
-                <Section title="Upcoming events" more="/events"><EventList items={d.events} /></Section>
-              </aside>
-            </div>
-          );
-        }}</Async>
+            );
+          }}
+        </Async>
       </div>
     </>
   );

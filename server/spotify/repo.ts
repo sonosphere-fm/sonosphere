@@ -22,13 +22,17 @@ export async function updateLink(userId: number, set: Partial<Omit<NewLink, "use
 }
 
 export async function dropLink(userId: number): Promise<boolean> {
-  const gone = await db.delete(spotifyLinks).where(eq(spotifyLinks.userId, userId)).returning({ id: spotifyLinks.userId });
+  const gone = await db
+    .delete(spotifyLinks)
+    .where(eq(spotifyLinks.userId, userId))
+    .returning({ id: spotifyLinks.userId });
   return gone.length > 0;
 }
 
 /** Working links whose recent plays are due by `at`, longest-waiting first. */
 export const dueLinks = (at: number, limit: number): Promise<Link[]> =>
-  db.select()
+  db
+    .select()
     .from(spotifyLinks)
     .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.recentAt, at)))
     .orderBy(asc(spotifyLinks.recentAt))
@@ -38,7 +42,8 @@ export const workingLinks = (): Promise<Link[]> => db.select().from(spotifyLinks
 
 /** Working links whose "now playing" check is due by `at`. */
 export const playingDue = (at: number, limit: number): Promise<Link[]> =>
-  db.select()
+  db
+    .select()
     .from(spotifyLinks)
     .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.playingAt, at)))
     .orderBy(asc(spotifyLinks.playingAt))

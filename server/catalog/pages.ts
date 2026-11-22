@@ -18,7 +18,7 @@ async function trend(scope: Scope, weeks = 26): Promise<TrendPoint[]> {
   const end = Math.floor((now() + SHIFT) / WEEK);
   const first = end - weeks + 1;
   const rows = await series({ ...scope, from: first * WEEK - SHIFT }, "week");
-  const plays = new Map(rows.map(r => [Number(r.k), r.c]));
+  const plays = new Map(rows.map((r) => [Number(r.k), r.c]));
   return Array.from({ length: weeks }, (_, i) => ({
     start: (first + i) * WEEK - SHIFT,
     count: plays.get(first + i) || 0,
@@ -42,8 +42,8 @@ export async function artistPage(a: repo.Artist, viewerId: number | undefined): 
     wiki: await latestWiki("artist", a.id),
     similar: await similarArtists(a.id, 6),
     topTracks: (await topTracks({ artistId: a.id, viewerId, global: true }, 10)).items,
-    topAlbums: wantBare("album", await repo.popularAlbums(a.id, false, 8), r => r.id),
-    topSingles: wantBare("album", await repo.popularAlbums(a.id, true, 4), r => r.id),
+    topAlbums: wantBare("album", await repo.popularAlbums(a.id, false, 8), (r) => r.id),
+    topSingles: wantBare("album", await repo.popularAlbums(a.id, true, 4), (r) => r.id),
     latestAlbum: await repo.latestAlbum(a.id),
     weekTrack: weekTracks.items[0] ?? null,
     albumCount: await repo.albumCount(a.id, false),
@@ -59,7 +59,7 @@ export async function similarWithTags(artistId: number): Promise<ArtistSimilar["
   const out: ArtistSimilar["items"] = [];
   for (const s of await similarArtists(artistId, 40)) {
     const tags = await topTags("artist", s.id, 3);
-    out.push({ ...s, tags: tags.map(t => t.name) });
+    out.push({ ...s, tags: tags.map((t) => t.name) });
   }
   return out;
 }
@@ -67,7 +67,7 @@ export async function similarWithTags(artistId: number): Promise<ArtistSimilar["
 export async function albumPage(al: repo.AlbumWithArtist, viewerId: number): Promise<AlbumPage> {
   const stats = await counts({ albumId: al.id });
   const artistImage = (await repo.findItem("artist", al.artistId))?.imageId ?? null;
-  const tracks = (await repo.trackList(al.id, viewerId)).map(t => ({
+  const tracks = (await repo.trackList(al.id, viewerId)).map((t) => ({
     position: t.position,
     id: t.id,
     title: t.title,
@@ -95,7 +95,7 @@ export async function albumPage(al: repo.AlbumWithArtist, viewerId: number): Pro
     wiki: await latestWiki("album", al.id),
     tracks,
     duration: tracks.reduce((sum, t) => sum + t.duration, 0),
-    otherAlbums: wantBare("album", await repo.otherAlbums(al.artistId, al.id, 6), r => r.id),
+    otherAlbums: wantBare("album", await repo.otherAlbums(al.artistId, al.id, 6), (r) => r.id),
     trend: await trend({ albumId: al.id }),
     topListeners: await repo.topListeners("album", al.id, 8),
     shoutCount: await shoutCount("album", al.id),
@@ -121,7 +121,7 @@ export async function trackPage(t: repo.TrackWithArtist, viewerId: number): Prom
     tags: await topTags("track", t.id, 8),
     myTags: await myTags(viewerId, "track", t.id),
     wiki: await latestWiki("track", t.id),
-    albums: wantBare("album", await repo.albumsWithTrack(t.id, t.artist), r => r.id),
+    albums: wantBare("album", await repo.albumsWithTrack(t.id, t.artist), (r) => r.id),
     similar: await similarTracks(t.id, t.artistId, viewerId, 10),
     trend: await trend({ trackId: t.id }),
     topListeners: await repo.topListeners("track", t.id, 8),

@@ -17,7 +17,7 @@ export function whereFrom(h: Headers): Place | null {
   const raw = h.get("cf-ipcity") || "";
   let city = raw;
   try {
-    city = new TextDecoder().decode(Uint8Array.from(raw, ch => ch.charCodeAt(0) & 255));
+    city = new TextDecoder().decode(Uint8Array.from(raw, (ch) => ch.charCodeAt(0) & 255));
   } catch {}
   return { lat: known ? lat : null, lon: known ? lon : null, city, country };
 }

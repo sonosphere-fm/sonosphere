@@ -8,7 +8,16 @@ import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./groups.repo";
 import { atomically, connection, sentSinceTx } from "./repo";
 import type { Group, GroupMessage, Member } from "./groups.repo";
-import type { DmDone, DmGroup, DmGroupCandidates, DmGroupMessage, DmGroupPage, DmGroupSent, DmUnsent, DmUser } from "../../shared/dm";
+import type {
+  DmDone,
+  DmGroup,
+  DmGroupCandidates,
+  DmGroupMessage,
+  DmGroupPage,
+  DmGroupSent,
+  DmUnsent,
+  DmUser,
+} from "../../shared/dm";
 
 const GROUP = {
   MAX_MEMBERS: 10,
@@ -126,20 +135,27 @@ export async function candidates(me: User, groupId: unknown): Promise<DmGroupCan
 export async function create(me: User, rawTitle: unknown, rawIds: unknown): Promise<DmGroupSent> {
   canPost(me);
   const title = cleanTitle(rawTitle);
-  const ids = [...new Set(Array.isArray(rawIds) ? rawIds.map(Number) : [])].filter(id => id !== me.id);
+  const ids = [...new Set(Array.isArray(rawIds) ? rawIds.map(Number) : [])].filter((id) => id !== me.id);
   if (ids.length < 2) fail(400, "Pick at least two people for a group");
   if (ids.length + 1 > GROUP.MAX_MEMBERS) fail(400, `Groups can have up to ${GROUP.MAX_MEMBERS} people`);
   const people: User[] = [];
-  for (const id of ids) people.push(await checkAddable(me, await findById(id), people.map(p => p.id)));
+  for (const id of ids)
+    people.push(
+      await checkAddable(
+        me,
+        await findById(id),
+        people.map((p) => p.id)
+      )
+    );
   const newGroups = (await onProbation(me)) ? PROBATION.NEW_GROUPS_PER_DAY : GROUP.NEW_PER_DAY;
-  const { groupId, id } = await atomically(async tx => {
+  const { groupId, id } = await atomically(async (tx) => {
     const t = now();
     if (!me.isAdmin && (await repo.createdSinceTx(tx, me.id, t - 86400)) >= newGroups) {
       fail(429, "You've started a lot of groups today. Try again tomorrow.");
     }
     const group = await repo.createTx(tx, me.id, title, t);
     for (const p of people) await repo.addMemberTx(tx, group.id, p.id, t);
-    const names = people.map(p => p.username).join(", ");
+    const names = people.map((p) => p.username).join(", ");
     const line = `${me.username} started the group with ${names}`;
     return { groupId: group.id, id: await repo.addMessageTx(tx, group.id, me.id, line, "created", t) };
   });
@@ -171,10 +187,12 @@ export async function send(me: User, groupId: unknown, rawBody: unknown): Promis
   if (!body) fail(400, "Write a message first");
   if (body.length > DM.MAX_LENGTH) fail(400, `Messages can be up to ${DM.MAX_LENGTH} characters`);
   const lim = await dmLimits(me);
-  const id = await atomically(async tx => {
+  const id = await atomically(async (tx) => {
     const t = now();
-    const sent = async (since: number) => (await sentSinceTx(tx, me.id, since)) + (await repo.sentSinceTx(tx, me.id, since));
-    if ((await sent(t - 60)) >= lim.perMinute) fail(429, "You're sending messages too quickly. Wait a moment and try again.");
+    const sent = async (since: number) =>
+      (await sentSinceTx(tx, me.id, since)) + (await repo.sentSinceTx(tx, me.id, since));
+    if ((await sent(t - 60)) >= lim.perMinute)
+      fail(429, "You're sending messages too quickly. Wait a moment and try again.");
     if ((await sent(t - 86400)) >= lim.perDay) fail(429, "You've reached today's message limit.");
     return repo.addMessageTx(tx, group.id, me.id, body, null, t);
   });
@@ -201,7 +219,7 @@ export async function rename(me: User, groupId: unknown, rawTitle: unknown): Pro
   const title = cleanTitle(rawTitle);
   if (title === group.title) fail(400, "That's already the group's name");
   const line = title ? `${me.username} named the group "${title}"` : `${me.username} removed the group's name`;
-  const id = await atomically(async tx => {
+  const id = await atomically(async (tx) => {
     await repo.updateTx(tx, group.id, { title });
     return repo.addMessageTx(tx, group.id, me.id, line, "title", now());
   });
@@ -214,7 +232,7 @@ export async function addMember(me: User, groupId: unknown, userId: unknown): Pr
   const target = await checkAddable(me, await findById(Number(userId) || 0), inGroup);
   if (inGroup.includes(target.id)) fail(400, `${target.username} is already in this group`);
   if (inGroup.length >= GROUP.MAX_MEMBERS) fail(400, `Groups can have up to ${GROUP.MAX_MEMBERS} people`);
-  const id = await atomically(async tx => {
+  const id = await atomically(async (tx) => {
     const t = now();
     await repo.addMemberTx(tx, group.id, target.id, t);
     return repo.addMessageTx(tx, group.id, me.id, `${me.username} added ${target.username}`, "added", t);
@@ -232,7 +250,7 @@ export async function removeMember(me: User, groupId: unknown, userId: unknown):
   const group = await owned(groupId, me);
   const target = await memberOf(group.id, userId);
   if (target.id === me.id) fail(400, "Leave the group instead");
-  const id = await atomically(async tx => {
+  const id = await atomically(async (tx) => {
     await repo.removeMemberTx(tx, group.id, target.id);
     return repo.addMessageTx(tx, group.id, me.id, `${me.username} removed ${target.username}`, "removed", now());
   });
@@ -243,7 +261,7 @@ export async function makeOwner(me: User, groupId: unknown, userId: unknown): Pr
   const group = await owned(groupId, me);
   const target = await memberOf(group.id, userId);
   if (target.id === me.id) fail(400, "You're already the owner");
-  const id = await atomically(async tx => {
+  const id = await atomically(async (tx) => {
     await repo.updateTx(tx, group.id, { ownerId: target.id });
     return repo.addMessageTx(tx, group.id, me.id, `${me.username} made ${target.username} the owner`, "owner", now());
   });
@@ -253,7 +271,7 @@ export async function makeOwner(me: User, groupId: unknown, userId: unknown): Pr
 // An owner who leaves hands the group to whoever has been in it longest; the last person out deletes it.
 export async function leave(me: User, groupId: unknown): Promise<DmDone> {
   const { group } = await mine(groupId, me.id);
-  const id = await atomically(async tx => {
+  const id = await atomically(async (tx) => {
     await repo.removeMemberTx(tx, group.id, me.id);
     const next = await repo.longestMemberTx(tx, group.id);
     if (next === null) {

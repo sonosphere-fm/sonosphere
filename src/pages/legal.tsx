@@ -23,210 +23,1039 @@ function Legal({ title, children }: { title: string; children: ReactNode }) {
 export function Terms() {
   return (
     <Legal title="Terms of Service">
-      <p>PLEASE READ THESE TERMS OF SERVICE CAREFULLY. These Terms of Service (these "Terms") constitute a legally binding agreement between you and the operator of Sonosphere, together with its successors and assigns ("Sonosphere," "we," "us" or "our"), governing your access to and use of the Service (as defined below). BY ACCESSING OR USING THE SERVICE IN ANY MANNER, INCLUDING BY VISITING OR BROWSING THE WEBSITE, CREATING AN ACCOUNT, CONNECTING AN APPLICATION, OR CLICKING A BUTTON OR CHECKING A BOX INDICATING ACCEPTANCE, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD AND AGREE TO BE BOUND BY THESE TERMS AND BY OUR <Link to="/privacy">PRIVACY POLICY</Link> AND ALL OTHER POLICIES, GUIDELINES AND RULES POSTED ON THE SERVICE, EACH OF WHICH IS INCORPORATED HEREIN BY REFERENCE. IF YOU DO NOT AGREE TO ALL OF THESE TERMS, YOU ARE NOT AUTHORIZED TO ACCESS OR USE THE SERVICE AND MUST CEASE ALL USE IMMEDIATELY.</p>
-      <p><b>IMPORTANT NOTICE REGARDING DISPUTE RESOLUTION: SECTION 24 CONTAINS A MANDATORY BINDING ARBITRATION AGREEMENT, A CLASS ACTION WAIVER AND A JURY TRIAL WAIVER THAT AFFECT YOUR LEGAL RIGHTS. UNLESS YOU OPT OUT IN ACCORDANCE WITH SECTION 24.10, YOU AGREE THAT ALL DISPUTES BETWEEN YOU AND SONOSPHERE WILL BE RESOLVED EXCLUSIVELY BY FINAL AND BINDING INDIVIDUAL ARBITRATION, AND YOU WAIVE YOUR RIGHT TO SEEK RELIEF IN A COURT OF LAW, TO HAVE A JURY TRIAL, AND TO PARTICIPATE AS A PLAINTIFF OR CLASS MEMBER IN ANY CLASS, COLLECTIVE OR REPRESENTATIVE ACTION. SECTIONS 15 THROUGH 19 LIMIT SONOSPHERE'S LIABILITY AND REQUIRE YOU TO INDEMNIFY SONOSPHERE.</b></p>
+      <p>
+        PLEASE READ THESE TERMS OF SERVICE CAREFULLY. These Terms of Service (these "Terms") constitute a legally
+        binding agreement between you and the operator of Sonosphere, together with its successors and assigns
+        ("Sonosphere," "we," "us" or "our"), governing your access to and use of the Service (as defined below). BY
+        ACCESSING OR USING THE SERVICE IN ANY MANNER, INCLUDING BY VISITING OR BROWSING THE WEBSITE, CREATING AN
+        ACCOUNT, CONNECTING AN APPLICATION, OR CLICKING A BUTTON OR CHECKING A BOX INDICATING ACCEPTANCE, YOU
+        ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD AND AGREE TO BE BOUND BY THESE TERMS AND BY OUR{" "}
+        <Link to="/privacy">PRIVACY POLICY</Link> AND ALL OTHER POLICIES, GUIDELINES AND RULES POSTED ON THE SERVICE,
+        EACH OF WHICH IS INCORPORATED HEREIN BY REFERENCE. IF YOU DO NOT AGREE TO ALL OF THESE TERMS, YOU ARE NOT
+        AUTHORIZED TO ACCESS OR USE THE SERVICE AND MUST CEASE ALL USE IMMEDIATELY.
+      </p>
+      <p>
+        <b>
+          IMPORTANT NOTICE REGARDING DISPUTE RESOLUTION: SECTION 24 CONTAINS A MANDATORY BINDING ARBITRATION AGREEMENT,
+          A CLASS ACTION WAIVER AND A JURY TRIAL WAIVER THAT AFFECT YOUR LEGAL RIGHTS. UNLESS YOU OPT OUT IN ACCORDANCE
+          WITH SECTION 24.10, YOU AGREE THAT ALL DISPUTES BETWEEN YOU AND SONOSPHERE WILL BE RESOLVED EXCLUSIVELY BY
+          FINAL AND BINDING INDIVIDUAL ARBITRATION, AND YOU WAIVE YOUR RIGHT TO SEEK RELIEF IN A COURT OF LAW, TO HAVE A
+          JURY TRIAL, AND TO PARTICIPATE AS A PLAINTIFF OR CLASS MEMBER IN ANY CLASS, COLLECTIVE OR REPRESENTATIVE
+          ACTION. SECTIONS 15 THROUGH 19 LIMIT SONOSPHERE'S LIABILITY AND REQUIRE YOU TO INDEMNIFY SONOSPHERE.
+        </b>
+      </p>
 
       <h2>1. Definitions</h2>
-      <p>In these Terms, the following capitalized terms have the meanings set forth below. Other capitalized terms are defined where they first appear.</p>
+      <p>
+        In these Terms, the following capitalized terms have the meanings set forth below. Other capitalized terms are
+        defined where they first appear.
+      </p>
       <ol>
-        <li><D>Account</D> means an account registered with the Service.</li>
-        <li><D>API</D> means the Sonosphere application programming interfaces, including the web-service endpoints accessible at the /2.0/ path, together with any associated keys, secrets, tokens, documentation and software.</li>
-        <li><D>Application</D> means any software, website, plug-in, device or service, other than the Service itself, that accesses the Service or the API, including scrobbling clients, media players and integrations.</li>
-        <li><D>Content</D> means any information, data, text, software, sound, music metadata, photographs, graphics, video, messages, tags, links and other material.</li>
-        <li><D>Listening Data</D> means records of audio or video content played, including scrobbles, now-playing status, loved tracks, play counts and timestamps, whether submitted manually, through an Application, through a Third-Party Service or by import.</li>
-        <li><D>Service</D> means the website located at sonosphere.fm and its subdomains, the API, the Sonosphere web player, and all related software, features, functionality, Content, data and services provided or made available by Sonosphere, as modified from time to time.</li>
-        <li><D>Sonosphere Content</D> means all Content made available through the Service other than User Content, including charts, statistics, rankings, recommendations, catalogue data and compilations.</li>
-        <li><D>Sonosphere Parties</D> means Sonosphere and its operators, owners, affiliates, officers, directors, members, managers, employees, contractors, volunteers, moderators, agents, licensors, suppliers, successors and assigns.</li>
-        <li><D>Third-Party Service</D> means any website, service, platform, software or Content provided by a person other than Sonosphere, including YouTube, Spotify and Cloudflare.</li>
-        <li><D>User Content</D> means any Content that you or any Application acting on your behalf submits, uploads, posts, transmits, stores or otherwise makes available through the Service, including Listening Data, profile information, avatars, images, artwork, tags, wiki contributions, comments, shouts, journal entries, events, playlists, reports and private messages.</li>
+        <li>
+          <D>Account</D> means an account registered with the Service.
+        </li>
+        <li>
+          <D>API</D> means the Sonosphere application programming interfaces, including the web-service endpoints
+          accessible at the /2.0/ path, together with any associated keys, secrets, tokens, documentation and software.
+        </li>
+        <li>
+          <D>Application</D> means any software, website, plug-in, device or service, other than the Service itself,
+          that accesses the Service or the API, including scrobbling clients, media players and integrations.
+        </li>
+        <li>
+          <D>Content</D> means any information, data, text, software, sound, music metadata, photographs, graphics,
+          video, messages, tags, links and other material.
+        </li>
+        <li>
+          <D>Listening Data</D> means records of audio or video content played, including scrobbles, now-playing status,
+          loved tracks, play counts and timestamps, whether submitted manually, through an Application, through a
+          Third-Party Service or by import.
+        </li>
+        <li>
+          <D>Service</D> means the website located at sonosphere.fm and its subdomains, the API, the Sonosphere web
+          player, and all related software, features, functionality, Content, data and services provided or made
+          available by Sonosphere, as modified from time to time.
+        </li>
+        <li>
+          <D>Sonosphere Content</D> means all Content made available through the Service other than User Content,
+          including charts, statistics, rankings, recommendations, catalogue data and compilations.
+        </li>
+        <li>
+          <D>Sonosphere Parties</D> means Sonosphere and its operators, owners, affiliates, officers, directors,
+          members, managers, employees, contractors, volunteers, moderators, agents, licensors, suppliers, successors
+          and assigns.
+        </li>
+        <li>
+          <D>Third-Party Service</D> means any website, service, platform, software or Content provided by a person
+          other than Sonosphere, including YouTube, Spotify and Cloudflare.
+        </li>
+        <li>
+          <D>User Content</D> means any Content that you or any Application acting on your behalf submits, uploads,
+          posts, transmits, stores or otherwise makes available through the Service, including Listening Data, profile
+          information, avatars, images, artwork, tags, wiki contributions, comments, shouts, journal entries, events,
+          playlists, reports and private messages.
+        </li>
       </ol>
 
       <h2>2. Acceptance; Additional Terms</h2>
-      <p>2.1 These Terms apply to all visitors, users and others who access or use the Service, whether or not registered. Certain features may be subject to additional terms, guidelines or rules ("Additional Terms") posted on the Service or otherwise made available to you, which are incorporated herein by reference. In the event of a conflict between these Terms and any Additional Terms, the Additional Terms shall control with respect to the relevant feature, except that Section 24 shall control over any conflicting provision of any Additional Terms.</p>
-      <p>2.2 You agree that these Terms are supported by adequate consideration, including your access to the Service free of charge, and that your electronic acceptance of these Terms constitutes your signature and has the same legal effect as a handwritten signature.</p>
+      <p>
+        2.1 These Terms apply to all visitors, users and others who access or use the Service, whether or not
+        registered. Certain features may be subject to additional terms, guidelines or rules ("Additional Terms") posted
+        on the Service or otherwise made available to you, which are incorporated herein by reference. In the event of a
+        conflict between these Terms and any Additional Terms, the Additional Terms shall control with respect to the
+        relevant feature, except that Section 24 shall control over any conflicting provision of any Additional Terms.
+      </p>
+      <p>
+        2.2 You agree that these Terms are supported by adequate consideration, including your access to the Service
+        free of charge, and that your electronic acceptance of these Terms constitutes your signature and has the same
+        legal effect as a handwritten signature.
+      </p>
 
       <h2>3. Eligibility</h2>
-      <p>3.1 The Service is intended solely for persons who are thirteen (13) years of age or older. By accessing or using the Service, you represent and warrant that: (a) you are at least thirteen (13) years of age, and at least the minimum age required to consent to the processing of personal data in your country of residence; (b) if you are under the age of majority in your jurisdiction, your parent or legal guardian has read and agreed to these Terms on your behalf, and such parent or guardian shall be responsible for your use of the Service and bound by these Terms; (c) you have the full right, power and authority to enter into and comply with these Terms; (d) you have not previously been suspended, banned or removed from the Service; (e) you are not located in, or ordinarily resident in, any country or region subject to comprehensive U.S. sanctions, and you are not identified on, or owned or controlled by any person identified on, any U.S. government list of prohibited or restricted parties; (f) you are not a person barred from receiving or using the Service under the laws of the United States or any other applicable jurisdiction; and (g) your access to and use of the Service will comply with all applicable laws, rules and regulations.</p>
-      <p>3.2 If you access or use the Service on behalf of a company, organization or other entity, you represent and warrant that you are authorized to bind such entity to these Terms, in which case "you" refers to both you and such entity, jointly and severally.</p>
-      <p>3.3 Sonosphere may, in its sole discretion, refuse to offer the Service to any person or entity and change its eligibility criteria at any time. The Service is void where prohibited by law, and the right to access the Service is revoked in such jurisdictions.</p>
+      <p>
+        3.1 The Service is intended solely for persons who are thirteen (13) years of age or older. By accessing or
+        using the Service, you represent and warrant that: (a) you are at least thirteen (13) years of age, and at least
+        the minimum age required to consent to the processing of personal data in your country of residence; (b) if you
+        are under the age of majority in your jurisdiction, your parent or legal guardian has read and agreed to these
+        Terms on your behalf, and such parent or guardian shall be responsible for your use of the Service and bound by
+        these Terms; (c) you have the full right, power and authority to enter into and comply with these Terms; (d) you
+        have not previously been suspended, banned or removed from the Service; (e) you are not located in, or
+        ordinarily resident in, any country or region subject to comprehensive U.S. sanctions, and you are not
+        identified on, or owned or controlled by any person identified on, any U.S. government list of prohibited or
+        restricted parties; (f) you are not a person barred from receiving or using the Service under the laws of the
+        United States or any other applicable jurisdiction; and (g) your access to and use of the Service will comply
+        with all applicable laws, rules and regulations.
+      </p>
+      <p>
+        3.2 If you access or use the Service on behalf of a company, organization or other entity, you represent and
+        warrant that you are authorized to bind such entity to these Terms, in which case "you" refers to both you and
+        such entity, jointly and severally.
+      </p>
+      <p>
+        3.3 Sonosphere may, in its sole discretion, refuse to offer the Service to any person or entity and change its
+        eligibility criteria at any time. The Service is void where prohibited by law, and the right to access the
+        Service is revoked in such jurisdictions.
+      </p>
 
       <h2>4. Accounts</h2>
-      <p>4.1 <i>Registration.</i> To access certain features, you must register an Account. You agree to (a) provide accurate, current and complete information during registration; (b) maintain and promptly update such information; (c) maintain the security and confidentiality of your password and other credentials; (d) not share your credentials with or permit access to your Account by any third party; and (e) notify Sonosphere immediately at <Mail /> of any actual or suspected unauthorized use of your Account or other breach of security.</p>
-      <p>4.2 <i>Responsibility.</i> You are solely responsible for all activities that occur under your Account, whether or not authorized by you, including all actions taken by any Application you authorize. Sonosphere may assume that any communication or activity received through your Account was made by you. Sonosphere shall not be liable for any loss or damage arising from any unauthorized use of your Account or your failure to comply with this Section 4.</p>
-      <p>4.3 <i>Verification.</i> Sonosphere may, at any time, require you to verify your email address, identity, age or other information, and may suspend or restrict your Account pending such verification. Unverified Accounts may be deleted automatically after a period determined by Sonosphere.</p>
-      <p>4.4 <i>Usernames.</i> You may not select a username that (a) is the name of another person with the intent to impersonate that person; (b) is subject to the rights of another person without appropriate authorization; or (c) is offensive, vulgar, obscene or otherwise objectionable, as determined by Sonosphere. You acquire no ownership, property or other right in any username or Account. Sonosphere may refuse, reclaim, rename, reassign or remove any username at any time for any reason, including inactivity, trademark or impersonation claims, or violation of these Terms, without liability to you.</p>
-      <p>4.5 <i>No transfer.</i> Your Account is personal to you and non-transferable. You may not sell, rent, lease, trade, gift, share or otherwise transfer your Account or any interest therein, and any attempted transfer is void.</p>
-      <p>4.6 <i>Inactive Accounts.</i> Sonosphere may suspend, archive or delete any Account, together with its User Content, that has been inactive for a period determined by Sonosphere in its sole discretion, with or without notice.</p>
-      <p>4.7 <i>No obligation to store.</i> Sonosphere is not a data storage or backup service. Sonosphere has no obligation to store, retain, maintain, back up or provide you with a copy of any User Content or other data, including your Listening Data, and may delete, lose, corrupt or fail to store any such data at any time, with or without notice and without liability. You are solely responsible for creating and maintaining your own backups of any User Content or data you wish to retain.</p>
+      <p>
+        4.1 <i>Registration.</i> To access certain features, you must register an Account. You agree to (a) provide
+        accurate, current and complete information during registration; (b) maintain and promptly update such
+        information; (c) maintain the security and confidentiality of your password and other credentials; (d) not share
+        your credentials with or permit access to your Account by any third party; and (e) notify Sonosphere immediately
+        at <Mail /> of any actual or suspected unauthorized use of your Account or other breach of security.
+      </p>
+      <p>
+        4.2 <i>Responsibility.</i> You are solely responsible for all activities that occur under your Account, whether
+        or not authorized by you, including all actions taken by any Application you authorize. Sonosphere may assume
+        that any communication or activity received through your Account was made by you. Sonosphere shall not be liable
+        for any loss or damage arising from any unauthorized use of your Account or your failure to comply with this
+        Section 4.
+      </p>
+      <p>
+        4.3 <i>Verification.</i> Sonosphere may, at any time, require you to verify your email address, identity, age or
+        other information, and may suspend or restrict your Account pending such verification. Unverified Accounts may
+        be deleted automatically after a period determined by Sonosphere.
+      </p>
+      <p>
+        4.4 <i>Usernames.</i> You may not select a username that (a) is the name of another person with the intent to
+        impersonate that person; (b) is subject to the rights of another person without appropriate authorization; or
+        (c) is offensive, vulgar, obscene or otherwise objectionable, as determined by Sonosphere. You acquire no
+        ownership, property or other right in any username or Account. Sonosphere may refuse, reclaim, rename, reassign
+        or remove any username at any time for any reason, including inactivity, trademark or impersonation claims, or
+        violation of these Terms, without liability to you.
+      </p>
+      <p>
+        4.5 <i>No transfer.</i> Your Account is personal to you and non-transferable. You may not sell, rent, lease,
+        trade, gift, share or otherwise transfer your Account or any interest therein, and any attempted transfer is
+        void.
+      </p>
+      <p>
+        4.6 <i>Inactive Accounts.</i> Sonosphere may suspend, archive or delete any Account, together with its User
+        Content, that has been inactive for a period determined by Sonosphere in its sole discretion, with or without
+        notice.
+      </p>
+      <p>
+        4.7 <i>No obligation to store.</i> Sonosphere is not a data storage or backup service. Sonosphere has no
+        obligation to store, retain, maintain, back up or provide you with a copy of any User Content or other data,
+        including your Listening Data, and may delete, lose, corrupt or fail to store any such data at any time, with or
+        without notice and without liability. You are solely responsible for creating and maintaining your own backups
+        of any User Content or data you wish to retain.
+      </p>
 
       <h2>5. Modifications</h2>
-      <p>5.1 <i>Modifications to these Terms.</i> Sonosphere reserves the right, in its sole discretion, to change, modify, add or remove any portion of these Terms at any time. Changes are effective when posted to the Service, and the "last updated" date above will be revised accordingly. Sonosphere may, but is not obligated to, provide additional notice of material changes by email, banner or other means. You are responsible for reviewing these Terms periodically. Your continued access to or use of the Service after changes are posted constitutes your binding acceptance of such changes. If you do not agree to any change, your sole and exclusive remedy is to cease using the Service and delete your Account. Changes to Section 24 are governed by Section 24.12.</p>
-      <p>5.2 <i>Modifications to the Service.</i> Sonosphere reserves the right at any time and from time to time, with or without notice and without liability to you or any third party, to (a) modify, update, suspend, discontinue or terminate the Service or any part thereof, including any feature, Content, integration, Application access or API endpoint; (b) impose or change limits on storage, usage, rate, bandwidth, features or access; (c) reset, recalculate or remove charts, statistics, rankings, play counts or recommendations; and (d) restrict access to any part of the Service in any jurisdiction.</p>
-      <p>5.3 <i>Beta and experimental features.</i> Sonosphere may make available features identified as beta, preview, experimental, early access or similar ("Beta Features"). Beta Features are provided solely for evaluation purposes, may contain errors, may not function as intended, may be modified or withdrawn at any time without notice, and are excluded from any obligation, commitment or warranty of Sonosphere whatsoever.</p>
-      <p>5.4 <i>Availability and maintenance.</i> Sonosphere does not guarantee any level of availability, uptime, performance or support. The Service may be unavailable from time to time for maintenance, upgrades, emergencies, attacks or other reasons, with or without notice.</p>
+      <p>
+        5.1 <i>Modifications to these Terms.</i> Sonosphere reserves the right, in its sole discretion, to change,
+        modify, add or remove any portion of these Terms at any time. Changes are effective when posted to the Service,
+        and the "last updated" date above will be revised accordingly. Sonosphere may, but is not obligated to, provide
+        additional notice of material changes by email, banner or other means. You are responsible for reviewing these
+        Terms periodically. Your continued access to or use of the Service after changes are posted constitutes your
+        binding acceptance of such changes. If you do not agree to any change, your sole and exclusive remedy is to
+        cease using the Service and delete your Account. Changes to Section 24 are governed by Section 24.12.
+      </p>
+      <p>
+        5.2 <i>Modifications to the Service.</i> Sonosphere reserves the right at any time and from time to time, with
+        or without notice and without liability to you or any third party, to (a) modify, update, suspend, discontinue
+        or terminate the Service or any part thereof, including any feature, Content, integration, Application access or
+        API endpoint; (b) impose or change limits on storage, usage, rate, bandwidth, features or access; (c) reset,
+        recalculate or remove charts, statistics, rankings, play counts or recommendations; and (d) restrict access to
+        any part of the Service in any jurisdiction.
+      </p>
+      <p>
+        5.3 <i>Beta and experimental features.</i> Sonosphere may make available features identified as beta, preview,
+        experimental, early access or similar ("Beta Features"). Beta Features are provided solely for evaluation
+        purposes, may contain errors, may not function as intended, may be modified or withdrawn at any time without
+        notice, and are excluded from any obligation, commitment or warranty of Sonosphere whatsoever.
+      </p>
+      <p>
+        5.4 <i>Availability and maintenance.</i> Sonosphere does not guarantee any level of availability, uptime,
+        performance or support. The Service may be unavailable from time to time for maintenance, upgrades, emergencies,
+        attacks or other reasons, with or without notice.
+      </p>
 
       <h2>6. Fees</h2>
-      <p>6.1 The Service is currently offered free of charge. Sonosphere reserves the right to charge fees for any part of the Service, including features currently offered free of charge, and to change any fees at any time. You will not be charged any fee without your prior affirmative agreement.</p>
-      <p>6.2 If you purchase any paid feature, you agree to pay all applicable fees and taxes, authorize Sonosphere and its payment processors to charge your designated payment method, and agree to any additional terms presented at the time of purchase. EXCEPT AS REQUIRED BY APPLICABLE LAW OR EXPRESSLY STATED AT THE TIME OF PURCHASE, ALL FEES ARE NON-REFUNDABLE, AND NO REFUNDS OR CREDITS WILL BE PROVIDED FOR PARTIALLY USED PERIODS, UNUSED FEATURES, OR SUSPENSION OR TERMINATION OF YOUR ACCOUNT FOR VIOLATION OF THESE TERMS. Any chargeback or payment reversal initiated by you without good cause may result in immediate termination of your Account.</p>
+      <p>
+        6.1 The Service is currently offered free of charge. Sonosphere reserves the right to charge fees for any part
+        of the Service, including features currently offered free of charge, and to change any fees at any time. You
+        will not be charged any fee without your prior affirmative agreement.
+      </p>
+      <p>
+        6.2 If you purchase any paid feature, you agree to pay all applicable fees and taxes, authorize Sonosphere and
+        its payment processors to charge your designated payment method, and agree to any additional terms presented at
+        the time of purchase. EXCEPT AS REQUIRED BY APPLICABLE LAW OR EXPRESSLY STATED AT THE TIME OF PURCHASE, ALL FEES
+        ARE NON-REFUNDABLE, AND NO REFUNDS OR CREDITS WILL BE PROVIDED FOR PARTIALLY USED PERIODS, UNUSED FEATURES, OR
+        SUSPENSION OR TERMINATION OF YOUR ACCOUNT FOR VIOLATION OF THESE TERMS. Any chargeback or payment reversal
+        initiated by you without good cause may result in immediate termination of your Account.
+      </p>
 
       <h2>7. User Content</h2>
-      <p>7.1 <i>Ownership.</i> As between you and Sonosphere, and subject to the licenses granted herein, you retain whatever ownership rights you may have in your User Content. You acknowledge that Listening Data consists primarily of factual information regarding works owned by third parties, and that Sonosphere may independently compile, derive and own compilations, aggregations and analyses of Listening Data.</p>
-      <p>7.2 <i>License to Sonosphere.</i> By submitting, posting or otherwise making available any User Content, you hereby grant, and represent and warrant that you have all rights necessary to grant, to Sonosphere and its affiliates, successors and assigns, a worldwide, non-exclusive, royalty-free, fully paid-up, perpetual, irrevocable, transferable and sublicensable (through multiple tiers) right and license to access, use, host, store, cache, copy, reproduce, record, modify, adapt, edit, translate, reformat, excerpt, aggregate, analyze, process, create derivative works of, publish, publicly perform, publicly display, communicate to the public, make available, distribute, transmit, broadcast, sell, license, commercialize and otherwise exploit such User Content, in whole or in part, together with your username, name, likeness and profile information as associated therewith, in any form, format, media or technology now known or hereafter developed, for any purpose whatsoever, including to operate, provide, maintain, improve, develop, research, train, advertise, market and promote the Service and any other products or services of Sonosphere or its affiliates, without any obligation of notice, attribution, consent or compensation to you or any third party.</p>
-      <p>7.3 <i>Listening Data and derived data.</i> Without limiting Section 7.2, you acknowledge and agree that Sonosphere may use Listening Data, in individual, aggregated, pseudonymized or de-identified form, to generate and publish charts, statistics, rankings, listening reports, recommendations, similar-artist relationships, user compatibility scores, catalogue data, metadata corrections and other derivative works and datasets ("Derived Data"). All right, title and interest in and to Derived Data, and all compilations, aggregations and analyses created by Sonosphere, are and shall remain the exclusive property of Sonosphere.</p>
-      <p>7.4 <i>Catalogue contributions.</i> User Content that contributes to shared catalogue features, including wiki entries and revisions, artwork, images, tags, metadata corrections and events ("Catalogue Contributions"), may be edited, combined, attributed, re-attributed or left unattributed by Sonosphere and other users, and may remain on the Service indefinitely, including after deletion of your Account, in which case it may be attributed to "a deleted user" or otherwise.</p>
-      <p>7.5 <i>Survival of license.</i> The licenses granted in this Section 7 are irrevocable and survive the removal or deletion of User Content and the termination of these Terms and your Account, including with respect to (a) Catalogue Contributions; (b) User Content shared with, copied, quoted or relied upon by other users; (c) Derived Data and aggregated or de-identified data; (d) User Content retained in backup, archival or log systems; and (e) User Content retained as required or permitted by law. The survival of these licenses does not entitle Sonosphere to retain any User Content beyond the periods described in the Privacy Policy, and applies only to such User Content as Sonosphere retains in accordance therewith.</p>
-      <p>7.6 <i>Private messages.</i> Notwithstanding Sections 7.2 through 7.5, the license granted with respect to private messages is limited to hosting, storing, transmitting, displaying to the participants, processing and retaining them in order to provide, secure and maintain the Service, and accessing, reviewing and disclosing them as described in Section 8 and the Privacy Policy. Sonosphere shall not publish private messages, or use them to generate Derived Data, except in de-identified or aggregated form.</p>
-      <p>7.7 <i>Waiver of rights.</i> To the maximum extent permitted by applicable law, you hereby irrevocably and unconditionally waive, and agree not to assert against Sonosphere, its licensees, successors or assigns, any and all moral rights, rights of attribution, rights of integrity, rights of disclosure and withdrawal, rights of publicity and privacy, and any similar rights in any jurisdiction, in and to your User Content. To the extent such rights cannot be waived, you consent to any act or omission that would otherwise infringe them.</p>
-      <p>7.8 <i>No compensation.</i> You acknowledge and agree that you shall not be entitled to any royalties, fees, compensation or other consideration for any use of your User Content, Derived Data or Feedback, and that Sonosphere's use thereof shall not give rise to any confidentiality or other obligation to you.</p>
-      <p>7.9 <i>Your representations.</i> You represent and warrant that: (a) you own, or have obtained all rights, licenses, consents, permissions, releases and authority necessary to grant, the licenses granted in these Terms with respect to your User Content; (b) your User Content, and the use thereof by Sonosphere and its licensees as contemplated by these Terms, does not and will not infringe, misappropriate or violate any copyright, trademark, patent, trade secret, moral right, right of publicity or privacy, or other intellectual property or proprietary right of any person, or violate any applicable law or regulation; (c) you have obtained the written consent of each identifiable natural person depicted or named in your User Content, where required; (d) your Listening Data accurately reflects content actually played by you; and (e) your User Content does not contain any virus, malware or other harmful code.</p>
-      <p>7.10 <i>Responsibility for User Content.</i> You are solely responsible for your User Content and the consequences of submitting, posting or publishing it. Sonosphere does not endorse, support, represent, verify or guarantee the completeness, truthfulness, accuracy, legality or reliability of any User Content or any opinion expressed therein. You understand that by using the Service you may be exposed to User Content that is inaccurate, misleading, offensive, harmful, indecent or objectionable, and you hereby waive, to the maximum extent permitted by law, any legal or equitable rights or remedies you have or may have against the Sonosphere Parties with respect thereto.</p>
+      <p>
+        7.1 <i>Ownership.</i> As between you and Sonosphere, and subject to the licenses granted herein, you retain
+        whatever ownership rights you may have in your User Content. You acknowledge that Listening Data consists
+        primarily of factual information regarding works owned by third parties, and that Sonosphere may independently
+        compile, derive and own compilations, aggregations and analyses of Listening Data.
+      </p>
+      <p>
+        7.2 <i>License to Sonosphere.</i> By submitting, posting or otherwise making available any User Content, you
+        hereby grant, and represent and warrant that you have all rights necessary to grant, to Sonosphere and its
+        affiliates, successors and assigns, a worldwide, non-exclusive, royalty-free, fully paid-up, perpetual,
+        irrevocable, transferable and sublicensable (through multiple tiers) right and license to access, use, host,
+        store, cache, copy, reproduce, record, modify, adapt, edit, translate, reformat, excerpt, aggregate, analyze,
+        process, create derivative works of, publish, publicly perform, publicly display, communicate to the public,
+        make available, distribute, transmit, broadcast, sell, license, commercialize and otherwise exploit such User
+        Content, in whole or in part, together with your username, name, likeness and profile information as associated
+        therewith, in any form, format, media or technology now known or hereafter developed, for any purpose
+        whatsoever, including to operate, provide, maintain, improve, develop, research, train, advertise, market and
+        promote the Service and any other products or services of Sonosphere or its affiliates, without any obligation
+        of notice, attribution, consent or compensation to you or any third party.
+      </p>
+      <p>
+        7.3 <i>Listening Data and derived data.</i> Without limiting Section 7.2, you acknowledge and agree that
+        Sonosphere may use Listening Data, in individual, aggregated, pseudonymized or de-identified form, to generate
+        and publish charts, statistics, rankings, listening reports, recommendations, similar-artist relationships, user
+        compatibility scores, catalogue data, metadata corrections and other derivative works and datasets ("Derived
+        Data"). All right, title and interest in and to Derived Data, and all compilations, aggregations and analyses
+        created by Sonosphere, are and shall remain the exclusive property of Sonosphere.
+      </p>
+      <p>
+        7.4 <i>Catalogue contributions.</i> User Content that contributes to shared catalogue features, including wiki
+        entries and revisions, artwork, images, tags, metadata corrections and events ("Catalogue Contributions"), may
+        be edited, combined, attributed, re-attributed or left unattributed by Sonosphere and other users, and may
+        remain on the Service indefinitely, including after deletion of your Account, in which case it may be attributed
+        to "a deleted user" or otherwise.
+      </p>
+      <p>
+        7.5 <i>Survival of license.</i> The licenses granted in this Section 7 are irrevocable and survive the removal
+        or deletion of User Content and the termination of these Terms and your Account, including with respect to (a)
+        Catalogue Contributions; (b) User Content shared with, copied, quoted or relied upon by other users; (c) Derived
+        Data and aggregated or de-identified data; (d) User Content retained in backup, archival or log systems; and (e)
+        User Content retained as required or permitted by law. The survival of these licenses does not entitle
+        Sonosphere to retain any User Content beyond the periods described in the Privacy Policy, and applies only to
+        such User Content as Sonosphere retains in accordance therewith.
+      </p>
+      <p>
+        7.6 <i>Private messages.</i> Notwithstanding Sections 7.2 through 7.5, the license granted with respect to
+        private messages is limited to hosting, storing, transmitting, displaying to the participants, processing and
+        retaining them in order to provide, secure and maintain the Service, and accessing, reviewing and disclosing
+        them as described in Section 8 and the Privacy Policy. Sonosphere shall not publish private messages, or use
+        them to generate Derived Data, except in de-identified or aggregated form.
+      </p>
+      <p>
+        7.7 <i>Waiver of rights.</i> To the maximum extent permitted by applicable law, you hereby irrevocably and
+        unconditionally waive, and agree not to assert against Sonosphere, its licensees, successors or assigns, any and
+        all moral rights, rights of attribution, rights of integrity, rights of disclosure and withdrawal, rights of
+        publicity and privacy, and any similar rights in any jurisdiction, in and to your User Content. To the extent
+        such rights cannot be waived, you consent to any act or omission that would otherwise infringe them.
+      </p>
+      <p>
+        7.8 <i>No compensation.</i> You acknowledge and agree that you shall not be entitled to any royalties, fees,
+        compensation or other consideration for any use of your User Content, Derived Data or Feedback, and that
+        Sonosphere's use thereof shall not give rise to any confidentiality or other obligation to you.
+      </p>
+      <p>
+        7.9 <i>Your representations.</i> You represent and warrant that: (a) you own, or have obtained all rights,
+        licenses, consents, permissions, releases and authority necessary to grant, the licenses granted in these Terms
+        with respect to your User Content; (b) your User Content, and the use thereof by Sonosphere and its licensees as
+        contemplated by these Terms, does not and will not infringe, misappropriate or violate any copyright, trademark,
+        patent, trade secret, moral right, right of publicity or privacy, or other intellectual property or proprietary
+        right of any person, or violate any applicable law or regulation; (c) you have obtained the written consent of
+        each identifiable natural person depicted or named in your User Content, where required; (d) your Listening Data
+        accurately reflects content actually played by you; and (e) your User Content does not contain any virus,
+        malware or other harmful code.
+      </p>
+      <p>
+        7.10 <i>Responsibility for User Content.</i> You are solely responsible for your User Content and the
+        consequences of submitting, posting or publishing it. Sonosphere does not endorse, support, represent, verify or
+        guarantee the completeness, truthfulness, accuracy, legality or reliability of any User Content or any opinion
+        expressed therein. You understand that by using the Service you may be exposed to User Content that is
+        inaccurate, misleading, offensive, harmful, indecent or objectionable, and you hereby waive, to the maximum
+        extent permitted by law, any legal or equitable rights or remedies you have or may have against the Sonosphere
+        Parties with respect thereto.
+      </p>
 
       <h2>8. Private Messages and Communications</h2>
-      <p>8.1 The Service may permit you to send private messages to other users. Private messages are not end-to-end encrypted and are stored on Sonosphere's systems. You acknowledge that private messages may be accessed, reviewed, retained and disclosed by Sonosphere (a) when reported by a participant; (b) to investigate suspected violations of these Terms, spam, fraud or abuse; (c) to protect the safety of any person; (d) to maintain, troubleshoot and secure the Service; and (e) to comply with law or legal process, all as further described in the Privacy Policy.</p>
-      <p>8.2 You have no expectation of privacy in communications with or through the Service as against Sonosphere to the extent described in Section 8.1 and the Privacy Policy. Recipients of your messages may copy, retain, forward or disclose them, and Sonosphere is not responsible for any such conduct.</p>
+      <p>
+        8.1 The Service may permit you to send private messages to other users. Private messages are not end-to-end
+        encrypted and are stored on Sonosphere's systems. You acknowledge that private messages may be accessed,
+        reviewed, retained and disclosed by Sonosphere (a) when reported by a participant; (b) to investigate suspected
+        violations of these Terms, spam, fraud or abuse; (c) to protect the safety of any person; (d) to maintain,
+        troubleshoot and secure the Service; and (e) to comply with law or legal process, all as further described in
+        the Privacy Policy.
+      </p>
+      <p>
+        8.2 You have no expectation of privacy in communications with or through the Service as against Sonosphere to
+        the extent described in Section 8.1 and the Privacy Policy. Recipients of your messages may copy, retain,
+        forward or disclose them, and Sonosphere is not responsible for any such conduct.
+      </p>
 
       <h2>9. Acceptable Use</h2>
       <p>9.1 You shall not, and shall not attempt to, or permit, encourage, assist or enable any third party to:</p>
       <ol>
-        <li>violate any applicable local, state, national or international law, regulation, ordinance or court order;</li>
-        <li>infringe, misappropriate or violate any intellectual property, privacy, publicity, contractual or other right of any person;</li>
-        <li>post, upload, transmit or otherwise make available any Content that is unlawful, defamatory, libelous, obscene, pornographic, sexually explicit, indecent, lewd, harassing, threatening, abusive, hateful, discriminatory, violent, inflammatory, fraudulent, deceptive or otherwise objectionable, as determined by Sonosphere in its sole discretion;</li>
+        <li>
+          violate any applicable local, state, national or international law, regulation, ordinance or court order;
+        </li>
+        <li>
+          infringe, misappropriate or violate any intellectual property, privacy, publicity, contractual or other right
+          of any person;
+        </li>
+        <li>
+          post, upload, transmit or otherwise make available any Content that is unlawful, defamatory, libelous,
+          obscene, pornographic, sexually explicit, indecent, lewd, harassing, threatening, abusive, hateful,
+          discriminatory, violent, inflammatory, fraudulent, deceptive or otherwise objectionable, as determined by
+          Sonosphere in its sole discretion;
+        </li>
         <li>post, upload or transmit any Content that depicts, sexualizes, exploits or endangers minors in any way;</li>
-        <li>harass, bully, intimidate, stalk, threaten, dox, abuse or harm any person, or incite or encourage any of the foregoing;</li>
-        <li>impersonate any person or entity, falsely state or misrepresent your affiliation with any person or entity, or create a false identity;</li>
-        <li>collect, harvest, scrape, store, aggregate or disclose any personal information of other users without their express consent, or use any information obtained from the Service to contact, track or profile any user outside the Service;</li>
-        <li>submit false, fabricated, duplicated, scripted, automated, inflated or otherwise inaccurate Listening Data, or use any means to manipulate, game, distort or artificially influence charts, statistics, rankings, play counts, votes, recommendations, user matching or any other feature;</li>
-        <li>send, post or facilitate unsolicited or unauthorized advertising, promotional material, junk mail, spam, chain letters, pyramid schemes or any other form of solicitation;</li>
-        <li>access, monitor, copy, scrape, crawl, spider, index, mine or extract any part of the Service or any Content by means of any robot, bot, script, crawler, scraper or other automated means, except through the API in strict compliance with Section 10;</li>
-        <li>circumvent, disable, bypass, defeat or otherwise interfere with any rate limit, usage limit, captcha, block, access restriction, authentication mechanism, security-related feature or technical measure of the Service, or access any part of the Service you are not authorized to access;</li>
-        <li>probe, scan, test or exploit the vulnerability of the Service or any system or network connected to the Service, or breach or circumvent any security or authentication measures, regardless of motive;</li>
-        <li>interfere with, disrupt, damage, overburden or impair the Service, its servers or networks, or any other user's use of the Service, including by denial-of-service attack, flooding, mail-bombing, crashing or imposing an unreasonable or disproportionately large load;</li>
-        <li>upload, transmit or distribute any virus, worm, Trojan horse, ransomware, spyware, malware, time bomb or other harmful, disruptive or destructive code or component;</li>
-        <li>copy, modify, translate, create derivative works of, decompile, disassemble, reverse engineer or otherwise attempt to derive the source code, algorithms, models or underlying structure of any part of the Service, except to the extent such restriction is expressly prohibited by applicable law;</li>
-        <li>sell, resell, rent, lease, license, sublicense, distribute, frame, mirror, commercially exploit or provide access to the Service or any Sonosphere Content to any third party, except as expressly permitted herein;</li>
-        <li>use the Service or any Content obtained therefrom to develop, train, improve or benchmark any competing product or service, or any machine learning or artificial intelligence model, without Sonosphere's prior written consent;</li>
+        <li>
+          harass, bully, intimidate, stalk, threaten, dox, abuse or harm any person, or incite or encourage any of the
+          foregoing;
+        </li>
+        <li>
+          impersonate any person or entity, falsely state or misrepresent your affiliation with any person or entity, or
+          create a false identity;
+        </li>
+        <li>
+          collect, harvest, scrape, store, aggregate or disclose any personal information of other users without their
+          express consent, or use any information obtained from the Service to contact, track or profile any user
+          outside the Service;
+        </li>
+        <li>
+          submit false, fabricated, duplicated, scripted, automated, inflated or otherwise inaccurate Listening Data, or
+          use any means to manipulate, game, distort or artificially influence charts, statistics, rankings, play
+          counts, votes, recommendations, user matching or any other feature;
+        </li>
+        <li>
+          send, post or facilitate unsolicited or unauthorized advertising, promotional material, junk mail, spam, chain
+          letters, pyramid schemes or any other form of solicitation;
+        </li>
+        <li>
+          access, monitor, copy, scrape, crawl, spider, index, mine or extract any part of the Service or any Content by
+          means of any robot, bot, script, crawler, scraper or other automated means, except through the API in strict
+          compliance with Section 10;
+        </li>
+        <li>
+          circumvent, disable, bypass, defeat or otherwise interfere with any rate limit, usage limit, captcha, block,
+          access restriction, authentication mechanism, security-related feature or technical measure of the Service, or
+          access any part of the Service you are not authorized to access;
+        </li>
+        <li>
+          probe, scan, test or exploit the vulnerability of the Service or any system or network connected to the
+          Service, or breach or circumvent any security or authentication measures, regardless of motive;
+        </li>
+        <li>
+          interfere with, disrupt, damage, overburden or impair the Service, its servers or networks, or any other
+          user's use of the Service, including by denial-of-service attack, flooding, mail-bombing, crashing or imposing
+          an unreasonable or disproportionately large load;
+        </li>
+        <li>
+          upload, transmit or distribute any virus, worm, Trojan horse, ransomware, spyware, malware, time bomb or other
+          harmful, disruptive or destructive code or component;
+        </li>
+        <li>
+          copy, modify, translate, create derivative works of, decompile, disassemble, reverse engineer or otherwise
+          attempt to derive the source code, algorithms, models or underlying structure of any part of the Service,
+          except to the extent such restriction is expressly prohibited by applicable law;
+        </li>
+        <li>
+          sell, resell, rent, lease, license, sublicense, distribute, frame, mirror, commercially exploit or provide
+          access to the Service or any Sonosphere Content to any third party, except as expressly permitted herein;
+        </li>
+        <li>
+          use the Service or any Content obtained therefrom to develop, train, improve or benchmark any competing
+          product or service, or any machine learning or artificial intelligence model, without Sonosphere's prior
+          written consent;
+        </li>
         <li>remove, alter or obscure any copyright, trademark or other proprietary notice on the Service;</li>
-        <li>use any meta tags, hidden text or other means that incorporate the Sonosphere name or marks without Sonosphere's prior written consent;</li>
-        <li>create more than one Account, create an Account by automated means or under false pretenses, or create or use an Account after suspension, ban or termination, or otherwise evade any enforcement action;</li>
-        <li>use the Service to plan, promote or engage in any illegal activity, or to promote any event, product or service that is unlawful;</li>
+        <li>
+          use any meta tags, hidden text or other means that incorporate the Sonosphere name or marks without
+          Sonosphere's prior written consent;
+        </li>
+        <li>
+          create more than one Account, create an Account by automated means or under false pretenses, or create or use
+          an Account after suspension, ban or termination, or otherwise evade any enforcement action;
+        </li>
+        <li>
+          use the Service to plan, promote or engage in any illegal activity, or to promote any event, product or
+          service that is unlawful;
+        </li>
         <li>submit false or misleading reports, or abuse any reporting, appeal or support mechanism; or</li>
-        <li>use the Service in any manner that, in Sonosphere's sole judgment, is objectionable, restricts or inhibits any other person from using or enjoying the Service, or may expose the Sonosphere Parties or users to harm or liability of any kind.</li>
+        <li>
+          use the Service in any manner that, in Sonosphere's sole judgment, is objectionable, restricts or inhibits any
+          other person from using or enjoying the Service, or may expose the Sonosphere Parties or users to harm or
+          liability of any kind.
+        </li>
       </ol>
-      <p>9.2 The enumeration of prohibited conduct in Section 9.1 is not exhaustive, and is supplemented by the <Link to="/guidelines">Community Guidelines</Link>, which are incorporated herein by reference. Sonosphere shall have the sole and exclusive right to determine whether any conduct or Content violates these Terms, and its determination shall be final and binding.</p>
+      <p>
+        9.2 The enumeration of prohibited conduct in Section 9.1 is not exhaustive, and is supplemented by the{" "}
+        <Link to="/guidelines">Community Guidelines</Link>, which are incorporated herein by reference. Sonosphere shall
+        have the sole and exclusive right to determine whether any conduct or Content violates these Terms, and its
+        determination shall be final and binding.
+      </p>
 
       <h2>10. API and Applications</h2>
-      <p>10.1 <i>License.</i> Subject to your compliance with these Terms, Sonosphere grants you a limited, revocable, non-exclusive, non-transferable, non-sublicensable license to access and use the API solely to develop and operate Applications that interoperate with the Service for non-commercial purposes, in accordance with the <Link to="/developers">API documentation</Link> and any usage limits imposed by Sonosphere. Commercial use of the API requires Sonosphere's prior written consent.</p>
-      <p>10.2 <i>Credentials.</i> API keys and shared secrets are Sonosphere's confidential information, are personal to you, and may not be shared, sold, transferred or embedded in any manner that permits their extraction by third parties. You are responsible for all activity conducted using your API credentials.</p>
-      <p>10.3 <i>Restrictions.</i> You shall not, and shall not permit any Application to: (a) exceed or circumvent any rate or usage limit; (b) build any product or service that replicates, substitutes for or competes with the Service or any core feature thereof; (c) sell, license, rent, publish or otherwise commercialize any data obtained through the API, or aggregate such data into any database or dataset for distribution; (d) access, store or use the data of any user without that user's express authorization, or retain such data after the user revokes authorization; (e) request credentials of any user other than through the authentication flows described in the API documentation; (f) misrepresent the identity, purpose or functionality of your Application, or imply any endorsement by or affiliation with Sonosphere; (g) submit Listening Data that was not actually played by the authorizing user; or (h) use the API in any manner that violates Section 9.</p>
-      <p>10.4 <i>Your Applications.</i> You are solely responsible for your Applications, including their security, their compliance with law, their privacy practices and any obligations to their end users. You shall maintain and comply with a privacy policy that accurately describes your collection and use of user data. Sonosphere is not a party to, and has no responsibility for, any agreement or dealings between you and your end users.</p>
-      <p>10.5 <i>Monitoring and enforcement.</i> Sonosphere may monitor use of the API, may request information regarding your Application, and may limit, throttle, suspend or revoke any API credentials or Application access at any time, for any reason or no reason, with or without notice and without liability. Sonosphere may modify or discontinue the API or any part thereof, including in a manner that is not backward compatible, at any time.</p>
-      <p>10.6 <i>Third-party Applications.</i> Applications are not owned, operated, controlled, reviewed or endorsed by Sonosphere. If you authorize an Application to access your Account, you authorize it to act on your behalf and to access and submit data as permitted by the Service, and you assume all risk arising therefrom. Sonosphere is not responsible or liable for any act or omission of any Application or its developer, including any collection, use, disclosure, loss or misuse of your data. You may revoke an Application's access through your Account settings.</p>
+      <p>
+        10.1 <i>License.</i> Subject to your compliance with these Terms, Sonosphere grants you a limited, revocable,
+        non-exclusive, non-transferable, non-sublicensable license to access and use the API solely to develop and
+        operate Applications that interoperate with the Service for non-commercial purposes, in accordance with the{" "}
+        <Link to="/developers">API documentation</Link> and any usage limits imposed by Sonosphere. Commercial use of
+        the API requires Sonosphere's prior written consent.
+      </p>
+      <p>
+        10.2 <i>Credentials.</i> API keys and shared secrets are Sonosphere's confidential information, are personal to
+        you, and may not be shared, sold, transferred or embedded in any manner that permits their extraction by third
+        parties. You are responsible for all activity conducted using your API credentials.
+      </p>
+      <p>
+        10.3 <i>Restrictions.</i> You shall not, and shall not permit any Application to: (a) exceed or circumvent any
+        rate or usage limit; (b) build any product or service that replicates, substitutes for or competes with the
+        Service or any core feature thereof; (c) sell, license, rent, publish or otherwise commercialize any data
+        obtained through the API, or aggregate such data into any database or dataset for distribution; (d) access,
+        store or use the data of any user without that user's express authorization, or retain such data after the user
+        revokes authorization; (e) request credentials of any user other than through the authentication flows described
+        in the API documentation; (f) misrepresent the identity, purpose or functionality of your Application, or imply
+        any endorsement by or affiliation with Sonosphere; (g) submit Listening Data that was not actually played by the
+        authorizing user; or (h) use the API in any manner that violates Section 9.
+      </p>
+      <p>
+        10.4 <i>Your Applications.</i> You are solely responsible for your Applications, including their security, their
+        compliance with law, their privacy practices and any obligations to their end users. You shall maintain and
+        comply with a privacy policy that accurately describes your collection and use of user data. Sonosphere is not a
+        party to, and has no responsibility for, any agreement or dealings between you and your end users.
+      </p>
+      <p>
+        10.5 <i>Monitoring and enforcement.</i> Sonosphere may monitor use of the API, may request information regarding
+        your Application, and may limit, throttle, suspend or revoke any API credentials or Application access at any
+        time, for any reason or no reason, with or without notice and without liability. Sonosphere may modify or
+        discontinue the API or any part thereof, including in a manner that is not backward compatible, at any time.
+      </p>
+      <p>
+        10.6 <i>Third-party Applications.</i> Applications are not owned, operated, controlled, reviewed or endorsed by
+        Sonosphere. If you authorize an Application to access your Account, you authorize it to act on your behalf and
+        to access and submit data as permitted by the Service, and you assume all risk arising therefrom. Sonosphere is
+        not responsible or liable for any act or omission of any Application or its developer, including any collection,
+        use, disclosure, loss or misuse of your data. You may revoke an Application's access through your Account
+        settings.
+      </p>
 
       <h2>11. Playback and Third-Party Services</h2>
-      <p>11.1 <i>No hosting of music.</i> Sonosphere does not host, store, sell or distribute sound recordings or musical works. Any playback functionality is provided solely by embedding or controlling Third-Party Services, such as YouTube and Spotify, subject to their respective terms. Sonosphere does not grant, and does not have the right to grant, any license to any sound recording, musical work, music video or other content made available through a Third-Party Service.</p>
-      <p>11.2 <i>Your obligations.</i> If you use playback or any other feature that relies on a Third-Party Service, you agree to comply with that Third-Party Service's terms of service, policies and usage requirements, including any subscription requirements (such as Spotify Premium), and you are solely responsible for any fees or charges imposed by that Third-Party Service.</p>
-      <p>11.3 <i>No guarantee.</i> Sonosphere makes no representation or warranty that any track, video or other content will be available, will be correctly identified or matched, will be the version you intended, will play without interruption, or will be suitable or lawful in your jurisdiction. Content made available through Third-Party Services may be removed or restricted at any time without notice.</p>
-      <p>11.4 <i>Disclaimer.</i> Third-Party Services are not under the control of Sonosphere, and Sonosphere does not endorse and is not responsible or liable for any Third-Party Service, including its availability, accuracy, content, advertising, products, services, security or privacy practices. Your access to and use of any Third-Party Service, including any link from the Service to a third-party website, is entirely at your own risk and subject to that third party's terms and policies. Sonosphere shall not be liable, directly or indirectly, for any damage or loss caused or alleged to be caused by or in connection with the use of or reliance on any Third-Party Service.</p>
-      <p>11.5 <i>Connected accounts.</i> If you connect a Third-Party Service account to the Service, you authorize Sonosphere to access, retrieve, store and use information from that account as described in the Privacy Policy and as necessary to provide the relevant feature. Sonosphere is not responsible for any act or omission of the Third-Party Service, including any suspension of your account with that service or any change to its interfaces that causes the connected feature to cease functioning.</p>
+      <p>
+        11.1 <i>No hosting of music.</i> Sonosphere does not host, store, sell or distribute sound recordings or musical
+        works. Any playback functionality is provided solely by embedding or controlling Third-Party Services, such as
+        YouTube and Spotify, subject to their respective terms. Sonosphere does not grant, and does not have the right
+        to grant, any license to any sound recording, musical work, music video or other content made available through
+        a Third-Party Service.
+      </p>
+      <p>
+        11.2 <i>Your obligations.</i> If you use playback or any other feature that relies on a Third-Party Service, you
+        agree to comply with that Third-Party Service's terms of service, policies and usage requirements, including any
+        subscription requirements (such as Spotify Premium), and you are solely responsible for any fees or charges
+        imposed by that Third-Party Service.
+      </p>
+      <p>
+        11.3 <i>No guarantee.</i> Sonosphere makes no representation or warranty that any track, video or other content
+        will be available, will be correctly identified or matched, will be the version you intended, will play without
+        interruption, or will be suitable or lawful in your jurisdiction. Content made available through Third-Party
+        Services may be removed or restricted at any time without notice.
+      </p>
+      <p>
+        11.4 <i>Disclaimer.</i> Third-Party Services are not under the control of Sonosphere, and Sonosphere does not
+        endorse and is not responsible or liable for any Third-Party Service, including its availability, accuracy,
+        content, advertising, products, services, security or privacy practices. Your access to and use of any
+        Third-Party Service, including any link from the Service to a third-party website, is entirely at your own risk
+        and subject to that third party's terms and policies. Sonosphere shall not be liable, directly or indirectly,
+        for any damage or loss caused or alleged to be caused by or in connection with the use of or reliance on any
+        Third-Party Service.
+      </p>
+      <p>
+        11.5 <i>Connected accounts.</i> If you connect a Third-Party Service account to the Service, you authorize
+        Sonosphere to access, retrieve, store and use information from that account as described in the Privacy Policy
+        and as necessary to provide the relevant feature. Sonosphere is not responsible for any act or omission of the
+        Third-Party Service, including any suspension of your account with that service or any change to its interfaces
+        that causes the connected feature to cease functioning.
+      </p>
 
       <h2>12. Events and Interactions with Other Users</h2>
-      <p>12.1 Events listed on the Service are submitted by users and are not organized, sponsored, verified, endorsed or guaranteed by Sonosphere. Sonosphere makes no representation as to the accuracy of any event information, including dates, venues, line-ups, ticket availability or pricing, or as to the safety, legality or quality of any event. Any attendance at any event, and any purchase of tickets from any third party, is solely at your own risk.</p>
-      <p>12.2 You are solely responsible for your interactions with other users, whether online or offline. Sonosphere does not screen users, conduct background checks or verify the identity or statements of users. Sonosphere has no obligation to become involved in any dispute between users, but reserves the right to monitor such disputes. You agree to exercise caution and good judgment in all interactions with other users, particularly if you decide to meet in person.</p>
+      <p>
+        12.1 Events listed on the Service are submitted by users and are not organized, sponsored, verified, endorsed or
+        guaranteed by Sonosphere. Sonosphere makes no representation as to the accuracy of any event information,
+        including dates, venues, line-ups, ticket availability or pricing, or as to the safety, legality or quality of
+        any event. Any attendance at any event, and any purchase of tickets from any third party, is solely at your own
+        risk.
+      </p>
+      <p>
+        12.2 You are solely responsible for your interactions with other users, whether online or offline. Sonosphere
+        does not screen users, conduct background checks or verify the identity or statements of users. Sonosphere has
+        no obligation to become involved in any dispute between users, but reserves the right to monitor such disputes.
+        You agree to exercise caution and good judgment in all interactions with other users, particularly if you decide
+        to meet in person.
+      </p>
 
       <h2>13. Moderation and Enforcement</h2>
-      <p>13.1 Sonosphere has the right, but not the obligation, to monitor, review, screen, filter, edit, refuse, hide, restrict, disable access to, remove or delete any User Content or Account, in whole or in part, at any time, for any reason or no reason, with or without notice, and without liability to you or any third party. Without limitation, Sonosphere may take such action with respect to any User Content or Account that Sonosphere believes, in its sole discretion, violates these Terms, may be unlawful, may expose the Sonosphere Parties or users to harm or liability, or is otherwise objectionable.</p>
-      <p>13.2 Enforcement actions may include warnings, content removal, feature restrictions, rate limiting, removal of Listening Data or adjustment of statistics, temporary suspension, permanent termination, IP or device blocking, and referral to law enforcement. Sonosphere is not required to provide reasons for any action, to apply its policies consistently, to provide any warning prior to taking action, or to provide any appeal or review process. Any appeal process Sonosphere elects to provide is offered solely as a courtesy and may be withdrawn at any time.</p>
-      <p>13.3 Sonosphere's failure to take action with respect to any conduct or Content does not constitute a waiver of its right to do so, and Sonosphere shall have no liability for any action or inaction with respect to conduct or Content of users or third parties. Moderators and other volunteers are not agents or employees of Sonosphere and have no authority to bind Sonosphere.</p>
+      <p>
+        13.1 Sonosphere has the right, but not the obligation, to monitor, review, screen, filter, edit, refuse, hide,
+        restrict, disable access to, remove or delete any User Content or Account, in whole or in part, at any time, for
+        any reason or no reason, with or without notice, and without liability to you or any third party. Without
+        limitation, Sonosphere may take such action with respect to any User Content or Account that Sonosphere
+        believes, in its sole discretion, violates these Terms, may be unlawful, may expose the Sonosphere Parties or
+        users to harm or liability, or is otherwise objectionable.
+      </p>
+      <p>
+        13.2 Enforcement actions may include warnings, content removal, feature restrictions, rate limiting, removal of
+        Listening Data or adjustment of statistics, temporary suspension, permanent termination, IP or device blocking,
+        and referral to law enforcement. Sonosphere is not required to provide reasons for any action, to apply its
+        policies consistently, to provide any warning prior to taking action, or to provide any appeal or review
+        process. Any appeal process Sonosphere elects to provide is offered solely as a courtesy and may be withdrawn at
+        any time.
+      </p>
+      <p>
+        13.3 Sonosphere's failure to take action with respect to any conduct or Content does not constitute a waiver of
+        its right to do so, and Sonosphere shall have no liability for any action or inaction with respect to conduct or
+        Content of users or third parties. Moderators and other volunteers are not agents or employees of Sonosphere and
+        have no authority to bind Sonosphere.
+      </p>
 
       <h2>14. Intellectual Property</h2>
-      <p>14.1 <i>Ownership.</i> The Service and all Sonosphere Content, software, source and object code, algorithms, models, interfaces, designs, layouts, text, graphics, logos, icons, trademarks, service marks, trade dress, databases, compilations, selection and arrangement, Derived Data and all other materials and technology comprised in or made available through the Service (excluding User Content), and all intellectual property and proprietary rights therein, are and shall remain the exclusive property of Sonosphere and its licensors, and are protected by copyright, trademark, database, trade secret and other laws of the United States and other jurisdictions.</p>
-      <p>14.2 <i>Limited license.</i> Subject to your ongoing compliance with these Terms, Sonosphere grants you a limited, personal, revocable, non-exclusive, non-transferable, non-sublicensable license to access and use the Service solely for your own personal, non-commercial purposes. This license terminates automatically upon any breach of these Terms or termination of your Account. All rights not expressly granted herein are reserved by Sonosphere and its licensors, and no implied licenses are granted by estoppel or otherwise.</p>
-      <p>14.3 <i>Trademarks.</i> "Sonosphere," the Sonosphere logo and all related names, logos, product and service names, designs and slogans are trademarks of Sonosphere. You may not use such marks without Sonosphere's prior written permission. All other names, logos and marks appearing on the Service are the property of their respective owners, and their appearance does not imply any affiliation with or endorsement by such owners.</p>
-      <p>14.4 <i>Feedback.</i> If you provide Sonosphere with any suggestions, comments, ideas, improvements, bug reports or other feedback relating to the Service ("Feedback"), you hereby irrevocably assign to Sonosphere all right, title and interest in and to such Feedback, and, to the extent such assignment is ineffective, grant Sonosphere an exclusive, perpetual, irrevocable, worldwide, royalty-free, fully paid-up, transferable and sublicensable license to use and exploit such Feedback for any purpose without restriction, attribution or compensation. Feedback is not confidential.</p>
-      <p>14.5 <i>Security research.</i> Nothing in these Terms authorizes you to test, probe or attempt to exploit the security of the Service. If you discover a potential security vulnerability, you agree to report it promptly and confidentially to <Mail />, not to access, modify or exfiltrate any data, not to disclose the vulnerability to any third party until Sonosphere has had a reasonable opportunity to remediate it, and that any such report constitutes Feedback.</p>
+      <p>
+        14.1 <i>Ownership.</i> The Service and all Sonosphere Content, software, source and object code, algorithms,
+        models, interfaces, designs, layouts, text, graphics, logos, icons, trademarks, service marks, trade dress,
+        databases, compilations, selection and arrangement, Derived Data and all other materials and technology
+        comprised in or made available through the Service (excluding User Content), and all intellectual property and
+        proprietary rights therein, are and shall remain the exclusive property of Sonosphere and its licensors, and are
+        protected by copyright, trademark, database, trade secret and other laws of the United States and other
+        jurisdictions.
+      </p>
+      <p>
+        14.2 <i>Limited license.</i> Subject to your ongoing compliance with these Terms, Sonosphere grants you a
+        limited, personal, revocable, non-exclusive, non-transferable, non-sublicensable license to access and use the
+        Service solely for your own personal, non-commercial purposes. This license terminates automatically upon any
+        breach of these Terms or termination of your Account. All rights not expressly granted herein are reserved by
+        Sonosphere and its licensors, and no implied licenses are granted by estoppel or otherwise.
+      </p>
+      <p>
+        14.3 <i>Trademarks.</i> "Sonosphere," the Sonosphere logo and all related names, logos, product and service
+        names, designs and slogans are trademarks of Sonosphere. You may not use such marks without Sonosphere's prior
+        written permission. All other names, logos and marks appearing on the Service are the property of their
+        respective owners, and their appearance does not imply any affiliation with or endorsement by such owners.
+      </p>
+      <p>
+        14.4 <i>Feedback.</i> If you provide Sonosphere with any suggestions, comments, ideas, improvements, bug reports
+        or other feedback relating to the Service ("Feedback"), you hereby irrevocably assign to Sonosphere all right,
+        title and interest in and to such Feedback, and, to the extent such assignment is ineffective, grant Sonosphere
+        an exclusive, perpetual, irrevocable, worldwide, royalty-free, fully paid-up, transferable and sublicensable
+        license to use and exploit such Feedback for any purpose without restriction, attribution or compensation.
+        Feedback is not confidential.
+      </p>
+      <p>
+        14.5 <i>Security research.</i> Nothing in these Terms authorizes you to test, probe or attempt to exploit the
+        security of the Service. If you discover a potential security vulnerability, you agree to report it promptly and
+        confidentially to <Mail />, not to access, modify or exfiltrate any data, not to disclose the vulnerability to
+        any third party until Sonosphere has had a reasonable opportunity to remediate it, and that any such report
+        constitutes Feedback.
+      </p>
 
       <h2>15. Copyright Infringement Claims</h2>
-      <p>15.1 <i>Notices.</i> Sonosphere respects the intellectual property rights of others and responds to notices of alleged copyright infringement that comply with the Digital Millennium Copyright Act, 17 U.S.C. § 512 (the "DMCA"). To submit a notice, send a written communication to Sonosphere's designated agent at <Mail /> that includes substantially the following: (a) a physical or electronic signature of a person authorized to act on behalf of the owner of the exclusive right allegedly infringed; (b) identification of the copyrighted work claimed to have been infringed, or a representative list if multiple works are covered by a single notice; (c) identification of the material claimed to be infringing and information reasonably sufficient to permit Sonosphere to locate it, such as its URL; (d) information reasonably sufficient to permit Sonosphere to contact you, including your name, mailing address, telephone number and email address; (e) a statement that you have a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent or the law; and (f) a statement that the information in the notification is accurate and, under penalty of perjury, that you are authorized to act on behalf of the owner of the exclusive right allegedly infringed.</p>
-      <p>15.2 <i>Counter-notices.</i> If you believe material you posted was removed or disabled by mistake or misidentification, you may send a counter-notice to the same address containing: (a) your physical or electronic signature; (b) identification of the material removed and the location at which it appeared; (c) a statement under penalty of perjury that you have a good faith belief that the material was removed or disabled as a result of mistake or misidentification; and (d) your name, address and telephone number, and a statement that you consent to the jurisdiction of the federal district court for the judicial district in which your address is located (or, if outside the United States, any judicial district in which Sonosphere may be found), and that you will accept service of process from the person who provided the original notice or its agent.</p>
-      <p>15.3 <i>Repeat infringers.</i> Sonosphere may, in appropriate circumstances and in its sole discretion, terminate the Accounts of users who are deemed to be repeat infringers. Sonosphere may remove or disable access to any material at any time, without notice, whether or not it receives a notice and whether or not the material is actually infringing.</p>
-      <p>15.4 <i>Misrepresentations.</i> Under 17 U.S.C. § 512(f), any person who knowingly materially misrepresents that material is infringing, or that material was removed by mistake, may be liable for damages, including costs and attorneys' fees.</p>
+      <p>
+        15.1 <i>Notices.</i> Sonosphere respects the intellectual property rights of others and responds to notices of
+        alleged copyright infringement that comply with the Digital Millennium Copyright Act, 17 U.S.C. § 512 (the
+        "DMCA"). To submit a notice, send a written communication to Sonosphere's designated agent at <Mail /> that
+        includes substantially the following: (a) a physical or electronic signature of a person authorized to act on
+        behalf of the owner of the exclusive right allegedly infringed; (b) identification of the copyrighted work
+        claimed to have been infringed, or a representative list if multiple works are covered by a single notice; (c)
+        identification of the material claimed to be infringing and information reasonably sufficient to permit
+        Sonosphere to locate it, such as its URL; (d) information reasonably sufficient to permit Sonosphere to contact
+        you, including your name, mailing address, telephone number and email address; (e) a statement that you have a
+        good faith belief that use of the material in the manner complained of is not authorized by the copyright owner,
+        its agent or the law; and (f) a statement that the information in the notification is accurate and, under
+        penalty of perjury, that you are authorized to act on behalf of the owner of the exclusive right allegedly
+        infringed.
+      </p>
+      <p>
+        15.2 <i>Counter-notices.</i> If you believe material you posted was removed or disabled by mistake or
+        misidentification, you may send a counter-notice to the same address containing: (a) your physical or electronic
+        signature; (b) identification of the material removed and the location at which it appeared; (c) a statement
+        under penalty of perjury that you have a good faith belief that the material was removed or disabled as a result
+        of mistake or misidentification; and (d) your name, address and telephone number, and a statement that you
+        consent to the jurisdiction of the federal district court for the judicial district in which your address is
+        located (or, if outside the United States, any judicial district in which Sonosphere may be found), and that you
+        will accept service of process from the person who provided the original notice or its agent.
+      </p>
+      <p>
+        15.3 <i>Repeat infringers.</i> Sonosphere may, in appropriate circumstances and in its sole discretion,
+        terminate the Accounts of users who are deemed to be repeat infringers. Sonosphere may remove or disable access
+        to any material at any time, without notice, whether or not it receives a notice and whether or not the material
+        is actually infringing.
+      </p>
+      <p>
+        15.4 <i>Misrepresentations.</i> Under 17 U.S.C. § 512(f), any person who knowingly materially misrepresents that
+        material is infringing, or that material was removed by mistake, may be liable for damages, including costs and
+        attorneys' fees.
+      </p>
 
       <h2>16. Term and Termination</h2>
-      <p>16.1 These Terms commence on the date you first access or use the Service and remain in effect until terminated in accordance with this Section.</p>
-      <p>16.2 Sonosphere may, in its sole discretion, at any time, for any reason or no reason, with or without notice, and without liability to you or any third party: (a) suspend, restrict or terminate your Account or your access to all or any part of the Service; (b) remove, disable or delete any or all of your User Content; (c) block your access from any IP address, device or network; and (d) terminate these Terms.</p>
-      <p>16.3 You may terminate these Terms at any time by deleting your Account through your Account settings and ceasing all use of the Service.</p>
-      <p>16.4 Upon any termination: (a) all rights and licenses granted to you hereunder shall immediately terminate; (b) you shall immediately cease all use of the Service and the API and delete all API credentials and data obtained through the API; (c) Sonosphere may, but is not obligated to, delete your Account and User Content, subject to Section 7.5 and the Privacy Policy; (d) Sonosphere shall have no obligation to provide you with any User Content or data or to refund any fees; and (e) you shall not create a new Account without Sonosphere's express written permission.</p>
-      <p>16.5 Sections 1, 4.2, 4.7, 6.2, 7 (excluding the license granted to you), 8, 10.3, 10.4, 10.6, 11, 12, 13, 14 (excluding the license granted to you), 15.3, 15.4, 16.4, 16.5 and 17 through 27, and any other provision that by its nature should survive termination, shall survive any termination or expiration of these Terms.</p>
+      <p>
+        16.1 These Terms commence on the date you first access or use the Service and remain in effect until terminated
+        in accordance with this Section.
+      </p>
+      <p>
+        16.2 Sonosphere may, in its sole discretion, at any time, for any reason or no reason, with or without notice,
+        and without liability to you or any third party: (a) suspend, restrict or terminate your Account or your access
+        to all or any part of the Service; (b) remove, disable or delete any or all of your User Content; (c) block your
+        access from any IP address, device or network; and (d) terminate these Terms.
+      </p>
+      <p>
+        16.3 You may terminate these Terms at any time by deleting your Account through your Account settings and
+        ceasing all use of the Service.
+      </p>
+      <p>
+        16.4 Upon any termination: (a) all rights and licenses granted to you hereunder shall immediately terminate; (b)
+        you shall immediately cease all use of the Service and the API and delete all API credentials and data obtained
+        through the API; (c) Sonosphere may, but is not obligated to, delete your Account and User Content, subject to
+        Section 7.5 and the Privacy Policy; (d) Sonosphere shall have no obligation to provide you with any User Content
+        or data or to refund any fees; and (e) you shall not create a new Account without Sonosphere's express written
+        permission.
+      </p>
+      <p>
+        16.5 Sections 1, 4.2, 4.7, 6.2, 7 (excluding the license granted to you), 8, 10.3, 10.4, 10.6, 11, 12, 13, 14
+        (excluding the license granted to you), 15.3, 15.4, 16.4, 16.5 and 17 through 27, and any other provision that
+        by its nature should survive termination, shall survive any termination or expiration of these Terms.
+      </p>
 
       <h2>17. Disclaimer of Warranties</h2>
-      <p>17.1 YOUR ACCESS TO AND USE OF THE SERVICE IS AT YOUR SOLE RISK. THE SERVICE, THE API, ALL SONOSPHERE CONTENT, USER CONTENT, DERIVED DATA, THIRD-PARTY SERVICES AND ALL OTHER CONTENT, MATERIALS, FEATURES AND FUNCTIONALITY MADE AVAILABLE THROUGH THE SERVICE ARE PROVIDED ON AN "AS IS," "AS AVAILABLE" AND "WITH ALL FAULTS" BASIS, WITHOUT ANY WARRANTY, REPRESENTATION OR CONDITION OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE.</p>
-      <p>17.2 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, THE SONOSPHERE PARTIES EXPRESSLY DISCLAIM ALL WARRANTIES, REPRESENTATIONS AND CONDITIONS, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, COMPLETENESS, CURRENCY, RELIABILITY, AVAILABILITY, SECURITY, QUIET ENJOYMENT, SYSTEM INTEGRATION AND QUALITY, AND ANY WARRANTIES ARISING FROM COURSE OF DEALING, COURSE OF PERFORMANCE OR USAGE OF TRADE.</p>
-      <p>17.3 WITHOUT LIMITING THE FOREGOING, THE SONOSPHERE PARTIES DO NOT WARRANT, REPRESENT OR GUARANTEE THAT: (A) THE SERVICE WILL MEET YOUR REQUIREMENTS OR EXPECTATIONS; (B) THE SERVICE WILL BE AVAILABLE, UNINTERRUPTED, TIMELY, SECURE OR ERROR-FREE, OR OPERATE IN COMBINATION WITH ANY OTHER HARDWARE, SOFTWARE, SYSTEM, APPLICATION OR DATA; (C) ANY CONTENT, INFORMATION, CHARTS, STATISTICS, RECOMMENDATIONS, METADATA, EVENT INFORMATION OR DERIVED DATA WILL BE ACCURATE, COMPLETE, RELIABLE, CURRENT OR APPROPRIATE; (D) ANY USER CONTENT OR DATA, INCLUDING LISTENING DATA, WILL BE STORED, PRESERVED, BACKED UP OR NOT LOST, CORRUPTED OR DELETED; (E) ANY SCROBBLES WILL BE RECORDED OR IMPORTED CORRECTLY OR AT ALL; (F) ANY ERRORS OR DEFECTS WILL BE CORRECTED; (G) THE SERVICE OR THE SERVERS THAT MAKE IT AVAILABLE ARE FREE OF VIRUSES, MALWARE OR OTHER HARMFUL COMPONENTS; OR (H) ANY THIRD-PARTY SERVICE OR APPLICATION WILL BE AVAILABLE, FUNCTION CORRECTLY OR REMAIN COMPATIBLE WITH THE SERVICE.</p>
-      <p>17.4 ANY CONTENT DOWNLOADED OR OTHERWISE OBTAINED THROUGH THE SERVICE IS OBTAINED AT YOUR OWN DISCRETION AND RISK, AND YOU SHALL BE SOLELY RESPONSIBLE FOR ANY DAMAGE TO YOUR COMPUTER SYSTEM, DEVICE OR NETWORK, OR LOSS OF DATA, THAT RESULTS THEREFROM. NO ADVICE OR INFORMATION, WHETHER ORAL OR WRITTEN, OBTAINED BY YOU FROM THE SONOSPHERE PARTIES OR THROUGH THE SERVICE SHALL CREATE ANY WARRANTY NOT EXPRESSLY STATED IN THESE TERMS.</p>
-      <p>17.5 THE SONOSPHERE PARTIES ARE NOT RESPONSIBLE FOR THE CONDUCT, WHETHER ONLINE OR OFFLINE, OF ANY USER, APPLICATION OR THIRD PARTY, AND YOU ASSUME ALL RISK OF INJURY, LOSS OR DAMAGE ARISING FROM YOUR INTERACTIONS WITH ANY OF THEM, INCLUDING AT ANY EVENT LISTED ON THE SERVICE.</p>
-      <p>17.6 SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES, SO SOME OF THE ABOVE EXCLUSIONS MAY NOT APPLY TO YOU. IN SUCH JURISDICTIONS, ANY IMPLIED WARRANTY SHALL BE LIMITED IN DURATION TO THIRTY (30) DAYS FROM YOUR FIRST USE OF THE SERVICE AND IN SCOPE TO THE MINIMUM REQUIRED BY LAW.</p>
+      <p>
+        17.1 YOUR ACCESS TO AND USE OF THE SERVICE IS AT YOUR SOLE RISK. THE SERVICE, THE API, ALL SONOSPHERE CONTENT,
+        USER CONTENT, DERIVED DATA, THIRD-PARTY SERVICES AND ALL OTHER CONTENT, MATERIALS, FEATURES AND FUNCTIONALITY
+        MADE AVAILABLE THROUGH THE SERVICE ARE PROVIDED ON AN "AS IS," "AS AVAILABLE" AND "WITH ALL FAULTS" BASIS,
+        WITHOUT ANY WARRANTY, REPRESENTATION OR CONDITION OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE.
+      </p>
+      <p>
+        17.2 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, THE SONOSPHERE PARTIES EXPRESSLY DISCLAIM ALL
+        WARRANTIES, REPRESENTATIONS AND CONDITIONS, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, INCLUDING ANY
+        IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY,
+        COMPLETENESS, CURRENCY, RELIABILITY, AVAILABILITY, SECURITY, QUIET ENJOYMENT, SYSTEM INTEGRATION AND QUALITY,
+        AND ANY WARRANTIES ARISING FROM COURSE OF DEALING, COURSE OF PERFORMANCE OR USAGE OF TRADE.
+      </p>
+      <p>
+        17.3 WITHOUT LIMITING THE FOREGOING, THE SONOSPHERE PARTIES DO NOT WARRANT, REPRESENT OR GUARANTEE THAT: (A) THE
+        SERVICE WILL MEET YOUR REQUIREMENTS OR EXPECTATIONS; (B) THE SERVICE WILL BE AVAILABLE, UNINTERRUPTED, TIMELY,
+        SECURE OR ERROR-FREE, OR OPERATE IN COMBINATION WITH ANY OTHER HARDWARE, SOFTWARE, SYSTEM, APPLICATION OR DATA;
+        (C) ANY CONTENT, INFORMATION, CHARTS, STATISTICS, RECOMMENDATIONS, METADATA, EVENT INFORMATION OR DERIVED DATA
+        WILL BE ACCURATE, COMPLETE, RELIABLE, CURRENT OR APPROPRIATE; (D) ANY USER CONTENT OR DATA, INCLUDING LISTENING
+        DATA, WILL BE STORED, PRESERVED, BACKED UP OR NOT LOST, CORRUPTED OR DELETED; (E) ANY SCROBBLES WILL BE RECORDED
+        OR IMPORTED CORRECTLY OR AT ALL; (F) ANY ERRORS OR DEFECTS WILL BE CORRECTED; (G) THE SERVICE OR THE SERVERS
+        THAT MAKE IT AVAILABLE ARE FREE OF VIRUSES, MALWARE OR OTHER HARMFUL COMPONENTS; OR (H) ANY THIRD-PARTY SERVICE
+        OR APPLICATION WILL BE AVAILABLE, FUNCTION CORRECTLY OR REMAIN COMPATIBLE WITH THE SERVICE.
+      </p>
+      <p>
+        17.4 ANY CONTENT DOWNLOADED OR OTHERWISE OBTAINED THROUGH THE SERVICE IS OBTAINED AT YOUR OWN DISCRETION AND
+        RISK, AND YOU SHALL BE SOLELY RESPONSIBLE FOR ANY DAMAGE TO YOUR COMPUTER SYSTEM, DEVICE OR NETWORK, OR LOSS OF
+        DATA, THAT RESULTS THEREFROM. NO ADVICE OR INFORMATION, WHETHER ORAL OR WRITTEN, OBTAINED BY YOU FROM THE
+        SONOSPHERE PARTIES OR THROUGH THE SERVICE SHALL CREATE ANY WARRANTY NOT EXPRESSLY STATED IN THESE TERMS.
+      </p>
+      <p>
+        17.5 THE SONOSPHERE PARTIES ARE NOT RESPONSIBLE FOR THE CONDUCT, WHETHER ONLINE OR OFFLINE, OF ANY USER,
+        APPLICATION OR THIRD PARTY, AND YOU ASSUME ALL RISK OF INJURY, LOSS OR DAMAGE ARISING FROM YOUR INTERACTIONS
+        WITH ANY OF THEM, INCLUDING AT ANY EVENT LISTED ON THE SERVICE.
+      </p>
+      <p>
+        17.6 SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES, SO SOME OF THE ABOVE EXCLUSIONS MAY
+        NOT APPLY TO YOU. IN SUCH JURISDICTIONS, ANY IMPLIED WARRANTY SHALL BE LIMITED IN DURATION TO THIRTY (30) DAYS
+        FROM YOUR FIRST USE OF THE SERVICE AND IN SCOPE TO THE MINIMUM REQUIRED BY LAW.
+      </p>
 
       <h2>18. Limitation of Liability</h2>
-      <p>18.1 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL ANY OF THE SONOSPHERE PARTIES BE LIABLE TO YOU OR ANY THIRD PARTY FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, PUNITIVE OR ENHANCED DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, BUSINESS, OPPORTUNITY, GOODWILL, REPUTATION, DATA (INCLUDING LISTENING DATA AND USER CONTENT) OR USE, BUSINESS INTERRUPTION, COMPUTER FAILURE OR MALFUNCTION, OR COST OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, HOWEVER CAUSED, ARISING OUT OF OR IN CONNECTION WITH THESE TERMS, THE SERVICE, ANY USER CONTENT, ANY APPLICATION, ANY THIRD-PARTY SERVICE, ANY EVENT OR ANY INTERACTION WITH ANY OTHER USER, WHETHER BASED ON CONTRACT, TORT (INCLUDING NEGLIGENCE AND GROSS NEGLIGENCE TO THE EXTENT PERMITTED BY LAW), STRICT LIABILITY, PRODUCT LIABILITY, STATUTE, WARRANTY OR ANY OTHER LEGAL OR EQUITABLE THEORY, AND WHETHER OR NOT ANY SONOSPHERE PARTY HAS BEEN ADVISED OF OR SHOULD HAVE FORESEEN THE POSSIBILITY OF SUCH DAMAGES.</p>
-      <p>18.2 WITHOUT LIMITING THE FOREGOING, THE SONOSPHERE PARTIES SHALL HAVE NO LIABILITY FOR ANY: (A) ERRORS, MISTAKES OR INACCURACIES IN ANY CONTENT; (B) PERSONAL INJURY OR PROPERTY DAMAGE OF ANY NATURE RESULTING FROM YOUR ACCESS TO OR USE OF THE SERVICE; (C) UNAUTHORIZED ACCESS TO OR USE OF SONOSPHERE'S SERVERS OR ANY INFORMATION STORED THEREIN; (D) INTERRUPTION OR CESSATION OF TRANSMISSION TO OR FROM THE SERVICE; (E) BUGS, VIRUSES OR OTHER HARMFUL CODE TRANSMITTED THROUGH THE SERVICE BY ANY THIRD PARTY; (F) LOSS, CORRUPTION OR DELETION OF ANY DATA OR USER CONTENT; (G) SUSPENSION OR TERMINATION OF YOUR ACCOUNT OR REMOVAL OF ANY USER CONTENT; OR (H) DEFAMATORY, OFFENSIVE OR ILLEGAL CONDUCT OF ANY THIRD PARTY.</p>
-      <p>18.3 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, THE TOTAL AGGREGATE LIABILITY OF ALL SONOSPHERE PARTIES, COLLECTIVELY, FOR ALL CLAIMS, DAMAGES AND LOSSES ARISING OUT OF OR IN CONNECTION WITH THESE TERMS OR THE SERVICE, UNDER ANY THEORY OF LIABILITY, SHALL NOT EXCEED THE GREATER OF (A) THE TOTAL AMOUNT ACTUALLY PAID BY YOU TO SONOSPHERE FOR THE SERVICE IN THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT FIRST GIVING RISE TO LIABILITY, OR (B) FIFTY U.S. DOLLARS (US$50.00). THE EXISTENCE OF MULTIPLE CLAIMS SHALL NOT ENLARGE THIS LIMIT.</p>
-      <p>18.4 THE LIMITATIONS AND EXCLUSIONS IN THIS SECTION 18 APPLY EVEN IF ANY REMEDY FAILS OF ITS ESSENTIAL PURPOSE, AND REFLECT AN INFORMED, VOLUNTARY ALLOCATION OF RISK BETWEEN THE PARTIES THAT FORMS AN ESSENTIAL BASIS OF THE BARGAIN. SONOSPHERE WOULD NOT PROVIDE THE SERVICE, PARTICULARLY FREE OF CHARGE, WITHOUT THESE LIMITATIONS. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OR LIMITATION OF CERTAIN DAMAGES; IN SUCH JURISDICTIONS, THE LIABILITY OF THE SONOSPHERE PARTIES SHALL BE LIMITED TO THE FULLEST EXTENT PERMITTED BY LAW. NOTHING IN THESE TERMS LIMITS LIABILITY THAT CANNOT BE LIMITED UNDER APPLICABLE LAW.</p>
+      <p>
+        18.1 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL ANY OF THE SONOSPHERE PARTIES BE
+        LIABLE TO YOU OR ANY THIRD PARTY FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, PUNITIVE OR
+        ENHANCED DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, BUSINESS, OPPORTUNITY, GOODWILL, REPUTATION, DATA
+        (INCLUDING LISTENING DATA AND USER CONTENT) OR USE, BUSINESS INTERRUPTION, COMPUTER FAILURE OR MALFUNCTION, OR
+        COST OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, HOWEVER CAUSED, ARISING OUT OF OR IN CONNECTION WITH THESE
+        TERMS, THE SERVICE, ANY USER CONTENT, ANY APPLICATION, ANY THIRD-PARTY SERVICE, ANY EVENT OR ANY INTERACTION
+        WITH ANY OTHER USER, WHETHER BASED ON CONTRACT, TORT (INCLUDING NEGLIGENCE AND GROSS NEGLIGENCE TO THE EXTENT
+        PERMITTED BY LAW), STRICT LIABILITY, PRODUCT LIABILITY, STATUTE, WARRANTY OR ANY OTHER LEGAL OR EQUITABLE
+        THEORY, AND WHETHER OR NOT ANY SONOSPHERE PARTY HAS BEEN ADVISED OF OR SHOULD HAVE FORESEEN THE POSSIBILITY OF
+        SUCH DAMAGES.
+      </p>
+      <p>
+        18.2 WITHOUT LIMITING THE FOREGOING, THE SONOSPHERE PARTIES SHALL HAVE NO LIABILITY FOR ANY: (A) ERRORS,
+        MISTAKES OR INACCURACIES IN ANY CONTENT; (B) PERSONAL INJURY OR PROPERTY DAMAGE OF ANY NATURE RESULTING FROM
+        YOUR ACCESS TO OR USE OF THE SERVICE; (C) UNAUTHORIZED ACCESS TO OR USE OF SONOSPHERE'S SERVERS OR ANY
+        INFORMATION STORED THEREIN; (D) INTERRUPTION OR CESSATION OF TRANSMISSION TO OR FROM THE SERVICE; (E) BUGS,
+        VIRUSES OR OTHER HARMFUL CODE TRANSMITTED THROUGH THE SERVICE BY ANY THIRD PARTY; (F) LOSS, CORRUPTION OR
+        DELETION OF ANY DATA OR USER CONTENT; (G) SUSPENSION OR TERMINATION OF YOUR ACCOUNT OR REMOVAL OF ANY USER
+        CONTENT; OR (H) DEFAMATORY, OFFENSIVE OR ILLEGAL CONDUCT OF ANY THIRD PARTY.
+      </p>
+      <p>
+        18.3 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, THE TOTAL AGGREGATE LIABILITY OF ALL SONOSPHERE PARTIES,
+        COLLECTIVELY, FOR ALL CLAIMS, DAMAGES AND LOSSES ARISING OUT OF OR IN CONNECTION WITH THESE TERMS OR THE
+        SERVICE, UNDER ANY THEORY OF LIABILITY, SHALL NOT EXCEED THE GREATER OF (A) THE TOTAL AMOUNT ACTUALLY PAID BY
+        YOU TO SONOSPHERE FOR THE SERVICE IN THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT FIRST GIVING RISE TO
+        LIABILITY, OR (B) FIFTY U.S. DOLLARS (US$50.00). THE EXISTENCE OF MULTIPLE CLAIMS SHALL NOT ENLARGE THIS LIMIT.
+      </p>
+      <p>
+        18.4 THE LIMITATIONS AND EXCLUSIONS IN THIS SECTION 18 APPLY EVEN IF ANY REMEDY FAILS OF ITS ESSENTIAL PURPOSE,
+        AND REFLECT AN INFORMED, VOLUNTARY ALLOCATION OF RISK BETWEEN THE PARTIES THAT FORMS AN ESSENTIAL BASIS OF THE
+        BARGAIN. SONOSPHERE WOULD NOT PROVIDE THE SERVICE, PARTICULARLY FREE OF CHARGE, WITHOUT THESE LIMITATIONS. SOME
+        JURISDICTIONS DO NOT ALLOW THE EXCLUSION OR LIMITATION OF CERTAIN DAMAGES; IN SUCH JURISDICTIONS, THE LIABILITY
+        OF THE SONOSPHERE PARTIES SHALL BE LIMITED TO THE FULLEST EXTENT PERMITTED BY LAW. NOTHING IN THESE TERMS LIMITS
+        LIABILITY THAT CANNOT BE LIMITED UNDER APPLICABLE LAW.
+      </p>
 
       <h2>19. Indemnification</h2>
-      <p>19.1 To the fullest extent permitted by applicable law, you agree to defend, indemnify and hold harmless the Sonosphere Parties from and against any and all claims, demands, suits, actions, proceedings, investigations, liabilities, damages, losses, judgments, awards, fines, penalties, settlements, costs and expenses of any kind (including reasonable attorneys', experts' and investigators' fees and court costs) arising out of or relating to: (a) your User Content; (b) your access to or use of, or inability to use, the Service; (c) any Application you develop, operate or authorize; (d) your breach or alleged breach of these Terms or any representation, warranty or covenant herein; (e) your violation or alleged violation of any law, regulation or right of any third party, including any intellectual property, privacy or publicity right; (f) any dispute or interaction between you and any other user or third party, including at any event; (g) your negligence or willful misconduct; and (h) any use of your Account or API credentials, whether or not authorized by you.</p>
-      <p>19.2 Sonosphere reserves the right, at your sole expense, to assume the exclusive defense and control of any matter for which you are required to indemnify the Sonosphere Parties, and you agree to cooperate fully with such defense and to provide all information and assistance reasonably requested. You shall not settle, compromise or consent to the entry of any judgment in any such matter without the prior written consent of Sonosphere. Your obligations under this Section are in addition to, and not in lieu of, any other remedies available to Sonosphere.</p>
+      <p>
+        19.1 To the fullest extent permitted by applicable law, you agree to defend, indemnify and hold harmless the
+        Sonosphere Parties from and against any and all claims, demands, suits, actions, proceedings, investigations,
+        liabilities, damages, losses, judgments, awards, fines, penalties, settlements, costs and expenses of any kind
+        (including reasonable attorneys', experts' and investigators' fees and court costs) arising out of or relating
+        to: (a) your User Content; (b) your access to or use of, or inability to use, the Service; (c) any Application
+        you develop, operate or authorize; (d) your breach or alleged breach of these Terms or any representation,
+        warranty or covenant herein; (e) your violation or alleged violation of any law, regulation or right of any
+        third party, including any intellectual property, privacy or publicity right; (f) any dispute or interaction
+        between you and any other user or third party, including at any event; (g) your negligence or willful
+        misconduct; and (h) any use of your Account or API credentials, whether or not authorized by you.
+      </p>
+      <p>
+        19.2 Sonosphere reserves the right, at your sole expense, to assume the exclusive defense and control of any
+        matter for which you are required to indemnify the Sonosphere Parties, and you agree to cooperate fully with
+        such defense and to provide all information and assistance reasonably requested. You shall not settle,
+        compromise or consent to the entry of any judgment in any such matter without the prior written consent of
+        Sonosphere. Your obligations under this Section are in addition to, and not in lieu of, any other remedies
+        available to Sonosphere.
+      </p>
 
       <h2>20. Release</h2>
-      <p>20.1 To the fullest extent permitted by applicable law, you hereby release, acquit and forever discharge each of the Sonosphere Parties from any and all claims, demands, causes of action, liabilities, damages and losses of every kind and nature, known and unknown, suspected and unsuspected, disclosed and undisclosed, arising out of or in any way connected with (a) any dispute between you and any other user, Application or third party; (b) any User Content; (c) any Third-Party Service; and (d) any event listed on the Service.</p>
-      <p>20.2 IF YOU ARE A CALIFORNIA RESIDENT, YOU EXPRESSLY WAIVE THE PROTECTIONS OF CALIFORNIA CIVIL CODE SECTION 1542, WHICH PROVIDES: "A GENERAL RELEASE DOES NOT EXTEND TO CLAIMS THAT THE CREDITOR OR RELEASING PARTY DOES NOT KNOW OR SUSPECT TO EXIST IN HIS OR HER FAVOR AT THE TIME OF EXECUTING THE RELEASE AND THAT, IF KNOWN BY HIM OR HER, WOULD HAVE MATERIALLY AFFECTED HIS OR HER SETTLEMENT WITH THE DEBTOR OR RELEASED PARTY." YOU ALSO EXPRESSLY WAIVE ANY AND ALL RIGHTS UNDER ANY STATUTE, RULE OR DOCTRINE OF ANY OTHER JURISDICTION THAT IS SIMILAR OR COMPARABLE IN EFFECT.</p>
+      <p>
+        20.1 To the fullest extent permitted by applicable law, you hereby release, acquit and forever discharge each of
+        the Sonosphere Parties from any and all claims, demands, causes of action, liabilities, damages and losses of
+        every kind and nature, known and unknown, suspected and unsuspected, disclosed and undisclosed, arising out of
+        or in any way connected with (a) any dispute between you and any other user, Application or third party; (b) any
+        User Content; (c) any Third-Party Service; and (d) any event listed on the Service.
+      </p>
+      <p>
+        20.2 IF YOU ARE A CALIFORNIA RESIDENT, YOU EXPRESSLY WAIVE THE PROTECTIONS OF CALIFORNIA CIVIL CODE SECTION
+        1542, WHICH PROVIDES: "A GENERAL RELEASE DOES NOT EXTEND TO CLAIMS THAT THE CREDITOR OR RELEASING PARTY DOES NOT
+        KNOW OR SUSPECT TO EXIST IN HIS OR HER FAVOR AT THE TIME OF EXECUTING THE RELEASE AND THAT, IF KNOWN BY HIM OR
+        HER, WOULD HAVE MATERIALLY AFFECTED HIS OR HER SETTLEMENT WITH THE DEBTOR OR RELEASED PARTY." YOU ALSO EXPRESSLY
+        WAIVE ANY AND ALL RIGHTS UNDER ANY STATUTE, RULE OR DOCTRINE OF ANY OTHER JURISDICTION THAT IS SIMILAR OR
+        COMPARABLE IN EFFECT.
+      </p>
 
       <h2>21. Equitable Relief</h2>
-      <p>21.1 You acknowledge that any actual or threatened breach of Sections 9, 10, 14 or 15 would cause Sonosphere immediate and irreparable harm for which monetary damages would be an inadequate remedy. Accordingly, Sonosphere shall be entitled to temporary, preliminary and permanent injunctive relief, specific performance and other equitable relief to prevent or restrain any such breach, without the necessity of posting a bond or other security or proving actual damages, in addition to all other remedies available at law or in equity.</p>
-      <p>21.2 To the fullest extent permitted by applicable law, you agree that any damages you may suffer in connection with the Service are not irreparable and are adequately compensable by monetary damages, and you waive any right to seek, and agree not to seek, injunctive or other equitable relief to enjoin, restrain or otherwise interfere with the operation of the Service, the development, exploitation or distribution of any Content or technology, or any other activity of Sonosphere. This Section 21.2 does not waive any non-waivable right to public injunctive relief referenced in Section 24.5.</p>
+      <p>
+        21.1 You acknowledge that any actual or threatened breach of Sections 9, 10, 14 or 15 would cause Sonosphere
+        immediate and irreparable harm for which monetary damages would be an inadequate remedy. Accordingly, Sonosphere
+        shall be entitled to temporary, preliminary and permanent injunctive relief, specific performance and other
+        equitable relief to prevent or restrain any such breach, without the necessity of posting a bond or other
+        security or proving actual damages, in addition to all other remedies available at law or in equity.
+      </p>
+      <p>
+        21.2 To the fullest extent permitted by applicable law, you agree that any damages you may suffer in connection
+        with the Service are not irreparable and are adequately compensable by monetary damages, and you waive any right
+        to seek, and agree not to seek, injunctive or other equitable relief to enjoin, restrain or otherwise interfere
+        with the operation of the Service, the development, exploitation or distribution of any Content or technology,
+        or any other activity of Sonosphere. This Section 21.2 does not waive any non-waivable right to public
+        injunctive relief referenced in Section 24.5.
+      </p>
 
       <h2>22. Electronic Communications and Notices</h2>
-      <p>22.1 By using the Service, you consent to receive communications from Sonosphere in electronic form, including by email to the address associated with your Account, by notifications within the Service, and by notices posted on the Service. You agree that all terms, conditions, agreements, notices, disclosures and other communications that Sonosphere provides to you electronically satisfy any legal requirement that such communications be in writing.</p>
-      <p>22.2 Notice to you shall be deemed given upon transmission by email to the address associated with your Account, whether or not received, or upon posting on the Service. You are responsible for keeping your email address current; notice sent to the last email address you provided shall be effective. Notice to Sonosphere shall be given by email to <Mail /> and shall be deemed given upon receipt by Sonosphere.</p>
+      <p>
+        22.1 By using the Service, you consent to receive communications from Sonosphere in electronic form, including
+        by email to the address associated with your Account, by notifications within the Service, and by notices posted
+        on the Service. You agree that all terms, conditions, agreements, notices, disclosures and other communications
+        that Sonosphere provides to you electronically satisfy any legal requirement that such communications be in
+        writing.
+      </p>
+      <p>
+        22.2 Notice to you shall be deemed given upon transmission by email to the address associated with your Account,
+        whether or not received, or upon posting on the Service. You are responsible for keeping your email address
+        current; notice sent to the last email address you provided shall be effective. Notice to Sonosphere shall be
+        given by email to <Mail /> and shall be deemed given upon receipt by Sonosphere.
+      </p>
 
       <h2>23. Governing Law and Venue</h2>
-      <p>23.1 These Terms, the Privacy Policy, and any claim, controversy or dispute arising out of or relating to them or to the Service, whether sounding in contract, tort, statute or otherwise, shall be governed by and construed in accordance with the laws of the State of California and applicable federal laws of the United States, without giving effect to any choice of law or conflict of laws principles or rules (whether of the State of California or any other jurisdiction) that would cause the application of the laws of any other jurisdiction.</p>
-      <p>23.2 Subject to Section 24, any action or proceeding arising out of or relating to these Terms or the Service shall be brought exclusively in the state courts located in the City and County of San Francisco, California, or the United States District Court for the Northern District of California, and each party irrevocably submits to the exclusive personal jurisdiction of and venue in such courts and waives any objection thereto, including any objection based on forum non conveniens.</p>
-      <p>23.3 The United Nations Convention on Contracts for the International Sale of Goods and the Uniform Computer Information Transactions Act, as enacted in any jurisdiction, shall not apply to these Terms.</p>
-      <p>23.4 Sonosphere makes no representation that the Service is appropriate or available for use in any particular location. Those who access or use the Service from outside the United States do so on their own initiative and are solely responsible for compliance with local law.</p>
+      <p>
+        23.1 These Terms, the Privacy Policy, and any claim, controversy or dispute arising out of or relating to them
+        or to the Service, whether sounding in contract, tort, statute or otherwise, shall be governed by and construed
+        in accordance with the laws of the State of California and applicable federal laws of the United States, without
+        giving effect to any choice of law or conflict of laws principles or rules (whether of the State of California
+        or any other jurisdiction) that would cause the application of the laws of any other jurisdiction.
+      </p>
+      <p>
+        23.2 Subject to Section 24, any action or proceeding arising out of or relating to these Terms or the Service
+        shall be brought exclusively in the state courts located in the City and County of San Francisco, California, or
+        the United States District Court for the Northern District of California, and each party irrevocably submits to
+        the exclusive personal jurisdiction of and venue in such courts and waives any objection thereto, including any
+        objection based on forum non conveniens.
+      </p>
+      <p>
+        23.3 The United Nations Convention on Contracts for the International Sale of Goods and the Uniform Computer
+        Information Transactions Act, as enacted in any jurisdiction, shall not apply to these Terms.
+      </p>
+      <p>
+        23.4 Sonosphere makes no representation that the Service is appropriate or available for use in any particular
+        location. Those who access or use the Service from outside the United States do so on their own initiative and
+        are solely responsible for compliance with local law.
+      </p>
 
       <h2>24. Binding Arbitration and Class Action Waiver</h2>
-      <p>24.1 <i>Informal dispute resolution.</i> Before commencing any arbitration or court proceeding, the party asserting a claim shall send the other party a written notice of dispute ("Notice of Dispute") that includes the claimant's name, username and email address associated with the Account (if applicable), a detailed description of the nature and basis of the claim, and the specific relief sought, and that is personally signed by the claimant (and by counsel, if represented). Notices of Dispute to Sonosphere shall be sent to <Mail />. For sixty (60) days after receipt of a complete Notice of Dispute, the parties shall attempt in good faith to resolve the dispute informally, which may include an individualized telephone or video conference in which the claimant personally participates. Compliance with this Section 24.1 is a mandatory condition precedent to commencing arbitration or any court proceeding, and any arbitration or proceeding commenced without such compliance shall be dismissed. All applicable statutes of limitations and filing fee deadlines shall be tolled while the parties engage in this process.</p>
-      <p>24.2 <i>Agreement to arbitrate.</i> Except as provided in Section 24.5, you and Sonosphere agree that any and all disputes, claims or controversies of any kind, whether based in contract, tort, statute, fraud, misrepresentation or any other legal theory, arising out of or relating in any way to these Terms, the Privacy Policy, the Service, any Content, any communication or advertising, or the relationship between you and Sonosphere, whether arising before or after your acceptance of these Terms, and including any dispute regarding the existence, formation, scope, validity, interpretation, applicability, enforceability, revocability or termination of these Terms or of this Section 24 (collectively, "Disputes"), shall be resolved exclusively through final and binding individual arbitration, rather than in court. This agreement to arbitrate extends to claims against the Sonosphere Parties, who are intended third-party beneficiaries of this Section 24.</p>
-      <p>24.3 <i>Delegation.</i> The arbitrator, and not any federal, state or local court or agency, shall have exclusive authority to resolve any Dispute relating to the interpretation, applicability, enforceability or formation of this arbitration agreement, including any claim that all or any part of this arbitration agreement is void or voidable, except that a court of competent jurisdiction shall decide (a) any Dispute concerning Sections 24.6 and 24.7, including their enforceability; and (b) whether the conditions precedent in Section 24.1 have been satisfied, if so elected by either party.</p>
-      <p>24.4 <i>Rules and procedure.</i> The arbitration shall be administered by JAMS in accordance with the JAMS Streamlined Arbitration Rules and Procedures (or, where the amount in controversy exceeds US$250,000, the JAMS Comprehensive Arbitration Rules and Procedures) and, where applicable, the JAMS Policy on Consumer Arbitrations Pursuant to Pre-Dispute Clauses Minimum Standards of Procedural Fairness, each as in effect when the arbitration is commenced (the "Rules"), as modified by this Section 24. The arbitration shall be conducted before a single neutral arbitrator who shall be a retired judge or an attorney licensed to practice law in California with at least ten (10) years of experience. The arbitration shall be seated in the City and County of San Francisco, California; provided that, where permitted by the Rules, the arbitration shall be conducted on written submissions alone or by videoconference unless the arbitrator determines that an in-person hearing is necessary. The arbitrator shall apply the substantive law of the State of California and applicable federal law, shall honor claims of privilege recognized at law, and shall be bound by these Terms, including the limitations of liability herein. Discovery shall be limited to that which is reasonably necessary given the individual nature and amount of the claim. The arbitrator may award relief only on an individual basis and only to the extent necessary to provide relief warranted by the claimant's individual claim, and may not award relief against Sonosphere with respect to any person other than you. The arbitrator shall issue a reasoned written decision. The arbitrator's award shall be final and binding, and judgment on the award may be entered in any court of competent jurisdiction. Any award or decision shall have no preclusive effect in any other arbitration or proceeding involving any person other than the parties. The payment of filing, administrative and arbitrator fees shall be governed by the Rules, except that the arbitrator may award fees and costs to Sonosphere if the arbitrator determines that the claim was frivolous or brought for an improper purpose, as measured by Federal Rule of Civil Procedure 11(b). The Federal Arbitration Act, 9 U.S.C. § 1 et seq., and federal arbitration law govern the interpretation and enforcement of this Section 24.</p>
-      <p>24.5 <i>Exceptions.</i> Notwithstanding the foregoing, (a) either party may elect to bring an individual action in small claims court in the City and County of San Francisco, California, or in the county of your residence, for Disputes within the jurisdictional limits of such court, provided the action remains in such court and is not removed or appealed to a court of general jurisdiction; (b) Sonosphere may bring an action in any court of competent jurisdiction for injunctive or other equitable relief to protect its intellectual property rights, confidential information, or the security, integrity or operation of the Service, or to enforce Sections 9, 10, 14 or 21; and (c) nothing in this Section 24 shall be construed to waive any non-waivable right you may have to seek public injunctive relief under applicable law, provided that any such claim shall be severed, stayed and brought only after the completion of the arbitration of all individual claims and remedies, and only to the extent such relief is not available in arbitration.</p>
-      <p>24.6 <i>Class action waiver.</i> TO THE FULLEST EXTENT PERMITTED BY LAW, YOU AND SONOSPHERE AGREE THAT EACH MAY BRING DISPUTES AGAINST THE OTHER ONLY IN AN INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF, REPRESENTATIVE OR CLASS MEMBER IN ANY PURPORTED CLASS, COLLECTIVE, CONSOLIDATED, MASS, PRIVATE ATTORNEY GENERAL OR REPRESENTATIVE ACTION OR PROCEEDING. UNLESS BOTH YOU AND SONOSPHERE AGREE OTHERWISE IN WRITING, THE ARBITRATOR MAY NOT CONSOLIDATE OR JOIN MORE THAN ONE PERSON'S CLAIMS, AND MAY NOT OTHERWISE PRESIDE OVER ANY FORM OF CLASS, COLLECTIVE, CONSOLIDATED OR REPRESENTATIVE PROCEEDING.</p>
-      <p>24.7 <i>Mass arbitration.</i> If twenty-five (25) or more Notices of Dispute or demands for arbitration raising substantially similar claims are submitted against Sonosphere by or with the assistance of the same or coordinated counsel, law firms or organizations (each, a "Mass Filing"), then: (a) the parties shall select fifteen (15) of such claims (ten (10) selected by the claimants' counsel and five (5) by Sonosphere) to proceed first as bellwether arbitrations, and no other claims shall be filed or administered, and no fees shall be assessed in connection therewith, until the bellwether arbitrations are resolved; (b) following resolution of the bellwether arbitrations, the parties shall engage in a global mediation of the remaining claims for no less than ninety (90) days; (c) if the remaining claims are not resolved, they shall proceed in staged batches of no more than fifty (50) claims each, with only one batch filed and administered at a time, each batch heard by a single arbitrator to the extent permitted by the Rules; and (d) all applicable statutes of limitations shall be tolled for claims held in abeyance under this Section 24.7. A court of competent jurisdiction shall have authority to enforce this Section 24.7, including by enjoining the mass filing or administration of demands. If this Section 24.7 is found unenforceable as to any Mass Filing, the claims comprising such Mass Filing shall be resolved in court in accordance with Section 23.</p>
-      <p>24.8 <i>Jury trial waiver.</i> TO THE FULLEST EXTENT PERMITTED BY LAW, YOU AND SONOSPHERE EACH KNOWINGLY, VOLUNTARILY AND INTENTIONALLY WAIVE ANY RIGHT TO A TRIAL BY JURY IN ANY ACTION OR PROCEEDING ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE, WHETHER IN ARBITRATION OR IN COURT.</p>
-      <p>24.9 <i>Severability.</i> If any portion of Section 24.6 is found to be unenforceable or unlawful with respect to any claim or request for relief, then (a) that claim or request for relief, and only that claim or request for relief, shall be severed and litigated exclusively in the courts specified in Section 23; (b) such litigation shall be stayed pending the completion of the arbitration of all individual claims; and (c) the remainder of this Section 24 shall remain in full force and effect. If any other provision of this Section 24 is found unenforceable, such provision shall be severed and the remainder shall be enforced.</p>
-      <p>24.10 <i>Right to opt out.</i> You may opt out of this Section 24 by sending written notice of your decision to opt out to <Mail /> from the email address associated with your Account, postmarked or sent within thirty (30) days after the date you first accept these Terms. Your notice must include your full name, username and an unequivocal statement that you wish to opt out of this arbitration agreement. Notices sent by any third party or on behalf of multiple persons shall be ineffective. Opting out of this Section 24 shall not affect any other provision of these Terms, including Sections 23 and 24.11, or any prior or subsequent arbitration agreement between you and Sonosphere.</p>
-      <p>24.11 <i>Limitations period.</i> TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY CLAIM OR CAUSE OF ACTION ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE MUST BE COMMENCED, BY NOTICE OF DISPUTE IN ACCORDANCE WITH SECTION 24.1, WITHIN ONE (1) YEAR AFTER SUCH CLAIM OR CAUSE OF ACTION ACCRUES, OR SUCH CLAIM OR CAUSE OF ACTION SHALL BE FOREVER BARRED, REGARDLESS OF ANY STATUTE OR LAW TO THE CONTRARY.</p>
-      <p>24.12 <i>Changes to this Section.</i> Notwithstanding Section 5.1, if Sonosphere makes any material change to this Section 24, the change shall not apply to any Dispute of which Sonosphere had received a Notice of Dispute before the change became effective. If you do not agree to any such change, you may reject it by sending written notice to <Mail /> within thirty (30) days after the change becomes effective, in which case the version of this Section 24 in effect immediately before the change shall continue to govern Disputes between you and Sonosphere.</p>
+      <p>
+        24.1 <i>Informal dispute resolution.</i> Before commencing any arbitration or court proceeding, the party
+        asserting a claim shall send the other party a written notice of dispute ("Notice of Dispute") that includes the
+        claimant's name, username and email address associated with the Account (if applicable), a detailed description
+        of the nature and basis of the claim, and the specific relief sought, and that is personally signed by the
+        claimant (and by counsel, if represented). Notices of Dispute to Sonosphere shall be sent to <Mail />. For sixty
+        (60) days after receipt of a complete Notice of Dispute, the parties shall attempt in good faith to resolve the
+        dispute informally, which may include an individualized telephone or video conference in which the claimant
+        personally participates. Compliance with this Section 24.1 is a mandatory condition precedent to commencing
+        arbitration or any court proceeding, and any arbitration or proceeding commenced without such compliance shall
+        be dismissed. All applicable statutes of limitations and filing fee deadlines shall be tolled while the parties
+        engage in this process.
+      </p>
+      <p>
+        24.2 <i>Agreement to arbitrate.</i> Except as provided in Section 24.5, you and Sonosphere agree that any and
+        all disputes, claims or controversies of any kind, whether based in contract, tort, statute, fraud,
+        misrepresentation or any other legal theory, arising out of or relating in any way to these Terms, the Privacy
+        Policy, the Service, any Content, any communication or advertising, or the relationship between you and
+        Sonosphere, whether arising before or after your acceptance of these Terms, and including any dispute regarding
+        the existence, formation, scope, validity, interpretation, applicability, enforceability, revocability or
+        termination of these Terms or of this Section 24 (collectively, "Disputes"), shall be resolved exclusively
+        through final and binding individual arbitration, rather than in court. This agreement to arbitrate extends to
+        claims against the Sonosphere Parties, who are intended third-party beneficiaries of this Section 24.
+      </p>
+      <p>
+        24.3 <i>Delegation.</i> The arbitrator, and not any federal, state or local court or agency, shall have
+        exclusive authority to resolve any Dispute relating to the interpretation, applicability, enforceability or
+        formation of this arbitration agreement, including any claim that all or any part of this arbitration agreement
+        is void or voidable, except that a court of competent jurisdiction shall decide (a) any Dispute concerning
+        Sections 24.6 and 24.7, including their enforceability; and (b) whether the conditions precedent in Section 24.1
+        have been satisfied, if so elected by either party.
+      </p>
+      <p>
+        24.4 <i>Rules and procedure.</i> The arbitration shall be administered by JAMS in accordance with the JAMS
+        Streamlined Arbitration Rules and Procedures (or, where the amount in controversy exceeds US$250,000, the JAMS
+        Comprehensive Arbitration Rules and Procedures) and, where applicable, the JAMS Policy on Consumer Arbitrations
+        Pursuant to Pre-Dispute Clauses Minimum Standards of Procedural Fairness, each as in effect when the arbitration
+        is commenced (the "Rules"), as modified by this Section 24. The arbitration shall be conducted before a single
+        neutral arbitrator who shall be a retired judge or an attorney licensed to practice law in California with at
+        least ten (10) years of experience. The arbitration shall be seated in the City and County of San Francisco,
+        California; provided that, where permitted by the Rules, the arbitration shall be conducted on written
+        submissions alone or by videoconference unless the arbitrator determines that an in-person hearing is necessary.
+        The arbitrator shall apply the substantive law of the State of California and applicable federal law, shall
+        honor claims of privilege recognized at law, and shall be bound by these Terms, including the limitations of
+        liability herein. Discovery shall be limited to that which is reasonably necessary given the individual nature
+        and amount of the claim. The arbitrator may award relief only on an individual basis and only to the extent
+        necessary to provide relief warranted by the claimant's individual claim, and may not award relief against
+        Sonosphere with respect to any person other than you. The arbitrator shall issue a reasoned written decision.
+        The arbitrator's award shall be final and binding, and judgment on the award may be entered in any court of
+        competent jurisdiction. Any award or decision shall have no preclusive effect in any other arbitration or
+        proceeding involving any person other than the parties. The payment of filing, administrative and arbitrator
+        fees shall be governed by the Rules, except that the arbitrator may award fees and costs to Sonosphere if the
+        arbitrator determines that the claim was frivolous or brought for an improper purpose, as measured by Federal
+        Rule of Civil Procedure 11(b). The Federal Arbitration Act, 9 U.S.C. § 1 et seq., and federal arbitration law
+        govern the interpretation and enforcement of this Section 24.
+      </p>
+      <p>
+        24.5 <i>Exceptions.</i> Notwithstanding the foregoing, (a) either party may elect to bring an individual action
+        in small claims court in the City and County of San Francisco, California, or in the county of your residence,
+        for Disputes within the jurisdictional limits of such court, provided the action remains in such court and is
+        not removed or appealed to a court of general jurisdiction; (b) Sonosphere may bring an action in any court of
+        competent jurisdiction for injunctive or other equitable relief to protect its intellectual property rights,
+        confidential information, or the security, integrity or operation of the Service, or to enforce Sections 9, 10,
+        14 or 21; and (c) nothing in this Section 24 shall be construed to waive any non-waivable right you may have to
+        seek public injunctive relief under applicable law, provided that any such claim shall be severed, stayed and
+        brought only after the completion of the arbitration of all individual claims and remedies, and only to the
+        extent such relief is not available in arbitration.
+      </p>
+      <p>
+        24.6 <i>Class action waiver.</i> TO THE FULLEST EXTENT PERMITTED BY LAW, YOU AND SONOSPHERE AGREE THAT EACH MAY
+        BRING DISPUTES AGAINST THE OTHER ONLY IN AN INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF, REPRESENTATIVE OR CLASS
+        MEMBER IN ANY PURPORTED CLASS, COLLECTIVE, CONSOLIDATED, MASS, PRIVATE ATTORNEY GENERAL OR REPRESENTATIVE ACTION
+        OR PROCEEDING. UNLESS BOTH YOU AND SONOSPHERE AGREE OTHERWISE IN WRITING, THE ARBITRATOR MAY NOT CONSOLIDATE OR
+        JOIN MORE THAN ONE PERSON'S CLAIMS, AND MAY NOT OTHERWISE PRESIDE OVER ANY FORM OF CLASS, COLLECTIVE,
+        CONSOLIDATED OR REPRESENTATIVE PROCEEDING.
+      </p>
+      <p>
+        24.7 <i>Mass arbitration.</i> If twenty-five (25) or more Notices of Dispute or demands for arbitration raising
+        substantially similar claims are submitted against Sonosphere by or with the assistance of the same or
+        coordinated counsel, law firms or organizations (each, a "Mass Filing"), then: (a) the parties shall select
+        fifteen (15) of such claims (ten (10) selected by the claimants' counsel and five (5) by Sonosphere) to proceed
+        first as bellwether arbitrations, and no other claims shall be filed or administered, and no fees shall be
+        assessed in connection therewith, until the bellwether arbitrations are resolved; (b) following resolution of
+        the bellwether arbitrations, the parties shall engage in a global mediation of the remaining claims for no less
+        than ninety (90) days; (c) if the remaining claims are not resolved, they shall proceed in staged batches of no
+        more than fifty (50) claims each, with only one batch filed and administered at a time, each batch heard by a
+        single arbitrator to the extent permitted by the Rules; and (d) all applicable statutes of limitations shall be
+        tolled for claims held in abeyance under this Section 24.7. A court of competent jurisdiction shall have
+        authority to enforce this Section 24.7, including by enjoining the mass filing or administration of demands. If
+        this Section 24.7 is found unenforceable as to any Mass Filing, the claims comprising such Mass Filing shall be
+        resolved in court in accordance with Section 23.
+      </p>
+      <p>
+        24.8 <i>Jury trial waiver.</i> TO THE FULLEST EXTENT PERMITTED BY LAW, YOU AND SONOSPHERE EACH KNOWINGLY,
+        VOLUNTARILY AND INTENTIONALLY WAIVE ANY RIGHT TO A TRIAL BY JURY IN ANY ACTION OR PROCEEDING ARISING OUT OF OR
+        RELATING TO THESE TERMS OR THE SERVICE, WHETHER IN ARBITRATION OR IN COURT.
+      </p>
+      <p>
+        24.9 <i>Severability.</i> If any portion of Section 24.6 is found to be unenforceable or unlawful with respect
+        to any claim or request for relief, then (a) that claim or request for relief, and only that claim or request
+        for relief, shall be severed and litigated exclusively in the courts specified in Section 23; (b) such
+        litigation shall be stayed pending the completion of the arbitration of all individual claims; and (c) the
+        remainder of this Section 24 shall remain in full force and effect. If any other provision of this Section 24 is
+        found unenforceable, such provision shall be severed and the remainder shall be enforced.
+      </p>
+      <p>
+        24.10 <i>Right to opt out.</i> You may opt out of this Section 24 by sending written notice of your decision to
+        opt out to <Mail /> from the email address associated with your Account, postmarked or sent within thirty (30)
+        days after the date you first accept these Terms. Your notice must include your full name, username and an
+        unequivocal statement that you wish to opt out of this arbitration agreement. Notices sent by any third party or
+        on behalf of multiple persons shall be ineffective. Opting out of this Section 24 shall not affect any other
+        provision of these Terms, including Sections 23 and 24.11, or any prior or subsequent arbitration agreement
+        between you and Sonosphere.
+      </p>
+      <p>
+        24.11 <i>Limitations period.</i> TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY CLAIM OR CAUSE OF ACTION
+        ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE MUST BE COMMENCED, BY NOTICE OF DISPUTE IN ACCORDANCE
+        WITH SECTION 24.1, WITHIN ONE (1) YEAR AFTER SUCH CLAIM OR CAUSE OF ACTION ACCRUES, OR SUCH CLAIM OR CAUSE OF
+        ACTION SHALL BE FOREVER BARRED, REGARDLESS OF ANY STATUTE OR LAW TO THE CONTRARY.
+      </p>
+      <p>
+        24.12 <i>Changes to this Section.</i> Notwithstanding Section 5.1, if Sonosphere makes any material change to
+        this Section 24, the change shall not apply to any Dispute of which Sonosphere had received a Notice of Dispute
+        before the change became effective. If you do not agree to any such change, you may reject it by sending written
+        notice to <Mail /> within thirty (30) days after the change becomes effective, in which case the version of this
+        Section 24 in effect immediately before the change shall continue to govern Disputes between you and Sonosphere.
+      </p>
 
       <h2>25. Export Controls and Sanctions</h2>
-      <p>You shall comply with all applicable export control, import and economic sanctions laws and regulations, including the Export Administration Regulations and regulations administered by the Office of Foreign Assets Control of the U.S. Department of the Treasury. You shall not access, use, export, re-export or transfer the Service or any part thereof in violation of such laws, or to or for the benefit of any prohibited person, country or end use.</p>
+      <p>
+        You shall comply with all applicable export control, import and economic sanctions laws and regulations,
+        including the Export Administration Regulations and regulations administered by the Office of Foreign Assets
+        Control of the U.S. Department of the Treasury. You shall not access, use, export, re-export or transfer the
+        Service or any part thereof in violation of such laws, or to or for the benefit of any prohibited person,
+        country or end use.
+      </p>
 
       <h2>26. California Consumer Notice</h2>
-      <p>Under California Civil Code Section 1789.3, California users are entitled to the following notice: the Service is provided by the operator of Sonosphere, which may be contacted at <Mail />. The Service is currently provided free of charge. If you have a complaint regarding the Service, or wish to receive further information regarding use of the Service, you may contact Sonosphere at the foregoing address, or contact the Complaint Assistance Unit of the Division of Consumer Services of the California Department of Consumer Affairs in writing at 1625 North Market Blvd., Suite N 112, Sacramento, California 95834, or by telephone at (800) 952-5210.</p>
+      <p>
+        Under California Civil Code Section 1789.3, California users are entitled to the following notice: the Service
+        is provided by the operator of Sonosphere, which may be contacted at <Mail />. The Service is currently provided
+        free of charge. If you have a complaint regarding the Service, or wish to receive further information regarding
+        use of the Service, you may contact Sonosphere at the foregoing address, or contact the Complaint Assistance
+        Unit of the Division of Consumer Services of the California Department of Consumer Affairs in writing at 1625
+        North Market Blvd., Suite N 112, Sacramento, California 95834, or by telephone at (800) 952-5210.
+      </p>
 
       <h2>27. General Provisions</h2>
-      <p>27.1 <i>Entire agreement.</i> These Terms, together with the Privacy Policy and any Additional Terms, constitute the sole and entire agreement between you and Sonosphere with respect to the Service and supersede all prior and contemporaneous understandings, agreements, representations and warranties, whether written or oral, with respect thereto.</p>
-      <p>27.2 <i>Severability.</i> Subject to Section 24.9, if any provision of these Terms is held by a court or arbitrator of competent jurisdiction to be invalid, illegal or unenforceable for any reason, such provision shall be modified to the minimum extent necessary to make it valid and enforceable while preserving its original intent to the greatest extent possible, or, if such modification is not possible, severed, and the remaining provisions shall continue in full force and effect.</p>
-      <p>27.3 <i>No waiver.</i> No failure or delay by Sonosphere in exercising any right, power or remedy under these Terms shall operate as a waiver thereof, nor shall any single or partial exercise of any right, power or remedy preclude any further exercise thereof. No waiver by Sonosphere shall be effective unless made in writing and signed by an authorized representative of Sonosphere.</p>
-      <p>27.4 <i>Assignment.</i> You may not assign, delegate, sublicense or otherwise transfer these Terms or any of your rights or obligations hereunder, whether voluntarily, by operation of law, change of control or otherwise, without Sonosphere's prior written consent, and any purported assignment in violation of this Section is null and void. Sonosphere may freely assign, delegate or transfer these Terms and any of its rights and obligations hereunder, in whole or in part, without notice or consent, including in connection with any merger, acquisition, corporate reorganization, financing, sale of all or substantially all of its assets, or by operation of law. These Terms shall be binding upon and inure to the benefit of the parties and their respective permitted successors and assigns.</p>
-      <p>27.5 <i>Force majeure.</i> Sonosphere shall not be liable for any failure or delay in performance resulting from causes beyond its reasonable control, including acts of God, flood, fire, earthquake, epidemic, pandemic, war, invasion, hostilities, terrorism, riot, civil unrest, embargo, governmental action, changes in law, labor disputes, strikes, failures or outages of utilities, internet service providers, hosting providers, telecommunications networks or Third-Party Services, cyberattacks, denial-of-service attacks, hacking and other malicious acts of third parties.</p>
-      <p>27.6 <i>Relationship of the parties.</i> Nothing in these Terms shall be construed to create any partnership, joint venture, agency, franchise, fiduciary, employment or other special relationship between you and Sonosphere. You have no authority to bind Sonosphere in any respect.</p>
-      <p>27.7 <i>Third-party beneficiaries.</i> Except as expressly provided herein with respect to the Sonosphere Parties, who are intended third-party beneficiaries of Sections 17 through 21 and 24 and may enforce such Sections directly, there are no third-party beneficiaries of these Terms.</p>
-      <p>27.8 <i>Attorneys' fees.</i> Subject to Section 24.4 and except as prohibited by applicable law, in any action or proceeding to enforce any right or remedy under these Terms, the prevailing party shall be entitled to recover its reasonable attorneys' fees, costs and expenses.</p>
-      <p>27.9 <i>Cumulative remedies.</i> All rights and remedies of Sonosphere under these Terms are cumulative and in addition to all other rights and remedies available at law, in equity, by statute or otherwise.</p>
-      <p>27.10 <i>Interpretation.</i> The section headings in these Terms are for convenience only and have no legal or contractual effect. The words "include," "includes" and "including" shall be deemed to be followed by the words "without limitation." The word "or" is not exclusive. The words "herein," "hereof" and "hereunder" refer to these Terms as a whole. Where Sonosphere is permitted to act in its "discretion" or "sole discretion," it may act or decline to act for any reason or no reason, in its absolute and unfettered judgment. These Terms shall be construed as if drafted jointly by the parties, and no presumption or burden of proof shall arise favoring or disfavoring either party by virtue of authorship.</p>
-      <p>27.11 <i>Language.</i> These Terms are drafted in the English language. Any translation is provided for convenience only, and in the event of any inconsistency, the English version shall control.</p>
-      <p>27.12 <i>Contact.</i> Questions regarding these Terms may be directed to <Mail />.</p>
+      <p>
+        27.1 <i>Entire agreement.</i> These Terms, together with the Privacy Policy and any Additional Terms, constitute
+        the sole and entire agreement between you and Sonosphere with respect to the Service and supersede all prior and
+        contemporaneous understandings, agreements, representations and warranties, whether written or oral, with
+        respect thereto.
+      </p>
+      <p>
+        27.2 <i>Severability.</i> Subject to Section 24.9, if any provision of these Terms is held by a court or
+        arbitrator of competent jurisdiction to be invalid, illegal or unenforceable for any reason, such provision
+        shall be modified to the minimum extent necessary to make it valid and enforceable while preserving its original
+        intent to the greatest extent possible, or, if such modification is not possible, severed, and the remaining
+        provisions shall continue in full force and effect.
+      </p>
+      <p>
+        27.3 <i>No waiver.</i> No failure or delay by Sonosphere in exercising any right, power or remedy under these
+        Terms shall operate as a waiver thereof, nor shall any single or partial exercise of any right, power or remedy
+        preclude any further exercise thereof. No waiver by Sonosphere shall be effective unless made in writing and
+        signed by an authorized representative of Sonosphere.
+      </p>
+      <p>
+        27.4 <i>Assignment.</i> You may not assign, delegate, sublicense or otherwise transfer these Terms or any of
+        your rights or obligations hereunder, whether voluntarily, by operation of law, change of control or otherwise,
+        without Sonosphere's prior written consent, and any purported assignment in violation of this Section is null
+        and void. Sonosphere may freely assign, delegate or transfer these Terms and any of its rights and obligations
+        hereunder, in whole or in part, without notice or consent, including in connection with any merger, acquisition,
+        corporate reorganization, financing, sale of all or substantially all of its assets, or by operation of law.
+        These Terms shall be binding upon and inure to the benefit of the parties and their respective permitted
+        successors and assigns.
+      </p>
+      <p>
+        27.5 <i>Force majeure.</i> Sonosphere shall not be liable for any failure or delay in performance resulting from
+        causes beyond its reasonable control, including acts of God, flood, fire, earthquake, epidemic, pandemic, war,
+        invasion, hostilities, terrorism, riot, civil unrest, embargo, governmental action, changes in law, labor
+        disputes, strikes, failures or outages of utilities, internet service providers, hosting providers,
+        telecommunications networks or Third-Party Services, cyberattacks, denial-of-service attacks, hacking and other
+        malicious acts of third parties.
+      </p>
+      <p>
+        27.6 <i>Relationship of the parties.</i> Nothing in these Terms shall be construed to create any partnership,
+        joint venture, agency, franchise, fiduciary, employment or other special relationship between you and
+        Sonosphere. You have no authority to bind Sonosphere in any respect.
+      </p>
+      <p>
+        27.7 <i>Third-party beneficiaries.</i> Except as expressly provided herein with respect to the Sonosphere
+        Parties, who are intended third-party beneficiaries of Sections 17 through 21 and 24 and may enforce such
+        Sections directly, there are no third-party beneficiaries of these Terms.
+      </p>
+      <p>
+        27.8 <i>Attorneys' fees.</i> Subject to Section 24.4 and except as prohibited by applicable law, in any action
+        or proceeding to enforce any right or remedy under these Terms, the prevailing party shall be entitled to
+        recover its reasonable attorneys' fees, costs and expenses.
+      </p>
+      <p>
+        27.9 <i>Cumulative remedies.</i> All rights and remedies of Sonosphere under these Terms are cumulative and in
+        addition to all other rights and remedies available at law, in equity, by statute or otherwise.
+      </p>
+      <p>
+        27.10 <i>Interpretation.</i> The section headings in these Terms are for convenience only and have no legal or
+        contractual effect. The words "include," "includes" and "including" shall be deemed to be followed by the words
+        "without limitation." The word "or" is not exclusive. The words "herein," "hereof" and "hereunder" refer to
+        these Terms as a whole. Where Sonosphere is permitted to act in its "discretion" or "sole discretion," it may
+        act or decline to act for any reason or no reason, in its absolute and unfettered judgment. These Terms shall be
+        construed as if drafted jointly by the parties, and no presumption or burden of proof shall arise favoring or
+        disfavoring either party by virtue of authorship.
+      </p>
+      <p>
+        27.11 <i>Language.</i> These Terms are drafted in the English language. Any translation is provided for
+        convenience only, and in the event of any inconsistency, the English version shall control.
+      </p>
+      <p>
+        27.12 <i>Contact.</i> Questions regarding these Terms may be directed to <Mail />.
+      </p>
     </Legal>
   );
 }
@@ -234,150 +1063,599 @@ export function Terms() {
 export function Privacy() {
   return (
     <Legal title="Privacy Policy">
-      <p>This Privacy Policy (this "Policy") describes how the operator of Sonosphere, together with its successors and assigns ("Sonosphere," "we," "us" or "our"), collects, uses, discloses, retains and otherwise processes Personal Information in connection with the Service. This Policy is incorporated into and forms part of our <Link to="/terms">Terms of Service</Link> (the "Terms"). Capitalized terms used but not defined in this Policy have the meanings given in the Terms. BY ACCESSING OR USING THE SERVICE, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THIS POLICY AND, TO THE EXTENT PERMITTED OR REQUIRED BY APPLICABLE LAW, CONSENT TO THE COLLECTION, USE, DISCLOSURE AND OTHER PROCESSING OF YOUR INFORMATION AS DESCRIBED HEREIN. IF YOU DO NOT AGREE WITH THIS POLICY, YOU MUST NOT ACCESS OR USE THE SERVICE.</p>
+      <p>
+        This Privacy Policy (this "Policy") describes how the operator of Sonosphere, together with its successors and
+        assigns ("Sonosphere," "we," "us" or "our"), collects, uses, discloses, retains and otherwise processes Personal
+        Information in connection with the Service. This Policy is incorporated into and forms part of our{" "}
+        <Link to="/terms">Terms of Service</Link> (the "Terms"). Capitalized terms used but not defined in this Policy
+        have the meanings given in the Terms. BY ACCESSING OR USING THE SERVICE, YOU ACKNOWLEDGE THAT YOU HAVE READ AND
+        UNDERSTOOD THIS POLICY AND, TO THE EXTENT PERMITTED OR REQUIRED BY APPLICABLE LAW, CONSENT TO THE COLLECTION,
+        USE, DISCLOSURE AND OTHER PROCESSING OF YOUR INFORMATION AS DESCRIBED HEREIN. IF YOU DO NOT AGREE WITH THIS
+        POLICY, YOU MUST NOT ACCESS OR USE THE SERVICE.
+      </p>
 
       <h2>1. Scope and Definitions</h2>
-      <p>1.1 This Policy applies to information processed by Sonosphere through the Service. This Policy does not apply to (a) information processed by any Third-Party Service or Application, even if accessed through the Service; (b) information you disclose publicly or to other users; or (c) aggregated, de-identified or anonymized information, which is not Personal Information.</p>
-      <p>1.2 In this Policy: <D>Personal Information</D> means information that identifies, relates to, describes, is reasonably capable of being associated with, or could reasonably be linked, directly or indirectly, with a particular natural person or household, and includes "personal data" and "personal information" as defined under applicable Privacy Laws; <D>Privacy Laws</D> means all laws and regulations applicable to Sonosphere's processing of Personal Information, including, to the extent applicable, the California Consumer Privacy Act of 2018, as amended by the California Privacy Rights Act of 2020, and its implementing regulations (the "CCPA"), the California Online Privacy Protection Act ("CalOPPA"), other U.S. state privacy laws, the Children's Online Privacy Protection Act ("COPPA"), and the EU and UK General Data Protection Regulations ("GDPR"); and <D>process</D> means any operation performed on information, including collection, recording, organization, storage, adaptation, retrieval, use, disclosure, combination, restriction, erasure and destruction.</p>
-      <p>1.3 For purposes of the CCPA and similar laws, Sonosphere is a "business" or "controller" with respect to Personal Information it processes for its own purposes through the Service, to the extent such laws apply to Sonosphere. Nothing in this Policy shall be construed as an admission that any particular Privacy Law applies to Sonosphere.</p>
+      <p>
+        1.1 This Policy applies to information processed by Sonosphere through the Service. This Policy does not apply
+        to (a) information processed by any Third-Party Service or Application, even if accessed through the Service;
+        (b) information you disclose publicly or to other users; or (c) aggregated, de-identified or anonymized
+        information, which is not Personal Information.
+      </p>
+      <p>
+        1.2 In this Policy: <D>Personal Information</D> means information that identifies, relates to, describes, is
+        reasonably capable of being associated with, or could reasonably be linked, directly or indirectly, with a
+        particular natural person or household, and includes "personal data" and "personal information" as defined under
+        applicable Privacy Laws; <D>Privacy Laws</D> means all laws and regulations applicable to Sonosphere's
+        processing of Personal Information, including, to the extent applicable, the California Consumer Privacy Act of
+        2018, as amended by the California Privacy Rights Act of 2020, and its implementing regulations (the "CCPA"),
+        the California Online Privacy Protection Act ("CalOPPA"), other U.S. state privacy laws, the Children's Online
+        Privacy Protection Act ("COPPA"), and the EU and UK General Data Protection Regulations ("GDPR"); and{" "}
+        <D>process</D> means any operation performed on information, including collection, recording, organization,
+        storage, adaptation, retrieval, use, disclosure, combination, restriction, erasure and destruction.
+      </p>
+      <p>
+        1.3 For purposes of the CCPA and similar laws, Sonosphere is a "business" or "controller" with respect to
+        Personal Information it processes for its own purposes through the Service, to the extent such laws apply to
+        Sonosphere. Nothing in this Policy shall be construed as an admission that any particular Privacy Law applies to
+        Sonosphere.
+      </p>
 
       <h2>2. Information We Collect</h2>
-      <p>2.1 <i>Information you provide to us.</i> We collect the following categories of information that you provide directly:</p>
+      <p>
+        2.1 <i>Information you provide to us.</i> We collect the following categories of information that you provide
+        directly:
+      </p>
       <ol>
-        <li><b>Account information:</b> username, email address, password (which we store only in salted, hashed form), and records of email verification and password resets;</li>
-        <li><b>Profile information:</b> real name, country, website, biography, avatar, and account, privacy, notification and display preferences;</li>
-        <li><b>Listening Data:</b> scrobbles (including track, artist and album names, timestamps and the Application used), now-playing status, loved tracks, and listening history you import from files or other services;</li>
-        <li><b>User Content:</b> tags, wiki contributions, images and artwork, comments and shouts, journal entries, playlists, events and attendance, obsessions, follows, blocks, reports and other content you submit;</li>
-        <li><b>Private messages:</b> the content and metadata (including sender, recipient and timestamps) of private messages you send and receive;</li>
-        <li><b>Developer information:</b> if you register for API access, the name, description and callback URL of your Application and records of its use of the API; and</li>
-        <li><b>Correspondence:</b> the content of any communication you send to us, including support requests, reports, DMCA notices, privacy requests and Feedback, together with your contact information.</li>
+        <li>
+          <b>Account information:</b> username, email address, password (which we store only in salted, hashed form),
+          and records of email verification and password resets;
+        </li>
+        <li>
+          <b>Profile information:</b> real name, country, website, biography, avatar, and account, privacy, notification
+          and display preferences;
+        </li>
+        <li>
+          <b>Listening Data:</b> scrobbles (including track, artist and album names, timestamps and the Application
+          used), now-playing status, loved tracks, and listening history you import from files or other services;
+        </li>
+        <li>
+          <b>User Content:</b> tags, wiki contributions, images and artwork, comments and shouts, journal entries,
+          playlists, events and attendance, obsessions, follows, blocks, reports and other content you submit;
+        </li>
+        <li>
+          <b>Private messages:</b> the content and metadata (including sender, recipient and timestamps) of private
+          messages you send and receive;
+        </li>
+        <li>
+          <b>Developer information:</b> if you register for API access, the name, description and callback URL of your
+          Application and records of its use of the API; and
+        </li>
+        <li>
+          <b>Correspondence:</b> the content of any communication you send to us, including support requests, reports,
+          DMCA notices, privacy requests and Feedback, together with your contact information.
+        </li>
       </ol>
-      <p>2.2 <i>Information from Third-Party Services and Applications.</i></p>
+      <p>
+        2.2 <i>Information from Third-Party Services and Applications.</i>
+      </p>
       <ol>
-        <li><b>Spotify:</b> if you connect a Spotify account, we receive OAuth access and refresh tokens, the permission scopes you granted, your Spotify account identifier, and your recently played tracks and associated metadata, which we process into Listening Data. If you enable playback, your browser communicates directly with Spotify using a short-lived access token we issue to it, and Spotify may collect information subject to its own privacy policy;</li>
-        <li><b>Applications:</b> Applications you authorize transmit to us Listening Data, now-playing information and any other data submitted through the API on your behalf, together with identifiers of the Application; and</li>
-        <li><b>Other sources:</b> we may obtain music metadata, artist information, images and corrections from public databases and other third-party sources. Such information generally does not relate to you, but may be combined with information associated with your Account.</li>
+        <li>
+          <b>Spotify:</b> if you connect a Spotify account, we receive OAuth access and refresh tokens, the permission
+          scopes you granted, your Spotify account identifier, and your recently played tracks and associated metadata,
+          which we process into Listening Data. If you enable playback, your browser communicates directly with Spotify
+          using a short-lived access token we issue to it, and Spotify may collect information subject to its own
+          privacy policy;
+        </li>
+        <li>
+          <b>Applications:</b> Applications you authorize transmit to us Listening Data, now-playing information and any
+          other data submitted through the API on your behalf, together with identifiers of the Application; and
+        </li>
+        <li>
+          <b>Other sources:</b> we may obtain music metadata, artist information, images and corrections from public
+          databases and other third-party sources. Such information generally does not relate to you, but may be
+          combined with information associated with your Account.
+        </li>
       </ol>
-      <p>2.3 <i>Information collected automatically.</i> When you access or use the Service, we and our service providers automatically collect certain information, including:</p>
+      <p>
+        2.3 <i>Information collected automatically.</i> When you access or use the Service, we and our service providers
+        automatically collect certain information, including:
+      </p>
       <ol>
-        <li><b>Device and connection information:</b> IP address, approximate location derived from IP address, browser type and version, operating system, device type, language preferences, referring and exit URLs, and request headers;</li>
-        <li><b>Usage information:</b> pages and features accessed, actions taken, search queries, dates and times of access, and interactions with the web player;</li>
-        <li><b>Log and security information:</b> server logs, error reports, rate-limiting records, authentication events, and records of moderation and administrative actions; and</li>
-        <li><b>Cookies and similar technologies:</b> information collected as described in Section 4.</li>
+        <li>
+          <b>Device and connection information:</b> IP address, approximate location derived from IP address, browser
+          type and version, operating system, device type, language preferences, referring and exit URLs, and request
+          headers;
+        </li>
+        <li>
+          <b>Usage information:</b> pages and features accessed, actions taken, search queries, dates and times of
+          access, and interactions with the web player;
+        </li>
+        <li>
+          <b>Log and security information:</b> server logs, error reports, rate-limiting records, authentication events,
+          and records of moderation and administrative actions; and
+        </li>
+        <li>
+          <b>Cookies and similar technologies:</b> information collected as described in Section 4.
+        </li>
       </ol>
-      <p>2.4 <i>Inferences.</i> We derive inferences from the information described above, including your musical preferences, similar artists, recommendations, compatibility with other users ("neighbours"), and listening reports and statistics.</p>
-      <p>2.5 <i>Information you choose not to provide.</i> You are not legally required to provide any Personal Information to us. However, certain information is necessary to create an Account or use certain features, and if you decline to provide it, you may be unable to use the Service or such features.</p>
+      <p>
+        2.4 <i>Inferences.</i> We derive inferences from the information described above, including your musical
+        preferences, similar artists, recommendations, compatibility with other users ("neighbours"), and listening
+        reports and statistics.
+      </p>
+      <p>
+        2.5 <i>Information you choose not to provide.</i> You are not legally required to provide any Personal
+        Information to us. However, certain information is necessary to create an Account or use certain features, and
+        if you decline to provide it, you may be unable to use the Service or such features.
+      </p>
 
       <h2>3. How We Use Information</h2>
       <p>3.1 We use the information we collect for the following purposes:</p>
       <ol>
-        <li><b>To provide the Service:</b> creating and administering your Account; authenticating you; recording, importing and displaying Listening Data; operating profiles, libraries, charts, playlists, events, messaging, the web player and all other features; and processing API requests;</li>
-        <li><b>To personalize the Service:</b> generating recommendations, similar artists, neighbours, listening reports, radio stations and other personalized content;</li>
-        <li><b>To generate Derived Data:</b> compiling site-wide charts, statistics, rankings, catalogue data, metadata corrections and similarity data, which may be published or otherwise exploited as described in the Terms;</li>
-        <li><b>To communicate with you:</b> sending verification, password reset, security and other transactional messages; sending notifications and digests in accordance with your preferences; responding to your requests and inquiries; and notifying you of changes to the Service, the Terms or this Policy;</li>
-        <li><b>For safety, security and integrity:</b> detecting, investigating, preventing and responding to spam, fraud, abuse, automated access, chart manipulation, security incidents, intellectual property infringement and other harmful, unauthorized or illegal activity; verifying accounts; enforcing rate limits; and protecting the rights, property and safety of Sonosphere, our users and others;</li>
-        <li><b>For moderation and enforcement:</b> reviewing reported content and conduct; enforcing the Terms and our other policies; and maintaining records of enforcement actions;</li>
-        <li><b>For analytics and improvement:</b> understanding how the Service is used, including through aggregate traffic and performance reports from Cloudflare Web Analytics; diagnosing and fixing technical problems; and researching, developing, testing and improving the Service and new products, services and features;</li>
-        <li><b>For legal and compliance purposes:</b> complying with applicable law, regulation, legal process and governmental requests; establishing, exercising and defending legal claims; and responding to DMCA notices and privacy requests;</li>
-        <li><b>For business transactions:</b> in connection with any actual or contemplated merger, acquisition, financing, reorganization, bankruptcy or sale of assets, as described in Section 6.1(h); and</li>
-        <li><b>For other purposes:</b> any other purpose disclosed to you at the time of collection, or with your consent.</li>
+        <li>
+          <b>To provide the Service:</b> creating and administering your Account; authenticating you; recording,
+          importing and displaying Listening Data; operating profiles, libraries, charts, playlists, events, messaging,
+          the web player and all other features; and processing API requests;
+        </li>
+        <li>
+          <b>To personalize the Service:</b> generating recommendations, similar artists, neighbours, listening reports,
+          radio stations and other personalized content;
+        </li>
+        <li>
+          <b>To generate Derived Data:</b> compiling site-wide charts, statistics, rankings, catalogue data, metadata
+          corrections and similarity data, which may be published or otherwise exploited as described in the Terms;
+        </li>
+        <li>
+          <b>To communicate with you:</b> sending verification, password reset, security and other transactional
+          messages; sending notifications and digests in accordance with your preferences; responding to your requests
+          and inquiries; and notifying you of changes to the Service, the Terms or this Policy;
+        </li>
+        <li>
+          <b>For safety, security and integrity:</b> detecting, investigating, preventing and responding to spam, fraud,
+          abuse, automated access, chart manipulation, security incidents, intellectual property infringement and other
+          harmful, unauthorized or illegal activity; verifying accounts; enforcing rate limits; and protecting the
+          rights, property and safety of Sonosphere, our users and others;
+        </li>
+        <li>
+          <b>For moderation and enforcement:</b> reviewing reported content and conduct; enforcing the Terms and our
+          other policies; and maintaining records of enforcement actions;
+        </li>
+        <li>
+          <b>For analytics and improvement:</b> understanding how the Service is used, including through aggregate
+          traffic and performance reports from Cloudflare Web Analytics; diagnosing and fixing technical problems; and
+          researching, developing, testing and improving the Service and new products, services and features;
+        </li>
+        <li>
+          <b>For legal and compliance purposes:</b> complying with applicable law, regulation, legal process and
+          governmental requests; establishing, exercising and defending legal claims; and responding to DMCA notices and
+          privacy requests;
+        </li>
+        <li>
+          <b>For business transactions:</b> in connection with any actual or contemplated merger, acquisition,
+          financing, reorganization, bankruptcy or sale of assets, as described in Section 6.1(h); and
+        </li>
+        <li>
+          <b>For other purposes:</b> any other purpose disclosed to you at the time of collection, or with your consent.
+        </li>
       </ol>
-      <p>3.2 <i>De-identified and aggregated information.</i> We may de-identify, pseudonymize or aggregate information so that it no longer reasonably identifies you, and may use, publish, disclose and otherwise exploit such information for any lawful purpose without restriction or notice to you. Where we maintain de-identified information, we will take reasonable measures to ensure it cannot be associated with a natural person, publicly commit to maintain and use it in de-identified form, and not attempt to re-identify it except as permitted by law.</p>
-      <p>3.3 <i>Automated processing.</i> Recommendations, charts, similarity scores, spam detection and certain moderation tools rely on automated processing. We do not engage in automated decision-making that produces legal effects concerning you or similarly significantly affects you, within the meaning of applicable Privacy Laws.</p>
-      <p>3.4 <i>Legal bases (EEA and UK users).</i> To the extent the GDPR applies, we process Personal Information on the following legal bases: (a) performance of our contract with you (the Terms), including to provide the Service; (b) our legitimate interests, including operating, securing, improving and promoting the Service, generating Derived Data, preventing fraud and abuse, enforcing our Terms and establishing or defending legal claims, where such interests are not overridden by your interests or fundamental rights; (c) compliance with legal obligations; and (d) your consent, where we request it, which you may withdraw at any time without affecting the lawfulness of processing prior to withdrawal.</p>
+      <p>
+        3.2 <i>De-identified and aggregated information.</i> We may de-identify, pseudonymize or aggregate information
+        so that it no longer reasonably identifies you, and may use, publish, disclose and otherwise exploit such
+        information for any lawful purpose without restriction or notice to you. Where we maintain de-identified
+        information, we will take reasonable measures to ensure it cannot be associated with a natural person, publicly
+        commit to maintain and use it in de-identified form, and not attempt to re-identify it except as permitted by
+        law.
+      </p>
+      <p>
+        3.3 <i>Automated processing.</i> Recommendations, charts, similarity scores, spam detection and certain
+        moderation tools rely on automated processing. We do not engage in automated decision-making that produces legal
+        effects concerning you or similarly significantly affects you, within the meaning of applicable Privacy Laws.
+      </p>
+      <p>
+        3.4 <i>Legal bases (EEA and UK users).</i> To the extent the GDPR applies, we process Personal Information on
+        the following legal bases: (a) performance of our contract with you (the Terms), including to provide the
+        Service; (b) our legitimate interests, including operating, securing, improving and promoting the Service,
+        generating Derived Data, preventing fraud and abuse, enforcing our Terms and establishing or defending legal
+        claims, where such interests are not overridden by your interests or fundamental rights; (c) compliance with
+        legal obligations; and (d) your consent, where we request it, which you may withdraw at any time without
+        affecting the lawfulness of processing prior to withdrawal.
+      </p>
 
       <h2>4. Cookies, Local Storage and Similar Technologies</h2>
       <p>4.1 We use the following technologies:</p>
       <ol>
-        <li><b>Strictly necessary cookies:</b> a session cookie that keeps you signed in and protects your Account. The Service cannot function without this cookie when you are signed in;</li>
-        <li><b>Local storage:</b> your browser's local storage, which we use to remember your player queue and position, display preferences and similar settings on your device. This information remains on your device unless transmitted as part of a request to the Service;</li>
-        <li><b>Security technologies:</b> Cloudflare, Inc. provides content delivery and security services and may set cookies or collect device, browser and network signals (including through Cloudflare Turnstile) to distinguish humans from automated traffic and protect the Service from attacks;</li>
-        <li><b>Analytics:</b> we use Cloudflare Web Analytics, provided by Cloudflare, Inc., to measure aggregate traffic and performance. When you load a page, Cloudflare may record the page visited, referring URL, browser, operating system, device type, approximate country derived from your IP address, and page load timing. Cloudflare Web Analytics does not use cookies or local storage to identify you, does not fingerprint your device, and does not track you across websites; we receive only aggregated reports; and</li>
-        <li><b>Embedded content:</b> when you play content through the web player, embedded players provided by YouTube (Google LLC) or Spotify may set cookies and collect information subject to their own policies. When a track page shows lyrics, your browser requests them directly from the third-party lyrics providers used by the open-source am-lyrics component, which receive the track's title, artist, album and duration together with your IP address and browser information, subject to their own policies.</li>
+        <li>
+          <b>Strictly necessary cookies:</b> a session cookie that keeps you signed in and protects your Account. The
+          Service cannot function without this cookie when you are signed in;
+        </li>
+        <li>
+          <b>Local storage:</b> your browser's local storage, which we use to remember your player queue and position,
+          display preferences and similar settings on your device. This information remains on your device unless
+          transmitted as part of a request to the Service;
+        </li>
+        <li>
+          <b>Security technologies:</b> Cloudflare, Inc. provides content delivery and security services and may set
+          cookies or collect device, browser and network signals (including through Cloudflare Turnstile) to distinguish
+          humans from automated traffic and protect the Service from attacks;
+        </li>
+        <li>
+          <b>Analytics:</b> we use Cloudflare Web Analytics, provided by Cloudflare, Inc., to measure aggregate traffic
+          and performance. When you load a page, Cloudflare may record the page visited, referring URL, browser,
+          operating system, device type, approximate country derived from your IP address, and page load timing.
+          Cloudflare Web Analytics does not use cookies or local storage to identify you, does not fingerprint your
+          device, and does not track you across websites; we receive only aggregated reports; and
+        </li>
+        <li>
+          <b>Embedded content:</b> when you play content through the web player, embedded players provided by YouTube
+          (Google LLC) or Spotify may set cookies and collect information subject to their own policies. When a track
+          page shows lyrics, your browser requests them directly from the third-party lyrics providers used by the
+          open-source am-lyrics component, which receive the track's title, artist, album and duration together with
+          your IP address and browser information, subject to their own policies.
+        </li>
       </ol>
-      <p>4.2 We do not use third-party advertising or cross-site tracking cookies. You may configure your browser to block or delete cookies and local storage, but doing so may prevent you from signing in or using certain features.</p>
-      <p>4.3 <i>Do Not Track.</i> Pursuant to California Business and Professions Code Section 22575(b), we disclose that the Service does not currently respond to "Do Not Track" signals or similar mechanisms, because no uniform technological standard for recognizing and implementing such signals has been adopted. We do not track users over time and across third-party websites to provide targeted advertising, and we do not knowingly permit third parties to do so through the Service, other than as may occur through embedded content described in Section 4.1(e).</p>
-      <p>4.4 <i>Global Privacy Control.</i> Because we do not sell or share Personal Information as those terms are defined under the CCPA, opt-out preference signals such as Global Privacy Control do not change our processing. If our practices change, we will process such signals as required by applicable law.</p>
+      <p>
+        4.2 We do not use third-party advertising or cross-site tracking cookies. You may configure your browser to
+        block or delete cookies and local storage, but doing so may prevent you from signing in or using certain
+        features.
+      </p>
+      <p>
+        4.3 <i>Do Not Track.</i> Pursuant to California Business and Professions Code Section 22575(b), we disclose that
+        the Service does not currently respond to "Do Not Track" signals or similar mechanisms, because no uniform
+        technological standard for recognizing and implementing such signals has been adopted. We do not track users
+        over time and across third-party websites to provide targeted advertising, and we do not knowingly permit third
+        parties to do so through the Service, other than as may occur through embedded content described in Section
+        4.1(e).
+      </p>
+      <p>
+        4.4 <i>Global Privacy Control.</i> Because we do not sell or share Personal Information as those terms are
+        defined under the CCPA, opt-out preference signals such as Global Privacy Control do not change our processing.
+        If our practices change, we will process such signals as required by applicable law.
+      </p>
 
       <h2>5. Public Information</h2>
-      <p>5.1 The Service is a social platform, and much of the information associated with your Account is public by design. Except to the extent limited by your privacy settings, the following is publicly available to any person, including persons who are not registered users, and may be indexed by search engines and retrieved by third parties through the API: your username, avatar, profile information, registration date, listening history, play counts, top artists, albums and tracks, loved tracks, listening reports, playlists, tags, comments and shouts, journal entries, events and attendance, follows and followers, obsessions, neighbours and catalogue contributions.</p>
-      <p>5.2 You may restrict the visibility of your recent and historical listening activity in your <Link to="/settings/privacy">privacy settings</Link>. Restricting visibility does not prevent the use of your Listening Data to generate Derived Data, including aggregate charts, or affect information that was public or copied by third parties before the restriction took effect.</p>
-      <p>5.3 Information you make public may be viewed, collected, copied, retained, used and redistributed by others, including in Applications, archives, search engine caches and datasets outside our control, and may persist after you delete it or your Account. Sonosphere has no obligation and no ability to remove information from third-party services and is not responsible for any use of public information by any third party. Please exercise discretion in deciding what to make public.</p>
+      <p>
+        5.1 The Service is a social platform, and much of the information associated with your Account is public by
+        design. Except to the extent limited by your privacy settings, the following is publicly available to any
+        person, including persons who are not registered users, and may be indexed by search engines and retrieved by
+        third parties through the API: your username, avatar, profile information, registration date, listening history,
+        play counts, top artists, albums and tracks, loved tracks, listening reports, playlists, tags, comments and
+        shouts, journal entries, events and attendance, follows and followers, obsessions, neighbours and catalogue
+        contributions.
+      </p>
+      <p>
+        5.2 You may restrict the visibility of your recent and historical listening activity in your{" "}
+        <Link to="/settings/privacy">privacy settings</Link>. Restricting visibility does not prevent the use of your
+        Listening Data to generate Derived Data, including aggregate charts, or affect information that was public or
+        copied by third parties before the restriction took effect.
+      </p>
+      <p>
+        5.3 Information you make public may be viewed, collected, copied, retained, used and redistributed by others,
+        including in Applications, archives, search engine caches and datasets outside our control, and may persist
+        after you delete it or your Account. Sonosphere has no obligation and no ability to remove information from
+        third-party services and is not responsible for any use of public information by any third party. Please
+        exercise discretion in deciding what to make public.
+      </p>
       <p>5.4 Your email address, password, private messages and IP address are not displayed publicly.</p>
 
       <h2>6. Disclosure of Information</h2>
-      <p>6.1 We may disclose information to the following categories of recipients and in the following circumstances:</p>
+      <p>
+        6.1 We may disclose information to the following categories of recipients and in the following circumstances:
+      </p>
       <ol>
-        <li><b>Service providers:</b> to vendors, contractors and service providers that perform services on our behalf, including hosting, cloud computing and data storage providers (which may include Cloudflare, Inc., Amazon Web Services, Inc., Google LLC and Microsoft Corporation), content delivery, security and analytics providers (such as Cloudflare, Inc.), email delivery providers, error monitoring and diagnostics providers (which may include Functional Software, Inc., doing business as Sentry), and providers of software and technical support, subject to obligations to process such information only to provide services to us;</li>
-        <li><b>Third-Party Services you connect:</b> to Spotify and any other Third-Party Service you connect, to the extent necessary to provide the connected feature, including transmission of access tokens, search queries and playback commands;</li>
-        <li><b>Applications you authorize:</b> to any Application you authorize, which may access and submit information associated with your Account as permitted by the Service;</li>
-        <li><b>Embedded content providers:</b> to YouTube (Google LLC) and other providers of embedded content when you use the web player, and to third-party lyrics providers when you view a track page, which receive information from your browser directly;</li>
-        <li><b>Other users and the public:</b> as described in Section 5, and to the participants in any conversation you join;</li>
-        <li><b>Legal process and law enforcement:</b> to courts, regulators, law enforcement agencies, government authorities and other third parties where we believe in good faith that disclosure is required or permitted by applicable law, regulation, subpoena, warrant, court order or other legal process, or is necessary to respond to a lawful request by public authorities, including to meet national security or law enforcement requirements;</li>
-        <li><b>Protection of rights and safety:</b> where we believe in good faith that disclosure is necessary or appropriate to enforce or apply the Terms or other agreements; to investigate or prevent actual or suspected fraud, abuse, infringement, security incidents or other illegal or harmful activity; to protect the rights, property or safety of Sonosphere, our users, the public or others; or in an emergency involving potential threats to the physical safety of any person;</li>
-        <li><b>Business transfers:</b> to any actual or prospective acquirer, successor, assignee, investor, lender or other party, and their advisors, in connection with, or during the negotiation or due diligence of, any merger, acquisition, consolidation, financing, reorganization, restructuring, joint venture, bankruptcy, insolvency, receivership, sale of assets or transfer of all or any portion of the Service, in which case Personal Information may be among the assets transferred and may be used by the recipient subject to this Policy or a policy no less protective;</li>
-        <li><b>Professional advisors:</b> to our lawyers, accountants, auditors and insurers, in the course of the professional services they render to us;</li>
-        <li><b>Affiliates:</b> to any current or future parent, subsidiary or affiliate of Sonosphere, which shall be bound by this Policy; and</li>
-        <li><b>With your consent or at your direction:</b> to any other person with your consent or at your direction.</li>
+        <li>
+          <b>Service providers:</b> to vendors, contractors and service providers that perform services on our behalf,
+          including hosting, cloud computing and data storage providers (which may include Cloudflare, Inc., Amazon Web
+          Services, Inc., Google LLC and Microsoft Corporation), content delivery, security and analytics providers
+          (such as Cloudflare, Inc.), email delivery providers, error monitoring and diagnostics providers (which may
+          include Functional Software, Inc., doing business as Sentry), and providers of software and technical support,
+          subject to obligations to process such information only to provide services to us;
+        </li>
+        <li>
+          <b>Third-Party Services you connect:</b> to Spotify and any other Third-Party Service you connect, to the
+          extent necessary to provide the connected feature, including transmission of access tokens, search queries and
+          playback commands;
+        </li>
+        <li>
+          <b>Applications you authorize:</b> to any Application you authorize, which may access and submit information
+          associated with your Account as permitted by the Service;
+        </li>
+        <li>
+          <b>Embedded content providers:</b> to YouTube (Google LLC) and other providers of embedded content when you
+          use the web player, and to third-party lyrics providers when you view a track page, which receive information
+          from your browser directly;
+        </li>
+        <li>
+          <b>Other users and the public:</b> as described in Section 5, and to the participants in any conversation you
+          join;
+        </li>
+        <li>
+          <b>Legal process and law enforcement:</b> to courts, regulators, law enforcement agencies, government
+          authorities and other third parties where we believe in good faith that disclosure is required or permitted by
+          applicable law, regulation, subpoena, warrant, court order or other legal process, or is necessary to respond
+          to a lawful request by public authorities, including to meet national security or law enforcement
+          requirements;
+        </li>
+        <li>
+          <b>Protection of rights and safety:</b> where we believe in good faith that disclosure is necessary or
+          appropriate to enforce or apply the Terms or other agreements; to investigate or prevent actual or suspected
+          fraud, abuse, infringement, security incidents or other illegal or harmful activity; to protect the rights,
+          property or safety of Sonosphere, our users, the public or others; or in an emergency involving potential
+          threats to the physical safety of any person;
+        </li>
+        <li>
+          <b>Business transfers:</b> to any actual or prospective acquirer, successor, assignee, investor, lender or
+          other party, and their advisors, in connection with, or during the negotiation or due diligence of, any
+          merger, acquisition, consolidation, financing, reorganization, restructuring, joint venture, bankruptcy,
+          insolvency, receivership, sale of assets or transfer of all or any portion of the Service, in which case
+          Personal Information may be among the assets transferred and may be used by the recipient subject to this
+          Policy or a policy no less protective;
+        </li>
+        <li>
+          <b>Professional advisors:</b> to our lawyers, accountants, auditors and insurers, in the course of the
+          professional services they render to us;
+        </li>
+        <li>
+          <b>Affiliates:</b> to any current or future parent, subsidiary or affiliate of Sonosphere, which shall be
+          bound by this Policy; and
+        </li>
+        <li>
+          <b>With your consent or at your direction:</b> to any other person with your consent or at your direction.
+        </li>
       </ol>
-      <p>6.2 <i>No sale or sharing.</i> We do not sell Personal Information, and we do not share Personal Information for cross-context behavioral advertising, as the terms "sell" and "share" are defined under the CCPA. We have not done so in the preceding twelve (12) months. We do not sell Personal Information as defined under Nevada Revised Statutes Chapter 603A.</p>
-      <p>6.3 <i>Law enforcement requests.</i> Sonosphere may, but is not obligated to, notify affected users of requests for their information, and will not do so where prohibited by law, where notice would be futile or counterproductive, or where we believe notice could create a risk of harm to any person.</p>
+      <p>
+        6.2 <i>No sale or sharing.</i> We do not sell Personal Information, and we do not share Personal Information for
+        cross-context behavioral advertising, as the terms "sell" and "share" are defined under the CCPA. We have not
+        done so in the preceding twelve (12) months. We do not sell Personal Information as defined under Nevada Revised
+        Statutes Chapter 603A.
+      </p>
+      <p>
+        6.3 <i>Law enforcement requests.</i> Sonosphere may, but is not obligated to, notify affected users of requests
+        for their information, and will not do so where prohibited by law, where notice would be futile or
+        counterproductive, or where we believe notice could create a risk of harm to any person.
+      </p>
 
       <h2>7. Access to Private Messages and Account Information</h2>
-      <p>7.1 Private messages are stored on our systems and are not end-to-end encrypted. Authorized personnel of Sonosphere may access, review, retain and disclose private messages and other non-public Account information (a) when a message or conversation is reported by a participant; (b) when we reasonably suspect spam, fraud, harassment, abuse or other violation of the Terms; (c) to protect the safety of any person; (d) as necessary to maintain, troubleshoot, secure and improve the Service; and (e) as required or permitted by law or legal process, including as described in Section 6.1(f) and (g).</p>
-      <p>7.2 Where permitted by law, we may preserve information associated with an Account, including after the Account is deleted, in response to legal process, a preservation request, or where we reasonably believe preservation is necessary to investigate or prevent harm or violations of the Terms.</p>
+      <p>
+        7.1 Private messages are stored on our systems and are not end-to-end encrypted. Authorized personnel of
+        Sonosphere may access, review, retain and disclose private messages and other non-public Account information (a)
+        when a message or conversation is reported by a participant; (b) when we reasonably suspect spam, fraud,
+        harassment, abuse or other violation of the Terms; (c) to protect the safety of any person; (d) as necessary to
+        maintain, troubleshoot, secure and improve the Service; and (e) as required or permitted by law or legal
+        process, including as described in Section 6.1(f) and (g).
+      </p>
+      <p>
+        7.2 Where permitted by law, we may preserve information associated with an Account, including after the Account
+        is deleted, in response to legal process, a preservation request, or where we reasonably believe preservation is
+        necessary to investigate or prevent harm or violations of the Terms.
+      </p>
 
       <h2>8. Retention</h2>
-      <p>8.1 We retain Personal Information for as long as reasonably necessary to fulfill the purposes for which it was collected, as described in this Policy, including for as long as your Account is active, and thereafter for as long as necessary to comply with legal obligations, resolve disputes, prevent fraud and abuse, enforce our agreements, maintain the security and integrity of the Service, and establish, exercise or defend legal claims. In determining retention periods, we consider the amount, nature and sensitivity of the information, the potential risk of harm from unauthorized use or disclosure, the purposes of processing and whether those purposes can be achieved by other means, and applicable legal requirements.</p>
-      <p>8.2 Without limiting Section 8.1: (a) Account, profile, Listening Data and User Content are retained until you delete them or your Account; (b) private messages are retained until your Account is deleted, provided that copies held by the other participants in a conversation remain available to them; (c) rate-limiting and similar security records are generally retained for limited periods of hours to days; (d) server and security logs are retained for a limited period consistent with operational and security needs; (e) Spotify tokens are retained until you disconnect Spotify or delete your Account; and (f) records of moderation, enforcement and administrative actions, reports and audit logs may be retained for as long as necessary for safety, integrity and legal purposes, including after Account deletion.</p>
-      <p>8.3 When you delete your Account, we delete or de-identify Personal Information associated with it, including sessions, Listening Data, posts, playlists, private messages and profile information, within a reasonable period, except that: (a) residual copies may remain in backup and archival systems until they are overwritten or deleted in the ordinary course; (b) Catalogue Contributions, including wiki revisions, images, artwork and events, may be retained and attributed to "a deleted user"; (c) Derived Data and aggregated or de-identified information may be retained indefinitely; (d) information may be retained as described in Sections 7.2 and 8.2(f); and (e) information may be retained as required or permitted by applicable law.</p>
+      <p>
+        8.1 We retain Personal Information for as long as reasonably necessary to fulfill the purposes for which it was
+        collected, as described in this Policy, including for as long as your Account is active, and thereafter for as
+        long as necessary to comply with legal obligations, resolve disputes, prevent fraud and abuse, enforce our
+        agreements, maintain the security and integrity of the Service, and establish, exercise or defend legal claims.
+        In determining retention periods, we consider the amount, nature and sensitivity of the information, the
+        potential risk of harm from unauthorized use or disclosure, the purposes of processing and whether those
+        purposes can be achieved by other means, and applicable legal requirements.
+      </p>
+      <p>
+        8.2 Without limiting Section 8.1: (a) Account, profile, Listening Data and User Content are retained until you
+        delete them or your Account; (b) private messages are retained until your Account is deleted, provided that
+        copies held by the other participants in a conversation remain available to them; (c) rate-limiting and similar
+        security records are generally retained for limited periods of hours to days; (d) server and security logs are
+        retained for a limited period consistent with operational and security needs; (e) Spotify tokens are retained
+        until you disconnect Spotify or delete your Account; and (f) records of moderation, enforcement and
+        administrative actions, reports and audit logs may be retained for as long as necessary for safety, integrity
+        and legal purposes, including after Account deletion.
+      </p>
+      <p>
+        8.3 When you delete your Account, we delete or de-identify Personal Information associated with it, including
+        sessions, Listening Data, posts, playlists, private messages and profile information, within a reasonable
+        period, except that: (a) residual copies may remain in backup and archival systems until they are overwritten or
+        deleted in the ordinary course; (b) Catalogue Contributions, including wiki revisions, images, artwork and
+        events, may be retained and attributed to "a deleted user"; (c) Derived Data and aggregated or de-identified
+        information may be retained indefinitely; (d) information may be retained as described in Sections 7.2 and
+        8.2(f); and (e) information may be retained as required or permitted by applicable law.
+      </p>
 
       <h2>9. Your Choices</h2>
-      <p>Subject to applicable law and the limitations described in this Policy, you may: (a) review and update your profile information and settings at any time through your Account settings; (b) restrict the visibility of your listening activity through your <Link to="/settings/privacy">privacy settings</Link>; (c) export your Listening Data and loved tracks in machine-readable formats from <Link to="/settings/data">Your data</Link>; (d) delete individual scrobbles, User Content or your entire Account through your Account settings; (e) disconnect Spotify and revoke the access of Applications through your Account settings; (f) block other users; and (g) opt out of optional email communications through your notification settings or the instructions in such emails, provided that we may continue to send transactional, security, legal and administrative communications, which you may not opt out of while you maintain an Account.</p>
+      <p>
+        Subject to applicable law and the limitations described in this Policy, you may: (a) review and update your
+        profile information and settings at any time through your Account settings; (b) restrict the visibility of your
+        listening activity through your <Link to="/settings/privacy">privacy settings</Link>; (c) export your Listening
+        Data and loved tracks in machine-readable formats from <Link to="/settings/data">Your data</Link>; (d) delete
+        individual scrobbles, User Content or your entire Account through your Account settings; (e) disconnect Spotify
+        and revoke the access of Applications through your Account settings; (f) block other users; and (g) opt out of
+        optional email communications through your notification settings or the instructions in such emails, provided
+        that we may continue to send transactional, security, legal and administrative communications, which you may not
+        opt out of while you maintain an Account.
+      </p>
 
       <h2>10. Privacy Rights</h2>
-      <p>10.1 <i>Your rights.</i> Depending on your jurisdiction of residence and subject to applicable exceptions, you may have some or all of the following rights with respect to your Personal Information: (a) to confirm whether we process your Personal Information and to access it; (b) to know the categories and specific pieces of Personal Information we have collected, the categories of sources, the business or commercial purposes for collection, and the categories of third parties to whom we disclose it; (c) to correct inaccurate Personal Information; (d) to delete Personal Information; (e) to obtain a portable copy of Personal Information; (f) to opt out of the sale or sharing of Personal Information, targeted advertising, or profiling in furtherance of decisions producing legal or similarly significant effects (although we do not engage in such activities); (g) to restrict or object to certain processing; (h) to withdraw consent, where processing is based on consent; and (i) not to receive discriminatory treatment for exercising any of these rights.</p>
-      <p>10.2 <i>Submitting requests.</i> To exercise any of these rights, email <Mail /> from the email address associated with your Account with the subject line "Privacy Request," specifying the right you wish to exercise. Many requests can also be fulfilled directly through the self-service tools described in Section 9.</p>
-      <p>10.3 <i>Verification.</i> We will take reasonable steps to verify your identity before fulfilling any request, which may include requiring you to make the request from the email address associated with your Account, to sign in to your Account, or to provide additional information. The degree of verification required may depend on the sensitivity of the information and the nature of the request. We will use information provided for verification only for that purpose. We cannot fulfill a request if we cannot verify your identity or authority to make it.</p>
-      <p>10.4 <i>Authorized agents.</i> You may designate an authorized agent to submit a request on your behalf. We may require the agent to provide written permission signed by you or a valid power of attorney, and may require you to verify your identity directly with us and confirm that you provided the agent permission to submit the request.</p>
-      <p>10.5 <i>Response.</i> We will respond to verifiable requests within the time required by applicable law, which we may extend where permitted. We are not required to respond to more than two requests to know or access from the same individual in a twelve-month period, or to requests that are manifestly unfounded, excessive or repetitive, for which we may charge a reasonable fee or decline to act, where permitted by law. We may deny a request, in whole or in part, where permitted by applicable law, including where fulfilling the request would (a) infringe the rights or freedoms of others; (b) require us to disclose trade secrets or re-identify de-identified data; (c) interfere with legal obligations, the establishment, exercise or defense of legal claims, or the detection or prevention of security incidents, fraud or illegal activity; or (d) be impossible or involve disproportionate effort. If we deny a request, we will explain the reasons where required.</p>
-      <p>10.6 <i>Appeals.</i> If you reside in a jurisdiction that provides a right to appeal and we decline to take action on your request, you may appeal our decision by emailing <Mail /> with the subject line "Privacy Request Appeal" within a reasonable period after our decision. We will respond to your appeal within the time required by applicable law. If your appeal is denied, you may contact the attorney general or data protection authority of your jurisdiction.</p>
-      <p>10.7 <i>EEA and UK users.</i> If the GDPR applies to our processing of your Personal Information, you have the right to lodge a complaint with the supervisory authority in your country of residence, place of work or place of the alleged infringement, although we encourage you to contact us first so that we may attempt to resolve your concern.</p>
+      <p>
+        10.1 <i>Your rights.</i> Depending on your jurisdiction of residence and subject to applicable exceptions, you
+        may have some or all of the following rights with respect to your Personal Information: (a) to confirm whether
+        we process your Personal Information and to access it; (b) to know the categories and specific pieces of
+        Personal Information we have collected, the categories of sources, the business or commercial purposes for
+        collection, and the categories of third parties to whom we disclose it; (c) to correct inaccurate Personal
+        Information; (d) to delete Personal Information; (e) to obtain a portable copy of Personal Information; (f) to
+        opt out of the sale or sharing of Personal Information, targeted advertising, or profiling in furtherance of
+        decisions producing legal or similarly significant effects (although we do not engage in such activities); (g)
+        to restrict or object to certain processing; (h) to withdraw consent, where processing is based on consent; and
+        (i) not to receive discriminatory treatment for exercising any of these rights.
+      </p>
+      <p>
+        10.2 <i>Submitting requests.</i> To exercise any of these rights, email <Mail /> from the email address
+        associated with your Account with the subject line "Privacy Request," specifying the right you wish to exercise.
+        Many requests can also be fulfilled directly through the self-service tools described in Section 9.
+      </p>
+      <p>
+        10.3 <i>Verification.</i> We will take reasonable steps to verify your identity before fulfilling any request,
+        which may include requiring you to make the request from the email address associated with your Account, to sign
+        in to your Account, or to provide additional information. The degree of verification required may depend on the
+        sensitivity of the information and the nature of the request. We will use information provided for verification
+        only for that purpose. We cannot fulfill a request if we cannot verify your identity or authority to make it.
+      </p>
+      <p>
+        10.4 <i>Authorized agents.</i> You may designate an authorized agent to submit a request on your behalf. We may
+        require the agent to provide written permission signed by you or a valid power of attorney, and may require you
+        to verify your identity directly with us and confirm that you provided the agent permission to submit the
+        request.
+      </p>
+      <p>
+        10.5 <i>Response.</i> We will respond to verifiable requests within the time required by applicable law, which
+        we may extend where permitted. We are not required to respond to more than two requests to know or access from
+        the same individual in a twelve-month period, or to requests that are manifestly unfounded, excessive or
+        repetitive, for which we may charge a reasonable fee or decline to act, where permitted by law. We may deny a
+        request, in whole or in part, where permitted by applicable law, including where fulfilling the request would
+        (a) infringe the rights or freedoms of others; (b) require us to disclose trade secrets or re-identify
+        de-identified data; (c) interfere with legal obligations, the establishment, exercise or defense of legal
+        claims, or the detection or prevention of security incidents, fraud or illegal activity; or (d) be impossible or
+        involve disproportionate effort. If we deny a request, we will explain the reasons where required.
+      </p>
+      <p>
+        10.6 <i>Appeals.</i> If you reside in a jurisdiction that provides a right to appeal and we decline to take
+        action on your request, you may appeal our decision by emailing <Mail /> with the subject line "Privacy Request
+        Appeal" within a reasonable period after our decision. We will respond to your appeal within the time required
+        by applicable law. If your appeal is denied, you may contact the attorney general or data protection authority
+        of your jurisdiction.
+      </p>
+      <p>
+        10.7 <i>EEA and UK users.</i> If the GDPR applies to our processing of your Personal Information, you have the
+        right to lodge a complaint with the supervisory authority in your country of residence, place of work or place
+        of the alleged infringement, although we encourage you to contact us first so that we may attempt to resolve
+        your concern.
+      </p>
 
       <h2>11. Notice to California Residents</h2>
-      <p>11.1 This Section supplements this Policy and applies solely to California residents, to the extent the CCPA applies to Sonosphere. In the preceding twelve (12) months, we have collected the following categories of Personal Information enumerated in the CCPA, from the sources described in Section 2, for the business and commercial purposes described in Section 3, and have disclosed each such category for a business purpose to the categories of recipients described in Section 6.1(a) through (k):</p>
+      <p>
+        11.1 This Section supplements this Policy and applies solely to California residents, to the extent the CCPA
+        applies to Sonosphere. In the preceding twelve (12) months, we have collected the following categories of
+        Personal Information enumerated in the CCPA, from the sources described in Section 2, for the business and
+        commercial purposes described in Section 3, and have disclosed each such category for a business purpose to the
+        categories of recipients described in Section 6.1(a) through (k):
+      </p>
       <ol>
-        <li><b>Identifiers:</b> such as username, email address, IP address, Account identifiers and Spotify account identifier;</li>
-        <li><b>Personal information categories listed in Cal. Civ. Code § 1798.80(e):</b> such as name, where provided;</li>
-        <li><b>Internet or other electronic network activity information:</b> such as browsing and usage information, interactions with the Service, and log data;</li>
-        <li><b>Geolocation data:</b> limited to approximate location derived from IP address, and any country you provide;</li>
-        <li><b>Audio, electronic, visual or similar information:</b> such as Listening Data and images you upload;</li>
-        <li><b>Inferences:</b> drawn from the foregoing to create a profile reflecting your musical preferences and characteristics, such as recommendations and compatibility scores; and</li>
-        <li><b>Sensitive personal information:</b> limited to Account log-in credentials (username or email address in combination with a password) and the contents of private messages, which we collect and use only for purposes permitted under Cal. Code Regs. tit. 11, § 7027(m), and not for the purpose of inferring characteristics about you.</li>
+        <li>
+          <b>Identifiers:</b> such as username, email address, IP address, Account identifiers and Spotify account
+          identifier;
+        </li>
+        <li>
+          <b>Personal information categories listed in Cal. Civ. Code § 1798.80(e):</b> such as name, where provided;
+        </li>
+        <li>
+          <b>Internet or other electronic network activity information:</b> such as browsing and usage information,
+          interactions with the Service, and log data;
+        </li>
+        <li>
+          <b>Geolocation data:</b> limited to approximate location derived from IP address, and any country you provide;
+        </li>
+        <li>
+          <b>Audio, electronic, visual or similar information:</b> such as Listening Data and images you upload;
+        </li>
+        <li>
+          <b>Inferences:</b> drawn from the foregoing to create a profile reflecting your musical preferences and
+          characteristics, such as recommendations and compatibility scores; and
+        </li>
+        <li>
+          <b>Sensitive personal information:</b> limited to Account log-in credentials (username or email address in
+          combination with a password) and the contents of private messages, which we collect and use only for purposes
+          permitted under Cal. Code Regs. tit. 11, § 7027(m), and not for the purpose of inferring characteristics about
+          you.
+        </li>
       </ol>
-      <p>11.2 We do not sell or share Personal Information, and we have no actual knowledge of selling or sharing the Personal Information of consumers under sixteen (16) years of age. We do not use or disclose sensitive personal information for purposes that would give rise to a right to limit under the CCPA. Retention periods for each category are described in Section 8.</p>
-      <p>11.3 <i>Shine the Light.</i> Under California Civil Code Section 1798.83, California residents may request certain information regarding our disclosure of Personal Information to third parties for their direct marketing purposes. We do not disclose Personal Information to third parties for their direct marketing purposes.</p>
-      <p>11.4 <i>Minors.</i> Pursuant to California Business and Professions Code Section 22581, California residents under the age of eighteen (18) who are registered users may request removal of content they have publicly posted on the Service by deleting it through the Service or by emailing <Mail />. Removal does not ensure complete or comprehensive removal of the content or information, including where it has been copied or reposted by third parties, and we are not required to remove content in the circumstances described in Section 22581(b).</p>
+      <p>
+        11.2 We do not sell or share Personal Information, and we have no actual knowledge of selling or sharing the
+        Personal Information of consumers under sixteen (16) years of age. We do not use or disclose sensitive personal
+        information for purposes that would give rise to a right to limit under the CCPA. Retention periods for each
+        category are described in Section 8.
+      </p>
+      <p>
+        11.3 <i>Shine the Light.</i> Under California Civil Code Section 1798.83, California residents may request
+        certain information regarding our disclosure of Personal Information to third parties for their direct marketing
+        purposes. We do not disclose Personal Information to third parties for their direct marketing purposes.
+      </p>
+      <p>
+        11.4 <i>Minors.</i> Pursuant to California Business and Professions Code Section 22581, California residents
+        under the age of eighteen (18) who are registered users may request removal of content they have publicly posted
+        on the Service by deleting it through the Service or by emailing <Mail />. Removal does not ensure complete or
+        comprehensive removal of the content or information, including where it has been copied or reposted by third
+        parties, and we are not required to remove content in the circumstances described in Section 22581(b).
+      </p>
 
       <h2>12. Security</h2>
-      <p>12.1 We implement administrative, technical and physical safeguards that we consider reasonable and appropriate to protect Personal Information against unauthorized access, use, alteration and disclosure, including encryption of data in transit, hashing of passwords, access controls and network protections. However, no method of transmission over the internet, method of electronic storage or security measure is completely secure, and we cannot and do not guarantee the absolute security of any information.</p>
-      <p>12.2 YOU ACKNOWLEDGE THAT YOU PROVIDE INFORMATION TO US AT YOUR OWN RISK. TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, SONOSPHERE SHALL NOT BE LIABLE FOR ANY UNAUTHORIZED ACCESS TO, OR USE, ALTERATION, DISCLOSURE, LOSS OR DESTRUCTION OF, ANY INFORMATION, EXCEPT TO THE EXTENT CAUSED BY OUR FAILURE TO IMPLEMENT AND MAINTAIN REASONABLE SECURITY PROCEDURES AND PRACTICES AS REQUIRED BY APPLICABLE LAW, AND IN ALL CASES SUBJECT TO THE LIMITATIONS OF LIABILITY IN THE TERMS.</p>
-      <p>12.3 You are responsible for maintaining the confidentiality of your password and for restricting access to your devices. In the event of a security breach affecting your Personal Information, we will notify you and applicable authorities where and as required by applicable law, which notice may be provided by email or by posting on the Service.</p>
+      <p>
+        12.1 We implement administrative, technical and physical safeguards that we consider reasonable and appropriate
+        to protect Personal Information against unauthorized access, use, alteration and disclosure, including
+        encryption of data in transit, hashing of passwords, access controls and network protections. However, no method
+        of transmission over the internet, method of electronic storage or security measure is completely secure, and we
+        cannot and do not guarantee the absolute security of any information.
+      </p>
+      <p>
+        12.2 YOU ACKNOWLEDGE THAT YOU PROVIDE INFORMATION TO US AT YOUR OWN RISK. TO THE FULLEST EXTENT PERMITTED BY
+        APPLICABLE LAW, SONOSPHERE SHALL NOT BE LIABLE FOR ANY UNAUTHORIZED ACCESS TO, OR USE, ALTERATION, DISCLOSURE,
+        LOSS OR DESTRUCTION OF, ANY INFORMATION, EXCEPT TO THE EXTENT CAUSED BY OUR FAILURE TO IMPLEMENT AND MAINTAIN
+        REASONABLE SECURITY PROCEDURES AND PRACTICES AS REQUIRED BY APPLICABLE LAW, AND IN ALL CASES SUBJECT TO THE
+        LIMITATIONS OF LIABILITY IN THE TERMS.
+      </p>
+      <p>
+        12.3 You are responsible for maintaining the confidentiality of your password and for restricting access to your
+        devices. In the event of a security breach affecting your Personal Information, we will notify you and
+        applicable authorities where and as required by applicable law, which notice may be provided by email or by
+        posting on the Service.
+      </p>
 
       <h2>13. Children</h2>
-      <p>The Service is not directed to children under the age of thirteen (13), and we do not knowingly collect, use or disclose Personal Information from children under 13. If you are under 13, you may not use the Service or provide any information to us. If we learn that we have collected Personal Information from a child under 13 without verifiable parental consent, we will take steps to delete such information and terminate the associated Account as promptly as practicable. If you believe that we may have collected information from a child under 13, please contact us at <Mail />. Users between the ages of 13 and the age of majority in their jurisdiction may use the Service only with the involvement and consent of a parent or legal guardian, as provided in the Terms.</p>
+      <p>
+        The Service is not directed to children under the age of thirteen (13), and we do not knowingly collect, use or
+        disclose Personal Information from children under 13. If you are under 13, you may not use the Service or
+        provide any information to us. If we learn that we have collected Personal Information from a child under 13
+        without verifiable parental consent, we will take steps to delete such information and terminate the associated
+        Account as promptly as practicable. If you believe that we may have collected information from a child under 13,
+        please contact us at <Mail />. Users between the ages of 13 and the age of majority in their jurisdiction may
+        use the Service only with the involvement and consent of a parent or legal guardian, as provided in the Terms.
+      </p>
 
       <h2>14. International Data Transfers</h2>
-      <p>Sonosphere is based in, and the Service is operated from, the United States. Our service providers, which may include Cloudflare, Amazon Web Services, Google and Microsoft, may store and process information in the United States and other countries. If you access the Service from outside the United States, you acknowledge and agree that your information will be transferred to, stored in and processed in the United States and such other countries, which may have data protection laws that differ from, and may be less protective than, those of your jurisdiction, and where government authorities may be able to access your information. To the extent required by applicable Privacy Laws, we rely on appropriate safeguards or applicable derogations for such transfers, including the necessity of the transfer for the performance of our contract with you.</p>
+      <p>
+        Sonosphere is based in, and the Service is operated from, the United States. Our service providers, which may
+        include Cloudflare, Amazon Web Services, Google and Microsoft, may store and process information in the United
+        States and other countries. If you access the Service from outside the United States, you acknowledge and agree
+        that your information will be transferred to, stored in and processed in the United States and such other
+        countries, which may have data protection laws that differ from, and may be less protective than, those of your
+        jurisdiction, and where government authorities may be able to access your information. To the extent required by
+        applicable Privacy Laws, we rely on appropriate safeguards or applicable derogations for such transfers,
+        including the necessity of the transfer for the performance of our contract with you.
+      </p>
 
       <h2>15. Third-Party Services and Applications</h2>
-      <p>The Service contains links to, embeds content from, and integrates with Third-Party Services and Applications that are not owned or controlled by Sonosphere. This Policy does not apply to, and Sonosphere is not responsible for, the privacy, security or data practices of any Third-Party Service or Application, including any information you provide to them or that they collect from you directly. Your use of Third-Party Services and Applications is governed by their respective privacy policies and terms, which we encourage you to review. Our inclusion of a link or integration does not imply our endorsement of the Third-Party Service or Application or of its practices.</p>
+      <p>
+        The Service contains links to, embeds content from, and integrates with Third-Party Services and Applications
+        that are not owned or controlled by Sonosphere. This Policy does not apply to, and Sonosphere is not responsible
+        for, the privacy, security or data practices of any Third-Party Service or Application, including any
+        information you provide to them or that they collect from you directly. Your use of Third-Party Services and
+        Applications is governed by their respective privacy policies and terms, which we encourage you to review. Our
+        inclusion of a link or integration does not imply our endorsement of the Third-Party Service or Application or
+        of its practices.
+      </p>
 
       <h2>16. Changes to this Policy</h2>
-      <p>We may amend this Policy at any time in our sole discretion. Amendments are effective upon posting to the Service unless otherwise stated, and the "last updated" date above will be revised accordingly. Where required by applicable law, we will provide additional notice of material changes or obtain your consent. Otherwise, we may, but are not obligated to, provide notice by email, banner or other means. Your continued access to or use of the Service after any amendment constitutes your acceptance of the amended Policy. If you do not agree to any amendment, you must cease using the Service and delete your Account. This Policy is governed by Sections 23 and 24 of the Terms.</p>
+      <p>
+        We may amend this Policy at any time in our sole discretion. Amendments are effective upon posting to the
+        Service unless otherwise stated, and the "last updated" date above will be revised accordingly. Where required
+        by applicable law, we will provide additional notice of material changes or obtain your consent. Otherwise, we
+        may, but are not obligated to, provide notice by email, banner or other means. Your continued access to or use
+        of the Service after any amendment constitutes your acceptance of the amended Policy. If you do not agree to any
+        amendment, you must cease using the Service and delete your Account. This Policy is governed by Sections 23 and
+        24 of the Terms.
+      </p>
 
       <h2>17. Contact</h2>
-      <p>Questions, comments, complaints and requests regarding this Policy or our privacy practices may be directed to the operator of Sonosphere at <Mail />.</p>
+      <p>
+        Questions, comments, complaints and requests regarding this Policy or our privacy practices may be directed to
+        the operator of Sonosphere at <Mail />.
+      </p>
     </Legal>
   );
 }
@@ -385,84 +1663,200 @@ export function Privacy() {
 export function Guidelines() {
   return (
     <Legal title="Community Guidelines">
-      <p>These Community Guidelines set out what is and is not permitted on Sonosphere. They form part of, and are enforced under, the <Link to="/terms">Terms of Service</Link>. They apply to everything you post or submit, including profiles, avatars, shouts, journal entries, playlists, tags, wiki entries, artwork, events, private messages, reports and Listening Data, and to conduct on and off the Service that affects Sonosphere or its users. They are not exhaustive. We may act against content or conduct that is not listed here but that, in our judgment, harms the Service or its users, and we apply them at our sole discretion.</p>
+      <p>
+        These Community Guidelines set out what is and is not permitted on Sonosphere. They form part of, and are
+        enforced under, the <Link to="/terms">Terms of Service</Link>. They apply to everything you post or submit,
+        including profiles, avatars, shouts, journal entries, playlists, tags, wiki entries, artwork, events, private
+        messages, reports and Listening Data, and to conduct on and off the Service that affects Sonosphere or its
+        users. They are not exhaustive. We may act against content or conduct that is not listed here but that, in our
+        judgment, harms the Service or its users, and we apply them at our sole discretion.
+      </p>
 
       <h2>1. Safety</h2>
       <ol>
-        <li><b>Minors.</b> No content that sexualizes, exploits or endangers anyone under 18, including drawn, generated or fictional depictions. We report apparent child sexual abuse material to the National Center for Missing & Exploited Children and to law enforcement, and permanently remove the accounts involved.</li>
-        <li><b>Violence and threats.</b> No threats of violence against any person or group, no incitement or glorification of violence, and no promotion of terrorist or violent extremist organizations or their propaganda.</li>
-        <li><b>Self-harm.</b> No content that encourages or instructs suicide, self-harm or disordered eating. Discussion of personal experience and recovery is permitted.</li>
-        <li><b>Dangerous activity.</b> No content that facilitates the sale of weapons, drugs or other regulated goods, or that provides instructions for serious harm.</li>
+        <li>
+          <b>Minors.</b> No content that sexualizes, exploits or endangers anyone under 18, including drawn, generated
+          or fictional depictions. We report apparent child sexual abuse material to the National Center for Missing &
+          Exploited Children and to law enforcement, and permanently remove the accounts involved.
+        </li>
+        <li>
+          <b>Violence and threats.</b> No threats of violence against any person or group, no incitement or
+          glorification of violence, and no promotion of terrorist or violent extremist organizations or their
+          propaganda.
+        </li>
+        <li>
+          <b>Self-harm.</b> No content that encourages or instructs suicide, self-harm or disordered eating. Discussion
+          of personal experience and recovery is permitted.
+        </li>
+        <li>
+          <b>Dangerous activity.</b> No content that facilitates the sale of weapons, drugs or other regulated goods, or
+          that provides instructions for serious harm.
+        </li>
       </ol>
 
       <h2>2. Respect for Other Users</h2>
       <ol>
-        <li><b>Harassment.</b> No targeted abuse, insults, intimidation, pile-ons, repeated unwanted contact, or encouraging others to do any of these. Contacting someone again after they have blocked you, from any account, is harassment.</li>
-        <li><b>Hate.</b> No attacks, slurs, dehumanizing language or stereotypes directed at people on the basis of race, ethnicity, national origin, caste, religion, sex, gender, gender identity, sexual orientation, disability, serious illness or age, and no symbols or content promoting hate groups.</li>
-        <li><b>Privacy.</b> No posting of another person's private information, including real name, address, phone number, workplace, private messages or images, without their consent. No sharing of intimate images of any person without their consent.</li>
-        <li><b>Impersonation.</b> No pretending to be another person, artist, label or organization, or to be Sonosphere staff. Parody and fan accounts must say so clearly in their profile.</li>
-        <li><b>Disputes.</b> Criticism of music, artists and opinions is permitted. Criticism of a person's identity, appearance or private life is not.</li>
+        <li>
+          <b>Harassment.</b> No targeted abuse, insults, intimidation, pile-ons, repeated unwanted contact, or
+          encouraging others to do any of these. Contacting someone again after they have blocked you, from any account,
+          is harassment.
+        </li>
+        <li>
+          <b>Hate.</b> No attacks, slurs, dehumanizing language or stereotypes directed at people on the basis of race,
+          ethnicity, national origin, caste, religion, sex, gender, gender identity, sexual orientation, disability,
+          serious illness or age, and no symbols or content promoting hate groups.
+        </li>
+        <li>
+          <b>Privacy.</b> No posting of another person's private information, including real name, address, phone
+          number, workplace, private messages or images, without their consent. No sharing of intimate images of any
+          person without their consent.
+        </li>
+        <li>
+          <b>Impersonation.</b> No pretending to be another person, artist, label or organization, or to be Sonosphere
+          staff. Parody and fan accounts must say so clearly in their profile.
+        </li>
+        <li>
+          <b>Disputes.</b> Criticism of music, artists and opinions is permitted. Criticism of a person's identity,
+          appearance or private life is not.
+        </li>
       </ol>
 
       <h2>3. Sexual and Graphic Content</h2>
       <ol>
-        <li>No pornography or sexually explicit content anywhere on the Service, including avatars, images, artwork and links.</li>
-        <li>Album artwork that contains nudity may be uploaded only where it is the official, unaltered release artwork, and we may restrict or replace it.</li>
+        <li>
+          No pornography or sexually explicit content anywhere on the Service, including avatars, images, artwork and
+          links.
+        </li>
+        <li>
+          Album artwork that contains nudity may be uploaded only where it is the official, unaltered release artwork,
+          and we may restrict or replace it.
+        </li>
         <li>No gratuitously violent, gory or shocking content.</li>
       </ol>
 
       <h2>4. Listening Data and Charts</h2>
       <ol>
-        <li>Scrobbles must reflect music you actually listened to. Imports must come from your own listening history.</li>
-        <li>No scripted, looped, muted, duplicated or fabricated plays, and no using multiple accounts, bots or coordinated groups to inflate any artist, album, track, tag or user in charts, statistics or recommendations.</li>
+        <li>
+          Scrobbles must reflect music you actually listened to. Imports must come from your own listening history.
+        </li>
+        <li>
+          No scripted, looped, muted, duplicated or fabricated plays, and no using multiple accounts, bots or
+          coordinated groups to inflate any artist, album, track, tag or user in charts, statistics or recommendations.
+        </li>
         <li>No offering, buying or selling plays, followers, listeners or chart positions.</li>
-        <li>We may remove plays, reset statistics, exclude accounts from charts or remove accounts that we believe are manipulating data, without notice and without being required to show how we reached that conclusion.</li>
+        <li>
+          We may remove plays, reset statistics, exclude accounts from charts or remove accounts that we believe are
+          manipulating data, without notice and without being required to show how we reached that conclusion.
+        </li>
       </ol>
 
       <h2>5. Catalogue Contributions</h2>
       <ol>
-        <li><b>Wiki entries</b> must be factual, neutral and written in your own words. Do not copy biographies, reviews or press material from other sources. Do not vandalize, blank or insert promotional, defamatory or false content.</li>
-        <li><b>Artwork and images</b> must be the correct, official image for the artist, album or track, and you must have the right to upload them. No watermarks, unrelated images, memes or edited covers.</li>
-        <li><b>Tags</b> must describe the music. No tags used to insult, harass, spam or promote.</li>
-        <li><b>Events</b> must be real, publicly announced events with accurate dates, venues and line-ups. No fake events, ticket resale schemes or phishing links.</li>
-        <li><b>Corrections</b> must reflect how the release is officially credited. Do not merge or rename artists or releases to game charts or to settle disputes.</li>
+        <li>
+          <b>Wiki entries</b> must be factual, neutral and written in your own words. Do not copy biographies, reviews
+          or press material from other sources. Do not vandalize, blank or insert promotional, defamatory or false
+          content.
+        </li>
+        <li>
+          <b>Artwork and images</b> must be the correct, official image for the artist, album or track, and you must
+          have the right to upload them. No watermarks, unrelated images, memes or edited covers.
+        </li>
+        <li>
+          <b>Tags</b> must describe the music. No tags used to insult, harass, spam or promote.
+        </li>
+        <li>
+          <b>Events</b> must be real, publicly announced events with accurate dates, venues and line-ups. No fake
+          events, ticket resale schemes or phishing links.
+        </li>
+        <li>
+          <b>Corrections</b> must reflect how the release is officially credited. Do not merge or rename artists or
+          releases to game charts or to settle disputes.
+        </li>
       </ol>
 
       <h2>6. Spam, Scams and Platform Abuse</h2>
       <ol>
-        <li>No unsolicited advertising, repetitive or off-topic posting, mass messaging, follow-for-follow schemes or link spam.</li>
-        <li>Artists, labels and promoters may share their own music where relevant, but may not spam shouts, messages or tags with it.</li>
-        <li>No phishing, malware, scams, giveaways that collect personal information, or links that disguise their destination.</li>
-        <li>No creating multiple accounts to evade blocks, restrictions or bans, to vote or post repeatedly, or to impersonate support.</li>
-        <li>No automated access, scraping or bulk collection outside the documented <Link to="/developers">API</Link>.</li>
+        <li>
+          No unsolicited advertising, repetitive or off-topic posting, mass messaging, follow-for-follow schemes or link
+          spam.
+        </li>
+        <li>
+          Artists, labels and promoters may share their own music where relevant, but may not spam shouts, messages or
+          tags with it.
+        </li>
+        <li>
+          No phishing, malware, scams, giveaways that collect personal information, or links that disguise their
+          destination.
+        </li>
+        <li>
+          No creating multiple accounts to evade blocks, restrictions or bans, to vote or post repeatedly, or to
+          impersonate support.
+        </li>
+        <li>
+          No automated access, scraping or bulk collection outside the documented <Link to="/developers">API</Link>.
+        </li>
       </ol>
 
       <h2>7. Intellectual Property</h2>
-      <p>Post only content you created or have the right to share. No links to unauthorized copies of music, albums, videos or software. Rights holders may report infringement under Section 15 of the <Link to="/terms">Terms of Service</Link>. Accounts that repeatedly infringe will be terminated.</p>
+      <p>
+        Post only content you created or have the right to share. No links to unauthorized copies of music, albums,
+        videos or software. Rights holders may report infringement under Section 15 of the{" "}
+        <Link to="/terms">Terms of Service</Link>. Accounts that repeatedly infringe will be terminated.
+      </p>
 
       <h2>8. Illegal Content</h2>
-      <p>No content or conduct that is unlawful in the United States or that facilitates unlawful activity, including fraud, defamation, unlawful gambling and the sale of illegal goods or services.</p>
+      <p>
+        No content or conduct that is unlawful in the United States or that facilitates unlawful activity, including
+        fraud, defamation, unlawful gambling and the sale of illegal goods or services.
+      </p>
 
       <h2>9. Reporting</h2>
       <ol>
-        <li>Use the report option on the content or profile concerned. Reports are confidential, and we do not tell the reported user who reported them, except as required by law.</li>
-        <li>You can block any user. Blocking prevents them from messaging you or posting on your profile. You can also limit who may message you, or turn off shouts on your profile, in your settings.</li>
+        <li>
+          Use the report option on the content or profile concerned. Reports are confidential, and we do not tell the
+          reported user who reported them, except as required by law.
+        </li>
+        <li>
+          You can block any user. Blocking prevents them from messaging you or posting on your profile. You can also
+          limit who may message you, or turn off shouts on your profile, in your settings.
+        </li>
         <li>Reporting a private message gives us permission to review that conversation.</li>
-        <li>False, bad-faith or retaliatory reports, and mass reporting, are themselves a violation of these Guidelines.</li>
-        <li>If someone is in immediate danger, contact local emergency services. Sonosphere is not an emergency service.</li>
+        <li>
+          False, bad-faith or retaliatory reports, and mass reporting, are themselves a violation of these Guidelines.
+        </li>
+        <li>
+          If someone is in immediate danger, contact local emergency services. Sonosphere is not an emergency service.
+        </li>
       </ol>
 
       <h2>10. Enforcement</h2>
       <ol>
-        <li>Depending on severity and history, we may remove content, issue a warning, restrict features (such as posting, messaging, uploading or editing), remove or exclude Listening Data, suspend an account temporarily, or terminate it permanently. Severe violations, including any involving minors, credible threats or doxxing, result in immediate termination without warning.</li>
+        <li>
+          Depending on severity and history, we may remove content, issue a warning, restrict features (such as posting,
+          messaging, uploading or editing), remove or exclude Listening Data, suspend an account temporarily, or
+          terminate it permanently. Severe violations, including any involving minors, credible threats or doxxing,
+          result in immediate termination without warning.
+        </li>
         <li>Enforcement may apply to all accounts we believe are operated by the same person.</li>
-        <li>We are not required to explain any decision, to warn before acting, or to apply any particular sequence of penalties. We are not obliged to review every report or to act on any of them.</li>
-        <li>You may ask us to reconsider a decision by emailing <Mail /> from the address on your account within 30 days. We may decline to review any decision, and our decision on review is final.</li>
-        <li>We may preserve content and account information related to violations and disclose it to law enforcement as described in the <Link to="/privacy">Privacy Policy</Link>.</li>
+        <li>
+          We are not required to explain any decision, to warn before acting, or to apply any particular sequence of
+          penalties. We are not obliged to review every report or to act on any of them.
+        </li>
+        <li>
+          You may ask us to reconsider a decision by emailing <Mail /> from the address on your account within 30 days.
+          We may decline to review any decision, and our decision on review is final.
+        </li>
+        <li>
+          We may preserve content and account information related to violations and disclose it to law enforcement as
+          described in the <Link to="/privacy">Privacy Policy</Link>.
+        </li>
       </ol>
 
       <h2>11. Changes</h2>
-      <p>We may update these Guidelines at any time by posting a revised version. Updated Guidelines apply from the date they are posted, including to content already on the Service.</p>
+      <p>
+        We may update these Guidelines at any time by posting a revised version. Updated Guidelines apply from the date
+        they are posted, including to content already on the Service.
+      </p>
     </Legal>
   );
 }

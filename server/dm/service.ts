@@ -9,7 +9,20 @@ import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./repo";
 import { softDeleteTx as softDeleteGroupTx, unreadGroups, memberIds, type GroupRemoved } from "./groups.repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
-import type { DmAccepted, DmCounts, DmDone, DmEvent, DmList, DmMessage, DmPolicy, DmSent, DmThread, DmThreadPage, DmUnsent, DmWith } from "../../shared/dm";
+import type {
+  DmAccepted,
+  DmCounts,
+  DmDone,
+  DmEvent,
+  DmList,
+  DmMessage,
+  DmPolicy,
+  DmSent,
+  DmThread,
+  DmThreadPage,
+  DmUnsent,
+  DmWith,
+} from "../../shared/dm";
 
 export const DM = {
   MAX_LENGTH: 2000,
@@ -22,7 +35,7 @@ export const DM = {
 };
 
 export const POLICIES = ["everyone", "requests", "following", "nobody"] as const satisfies readonly DmPolicy[];
-const policyOf = (u: Pick<User, "dmPolicy">): DmPolicy => POLICIES.find(p => p === u.dmPolicy) ?? "requests";
+const policyOf = (u: Pick<User, "dmPolicy">): DmPolicy => POLICIES.find((p) => p === u.dmPolicy) ?? "requests";
 
 const GONE = "This account no longer exists";
 const emit = (userId: number, event: DmEvent) => push(userId, event);
@@ -39,7 +52,8 @@ async function myThread(id: unknown, userId: number): Promise<Thread> {
   return t;
 }
 
-const hasLink = (s: string) => /(https?:\/\/|www\.)\S|\b[a-z0-9-]+\.(com|net|org|io|ru|xyz|top|gg|me|co|link|app|ly)\b/i.test(s);
+const hasLink = (s: string) =>
+  /(https?:\/\/|www\.)\S|\b[a-z0-9-]+\.(com|net|org|io|ru|xyz|top|gg|me|co|link|app|ly)\b/i.test(s);
 
 export function tidy(input: unknown): string {
   return String(input ?? "")
@@ -87,7 +101,12 @@ async function allowed(from: User, to: User | null): Promise<Allowed> {
 
 export async function dmLimits(from: User) {
   if (await onProbation(from)) {
-    return { perMinute: PROBATION.DM_PER_MINUTE, perDay: PROBATION.DM_PER_DAY, newThreads: PROBATION.NEW_THREADS_PER_DAY, copies: PROBATION.COPIES };
+    return {
+      perMinute: PROBATION.DM_PER_MINUTE,
+      perDay: PROBATION.DM_PER_DAY,
+      newThreads: PROBATION.NEW_THREADS_PER_DAY,
+      copies: PROBATION.COPIES,
+    };
   }
   return { perMinute: DM.PER_MINUTE, perDay: DM.PER_DAY, newThreads: DM.NEW_THREADS_PER_DAY, copies: DM.COPIES };
 }
@@ -156,7 +175,8 @@ async function shapeOrNull(t: Thread, userId: number): Promise<DmThread | null> 
   };
 }
 
-const threadShape = async (t: Thread, userId: number): Promise<DmThread> => (await shapeOrNull(t, userId)) ?? notFound();
+const threadShape = async (t: Thread, userId: number): Promise<DmThread> =>
+  (await shapeOrNull(t, userId)) ?? notFound();
 
 export async function dmCounts(userId: number): Promise<DmCounts> {
   const counts = await repo.unreadCounts(userId);
@@ -171,7 +191,7 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
   const flags: Flag[] = [];
   let out: { message: Message; thread: Thread; accepted: boolean };
   try {
-    out = await repo.atomically(async tx => {
+    out = await repo.atomically(async (tx) => {
       let t = await repo.threadOfTx(tx, from.id, to.id);
       let accepted = false;
       const pendingMine = !!t && t.status !== "active" && t.requesterId === from.id;
@@ -185,7 +205,8 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
         await repo.setStatusTx(tx, t.id, "active");
         t = { ...t, status: "active" };
       } else if (t && pendingMine) {
-        if ((await repo.sentInTx(tx, t.id, from.id)) >= DM.REQUEST_CAP) fail(403, "Wait for a reply before sending more messages");
+        if ((await repo.sentInTx(tx, t.id, from.id)) >= DM.REQUEST_CAP)
+          fail(403, "Wait for a reply before sending more messages");
       }
       if ((!t || t.status !== "active") && opening === "request" && hasLink(body)) {
         fail(400, "Links can't be sent until your message request is accepted");
@@ -206,7 +227,13 @@ export async function send(from: User, to: User, rawBody: unknown): Promise<DmSe
     emit(to.id, { t: "dm", thread: await threadShape(thread, to.id), message, counts: await dmCounts(to.id) });
     await mailMessage(to, from.username, thread.id, thread.status === "request", body);
   }
-  emit(from.id, { t: "dm", thread: await threadShape(thread, from.id), message, counts: await dmCounts(from.id), accepted });
+  emit(from.id, {
+    t: "dm",
+    thread: await threadShape(thread, from.id),
+    message,
+    counts: await dmCounts(from.id),
+    accepted,
+  });
   return { message, thread: await threadShape(thread, from.id) };
 }
 

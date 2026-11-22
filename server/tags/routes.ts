@@ -10,17 +10,17 @@ const TAGGABLE = ["artist", "album", "track"] as const;
 
 export const router = new Router();
 
-router.get<TagPage>("/api/tag", async c => {
+router.get<TagPage>("/api/tag", async (c) => {
   const tag = await requireTag(c.q.get("name"));
   return tagPage(tag, c.user?.id);
 });
 
-router.get<TagSuggestions>("/api/tags/suggest", async c => {
+router.get<TagSuggestions>("/api/tags/suggest", async (c) => {
   const items = await suggest(c.q.get("q") || "", c.user?.id);
   return { items };
 });
 
-router.post<ItemTags>("/api/tags", async c => {
+router.post<ItemTags>("/api/tags", async (c) => {
   const u = confirmed(need(c));
   await limit(u, `tag:${u.id}`, 100, 3600, "That is a lot of tagging. Try again in a while.");
   const it = await requireItem(c.body.type, c.body.id, TAGGABLE);
@@ -28,7 +28,7 @@ router.post<ItemTags>("/api/tags", async c => {
   return tagsOn(u.id, it.type, it.row.id);
 });
 
-router.post<ItemTags>("/api/tags/remove", async c => {
+router.post<ItemTags>("/api/tags/remove", async (c) => {
   const u = need(c);
   const it = await requireItem(c.body.type, c.body.id, TAGGABLE);
   await repo.removeTag(u.id, it.type, it.row.id, String(c.body.tag || ""));

@@ -1,4 +1,13 @@
-import { isValidElement, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type TextareaHTMLAttributes } from "react";
+import {
+  isValidElement,
+  useState,
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type Ref,
+  type TextareaHTMLAttributes,
+} from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { Button as AButton } from "@astryxdesign/core/Button";
 import { TextInput, type TextInputType } from "@astryxdesign/core/TextInput";
@@ -42,7 +51,7 @@ export function Button({ kind = "", children, disabled, loading, type, title, hr
   if (!solid) variant = "ghost";
   else if (k.includes("ghost")) variant = "secondary";
   else if (k.includes("danger")) variant = "destructive";
-  const extra = k.filter(c => !["btn", "ghost", "danger", "small"].includes(c));
+  const extra = k.filter((c) => !["btn", "ghost", "danger", "small"].includes(c));
   const className = [solid ? "" : "bare", ...extra].filter(Boolean).join(" ") || undefined;
   const label = rest["aria-label"] || textOf(children).replace(/\s+/g, " ").trim() || title || "Button";
   const link = href ? { href, ...(download ? { download: true } : {}) } : { type: type ?? "submit" };
@@ -69,10 +78,31 @@ const isText = (t: string): t is TextInputType => TEXT.has(t);
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> };
 
-export function Input({ type = "text", value, onChange, placeholder, disabled, autoFocus, name, autoComplete, className, checked, ref, ...rest }: InputProps) {
+export function Input({
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  autoFocus,
+  name,
+  autoComplete,
+  className,
+  checked,
+  ref,
+  ...rest
+}: InputProps) {
   const label = rest["aria-label"] || placeholder || name || "Field";
   if (type === "checkbox") {
-    return <CheckboxInput label={label} isLabelHidden value={!!checked} onChange={(_, e) => onChange?.(e)} isDisabled={disabled} />;
+    return (
+      <CheckboxInput
+        label={label}
+        isLabelHidden
+        value={!!checked}
+        onChange={(_, e) => onChange?.(e)}
+        isDisabled={disabled}
+      />
+    );
   }
   // dates, numbers and file pickers keep the browser's own control
   if (!isText(type)) {
@@ -117,19 +147,47 @@ type SearchFieldProps = {
 };
 
 /** Put it inside a <form>. */
-export function SearchField({ value, onChange, placeholder, autoFocus, label = "Search", clearable }: SearchFieldProps) {
+export function SearchField({
+  value,
+  onChange,
+  placeholder,
+  autoFocus,
+  label = "Search",
+  clearable,
+}: SearchFieldProps) {
   return (
     <div className="search-field">
-      <Input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} aria-label={label} autoFocus={autoFocus} />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={label}
+        autoFocus={autoFocus}
+      />
       {clearable && value && (
-        <Button kind="search-clear" type="button" aria-label="Clear search" onClick={() => onChange("")}><Ico.XCircle /></Button>
+        <Button kind="search-clear" type="button" aria-label="Clear search" onClick={() => onChange("")}>
+          <Ico.XCircle />
+        </Button>
       )}
-      <Button kind="search-go" aria-label="Search"><Ico.Search /></Button>
+      <Button kind="search-go" aria-label="Search">
+        <Ico.Search />
+      </Button>
     </div>
   );
 }
 
-export function Textarea({ value, onChange, placeholder, disabled, autoFocus, rows, maxLength, name, className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  autoFocus,
+  rows,
+  maxLength,
+  name,
+  className,
+  ...rest
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <TextArea
       label={rest["aria-label"] || placeholder || name || "Text"}
@@ -147,14 +205,41 @@ export function Textarea({ value, onChange, placeholder, disabled, autoFocus, ro
   );
 }
 
-export function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: [string, string][] }) {
+export function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: [string, string][];
+}) {
   const items = options.map(([v, l]) => ({ value: v, label: l }));
   return <Selector label={label} isLabelHidden size="sm" value={value} onChange={onChange} options={items} />;
 }
 
-export function Modal({ title, onClose, children, width = 460 }: { title: string; onClose: () => void; children: ReactNode; width?: number }) {
+export function Modal({
+  title,
+  onClose,
+  children,
+  width = 460,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  width?: number;
+}) {
   return (
-    <Dialog isOpen onOpenChange={open => { if (!open) onClose(); }} width={width} purpose="form">
+    <Dialog
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      width={width}
+      purpose="form"
+    >
       <DialogHeader title={title} onOpenChange={() => onClose()} />
       {children}
     </Dialog>
@@ -186,12 +271,26 @@ function Confirm({ a, close }: { a: Ask; close: () => void }) {
   };
   return (
     <Modal title={a.title} onClose={close}>
-      <form className="form confirm" onSubmit={e => { e.preventDefault(); go(); }}>
+      <form
+        className="form confirm"
+        onSubmit={(e) => {
+          e.preventDefault();
+          go();
+        }}
+      >
         {a.body && <p className="muted">{a.body}</p>}
-        {err && <p className="form-error" role="alert">{err}</p>}
+        {err && (
+          <p className="form-error" role="alert">
+            {err}
+          </p>
+        )}
         <div className="row">
-          <Button kind={a.danger ? "btn danger" : "btn"} loading={busy} autoFocus>{a.action}</Button>
-          <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+          <Button kind={a.danger ? "btn danger" : "btn"} loading={busy} autoFocus>
+            {a.action}
+          </Button>
+          <Button kind="btn ghost" type="button" onClick={close}>
+            Cancel
+          </Button>
         </div>
       </form>
     </Modal>
@@ -201,7 +300,14 @@ function Confirm({ a, close }: { a: Ask; close: () => void }) {
 export function Pages({ page, pages, onChange }: { page: number; pages: number; onChange: (p: number) => void }) {
   return (
     <div className="pager">
-      <Pagination label="Pagination" page={page} totalPages={pages} onChange={onChange} variant="pages" siblingCount={1} />
+      <Pagination
+        label="Pagination"
+        page={page}
+        totalPages={pages}
+        onChange={onChange}
+        variant="pages"
+        siblingCount={1}
+      />
     </div>
   );
 }

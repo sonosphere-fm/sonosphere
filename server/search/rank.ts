@@ -3,7 +3,8 @@ import type { FoundArtist } from "../../shared/search";
 
 // Must match mbkey() in the MusicBrainz copy.
 export const looseKey = (s: string) =>
-  s.normalize("NFKD")
+  s
+    .normalize("NFKD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
     .replace(/&/g, "and")
@@ -22,8 +23,10 @@ function textScore(key: string, q: string): number {
 const lengthPenalty = (key: string, q: string) => Math.min(15, Math.max(0, key.length - q.length) * 0.4);
 
 // names of uploads, fan pages and tribute acts rather than artists: "Radiohead - Topic", "Radiohead • Lossless"
-const JUNK = /( - topic$|•|\||\blossless\b|\bvevo\b|\bofficial\b|\bfan ?(page|club|account)?\b|\bcover(s|ed)?\b|\btribute\b|\bkaraoke\b|\bsucks\b|\bunofficial\b|\bbootlegs?\b|\bleaks?\b|\barchive\b|\btopic$)/i;
-const junkWords = /^(\d+|ii|iii|tribute|cover|covers|band|fans?|sucks|lossless|topic|official|vevo|archive|leaks?|brasil|brazil|br|mx)$/;
+const JUNK =
+  /( - topic$|•|\||\blossless\b|\bvevo\b|\bofficial\b|\bfan ?(page|club|account)?\b|\bcover(s|ed)?\b|\btribute\b|\bkaraoke\b|\bsucks\b|\bunofficial\b|\bbootlegs?\b|\bleaks?\b|\barchive\b|\btopic$)/i;
+const junkWords =
+  /^(\d+|ii|iii|tribute|cover|covers|band|fans?|sucks|lossless|topic|official|vevo|archive|leaks?|brasil|brazil|br|mx)$/;
 
 type Ranked = { a: FoundArtist; score: number; key: string; releases: number; mbOnly: boolean };
 
@@ -32,7 +35,7 @@ type Ranked = { a: FoundArtist; score: number; key: string; releases: number; mb
 function isJunk(s: Ranked, above: Ranked[]): boolean {
   if (/^\[.*\]$/.test(s.a.name) || JUNK.test(s.a.name)) return true;
   const flat = s.key.replace(/ /g, "");
-  return above.some(b => {
+  return above.some((b) => {
     if (b.releases < 5 * (s.releases + 1)) return false;
     const bFlat = b.key.replace(/ /g, "");
     let base: string;
@@ -42,7 +45,7 @@ function isJunk(s: Ranked, above: Ranked[]): boolean {
     const subject = base === b.key ? s.key : flat;
     if (base === subject) return false;
     const rest = subject.slice(base.length).trim();
-    return rest.split(" ").every(w => junkWords.test(w)) || /^(sucks|fan|tribute|cover)/.test(rest);
+    return rest.split(" ").every((w) => junkWords.test(w)) || /^(sucks|fan|tribute|cover)/.test(rest);
   });
 }
 
@@ -88,7 +91,13 @@ export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: str
 type Titled = { id: number; title: string; artist: string; image: string | null; listeners: number };
 
 /** Ours and MusicBrainz's albums or tracks in one list; ones only MusicBrainz knows get negative ids like artists. */
-export function rankTitles<T extends Titled>(ours: T[], theirs: TitleHit[], typed: string, limit: number, stub: (h: TitleHit) => T): T[] {
+export function rankTitles<T extends Titled>(
+  ours: T[],
+  theirs: TitleHit[],
+  typed: string,
+  limit: number,
+  stub: (h: TitleHit) => T
+): T[] {
   const q = looseKey(typed);
   const both = (title: string, artist: string) => `${looseKey(title)}\n${looseKey(artist)}`;
   const known = new Map<string, TitleHit>();
@@ -101,7 +110,7 @@ export function rankTitles<T extends Titled>(ours: T[], theirs: TitleHit[], type
     return textScore(key, q) - lengthPenalty(key, q);
   };
   const fame = (h: TitleHit | undefined) => (h ? 10 * Math.log10(1 + h.n) : 0);
-  const scored = ours.map(t => {
+  const scored = ours.map((t) => {
     const k = both(t.title, t.artist);
     const mb = known.get(k);
     known.delete(k);

@@ -8,8 +8,8 @@ import * as repo from "./repo";
 import { wantBare } from "../metadata/wanted";
 
 export async function tagPage(tag: Tag, viewerId: number | undefined): Promise<TagPage> {
-  const artists = wantBare("artist", await repo.taggedArtists(tag.id, 60), r => r.id);
-  const artistIds = artists.map(a => a.id);
+  const artists = wantBare("artist", await repo.taggedArtists(tag.id, 60), (r) => r.id);
+  const artistIds = artists.map((a) => a.id);
   return {
     id: tag.id,
     name: tag.name,
@@ -29,14 +29,17 @@ export async function suggest(typed: string, userId: number | undefined): Promis
   if (q) return repo.matchingTags(q, 8);
   const recent = userId ? await repo.recentTags(userId, 12) : [];
   const popular = await repo.popularTags(24);
-  const seen = new Set(recent.map(t => t.name));
-  return [...recent, ...popular.filter(t => !seen.has(t.name))].slice(0, 24);
+  const seen = new Set(recent.map((t) => t.name));
+  return [...recent, ...popular.filter((t) => !seen.has(t.name))].slice(0, 24);
 }
 
 // A list, or one comma-separated string.
 export function namesFrom(input: unknown): string[] {
   const raw: unknown[] = Array.isArray(input) ? input : String(input || "").split(",");
-  const names = raw.map(t => clean(t, 40)).filter(Boolean).slice(0, 10);
+  const names = raw
+    .map((t) => clean(t, 40))
+    .filter(Boolean)
+    .slice(0, 10);
   return names.length ? names : bad("Enter at least one tag");
 }
 

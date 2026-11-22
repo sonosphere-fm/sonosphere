@@ -24,13 +24,21 @@ type MusicHeroProps = {
 };
 
 const MHERO = "hero bg-site-panel p-0 min-h-[300px] flex flex-col max-[700px]:min-h-0";
-const MHERO_INNER = "wrap flex-1 flex flex-col justify-end gap-3.5 pt-14 pb-[26px] *:max-w-[760px] max-[700px]:pt-7 max-[700px]:pb-[18px] max-[700px]:gap-3";
+const MHERO_INNER =
+  "wrap flex-1 flex flex-col justify-end gap-3.5 pt-14 pb-[26px] *:max-w-[760px] max-[700px]:pt-7 max-[700px]:pb-[18px] max-[700px]:gap-3";
 const MHERO_OVER = "text-[18px] font-semibold -mb-2 max-[700px]:text-[15px] max-[700px]:-mb-1.5 [&_a]:text-site-link";
 
 export function MusicHero({ image, cover, over, title, actions, stats, cards, tabs, children }: MusicHeroProps) {
   return (
     <div className={MHERO}>
-      {image ? <ImageWithFallback className={cover ? "mhero-img cover" : "mhero-img"} src={imageUrl(image)} alt="" loading="eager" /> : null}
+      {image ? (
+        <ImageWithFallback
+          className={cover ? "mhero-img cover" : "mhero-img"}
+          src={imageUrl(image)}
+          alt=""
+          loading="eager"
+        />
+      ) : null}
       <div className={MHERO_INNER}>
         {over && <div className={MHERO_OVER}>{over}</div>}
         <h1 className="text-[54px] leading-[1.05]">{title}</h1>
@@ -50,7 +58,9 @@ export function HeroStat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col leading-[1.15]">
       <span className="text-[11px] text-site-muted uppercase tracking-[.06em]">{label}</span>
-      <b className="text-[22px] font-site-display" title={num(value)}>{short(value)}</b>
+      <b className="text-[22px] font-site-display" title={num(value)}>
+        {short(value)}
+      </b>
     </div>
   );
 }
@@ -79,7 +89,8 @@ export function FeatureCard({ label, to, image, title, sub }: FeatureCardProps) 
 // Noon keeps a bare date from shifting a day in any timezone; year-only dates pass through.
 export const releaseDate = (d: string) => (d.length > 4 ? date(Date.parse(d + "T12:00:00") / 1000) : d);
 
-export const SIDE_LINKS = "flex gap-3.5 mt-3 mb-0 text-[14px] [&>a+a]:pl-3.5 [&>a+a]:border-l [&>a+a]:border-l-site-line";
+export const SIDE_LINKS =
+  "flex gap-3.5 mt-3 mb-0 text-[14px] [&>a+a]:pl-3.5 [&>a+a]:border-l [&>a+a]:border-l-site-line";
 
 const ABOUT = "section grid grid-cols-[minmax(0,1fr)_220px] gap-x-8 gap-y-4 max-[700px]:grid-cols-[minmax(0,1fr)]";
 
@@ -102,7 +113,9 @@ type AboutProps = { wiki: WikiVersion | null; to: string; facts: [string, ReactN
 export function About({ wiki, to, facts, children }: AboutProps) {
   return (
     <section className={ABOUT}>
-      <div><WikiSummary wiki={wiki} to={to} flush /></div>
+      <div>
+        <WikiSummary wiki={wiki} to={to} flush />
+      </div>
       <dl className="m-0 text-[14px]">
         {facts.map(([k, v]) => (
           <div key={k} className="flex gap-3 py-1.5 first:pt-0 border-b border-b-site-line">
@@ -116,7 +129,8 @@ export function About({ wiki, to, facts, children }: AboutProps) {
   );
 }
 
-const BY_ARTIST = "group flex items-center gap-3.5 text-site-ink *:flex *:flex-col *:min-w-0 [&>.art]:w-[84px] [&>.art]:flex-none";
+const BY_ARTIST =
+  "group flex items-center gap-3.5 text-site-ink *:flex *:flex-col *:min-w-0 [&>.art]:w-[84px] [&>.art]:flex-none";
 
 export function ByArtist({ name, image }: { name: string; image?: string | null }) {
   return (
@@ -125,7 +139,9 @@ export function ByArtist({ name, image }: { name: string; image?: string | null 
         <Art image={image} kind="artist" />
         <span>
           <strong className="text-[18px] group-hover:underline">{name}</strong>
-          <span className="text-[14px] text-site-link">View artist <Ico.Right /></span>
+          <span className="text-[14px] text-site-link">
+            View artist <Ico.Right />
+          </span>
         </span>
       </Link>
     </Section>
@@ -134,7 +150,7 @@ export function ByArtist({ name, image }: { name: string; image?: string | null 
 
 export function Trend({ data }: { data: TrendPoint[] }) {
   const weeks = weekTrend(data);
-  if (weeks.every(w => !w.value)) return null;
+  if (weeks.every((w) => !w.value)) return null;
   return (
     <Section title="Scrobble stats">
       <BarChart data={weeks} height={110} every={5} />
@@ -147,25 +163,31 @@ export function Listeners({ items, more }: { items: Listener[]; more?: string })
   if (!items.length) return null;
   return (
     <Section title="Listeners" more={more} moreLabel="View all listeners" foot>
-      <div className="listeners2"><UserList items={items} /></div>
+      <div className="listeners2">
+        <UserList items={items} />
+      </div>
     </Section>
   );
 }
 
-const TRENDING_LIST = "list-none m-0 p-0 grid grid-cols-6 gap-4 max-[900px]:grid-cols-3 max-[900px]:gap-x-3.5 max-[900px]:gap-y-5 max-[700px]:grid-cols-2";
-const TRENDING_ITEM = "grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 items-baseline text-site-ink hover:text-site-link hover:underline [&>.art]:col-span-full [&>.art]:mb-2";
+const TRENDING_LIST =
+  "list-none m-0 p-0 grid grid-cols-6 gap-4 max-[900px]:grid-cols-3 max-[900px]:gap-x-3.5 max-[900px]:gap-y-5 max-[700px]:grid-cols-2";
+const TRENDING_ITEM =
+  "grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 items-baseline text-site-ink hover:text-site-link hover:underline [&>.art]:col-span-full [&>.art]:mb-2";
 
 export function TrendingBand() {
   const q = useApi<Charts>("/charts?kind=tracks&limit=6");
   // Every item is a track with kind=tracks; the filter narrows the type.
-  const items = (q.data?.items ?? []).filter(t => "duration" in t);
+  const items = (q.data?.items ?? []).filter((t) => "duration" in t);
   if (!items.length) return null;
   return (
     <div className="trending bg-site-panel text-site-ink pt-[34px] pb-10 [border-block-style:none]">
       <div className="wrap">
         <header className="flex items-baseline gap-3 mb-[18px]">
           <h2 className="flex-1 text-[24px] text-site-ink">Trending tracks</h2>
-          <Link className="more text-site-link font-medium hover:underline" to="/charts?kind=tracks">View all trending tracks <Ico.Right /></Link>
+          <Link className="more text-site-link font-medium hover:underline" to="/charts?kind=tracks">
+            View all trending tracks <Ico.Right />
+          </Link>
         </header>
         <ol className={TRENDING_LIST}>
           {items.map((t, i) => (
@@ -175,7 +197,12 @@ export function TrendingBand() {
                 <b className="text-[22px] text-site-link font-site-display">{i + 1}</b>
                 <strong className="truncate">{t.title}</strong>
               </Link>
-              <Link className="truncate text-[13px] text-site-muted hover:text-site-link hover:underline" to={artistUrl(t.artist)}>{t.artist}</Link>
+              <Link
+                className="truncate text-[13px] text-site-muted hover:text-site-link hover:underline"
+                to={artistUrl(t.artist)}
+              >
+                {t.artist}
+              </Link>
             </li>
           ))}
         </ol>

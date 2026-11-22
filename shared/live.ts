@@ -5,7 +5,12 @@ export type PublicNowPlaying = {
   t: "nowplaying";
   user: { username: string };
   nowPlaying: {
-    trackId: number; title: string; artist: string; album: string | null;
-    duration: number; startedAt: number; imageUrl: string | null;
+    trackId: number;
+    title: string;
+    artist: string;
+    album: string | null;
+    duration: number;
+    startedAt: number;
+    imageUrl: string | null;
   } | null;
 };

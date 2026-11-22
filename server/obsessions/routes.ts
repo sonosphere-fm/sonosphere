@@ -15,20 +15,22 @@ async function trackId(b: Body): Promise<number> {
   return (await requireTrack(text(b.artist), text(b.track))).id;
 }
 
-router.get<Obsessions>("/api/user/obsessions", async c => {
+router.get<Obsessions>("/api/user/obsessions", async (c) => {
   const u = await requireUser(c.q.get("name"));
-  return { items: wantCovers(await repo.obsessionsOf(u.id, c.user?.id), r => r.trackId) };
+  return { items: wantCovers(await repo.obsessionsOf(u.id, c.user?.id), (r) => r.trackId) };
 });
 
-router.post<ObsessionCreated>("/api/obsessions", async c => {
+router.post<ObsessionCreated>("/api/obsessions", async (c) => {
   const u = confirmed(need(c));
   await throttle(`obsession:${u.id}`, 30, 3600);
   const id = await trackId(c.body);
-  const comment = String(c.body.comment || "").trim().slice(0, 300);
+  const comment = String(c.body.comment || "")
+    .trim()
+    .slice(0, 300);
   return { id: await repo.addObsession(u.id, id, comment) };
 });
 
-router.delete<ObsessionRemoved>("/api/obsessions/:id", async c => {
+router.delete<ObsessionRemoved>("/api/obsessions/:id", async (c) => {
   const id = Number(c.params[0]);
   await repo.removeObsession(id, need(c).id);
   return { ok: true };

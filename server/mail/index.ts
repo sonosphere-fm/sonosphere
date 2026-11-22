@@ -27,13 +27,13 @@ function smtpConfig() {
 const smtp = smtpConfig();
 const transport = smtp
   ? nodemailer.createTransport({
-    ...smtp,
-    // the EHLO name; otherwise it would be this machine's host name
-    name: new URL(SITE_URL).hostname,
-    connectionTimeout: 15_000,
-    greetingTimeout: 15_000,
-    socketTimeout: 30_000,
-  })
+      ...smtp,
+      // the EHLO name; otherwise it would be this machine's host name
+      name: new URL(SITE_URL).hostname,
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 30_000,
+    })
   : nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "unix" });
 const DEV_DIR = join(env.DATA_DIR || "data", "mail");
 
@@ -42,7 +42,10 @@ export type Mail = { to: string; subject: string; text: string; html: string };
 export async function send(m: Mail): Promise<void> {
   await db.insert(outbox).values({ ...m, nextAt: now(), createdAt: now() });
   queueMicrotask(() => {
-    deliver().catch(e => { console.error("mail:", e); Sentry.captureException(e); });
+    deliver().catch((e) => {
+      console.error("mail:", e);
+      Sentry.captureException(e);
+    });
   });
 }
 
@@ -52,7 +55,8 @@ const day = () => new Date().toISOString().slice(0, 10);
 
 // Composed here rather than by nodemailer, whose composer stamps X-Mailer, its name in part boundaries and its own Message-ID style.
 const DOMAIN = (/@([^>\s]+)>?\s*$/.exec(FROM)?.[1] || new URL(SITE_URL).hostname).toLowerCase();
-const hex = (n: number) => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => b.toString(16).padStart(2, "0")).join("");
+const hex = (n: number) =>
+  Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => b.toString(16).padStart(2, "0")).join("");
 const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64").replace(/.{76}/g, "$&\r\n");
 const word = (s: string) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s, "utf8").toString("base64")}?=`);
 const addressOf = (s: string) => /<([^>]+)>/.exec(s)?.[1] ?? s.trim();
@@ -64,7 +68,9 @@ const named = (s: string) => {
 function compose(m: Mail): string {
   const boundary = hex(14);
   const part = (type: string, body: string) =>
-    [`--${boundary}`, `Content-Type: ${type}; charset=utf-8`, "Content-Transfer-Encoding: base64", "", b64(body)].join("\r\n");
+    [`--${boundary}`, `Content-Type: ${type}; charset=utf-8`, "Content-Transfer-Encoding: base64", "", b64(body)].join(
+      "\r\n"
+    );
   return [
     `From: ${named(FROM)}`,
     `To: ${m.to}`,
@@ -93,7 +99,10 @@ async function sendOne(m: Mail): Promise<void> {
 async function holdUntilTomorrow() {
   const t = new Date();
   t.setUTCHours(24, 5, 0, 0);
-  await db.update(outbox).set({ nextAt: Math.floor(t.getTime() / 1000) }).where(lte(outbox.nextAt, now()));
+  await db
+    .update(outbox)
+    .set({ nextAt: Math.floor(t.getTime() / 1000) })
+    .where(lte(outbox.nextAt, now()));
   console.error("mail: daily limit reached, holding the rest until tomorrow");
 }
 
@@ -120,7 +129,8 @@ export async function deliver(): Promise<void> {
           } else {
             console.error(`mail: "${r.subject}" failed (try ${r.attempts + 1}), retrying in ${gap}s: ${msg}`);
             Sentry.captureException(e);
-            await db.update(outbox)
+            await db
+              .update(outbox)
               .set({ attempts: r.attempts + 1, nextAt: now() + gap, error: msg })
               .where(eq(outbox.id, r.id));
           }

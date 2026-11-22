@@ -5,7 +5,20 @@ import { ago, albumUrl, api, artistUrl, num, plural, qs, tagUrl, trackUrl, useAp
 import { Async, Empty, Pager } from "../ui/base";
 import { CHECK, COMPACT_LIST, FILTERBAR, PICKED_ROW, SCROLL, SEARCH, TABLE } from "./common";
 import { TOOLBAR, WIDE_SEARCH, useQuery, useConfirm, useAction2, useFlash } from "./common";
-import type { AdminTagList, CatalogueDetails, CatalogueDuplicates, CatalogueItem, CatalogueMerged, CatalogueSearch, Ok, OrphanList, OrphansDeleted, TagDeleted, Tracklist, TracklistTrack } from "../../shared/admin-content";
+import type {
+  AdminTagList,
+  CatalogueDetails,
+  CatalogueDuplicates,
+  CatalogueItem,
+  CatalogueMerged,
+  CatalogueSearch,
+  Ok,
+  OrphanList,
+  OrphansDeleted,
+  TagDeleted,
+  Tracklist,
+  TracklistTrack,
+} from "../../shared/admin-content";
 import { Ico } from "../icons";
 
 const KIND_LABEL: Record<string, string> = { artist: "Artists", album: "Albums", track: "Tracks" };
@@ -31,8 +44,18 @@ export function Catalogue() {
     <>
       <div className={TOOLBAR}>
         <nav className="tabs sub">
-          {[["duplicates", "Duplicate artists"], ["browse", "Edit and merge"], ["orphans", "Orphans"], ["tags", "Tags"]].map(([k, l]) => (
-            <button key={k} type="button" className={tab === k ? "active" : ""} onClick={() => set({ tab: k === "duplicates" ? "" : k, kind: "", q: "" })}>
+          {[
+            ["duplicates", "Duplicate artists"],
+            ["browse", "Edit and merge"],
+            ["orphans", "Orphans"],
+            ["tags", "Tags"],
+          ].map(([k, l]) => (
+            <button
+              key={k}
+              type="button"
+              className={tab === k ? "active" : ""}
+              onClick={() => set({ tab: k === "duplicates" ? "" : k, kind: "", q: "" })}
+            >
               {l}
             </button>
           ))}
@@ -55,56 +78,81 @@ function Duplicates() {
     <>
       {modal}
       <p className="muted">
-        Artists whose names only differ by case, accents, punctuation, “the” or “&amp;”. Pick the one to keep; the rest are merged into it with their
-        tracks, albums, scrobbles, tags, wiki history and wall posts. Tracks and albums with the same title are combined.
+        Artists whose names only differ by case, accents, punctuation, “the” or “&amp;”. Pick the one to keep; the rest
+        are merged into it with their tracks, albums, scrobbles, tags, wiki history and wall posts. Tracks and albums
+        with the same title are combined.
       </p>
       {flash.note}
-      <Async q={q}>{d => {
-        if (d.groups.length === 0) return <Empty>No likely duplicates.</Empty>;
-        return (
-          <div className="grid gap-3">
-            {d.groups.map((g, gi) => {
-              const keep = target[gi] ?? g[0].id;
-              const kept = g.find(a => a.id === keep)!;
-              const rest = g.filter(a => a.id !== keep);
-              const mergeAll = async (note: string) => {
-                let done = 0;
-                for (const a of rest) {
-                  await api<CatalogueMerged>("/admin/catalogue/merge", { body: { kind: "artist", source: a.id, target: keep, note } });
-                  done++;
-                }
-                q.reload();
-                flash.set({ ok: true, text: `Merged ${plural(done, "artist")} into ${kept.name}.` });
-              };
-              const askMerge = () => ask({
-                title: `Merge into ${kept.name}`,
-                action: `Merge ${rest.length}`,
-                danger: true,
-                body: <p>Merge {rest.map(a => `“${a.name}”`).join(", ")} into “{kept.name}”. The merged artists are deleted. This can't be undone.</p>,
-                run: mergeAll,
-              });
-              return (
-                <div key={g.map(a => a.id).join("-")} className={GROUP}>
-                  <ul className="list-none m-[0_0_10px] p-0">
-                    {g.map(a => (
-                      <li key={a.id}>
-                        <label className={RADIO}>
-                          <input className="accent-site-accent" type="radio" name={`dup-${gi}`} checked={a.id === keep} onChange={() => setTarget({ ...target, [gi]: a.id })} />
-                          <span className="grow"><b>{a.name}</b> <Link className="muted small" to={artistUrl(a.name)}>view</Link></span>
-                          <span className="muted small">{plural(a.scrobbles, "scrobble")} · {plural(a.tracks, "track")} · {plural(a.albums, "album")}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button kind="btn ghost small" type="button" onClick={askMerge}>
-                    Keep “{kept.name}”, merge {rest.length} other{rest.length === 1 ? "" : "s"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        );
-      }}</Async>
+      <Async q={q}>
+        {(d) => {
+          if (d.groups.length === 0) return <Empty>No likely duplicates.</Empty>;
+          return (
+            <div className="grid gap-3">
+              {d.groups.map((g, gi) => {
+                const keep = target[gi] ?? g[0].id;
+                const kept = g.find((a) => a.id === keep)!;
+                const rest = g.filter((a) => a.id !== keep);
+                const mergeAll = async (note: string) => {
+                  let done = 0;
+                  for (const a of rest) {
+                    await api<CatalogueMerged>("/admin/catalogue/merge", {
+                      body: { kind: "artist", source: a.id, target: keep, note },
+                    });
+                    done++;
+                  }
+                  q.reload();
+                  flash.set({ ok: true, text: `Merged ${plural(done, "artist")} into ${kept.name}.` });
+                };
+                const askMerge = () =>
+                  ask({
+                    title: `Merge into ${kept.name}`,
+                    action: `Merge ${rest.length}`,
+                    danger: true,
+                    body: (
+                      <p>
+                        Merge {rest.map((a) => `“${a.name}”`).join(", ")} into “{kept.name}”. The merged artists are
+                        deleted. This can't be undone.
+                      </p>
+                    ),
+                    run: mergeAll,
+                  });
+                return (
+                  <div key={g.map((a) => a.id).join("-")} className={GROUP}>
+                    <ul className="list-none m-[0_0_10px] p-0">
+                      {g.map((a) => (
+                        <li key={a.id}>
+                          <label className={RADIO}>
+                            <input
+                              className="accent-site-accent"
+                              type="radio"
+                              name={`dup-${gi}`}
+                              checked={a.id === keep}
+                              onChange={() => setTarget({ ...target, [gi]: a.id })}
+                            />
+                            <span className="grow">
+                              <b>{a.name}</b>{" "}
+                              <Link className="muted small" to={artistUrl(a.name)}>
+                                view
+                              </Link>
+                            </span>
+                            <span className="muted small">
+                              {plural(a.scrobbles, "scrobble")} · {plural(a.tracks, "track")} ·{" "}
+                              {plural(a.albums, "album")}
+                            </span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button kind="btn ghost small" type="button" onClick={askMerge}>
+                      Keep “{kept.name}”, merge {rest.length} other{rest.length === 1 ? "" : "s"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }}
+      </Async>
     </>
   );
 }
@@ -151,55 +199,87 @@ function Browse() {
         <Select
           label="Kind"
           value={kind}
-          onChange={v => set({ kind: v === "artist" ? "" : v })}
-          options={[["artist", "Artists"], ["album", "Albums"], ["track", "Tracks"]]}
+          onChange={(v) => set({ kind: v === "artist" ? "" : v })}
+          options={[
+            ["artist", "Artists"],
+            ["album", "Albums"],
+            ["track", "Tracks"],
+          ]}
         />
         <form className={SEARCH} onSubmit={search}>
-          <SearchField value={text} onChange={setText} placeholder={`Search ${KIND_LABEL[kind].toLowerCase()}`} clearable />
+          <SearchField
+            value={text}
+            onChange={setText}
+            placeholder={`Search ${KIND_LABEL[kind].toLowerCase()}`}
+            clearable
+          />
         </form>
       </div>
       {flash.note}
-      <Async q={q}>{d => (
-        <>
-          <p className="muted small">{num(d.total)} {KIND_LABEL[kind].toLowerCase()}</p>
-          {d.items.length === 0 ? <Empty>Nothing matches.</Empty> : (
-            <div className={SCROLL}>
-              <table className={TABLE}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    {kind !== "artist" && <th>Artist</th>}
-                    {kind !== "track" && <th className="num">Tracks</th>}
-                    {kind === "artist" && <th className="num">Albums</th>}
-                    <th className="num">Scrobbles</th>
-                    <th className="num">#</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.items.map(it => (
-                    <tr key={it.id}>
-                      <td><Link className="strong" to={itemUrl(kind, it)}>{it.name}</Link></td>
-                      {kind !== "artist" && <td>{it.artist}</td>}
-                      {kind !== "track" && <td className="num">{num(it.tracks)}</td>}
-                      {kind === "artist" && <td className="num">{num(it.albums)}</td>}
-                      <td className="num">{num(it.scrobbles)}</td>
-                      <td className="num muted small">{it.id}</td>
-                      <td className="nowrap right">
-                        <Button kind="link small" type="button" onClick={() => setRename(it)}>Rename</Button>{" "}
-                        <Button kind="link small" type="button" onClick={() => setDetails(it)}>Details</Button>{" "}
-                        <Button kind="link small" type="button" onClick={() => setMerge(it)}>Merge into…</Button>
-                        {kind === "album" && <>{" "}<Button kind="link small" type="button" onClick={() => setEditing(it)}>Track list</Button></>}
-                      </td>
+      <Async q={q}>
+        {(d) => (
+          <>
+            <p className="muted small">
+              {num(d.total)} {KIND_LABEL[kind].toLowerCase()}
+            </p>
+            {d.items.length === 0 ? (
+              <Empty>Nothing matches.</Empty>
+            ) : (
+              <div className={SCROLL}>
+                <table className={TABLE}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      {kind !== "artist" && <th>Artist</th>}
+                      {kind !== "track" && <th className="num">Tracks</th>}
+                      {kind === "artist" && <th className="num">Albums</th>}
+                      <th className="num">Scrobbles</th>
+                      <th className="num">#</th>
+                      <th />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <Pager total={d.total} limit={d.limit} />
-        </>
-      )}</Async>
+                  </thead>
+                  <tbody>
+                    {d.items.map((it) => (
+                      <tr key={it.id}>
+                        <td>
+                          <Link className="strong" to={itemUrl(kind, it)}>
+                            {it.name}
+                          </Link>
+                        </td>
+                        {kind !== "artist" && <td>{it.artist}</td>}
+                        {kind !== "track" && <td className="num">{num(it.tracks)}</td>}
+                        {kind === "artist" && <td className="num">{num(it.albums)}</td>}
+                        <td className="num">{num(it.scrobbles)}</td>
+                        <td className="num muted small">{it.id}</td>
+                        <td className="nowrap right">
+                          <Button kind="link small" type="button" onClick={() => setRename(it)}>
+                            Rename
+                          </Button>{" "}
+                          <Button kind="link small" type="button" onClick={() => setDetails(it)}>
+                            Details
+                          </Button>{" "}
+                          <Button kind="link small" type="button" onClick={() => setMerge(it)}>
+                            Merge into…
+                          </Button>
+                          {kind === "album" && (
+                            <>
+                              {" "}
+                              <Button kind="link small" type="button" onClick={() => setEditing(it)}>
+                                Track list
+                              </Button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <Pager total={d.total} limit={d.limit} />
+          </>
+        )}
+      </Async>
       {rename && <RenameDialog kind={kind} item={rename} close={() => setRename(null)} done={renamed} />}
       {merge && <MergeDialog kind={kind} item={merge} close={() => setMerge(null)} done={merged} />}
       {editing && <TracklistDialog item={editing} close={() => setEditing(null)} done={edited} />}
@@ -226,13 +306,21 @@ export function RenameDialog({ kind, item, close, done }: RenameProps) {
     <Modal title={`Rename ${kind}`} onClose={close}>
       <form className="form" onSubmit={submit}>
         <p className="muted small">
-          {item.artist ? `${item.name} by ${item.artist}` : item.name}. Every scrobble, tag and page follows the new name. If the name is taken, merge instead.
+          {item.artist ? `${item.name} by ${item.artist}` : item.name}. Every scrobble, tag and page follows the new
+          name. If the name is taken, merge instead.
         </p>
-        <label>New name<Input value={name} onChange={e => setName(e.target.value)} autoFocus aria-label="New name" /></label>
+        <label>
+          New name
+          <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus aria-label="New name" />
+        </label>
         {act.note}
         <div className="row">
-          <Button kind="btn" loading={act.busy} disabled={!name.trim() || name.trim() === item.name}>Rename</Button>
-          <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+          <Button kind="btn" loading={act.busy} disabled={!name.trim() || name.trim() === item.name}>
+            Rename
+          </Button>
+          <Button kind="btn ghost" type="button" onClick={close}>
+            Cancel
+          </Button>
         </div>
       </form>
     </Modal>
@@ -252,7 +340,9 @@ function MergeDialog({ kind, item, close, done }: DialogProps & { item: Catalogu
     e.preventDefault();
     if (!pick) return;
     act.run(async () => {
-      const r = await api<CatalogueMerged>("/admin/catalogue/merge", { body: { kind, source: item.id, target: pick.id } });
+      const r = await api<CatalogueMerged>("/admin/catalogue/merge", {
+        body: { kind, source: item.id, target: pick.id },
+      });
       const counts = r.merged !== undefined ? ` (${r.merged} combined, ${r.moved} moved)` : "";
       done(`Merged “${item.name}” into “${pick.name}”${counts}.`);
     });
@@ -261,7 +351,8 @@ function MergeDialog({ kind, item, close, done }: DialogProps & { item: Catalogu
     <Modal title={`Merge ${kind}`} onClose={close}>
       <div className="form">
         <p className="small">
-          Move everything from <b>{item.name}</b>{item.artist && <> by {item.artist}</>} (#{item.id}) into another {kind}, then delete it.
+          Move everything from <b>{item.name}</b>
+          {item.artist && <> by {item.artist}</>} (#{item.id}) into another {kind}, then delete it.
         </p>
         {!pick ? (
           <>
@@ -269,19 +360,31 @@ function MergeDialog({ kind, item, close, done }: DialogProps & { item: Catalogu
               <SearchField value={text} onChange={setText} placeholder={`Find the ${kind} to keep`} autoFocus />
             </form>
             <Suspense fallback={<p className="muted small">Searching…</p>}>
-              <MergeResults kind={kind} term={term} fallback={item.artist} skip={[item.id]} pickLabel="Keep this" onPick={setPick} />
+              <MergeResults
+                kind={kind}
+                term={term}
+                fallback={item.artist}
+                skip={[item.id]}
+                pickLabel="Keep this"
+                onPick={setPick}
+              />
             </Suspense>
           </>
         ) : (
           <form className="form" onSubmit={submit}>
             <p className="notice">
               Merge <b>{item.name}</b> (#{item.id}, {num(item.scrobbles)} scrobbles) into <b>{pick.name}</b>
-              {pick.artist && <> by {pick.artist}</>} (#{pick.id}, {num(pick.scrobbles)} scrobbles)? This can't be undone.
+              {pick.artist && <> by {pick.artist}</>} (#{pick.id}, {num(pick.scrobbles)} scrobbles)? This can't be
+              undone.
             </p>
             {act.note}
             <div className="row">
-              <Button kind="btn danger" loading={act.busy}>Merge</Button>
-              <Button kind="btn ghost" type="button" onClick={() => setPick(null)}>Pick another</Button>
+              <Button kind="btn danger" loading={act.busy}>
+                Merge
+              </Button>
+              <Button kind="btn ghost" type="button" onClick={() => setPick(null)}>
+                Pick another
+              </Button>
             </div>
           </form>
         )}
@@ -302,7 +405,7 @@ export function DetailsDialog(props: DialogProps) {
 
 function DetailsLoader(props: DialogProps) {
   const q = useApi<CatalogueDetails>(`/admin/catalogue/details${qs({ kind: props.kind, id: props.item.id })}`);
-  return <Async q={q}>{d => <DetailsForm {...props} initial={d} />}</Async>;
+  return <Async q={q}>{(d) => <DetailsForm {...props} initial={d} />}</Async>;
 }
 
 const RELEASE_TYPES: [string, string][] = [
@@ -335,7 +438,9 @@ function DetailsForm({ kind, item, initial, close, done }: DialogProps & { initi
       album: { releaseDate, releaseType, mbid },
       track: { duration: seconds(length || "0") },
     };
-    const changed = Object.entries(fields[kind]!).filter(([k, v]) => v !== (initial[k as keyof CatalogueDetails] ?? ""));
+    const changed = Object.entries(fields[kind]!).filter(
+      ([k, v]) => v !== (initial[k as keyof CatalogueDetails] ?? "")
+    );
     act.run(async () => {
       await api<Ok>("/admin/catalogue/details", { body: { kind, id: item.id, ...Object.fromEntries(changed) } });
       done(`Saved the details of “${item.name}”.`);
@@ -343,20 +448,45 @@ function DetailsForm({ kind, item, initial, close, done }: DialogProps & { initi
   };
   return (
     <form className="form" onSubmit={submit}>
-      <p className="muted small">{item.artist ? `${item.name} by ${item.artist}` : item.name}. Every change is logged and can be undone from the audit log.</p>
+      <p className="muted small">
+        {item.artist ? `${item.name} by ${item.artist}` : item.name}. Every change is logged and can be undone from the
+        audit log.
+      </p>
       {kind === "album" && (
         <>
-          <label>Release date <span className="muted small">YYYY or YYYY-MM-DD</span><Input value={releaseDate} onChange={e => setReleaseDate(e.target.value)} autoFocus /></label>
+          <label>
+            Release date <span className="muted small">YYYY or YYYY-MM-DD</span>
+            <Input value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} autoFocus />
+          </label>
           <Select label="Release type" value={releaseType} onChange={setReleaseType} options={RELEASE_TYPES} />
         </>
       )}
-      {kind === "track" && <label>Length <span className="muted small">minutes:seconds</span><Input value={length} onChange={e => setLength(e.target.value)} autoFocus /></label>}
-      {kind !== "track" && <label>MusicBrainz ID<Input value={mbid} onChange={e => setMbid(e.target.value)} /></label>}
-      {kind === "artist" && <label>Spotify ID<Input value={spotifyId} onChange={e => setSpotifyId(e.target.value)} /></label>}
+      {kind === "track" && (
+        <label>
+          Length <span className="muted small">minutes:seconds</span>
+          <Input value={length} onChange={(e) => setLength(e.target.value)} autoFocus />
+        </label>
+      )}
+      {kind !== "track" && (
+        <label>
+          MusicBrainz ID
+          <Input value={mbid} onChange={(e) => setMbid(e.target.value)} />
+        </label>
+      )}
+      {kind === "artist" && (
+        <label>
+          Spotify ID
+          <Input value={spotifyId} onChange={(e) => setSpotifyId(e.target.value)} />
+        </label>
+      )}
       {act.note}
       <div className="row">
-        <Button kind="btn" loading={act.busy}>Save</Button>
-        <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+        <Button kind="btn" loading={act.busy}>
+          Save
+        </Button>
+        <Button kind="btn ghost" type="button" onClick={close}>
+          Cancel
+        </Button>
       </div>
     </form>
   );
@@ -378,7 +508,7 @@ const TRACK_ROW = "flex items-center gap-2 py-1 border-b border-site-line";
 
 function TracklistEditor({ item, close, done }: TracklistProps) {
   const q = useApi<Tracklist>(`/admin/catalogue/tracklist${qs({ id: item.id })}`);
-  return <Async q={q}>{d => <TracklistForm item={item} initial={d.tracks} close={close} done={done} />}</Async>;
+  return <Async q={q}>{(d) => <TracklistForm item={item} initial={d.tracks} close={close} done={done} />}</Async>;
 }
 
 function TracklistForm({ item, initial, close, done }: TracklistProps & { initial: TracklistTrack[] }) {
@@ -386,8 +516,8 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
   const [text, setText] = useState(item.artist ?? "");
   const [term, setTerm] = useState(item.artist ?? "");
   const act = useAction2();
-  const ids = list.map(t => t.id);
-  const changed = ids.join() !== initial.map(t => t.id).join();
+  const ids = list.map((t) => t.id);
+  const changed = ids.join() !== initial.map((t) => t.id).join();
   const move = (i: number, by: number) => {
     const next = [...list];
     [next[i], next[i + by]] = [next[i + by]!, next[i]!];
@@ -400,23 +530,27 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
     setText("");
     setTerm(item.artist ?? "");
   };
-  const listed = list.some(t => t.name.toLowerCase() === term.toLowerCase());
+  const listed = list.some((t) => t.name.toLowerCase() === term.toLowerCase());
   const offerNew = term !== "" && term !== item.artist && !listed;
   const search = (e: FormEvent) => {
     e.preventDefault();
     setTerm(text.trim());
   };
-  const save = () => act.run(async () => {
-    const tracks = list.map(t => (t.id > 0 ? t.id : t.name));
-    await api<Ok>("/admin/catalogue/tracklist", { body: { id: item.id, tracks } });
-    done(`Saved the track list of “${item.name}” (${plural(list.length, "track")}).`);
-  });
+  const save = () =>
+    act.run(async () => {
+      const tracks = list.map((t) => (t.id > 0 ? t.id : t.name));
+      await api<Ok>("/admin/catalogue/tracklist", { body: { id: item.id, tracks } });
+      done(`Saved the track list of “${item.name}” (${plural(list.length, "track")}).`);
+    });
   return (
     <div className="form">
       <p className="muted small">
-        {item.name} by {item.artist}. Once saved, scrobbles stop adding tracks to this album, so removed tracks stay off. To add a song nobody has scrobbled yet, search its title and add it as a new track.
+        {item.name} by {item.artist}. Once saved, scrobbles stop adding tracks to this album, so removed tracks stay
+        off. To add a song nobody has scrobbled yet, search its title and add it as a new track.
       </p>
-      {list.length === 0 ? <p className="muted small">No tracks.</p> : (
+      {list.length === 0 ? (
+        <p className="muted small">No tracks.</p>
+      ) : (
         <ol className="list-none w-full m-0 p-0 max-h-[40vh] overflow-auto">
           {list.map((t, i) => (
             <li key={t.id} className={TRACK_ROW}>
@@ -426,23 +560,47 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
                 {t.artist !== item.artist && <span className="muted"> by {t.artist}</span>}
                 {t.id < 0 && <span className="muted small"> new</span>}
               </span>
-              <Button kind="link small" type="button" aria-label={`Move ${t.name} up`} disabled={i === 0} onClick={() => move(i, -1)}><Ico.SortUp /></Button>
-              <Button kind="link small" type="button" aria-label={`Move ${t.name} down`} disabled={i === list.length - 1} onClick={() => move(i, 1)}><Ico.SortDown /></Button>
-              <Button kind="link small" type="button" onClick={() => setList(list.filter(x => x.id !== t.id))}>Remove</Button>
+              <Button
+                kind="link small"
+                type="button"
+                aria-label={`Move ${t.name} up`}
+                disabled={i === 0}
+                onClick={() => move(i, -1)}
+              >
+                <Ico.SortUp />
+              </Button>
+              <Button
+                kind="link small"
+                type="button"
+                aria-label={`Move ${t.name} down`}
+                disabled={i === list.length - 1}
+                onClick={() => move(i, 1)}
+              >
+                <Ico.SortDown />
+              </Button>
+              <Button kind="link small" type="button" onClick={() => setList(list.filter((x) => x.id !== t.id))}>
+                Remove
+              </Button>
             </li>
           ))}
         </ol>
       )}
       {act.note}
       <div className="row">
-        <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>Save</Button>
-        <Button kind="btn ghost" type="button" onClick={close}>Cancel</Button>
+        <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>
+          Save
+        </Button>
+        <Button kind="btn ghost" type="button" onClick={close}>
+          Cancel
+        </Button>
       </div>
       <form className={WIDE_SEARCH} onSubmit={search}>
         <SearchField value={text} onChange={setText} placeholder="Find a track to add" />
       </form>
       {offerNew && (
-        <Button kind="btn ghost small" type="button" onClick={addNew}>Add “{term}” as a new track</Button>
+        <Button kind="btn ghost small" type="button" onClick={addNew}>
+          Add “{term}” as a new track
+        </Button>
       )}
       <Suspense fallback={<p className="muted small">Searching…</p>}>
         <MergeResults kind="track" term={term} fallback={item.artist} skip={ids} pickLabel="Add" onPick={add} />
@@ -464,26 +622,42 @@ type MergeResultsProps = {
 function MergeResults({ kind, term, fallback, skip, pickLabel, onPick }: MergeResultsProps) {
   const q = useApi<CatalogueSearch>(`/admin/catalogue/search${qs({ kind, q: term, limit: 8 })}`);
   return (
-    <Async q={q}>{d => {
-      const items = d.items.filter(x => !skip.includes(x.id));
-      if (items.length === 0 && fallback && fallback !== term) {
-        return <MergeResults kind={kind} term={fallback} fallback={null} skip={skip} pickLabel={pickLabel} onPick={onPick} />;
-      }
-      if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
-      return (
-        <ul className={`${COMPACT_LIST} max-h-[320px] overflow-auto [&>li]:items-center`}>
-          {items.map(x => (
-            <li key={x.id}>
-              <span>
-                <b>{x.name}</b>{x.artist && <span className="muted"> by {x.artist}</span>}{" "}
-                <span className="muted small">#{x.id} · {plural(x.scrobbles, "scrobble")}</span>
-              </span>
-              <Button kind="btn ghost small" type="button" onClick={() => onPick(x)}>{pickLabel}</Button>
-            </li>
-          ))}
-        </ul>
-      );
-    }}</Async>
+    <Async q={q}>
+      {(d) => {
+        const items = d.items.filter((x) => !skip.includes(x.id));
+        if (items.length === 0 && fallback && fallback !== term) {
+          return (
+            <MergeResults
+              kind={kind}
+              term={fallback}
+              fallback={null}
+              skip={skip}
+              pickLabel={pickLabel}
+              onPick={onPick}
+            />
+          );
+        }
+        if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
+        return (
+          <ul className={`${COMPACT_LIST} max-h-[320px] overflow-auto [&>li]:items-center`}>
+            {items.map((x) => (
+              <li key={x.id}>
+                <span>
+                  <b>{x.name}</b>
+                  {x.artist && <span className="muted"> by {x.artist}</span>}{" "}
+                  <span className="muted small">
+                    #{x.id} · {plural(x.scrobbles, "scrobble")}
+                  </span>
+                </span>
+                <Button kind="btn ghost small" type="button" onClick={() => onPick(x)}>
+                  {pickLabel}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        );
+      }}
+    </Async>
   );
 }
 
@@ -509,13 +683,18 @@ function Orphans() {
     const skipped = r.skipped ? `, skipped ${num(r.skipped)} now in use` : "";
     flash.set({ ok: true, text: `Deleted ${num(r.deleted)}${skipped}.` });
   };
-  const askDelete = () => ask({
-    title: `Delete ${plural(picked.size, kind)}`,
-    action: "Delete",
-    danger: true,
-    body: <p>Permanently delete the selected {label}. Anything that started being used since this list loaded is skipped.</p>,
-    run: deletePicked,
-  });
+  const askDelete = () =>
+    ask({
+      title: `Delete ${plural(picked.size, kind)}`,
+      action: "Delete",
+      danger: true,
+      body: (
+        <p>
+          Permanently delete the selected {label}. Anything that started being used since this list loaded is skipped.
+        </p>
+      ),
+      run: deletePicked,
+    });
   const togglePick = (id: number, on: boolean) => {
     const n = new Set(picked);
     if (on) n.add(id);
@@ -529,49 +708,83 @@ function Orphans() {
         <Select
           label="Kind"
           value={kind}
-          onChange={v => set({ kind: v === "track" ? "" : v })}
-          options={[["track", "Tracks"], ["album", "Albums"], ["artist", "Artists"]]}
+          onChange={(v) => set({ kind: v === "track" ? "" : v })}
+          options={[
+            ["track", "Tracks"],
+            ["album", "Albums"],
+            ["artist", "Artists"],
+          ]}
         />
         <label className={CHECK}>
-          <Input type="checkbox" checked={imported === "1"} onChange={e => set({ imported: e.target.checked ? "1" : "" })} /> Include imported items with play counts
+          <Input
+            type="checkbox"
+            checked={imported === "1"}
+            onChange={(e) => set({ imported: e.target.checked ? "1" : "" })}
+          />{" "}
+          Include imported items with play counts
         </label>
       </div>
       <p className="muted small">
-        Nobody has scrobbled, loved, tagged, written about or playlisted these{ORPHAN_EXTRA[kind] ?? ""}. Each one is checked again before it's deleted.
+        Nobody has scrobbled, loved, tagged, written about or playlisted these{ORPHAN_EXTRA[kind] ?? ""}. Each one is
+        checked again before it's deleted.
       </p>
       {flash.note}
-      <Async q={q}>{d => {
-        const all = picked.size === d.items.length;
-        const toggleAll = () => setPicked(new Set(all ? [] : d.items.map(x => x.id)));
-        return (
-          <>
-            <div className="bulk-bar">
-              <b>{num(d.total)} orphaned {label}</b>
-              {d.total > d.items.length && <span className="muted small">(showing the newest {d.items.length})</span>}
-              {d.items.length > 0 && <Button kind="link small" type="button" onClick={toggleAll}>{all ? "Select none" : "Select all"}</Button>}
-              {picked.size > 0 && <Button kind="btn danger small" type="button" onClick={askDelete}>Delete {picked.size} selected</Button>}
-            </div>
-            {d.items.length === 0 ? <Empty>Nothing to clean up.</Empty> : (
-              <div className={SCROLL}>
-                <table className={TABLE}>
-                  <tbody>
-                    {d.items.map(x => (
-                      <tr key={x.id} className={picked.has(x.id) ? PICKED_ROW : ""}>
-                        <td className="w-7">
-                          <Input type="checkbox" aria-label={`Select ${x.name}`} checked={picked.has(x.id)} onChange={e => togglePick(x.id, e.target.checked)} />
-                        </td>
-                        <td><b>{x.name}</b>{x.artist && <span className="muted"> by {x.artist}</span>}</td>
-                        <td className="num muted small">{x.basePlaycount ? `${num(x.basePlaycount)} imported plays` : ""}</td>
-                        <td className="nowrap muted small">added {ago(x.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      <Async q={q}>
+        {(d) => {
+          const all = picked.size === d.items.length;
+          const toggleAll = () => setPicked(new Set(all ? [] : d.items.map((x) => x.id)));
+          return (
+            <>
+              <div className="bulk-bar">
+                <b>
+                  {num(d.total)} orphaned {label}
+                </b>
+                {d.total > d.items.length && <span className="muted small">(showing the newest {d.items.length})</span>}
+                {d.items.length > 0 && (
+                  <Button kind="link small" type="button" onClick={toggleAll}>
+                    {all ? "Select none" : "Select all"}
+                  </Button>
+                )}
+                {picked.size > 0 && (
+                  <Button kind="btn danger small" type="button" onClick={askDelete}>
+                    Delete {picked.size} selected
+                  </Button>
+                )}
               </div>
-            )}
-          </>
-        );
-      }}</Async>
+              {d.items.length === 0 ? (
+                <Empty>Nothing to clean up.</Empty>
+              ) : (
+                <div className={SCROLL}>
+                  <table className={TABLE}>
+                    <tbody>
+                      {d.items.map((x) => (
+                        <tr key={x.id} className={picked.has(x.id) ? PICKED_ROW : ""}>
+                          <td className="w-7">
+                            <Input
+                              type="checkbox"
+                              aria-label={`Select ${x.name}`}
+                              checked={picked.has(x.id)}
+                              onChange={(e) => togglePick(x.id, e.target.checked)}
+                            />
+                          </td>
+                          <td>
+                            <b>{x.name}</b>
+                            {x.artist && <span className="muted"> by {x.artist}</span>}
+                          </td>
+                          <td className="num muted small">
+                            {x.basePlaycount ? `${num(x.basePlaycount)} imported plays` : ""}
+                          </td>
+                          <td className="nowrap muted small">added {ago(x.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          );
+        }}
+      </Async>
     </>
   );
 }
@@ -589,16 +802,18 @@ function Tags() {
     e.preventDefault();
     set({ q: text.trim() });
   };
-  const askDelete = (g: { id: number; name: string; uses: number }) => ask({
-    title: `Delete tag “${g.name}”`,
-    action: "Delete tag",
-    danger: true,
-    body: <p>Removes the tag from {plural(g.uses, "item")}, along with its wiki and wall. This can't be undone.</p>,
-    run: note => api<TagDeleted>("/admin/tags/delete", { body: { id: g.id, note } }).then(() => {
-      q.reload();
-      flash.set({ ok: true, text: `Deleted “${g.name}”.` });
-    }),
-  });
+  const askDelete = (g: { id: number; name: string; uses: number }) =>
+    ask({
+      title: `Delete tag “${g.name}”`,
+      action: "Delete tag",
+      danger: true,
+      body: <p>Removes the tag from {plural(g.uses, "item")}, along with its wiki and wall. This can't be undone.</p>,
+      run: (note) =>
+        api<TagDeleted>("/admin/tags/delete", { body: { id: g.id, note } }).then(() => {
+          q.reload();
+          flash.set({ ok: true, text: `Deleted “${g.name}”.` });
+        }),
+    });
   return (
     <>
       {modal}
@@ -606,40 +821,60 @@ function Tags() {
         <form className={SEARCH} onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder="Search tags" clearable />
         </form>
-        <Select label="Sort" value={sort} onChange={v => set({ sort: v === "uses" ? "" : v })} options={[["uses", "Most used"], ["name", "A to Z"]]} />
+        <Select
+          label="Sort"
+          value={sort}
+          onChange={(v) => set({ sort: v === "uses" ? "" : v })}
+          options={[
+            ["uses", "Most used"],
+            ["name", "A to Z"],
+          ]}
+        />
       </div>
       {flash.note}
-      <Async q={q}>{d => (
-        <>
-          {d.items.length === 0 ? <Empty>No tags match.</Empty> : (
-            <div className={SCROLL}>
-              <table className={TABLE}>
-                <thead>
-                  <tr>
-                    <th>Tag</th>
-                    <th className="num">Uses</th>
-                    <th className="num">By listeners</th>
-                    <th className="num">Imported</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.items.map(g => (
-                    <tr key={g.id}>
-                      <td><Link className="strong" to={tagUrl(g.name)}>{g.name}</Link></td>
-                      <td className="num">{num(g.uses)}</td>
-                      <td className="num">{num(g.users)}</td>
-                      <td className="num">{num(g.imported ?? 0)}</td>
-                      <td className="right"><Button kind="link small" type="button" onClick={() => askDelete(g)}>Delete</Button></td>
+      <Async q={q}>
+        {(d) => (
+          <>
+            {d.items.length === 0 ? (
+              <Empty>No tags match.</Empty>
+            ) : (
+              <div className={SCROLL}>
+                <table className={TABLE}>
+                  <thead>
+                    <tr>
+                      <th>Tag</th>
+                      <th className="num">Uses</th>
+                      <th className="num">By listeners</th>
+                      <th className="num">Imported</th>
+                      <th />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <Pager total={d.total} limit={d.limit} />
-        </>
-      )}</Async>
+                  </thead>
+                  <tbody>
+                    {d.items.map((g) => (
+                      <tr key={g.id}>
+                        <td>
+                          <Link className="strong" to={tagUrl(g.name)}>
+                            {g.name}
+                          </Link>
+                        </td>
+                        <td className="num">{num(g.uses)}</td>
+                        <td className="num">{num(g.users)}</td>
+                        <td className="num">{num(g.imported ?? 0)}</td>
+                        <td className="right">
+                          <Button kind="link small" type="button" onClick={() => askDelete(g)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <Pager total={d.total} limit={d.limit} />
+          </>
+        )}
+      </Async>
     </>
   );
 }

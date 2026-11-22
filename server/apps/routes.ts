@@ -20,16 +20,17 @@ function callbackUrl(raw: unknown): string {
   } catch {
     return bad("The callback URL isn't a valid URL");
   }
-  if (["javascript:", "data:", "vbscript:", "file:", "blob:", "about:"].includes(u.protocol)) bad("That kind of callback URL isn't allowed");
+  if (["javascript:", "data:", "vbscript:", "file:", "blob:", "about:"].includes(u.protocol))
+    bad("That kind of callback URL isn't allowed");
   return u.href;
 }
 
-router.get<Apps>("/api/apps", async c => {
+router.get<Apps>("/api/apps", async (c) => {
   const u = need(c);
   return { items: await repo.appsOf(u.id), sessions: await repo.sessionsOf(u.id) };
 });
 
-router.post<AppOk>("/api/apps", async c => {
+router.post<AppOk>("/api/apps", async (c) => {
   const u = confirmed(need(c));
   const name = clean(c.body.name, 60) || bad("Give the application a name");
   const cb = callbackUrl(c.body.callbackUrl);
@@ -46,27 +47,30 @@ router.post<AppOk>("/api/apps", async c => {
   return { ok: true };
 });
 
-router.patch<AppOk>("/api/apps/:id", async c => {
+router.patch<AppOk>("/api/apps/:id", async (c) => {
   await repo.setCallback(Number(c.params[0]), need(c).id, callbackUrl(c.body.callbackUrl));
   return { ok: true };
 });
 
-router.delete<AppOk>("/api/apps/:id", async c => {
+router.delete<AppOk>("/api/apps/:id", async (c) => {
   const id = Number(c.params[0]);
   await repo.deleteApp(id, need(c).id);
   return { ok: true };
 });
 
-router.post<AppOk>("/api/apps/revoke", async c => {
+router.post<AppOk>("/api/apps/revoke", async (c) => {
   const key = String(c.body.key);
   await repo.revokeSession(key, need(c).id);
   return { ok: true };
 });
 
-router.get<AppInfo>("/api/apps/lookup", async c => (await repo.appByKey(c.q.get("api_key") ?? "")) ?? missing("Application"));
+router.get<AppInfo>(
+  "/api/apps/lookup",
+  async (c) => (await repo.appByKey(c.q.get("api_key") ?? "")) ?? missing("Application")
+);
 
 // Desktop sign-in brings the token from auth.getToken; web sign-in brings none, so one is made here, already approved.
-router.post<AppAuthorized>("/api/apps/authorize", async c => {
+router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
   const u = need(c);
   const apiKey = String(c.body.api_key ?? "");
   const app = (await repo.appByKey(apiKey)) ?? missing("Application");

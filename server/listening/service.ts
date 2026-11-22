@@ -9,7 +9,13 @@ import { listeningChanged } from "../realtime";
 import type { EditScope, Report, ScrobbleResult } from "../../shared/listening";
 
 /** Nothing about it has been checked yet. */
-export type ScrobbleInput = { artist?: unknown; track?: unknown; album?: unknown; timestamp?: unknown; duration?: unknown };
+export type ScrobbleInput = {
+  artist?: unknown;
+  track?: unknown;
+  album?: unknown;
+  timestamp?: unknown;
+  duration?: unknown;
+};
 
 const OLDEST = 946684800;
 
@@ -67,10 +73,14 @@ export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], sour
       checked.push(n ? { ...n, playedAt: ts } : refused("Artist and track are required"));
     }
   }
-  const filed = await repo.recordScrobbles(userId, checked.filter(c => "playedAt" in c), source);
+  const filed = await repo.recordScrobbles(
+    userId,
+    checked.filter((c) => "playedAt" in c),
+    source
+  );
   if (filed.some(Boolean)) listeningChanged(userId, "scrobbles");
   let i = 0;
-  return checked.map(c => {
+  return checked.map((c) => {
     if (!("playedAt" in c)) return c;
     const r = filed[i++];
     if (!r) return refused("Duplicate scrobble");
@@ -95,7 +105,13 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
  * One week (Monday to Sunday) or calendar year in the listener's time zone. `offset` counts back from the
  * current one; `tzMin` is their offset from UTC in minutes.
  */
-export async function report(userId: number, type: "week" | "year", offset: number, tzMin: number, viewerId = 0): Promise<Report> {
+export async function report(
+  userId: number,
+  type: "week" | "year",
+  offset: number,
+  tzMin: number,
+  viewerId = 0
+): Promise<Report> {
   const tz = Math.round(tzMin) * 60;
   const localNow = new Date((now() + tz) * 1000);
   let start: number;
@@ -104,7 +120,8 @@ export async function report(userId: number, type: "week" | "year", offset: numb
   let keys: string[];
   if (type === "week") {
     const dow = (localNow.getUTCDay() + 6) % 7;
-    const monday = Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), localNow.getUTCDate() - dow - 7 * offset) / 1000;
+    const monday =
+      Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), localNow.getUTCDate() - dow - 7 * offset) / 1000;
     start = monday - tz;
     end = start + 7 * 86400;
     prevStart = start - 7 * 86400;
@@ -120,9 +137,9 @@ export async function report(userId: number, type: "week" | "year", offset: numb
   const cur: repo.Scope = { userId, from: start, to: end, viewerId };
   const prev: repo.Scope = { userId, from: prevStart, to: start };
   const bucketRows = await repo.series(cur, type === "week" ? "day" : "month", tzMin);
-  const buckets = new Map(bucketRows.map(r => [String(r.k), r.c]));
+  const buckets = new Map(bucketRows.map((r) => [String(r.k), r.c]));
   const hourRows = await repo.series(cur, "hour", tzMin);
-  const hours = new Map(hourRows.map(r => [Number(r.k), r.c]));
+  const hours = new Map(hourRows.map((r) => [Number(r.k), r.c]));
   const fresh = await repo.newArtists(userId, start, end);
   return {
     type,
@@ -146,7 +163,8 @@ export async function report(userId: number, type: "week" | "year", offset: numb
 export async function editScrobble(id: number, input: ScrobbleInput): Promise<void> {
   const ref = (await resolve(input)) ?? bad("Artist and track are required");
   const albumId = clean(input.album) ? ref.albumId : null;
-  if (!(await repo.refileScrobble(id, { ...ref, albumId }))) bad("You already have that track scrobbled at the same time");
+  if (!(await repo.refileScrobble(id, { ...ref, albumId })))
+    bad("You already have that track scrobbled at the same time");
 }
 
 /** Names are used as typed (no community corrections). Returns how many plays changed. */
@@ -163,7 +181,8 @@ export async function editScrobbles(src: repo.Scrobble, scope: EditScope, input:
 export async function importLoved(userId: number, list: unknown[]): Promise<number> {
   const entries: { artist: string; track: string; lovedAt: number }[] = [];
   for (const item of list) {
-    const t: { artist?: unknown; track?: unknown; timestamp?: unknown } = typeof item === "object" && item !== null ? item : {};
+    const t: { artist?: unknown; track?: unknown; timestamp?: unknown } =
+      typeof item === "object" && item !== null ? item : {};
     const artist = clean(t.artist);
     const track = clean(t.track);
     if (!artist || !track) continue;

@@ -8,7 +8,7 @@ import type { Dashboard } from "../../shared/admin";
 export const router = new Router({ jsonOnly: true });
 const DAY = 86400;
 
-router.get<Dashboard>("/api/admin/dashboard", async c => {
+router.get<Dashboard>("/api/admin/dashboard", async (c) => {
   staff(c);
   const t = now();
   const today = Math.floor(t / DAY) * DAY;
