@@ -1,5 +1,6 @@
 // A provider email that belongs to an existing account is refused rather than linked, so nobody can take over an
 // account by showing up with the same address; the owner connects the provider from settings instead.
+import { recordChange } from "../../account/history";
 import { need } from "../../guards";
 import { bad, ipOf, limit, Router, type Ctx } from "../../http";
 import { getJson, setJson, takeJson } from "../../kv";
@@ -115,7 +116,10 @@ router.get("/api/auth/oauth/:provider/callback", async (c) => {
     const u = await findById(link.userId);
     if (!u) return failTo(c, "login", "failed");
     if (u.banned) return failTo(c, "login", "banned");
-    if (link.name !== who.name) await repo.renameLink(p.id, who.subject, who.name);
+    if (link.name !== who.name) {
+      await repo.renameLink(p.id, who.subject, who.name);
+      await recordChange(u.id, `${p.id} name`, link.name, who.name);
+    }
     await startSession(c.headers, u.id);
     return go(c, st.next);
   }

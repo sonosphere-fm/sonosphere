@@ -26,6 +26,8 @@ import {
 import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
+import { CopyLink } from "../../ui/copy-link";
+import { shortUrl } from "../../../shared/paths";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
 import { UserLabels } from "../../ui/user-labels";
@@ -118,6 +120,7 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
         <Button kind="btn ghost" href="/scrobble">
           Scrobble manually
         </Button>
+        <CopyLink url={shortUrl(u.username)} />
       </>
     );
   }
@@ -125,6 +128,7 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
     <>
       {!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={onChange} />}
       {!u.hidden && <StationButton type="library" name={u.username} label="Play library" ghost />}
+      <CopyLink url={shortUrl(u.username)} />
       {me && !u.blocked && (
         <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>
           Message

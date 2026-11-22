@@ -238,6 +238,21 @@ export const albumFolds = pgTable(
   (table) => [primaryKey({ columns: [table.artistId, table.titleNorm] }), index("album_folds_album").on(table.albumId)]
 );
 
+// where a merged-away artist, album or track went, so short links to it still resolve
+export const catalogueMoves = pgTable(
+  "catalogue_moves",
+  {
+    kind: text().notNull(),
+    fromId: integer("from_id").notNull(),
+    toId: integer("to_id").notNull(),
+    movedAt: integer("moved_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.kind, table.fromId] }),
+    index("catalogue_moves_to").on(table.kind, table.toId),
+  ]
+);
+
 export const tracks = pgTable(
   "tracks",
   {
@@ -691,6 +706,22 @@ export const usernameHistory = pgTable(
     index("username_history_user").on(table.userId, table.id),
     index("username_history_name").on(table.previousNorm, table.reservedUntil),
   ]
+);
+
+// Kept for staff audit only; nothing reads it back. Usernames have their own history above.
+export const accountHistory = pgTable(
+  "account_history",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    field: text().notNull(),
+    previous: text().notNull(),
+    next: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [index("account_history_user").on(table.userId, table.id)]
 );
 
 export const auditLog = pgTable(

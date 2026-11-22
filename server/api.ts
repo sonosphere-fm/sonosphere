@@ -23,6 +23,7 @@ import { router as reports } from "./reports/routes";
 import { router as search } from "./search/routes";
 import { router as shouts } from "./shouts/routes";
 import { router as site } from "./site/routes";
+import { router as short } from "./site/short";
 import { router as stations } from "./stations/routes";
 import { router as tags } from "./tags/routes";
 import { router as users } from "./users/routes";
@@ -45,6 +46,7 @@ export const api = new Router().include(
   usernameFont,
   images,
   site,
+  short,
   changelog,
   home,
   search,

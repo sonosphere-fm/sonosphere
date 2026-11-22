@@ -22,6 +22,8 @@ import {
 import { Art, Async, Empty, Pager, PeriodPicker, Section, Tabs, Pane } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { Grid, TrackList, UserList } from "../../ui/lists";
+import { CopyLink } from "../../ui/copy-link";
+import { shortMusicUrl } from "../../../shared/paths";
 import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger, TagChips } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
@@ -200,6 +202,7 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
                 <>
                   <PlayButton queue={a.topTracks} label="Play artist" />
                   <StationButton type="artist" name={a.name} label="Artist radio" ghost />
+                  <CopyLink url={shortMusicUrl("a", a.id)} />
                   {me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}
                   {me?.admin && (
                     <Suspense fallback={null}>
