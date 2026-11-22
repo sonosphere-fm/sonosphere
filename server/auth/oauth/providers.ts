@@ -9,6 +9,7 @@ export type Provider = {
   authorizeUrl: string;
   tokenUrl: string;
   scope: string;
+  params?: Record<string, string>;
   pkce: boolean;
   profile: (accessToken: string) => Promise<Profile>;
 };
@@ -61,6 +62,26 @@ const ALL: Provider[] = [
         subject: String(u.sub),
         name: email ?? "",
         email,
+        emailVerified: u.email_verified === true,
+      };
+    },
+  },
+  {
+    id: "twitch",
+    label: "Twitch",
+    clientId: env.TWITCH_CLIENT_ID || "",
+    clientSecret: env.TWITCH_CLIENT_SECRET || "",
+    authorizeUrl: "https://id.twitch.tv/oauth2/authorize",
+    tokenUrl: "https://id.twitch.tv/oauth2/token",
+    scope: "openid user:read:email",
+    params: { claims: JSON.stringify({ userinfo: { email: null, email_verified: null, preferred_username: null } }) },
+    pkce: false,
+    async profile(token) {
+      const u = await getJson("https://id.twitch.tv/oauth2/userinfo", token);
+      return {
+        subject: String(u.sub),
+        name: String(u.preferred_username ?? ""),
+        email: typeof u.email === "string" ? u.email.toLowerCase() : null,
         emailVerified: u.email_verified === true,
       };
     },

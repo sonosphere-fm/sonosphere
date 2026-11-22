@@ -68,6 +68,7 @@ router.get("/api/auth/oauth/:provider/start", async (c) => {
     response_type: "code",
     scope: p.scope,
     state,
+    ...p.params,
   }).toString();
   if (verifier) {
     const challenge = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
