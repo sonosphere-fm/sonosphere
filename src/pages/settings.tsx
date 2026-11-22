@@ -1116,7 +1116,7 @@ function AppSettings() {
         </p>
         <p>
           Players that support ListenBrainz can scrobble here too: set the server URL to{" "}
-          <code>{window.location.origin}</code> and paste a token.
+          <code>{window.location.origin}</code> and paste a token. <Link to="/help#listenbrainz">Setup details</Link>.
         </p>
         {token ? (
           <p>

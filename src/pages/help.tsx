@@ -5,6 +5,7 @@ import { TITLES, useTitle } from "../lib";
 const SECTIONS: [string, string][] = [
   ["spotify", "Spotify"],
   ["pano-scrobbler", "Pano Scrobbler"],
+  ["listenbrainz", "ListenBrainz apps"],
   ["other-apps", "Other scrobblers"],
   ["manual", "Manual scrobbles and imports"],
 ];
@@ -59,6 +60,21 @@ export function Help() {
             </Link>{" "}
             first. You don't need an API account: Pano uses its built-in key and secret <code>panoScrobbler</code>.
           </p>
+          <h2 id="listenbrainz">ListenBrainz apps</h2>
+          <p>
+            Players and scrobblers that support ListenBrainz (multi-scrobbler, Navidrome, Jellyfin plugins, Pano and
+            others) can send plays here instead.
+          </p>
+          <ol>
+            <li>
+              Open {applications} and choose <b>Create ListenBrainz token</b>. Copy the token: it is only shown once.
+            </li>
+            <li>
+              In the app, set the ListenBrainz server or API URL to <code>{origin}</code> and paste the token. If the
+              app wants the full API address, use <code>{origin}/1/</code>.
+            </li>
+            <li>Play music. The token shows up under {applications}, where you can disconnect it at any time.</li>
+          </ol>
           <h2 id="other-apps">Other scrobblers</h2>
           <p>Any player that supports the Last.fm 2.0 protocol and lets you change its server can scrobble here.</p>
           <ul>
