@@ -751,7 +751,7 @@ function AppSettings() {
         <div className="services"><SpotifySettings /></div>
       </Section>
       <Section title="Connected applications">
-        <p>To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed. <Link to="/developers#pano-scrobbler">Setup details</Link>.</p>
+        <p>To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed. <Link to="/help#pano-scrobbler">Setup details</Link>.</p>
         <Async q={q}>
           {d => d.sessions.length ? (
             <ul className="plain">

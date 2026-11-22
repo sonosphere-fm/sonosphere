@@ -1,6 +1,6 @@
 import { Ico } from "../../icons";
 import { Lyrics } from "../../ui/lyrics";
-import { useState, type FormEvent, Suspense } from "react";
+import { lazy, useState, type FormEvent, Suspense } from "react";
 import { Button, Input, Modal } from "../../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { albumUrl, api, artistUrl, dec, dur, plural, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
@@ -15,6 +15,8 @@ import type { ScrobbleResponse } from "../../../shared/listening";
 import type { ObsessionCreated } from "../../../shared/obsessions";
 import type { PlaylistCreated, PlaylistOk, UserPlaylists } from "../../../shared/playlists";
 import { MusicHero, HeroStat, FeatureCard, YourScrobbles, About, ByArtist, Trend, Listeners, TrendingBand } from "./entity";
+
+const AdminTools = lazy(() => import("../../admin/page-tools").then(m => ({ default: m.AdminTools })));
 
 type ModalProps = { track: Pick<TrackData, "id" | "title">; onClose: () => void };
 
@@ -131,6 +133,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                   <Button kind="btn ghost" loading={act.busy} onClick={() => scrobbleNow(t)}>Scrobble now</Button>
                 </>
               )}
+              {me?.admin && <Suspense fallback={null}><AdminTools kind="track" item={{ id: t.id, name: t.title, artist: t.artist }} onDone={q.reload} /></Suspense>}
             </>
           }
         >
