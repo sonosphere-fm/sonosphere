@@ -5,6 +5,7 @@ import { clean } from "../util";
 import * as repo from "./repo";
 import { requireOwn, trackToAdd } from "./service";
 import type { PlaylistCreated, PlaylistOk, PlaylistPage, UserPlaylists } from "../../shared/playlists";
+import { wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
@@ -22,7 +23,7 @@ router.get<PlaylistPage>("/api/playlist/:id", async c => {
     owner: p.owner,
     createdAt: p.createdAt,
     mine: c.user?.id === p.userId,
-    tracks: await repo.tracksOn(p.id, c.user?.id),
+    tracks: wantCovers(await repo.tracksOn(p.id, c.user?.id), r => r.id),
   };
 });
 

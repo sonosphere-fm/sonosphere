@@ -6,7 +6,7 @@ import { getJson, setJson } from "../kv";
 import { now } from "../util";
 import { scoresFor } from "./model";
 import * as repo from "./repo";
-import { wantBare } from "../metadata/wanted";
+import { wantBare, wantCovers } from "../metadata/wanted";
 
 export const similarArtists = async (artistId: number, limit = 12): Promise<SimilarArtist[]> =>
   wantBare("artist", await repo.similarArtistRows(artistId, limit), r => r.id);
@@ -20,7 +20,7 @@ export async function similarTracks(trackId: number, artistId: number, viewerId 
     const { items } = await topTracks({ artistId: id, viewerId, global: true }, take + 1);
     out.push(...items.filter(t => t.id !== trackId).slice(0, take));
   }
-  return wantBare("track", out.slice(0, limit), t => t.id);
+  return wantCovers(out.slice(0, limit), t => t.id);
 }
 
 export async function neighbours(userId: number, limit = 20): Promise<Neighbour[]> {
@@ -277,5 +277,5 @@ export async function recommendations(userId: number, viewerId: number, artistLi
   }
   const cards = new Map((await repo.trackCards(chosen, viewerId)).map(c => [c.id, c]));
   const tracks = chosen.map(id => cards.get(id)).filter((t): t is TopTrack => !!t);
-  return { artists: wantBare("artist", artists, a => a.id), tracks: wantBare("track", tracks, t => t.id) };
+  return { artists: wantBare("artist", artists, a => a.id), tracks: wantCovers(tracks, t => t.id) };
 }

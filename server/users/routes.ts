@@ -13,6 +13,7 @@ import { canSee, canSeeCharts, requireUser } from "./service";
 import type { Report } from "../../shared/listening";
 import type { FollowResult, Neighbours, People, Profile, UserArtistLibrary, UserLoved, UserRecent, UserTags, UserTop } from "../../shared/users";
 import { limit } from "../trust/service";
+import { wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
@@ -60,7 +61,7 @@ router.get<UserLoved>("/api/user/loved", async c => {
   const u = await requireUser(c.q.get("name"));
   const pg = paging(c.q);
   if (!canSeeCharts(u, c.user)) return { items: [], total: 0, hidden: true, ...pg };
-  const items = await repo.lovedTracksOf(u.id, c.user?.id, pg.limit, pg.offset);
+  const items = wantCovers(await repo.lovedTracksOf(u.id, c.user?.id, pg.limit, pg.offset), r => r.id);
   return { items, total: await repo.lovedCount(u.id), ...pg };
 });
 

@@ -7,6 +7,7 @@ import { now } from "../util";
 import { latestWiki } from "../wiki/repo";
 import type { AlbumPage, ArtistPage, ArtistSimilar, TrackPage, TrendPoint } from "../../shared/catalog";
 import * as repo from "./repo";
+import { wantBare } from "../metadata/wanted";
 
 const WEEK = 604800;
 // weeks start on Monday; the epoch fell on a Thursday
@@ -41,7 +42,7 @@ export async function artistPage(a: repo.Artist, viewerId: number | undefined): 
     wiki: await latestWiki("artist", a.id),
     similar: await similarArtists(a.id, 6),
     topTracks: (await topTracks({ artistId: a.id, viewerId, global: true }, 10)).items,
-    topAlbums: await repo.popularAlbums(a.id, 8),
+    topAlbums: wantBare("album", await repo.popularAlbums(a.id, 8), r => r.id),
     latestAlbum: await repo.latestAlbum(a.id),
     weekTrack: weekTracks.items[0] ?? null,
     albumCount: await repo.albumCount(a.id),
@@ -93,7 +94,7 @@ export async function albumPage(al: repo.AlbumWithArtist, viewerId: number): Pro
     wiki: await latestWiki("album", al.id),
     tracks,
     duration: tracks.reduce((sum, t) => sum + t.duration, 0),
-    otherAlbums: await repo.otherAlbums(al.artistId, al.id, 6),
+    otherAlbums: wantBare("album", await repo.otherAlbums(al.artistId, al.id, 6), r => r.id),
     trend: await trend({ albumId: al.id }),
     topListeners: await repo.topListeners("album", al.id, 8),
     shoutCount: await shoutCount("album", al.id),
@@ -119,7 +120,7 @@ export async function trackPage(t: repo.TrackWithArtist, viewerId: number): Prom
     tags: await topTags("track", t.id, 8),
     myTags: await myTags(viewerId, "track", t.id),
     wiki: await latestWiki("track", t.id),
-    albums: await repo.albumsWithTrack(t.id, t.artist),
+    albums: wantBare("album", await repo.albumsWithTrack(t.id, t.artist), r => r.id),
     similar: await similarTracks(t.id, t.artistId, viewerId, 10),
     trend: await trend({ trackId: t.id }),
     topListeners: await repo.topListeners("track", t.id, 8),

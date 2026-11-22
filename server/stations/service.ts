@@ -1,6 +1,7 @@
 import { recommendedArtists, similarArtists } from "../recommend/service";
 import * as repo from "./repo";
 import type { StationTrack } from "../../shared/stations";
+import { wantCovers } from "../metadata/wanted";
 
 const BATCH = 30;
 
@@ -13,7 +14,7 @@ function shuffle<T>(a: T[]): T[] {
 }
 
 const libraryPicks = async (userId: number, viewerId: number, n: number): Promise<StationTrack[]> =>
-  shuffle(await repo.randomPlays(userId, viewerId, n * 5)).slice(0, n);
+  wantCovers(shuffle(await repo.randomPlays(userId, viewerId, n * 5)).slice(0, n), t => t.id);
 
 async function artistPicks(artistIds: number[], viewerId: number, per: number, pool = 6): Promise<StationTrack[]> {
   if (!artistIds.length) return [];
@@ -24,7 +25,7 @@ async function artistPicks(artistIds: number[], viewerId: number, per: number, p
     list.push(track);
     byArtist.set(artistId, list);
   }
-  return [...byArtist.values()].flatMap(list => shuffle(list).slice(0, per));
+  return wantCovers([...byArtist.values()].flatMap(list => shuffle(list).slice(0, per)), t => t.id);
 }
 
 export const library = (userId: number, viewerId: number): Promise<StationTrack[]> =>

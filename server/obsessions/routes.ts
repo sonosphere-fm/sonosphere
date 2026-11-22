@@ -4,6 +4,7 @@ import { Router, throttle, type Body } from "../http";
 import { requireUser } from "../users/service";
 import * as repo from "./repo";
 import type { ObsessionCreated, ObsessionRemoved, Obsessions } from "../../shared/obsessions";
+import { wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
@@ -16,7 +17,7 @@ async function trackId(b: Body): Promise<number> {
 
 router.get<Obsessions>("/api/user/obsessions", async c => {
   const u = await requireUser(c.q.get("name"));
-  return { items: await repo.obsessionsOf(u.id, c.user?.id) };
+  return { items: wantCovers(await repo.obsessionsOf(u.id, c.user?.id), r => r.trackId) };
 });
 
 router.post<ObsessionCreated>("/api/obsessions", async c => {
