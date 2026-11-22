@@ -4,6 +4,7 @@ import { Select } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   albumUrl,
+  artistTitle,
   artistUrl,
   dec,
   enc,
@@ -175,7 +176,7 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
   const base = artistUrl(name);
   const q = useApi<ArtistData>(`/artist${qs({ name })}`);
   const { me } = useAuth();
-  useTitle(q.data ? `${q.data.name} - music, stats and listeners` : name);
+  useTitle(artistTitle(name, tab));
   return (
     <Async q={q}>
       {(a) => {

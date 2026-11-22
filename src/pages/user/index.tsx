@@ -19,7 +19,9 @@ import {
   useApi,
   useAuth,
   userUrl,
+  TITLES,
   useTitle,
+  userTitle,
 } from "../../lib";
 import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
 import { EventList } from "../../ui/events";
@@ -55,6 +57,14 @@ type Tab =
   | "journal-new"
   | "journal-post"
   | "journal-edit";
+
+const TITLE_TABS: Partial<Record<Tab, string>> = { "library-artist": "library", report: "listening-report" };
+
+function pageTitle(name: string, tab: Tab) {
+  if (tab === "journal-post") return null;
+  if (tab === "journal-new" || tab === "journal-edit") return TITLES.editJournal;
+  return userTitle(name, TITLE_TABS[tab] ?? tab);
+}
 
 const LISTENING_TABS: Tab[] = ["library", "library-artist", "report", "loved", "neighbours"];
 
@@ -129,7 +139,7 @@ export function UserPage({ tab }: { tab: Tab }) {
   const base = userUrl(name);
   const q = useApi<Profile>(`/user${qs({ name })}`);
   const { me } = useAuth();
-  useTitle(q.data ? `${q.data.username}'s music profile` : name);
+  useTitle(pageTitle(name, tab));
   const location = useLocation();
   const redirect = q.data
     ? usernameRedirect(

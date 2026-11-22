@@ -3,7 +3,7 @@ import { Suspense, useState } from "react";
 import { SiteBanner } from "../../banner";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
-import { artistUrl, date, prefetch, qs, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
+import { artistUrl, date, prefetch, qs, TITLES, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
 import { Async, Avatar, Pane, Section } from "../../ui/base";
 import { UserLabels } from "../../ui/user-labels";
 import { RecCard, Grid, TrackList } from "../../ui/lists";
@@ -153,7 +153,7 @@ export function Home() {
     prefetch(RECOMMENDED);
     prefetch(recentOf(me.username));
   }
-  useTitle(me ? "Home" : "Track what you love");
+  useTitle(me ? TITLES.home : TITLES.guestHome);
   return (
     <>
       {me ? (

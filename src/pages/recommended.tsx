@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { useApi, useTitle } from "../lib";
+import { TITLES, useApi, useTitle } from "../lib";
 import { Async, Empty, Section } from "../ui/base";
 import { EventList } from "../ui/events";
 import { RecCard, TrackList } from "../ui/lists";
@@ -50,7 +50,7 @@ export function Recommended() {
   const q = useApi<RecommendedData>("/recommended");
   const show = useSearchParams()[0].get("show");
   const at: HomeTab = show === "tracks" || show === "albums" || show === "events" ? show : "artists";
-  useTitle("Recommended");
+  useTitle(TITLES.recommended);
   return (
     <>
       <HomeTabs at={at} />

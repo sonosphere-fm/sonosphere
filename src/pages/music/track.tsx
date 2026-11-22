@@ -12,6 +12,7 @@ import {
   dur,
   plural,
   qs,
+  releaseTitle,
   trackUrl,
   useApi,
   useAuth,
@@ -144,7 +145,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
   const { me } = useAuth();
   const [modal, setModal] = useState<"playlist" | "obsession" | "links" | null>(null);
   const act = useAction();
-  useTitle(q.data ? `${q.data.title} - ${q.data.artist}` : track);
+  useTitle(releaseTitle(track, artist, tab === "wiki"));
 
   const scrobbleNow = (t: TrackData) =>
     act.run(async () => {

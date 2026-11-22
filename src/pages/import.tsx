@@ -3,7 +3,7 @@ import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportState } from "../.
 import { Spinner } from "../icons";
 import { Button, Input, Select } from "../kit";
 import { importLastfm } from "../lastfm-import";
-import { api, dateTime, num, plural, useTitle } from "../lib";
+import { api, dateTime, num, plural, TITLES, useTitle } from "../lib";
 import { Section, useAction } from "../ui/base";
 
 function parseCsv(text: string): string[][] {
@@ -206,7 +206,7 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
 }
 
 export function ImportPage() {
-  useTitle("Import listening history");
+  useTitle(TITLES.import);
   const [job, setJob] = useImportJob();
   const [username, setUsername] = useState("");
   const [kind, setKind] = useState<"scrobbles" | "loved">("scrobbles");

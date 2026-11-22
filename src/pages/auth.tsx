@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Input } from "../kit";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { api, qs, useApi, useAuth, useTitle } from "../lib";
+import { api, qs, TITLES, useApi, useAuth, useTitle } from "../lib";
 import { useAction } from "../ui/base";
 import type { AuthConfig, OAuthCreated, OAuthPending, Ok, Session } from "../../shared/auth";
 import { OAUTH_ERRORS, OAuthButtons } from "../ui/oauth";
@@ -121,7 +121,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const config = useApi<AuthConfig>("/auth/config").data;
   const oauthError = OAUTH_ERRORS[sp.get("oauth") ?? ""];
   const login = mode === "login";
-  useTitle(login ? "Log in" : "Join");
+  useTitle(login ? TITLES.login : TITLES.join);
   if (me) return <Navigate to={next} replace />;
 
   const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
@@ -210,7 +210,7 @@ export function OAuthJoinPage() {
   const q = useApi<OAuthPending>("/auth/oauth/pending");
   const [name, setName] = useState<string | null>(null);
   const act = useAction();
-  useTitle("Join Sonosphere");
+  useTitle(TITLES.join);
   if (me) return <Navigate to="/" replace />;
   const username = name ?? q.data?.username ?? "";
 
@@ -278,7 +278,7 @@ export function ForgotPage() {
   const [sent, setSent] = useState("");
   const act = useAction();
   const robot = useTurnstile("forgot");
-  useTitle("Reset your password");
+  useTitle(TITLES.forgot);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -342,7 +342,7 @@ export function ResetPage() {
   const nav = useNavigate();
   const [pw, setPw] = useState("");
   const act = useAction();
-  useTitle("Choose a new password");
+  useTitle(TITLES.reset);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -395,7 +395,7 @@ export function VerifyPage() {
   const [state, setState] = useState<"working" | "done" | string>(
     token ? "working" : "This link is missing its code. Open the link from the email again."
   );
-  useTitle("Confirm your email");
+  useTitle(TITLES.verify);
   const started = useRef(false);
 
   useEffect(() => {

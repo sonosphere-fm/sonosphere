@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Arrow } from "../icons";
-import { useTitle } from "../lib";
+import { TITLES, useTitle } from "../lib";
 
 const SECTIONS: [string, string][] = [
   ["spotify", "Spotify"],
@@ -11,7 +11,7 @@ const SECTIONS: [string, string][] = [
 
 export function Help() {
   const origin = window.location.origin;
-  useTitle("Help");
+  useTitle(TITLES.help);
   const applications = (
     <Link to="/settings/applications">
       Settings

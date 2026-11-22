@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Arrow } from "../icons";
-import { useTitle } from "../lib";
+import { TITLES, useTitle } from "../lib";
 
 const METHODS: [string, string[]][] = [
   ["Auth", ["auth.getToken", "auth.getSession", "auth.getMobileSession"]],
@@ -51,7 +51,7 @@ const METHODS: [string, string[]][] = [
 ];
 export function Developers() {
   const origin = window.location.origin;
-  useTitle("API");
+  useTitle(TITLES.developers);
   return (
     <div className="wrap page docs-page">
       <h1 className="page-title">Sonosphere API</h1>
