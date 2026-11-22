@@ -9,9 +9,11 @@ import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Pagination } from "@astryxdesign/core/Pagination";
 import { Ico } from "./icons";
 
+const SERVER_PATHS = /^(https?:|\/api\/|\/discord$)/;
+
 /** Lets Astryx links navigate through the router instead of reloading. */
 export const RouteLink = ({ href, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
-  if (/^(https?:|\/api\/)/.test(href || "")) return <a href={href} {...rest} />;
+  if (SERVER_PATHS.test(href || "")) return <a href={href} {...rest} />;
   return <RouterLink to={href || ""} {...rest} />;
 };
 
