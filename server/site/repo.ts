@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ne, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn } from "../db/client";
-import { auditLog, meta, siteSettings, users } from "../db/schema";
+import { auditLog, meta, siteSettings, usernameHistory, users } from "../db/schema";
 import { first } from "../util";
 import type { Role } from "../../shared/site";
 import type { AuditRow } from "../../shared/admin";
@@ -31,7 +31,21 @@ export async function adminCount(): Promise<number> {
 
 // Takes normalised usernames.
 export async function promote(usernames: string[]): Promise<void> {
-  for (const name of usernames) await db.update(users).set({ isAdmin: true }).where(eq(users.usernameNorm, name));
+  for (const name of usernames) {
+    // Configuration follows the original account after a rename, never a later claimant of its old name.
+    const previous = await first(
+      db
+        .select({ userId: usernameHistory.userId })
+        .from(usernameHistory)
+        .where(eq(usernameHistory.previousNorm, name))
+        .orderBy(usernameHistory.id)
+        .limit(1)
+    );
+    await db
+      .update(users)
+      .set({ isAdmin: true })
+      .where(previous ? eq(users.id, previous.userId) : eq(users.usernameNorm, name));
+  }
 }
 
 export const storedSettings = (): Promise<{ key: string; value: string }[]> => db.select().from(siteSettings);

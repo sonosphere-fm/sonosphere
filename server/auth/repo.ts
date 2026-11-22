@@ -1,5 +1,7 @@
 import { and, count, eq, ne, or, sql } from "drizzle-orm";
-import { db } from "../db/client";
+import { db, transact } from "../db/client";
+import { lockUsernameClaims, usernameUnavailable } from "../account/usernames";
+import { bad } from "../http";
 import { notifications, reports, sessions, users } from "../db/schema";
 import { digest, first, norm, now } from "../util";
 import type { User } from "../users/repo";
@@ -24,14 +26,7 @@ export const findByLogin = (ident: string): Promise<User | null> =>
   );
 
 export async function usernameTaken(username: string): Promise<boolean> {
-  const row = await first(
-    db
-      .select({ one: sql`1` })
-      .from(users)
-      .where(eq(users.usernameNorm, norm(username)))
-      .limit(1)
-  );
-  return !!row;
+  return usernameUnavailable(username);
 }
 
 export async function emailTaken(email: string, exceptId = 0): Promise<boolean> {
@@ -51,19 +46,23 @@ export async function createUser(
   passwordHash: string,
   emailVerified = false
 ): Promise<number> {
-  const [row] = await db
-    .insert(users)
-    .values({
-      username,
-      usernameNorm: norm(username),
-      email,
-      passwordHash,
-      registeredAt: now(),
-      emailVerifiedAt: emailVerified ? now() : null,
-    })
-    .returning({ id: users.id });
-  if (!row) throw new Error("The new account was not stored");
-  return row.id;
+  return transact(async (tx) => {
+    await lockUsernameClaims(tx);
+    if (await usernameUnavailable(username, tx)) return bad("That username is taken or temporarily reserved");
+    const [row] = await tx
+      .insert(users)
+      .values({
+        username,
+        usernameNorm: norm(username),
+        email,
+        passwordHash,
+        registeredAt: now(),
+        emailVerifiedAt: emailVerified ? now() : null,
+      })
+      .returning({ id: users.id });
+    if (!row) throw new Error("The new account was not stored");
+    return row.id;
+  });
 }
 
 export const openReportCount = async (): Promise<number> =>
