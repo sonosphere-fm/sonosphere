@@ -49,6 +49,50 @@ const METHODS: [string, string[]][] = [
   ["Tag", ["tag.getInfo", "tag.getTopArtists", "tag.getTopTracks", "tag.getTopAlbums"]],
   ["Chart", ["chart.getTopArtists", "chart.getTopTracks", "chart.getTopTags"]],
 ];
+const LB_ENDPOINTS: [string, string[]][] = [
+  ["Auth", ["GET validate-token"]],
+  [
+    "Listens",
+    [
+      "POST submit-listens",
+      "POST delete-listen",
+      "GET user/{user}/listens",
+      "GET user/{user}/listen-count",
+      "GET user/{user}/playing-now",
+      "GET POST latest-import",
+    ],
+  ],
+  [
+    "Feedback",
+    [
+      "POST feedback/recording-feedback",
+      "GET feedback/user/{user}/get-feedback",
+      "GET POST feedback/user/{user}/get-feedback-for-recordings",
+      "GET feedback/recording/{msid}/get-feedback",
+      "GET feedback/recording/{mbid}/get-feedback-mbid",
+    ],
+  ],
+  [
+    "Social",
+    [
+      "GET user/{user}/followers",
+      "GET user/{user}/following",
+      "POST user/{user}/follow",
+      "POST user/{user}/unfollow",
+      "GET user/{user}/similar-users",
+      "GET user/{user}/similar-to/{other}",
+      "GET user/{user}/services",
+      "GET search/users",
+    ],
+  ],
+  [
+    "User stats (GET stats/user/{user}/…)",
+    ["artists", "releases", "release-groups", "recordings", "listening-activity", "daily-activity"],
+  ],
+  ["Site stats (GET stats/sitewide/…)", ["artists", "releases", "release-groups", "recordings"]],
+  ["Listeners", ["GET stats/artist/{mbid}/listeners", "GET stats/release-group/{mbid}/listeners"]],
+];
+
 export function Developers() {
   const origin = window.location.origin;
   useTitle(TITLES.developers);
@@ -124,6 +168,62 @@ curl "${origin}/2.0/?method=user.getRecentTracks&user=USERNAME&api_key=KEY&forma
             Failures return <code>{`{"error": code, "message": "…"}`}</code>: 3 invalid method, 4 auth failed, 6 invalid
             parameters, 9 invalid session, 10 invalid API key, 13 invalid signature, 14 unauthorised token.
           </p>
+          <h2 id="listenbrainz">ListenBrainz API</h2>
+          <p>
+            The ListenBrainz API is served at <code>{origin}/1/</code> with the same paths, request bodies and
+            responses, so ListenBrainz clients and libraries work by changing the root URL to <code>{origin}</code>.
+          </p>
+          <ul>
+            <li>
+              <b>Tokens:</b> users create one under{" "}
+              <Link to="/settings/applications">
+                Settings
+                <Arrow say=", " />
+                Applications
+              </Link>
+              . Send it as <code>Authorization: Token TOKEN</code>. Reads don't need one, except to see your own private
+              listening.
+            </li>
+            <li>
+              <b>Errors:</b> <code>{`{"code": 400, "error": "…"}`}</code> with the matching HTTP status. Stats with
+              nothing to show return 204.
+            </li>
+            <li>
+              <b>Rate limit:</b> 100 requests per 10 seconds per address, reported in the <code>X-RateLimit-*</code>{" "}
+              headers.
+            </li>
+            <li>
+              <b>Recording IDs:</b> <code>recording_msid</code> values are Sonosphere's own and only mean something
+              here. A <code>recording_mbid</code> is known once a client has sent it with a listen.
+            </li>
+            <li>
+              <b>Stats</b> are live and use UTC. All ranges are supported, from <code>this_week</code> to{" "}
+              <code>all_time</code>.
+            </li>
+          </ul>
+          <pre>{`# submit a listen
+curl -X POST ${origin}/1/submit-listens \\
+  -H "Authorization: Token TOKEN" -H "Content-Type: application/json" \\
+  -d '{"listen_type": "single", "payload": [{"listened_at": '$(date +%s)',
+       "track_metadata": {"artist_name": "Glass Harbor", "track_name": "When the Echoes Come"}}]}'
+
+# read
+curl "${origin}/1/user/USERNAME/listens?count=10"`}</pre>
+          <p>Supported endpoints:</p>
+          <ul>
+            {LB_ENDPOINTS.map(([group, list]) => (
+              <li key={group}>
+                <b>{group}:</b>{" "}
+                {list.map((e, i) => (
+                  <span key={e}>
+                    {i > 0 && ", "}
+                    <code>{e}</code>
+                  </span>
+                ))}
+              </li>
+            ))}
+          </ul>
+          <p>Playlists, recommendations, radio, metadata lookups and data dumps aren't available.</p>
           <h2 id="public-now-playing">Public now-playing API</h2>
           <p>
             Show a listener's current song on a website. No key, signature or login, and cross-origin requests are
@@ -193,8 +293,11 @@ stream.addEventListener("nowplaying", e => {
 stream.addEventListener("unavailable", () => stream.close());`}</pre>
         </div>
         <aside className="side">
-          <h3>Public live API</h3>
+          <h3>Other APIs</h3>
           <ul className="plain">
+            <li>
+              <a href="#listenbrainz">ListenBrainz-compatible API</a>
+            </li>
             <li>
               <a href="#public-now-playing">Now-playing snapshots, SSE and WebSockets</a>
             </li>
