@@ -1,5 +1,6 @@
 import type { users } from "./db/schema";
-import { sessionUser } from "./auth/session";
+import { viewerOf } from "./auth/session";
+export { tokenOf } from "./auth/session";
 import { attempt, hits } from "./kv";
 import { isStaff } from "./site/roles";
 
@@ -17,7 +18,7 @@ export const missing = (what: string): never => fail(404, `${what} not found`);
 export type Viewer = typeof users.$inferSelect;
 /** A JSON request body before validation: handlers must check each field they read. */
 export type Body = Record<string, unknown>;
-export type Ctx = { req: Request; url: URL; q: URLSearchParams; user: Viewer | null; body: Body; params: string[]; headers: Headers };
+export type Ctx = { req: Request; url: URL; q: URLSearchParams; user: Viewer | null; actor: Viewer | null; body: Body; params: string[]; headers: Headers };
 type Handler<R = unknown> = (c: Ctx) => R | Response | Promise<R | Response>;
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 type Options = {
@@ -49,14 +50,14 @@ export class Router {
     const headers = new Headers({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
     try {
       if (req.method !== "GET" && crossSite(req, url)) fail(403, "Cross-site request refused");
-      const user = await sessionUser(tokenOf(req));
+      const { user, actor } = await viewerOf(req);
       await budget(req, url, user);
       for (const r of this.routes) {
         if (r.method !== req.method) continue;
         const m = r.re.exec(url.pathname);
         if (!m) continue;
         const body = await readBody(req, r.jsonOnly);
-        const c: Ctx = { req, url, q: url.searchParams, user, body, params: m.slice(1).map(decodeURIComponent), headers };
+        const c: Ctx = { req, url, q: url.searchParams, user, actor, body, params: m.slice(1).map(decodeURIComponent), headers };
         const out = await r.fn(c);
         return out instanceof Response ? out : new Response(JSON.stringify(out), { headers });
       }
@@ -73,8 +74,6 @@ export class Router {
     }
   };
 }
-
-export const tokenOf = (req: Request) => /(?:^|;\s*)sid=([a-f0-9]+)/.exec(req.headers.get("cookie") || "")?.[1] || "";
 
 export const ipOf = (req: Request) => req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
 

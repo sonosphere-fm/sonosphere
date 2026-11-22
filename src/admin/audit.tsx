@@ -20,6 +20,9 @@ const ACTION: Record<string, string> = {
   "user.probation": "Put on probation",
   "user.release": "Ended probation",
   "user.delete": "Deleted account",
+  "user.impersonate": "Acted as user",
+  "user.impersonate.stop": "Stopped acting as user",
+  "user.clear-scrobbles": "Cleared scrobbles",
   "note.add": "Added note",
   "note.delete": "Deleted note",
   "report.dismiss": "Dismissed report",
@@ -83,6 +86,7 @@ function details(a: AuditRow): ReactNode {
   if (a.action === "catalogue.edit") return <>{d.reverts !== undefined && "Undo: "}{fieldChanges(d.fields)}</>;
   if (d.reverts !== undefined) return "Undo of an earlier change";
   if (a.action === "user.sessions") return plural(count(d.revoked), "session");
+  if (a.action === "user.clear-scrobbles") return plural(count(d.deleted), "scrobble");
   if (a.action === "user.delete") return `${plural(count(d.scrobbles), "scrobble")}, ${plural(count(d.shouts), "shout")}`;
   if (a.action === "tag.delete") return plural(count(d.uses), "use");
   if (a.action === "dm.resolve") return `${FLAG[String(d.kind)] ?? d.kind}${d.detail ? `: ${d.detail}` : ""}`;

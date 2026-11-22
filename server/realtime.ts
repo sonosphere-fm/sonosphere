@@ -1,5 +1,5 @@
 import type { Server, ServerWebSocket } from "bun";
-import { sessionUser } from "./auth/session";
+import { sessionUser, viewerOf } from "./auth/session";
 import { ipOf, tokenOf } from "./http";
 import { hits, publish, subscribe } from "./kv";
 import { findById, findByName } from "./users/repo";
@@ -7,7 +7,7 @@ import { canSee } from "./users/service";
 import type { ListeningEvent } from "../shared/live";
 import * as Sentry from "@sentry/bun";
 
-export type SocketData = { userId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number; publicUserId?: number; publicOrigin?: string };
+export type SocketData = { userId: number; actorId: number; token: string; ip: string; listening: Set<number>; listenVersion: number; typedAt: number; msgs: number; windowAt: number; publicUserId?: number; publicOrigin?: string };
 type Sock = ServerWebSocket<SocketData>;
 const sockets = new Map<number, Set<Sock>>();
 const MAX_PER_USER = 6;
@@ -35,12 +35,12 @@ export async function upgrade(req: Request, server: Server<SocketData>): Promise
   const wait = await hits(`ws:${ipOf(req)}`, 30, 60);
   if (wait) return new Response("Too many connections", { status: 429, headers: { "Retry-After": String(wait) } });
   const token = tokenOf(req);
-  const user = await sessionUser(token);
-  if (token && !user) return new Response("Unauthorized", { status: 401 });
+  const { user, actor } = await viewerOf(req);
+  if (token && !actor) return new Response("Unauthorized", { status: 401 });
   const ip = ipOf(req);
   const connections = user ? sockets.get(user.id)?.size ?? 0 : [...sockets.get(0) ?? []].filter(ws => ws.data.ip === ip).length;
   if (connections >= MAX_PER_USER) return new Response("Too many connections", { status: 429 });
-  const data: SocketData = { userId: user?.id ?? 0, token, ip, listening: new Set(), listenVersion: 0, typedAt: 0, msgs: 0, windowAt: Date.now() };
+  const data: SocketData = { userId: user?.id ?? 0, actorId: actor?.id ?? 0, token, ip, listening: new Set(), listenVersion: 0, typedAt: 0, msgs: 0, windowAt: Date.now() };
   return server.upgrade(req, { data }) ? undefined : new Response("Expected a WebSocket", { status: 426 });
 }
 
@@ -160,7 +160,7 @@ export function push(userId: number, event: object) {
 }
 
 async function deliverListening(ws: Sock, userId: number, change: ListeningEvent["change"]) {
-  const [target, viewer] = await Promise.all([findById(userId), ws.data.userId ? sessionUser(ws.data.token) : null]);
+  const [target, viewer] = await Promise.all([findById(userId), ws.data.userId ? findById(ws.data.userId) : null]);
   if (!target || target.banned || (ws.data.userId && viewer?.id !== ws.data.userId) || !canSee(target, viewer) || !ws.data.listening.has(userId)) return;
   const event: ListeningEvent = { t: "listening", userId, name: target.username, change };
   try { ws.send(JSON.stringify(event)); } catch {}
@@ -181,7 +181,7 @@ sweep.__spinSocketSweep = setInterval(async () => {
     for (const ws of [...set]) {
       if (!ws.data.userId) continue;
       const user = await sessionUser(ws.data.token).catch(() => null);
-      if (user?.id !== ws.data.userId) closeQuietly(ws, "Session ended");
+      if (user?.id !== ws.data.actorId) closeQuietly(ws, "Session ended");
     }
   }
 }, 60_000);

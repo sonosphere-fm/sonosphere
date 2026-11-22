@@ -1,7 +1,6 @@
 import { readdir } from "node:fs/promises";
-import { sessionUser } from "./auth/session";
+import { viewerOf } from "./auth/session";
 import { me } from "./auth/service";
-import { tokenOf } from "./http";
 import { isStaff } from "./site/roles";
 import { pageSeo, seoContent, seoHead } from "./seo";
 import { crawlerRoutes } from "./sitemap";
@@ -34,8 +33,8 @@ export async function appRoutes() {
 
   // the page embeds the viewer's account, so no shared cache may keep it
   const shell = async (req: Request) => {
-    const [viewer, seo] = await Promise.all([sessionUser(tokenOf(req)).catch(() => null), pageSeo(new URL(req.url))]);
-    const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer) : null }));
+    const [{ user: viewer, actor }, seo] = await Promise.all([viewerOf(req).catch(() => ({ user: null, actor: null })), pageSeo(new URL(req.url))]);
+    const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer, actor) : null }));
     const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
     const page = html
       .replace("<html lang=\"en\">", () => `<html lang="en"${scheme}>`)
@@ -62,7 +61,7 @@ export async function appRoutes() {
     if (!found.staff) {
       return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": path === "/assets/social-card.png" ? "public, max-age=86400" : `public, ${FOREVER}` } });
     }
-    const viewer = await sessionUser(tokenOf(req));
+    const { actor: viewer } = await viewerOf(req);
     if (!viewer || !isStaff(viewer)) return missing();
     return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": `private, ${FOREVER}`, Vary: "Cookie" } });
   };

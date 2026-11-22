@@ -2,7 +2,7 @@ import { wantBare, wantCovers } from "../metadata/wanted";
 import { and, asc, count, countDistinct, desc, eq, exists, gt, gte, inArray, isNotNull, lt, ne, notExists, or, sql, type SQL } from "drizzle-orm";
 import { playImage, trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
-import { db, transact } from "../db/client";
+import { db, transact, type Conn } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
 import { getJson, setJson } from "../kv";
 import { albums, artists, lovedTracks, nowPlaying as playing, scrobbles, taggings, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
@@ -595,10 +595,11 @@ export async function deleteScrobbles(userId: number, ids: number[]): Promise<nu
   return gone.length;
 }
 
-export async function deleteAllScrobbles(userId: number): Promise<number> {
+export async function deleteAllScrobbles(userId: number, onDeleted?: (tx: Conn, deleted: number) => Promise<void>): Promise<number> {
   return transact(async tx => {
     const n = await total(tx.select({ c: count() }).from(scrobbles).where(eq(scrobbles.userId, userId)));
     await tx.delete(scrobbles).where(eq(scrobbles.userId, userId));
+    await onDeleted?.(tx, n);
     return n;
   });
 }

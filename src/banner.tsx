@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Ico } from "./icons";
 import { Button } from "./kit";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api, useAuth } from "./lib";
 import type { SiteInfo } from "../shared/admin";
-import { UNVERIFIED_DAYS, type Ok } from "../shared/auth";
+import { UNVERIFIED_DAYS, type MeResponse, type Ok } from "../shared/auth";
 
 const DISMISSED = "spin.announcement.dismissed";
 
@@ -47,6 +47,34 @@ export function SiteBanner() {
 
 const NAGGED = "spin.verify.dismissed";
 
+export function ImpersonationBanner() {
+  const { me, setMe } = useAuth();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!me?.impersonating) return null;
+  const stop = async () => {
+    const target = me.username;
+    setBusy(true);
+    setError("");
+    try {
+      const r = await api<MeResponse>("/me/stop-impersonating", { body: {} });
+      setMe(r.user);
+      navigate(`/admin/users/${encodeURIComponent(target)}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally { setBusy(false); }
+  };
+  return (
+    <div className="site-banner impersonation" role="status">
+      <div className="wrap site-banner-in">
+        <span>Acting as <strong>{me.username}</strong> from {me.impersonating.by}'s account. {error && <span role="alert">{error}</span>}</span>
+        <button type="button" className="banner-link" disabled={busy} onClick={stop}>{busy ? "Returning…" : "Return to your account"}</button>
+      </div>
+    </div>
+  );
+}
+
 function readNagged() {
   try {
     return sessionStorage.getItem(NAGGED) === "1";
@@ -60,7 +88,7 @@ export function VerifyBanner() {
   const { pathname } = useLocation();
   const [hidden, setHidden] = useState(readNagged);
   const [note, setNote] = useState("");
-  if (!me || me.emailVerified || hidden || pathname === "/verify") return null;
+  if (!me || me.impersonating || me.emailVerified || hidden || pathname === "/verify") return null;
 
   const dismiss = () => {
     setHidden(true);
