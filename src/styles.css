@@ -8,6 +8,7 @@
 @import "@astryxdesign/core/astryx.css";
 @import "./themes/sonosphere/sonosphere.css";
 @import "@astryxdesign/core/tailwind-theme.css";
+@import "./pages/music/home-hero.css";
 
 /* site tokens as Tailwind utilities (bg-site-card, text-site-muted, font-site-display); unprefixed names belong to Astryx */
 @theme inline {
@@ -286,26 +287,6 @@
     padding: 0 5px;
   }
 
-  .banner {
-    background: var(--accent);
-    color: var(--on-accent);
-    padding: 56px 0 48px;
-    border-top: 1px solid var(--accent-dark);
-  }
-  .banner h1 {
-    font-size: 56px;
-    letter-spacing: -0.02em;
-    margin-bottom: 14px;
-  }
-  .banner p {
-    font-size: 20px;
-    max-width: 560px;
-  }
-  .banner-stats {
-    font-size: 14px !important;
-    margin: 22px 0 0;
-    color: #fbd0cd;
-  }
   .hero-inner {
     display: flex;
     gap: 26px;
@@ -917,6 +898,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .c-name > a {
+    line-height: max(24px, 1.45em);
+  }
   .c-name {
     max-width: 0;
     width: 100%;
@@ -1209,9 +1193,6 @@
     .hero h1 {
       font-size: 32px;
     }
-    .banner h1 {
-      font-size: 38px;
-    }
     .c-bar .bar {
       width: 200px;
     }
@@ -1382,80 +1363,6 @@
     .cardgrid.lead > :first-child {
       grid-column: span 2;
       grid-row: auto;
-    }
-  }
-  .banner h1,
-  .banner p,
-  .banner a {
-    color: #fff;
-  }
-  .banner .banner-stats {
-    color: #fde3e1;
-  }
-  .banner-inner {
-    display: flex;
-    gap: 48px;
-    align-items: center;
-  }
-  .banner-copy {
-    flex: 1;
-    min-width: 0;
-  }
-  .banner-chart {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    width: 360px;
-    flex: none;
-    background: var(--accent-dark);
-  }
-  .banner-chart li {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.18);
-  }
-  .banner-chart .banner-chart-head {
-    border-top: 0;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #fff;
-  }
-  .banner-chart b {
-    font-size: 26px;
-    width: 22px;
-    color: #fff;
-  }
-  .banner-chart a {
-    min-width: 0;
-    flex: 1;
-  }
-  .banner-chart a:hover strong {
-    text-decoration: underline;
-  }
-  .banner-chart strong,
-  .banner-chart span {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: #fff;
-  }
-  .banner-chart span {
-    font-size: 14px;
-    color: #fde3e1;
-  }
-  @media (max-width: 860px) {
-    .banner-inner {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 24px;
-    }
-    .banner-chart {
-      width: auto;
     }
   }
 
@@ -1932,20 +1839,6 @@
     overflow: hidden;
   }
 
-  .banner {
-    background: var(--black);
-    border-top: 0;
-  }
-  .banner .banner-stats,
-  .banner-chart span {
-    color: var(--edge);
-  }
-  .banner-chart {
-    background: var(--accent-dark);
-  }
-  .banner-chart b {
-    color: var(--link);
-  }
   .astryx-button.inverse {
     background: var(--accent);
     border-color: var(--accent);
@@ -2365,9 +2258,6 @@
     }
     .hero h1 {
       font-size: 28px;
-    }
-    .banner h1 {
-      font-size: 32px;
     }
     .section-head h2 {
       font-size: 19px;
@@ -3961,9 +3851,6 @@
     color: var(--on-sun);
     box-shadow: 0 0 0 2px var(--bar);
   }
-  .banner-copy > .row {
-    margin-top: 28px;
-  }
 
   /* dialog titles get programmatic focus on open but aren't interactive */
   .astryx-dialog .astryx-heading[tabindex="-1"]:focus,
@@ -4102,10 +3989,6 @@
     background: var(--sun);
     color: var(--on-sun);
   }
-  .banner ::selection {
-    background: var(--accent);
-    color: var(--on-accent);
-  } /* the home banner is yellow itself */
 
   .site-header {
     background: var(--bar);
@@ -4539,77 +4422,6 @@
     background: light-dark(var(--sun), #3d50e0);
   }
 
-  /* the yellow banner reads as paper in both modes; light-dark() tokens resolve at the root, so they're pinned here */
-  .banner {
-    color-scheme: light;
-    --ink: #17150f;
-    --ink-2: #45413a;
-    --muted: #6b665c;
-    --line: #d9d2c3;
-    --card: #fffdf7;
-    --bg: #f6f2e9;
-    --link: #2438d6;
-    --accent: #2438d6;
-    --accent-dark: #1a299f;
-  }
-  .banner {
-    background: var(--banner);
-    border-bottom: 2px solid var(--ink);
-  }
-  .banner h1,
-  .banner p,
-  .banner a {
-    color: var(--ink);
-  }
-  .banner .banner-stats {
-    color: var(--ink-2);
-    font-family: var(--mono);
-  }
-  .banner h1 {
-    letter-spacing: -0.035em;
-  }
-  .banner-chart {
-    background: var(--card);
-    border: 1.5px solid var(--ink);
-  }
-  .banner-chart li {
-    border-top-color: var(--line);
-  }
-  .banner-chart .banner-chart-head {
-    color: var(--ink);
-    font-family: var(--mono);
-    font-weight: 500;
-    font-size: 11px;
-    border-bottom: 1.5px solid var(--ink);
-  }
-  .banner-chart b {
-    color: var(--link);
-    font-family: var(--display);
-  }
-  .banner-chart strong {
-    color: var(--ink);
-  }
-  .banner-chart span {
-    color: var(--muted);
-  }
-
-  .banner .astryx-button.astryx-button:not([data-variant="primary"]):not(.bare) {
-    background: none;
-    border: 1.5px solid var(--ink);
-    color: var(--ink);
-  }
-  .banner .astryx-button.astryx-button:not([data-variant="primary"]):not(.bare):hover {
-    background: var(--card);
-  }
-  .banner .astryx-button.astryx-button[data-variant="primary"] {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: var(--bg);
-  }
-  .banner .astryx-button.astryx-button[data-variant="primary"]:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
   a.chip.chip,
   .chip.chip a {
     color: var(--ink);
@@ -4724,13 +4536,6 @@
   .hero .astryx-button.astryx-button:not(.bare):not(.play-btn):not([data-variant="primary"]):hover {
     background: var(--card);
   }
-  .banner .astryx-button.astryx-button:not([data-variant="primary"]):not(.bare) {
-    background: var(--veil);
-    border: 0;
-  }
-  .banner .astryx-button.astryx-button:not([data-variant="primary"]):not(.bare):hover {
-    background: var(--veil-hover);
-  }
 
   .astryx-button.play-btn.play-btn,
   .rec-img .astryx-button.play-btn.play-btn {
@@ -4772,15 +4577,11 @@
   }
 
   .card,
-  .stats.boxed,
-  .banner-chart {
+  .stats.boxed {
     border: 1px solid var(--line);
   }
   .stats.boxed .stat {
     border-right-color: var(--line);
-  }
-  .banner-chart .banner-chart-head {
-    border-bottom: 1px solid var(--line);
   }
   a.bar:hover > span {
     background: var(--bar-fill-hover);
@@ -4794,15 +4595,8 @@
   .tabs {
     border-bottom: 0;
   }
-  .banner {
-    border-bottom: 0;
-    border-top: 0;
-  }
-  .card,
-  .banner-chart {
-    border: 0;
-  }
   .card {
+    border: 0;
     background: var(--card);
   }
   .stats.boxed {
@@ -4811,12 +4605,6 @@
   }
   .stats.boxed .stat {
     border-right: 0;
-  }
-  .banner-chart li {
-    border-top: 0;
-  }
-  .banner-chart .banner-chart-head {
-    border-bottom: 0;
   }
   .chartlist td {
     border-bottom: 0;

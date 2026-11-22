@@ -1,0 +1,132 @@
+/* The guest masthead shown before the application takes over. */
+.guest-home-header {
+  background: #2438d6;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  font:
+    400 16px / 1.45 "Source Sans 3 Variable",
+    Arial,
+    sans-serif;
+}
+.guest-home-header .wrap {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  height: 54px;
+  padding: 0 20px;
+  gap: 8px;
+}
+.guest-home-header .logo {
+  display: flex;
+  color: #ffcf33;
+}
+.guest-home-header .wordmark {
+  display: flex;
+  align-items: center;
+  font-size: 34px;
+  line-height: 1;
+}
+.guest-home-header .brand-logo {
+  width: auto;
+  height: 0.935em;
+}
+.guest-home-header .logo-small {
+  display: none;
+  width: 1em;
+  height: 1em;
+}
+.guest-home-header .site-nav {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 2px;
+  height: 100%;
+}
+.guest-home-header .site-nav > a {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+  height: 100%;
+  padding: 0 12px;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 500;
+}
+.guest-home-header .site-nav > a.guest-search {
+  flex: none;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+}
+.guest-home-header .guest-search svg {
+  width: 19px;
+  height: 19px;
+}
+.guest-home-header .site-nav > a:hover {
+  background: #1a299f;
+}
+.guest-home-header .site-nav > a.active {
+  box-shadow: inset 0 -4px 0 #ffcf33;
+}
+.guest-home-header .site-nav > a.join {
+  height: 34px;
+  margin-left: 8px;
+  padding: 0 16px;
+  background: #ffcf33;
+  color: #17150f;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.guest-home-header :focus-visible {
+  outline: 2px solid #ffcf33;
+  outline-offset: 2px;
+}
+@media (max-width: 860px) {
+  .guest-home-header .site-nav > a:not(.join) {
+    padding-inline: 8px;
+    font-size: 14px;
+  }
+}
+@media (max-width: 600px) {
+  .guest-home-header .wrap {
+    padding-inline: 16px;
+  }
+}
+@media (max-width: 520px) {
+  .guest-home-header .wordmark {
+    font-size: 30px;
+  }
+  .guest-home-header .site-nav > a[href="/"] {
+    display: none;
+  }
+  .guest-home-header .site-nav > a.join {
+    margin-left: 4px;
+    padding-inline: 12px;
+  }
+}
+@media (max-width: 480px) {
+  .guest-home-header .brand-logo {
+    display: none;
+  }
+  .guest-home-header .logo-small {
+    display: block;
+  }
+}
+@media (max-width: 400px) {
+  .guest-home-header .site-nav > a[href="/events"] {
+    display: none;
+  }
+  .guest-home-header .site-nav > a:not(.join) {
+    padding-inline: 7px;
+  }
+}

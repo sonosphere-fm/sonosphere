@@ -74,7 +74,7 @@ function pictures(data: unknown, budget = { left: 24 }) {
   }
 }
 
-function load(path: string): Entry {
+function load(path: string, preloadPictures = false): Entry {
   let entry = cache.get(path);
   if (!entry) {
     entry = { at: 0, subs: new Set() };
@@ -85,7 +85,7 @@ function load(path: string): Entry {
   const onData = (data: unknown) => {
     e.data = data;
     e.error = undefined;
-    if (!e.subs.size) pictures(data);
+    if (preloadPictures && !e.subs.size) pictures(data);
   };
   // a failed refresh keeps what is on screen
   const onError = (error: ApiError) => {
@@ -106,9 +106,9 @@ function load(path: string): Entry {
   return e;
 }
 
-export const prefetch = (path: string) => {
+export const prefetch = (path: string, options?: { artwork?: boolean }) => {
   const e = cache.get(path);
-  if (!e || (!e.promise && Date.now() - e.at > 30000)) load(path);
+  if (!e || (!e.promise && Date.now() - e.at > 30000)) load(path, options?.artwork);
 };
 
 /** The viewer changed: refresh what is on screen, forget the rest. */
