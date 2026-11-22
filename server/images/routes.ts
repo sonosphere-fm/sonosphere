@@ -4,7 +4,7 @@ import { bad, fail, ipOf, limit, missing, Router, type Ctx } from "../http";
 import { getJson, setJson } from "../kv";
 import { store } from "../storage";
 import { caps, spendRead } from "../storage/budget";
-import { convert } from "./process";
+import { convert, sniff } from "./process";
 import { fetchRemote, sized, type Picture } from "./remote";
 import * as repo from "./repo";
 import type { Ok } from "../../shared/auth";
@@ -36,7 +36,7 @@ async function siteBytes(): Promise<number> {
 }
 
 // the bytes as uploaded are never stored or served, only the converted WebP
-async function storeImage(c: Ctx, userId: number): Promise<string> {
+async function storeImage(c: Ctx, userId: number, preserveGif = false): Promise<string> {
   await limit(`upload:${userId}`, 20, 3600, "Too many uploads. Wait a while and try again.");
   await limit(`upload-ip:${ipOf(c.req)}`, 40, 3600, "Too many uploads. Wait a while and try again.");
   const full = "You have used all the space for your pictures.";
@@ -47,6 +47,10 @@ async function storeImage(c: Ctx, userId: number): Promise<string> {
   const data = await readCapped(c.req, MAX_BYTES);
   if (!data.length) bad("Empty upload");
   const img = await convert(data);
+  if (preserveGif && sniff(data) === "gif") {
+    if (used + data.length > caps.userBytes) fail(403, full);
+    return repo.saveGif(data, userId);
+  }
   if (used + img.large.length + img.small.length > caps.userBytes) fail(403, full);
   return repo.saveImage(img, userId);
 }
@@ -131,7 +135,7 @@ router.post<ImageSaved>("/api/image", async (c) => {
     return { image: await storeImage(c, u.id) };
   }
   if (type === "user" || type === "banner") {
-    const image = await storeImage(c, u.id);
+    const image = await storeImage(c, u.id, true);
     if (type === "banner") await repo.setUserBanner(u.id, image);
     else await repo.setUserImage(u.id, image);
     return { image };

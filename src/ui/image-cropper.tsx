@@ -17,6 +17,7 @@ export function ImageCropper({
   onSave: (image: Blob) => Promise<void>;
 }) {
   const banner = kind === "banner";
+  const gif = file.type === "image/gif" || /\.gif$/i.test(file.name);
   const aspect = banner ? 4 : 1;
   const [source, setSource] = useState<Source | null>(null);
   const [rotation, setRotation] = useState(0);
@@ -113,6 +114,11 @@ export function ImageCropper({
     setBusy(true);
     setError("");
     try {
+      if (gif) {
+        await onSave(new Blob([file], { type: "image/gif" }));
+        onClose();
+        return;
+      }
       const image = new Image();
       image.src = source.url;
       await image.decode();
@@ -142,6 +148,35 @@ export function ImageCropper({
       setBusy(false);
     }
   };
+
+  if (gif)
+    return (
+      <Modal
+        title={banner ? "Upload your banner" : "Upload your picture"}
+        width={720}
+        onClose={() => {
+          if (!busy) onClose();
+        }}
+      >
+        {source && (
+          <img src={source.url} alt="Animated image preview" className="block w-full max-h-[420px] object-contain" />
+        )}
+        <p className="crop-hint">GIF animation is preserved. GIFs are displayed centered without cropping.</p>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="row">
+          <Button kind="btn" type="button" loading={busy} disabled={!source} onClick={save}>
+            {banner ? "Save banner" : "Save picture"}
+          </Button>
+          <Button kind="btn ghost" type="button" disabled={busy} onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </Modal>
+    );
 
   return (
     <Modal
@@ -254,7 +289,6 @@ export function ImageCropper({
             </button>
           </div>
         </div>
-        {file.type === "image/gif" && <p className="crop-hint">Animated images are saved as a still image.</p>}
         {error && (
           <p className="form-error" role="alert">
             {error}
