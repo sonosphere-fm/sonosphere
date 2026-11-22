@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useTitle } from "../lib";
 
 const UPDATED = "November 21, 2026";
-const CONTACT = "legal@sonosp.here";
+const CONTACT = "legal@sonosphere.fm";
 const Mail = () => <a href={`mailto:${CONTACT}`}>{CONTACT}</a>;
 const D = ({ children }: { children: ReactNode }) => <b>"{children}"</b>;
 
@@ -34,7 +34,7 @@ export function Terms() {
         <li><D>Application</D> means any software, website, plug-in, device or service, other than the Service itself, that accesses the Service or the API, including scrobbling clients, media players and integrations.</li>
         <li><D>Content</D> means any information, data, text, software, sound, music metadata, photographs, graphics, video, messages, tags, links and other material.</li>
         <li><D>Listening Data</D> means records of audio or video content played, including scrobbles, now-playing status, loved tracks, play counts and timestamps, whether submitted manually, through an Application, through a Third-Party Service or by import.</li>
-        <li><D>Service</D> means the website located at sonosp.here and its subdomains, the API, the Sonosphere web player, and all related software, features, functionality, Content, data and services provided or made available by Sonosphere, as modified from time to time.</li>
+        <li><D>Service</D> means the website located at sonosphere.fm and its subdomains, the API, the Sonosphere web player, and all related software, features, functionality, Content, data and services provided or made available by Sonosphere, as modified from time to time.</li>
         <li><D>Sonosphere Content</D> means all Content made available through the Service other than User Content, including charts, statistics, rankings, recommendations, catalogue data and compilations.</li>
         <li><D>Sonosphere Parties</D> means Sonosphere and its operators, owners, affiliates, officers, directors, members, managers, employees, contractors, volunteers, moderators, agents, licensors, suppliers, successors and assigns.</li>
         <li><D>Third-Party Service</D> means any website, service, platform, software or Content provided by a person other than Sonosphere, including YouTube, Spotify and Cloudflare.</li>
