@@ -3,6 +3,7 @@ import { execSync } from "node:child_process";
 import tailwind from "bun-plugin-tailwind";
 import { guestHomeShell } from "./home-shell";
 import { STAFF_BUNDLE_MARK } from "../src/admin/index";
+import "./changelog";
 
 let gitSha = process.env.SENTRY_RELEASE || process.env.GIT_SHA || "unknown";
 try {

@@ -4,7 +4,8 @@ import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu"
 import { Button } from "../../kit";
 import { Markdown } from "../../md";
 import { StationButton } from "../../player";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { usernameRedirect } from "../../../shared/username-redirect";
 import {
   api,
   artistUrl,
@@ -129,6 +130,14 @@ export function UserPage({ tab }: { tab: Tab }) {
   const q = useApi<Profile>(`/user${qs({ name })}`);
   const { me } = useAuth();
   useTitle(q.data ? `${q.data.username}'s music profile` : name);
+  const location = useLocation();
+  const redirect = q.data
+    ? usernameRedirect(
+        new URL(location.pathname + location.search + location.hash, window.location.origin),
+        q.data.username
+      )
+    : null;
+  if (redirect) return <Navigate to={redirect} replace />;
   return (
     <Async q={q}>
       {(u) => {

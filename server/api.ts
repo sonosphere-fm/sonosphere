@@ -6,6 +6,7 @@ import { router as auth } from "./auth/routes";
 import { router as oauth } from "./auth/oauth/routes";
 import { router as blocks } from "./blocks/routes";
 import { router as catalog } from "./catalog/routes";
+import { router as changelog } from "./changelog/routes";
 import { router as dm } from "./dm/routes";
 import { router as spotify } from "./spotify/routes";
 import { router as events } from "./events/routes";
@@ -42,6 +43,7 @@ export const api = new Router().include(
   account,
   images,
   site,
+  changelog,
   home,
   search,
   catalog,
