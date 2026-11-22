@@ -111,8 +111,8 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
     <Async q={q}>{t => (
       <>
         <MusicHero
-          image={t.artistImage ?? t.image}
-          soft={!t.artistImage}
+          image={t.image ?? t.artistImage}
+          cover={!!t.image}
           title={t.title}
           over={<Link to={artistUrl(t.artist)}>{t.artist}</Link>}
           tabs={<Tabs items={[[base, "Overview", true], [`${base}/+wiki`, "Wiki"]]} />}

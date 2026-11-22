@@ -7,6 +7,27 @@ const MAX_BYTES = 5_000_000;
 const MAX_REDIRECTS = 3;
 const MIME = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif" } as const;
 
+// Spotify names each size of a picture by a prefix: album covers 1500px or 300px, artist photos 640px or 320px
+const SPOTIFY_SIZES: Record<string, { large: string; small: string }> = {
+  ab67616d0000b273: { large: "ab67616d000082c1", small: "ab67616d00001e02" },
+  ab6761610000e5eb: { large: "ab6761610000e5eb", small: "ab67616100005174" },
+};
+const SPOTIFY = /^https:\/\/i\.scdn\.co\/image\/([0-9a-f]{16})([0-9a-f]{24})$/;
+const LASTFM = /^(https:\/\/lastfm(?:-img)?\.freetls\.fastly\.net\/i\/u\/)(?:[^/]+\/)?([0-9a-f]{32})\.\w+$/;
+const WIKIMEDIA_WIDTH = /^(https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/[^?]+)\?width=\d+$/;
+
+/** The address of the size wanted, for the sources that serve several; others as they are. */
+export function sized(url: string, small: boolean): string {
+  const lf = LASTFM.exec(url);
+  if (lf) return `${lf[1]}${small ? "300x300" : "_"}/${lf[2]}.webp`;
+  const wm = WIKIMEDIA_WIDTH.exec(url);
+  if (wm) return `${wm[1]}?width=${small ? 300 : 1200}`;
+  const sp = SPOTIFY.exec(url);
+  const sizes = sp && SPOTIFY_SIZES[sp[1]!];
+  if (sizes) return `https://i.scdn.co/image/${small ? sizes.small : sizes.large}${sp[2]}`;
+  return url;
+}
+
 // a named https host, never an address, so a redirect can't point the fetch inside the network
 const publicHttps = (u: URL) => u.protocol === "https:" && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(u.hostname);
 

@@ -252,10 +252,10 @@ export async function wikiPhotos(mbids: string[]): Promise<Map<string, Picture>>
   return out;
 }
 
-/** The 500px front cover from the Cover Art Archive; null when it has none. */
+/** The 1200px front cover from the Cover Art Archive; null when it has none. */
 export async function coverArt(mbid: string, of: "release-group" | "release" = "release-group"): Promise<Uint8Array | null> {
   await turn("caa", 250);
-  const res = await fetch(`https://coverartarchive.org/${of}/${mbid}/front-500`, {
+  const res = await fetch(`https://coverartarchive.org/${of}/${mbid}/front-1200`, {
     headers: { "User-Agent": agent() },
     signal: AbortSignal.timeout(30_000),
   });
