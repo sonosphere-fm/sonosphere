@@ -4,6 +4,8 @@ import { me } from "./auth/service";
 import { isStaff } from "./site/roles";
 import { pageSeo, seoContent, seoHead } from "./seo";
 import { crawlerRoutes } from "./sitemap";
+import { findByName } from "./users/repo";
+import { usernameRedirect } from "../shared/username-redirect";
 
 type Asset = { body: ArrayBuffer; type: string; staff: boolean };
 const DIST = "dist";
@@ -34,6 +36,17 @@ export async function appRoutes() {
   // the page embeds the viewer's account, so no shared cache may keep it
   const shell = async (req: Request) => {
     const url = new URL(req.url);
+    const match = /^\/user\/([^/]+)/.exec(url.pathname);
+    if (match) {
+      let name = "";
+      try {
+        name = decodeURIComponent(match[1]!);
+      } catch {}
+      const user = name ? await findByName(name) : null;
+      const location = user ? usernameRedirect(url, user.username) : null;
+      if (location)
+        return new Response(null, { status: 302, headers: { Location: location, "Cache-Control": "no-store" } });
+    }
     const [{ user: viewer, actor }, seo] = await Promise.all([
       viewerOf(req).catch(() => ({ user: null, actor: null })),
       pageSeo(url),

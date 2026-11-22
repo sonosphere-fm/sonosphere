@@ -2,7 +2,9 @@ import { passwordChanged, passwordSet, startEmailChange } from "../auth/email";
 import { deleteSessionsOf, emailTaken } from "../auth/repo";
 import { confirmedBy, endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
-import { confirmed, need } from "../guards";
+import { confirmed, need, poster } from "../guards";
+import { changeUsername, usernameStatus } from "./usernames";
+import type { UsernameStatus } from "../../shared/account";
 import { bad, fail, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
 import { clearActAsCookie } from "../auth/session";
 import { isAdmin } from "../site/roles";
@@ -16,6 +18,22 @@ import type { ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { MeResponse, Ok } from "../../shared/auth";
 
 export const router = new Router();
+
+router.get<UsernameStatus>("/api/me/username", (c) => usernameStatus(need(c).id));
+
+router.post<MeResponse>("/api/me/username", async (c) => {
+  const user = confirmed(poster(c));
+  await throttle(`username-change:${user.id}`, 20, 3600);
+  const updated = await changeUsername(user.id, c.actor ?? user, c.body.username);
+  return { user: await me(updated, c.actor?.id === user.id ? updated : c.actor) };
+});
+
+router.post<MeResponse>("/api/me/username/undo", async (c) => {
+  const user = confirmed(poster(c));
+  await throttle(`username-change:${user.id}`, 20, 3600);
+  const updated = await changeUsername(user.id, c.actor ?? user, undefined, true);
+  return { user: await me(updated, c.actor?.id === user.id ? updated : c.actor) };
+});
 
 router.patch<ProfileSaved>("/api/me", async (c) => {
   const u = need(c);

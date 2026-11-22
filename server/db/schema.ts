@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   username: text().notNull(),
   usernameNorm: text("username_norm").notNull().unique(),
+  usernameChangeAfter: integer("username_change_after").default(0).notNull(),
   email: text().notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   realname: text().default("").notNull(),
@@ -649,6 +650,42 @@ export const journals = pgTable(
     updatedAt: integer("updated_at").notNull(),
   },
   (table) => [index("journals_user").on(table.userId, table.createdAt)]
+);
+
+export const changelogPosts = pgTable(
+  "changelog_posts",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+    title: text().notNull(),
+    body: text().notNull(),
+    author: text().notNull(),
+    editor: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => [index("changelog_posts_time").on(table.createdAt, table.id)]
+);
+
+export const usernameHistory = pgTable(
+  "username_history",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    previous: text().notNull(),
+    previousNorm: text("previous_norm").notNull(),
+    next: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+    reservedUntil: integer("reserved_until").notNull(),
+    releasedAt: integer("released_at"),
+    undoneAt: integer("undone_at"),
+    isUndo: boolean("is_undo").default(false).notNull(),
+  },
+  (table) => [
+    index("username_history_user").on(table.userId, table.id),
+    index("username_history_name").on(table.previousNorm, table.reservedUntil),
+  ]
 );
 
 export const auditLog = pgTable(
