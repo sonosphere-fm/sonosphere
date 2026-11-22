@@ -2,8 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, ty
 import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
-import { UsernameFontSettings } from "../ui/username-font-settings";
-import { ProfileAccentSettings } from "../ui/profile-accent-settings";
+import { ProfileStyleSettings } from "../ui/profile-style-settings";
 import { Username } from "../ui/username";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -180,16 +179,7 @@ function ProfileSettings() {
       <BannerSettings />
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
-          <UsernameFontSettings
-            value={f.usernameFont}
-            onChange={(usernameFont) => setF((f) => ({ ...f, usernameFont }))}
-            disabled={act.busy}
-          />
-          <ProfileAccentSettings
-            value={f}
-            onChange={(appearance) => setF((f) => ({ ...f, ...appearance }))}
-            disabled={act.busy}
-          />
+          <ProfileStyleSettings value={f} onChange={(style) => setF((f) => ({ ...f, ...style }))} disabled={act.busy} />
           <label>
             Display name
             <Input value={f.realname} onChange={set("realname")} maxLength={60} />

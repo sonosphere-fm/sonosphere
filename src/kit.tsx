@@ -13,7 +13,7 @@ import { Button as AButton } from "@astryxdesign/core/Button";
 import { TextInput, type TextInputType } from "@astryxdesign/core/TextInput";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
-import { Selector } from "@astryxdesign/core/Selector";
+import { Selector, SelectorOption, type SelectorOptionData } from "@astryxdesign/core/Selector";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Pagination } from "@astryxdesign/core/Pagination";
 import { Ico } from "./icons";
@@ -211,14 +211,22 @@ export function Select({
   onChange,
   options,
   disabled,
+  render,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: [string, string][];
   disabled?: boolean;
+  render?: (value: string, label: string) => ReactNode;
 }) {
+  const labels = new Map(options);
   const items = options.map(([v, l]) => ({ value: v, label: l }));
+  const custom = render
+    ? (option: SelectorOptionData) => (
+        <SelectorOption layout="inline" label={render(option.value, labels.get(option.value)!)} />
+      )
+    : undefined;
   return (
     <Selector
       label={label}
@@ -228,6 +236,8 @@ export function Select({
       value={value}
       onChange={onChange}
       options={items}
+      renderOption={custom}
+      renderValue={custom}
     />
   );
 }

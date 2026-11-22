@@ -6347,7 +6347,7 @@
     );
     background: var(--profile-page);
   }
-  .profile-theme[data-profile-accent="custom"] .hero {
+  .profile-theme[data-profile-accent="custom"] :is(.hero, .style-preview) {
     background: var(--profile-surface);
     border-top: 3px solid var(--profile-accent);
   }
@@ -6355,10 +6355,10 @@
     background: var(--profile-banner-shade);
   }
   .profile-theme[data-profile-accent="custom"]
-    :is(.hero h1, .section-head h2, .toolbar h2, .report-title, .accent-preview-heading) {
+    :is(.hero h1, .section-head h2, .toolbar h2, .report-title, .style-preview-name) {
     color: var(--profile-text);
   }
-  .profile-theme[data-profile-accent="custom"] :is(.stats.boxed, .notice, .accent-preview-heading) {
+  .profile-theme[data-profile-accent="custom"] :is(.stats.boxed, .notice) {
     background: var(--profile-surface);
   }
   .profile-theme[data-profile-accent="custom"] :is(.section-head, .tabs) {
@@ -6392,8 +6392,7 @@
   .profile-theme[data-profile-accent="custom"] .chartlist tr.now td {
     background: var(--now);
   }
-  .profile-theme[data-profile-accent="custom"] .astryx-button.bare:not(.play-btn):not(.love),
-  .profile-theme[data-profile-accent="custom"] .accent-preview-link {
+  .profile-theme[data-profile-accent="custom"] .astryx-button.bare:not(.play-btn):not(.love) {
     color: var(--profile-text);
   }
   .profile-theme[data-profile-accent="custom"] .astryx-button.bare.love.on {
@@ -6406,64 +6405,78 @@
     background: var(--profile-accent);
     color: var(--profile-on-accent);
   }
-  .accent-fields {
+  .style-settings {
     border: 0;
     padding: 0;
     margin: 0;
     min-width: 0;
+    width: 100%;
     display: grid;
     gap: 14px;
   }
-  .accent-color-field {
+  .style-preview {
     display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    background: var(--panel);
+    border-top: 3px solid var(--accent);
+  }
+  .style-preview-name {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .form .style-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
     align-items: end;
-    gap: 10px;
   }
-  .accent-color-field label {
+  .style-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .style-field .theme-pick {
+    display: flex;
+    height: 40px;
+    margin: 0;
+  }
+  .style-field .theme-pick button {
     flex: 1;
-    min-width: 0;
+    padding: 0 10px;
+    white-space: nowrap;
   }
-  .accent-color-field input[type="color"] {
-    width: 48px;
+  .font-preview {
+    display: block;
+    height: 1.25em;
+    width: auto;
+    max-width: 100%;
+  }
+  .color-field {
+    display: flex;
+    gap: 8px;
+  }
+  .color-field input[type="color"] {
+    flex: none;
+    width: 44px;
     height: 40px;
     padding: 3px;
     border: 1px solid var(--edge);
     background: var(--card);
     cursor: pointer;
   }
-  .accent-color-field input[type="color"]:disabled {
+  .color-field input[type="color"]:disabled {
     cursor: progress;
     opacity: 0.5;
-  }
-  .accent-preview {
-    padding: 16px;
-    border: 1px solid var(--line);
-    display: grid;
-    gap: 14px;
-  }
-  .accent-preview-heading {
-    background: var(--panel);
-    padding: 12px;
-    font-size: 24px;
-    overflow-wrap: anywhere;
-  }
-  .accent-preview .section-head {
-    margin: 0;
-  }
-  .accent-preview .bar {
-    width: 100%;
-    color: var(--ink);
-  }
-  .accent-preview .astryx-button {
-    justify-self: start;
-  }
-  .accent-preview-action {
-    justify-self: start;
-    background: var(--accent);
-    color: var(--on-accent);
-    border: 1px solid var(--link);
-    padding: 6px 14px;
-    font-weight: 600;
   }
   .profile-theme .hero h1 {
     overflow-wrap: anywhere;
