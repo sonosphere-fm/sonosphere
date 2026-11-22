@@ -186,7 +186,7 @@ function Footer() {
             <Link to="/terms">Terms</Link>
             <Link to="/privacy">Privacy</Link>
             <Link to="/guidelines">Guidelines</Link>
-            <a href="mailto:support@sonosp.here">Contact</a>
+            <a href="mailto:support@sonosphere.fm">Contact</a>
           </span>
         </div>
       </div>
