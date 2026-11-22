@@ -169,8 +169,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // videos still to try for this track: some can't be embedded
   const cands = useRef<string[]>([]);
   const station = useRef<(Station & { loading: boolean }) | null>(state.station && { ...state.station, loading: false });
-  // where to start the track when resuming after a reload
+  // where to start the track: after a reload, or where the source that failed left off
   const from = useRef(0);
+  // tries the current track's next source when the one playing it fails
+  const fallBack = useRef(() => {});
 
   // Connected on the first play, and given up on for the session if the link can't play.
   const sp = useRef<SpotifyLink>({ out: null, opening: null, off: false, uri: "", moved: false });
@@ -192,6 +194,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const spotifyFailed = () => {
+    if (!ref.current.spotify) return;
+    sp.current.uri = "";
+    sp.current.out?.pause();
+    from.current = ref.current.position;
+    setState(v => ({ ...v, spotify: null, status: "finding" }));
+    fallBack.current();
+  };
+
   const spotify = (): Promise<SpotifyOut | null> => {
     const s = sp.current;
     if (s.off || !meRef.current) return Promise.resolve(null);
@@ -200,8 +211,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       s.off = true;
       s.out?.close();
       s.out = null;
+      spotifyFailed();
     };
-    return s.opening ??= openSpotify({ state: onSpotify, lost })
+    return s.opening ??= openSpotify({ state: onSpotify, lost, failed: spotifyFailed })
       .catch(() => null)
       .then(out => {
         s.opening = null;
@@ -256,36 +268,42 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setState({ ...empty, queue, index, playing: true, station: st && { path: st.path, title: st.title } });
     if (st && index >= queue.length - 3) refill();
 
+    const playSpotify = async () => {
+      const out = await spotify();
+      if (!out || stale()) return false;
+      const hit = await out.find(t.artist, t.title);
+      if (!hit || stale()) return false;
+      sp.current.uri = hit.uri;
+      sp.current.moved = false;
+      if (!(await out.play(hit.uri, from.current * 1000)) || stale()) {
+        sp.current.uri = "";
+        return false;
+      }
+      setState(s => ({ ...s, spotify: { id: hit.id, art: hit.art }, videoId: null, status: "ready", playing: true }));
+      return true;
+    };
     const playVideo = async () => {
       const ids = await api<VideoLookup>(`/video${qs({ artist: t.artist, track: t.title })}`)
         .then(r => r.videoIds || [], (): string[] => []);
-      if (stale()) return;
+      if (!ids[0] || stale()) return false;
       cands.current = ids;
-      const videoId = ids[0] || null;
-      setState(s => ({ ...s, videoId, status: videoId ? "ready" : "missing", playing: !!videoId }));
-      if (videoId && meRef.current) {
+      setState(s => ({ ...s, videoId: ids[0]!, status: "ready", playing: true }));
+      if (meRef.current) {
         const body = { artist: t.artist, track: t.title, album: t.album || "", duration: t.duration || 0 };
         api<Ok>("/nowplaying", { body }).catch(() => {});
       }
+      return true;
     };
-    const playSpotify = async () => {
-      const out = await spotify();
-      if (!out || stale()) return null;
-      const hit = await out.find(t.artist, t.title);
-      if (!hit || stale()) return null;
-      sp.current.uri = hit.uri;
-      sp.current.moved = false;
-      return (await out.play(hit.uri, at * 1000)) ? hit : null;
-    };
-    playSpotify().catch(() => null).then(hit => {
-      if (stale()) return;
-      if (!hit) {
-        sp.current.uri = "";
-        playVideo();
-        return;
+    // Spotify first when linked; each source is tried once per track
+    const sources = [playSpotify, playVideo];
+    fallBack.current = async () => {
+      for (let source = sources.shift(); source; source = sources.shift()) {
+        if (await source().catch(() => false)) return;
+        if (stale()) return;
       }
-      setState(s => ({ ...s, spotify: { id: hit.id, art: hit.art }, status: "ready", playing: true }));
-    });
+      setState(s => ({ ...s, status: "missing", playing: false }));
+    };
+    fallBack.current();
   };
   const next = () => start(ref.current.queue, ref.current.index + 1);
 
@@ -307,11 +325,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         else if (e.data === YT.PlayerState.PLAYING) setState(s => ({ ...s, playing: true }));
         else if (e.data === YT.PlayerState.PAUSED) setState(s => ({ ...s, playing: false }));
       };
-      // removed, private or not embeddable: try the next candidate
+      // removed, private or not embeddable: try the next candidate, then the next source
       const onError = () => {
         const rest = cands.current.slice(1);
         cands.current = rest;
-        setState(s => rest[0] ? { ...s, videoId: rest[0] } : { ...s, status: "missing", playing: false });
+        if (rest[0]) return setState(s => ({ ...s, videoId: rest[0]! }));
+        from.current = ref.current.position;
+        setState(s => ({ ...s, videoId: null, status: "finding" }));
+        fallBack.current();
       };
       yt.current = new YT.Player(el, {
         videoId: id,
