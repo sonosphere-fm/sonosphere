@@ -11,6 +11,8 @@ import {
 import type { AuditEntry } from "../site/audit";
 import type { AdminTag, CatalogueItem, TracklistTrack, CatalogueKind, DuplicateArtist, OrphanItem } from "../../shared/admin-content";
 import { auditTx } from "../site/audit";
+import { bad } from "../http";
+import { getOrCreateTrackTx } from "../catalog/repo";
 
 export type Kind = CatalogueKind;
 export type Actor = { id: number | null; username: string };
@@ -297,9 +299,21 @@ export async function existingTracks(ids: number[]): Promise<number> {
   return total(db.select({ c: count() }).from(tracks).where(inArray(tracks.id, ids)));
 }
 
-// Tracks taken off no longer point at the album; the list is locked so scrobbles can't add them back.
-export async function setTracklist(albumId: number, trackIds: number[], actor: Actor, entry: AuditEntry): Promise<void> {
+export type TracklistEntry = number | string;
+
+// A title is a track by the album's artist, created when it's new. Tracks taken off no longer point at the album;
+// the list is locked so scrobbles can't add them back.
+export async function setTracklist(
+  album: CatRow,
+  entries: TracklistEntry[],
+  actor: Actor,
+  entry: (trackIds: number[]) => AuditEntry,
+): Promise<void> {
+  const albumId = album.id;
   await transact(async tx => {
+    const trackIds: number[] = [];
+    for (const e of entries) trackIds.push(typeof e === "number" ? e : await getOrCreateTrackTx(tx, album.artistId!, e));
+    if (new Set(trackIds).size !== trackIds.length) bad("A track is listed twice");
     await tx.delete(albumTracks).where(eq(albumTracks.albumId, albumId));
     if (trackIds.length) {
       await tx.insert(albumTracks).values(trackIds.map((trackId, i) => ({ albumId, trackId, position: i + 1 })));
@@ -308,7 +322,7 @@ export async function setTracklist(albumId: number, trackIds: number[], actor: A
     const removed = trackIds.length ? notInArray(tracks.id, trackIds) : undefined;
     await tx.update(tracks).set({ albumId: null }).where(and(eq(tracks.albumId, albumId), removed));
     await tx.update(albums).set({ tracklistLocked: true }).where(eq(albums.id, albumId));
-    await auditTx(tx, actor, entry);
+    await auditTx(tx, actor, entry(trackIds));
   });
 }
 
