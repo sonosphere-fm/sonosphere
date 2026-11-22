@@ -44,6 +44,8 @@ startMetadata();
 startEventSync();
 startImports();
 
+const DISCORD_INVITE = "https://discord.gg/nAjqvC3Ajq";
+
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };
 
 const server = Bun.serve<SocketData>({
@@ -57,6 +59,7 @@ const server = Bun.serve<SocketData>({
     "/api/user/nowplaying/stream": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
     "/api/user/nowplaying/ws": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
     "/api/*": api.handle,
+    "/discord": () => new Response(null, { status: 302, headers: { Location: DISCORD_INVITE, "Cache-Control": "no-store" } }),
     "/2.0": handleCompat,
     "/2.0/": handleCompat,
     ...app,

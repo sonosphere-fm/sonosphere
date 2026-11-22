@@ -137,6 +137,7 @@ function Header() {
                   href={me.openReports > 0 ? "/admin/reports" : "/admin"}
                 />
               )}
+              <DropdownMenuItem icon={<Ico.Discord />} label="Join our Discord" href="/discord" />
               <DropdownMenuItem icon={<Ico.LogOut />} label="Log out" onClick={logout} />
             </DropdownMenu>
           ) : (
@@ -180,6 +181,7 @@ function Footer() {
     yourMusic,
     ["Scrobbling", [["Scrobble manually", "/scrobble"], ["Connect a player", "/settings/applications"], ["Import & export", "/settings/data"]]],
     ["Developers", [["API documentation", "/developers"], ["API keys", "/settings/applications"]]],
+    ["Community", [["Join our Discord", "/discord"], ["Guidelines", "/guidelines"]]],
     ...account,
   ];
   return (
@@ -195,7 +197,7 @@ function Footer() {
           <nav key={title} aria-label={title}>
             <h2 className="font-site text-site-sun text-[11px] font-semibold tracking-[.08em] uppercase m-0 mb-2">{title}</h2>
             <ul className="list-none m-0 p-0 grid gap-0.5 max-[600px]:gap-0">
-              {links.map(([label, to]) => <li key={label}><Link className={colLink} to={to}>{label}</Link></li>)}
+              {links.map(([label, to]) => <li key={label}><RouteLink className={colLink} href={to}>{label}</RouteLink></li>)}
             </ul>
           </nav>
         ))}
