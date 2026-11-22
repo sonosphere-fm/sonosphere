@@ -1,13 +1,13 @@
 FROM oven/bun:1.4.5 AS build
+# deploy.sh generates server/changelog/history.gitlog before invoking Docker.
+# For a manual build, generate it with the same git log command first.
 WORKDIR /app
-# Keep system packages cached across source and release changes.
-RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
 ARG GIT_SHA
 ENV SENTRY_RELEASE=$GIT_SHA
-RUN bun run typecheck && bun run build
+RUN bun run typecheck && CHANGELOG_GIT_LOG=server/changelog/history.gitlog bun run build
 
 FROM oven/bun:1.4.5 AS deps
 WORKDIR /app

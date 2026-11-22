@@ -20,7 +20,11 @@ export async function readGitHistory(): Promise<ChangelogEntry[]> {
     ],
     { cwd: root, timeout: 10000, maxBuffer: 16 * 1024 * 1024 }
   );
-  const fields = stdout.split("\0");
+  return parseGitHistory(stdout);
+}
+
+export function parseGitHistory(log: string): ChangelogEntry[] {
+  const fields = log.split("\0");
   const entries: ChangelogEntry[] = [];
   for (let i = 1; i + 4 < fields.length; i += 5) {
     let additions = 0;
