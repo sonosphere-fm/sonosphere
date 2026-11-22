@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or, sql } from "drizzle-orm";
-import { db, transact } from "../db/client";
+import { db, transact, transactRetry } from "../db/client";
 import { albums, albumTracks, artists, spotifyArtistPics, tracks } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx } from "../catalog/repo";
 import { first, norm, now } from "../util";
@@ -67,7 +67,7 @@ export async function setTrackList(
   artistId: number,
   list: { title: string; seconds: number }[]
 ): Promise<void> {
-  await transact(async (tx) => {
+  await transactRetry(async (tx) => {
     const place = (trackId: number, position: number) =>
       tx
         .update(albumTracks)

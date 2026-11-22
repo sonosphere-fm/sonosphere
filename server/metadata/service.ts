@@ -127,10 +127,11 @@ async function findCover(
     if (mbid && (await storeCover(albumId, mbid))) return;
     if (!mbid && (await viaLastfmRelease(albumId, await lastfm()))) return;
   } catch (e) {
-    if (!(e instanceof src.Busy) || e.message !== "storage") throw e;
-    // out of storage for today: covers wait an hour, and this album is searched again then
+    if (!(e instanceof src.Busy)) throw e;
+    // not an answer about the cover: search again once the source is free
     await repo.setAlbum(albumId, { coverAt: null });
-    await setJson(COVERS_PAUSED, 1, 3600_000);
+    // out of storage for today: covers wait an hour, and this album is searched again then
+    if (e.message === "storage") await setJson(COVERS_PAUSED, 1, 3600_000);
     return;
   }
   const lf = await lastfm();

@@ -143,8 +143,17 @@ export async function getOrCreateAlbumTx(
   const [created] = await tx
     .insert(albums)
     .values({ artistId, title: clean(title), titleNorm: n, releaseDate, createdAt: now() })
+    .onConflictDoNothing({ target: [albums.artistId, albums.titleNorm] })
     .returning({ id: albums.id });
-  return created.id;
+  if (created) return created.id;
+
+  // A concurrent creator may have committed after our lookup; read it in a fresh statement snapshot.
+  const [existing] = await tx
+    .select({ id: albums.id })
+    .from(albums)
+    .where(and(eq(albums.artistId, artistId), eq(albums.titleNorm, n)));
+  if (!existing) throw new Error("Album disappeared after concurrent creation");
+  return existing.id;
 }
 
 /**
@@ -165,20 +174,35 @@ export async function getOrCreateTrackTx(
     .from(tracks)
     .where(and(eq(tracks.artistId, artistId), eq(tracks.titleNorm, n)));
   let id: number;
-  if (!row) {
+  let currentAlbumId: number | null;
+  if (row) {
+    id = row.id;
+    currentAlbumId = row.albumId;
+  } else {
     const [created] = await tx
       .insert(tracks)
       .values({ artistId, title: clean(title), titleNorm: n, duration: duration | 0, albumId, createdAt: now() })
+      .onConflictDoNothing({ target: [tracks.artistId, tracks.titleNorm] })
       .returning({ id: tracks.id });
-    id = created.id;
-  } else {
-    id = row.id;
-    if (!row.duration && duration > 0)
-      await tx
-        .update(tracks)
-        .set({ duration: duration | 0 })
-        .where(eq(tracks.id, id));
+    if (created) {
+      id = created.id;
+      currentAlbumId = albumId;
+    } else {
+      // a concurrent caller created it first; take that row
+      const [existing] = await tx
+        .select({ id: tracks.id, albumId: tracks.albumId })
+        .from(tracks)
+        .where(and(eq(tracks.artistId, artistId), eq(tracks.titleNorm, n)));
+      if (!existing) throw new Error("Track disappeared after concurrent creation");
+      id = existing.id;
+      currentAlbumId = existing.albumId;
+    }
   }
+  if (duration > 0)
+    await tx
+      .update(tracks)
+      .set({ duration: duration | 0 })
+      .where(and(eq(tracks.id, id), eq(tracks.duration, 0)));
   if (!albumId) return id;
 
   const [listed] = await tx
@@ -189,7 +213,11 @@ export async function getOrCreateTrackTx(
     const [album] = await tx.select({ locked: albums.tracklistLocked }).from(albums).where(eq(albums.id, albumId));
     if (album?.locked) return id;
   }
-  if (row && !row.albumId) await tx.update(tracks).set({ albumId }).where(eq(tracks.id, id));
+  if (!currentAlbumId)
+    await tx
+      .update(tracks)
+      .set({ albumId })
+      .where(and(eq(tracks.id, id), isNull(tracks.albumId)));
   if (!listed) {
     let pos = position;
     if (pos === undefined) {
@@ -199,7 +227,8 @@ export async function getOrCreateTrackTx(
         .where(eq(albumTracks.albumId, albumId));
       pos = last?.p ?? 1;
     }
-    await tx.insert(albumTracks).values({ albumId, trackId: id, position: pos });
+    // another caller may have listed it after our lookup; its position wins
+    await tx.insert(albumTracks).values({ albumId, trackId: id, position: pos }).onConflictDoNothing();
   }
   return id;
 }

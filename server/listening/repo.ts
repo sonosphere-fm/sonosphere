@@ -20,7 +20,7 @@ import {
 } from "drizzle-orm";
 import { playImage, trackImage } from "../catalog/art";
 import { alias } from "drizzle-orm/pg-core";
-import { db, transact, type Conn } from "../db/client";
+import { db, transact, transactRetry, type Conn } from "../db/client";
 import { flag, timeBucket, type Bucket } from "../db/dialect";
 import { getJson, setJson } from "../kv";
 import {
@@ -639,7 +639,7 @@ export async function recordScrobbles(
   plays: NewScrobble[],
   source: string
 ): Promise<(Scrobbled | null)[]> {
-  return transact(async (tx) => {
+  return transactRetry(async (tx) => {
     const out: (Scrobbled | null)[] = [];
     for (const play of plays) {
       const ref = await resolveTrackTx(tx, play);
