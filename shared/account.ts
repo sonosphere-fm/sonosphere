@@ -17,3 +17,8 @@ export type ProfileEdit = {
 };
 export type ProfileSaved = Session;
 export type ScrobblesCleared = { deleted: number };
+export type UsernameStatus = {
+  username: string;
+  changeAfter: number;
+  undo: { username: string; expiresAt: number } | null;
+};

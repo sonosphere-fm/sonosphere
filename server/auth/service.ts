@@ -8,6 +8,8 @@ import { pendingEmail } from "./email";
 import * as repo from "./repo";
 import { clearActAsCookie, sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
+import { USERNAME } from "../account/username-policy";
+export { USERNAME } from "../account/username-policy";
 
 export async function me(u: User, actor?: User | null): Promise<Me> {
   return {
@@ -65,7 +67,6 @@ export async function endSession(headers: Headers, token = ""): Promise<void> {
   headers.append("Set-Cookie", clearActAsCookie());
 }
 
-export const USERNAME = /^[a-zA-Z][a-zA-Z0-9_-]{1,14}$/;
 export async function checkNewAccount(username: string, email: string): Promise<void> {
   const open = await setting("registrationsOpen");
   if (!open && !(await configAdmins()).includes(norm(username))) fail(403, "Registrations are closed at the moment");

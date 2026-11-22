@@ -19,6 +19,7 @@ import {
 } from "../db/schema";
 import { first, norm, now } from "../util";
 import type { TagCount } from "../../shared/tags";
+import { aliasUser } from "../account/usernames";
 import type { LovedTrack, Person, PublicUser, TaggedItem } from "../../shared/users";
 
 export type User = typeof users.$inferSelect;
@@ -42,14 +43,14 @@ export const publicUser = (u: Named & ({ imageId: string | null } | { image: str
   image: "imageId" in u ? u.imageId : u.image,
 });
 
-export const findByName = (name: string): Promise<User | null> =>
-  first(
+export const findByName = async (name: string): Promise<User | null> =>
+  (await first(
     db
       .select()
       .from(users)
       .where(eq(users.usernameNorm, norm(name)))
       .limit(1)
-  );
+  )) ?? aliasUser(name);
 export const findById = (id: number): Promise<User | null> =>
   first(db.select().from(users).where(eq(users.id, id)).limit(1));
 

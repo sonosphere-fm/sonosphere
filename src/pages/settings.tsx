@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { Button, Input, Select, useConfirm } from "../kit";
 import { MdEditor } from "../md";
+import { UsernameSettings } from "../ui/username-settings";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ago,
@@ -610,6 +611,7 @@ function AccountSettings() {
   return (
     <>
       {c.dialog}
+      <UsernameSettings />
       <Section title="Email">
         <form className="form" onSubmit={submitEmail}>
           <p className="muted small">
