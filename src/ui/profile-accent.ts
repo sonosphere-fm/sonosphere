@@ -54,7 +54,20 @@ export function profileAccentStyle(user: UserAppearance): CSSProperties | undefi
   // White is readable across the entire sRGB gradient, including its middle.
   const barStart = textTone(start, false, ["#ffffff"]);
   const barEnd = textTone(end, false, ["#ffffff"]);
+  // Tailwind's CSS optimizer drops all but one color-mix() custom property per rule, so mixes live here.
+  const lightBg = mix(start, "#fffdf7", 0.12);
+  const darkBg = mix(start, "#101012", 0.12);
+  const onBg = (color: string, amount: number) =>
+    `light-dark(${mix(color, lightBg, amount)}, ${mix(color, darkBg, amount)})`;
   return {
+    "--profile-line": onBg(start, 0.25),
+    "--profile-tint": onBg(start, 0.18),
+    "--profile-faint": onBg(start, 0.08),
+    "--profile-now-hover": onBg(start, 0.23),
+    "--profile-black": mix(start, "#080808", 0.08),
+    "--profile-zebra": `${start}0d`,
+    "--profile-wash": `${start}1f`,
+    "--profile-chart": `linear-gradient(90deg, ${onBg(start, 0.24)}, ${onBg(end, 0.24)})`,
     "--profile-accent": start,
     "--profile-accent-end": end,
     "--profile-text": `light-dark(${textTone(start, false, lightSurfaces)}, ${textTone(start, true, darkSurfaces)})`,
