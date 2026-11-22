@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { albumUrl, artistUrl, dec, dur, plural, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
 import { Async, Section, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
+import { CopyLink } from "../../ui/copy-link";
+import { shortMusicUrl } from "../../../shared/paths";
 import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
@@ -60,6 +62,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             actions={
               <>
                 <PlayButton queue={a.tracks} label="Play album" />
+                <CopyLink url={shortMusicUrl("r", a.id)} />
                 {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
                 {me?.admin && (
                   <Suspense fallback={null}>

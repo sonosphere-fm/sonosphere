@@ -25,7 +25,10 @@
 		max_size 300MB
 	}
 	encode zstd gzip
+	import app
+}
 
+(app) {
 	reverse_proxy 127.0.0.1:3000 {
 		header_up X-Forwarded-For {client_ip}
 		header_up X-Forwarded-Proto https
@@ -41,8 +44,20 @@ https://sonosphere.fm {
 	import site
 }
 
-# the beta domain and www forward to the main one
-https://sonosp.here, https://www.sonosphere.fm {
+# short links: sonosp.here/<username> and sonosp.here/<a|r|t>/<id>
+https://sonosp.here {
+	tls internal
+	import cloudflare
+	handle / {
+		redir https://sonosphere.fm/ 302
+	}
+	handle {
+		rewrite * /api/short{path}
+		import app
+	}
+}
+
+https://www.sonosphere.fm {
 	tls internal
 	import cloudflare
 	redir https://sonosphere.fm{uri} 301

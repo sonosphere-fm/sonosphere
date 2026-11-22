@@ -26,6 +26,7 @@ import {
   albumTracks,
   artists,
   auditLog,
+  catalogueMoves,
   eventArtists,
   lovedTracks,
   nowPlaying,
@@ -55,6 +56,7 @@ import type {
 } from "../../shared/admin-content";
 import { auditTx } from "../site/audit";
 import { bad } from "../http";
+import { now } from "../util";
 import { getOrCreateTrackTx } from "../catalog/repo";
 
 export type Kind = CatalogueKind;
@@ -261,6 +263,13 @@ async function moveItemRefsTx(tx: Tx, type: Kind, src: number, dst: number): Pro
   await tx.delete(wikiLocks).where(srcLock);
 }
 
+// Earlier moves into the source follow it, so every old id points straight at a live row.
+async function recordMoveTx(tx: Tx, kind: Kind, src: number, dst: number): Promise<void> {
+  const into = and(eq(catalogueMoves.kind, kind), eq(catalogueMoves.toId, src));
+  await tx.update(catalogueMoves).set({ toId: dst }).where(into);
+  await tx.insert(catalogueMoves).values({ kind, fromId: src, toId: dst, movedAt: now() });
+}
+
 const atLeast = (column: AnyColumn, n: number) => sql`CASE WHEN ${column} < ${n} THEN ${n} ELSE ${column} END`;
 
 async function mergeTrackTx(tx: Tx, src: number, dst: number): Promise<void> {
@@ -315,6 +324,7 @@ async function mergeTrackTx(tx: Tx, src: number, dst: number): Promise<void> {
       albumId: sql`COALESCE(${tracks.albumId}, ${s.albumId})`,
     })
     .where(eq(tracks.id, dst));
+  await recordMoveTx(tx, "track", src, dst);
   await tx.delete(tracks).where(eq(tracks.id, src));
 }
 
@@ -349,6 +359,7 @@ async function mergeAlbumTx(tx: Tx, src: number, dst: number): Promise<void> {
       releaseDate: sql`COALESCE(${albums.releaseDate}, ${s.releaseDate})`,
     })
     .where(eq(albums.id, dst));
+  await recordMoveTx(tx, "album", src, dst);
   await tx.delete(albums).where(eq(albums.id, src));
 }
 
@@ -446,6 +457,7 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
       imageId: sql`COALESCE(${artists.imageId}, ${s.imageId})`,
     })
     .where(eq(artists.id, dst));
+  await recordMoveTx(tx, "artist", src, dst);
   await tx.delete(artists).where(eq(artists.id, src));
   return { merged, moved };
 }

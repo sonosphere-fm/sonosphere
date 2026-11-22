@@ -3,6 +3,7 @@ import { deleteSessionsOf, emailTaken } from "../auth/repo";
 import { confirmedBy, endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
 import { confirmed, need, poster } from "../guards";
+import { recordChange } from "./history";
 import { changeUsername, usernameStatus } from "./usernames";
 import type { UsernameStatus } from "../../shared/account";
 import { profileLinks } from "../../shared/profile-links";
@@ -120,6 +121,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     ...(emailMuted !== undefined && { emailMuted }),
     ...(theme && { theme }),
   });
+  await recordChange(u.id, "realname", u.realname, realname);
   return { user: await me((await findById(u.id)) ?? missing("User"), c.actor) };
 });
 

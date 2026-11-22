@@ -21,8 +21,10 @@ import {
 } from "../../lib";
 import { Async, Section, Tabs, useAction, Pane } from "../../ui/base";
 import { Grid, LoveButton, TrackList } from "../../ui/lists";
+import { shortMusicUrl } from "../../../shared/paths";
 import { Shoutbox } from "../../ui/shoutbox";
 import { TrackLinks } from "../../ui/track-links";
+import { CopyLink } from "../../ui/copy-link";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
@@ -195,6 +197,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                 <Button kind="btn ghost" type="button" onClick={() => setModal("links")}>
                   <Ico.External /> Open in
                 </Button>
+                <CopyLink url={shortMusicUrl("t", t.id)} />
                 {me && (
                   <DropdownMenu placement="below" alignment="start" button={{ label: "More", variant: "secondary" }}>
                     <DropdownMenuItem label="Add to playlist" onClick={() => setModal("playlist")} />

@@ -2,6 +2,7 @@ import { and, eq, gt, isNull, lt, notLike } from "drizzle-orm";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
 import { db } from "../db/client";
 import { emailTokens, users } from "../db/schema";
+import { recordChange } from "../account/history";
 import { deleteAccount } from "../account/repo";
 import { bad, fail } from "../http";
 import { send } from "../mail";
@@ -73,6 +74,7 @@ export async function confirmEmail(token: unknown): Promise<User> {
     if (await emailTaken(t.email, u.id)) fail(400, "That email is already in use by another account");
     const old = u.email;
     await db.update(users).set({ email: t.email, emailVerifiedAt: now() }).where(eq(users.id, u.id));
+    await recordChange(u.id, "email", old, t.email);
     await db.delete(emailTokens).where(and(eq(emailTokens.userId, u.id), eq(emailTokens.kind, "verify")));
     if (old !== t.email) await send(mail.emailChangedMail(old, u.username, t.email));
   }
