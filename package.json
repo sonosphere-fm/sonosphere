@@ -28,8 +28,7 @@
     "postgres": "^4.1.1",
     "react": "19",
     "react-dom": "19",
-    "react-router-dom": "6",
-    "three": "^0.187.0"
+    "react-router-dom": "6"
   },
   "devDependencies": {
     "@astryxdesign/cli": "^0.7.16",
@@ -37,7 +36,6 @@
     "@types/nodemailer": "^8.0.2",
     "@types/react": "19",
     "@types/react-dom": "19",
-    "@types/three": "^0.187.0",
     "cheerio": "^1.2.0",
     "drizzle-kit": "^0.31.11",
     "typescript": "^7.0.2"

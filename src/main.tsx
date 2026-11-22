@@ -1,13 +1,12 @@
 import { Ico, Spinner } from "./icons";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ComponentProps, type FormEvent } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type ComponentProps, type FocusEvent, type FormEvent } from "react";
 import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, startingTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
-import { RouteLink } from "./kit";
-import { flushSync } from "react-dom";
+import { Button, RouteLink } from "./kit";
 import "./sentry";
 import { createRoot } from "react-dom/client";
 import { PageMetadata } from "./page-metadata";
@@ -55,39 +54,40 @@ const AdminPage = lazy(() => import("./admin/index"));
 function Header() {
   const { me, setMe } = useAuth();
   const nav = useNavigate();
-  const location = useLocation();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchToggle = useRef<HTMLButtonElement>(null);
-  const searchInput = useRef<HTMLInputElement>(null);
+  const loc = useLocation();
+  const [term, setTerm] = useState("");
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => setSearchOpen(false), [location.key]);
+  const close = () => {
+    setTerm("");
+    setOpen(false);
+  };
+  useEffect(close, [loc.pathname, loc.search]);
 
-  const closeSearch = () => {
-    setSearchOpen(false);
-    searchToggle.current?.focus();
-  };
-  const toggleSearch = () => {
-    if (searchOpen) {
-      closeSearch();
-    } else {
-      // Focus within the tap so mobile browsers can open the keyboard.
-      flushSync(() => setSearchOpen(true));
-      searchInput.current?.focus();
-    }
-  };
-  const search = (e: FormEvent<HTMLFormElement>) => {
+  const search = (e: FormEvent) => {
     e.preventDefault();
-    const term = new FormData(e.currentTarget).get("q");
-    if (typeof term !== "string" || !term.trim()) return;
-    e.currentTarget.reset();
-    if (searchOpen) closeSearch();
-    nav(`/search?q=${encodeURIComponent(term.trim())}`);
+    if (term.trim()) nav(`/search?q=${encodeURIComponent(term.trim())}`);
   };
   const logout = () => api<Ok>("/auth/logout", { body: {} }).then(() => {
     setMe(null);
     nav("/");
   });
+  const closeOnBlur = (e: FocusEvent<HTMLFormElement>) => {
+    if (!term && !e.currentTarget.contains(e.relatedTarget as Node)) close();
+  };
+
+  if (open) return (
+    <header className="site-header searching">
+      <form className="header-search wrap" onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }} onBlur={closeOnBlur}>
+        <input autoFocus value={term} onChange={e => setTerm(e.target.value)} placeholder="Search for music…" aria-label="Search for music" />
+        <button type="button" className="header-search-x" aria-label="Close search" onClick={close}><Ico.X /></button>
+        <button type="submit" className="header-search-go" aria-label="Search"><Ico.Search /></button>
+      </form>
+    </header>
+  );
+
   const dmCount = me ? me.dm.unread + me.dm.requests : 0;
+  const badge = me ? me.unread + dmCount : 0;
   const menuButton = me && {
     label: `${me.username} menu`,
     variant: "ghost" as const,
@@ -95,48 +95,33 @@ function Header() {
     children: (
       <>
         <span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>
-        {me.admin && me.openReports > 0 && <b className="dot">{me.openReports}</b>}
+        {badge > 0 && <b className="dot">{badge}</b>}
       </>
     ),
   };
 
   return (
-    <header className="site-header sphere-site-header">
-      <div className="wrap sphere-header-layout">
+    <header className="site-header">
+      <div className="wrap">
         <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
-        <nav className="sphere-primary" aria-label="Main">
+        <nav className="site-nav" aria-label="Main">
+          <Button kind="nav-search" type="button" aria-label="Search" onClick={() => setOpen(true)}><Ico.Search /></Button>
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/charts">Charts</NavLink>
           <NavLink to="/events">Events</NavLink>
-        </nav>
-        <button type="button" className="sphere-search-toggle" ref={searchToggle}
-          aria-label={searchOpen ? "Close search" : "Open search"} aria-expanded={searchOpen}
-          aria-controls="site-search" onClick={toggleSearch}>
-          {searchOpen ? <Ico.X /> : <Ico.Search />}
-        </button>
-        <search className="sphere-search" id="site-search" aria-label="Site search" data-open={searchOpen || undefined}
-          onKeyDown={event => { if (searchOpen && event.key === "Escape") closeSearch(); }}>
-          <form action="/search" method="get" onSubmit={search}>
-            <input type="search" name="q" ref={searchInput} placeholder="Search music" aria-label="Search music"
-              enterKeyHint="search" autoCorrect="off" autoCapitalize="none" spellCheck={false} />
-            <button type="submit" aria-label="Submit search"><Ico.Search /></button>
-          </form>
-        </search>
-        <div className="sphere-account-actions">
           {me && menuButton ? (
-            <>
-            <nav className="sphere-quick" aria-label="Your account">
-              <NavLink to={`${userUrl(me.username)}/library`} title="Library"><Ico.Library /><span>Library</span></NavLink>
-              <NavLink to={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"} title="Messages">
-                <Ico.Chat /><span>Messages</span>{dmCount > 0 && <b className="dot">{dmCount}</b>}
-              </NavLink>
-              <NavLink to="/inbox" title="Inbox"><Ico.Inbox /><span>Inbox</span>{me.unread > 0 && <b className="dot">{me.unread}</b>}</NavLink>
-              <NavLink to="/scrobble" title="Scrobble"><Ico.Scrobble /><span>Scrobble</span></NavLink>
-            </nav>
             <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} menuMaxHeight={480} button={menuButton}>
               <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
+              <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
               <DropdownMenuItem icon={<Ico.Reports />} label="Listening reports" href={`${userUrl(me.username)}/listening-report/week`} />
               <DropdownMenuItem icon={<Ico.Recommended />} label="Recommended" href="/recommended" />
+              <DropdownMenuItem
+                icon={<Ico.Chat />}
+                label={dmCount > 0 ? `Messages (${dmCount})` : "Messages"}
+                href={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"}
+              />
+              <DropdownMenuItem icon={<Ico.Inbox />} label={me.unread > 0 ? `Inbox (${me.unread})` : "Inbox"} href="/inbox" />
+              <DropdownMenuItem icon={<Ico.Scrobble />} label="Scrobble" href="/scrobble" />
               <DropdownMenuItem icon={<Ico.Settings />} label="Settings" href="/settings" />
               {me.admin && (
                 <DropdownMenuItem
@@ -147,14 +132,13 @@ function Header() {
               )}
               <DropdownMenuItem icon={<Ico.LogOut />} label="Log out" onClick={logout} />
             </DropdownMenu>
-            </>
           ) : (
             <>
-              <NavLink className="sphere-login" to="/login">Sign in</NavLink>
-              <Link to="/join" className="sphere-join">Join now <Ico.Right /></Link>
+              <NavLink to="/login">Log in</NavLink>
+              <Link to="/join" className="join">Join</Link>
             </>
           )}
-        </div>
+        </nav>
       </div>
     </header>
   );
