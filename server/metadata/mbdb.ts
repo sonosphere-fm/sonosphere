@@ -164,6 +164,15 @@ export async function releaseGroupOf(releaseMbid: string): Promise<string | null
   return r?.gid ?? null;
 }
 
+/** Each release group's primary type ("Album", "Single"...), empty when it has none. */
+export async function releaseTypes(mbids: string[]): Promise<Map<string, string>> {
+  const rows = await db()<{ mbid: string; type: string }[]>`
+    SELECT rg.gid::text AS mbid, coalesce(t.name, '') AS type
+    FROM release_group rg LEFT JOIN rg_type t ON t.id = rg.type
+    WHERE rg.gid = ANY(${mbids}::uuid[])`;
+  return new Map(rows.map(r => [r.mbid, r.type]));
+}
+
 /** Albums and EPs, oldest first. */
 export async function discography(mbid: string): Promise<MbAlbum[]> {
   const rows = await db().unsafe<AlbumRow[]>(`SELECT * FROM (${ALBUM}

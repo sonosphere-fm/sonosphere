@@ -252,7 +252,7 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
               <SearchField value={text} onChange={setText} placeholder={`Find the ${kind} to keep`} autoFocus />
             </form>
             <Suspense fallback={<p className="muted small">Searching…</p>}>
-              <MergeResults kind={kind} term={term} skip={item.id} onPick={setPick} />
+              <MergeResults kind={kind} term={term} fallback={item.artist} skip={item.id} onPick={setPick} />
             </Suspense>
           </>
         ) : (
@@ -273,11 +273,17 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
   );
 }
 
-function MergeResults({ kind, term, skip, onPick }: { kind: string; term: string; skip: number; onPick: (it: CatalogueItem) => void }) {
+type MergeResultsProps = { kind: string; term: string; fallback: string | null; skip: number; onPick: (it: CatalogueItem) => void };
+
+// with no other match by name, the artist's others are the likely targets (a single into its album)
+function MergeResults({ kind, term, fallback, skip, onPick }: MergeResultsProps) {
   const q = useApi<CatalogueSearch>(`/admin/catalogue/search${qs({ kind, q: term, limit: 8 })}`);
   return (
     <Async q={q}>{d => {
       const items = d.items.filter(x => x.id !== skip);
+      if (items.length === 0 && fallback && fallback !== term) {
+        return <MergeResults kind={kind} term={fallback} fallback={null} skip={skip} onPick={onPick} />;
+      }
       if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
       return (
         <ul className={`${COMPACT_LIST} max-h-[320px] overflow-auto [&>li]:items-center`}>

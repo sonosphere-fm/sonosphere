@@ -13,7 +13,7 @@ export type AuditEntry = {
   data?: object;
 };
 
-type Actor = { id: number; username: string };
+type Actor = { id: number | null; username: string };
 
 const row = (actor: Actor, e: AuditEntry) => ({
   actorId: actor.id,

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { db, transact } from "../db/client";
 import { albums, albumTracks, artists, spotifyArtistPics, tracks } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx } from "../catalog/repo";
@@ -28,7 +28,8 @@ export async function setArtist(id: number, set: { mbid?: string; spotifyId?: st
   if (Object.keys(set).length) await db.update(artists).set(set).where(eq(artists.id, id));
 }
 export async function setAlbum(id: number, set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number | null; metaAt?: number }) {
-  if (Object.keys(set).length) await db.update(albums).set(set).where(eq(albums.id, id));
+  if (!Object.keys(set).length) return;
+  await db.update(albums).set(set.mbid ? { ...set, releaseType: null } : set).where(eq(albums.id, id));
 }
 export async function setTrack(id: number, set: { duration?: number; albumId?: number; metaAt?: number }) {
   if (Object.keys(set).length) await db.update(tracks).set(set).where(eq(tracks.id, id));
@@ -218,3 +219,34 @@ export const unlookedTracks = (limit: number) =>
     .where(and(isNull(tracks.metaAt), or(isNull(tracks.albumId), eq(tracks.duration, 0))))
     .orderBy(asc(tracks.id))
     .limit(limit);
+
+export const untypedAlbums = (limit: number) =>
+  db
+    .select({ id: albums.id, mbid: albums.mbid })
+    .from(albums)
+    .where(and(isNotNull(albums.mbid), isNull(albums.releaseType)))
+    .orderBy(asc(albums.id))
+    .limit(limit);
+export const setReleaseType = (id: number, releaseType: string) =>
+  db.update(albums).set({ releaseType }).where(eq(albums.id, id));
+
+/** Singles whose every listed track is also on one of the artist's albums or EPs, with the earliest such album. */
+export async function singlesOnAlbums(limit: number): Promise<{ single: number; album: number }[]> {
+  const rows = await db.execute<{ single: number; album: number }>(sql`
+    SELECT * FROM (
+      SELECT s.id AS single, (
+        SELECT d.id FROM albums d
+        WHERE d.artist_id = s.artist_id AND d.release_type IN ('album', 'ep')
+          AND NOT EXISTS (
+            SELECT 1 FROM album_tracks st WHERE st.album_id = s.id
+              AND NOT EXISTS (SELECT 1 FROM album_tracks dt WHERE dt.album_id = d.id AND dt.track_id = st.track_id))
+        ORDER BY d.release_type = 'ep', d.release_date NULLS LAST, d.id
+        LIMIT 1) AS album
+      FROM albums s
+      WHERE s.release_type = 'single' AND EXISTS (SELECT 1 FROM album_tracks st WHERE st.album_id = s.id)
+    ) x
+    WHERE album IS NOT NULL
+    ORDER BY single
+    LIMIT ${limit}`);
+  return [...rows];
+}
