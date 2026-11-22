@@ -274,6 +274,18 @@ export const tracks = pgTable(
   (table) => [unique().on(table.artistId, table.titleNorm)]
 );
 
+// MusicBrainz recording ids that ListenBrainz clients sent with a play of the track
+export const recordingMbids = pgTable(
+  "recording_mbids",
+  {
+    mbid: text().primaryKey(),
+    trackId: integer("track_id")
+      .notNull()
+      .references(() => tracks.id, { onDelete: "cascade" }),
+  },
+  (table) => [index("recording_mbids_track").on(table.trackId)]
+);
+
 export const albumTracks = pgTable(
   "album_tracks",
   {
@@ -604,6 +616,19 @@ export const apiSessions = pgTable("api_sessions", {
   createdAt: integer("created_at").notNull(),
   lastUsedAt: integer("last_used_at").default(0).notNull(),
 });
+
+// the newest play an importer copied in from another service, for ListenBrainz's latest-import
+export const listenImports = pgTable(
+  "listen_imports",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    service: text().notNull(),
+    ts: integer().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.service] })]
+);
 
 export const videoCache = pgTable("video_cache", {
   key: text().primaryKey(),

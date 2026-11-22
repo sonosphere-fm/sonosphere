@@ -14,7 +14,8 @@ const go = (path: string) =>
 
 type Kind = (typeof SHORT_KINDS)[keyof typeof SHORT_KINDS];
 
-async function currentId(kind: Kind, id: number) {
+/** Where a merged-away artist, album or track went, or the same id. */
+export async function currentId(kind: Kind, id: number) {
   const moved = await first(
     db
       .select({ to: catalogueMoves.toId })

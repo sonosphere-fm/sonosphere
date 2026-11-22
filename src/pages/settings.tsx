@@ -20,7 +20,7 @@ import {
   type Ok,
 } from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
-import type { ApiApp, AppOk, Apps } from "../../shared/apps";
+import type { ApiApp, AppOk, Apps, ListenToken } from "../../shared/apps";
 import { useTurnstile } from "./auth";
 import { OAUTH_ERRORS, OAuthMark, oauthStart } from "../ui/oauth";
 import type { Logins } from "../../shared/auth";
@@ -1065,6 +1065,14 @@ function AppSettings() {
   const act = useAction();
   const c = useConfirm();
   const robot = useTurnstile("apiapp");
+  const tokenAct = useAction();
+  const [token, setToken] = useState("");
+
+  const newToken = () =>
+    tokenAct.run(async () => {
+      setToken((await api<ListenToken>("/apps/listen-token", { body: {} })).token);
+      q.reload();
+    });
 
   const revoke = (key: string) => api<AppOk>("/apps/revoke", { body: { key } }).then(q.reload);
 
@@ -1106,6 +1114,20 @@ function AppSettings() {
           <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed.{" "}
           <Link to="/help#pano-scrobbler">Setup details</Link>.
         </p>
+        <p>
+          Players that support ListenBrainz can scrobble here too: set the server URL to{" "}
+          <code>{window.location.origin}</code> and paste a token.
+        </p>
+        {token ? (
+          <p>
+            Your token, shown only this once: <code>{token}</code>
+          </p>
+        ) : (
+          <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
+            Create ListenBrainz token
+          </Button>
+        )}
+        {tokenAct.note}
         <Async q={q}>
           {(d) =>
             d.sessions.length ? (
