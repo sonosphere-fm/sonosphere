@@ -1,6 +1,6 @@
 import { Arrow, Ico } from "../../icons";
 import { useState } from "react";
-import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
+import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Button } from "../../kit";
 import { Markdown } from "../../md";
 import { StationButton } from "../../player";
@@ -26,7 +26,7 @@ import {
 import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
-import { CopyLink } from "../../ui/copy-link";
+import { MoreMenu } from "../../ui/more-menu";
 import { shortUrl } from "../../../shared/paths";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
@@ -120,7 +120,7 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
         <Button kind="btn ghost" href="/scrobble">
           Scrobble manually
         </Button>
-        <CopyLink url={shortUrl(u.username)} />
+        <MoreMenu label={`More actions for ${u.username}`} link={shortUrl(u.username)} />
       </>
     );
   }
@@ -128,13 +128,12 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
     <>
       {!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={onChange} />}
       {!u.hidden && <StationButton type="library" name={u.username} label="Play library" ghost />}
-      <CopyLink url={shortUrl(u.username)} />
       {me && !u.blocked && (
         <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>
           Message
         </Button>
       )}
-      {me && <ProfileMenu u={u} onChange={onChange} />}
+      <ProfileMenu u={u} onChange={onChange} />
     </>
   );
 }
@@ -276,21 +275,15 @@ function ProfileMenu({ u, onChange }: { u: Profile; onChange: () => void }) {
   const toggleSuspend = () =>
     api<SuspendResult>("/mod/suspend", { body: { username: u.username, suspended: !u.suspended } }).then(done);
 
-  const button = {
-    label: `More actions for ${u.username}`,
-    variant: "secondary",
-    className: "more-btn",
-    children: <Ico.More />,
-  } as const;
   return (
     <>
-      <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} button={button}>
-        <DropdownMenuItem label={u.blocked ? "Unblock user" : "Block user"} onClick={toggleBlock} />
-        <DropdownMenuItem label="Report profile" onClick={() => setReporting(true)} />
+      <MoreMenu label={`More actions for ${u.username}`} link={shortUrl(u.username)}>
+        {me && <DropdownMenuItem label={u.blocked ? "Unblock user" : "Block user"} onClick={toggleBlock} />}
+        {me && <DropdownMenuItem label="Report profile" onClick={() => setReporting(true)} />}
         {me?.admin && (
           <DropdownMenuItem label={u.suspended ? "Lift suspension" : "Suspend from posting"} onClick={toggleSuspend} />
         )}
-      </DropdownMenu>
+      </MoreMenu>
       <ReportButton type="user" id={u.id} open={reporting} onClose={() => setReporting(false)} />
     </>
   );
