@@ -157,6 +157,8 @@ export const albums = pgTable("albums", {
 	basePlaycount: big("base_playcount").default(0).notNull(),
 	// the MusicBrainz release group
 	mbid: text(),
+	// its MusicBrainz primary type in lower case ("album", "single", "ep"), empty when it has none
+	releaseType: text("release_type"),
 	metaAt: integer("meta_at"),
 	coverAt: integer("cover_at"),
 	spAt: integer("sp_at"),
@@ -164,6 +166,17 @@ export const albums = pgTable("albums", {
 },
 (table) => [
 	unique().on(table.artistId, table.titleNorm),
+]);
+
+// a name an album was merged away under, so scrobbles naming it land on the album it went into
+export const albumFolds = pgTable("album_folds", {
+	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
+	titleNorm: text("title_norm").notNull(),
+	albumId: integer("album_id").notNull().references(() => albums.id, { onDelete: "cascade" } ),
+},
+(table) => [
+	primaryKey({ columns: [table.artistId, table.titleNorm] }),
+	index("album_folds_album").on(table.albumId),
 ]);
 
 export const tracks = pgTable("tracks", {

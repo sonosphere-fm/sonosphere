@@ -28,8 +28,9 @@ router.get<ArtistTracks>("/api/artist/tracks", async c => {
 router.get<ArtistAlbums>("/api/artist/albums", async c => {
   const a = await requireArtist(c.q.get("name"));
   const pg = paging(c.q, 48);
-  const items = wantBare("album", await repo.discography(a.id, pg.limit, pg.offset), r => r.id);
-  return { items, total: await repo.albumCount(a.id), ...pg };
+  const singles = c.q.get("type") === "singles";
+  const items = wantBare("album", await repo.discography(a.id, singles, pg.limit, pg.offset), r => r.id);
+  return { items, total: await repo.albumCount(a.id, singles), ...pg };
 });
 
 router.get<ArtistSimilar>("/api/artist/similar", async c => {

@@ -5,7 +5,7 @@ import { and, asc, count, countDistinct, desc, eq, inArray, ne, notExists, or, s
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact, type Conn, type Tx } from "../db/client";
 import {
-  albums, albumTracks, artists, eventArtists, lovedTracks, nowPlaying, obsessions, playlistTracks, scrobbles, shouts, similarArtists,
+  albumFolds, albums, albumTracks, artists, eventArtists, lovedTracks, nowPlaying, obsessions, playlistTracks, scrobbles, shouts, similarArtists,
   taggings, tags, tracks, userAlbums, userArtists, userTracks, wikiLocks, wikis,
 } from "../db/schema";
 import type { AuditEntry } from "../site/audit";
@@ -13,7 +13,7 @@ import type { AdminTag, CatalogueItem, CatalogueKind, DuplicateArtist, OrphanIte
 import { auditTx } from "../site/audit";
 
 export type Kind = CatalogueKind;
-type Actor = { id: number; username: string };
+export type Actor = { id: number | null; username: string };
 type Page = { limit: number; offset: number };
 export type CatRow = { id: number; label: string; artist: string | null; artistId: number | null };
 
@@ -206,6 +206,10 @@ async function mergeAlbumTx(tx: Tx, src: number, dst: number): Promise<void> {
   await tx.update(scrobbles).set({ albumId: dst }).where(eq(scrobbles.albumId, src));
   await tx.update(nowPlaying).set({ albumId: dst }).where(eq(nowPlaying.albumId, src));
   await moveItemRefsTx(tx, "album", src, dst);
+  await tx.update(albumFolds).set({ albumId: dst }).where(eq(albumFolds.albumId, src));
+  await tx.insert(albumFolds)
+    .values({ artistId: s.artistId, titleNorm: s.titleNorm, albumId: dst })
+    .onConflictDoUpdate({ target: [albumFolds.artistId, albumFolds.titleNorm], set: { albumId: dst } });
   await tx.update(albums).set({
     basePlaycount: sql`${albums.basePlaycount} + ${s.basePlaycount}`,
     baseListeners: atLeast(albums.baseListeners, s.baseListeners),

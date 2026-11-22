@@ -66,6 +66,11 @@ function Overview({ a, base }: { a: ArtistData; base: string }) {
         <Section title="Albums" more={`${base}/+albums`} moreLabel="View all albums" foot>
           <Grid below kind="album" cols={4} items={a.topAlbums.slice(0, 4)} sub={albumSub} />
         </Section>
+        {a.topSingles.length > 0 && (
+          <Section title="Singles" more={`${base}/+albums?type=singles`} moreLabel="View all singles" foot>
+            <Grid below kind="album" cols={4} items={a.topSingles} sub={albumSub} />
+          </Section>
+        )}
         <Listeners items={a.topListeners} more={`${base}/+listeners`} />
         <Section title="Wall" more={`${base}/+wall`} moreLabel="View the whole wall" foot>
           <Shoutbox type="artist" id={a.id} limit={3} />
@@ -197,24 +202,34 @@ function ArtistTracks({ name }: { name: string }) {
   );
 }
 
+const RELEASE_TYPES: [string, string][] = [["albums", "Albums"], ["singles", "Singles"]];
+
 function ArtistAlbums({ name }: { name: string }) {
-  const [sp] = useSearchParams();
+  const [sp, setSp] = useSearchParams();
   const page = Number(sp.get("page")) || 1;
-  const q = useApi<ArtistAlbumsData>(`/artist/albums${qs({ name, page })}`);
+  const type = sp.get("type") === "singles" ? "singles" : "albums";
+  const q = useApi<ArtistAlbumsData>(`/artist/albums${qs({ name, page, type: type === "singles" ? type : "" })}`);
+  const pick = (v: string) => setSp(v === "singles" ? { type: v } : {});
   return (
-    <Async q={q}>
-      {d => (
-        <>
-          <Grid
-            kind="album"
-            cols={4}
-            items={d.items}
-            sub={x => <>{x.releaseDate?.slice(0, 4)} · {plural(x.trackCount, "track")} · {num(x.listeners)} listeners</>}
-          />
-          <Pager total={d.total} limit={d.limit} />
-        </>
-      )}
-    </Async>
+    <>
+      <div className="toolbar">
+        <h2>{type === "singles" ? "Singles" : "Albums"}</h2>
+        <Select label="Show" value={type} onChange={pick} options={RELEASE_TYPES} />
+      </div>
+      <Async q={q}>
+        {d => (
+          <>
+            <Grid
+              kind="album"
+              cols={4}
+              items={d.items}
+              sub={x => <>{x.releaseDate?.slice(0, 4)} · {plural(x.trackCount, "track")} · {num(x.listeners)} listeners</>}
+            />
+            <Pager total={d.total} limit={d.limit} />
+          </>
+        )}
+      </Async>
+    </>
   );
 }
 

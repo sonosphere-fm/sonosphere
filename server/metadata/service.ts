@@ -10,6 +10,7 @@ import { findAlbum, findArtist, findTrack, type AlbumWithArtist, type Artist, ty
 import * as repo from "./repo";
 import * as src from "./sources";
 import * as mbdb from "./mbdb";
+import { singlesBackfill } from "./singles";
 import { WANTED } from "./wanted";
 
 const MONTH = 30 * 86400;
@@ -600,5 +601,6 @@ export function startMetadata() {
     lastfmBackfill();
     wikidataBackfill();
     catalogueCopyBackfill();
+    singlesBackfill().catch(quiet("singles"));
   }, 20_000);
 }

@@ -1,7 +1,7 @@
-import { and, asc, count, desc, eq, exists, getTableColumns, gt, inArray, isNotNull, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, getTableColumns, gt, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { db, transact, type Tx } from "../db/client";
 import { flag } from "../db/dialect";
-import { albums, albumTracks, artists, eventArtists, eventAttendance, events, journals, lovedTracks, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
+import { albumFolds, albums, albumTracks, artists, eventArtists, eventAttendance, events, journals, lovedTracks, tags, tracks, userAlbums, userArtists, userTracks, users } from "../db/schema";
 import { openListener, publicCols } from "../users/repo";
 import { clean, first, norm, now } from "../util";
 import type { ArtistAlbum, ArtistAlbumWithPlays, EventSummary, ItemType, LatestAlbum, Listener, OtherAlbum, TrackAlbum } from "../../shared/catalog";
@@ -74,6 +74,10 @@ export async function getOrCreateAlbumTx(tx: Tx, artistId: number, title: string
     .from(albums)
     .where(and(eq(albums.artistId, artistId), eq(albums.titleNorm, n)));
   if (row) return row.id;
+  const [folded] = await tx.select({ id: albumFolds.albumId })
+    .from(albumFolds)
+    .where(and(eq(albumFolds.artistId, artistId), eq(albumFolds.titleNorm, n)));
+  if (folded) return folded.id;
   const [created] = await tx.insert(albums)
     .values({ artistId, title: clean(title), titleNorm: n, releaseDate, createdAt: now() })
     .returning({ id: albums.id });
@@ -171,23 +175,26 @@ export async function topListeners(kind: "artist" | "album" | "track", id: numbe
     .limit(limit);
 }
 
-export async function popularAlbums(artistId: number, limit: number): Promise<ArtistAlbum[]> {
+const releases = (artistId: number, singles: boolean) =>
+  and(eq(albums.artistId, artistId), singles ? eq(albums.releaseType, "single") : or(isNull(albums.releaseType), ne(albums.releaseType, "single")));
+
+export async function popularAlbums(artistId: number, singles: boolean, limit: number): Promise<ArtistAlbum[]> {
   const listeners = albumListeners.as("listeners");
   return db.select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name, listeners, trackCount: albumSize })
     .from(albums)
     .innerJoin(artists, eq(artists.id, albums.artistId))
-    .where(eq(albums.artistId, artistId))
+    .where(releases(artistId, singles))
     .orderBy(desc(listeners))
     .limit(limit);
 }
 
-export async function discography(artistId: number, limit: number, offset: number): Promise<ArtistAlbumWithPlays[]> {
+export async function discography(artistId: number, singles: boolean, limit: number, offset: number): Promise<ArtistAlbumWithPlays[]> {
   const listeners = albumListeners.as("listeners");
   const playcount = albumPlays.as("playcount");
   return db.select({ ...albumCard, releaseDate: albums.releaseDate, artist: artists.name, playcount, listeners, trackCount: albumSize })
     .from(albums)
     .innerJoin(artists, eq(artists.id, albums.artistId))
-    .where(eq(albums.artistId, artistId))
+    .where(releases(artistId, singles))
     .orderBy(desc(listeners), desc(playcount))
     .limit(limit)
     .offset(offset);
@@ -213,8 +220,8 @@ export async function otherAlbums(artistId: number, exceptAlbumId: number, limit
     .limit(limit);
 }
 
-export const albumCount = (artistId: number): Promise<number> =>
-  single(db.select({ c: count() }).from(albums).where(eq(albums.artistId, artistId)));
+export const albumCount = (artistId: number, singles: boolean): Promise<number> =>
+  single(db.select({ c: count() }).from(albums).where(releases(artistId, singles)));
 export const trackCount = (artistId: number): Promise<number> =>
   single(db.select({ c: count() }).from(tracks).where(eq(tracks.artistId, artistId)));
 

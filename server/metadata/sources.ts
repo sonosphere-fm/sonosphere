@@ -200,6 +200,12 @@ async function apiTrackList(rgid: string): Promise<ListedTrack[]> {
   return out.slice(0, 100);
 }
 
+async function apiReleaseTypes(mbids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const mbid of mbids) out.set(mbid, str((await mb(`/release-group/${mbid}`, {}))?.["primary-type"]));
+  return out;
+}
+
 let ownDownAt = 0;
 async function own<T>(local: () => Promise<T>, api: () => Promise<T>): Promise<T> {
   if (mbdb.mbdbOn && Date.now() - ownDownAt > 60_000) {
@@ -218,6 +224,7 @@ export const mbAlbum = (artist: string, title: string) => own(() => mbdb.album(a
 export const mbDiscography = (mbid: string) => own(() => mbdb.discography(mbid), () => apiDiscography(mbid));
 export const mbTrack = (artist: string, title: string) => own(() => mbdb.track(artist, title), () => apiTrack(artist, title));
 export const mbTrackList = (rgid: string) => own(() => mbdb.trackList(rgid), () => apiTrackList(rgid));
+export const mbReleaseTypes = (mbids: string[]) => own(() => mbdb.releaseTypes(mbids), () => apiReleaseTypes(mbids));
 /** Whether lookups are cheap (our own copy) rather than one a second. */
 export const mbLocal = () => mbdb.mbdbOn && Date.now() - ownDownAt > 60_000;
 
