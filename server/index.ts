@@ -22,6 +22,8 @@ import { startEventSync } from "./events/sync";
 import { startImports } from "./listening/imports";
 import { startMetadata } from "./metadata/service";
 import { syncAdmins } from "./site/roles";
+import { pg } from "./db/client";
+import { readiness } from "./readiness";
 
 const production = process.env.NODE_ENV === "production";
 
@@ -63,6 +65,7 @@ const server = Bun.serve<SocketData>({
   reusePort: true,
   development: production ? false : { hmr: true, console: false },
   routes: {
+    "/health/ready": () => readiness(() => pg`SELECT 1`),
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv),
     "/api/user/nowplaying": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
     "/api/user/nowplaying/stream": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),

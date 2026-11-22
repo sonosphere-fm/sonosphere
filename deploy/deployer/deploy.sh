@@ -25,9 +25,11 @@ notify() {
 
 app_answers() {
   for _ in $(seq 60); do
-    curl -sf -o /dev/null "http://127.0.0.1:$1/api/site" && return 0
+    curl -sf --connect-timeout 1 --max-time 3 -o /dev/null "http://127.0.0.1:$1/health/ready" && return 0
     sleep 1
   done
+  echo "Readiness probe failed on port $1; final response:"
+  curl -sS --connect-timeout 1 --max-time 3 -w '\nHTTP %{http_code}\n' "http://127.0.0.1:$1/health/ready" || true
   return 1
 }
 
