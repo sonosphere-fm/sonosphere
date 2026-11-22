@@ -43,17 +43,30 @@ preflight() {
   return $ok
 }
 
+timed() {
+  label=$1
+  shift
+  phase_started=$(date +%s)
+  if "$@"; then phase_status=0; else phase_status=$?; fi
+  echo "$label: $(( $(date +%s) - phase_started ))s (exit $phase_status)"
+  return "$phase_status"
+}
+
 ship() {
   set -e
-  docker build -q -t "sonosphere:$1" $SRC
-  $COMPOSE build -q backup
-  $COMPOSE exec -T backup sh /deploy/backup.sh deploy
-  preflight "$1"
-  docker tag "sonosphere:$1" sonosphere:live
-  $COMPOSE up -d --wait postgres valkey app caddy backup
-  $COMPOSE exec -T caddy caddy reload --config /etc/caddy/Caddyfile
-  docker image ls sonosphere --format '{{.Tag}}' | grep -v live | tail -n +4 | sed 's/^/sonosphere:/' | xargs -r docker rmi -f
-  docker image prune -f > /dev/null
+  # Supply only the public commit metadata needed by the server, not the whole repository.
+  git -C "$SRC" log -30 --first-parent --diff-merges=first-parent --numstat \
+    --format='%x00%H%x00%cI%x00%an%x00%s%x00' HEAD -- > "$SRC/server/changelog/history.gitlog" || return $?
+  timed "App image build" docker build --build-arg "GIT_SHA=$1" -t "sonosphere:$1" "$SRC" || return $?
+  timed "Backup image build" $COMPOSE build -q backup || return $?
+  timed "Database backup" $COMPOSE exec -T backup sh /deploy/backup.sh deploy || return $?
+  timed "Preflight" preflight "$1" || return $?
+  docker tag "sonosphere:$1" sonosphere:live || return $?
+  timed "Service replacement" $COMPOSE up -d --wait postgres valkey app caddy backup || return $?
+  timed "Caddy reload" $COMPOSE exec -T caddy caddy reload --config /etc/caddy/Caddyfile || return $?
+  docker image ls sonosphere --format '{{.Tag}}' | grep -v live | tail -n +4 | sed 's/^/sonosphere:/' | xargs -r docker rmi --no-prune -f
+  # Intermediate stages are reusable build cache, especially with Docker's classic builder.
+  # Do not prune them after each release.
 }
 
 deploy() {
