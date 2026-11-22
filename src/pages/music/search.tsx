@@ -7,6 +7,7 @@ import { Async, Empty, Section } from "../../ui/base";
 import { Grid, TrackList, UserList } from "../../ui/lists";
 import { TagChips } from "../../ui/tags";
 import type { SearchResults } from "../../../shared/search";
+import { TopTabs } from "./shared";
 
 const TYPES = [
   ["all", "Top results"],
@@ -32,8 +33,8 @@ export function SearchPage() {
     if (box.trim()) nav(`/search?q=${encodeURIComponent(box.trim())}`);
   };
 
-  const field = (
-    <form className="search-big" onSubmit={go} role="search">
+  const field = (className: string) => (
+    <form className={className} onSubmit={go} role="search">
       <SearchField clearable value={box} onChange={setBox} placeholder="Search for an artist, album, track, tag or listener…" autoFocus={!term} />
     </form>
   );
@@ -42,7 +43,7 @@ export function SearchPage() {
     return (
       <div className="wrap page">
         <h1 className="page-title center">Search for music, tags and listeners</h1>
-        <div className="search-empty">{field}</div>
+        <div className="max-w-[640px] mx-auto">{field("max-w-[720px] mb-6")}</div>
       </div>
     );
   }
@@ -79,16 +80,14 @@ export function SearchPage() {
 
   return (
     <>
-      <div className="wrap search-head"><h1 className="page-title">Search results for “{term}”</h1></div>
-      <div className="top-tabs">
-        <nav className="wrap tabs">
-          {TYPES.map(([k, l]) => <Button key={k} kind={k === type ? "active" : ""} onClick={() => setType(k)}>{l}</Button>)}
-        </nav>
-      </div>
+      <div className="wrap"><h1 className="page-title mt-7 mb-2">Search results for “{term}”</h1></div>
+      <TopTabs>
+        {TYPES.map(([k, l]) => <Button key={k} kind={k === type ? "active" : ""} onClick={() => setType(k)}>{l}</Button>)}
+      </TopTabs>
       <div className="wrap search-page">
         <div className="cols">
           <div className="main">
-            {field}
+            {field("mb-7")}
             <Async q={q}>{results}</Async>
           </div>
           <aside className="side">

@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Button, Input, Modal, SearchField, Select } from "../kit";
 import { ago, albumUrl, api, artistUrl, num, plural, qs, tagUrl, trackUrl, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
-import { useQuery, useConfirm, useAction2, useFlash } from "./common";
+import { CHECK, COMPACT_LIST, FILTERBAR, PICKED_ROW, SCROLL, SEARCH, TABLE } from "./common";
+import { TOOLBAR, WIDE_SEARCH, useQuery, useConfirm, useAction2, useFlash } from "./common";
 import type { AdminTagList, CatalogueDuplicates, CatalogueItem, CatalogueMerged, CatalogueSearch, Ok, OrphanList, OrphansDeleted, TagDeleted } from "../../shared/admin-content";
 
 const KIND_LABEL: Record<string, string> = { artist: "Artists", album: "Albums", track: "Tracks" };
@@ -27,7 +28,7 @@ export function Catalogue() {
   useTitle("Catalogue");
   return (
     <>
-      <div className="toolbar">
+      <div className={TOOLBAR}>
         <nav className="tabs sub">
           {[["duplicates", "Duplicate artists"], ["browse", "Rename and merge"], ["orphans", "Orphans"], ["tags", "Tags"]].map(([k, l]) => (
             <button key={k} type="button" className={tab === k ? "active" : ""} onClick={() => set({ tab: k === "duplicates" ? "" : k, kind: "", q: "" })}>
@@ -40,6 +41,9 @@ export function Catalogue() {
     </>
   );
 }
+
+const GROUP = "border border-site-line pt-[10px] px-[14px] pb-[14px]";
+const RADIO = "flex items-center gap-[10px] py-1.5 flex-wrap cursor-pointer";
 
 function Duplicates() {
   const q = useApi<CatalogueDuplicates>("/admin/catalogue/duplicates");
@@ -57,7 +61,7 @@ function Duplicates() {
       <Async q={q}>{d => {
         if (d.groups.length === 0) return <Empty>No likely duplicates.</Empty>;
         return (
-          <div className="adm-groups">
+          <div className="grid gap-3">
             {d.groups.map((g, gi) => {
               const keep = target[gi] ?? g[0].id;
               const kept = g.find(a => a.id === keep)!;
@@ -79,12 +83,12 @@ function Duplicates() {
                 run: mergeAll,
               });
               return (
-                <div key={g.map(a => a.id).join("-")} className="adm-group">
-                  <ul>
+                <div key={g.map(a => a.id).join("-")} className={GROUP}>
+                  <ul className="list-none m-[0_0_10px] p-0">
                     {g.map(a => (
                       <li key={a.id}>
-                        <label className="adm-radio">
-                          <input type="radio" name={`dup-${gi}`} checked={a.id === keep} onChange={() => setTarget({ ...target, [gi]: a.id })} />
+                        <label className={RADIO}>
+                          <input className="accent-site-accent" type="radio" name={`dup-${gi}`} checked={a.id === keep} onChange={() => setTarget({ ...target, [gi]: a.id })} />
                           <span className="grow"><b>{a.name}</b> <Link className="muted small" to={artistUrl(a.name)}>view</Link></span>
                           <span className="muted small">{plural(a.scrobbles, "scrobble")} · {plural(a.tracks, "track")} · {plural(a.albums, "album")}</span>
                         </label>
@@ -132,14 +136,14 @@ function Browse() {
   };
   return (
     <>
-      <div className="adm-filterbar">
+      <div className={FILTERBAR}>
         <Select
           label="Kind"
           value={kind}
           onChange={v => set({ kind: v === "artist" ? "" : v })}
           options={[["artist", "Artists"], ["album", "Albums"], ["track", "Tracks"]]}
         />
-        <form className="adm-search" onSubmit={search}>
+        <form className={SEARCH} onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder={`Search ${KIND_LABEL[kind].toLowerCase()}`} clearable />
         </form>
       </div>
@@ -148,8 +152,8 @@ function Browse() {
         <>
           <p className="muted small">{num(d.total)} {KIND_LABEL[kind].toLowerCase()}</p>
           {d.items.length === 0 ? <Empty>Nothing matches.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className={SCROLL}>
+              <table className={TABLE}>
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -244,7 +248,7 @@ function MergeDialog({ kind, item, close, done }: DialogProps) {
         </p>
         {!pick ? (
           <>
-            <form className="adm-search wide" onSubmit={search}>
+            <form className={WIDE_SEARCH} onSubmit={search}>
               <SearchField value={text} onChange={setText} placeholder={`Find the ${kind} to keep`} autoFocus />
             </form>
             <Suspense fallback={<p className="muted small">Searching…</p>}>
@@ -276,7 +280,7 @@ function MergeResults({ kind, term, skip, onPick }: { kind: string; term: string
       const items = d.items.filter(x => x.id !== skip);
       if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
       return (
-        <ul className="adm-list compact adm-pick">
+        <ul className={`${COMPACT_LIST} max-h-[320px] overflow-auto [&>li]:items-center`}>
           {items.map(x => (
             <li key={x.id}>
               <span>
@@ -330,14 +334,14 @@ function Orphans() {
   return (
     <>
       {modal}
-      <div className="adm-filterbar">
+      <div className={FILTERBAR}>
         <Select
           label="Kind"
           value={kind}
           onChange={v => set({ kind: v === "track" ? "" : v })}
           options={[["track", "Tracks"], ["album", "Albums"], ["artist", "Artists"]]}
         />
-        <label className="check adm-check">
+        <label className={CHECK}>
           <Input type="checkbox" checked={imported === "1"} onChange={e => set({ imported: e.target.checked ? "1" : "" })} /> Include imported items with play counts
         </label>
       </div>
@@ -357,12 +361,12 @@ function Orphans() {
               {picked.size > 0 && <Button kind="btn danger small" type="button" onClick={askDelete}>Delete {picked.size} selected</Button>}
             </div>
             {d.items.length === 0 ? <Empty>Nothing to clean up.</Empty> : (
-              <div className="adm-scroll">
-                <table className="adm-table">
+              <div className={SCROLL}>
+                <table className={TABLE}>
                   <tbody>
                     {d.items.map(x => (
-                      <tr key={x.id} className={picked.has(x.id) ? "picked" : ""}>
-                        <td className="tick">
+                      <tr key={x.id} className={picked.has(x.id) ? PICKED_ROW : ""}>
+                        <td className="w-7">
                           <Input type="checkbox" aria-label={`Select ${x.name}`} checked={picked.has(x.id)} onChange={e => togglePick(x.id, e.target.checked)} />
                         </td>
                         <td><b>{x.name}</b>{x.artist && <span className="muted"> by {x.artist}</span>}</td>
@@ -407,8 +411,8 @@ function Tags() {
   return (
     <>
       {modal}
-      <div className="adm-filterbar">
-        <form className="adm-search" onSubmit={search}>
+      <div className={FILTERBAR}>
+        <form className={SEARCH} onSubmit={search}>
           <SearchField value={text} onChange={setText} placeholder="Search tags" clearable />
         </form>
         <Select label="Sort" value={sort} onChange={v => set({ sort: v === "uses" ? "" : v })} options={[["uses", "Most used"], ["name", "A to Z"]]} />
@@ -417,8 +421,8 @@ function Tags() {
       <Async q={q}>{d => (
         <>
           {d.items.length === 0 ? <Empty>No tags match.</Empty> : (
-            <div className="adm-scroll">
-              <table className="adm-table">
+            <div className={SCROLL}>
+              <table className={TABLE}>
                 <thead>
                   <tr>
                     <th>Tag</th>

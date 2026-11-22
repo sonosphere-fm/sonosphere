@@ -18,16 +18,13 @@ type HeroProps = {
   actions?: ReactNode;
   children?: ReactNode;
   tabs?: ReactNode;
-  image?: string | null;
   banner?: string | null;
 };
 
-export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, image, banner }: HeroProps) {
+export function Hero({ art, kicker, title, sub, stats, actions, children, tabs, banner }: HeroProps) {
   return (
     <div className="hero">
-      {banner
-        ? <ImageWithFallback className="hero-banner" src={imageUrl(banner)} alt="" loading="eager" />
-        : image ? <ImageWithFallback className="hero-bg" src={imageUrl(image)} alt="" loading="eager" /> : null}
+      {banner && <ImageWithFallback className="hero-banner" src={imageUrl(banner)} alt="" loading="eager" />}
       <div className="wrap hero-inner">
         {art && <div className="hero-art">{art}</div>}
         <div className="hero-body">
@@ -78,14 +75,16 @@ const HOME_TABS: [HomeTab, string, string][] = [
   ["events", "Events", "/recommended?show=events"],
 ];
 
-export function HomeTabs({ at }: { at: HomeTab }) {
+export function TopTabs({ children }: { children: ReactNode }) {
   return (
-    <div className="top-tabs">
-      <nav className="wrap tabs">
-        {HOME_TABS.map(([k, l, to]) => <Link key={k} className={at === k ? "active" : ""} to={to}>{l}</Link>)}
-      </nav>
+    <div className="top-tabs bg-site-panel py-3 [border-block-style:none]">
+      <nav className="wrap tabs">{children}</nav>
     </div>
   );
+}
+
+export function HomeTabs({ at }: { at: HomeTab }) {
+  return <TopTabs>{HOME_TABS.map(([k, l, to]) => <Link key={k} className={at === k ? "active" : ""} to={to}>{l}</Link>)}</TopTabs>;
 }
 
 type MixedRec = { kind: "artist" | "album" | "track"; item: Recommendation | TopAlbum | TopTrack; because: string[] };

@@ -19,7 +19,7 @@ import type {
   ArtistTracks as ArtistTracksData,
 } from "../../../shared/catalog";
 import type { TopTrack } from "../../../shared/listening";
-import { MusicHero, HeroStat, FeatureCard, releaseDate, YourScrobbles, About, Trend, Listeners, TrendingBand } from "./entity";
+import { MusicHero, HeroStat, FeatureCard, releaseDate, YourScrobbles, About, Trend, Listeners, TrendingBand, SIDE_LINKS } from "./entity";
 
 type ArtistTab = "overview" | "tracks" | "albums" | "similar" | "wiki" | "listeners" | "shoutbox";
 
@@ -85,11 +85,11 @@ function Overview({ a, base }: { a: ArtistData; base: string }) {
           {a.events.length
             ? <EventList items={a.events} />
             : <p className="muted">We don't have any upcoming events for this artist right now.</p>}
-          <p className="side-links"><Link to="/events/add"><Ico.Plus /> Add event</Link><Link to="/events">View all events</Link></p>
+          <p className={SIDE_LINKS}><Link to="/events/add"><Ico.Plus /> Add event</Link><Link to="/events">View all events</Link></p>
         </Section>
         {(a.mbid || a.spotifyId) && (
           <Section title="Elsewhere">
-            <p className="side-links">
+            <p className={SIDE_LINKS}>
               {a.mbid && <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a>}
               {a.spotifyId && <a href={`https://open.spotify.com/artist/${a.spotifyId}`} target="_blank" rel="noreferrer">Spotify</a>}
             </p>
@@ -161,7 +161,7 @@ function ArtistTopTracks({ name, base, initial }: { name: string; base: string; 
   const aside = (
     <>
       <PlayButton queue={items} />
-      <span className="head-right"><Select label="Time period" value={period} onChange={setPeriod} options={PERIODS} /></span>
+      <span className="ml-auto"><Select label="Time period" value={period} onChange={setPeriod} options={PERIODS} /></span>
     </>
   );
 
@@ -226,7 +226,7 @@ function ArtistSimilar({ name }: { name: string }) {
         <ul className="similar">
           {d.items.map(s => (
             <li key={s.id}>
-              <Link to={artistUrl(s.name)} className="similar-art"><Art image={s.image} kind="artist" /></Link>
+              <Link to={artistUrl(s.name)} className="w-[72px] flex-none max-[600px]:w-14"><Art image={s.image} kind="artist" /></Link>
               <div className="grow">
                 <Link className="strong" to={artistUrl(s.name)}>{s.name}</Link>
                 <span className="muted small">{num(s.listeners)} listeners</span>

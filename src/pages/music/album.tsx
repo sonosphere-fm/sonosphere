@@ -9,7 +9,7 @@ import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
 import { UploadImage } from "./shared";
 import type { AlbumPage as AlbumData } from "../../../shared/catalog";
-import { MusicHero, HeroStat, releaseDate, YourScrobbles, About, ByArtist, Trend, Listeners, TrendingBand } from "./entity";
+import { MusicHero, HeroStat, releaseDate, YourScrobbles, About, ByArtist, Trend, Listeners, TrendingBand, SIDE_LINKS } from "./entity";
 
 function albumFacts(a: AlbumData) {
   const facts: [string, ReactNode][] = [];
@@ -68,7 +68,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
                   <Trend data={a.trend} />
                   {a.mbid && (
                     <Section title="Elsewhere">
-                      <p className="side-links">
+                      <p className={SIDE_LINKS}>
                         <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">MusicBrainz</a>
                       </p>
                     </Section>

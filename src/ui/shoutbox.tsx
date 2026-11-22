@@ -101,7 +101,7 @@ export function Shoutbox({ type, id, limit = 20, word = "post" }: {
     compose = <p className="muted">This wall is turned off.</p>;
   } else if (me) {
     compose = (
-      <form onSubmit={post} className="shout-form">
+      <form onSubmit={post} className="flex gap-2.5 items-start mb-2 [&_textarea]:flex-1">
         <Avatar user={me} />
         <Textarea
           rows={2}
@@ -135,7 +135,7 @@ export function Shoutbox({ type, id, limit = 20, word = "post" }: {
                   </div>
                   <p>{s.body}</p>
                 </div>
-                <span className="shout-actions">
+                <span className="inline-flex gap-2.5 whitespace-nowrap">
                   {me && me.username !== s.author.username && <ReportButton type="shout" id={s.id} />}
                   {me && (me.username === s.author.username || d.canModerate) && (
                     <Button kind="link small" onClick={() => remove(s.id)}>Delete</Button>

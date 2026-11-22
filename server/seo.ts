@@ -10,7 +10,7 @@ import { findByName } from "./users/repo";
 import { canSee } from "./users/service";
 
 export const landing = {
-  "/": ["Sonosphere — Track what you love", "Scrobble the music you play, explore your listening history, and discover artists through community charts and recommendations."],
+  "/": ["Sonosphere - Track what you love", "Scrobble the music you play, explore your listening history, and discover artists through community charts and recommendations."],
   "/charts": ["Music Charts", "Explore the artists, albums, and tracks the Sonosphere community is listening to."],
   "/events": ["Concerts & Music Events", "Find upcoming concerts and festivals, browse lineups, and see who’s going."],
   "/developers": ["Developer API & Scrobbling Docs", "Build with the Sonosphere API. Find authentication, scrobbling, and Last.fm compatibility documentation."],
@@ -85,22 +85,22 @@ async function lookup(url: URL): Promise<Page> {
       const t = await requireTrack(name(first), name(third));
       const album = t.albumId ? await findItem("album", t.albumId) : null;
       const image = album?.imageId ?? (await findItem("artist", t.artistId))?.imageId;
-      return { title: `${t.title} by ${t.artist}${fourth ? " — Wiki" : ""}`, description: `Discover “${t.title}” by ${t.artist}${album ? ` from ${album.title}` : ""}. See listening stats, tags, and similar tracks.`, path: trackUrl(t.artist, t.title), index: !fourth, image, artwork: album?.imageId ? `Cover art for ${album.title}` : `Image of ${t.artist}`, schema: { "@type": "MusicRecording", name: t.title, byArtist: musicGroup(t.artist), ...(album && { inAlbum: { "@type": "MusicAlbum", name: album.title, url: absolute(albumUrl(t.artist, album.title)) } }) } };
+      return { title: `${t.title} by ${t.artist}${fourth ? " - Wiki" : ""}`, description: `Discover “${t.title}” by ${t.artist}${album ? ` from ${album.title}` : ""}. See listening stats, tags, and similar tracks.`, path: trackUrl(t.artist, t.title), index: !fourth, image, artwork: album?.imageId ? `Cover art for ${album.title}` : `Image of ${t.artist}`, schema: { "@type": "MusicRecording", name: t.title, byArtist: musicGroup(t.artist), ...(album && { inAlbum: { "@type": "MusicAlbum", name: album.title, url: absolute(albumUrl(t.artist, album.title)) } }) } };
     }
     const artistTab = own(artistTabs, tab) ? artistTabs[tab] : undefined;
     if (!second || (artistTab && !third)) {
       const a = await requireArtist(name(first));
       const bio = tab === "+wiki";
-      return { title: artistTab ? `${a.name} — ${artistTab}` : `${a.name} — Music, Albums & Tracks`, description: artistTab ? `Explore ${artistTab.toLowerCase()} for ${a.name} on Sonosphere.` : `Explore ${a.name}’s top tracks, albums, similar artists, and listening stats on Sonosphere.`, path: artistUrl(a.name) + (artistTab && !bio ? (tab === "+wall" ? "/+shoutbox" : `/${tab}`) : ""), index: !artistTab, image: a.imageId, artwork: `Image of ${a.name}`, schema: musicGroup(a.name) };
+      return { title: artistTab ? `${a.name} - ${artistTab}` : `${a.name} - Music, Albums & Tracks`, description: artistTab ? `Explore ${artistTab.toLowerCase()} for ${a.name} on Sonosphere.` : `Explore ${a.name}’s top tracks, albums, similar artists, and listening stats on Sonosphere.`, path: artistUrl(a.name) + (artistTab && !bio ? (tab === "+wall" ? "/+shoutbox" : `/${tab}`) : ""), index: !artistTab, image: a.imageId, artwork: `Image of ${a.name}`, schema: musicGroup(a.name) };
     }
     if (!fourth && (!third || extra === "+wiki")) {
       const a = await requireAlbum(name(first), name(second));
-      return { title: `${a.title} by ${a.artist}${third ? " — Wiki" : ""}`, description: `Explore ${a.title} by ${a.artist}, including its tracklist, listening stats, and community tags.`, path: albumUrl(a.artist, a.title), index: !third, image: a.imageId ?? (await findItem("artist", a.artistId))?.imageId, artwork: a.imageId ? `Cover art for ${a.title}` : `Image of ${a.artist}`, schema: { "@type": "MusicAlbum", name: a.title, byArtist: musicGroup(a.artist) } };
+      return { title: `${a.title} by ${a.artist}${third ? " - Wiki" : ""}`, description: `Explore ${a.title} by ${a.artist}, including its tracklist, listening stats, and community tags.`, path: albumUrl(a.artist, a.title), index: !third, image: a.imageId ?? (await findItem("artist", a.artistId))?.imageId, artwork: a.imageId ? `Cover art for ${a.title}` : `Image of ${a.artist}`, schema: { "@type": "MusicAlbum", name: a.title, byArtist: musicGroup(a.artist) } };
     }
   }
   if (family === "tag" && (!second || (tab === "+wiki" && !third))) {
     const tag = await requireTag(dec(decodeURIComponent(first)));
-    return { title: `${tag.name} Music${second ? " — Wiki" : ""}`, description: `Discover artists, albums, and tracks tagged ${tag.name} by Sonosphere listeners.`, path: tagUrl(tag.name), index: !second };
+    return { title: `${tag.name} Music${second ? " - Wiki" : ""}`, description: `Discover artists, albums, and tracks tagged ${tag.name} by Sonosphere listeners.`, path: tagUrl(tag.name), index: !second };
   }
   if (family === "event" && !second) {
     const id = idOf(first);
@@ -142,11 +142,11 @@ async function lookup(url: URL): Promise<Page> {
     if (journalPost) {
       const post = await findJournal(idOf(third));
       if (!post || post.userId !== user.id) return missing;
-      return { title: `${post.title} — ${user.username}’s Journal`, description: summary(post.body), path: `${base}/journal/${post.id}`, index: true };
+      return { title: `${post.title} - ${user.username}’s Journal`, description: summary(post.body), path: `${base}/journal/${post.id}`, index: true };
     }
     const subpage = second ? userTabs[canonicalTab] : "Listener Profile";
     const suffix = third ? libraryArtist ? `/music/${fourth}` : `/${encodeURIComponent(decodeURIComponent(third))}` : "";
-    return { title: `${user.username} — ${subpage}`, description: `Explore ${user.username}’s ${second ? subpage.toLowerCase() : "listening activity and music library"} on Sonosphere.`, path: second ? `${base}/${canonicalTab}${suffix}` : base, index: !second, image: user.imageId, artwork: `${user.username}’s profile picture` };
+    return { title: `${user.username} - ${subpage}`, description: `Explore ${user.username}’s ${second ? subpage.toLowerCase() : "listening activity and music library"} on Sonosphere.`, path: second ? `${base}/${canonicalTab}${suffix}` : base, index: !second, image: user.imageId, artwork: `${user.username}’s profile picture` };
   }
   return missing;
 }
@@ -170,7 +170,7 @@ export function seoHead(page: Page): string {
   const url = page.path ? absolute(page.path) : undefined;
   const customImage = page.image && /^[a-f0-9]{32}$/.test(page.image);
   const image = absolute(customImage ? `/api/image/${page.image}` : "/assets/social-card.png");
-  const alt = customImage ? page.artwork || page.title : "Sonosphere — Track what you love";
+  const alt = customImage ? page.artwork || page.title : "Sonosphere - Track what you love";
   const og = { title, description, type: "website", site_name: "Sonosphere", locale: "en_US", url: page.sharePath ? absolute(page.sharePath) : url, image, "image:alt": alt,
     ...(!customImage && { "image:type": "image/png", "image:width": "1200", "image:height": "630" }) };
   const twitter = { card: customImage ? "summary" : "summary_large_image", title, description, image, "image:alt": alt };

@@ -4,7 +4,7 @@ import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
-import { applyTheme, startingTheme } from "./theme";
+import { applyTheme, usePageTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { Button, RouteLink } from "./kit";
 import "./sentry";
@@ -77,11 +77,18 @@ function Header() {
   };
 
   if (open) return (
-    <header className="site-header searching">
-      <form className="header-search wrap" onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }} onBlur={closeOnBlur}>
-        <input autoFocus value={term} onChange={e => setTerm(e.target.value)} placeholder="Search for music…" aria-label="Search for music" />
-        <button type="button" className="header-search-x" aria-label="Close search" onClick={close}><Ico.X /></button>
-        <button type="submit" className="header-search-go" aria-label="Search"><Ico.Search /></button>
+    <header className="site-header">
+      <form className={`wrap ${searchForm}`} onSubmit={search} role="search" onKeyDown={e => { if (e.key === "Escape") close(); }} onBlur={closeOnBlur}>
+        <input
+          autoFocus
+          className={searchInput}
+          value={term}
+          onChange={e => setTerm(e.target.value)}
+          placeholder="Search for music…"
+          aria-label="Search for music"
+        />
+        <button type="button" className={`${searchButton} ${searchClose}`} aria-label="Close search" onClick={close}><Ico.X /></button>
+        <button type="submit" className={`${searchButton} ${searchGo}`} aria-label="Search"><Ico.Search /></button>
       </form>
     </header>
   );
@@ -91,7 +98,7 @@ function Header() {
   const menuButton = me && {
     label: `${me.username} menu`,
     variant: "ghost" as const,
-    className: "menu-toggle",
+    className: menuToggle,
     children: (
       <>
         <span className="avatar" style={{ width: 30, height: 30 }}><Art image={me.image} kind="user" /></span>
@@ -105,7 +112,7 @@ function Header() {
       <div className="wrap">
         <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
         <nav className="site-nav" aria-label="Main">
-          <Button kind="nav-search" type="button" aria-label="Search" onClick={() => setOpen(true)}><Ico.Search /></Button>
+          <Button kind={navSearch} type="button" aria-label="Search" onClick={() => setOpen(true)}><Ico.Search /></Button>
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/charts">Charts</NavLink>
           <NavLink to="/events">Events</NavLink>
@@ -144,6 +151,19 @@ function Header() {
   );
 }
 
+const searchForm = "flex items-center gap-0 h-[54px]";
+const searchInput = "flex-1 min-w-0 h-[38px] bg-site-card text-site-ink border-none outline-none [font-family:inherit] "
+  + "[line-height:inherit] text-[16px] font-normal px-3.5 max-[700px]:px-3 [box-shadow:inset_0_1px_3px_rgba(23,21,15,.22)] "
+  + "placeholder:text-site-muted";
+const searchButton = "flex-none grid place-items-center h-[38px] border-none cursor-pointer [&_svg]:size-[18px]";
+const searchClose = "order-3 w-10 ml-1.5 bg-transparent text-white opacity-80 hover:opacity-100 focus-visible:opacity-100";
+const searchGo = "order-2 w-11 bg-site-sun text-site-on-sun hover:bg-site-sun-dark focus-visible:bg-site-sun-dark";
+
+const navSearch = "inline-flex items-center justify-center size-10 p-0 text-white text-[19px] rounded-[50%] hover:bg-site-bar-hover";
+const menuToggle = "menu-toggle flex items-center gap-2 size-[38px] min-w-0 p-0 ml-1.5 border-none bg-transparent "
+  + "text-white hover:bg-site-bar-hover aria-expanded:bg-site-bar-hover "
+  + "focus-visible:outline-none focus-visible:bg-[rgba(255,255,255,.12)]";
+
 type LinkColumn = [string, [string, string][]];
 
 function Footer() {
@@ -163,36 +183,51 @@ function Footer() {
     ...account,
   ];
   return (
-    <footer className="site-footer sphere-site-footer">
-      <div className="wrap sphere-footer-masthead">
-        <Link to="/" className="logo" aria-label="Sonosphere home"><Logo /></Link>
-        <Link className="sphere-footer-cta" to={me ? `${u}/library` : "/join"}>
+    <footer className="bg-site-bar text-white pb-8 text-[14px] [border-top:0] [&_:focus-visible]:outline-site-sun">
+      <div className={`wrap ${masthead}`}>
+        <Link to="/" className={`logo ${mastheadLogo}`} aria-label="Sonosphere home"><Logo /></Link>
+        <Link className={cta} to={me ? `${u}/library` : "/join"}>
           {me ? "Your library" : "Join Sonosphere"} <Ico.Right />
         </Link>
       </div>
-      <div className="wrap footer-cols">
+      <div className={`wrap ${footerCols}`}>
         {cols.map(([title, links]) => (
           <nav key={title} aria-label={title}>
-            <h2>{title}</h2>
-            <ul>{links.map(([label, to]) => <li key={label}><Link to={to}>{label}</Link></li>)}</ul>
+            <h2 className="font-site text-site-sun text-[11px] font-semibold tracking-[.08em] uppercase m-0 mb-2">{title}</h2>
+            <ul className="list-none m-0 p-0 grid gap-0.5 max-[600px]:gap-0">
+              {links.map(([label, to]) => <li key={label}><Link className={colLink} to={to}>{label}</Link></li>)}
+            </ul>
           </nav>
         ))}
       </div>
-      <div className="footer-base">
-        <div className="wrap">
+      <div className="border-t border-t-[#fff5] text-[#8a8a8a] text-[12px]">
+        <div className={`wrap ${footerBase}`}>
           <ThemeToggle />
-          <span className="footer-copy">© {new Date().getFullYear()} Sonosphere</span>
-          <span className="footer-legal">
-            <Link to="/terms">Terms</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/guidelines">Guidelines</Link>
-            <a href="mailto:support@sonosphere.fm">Contact</a>
+          <span className="text-white">© {new Date().getFullYear()} Sonosphere</span>
+          <span className={legalLinks}>
+            <Link className={legalLink} to="/terms">Terms</Link>
+            <Link className={legalLink} to="/privacy">Privacy</Link>
+            <Link className={legalLink} to="/guidelines">Guidelines</Link>
+            <a className={legalLink} href="mailto:support@sonosphere.fm">Contact</a>
           </span>
         </div>
       </div>
     </footer>
   );
 }
+
+const masthead = "flex flex-wrap [align-items:end] justify-between gap-x-8 gap-y-5 max-[720px]:gap-[15px] "
+  + "pt-[clamp(32px,5vw,67px)] pb-[26px] border-b border-b-[#fff5]";
+const mastheadLogo = "text-site-sun hover:text-white hover:underline [&_.wordmark]:text-[clamp(2.25rem,6vw,5.25rem)]";
+const cta = "min-h-[42px] inline-flex items-center gap-3 px-3 py-2 text-site-on-sun bg-site-sun font-[750] hover:bg-white";
+const footerCols = "grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-8 pt-9 pb-8 "
+  + "max-[900px]:grid-cols-[repeat(auto-fit,minmax(128px,1fr))] max-[900px]:gap-x-5 max-[900px]:gap-y-6 "
+  + "max-[600px]:gap-5 max-[600px]:pt-7 max-[600px]:pb-5";
+const colLink = "text-white hover:underline max-[600px]:inline-block max-[600px]:py-1.5";
+const footerBase = "grid grid-cols-[1fr_auto_1fr] flex-wrap items-center gap-x-5 gap-y-2.5 py-5 "
+  + "max-[720px]:grid-cols-1 max-[720px]:justify-items-center";
+const legalLinks = "flex flex-wrap gap-x-[17px] gap-y-1.5 justify-self-end max-[720px]:justify-self-center max-[720px]:justify-center";
+const legalLink = "text-white hover:underline";
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -435,7 +470,8 @@ const boot = (window as { __ME?: MeResponse }).__ME;
 function App() {
   const [me, setMeRaw] = useState<Me | null>(() => boot?.user ?? null);
   const [ready, setReady] = useState(!!boot);
-  const themePref = me?.theme ?? startingTheme();
+  const pageTheme = usePageTheme();
+  const themePref = me?.theme ?? pageTheme;
   // Wait for the session check, or a signed-in reload would forget the remembered theme.
   useEffect(() => { if (ready) applyTheme(themePref); }, [themePref, ready]);
 

@@ -14,18 +14,14 @@ async function load() {
   const names = await readdir(`${DIST}/assets`).catch(() => null);
   const page = Bun.file(`${DIST}/index.html`);
   if (!names || !(await page.exists())) throw new Error("dist/ is missing. Run `bun run build` first.");
-  const manifest: { scripts: string[]; style: string | null } = await Bun.file(`${DIST}/staff.json`).json();
+  const manifest: { scripts: string[] } = await Bun.file(`${DIST}/staff.json`).json();
   const staffOnly = new Set(manifest.scripts);
-  if (manifest.style) staffOnly.add(manifest.style);
   const assets = new Map<string, Asset>();
   for (const name of names) {
     const path = `assets/${name}`;
     const file = Bun.file(`${DIST}/${path}`);
     assets.set(`/${path}`, { body: await file.arrayBuffer(), type: file.type, staff: staffOnly.has(path) });
   }
-  // a fixed address lets the portal load its stylesheet without knowing the hashed name
-  const style = manifest.style ? assets.get(`/${manifest.style}`) : undefined;
-  if (style) assets.set("/assets/staff.css", style);
   return { assets, html: await page.text() };
 }
 
@@ -68,8 +64,7 @@ export async function appRoutes() {
     }
     const viewer = await sessionUser(tokenOf(req));
     if (!viewer || !isStaff(viewer)) return missing();
-    const cache = path === "/assets/staff.css" ? "private, no-cache" : `private, ${FOREVER}`;
-    return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": cache, Vary: "Cookie" } });
+    return new Response(found.body, { headers: { "Content-Type": found.type, "Cache-Control": `private, ${FOREVER}`, Vary: "Cookie" } });
   };
 
   return { ...crawlerRoutes, "/page-metadata": metadata, "/assets/*": asset, "/*": shell };

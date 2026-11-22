@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ago, num, plural, useApi, useTitle } from "../lib";
 import { Async, Avatar, Section, Stat } from "../ui/base";
 import { BarChart } from "../ui/charts";
-import { adminUrl } from "./common";
+import { FACTS, PEOPLE, PERSON, TILES, adminUrl } from "./common";
 import { AuditList } from "./audit";
 import type { Dashboard as DashboardData, DayCount } from "../../shared/admin";
 
@@ -23,7 +23,7 @@ export function Dashboard() {
       const t = d.totals;
       return (
         <>
-          <div className="stats boxed adm-tiles">
+          <div className={TILES}>
             <Stat label="Members" value={num(t.users)} hint={`${num(t.newUsers7)} new this week`} />
             <Stat label="Active listeners" value={num(t.active7)} hint="scrobbled in the last 7 days" />
             <Stat label="Scrobbles" value={num(t.scrobbles)} hint={`${num(t.scrobbles7)} this week`} />
@@ -35,7 +35,7 @@ export function Dashboard() {
               hint={<Link to="/admin/users?filter=banned">{plural(t.banned, "banned account")}</Link>}
             />
           </div>
-          <div className="cols even adm-charts">
+          <div className="cols even gap-x-8 gap-y-2 [&_.section]:mb-[18px]">
             <Section title="Scrobbles per day"><BarChart data={series(d.series.scrobbles)} height={110} every={5} /></Section>
             <Section title="Sign-ups per day"><BarChart data={series(d.series.signups)} height={110} every={5} unit="sign-ups" /></Section>
             <Section title="Reports per day"><BarChart data={series(d.series.reports)} height={110} every={5} unit="reports" /></Section>
@@ -43,15 +43,15 @@ export function Dashboard() {
               <BarChart data={series(d.series.posts)} height={110} every={5} unit="wall posts, journal posts and wiki edits" />
             </Section>
           </div>
-          <div className="cols adm-split">
+          <div className="cols mt-2">
             <Section title="Recent staff actions" more="/admin/audit" moreLabel="Audit log">
               <AuditList items={d.recentActions} empty="No staff actions yet." />
             </Section>
             <aside className="side">
               <Section title="Newest members" more="/admin/users">
-                <ul className="adm-people">
+                <ul className={PEOPLE}>
                   {d.recentUsers.map(u => (
-                    <li key={u.id}>
+                    <li key={u.id} className={PERSON}>
                       <Avatar user={u} size={32} />
                       <Link className="grow strong" to={adminUrl(u.username)}>{u.username}</Link>
                       <span className="muted small">{ago(u.registeredAt)}</span>
@@ -60,7 +60,7 @@ export function Dashboard() {
                 </ul>
               </Section>
               <Section title="At a glance">
-                <dl className="adm-facts">
+                <dl className={FACTS}>
                   <dt>Staff</dt><dd>{plural(t.admins, "admin")}, {plural(t.moderators, "moderator")}</dd>
                   <dt>Posts this week</dt><dd>{num(t.shouts7)} wall posts, {num(t.journals7)} journal posts, {num(t.wikis7)} wiki edits</dd>
                   <dt>Catalogue</dt><dd>{num(t.artists)} artists, {num(t.albums)} albums, {num(t.tracks)} tracks</dd>

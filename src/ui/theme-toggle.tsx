@@ -8,6 +8,9 @@ import type { ProfileSaved } from "../../shared/account";
 const isDark = () => getComputedStyle(document.documentElement).colorScheme === "dark"
   || (document.documentElement.dataset.scheme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
 
+const button = "inline-grid place-items-center size-8 p-0 bg-transparent text-[#f6f2e9] border-none rounded-none "
+  + "hover:text-site-sun disabled:cursor-progress disabled:opacity-60";
+
 export function ThemeToggle() {
   const { me, setMe } = useAuth();
   const [dark, setDark] = useState(isDark);
@@ -33,9 +36,9 @@ export function ThemeToggle() {
     } catch (error) { setMe(previous); throw error; }
   });
   const label = dark ? "Switch to light mode" : "Switch to dark mode";
-  return <span className="footer-theme">
-    <button type="button" className="theme-toggle" aria-label={label} title={label} onClick={toggle} disabled={act.busy}>
-      {dark ? <Sun size={20} weight="bold" aria-hidden /> : <Moon size={20} weight="bold" aria-hidden />}
+  return <span className="footer-theme inline-flex items-center gap-2.5">
+    <button type="button" className={button} aria-label={label} title={label} onClick={toggle} disabled={act.busy}>
+      {dark ? <Sun size={18} weight="bold" aria-hidden /> : <Moon size={18} weight="bold" aria-hidden />}
     </button>
     {act.note}
   </span>;

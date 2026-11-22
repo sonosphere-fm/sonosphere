@@ -19,7 +19,7 @@ export function Tagger({ type, id, tags, myTags }: { type: ItemType; id: number;
     setOpen(false);
   }, [id, type]);
   return (
-    <div className="tagger">
+    <div className="flex flex-wrap gap-2.5 items-center col-span-full">
       {state.tags.length ? <TagChips tags={state.tags} /> : <span className="muted">No tags yet.</span>}
       {me && !open && (
         <Button kind="chip add" onClick={() => setOpen(true)}><Ico.Plus /> {state.myTags.length ? "Edit my tags" : "Add tags"}</Button>

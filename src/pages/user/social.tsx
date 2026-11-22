@@ -132,7 +132,7 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
       )}
       <Async q={q}>
         {d => d.items.length ? (
-          <div className="grid below" data-cols={6} style={sixCols}>
+          <div className="cardgrid below" data-cols={6} style={sixCols}>
             {d.items.map(p => (
               <Link className="mcard album" key={p.id} to={`/playlist/${p.id}`}>
                 <Art image={p.image} />
