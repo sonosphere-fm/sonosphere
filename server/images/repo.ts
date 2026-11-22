@@ -46,6 +46,22 @@ export async function saveImage(img: Converted, uploaderId: number | null, at = 
   }
 }
 
+export async function saveGif(data: Uint8Array, uploaderId: number): Promise<string> {
+  const id = rid(16);
+  const bytes = Buffer.from(data);
+  await db.insert(images).values({
+    id,
+    mime: "image/gif",
+    data: bytes,
+    size: bytes.length,
+    width: bytes.readUInt16LE(6),
+    height: bytes.readUInt16LE(8),
+    uploaderId,
+    createdAt: now(),
+  });
+  return id;
+}
+
 type Found = { key: string } | { url: string } | { mime: string; data: Uint8Array<ArrayBuffer> };
 
 // `data` holds the original bytes of pictures uploaded before object storage
