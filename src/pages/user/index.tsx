@@ -78,7 +78,7 @@ function profileTabs(u: Profile, base: string, locked: boolean) {
     [`${base}/listening-report`, "Reports"],
     [`${base}/library`, "Library"],
     [`${base}/following`, `Following (${u.following})`],
-    [`${base}/followers`, "Followers"],
+    [`${base}/followers`, `Followers (${u.followers})`],
     [`${base}/loved`, "Loved"],
     [`${base}/journal`, "Journal"],
     [`${base}/earworms`, "Earworms"],
