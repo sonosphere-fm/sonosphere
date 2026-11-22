@@ -121,3 +121,23 @@ export function mixRecs(d: Pick<Recommended, "artists" | "tracks" | "albums">, l
   }
   return out.slice(0, limit);
 }
+
+export function ImportPrompt() {
+  return (
+    <div className="import-prompt">
+      <h2>Bring your scrobbles with you</h2>
+      <p>
+        Recommendations need some listening history to go on. Import your scrobbles from Last.fm or a file and they fill
+        in from everything you have played, or connect a player to start scrobbling now.
+      </p>
+      <div className="row">
+        <Button kind="btn" href="/import">
+          Import your scrobbles
+        </Button>
+        <Button kind="btn ghost" href="/settings/applications">
+          Connect a player
+        </Button>
+      </div>
+    </div>
+  );
+}
