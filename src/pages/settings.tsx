@@ -1081,20 +1081,7 @@ function AppSettings() {
   const q = useApi<Apps>("/apps");
   const c = useConfirm();
   const [adding, setAdding] = useState(false);
-  const tokenAct = useAction();
-  const tokenRobot = useTurnstile("listentoken");
-  const [token, setToken] = useState("");
-
-  const newToken = () =>
-    tokenAct.run(async () => {
-      if (tokenRobot.on && !tokenRobot.token) throw new Error("Complete the check that you are not a robot");
-      try {
-        setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile: tokenRobot.token } })).token);
-      } finally {
-        tokenRobot.reset();
-      }
-      q.reload();
-    });
+  const [tokenOpened, setTokenOpened] = useState(false);
 
   const revoke = (key: string) => api<AppOk>("/apps/revoke", { body: { key } }).then(q.reload);
 
@@ -1129,20 +1116,13 @@ function AppSettings() {
             <CopyField label="ListenBrainz server URL" value={window.location.origin} />
             <span className="muted small">Paste a token instead of a password.</span>
           </div>
-          {token ? (
-            <div className="token-reveal">
-              <CopyField label="Your token" value={token} />
-              <p>Copy it now: it's shown only this once.</p>
-            </div>
-          ) : (
-            <>
-              {tokenRobot.view}
-              <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
-                Create ListenBrainz token
-              </Button>
-            </>
-          )}
-          {tokenAct.note}
+          <details className="api-app connect-drop" onToggle={(e) => e.currentTarget.open && setTokenOpened(true)}>
+            <summary>
+              <Ico.Chevron />
+              <b>Create ListenBrainz token</b>
+            </summary>
+            {tokenOpened && <NewToken onCreated={q.reload} />}
+          </details>
           <Link className="connect-more" to="/help#pano-scrobbler">
             Setup details <Arrow />
           </Link>
@@ -1221,6 +1201,41 @@ function AppSettings() {
         </Async>
       </Section>
     </>
+  );
+}
+
+function NewToken({ onCreated }: { onCreated: () => void }) {
+  const act = useAction();
+  const robot = useTurnstile("listentoken");
+  const [token, setToken] = useState("");
+
+  const create = () =>
+    act.run(async () => {
+      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      try {
+        setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile: robot.token } })).token);
+      } finally {
+        robot.reset();
+      }
+      onCreated();
+    });
+
+  if (token) {
+    return (
+      <div className="token-reveal">
+        <CopyField label="Your token" value={token} />
+        <p>Copy it now: it's shown only this once.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="new-token">
+      {robot.view}
+      {act.note}
+      <Button kind="btn small" loading={act.busy} onClick={create}>
+        Create ListenBrainz token
+      </Button>
+    </div>
   );
 }
 
