@@ -28,6 +28,7 @@ import { MoreMenu } from "../../ui/more-menu";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
+import { RemoveScrobbles } from "./shared";
 import type { TrackPage as TrackData } from "../../../shared/catalog";
 import type { ScrobbleResponse } from "../../../shared/listening";
 import type { ObsessionCreated } from "../../../shared/obsessions";
@@ -201,6 +202,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                   {me && <DropdownMenuItem label="Add to playlist" onClick={() => setModal("playlist")} />}
                   {me && <DropdownMenuItem label="Set as earworm" onClick={() => setModal("obsession")} />}
                   {me && <DropdownMenuItem label="Scrobble now" isDisabled={act.busy} onClick={() => scrobbleNow(t)} />}
+                  {me && <RemoveScrobbles scope="track" id={t.id} name={t.title} count={t.userPlaycount} />}
                 </MoreMenu>
                 {me?.admin && (
                   <Suspense fallback={null}>

@@ -854,6 +854,17 @@ export async function deleteScrobbles(userId: number, ids: number[]): Promise<nu
   return gone.length;
 }
 
+/** Removes every play of one track, album or artist from the listener's library. Returns how many went. */
+export async function deleteScrobblesBy(userId: number, scope: EditScope, itemId: number): Promise<number> {
+  const col = scope === "track" ? scrobbles.trackId : scope === "album" ? scrobbles.albumId : scrobbles.artistId;
+  // Count inside the delete statement: one artist can hold a whole history, and RETURNING would ship every id back.
+  const [r] = await db.execute<{ n: number }>(
+    sql`WITH gone AS (DELETE FROM ${scrobbles} WHERE ${scrobbles.userId} = ${userId} AND ${col} = ${itemId} RETURNING 1)
+        SELECT count(*)::int AS n FROM gone`
+  );
+  return r?.n ?? 0;
+}
+
 export async function deleteAllScrobbles(
   userId: number,
   onDeleted?: (tx: Conn, deleted: number) => Promise<void>

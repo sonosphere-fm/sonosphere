@@ -76,6 +76,13 @@ router.post<ScrobblesDeleted>("/api/scrobbles/delete", async (c) => {
   return { deleted: await repo.deleteScrobbles(u.id, ids) };
 });
 
+router.post<ScrobblesDeleted>("/api/scrobbles/delete-by", async (c) => {
+  const u = need(c);
+  const scope = oneOf(c.body.scope, SCOPES) ?? bad("Choose what to remove scrobbles of");
+  const item = await requireItem(scope, c.body.id, [scope]);
+  return { deleted: await repo.deleteScrobblesBy(u.id, scope, item.row.id) };
+});
+
 router.post<LovedImported>("/api/love/import", async (c) => {
   const u = need(c);
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [];
