@@ -7,7 +7,7 @@ const OUT = new URL("../src/ui/font-previews.ts", import.meta.url);
 
 async function fontFile(family: string) {
   const query = family.replaceAll(" ", "+");
-  const css = await fetch(`https://fonts.googleapis.com/css2?family=${query}`, {
+  const css = await fetch(`https://api.fonts.coollabs.io/css2?family=${query}`, {
     headers: { "user-agent": "curl" },
   }).then((r) => r.text());
   const url = css.match(/src:\s*url\(([^)]+\.ttf)\)/)?.[1];
