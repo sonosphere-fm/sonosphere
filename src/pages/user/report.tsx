@@ -30,6 +30,7 @@ function Delta({ now, before }: { now: number; before: number }) {
 }
 
 function reportTitle(r: ListeningReport, type: ReportType) {
+  if (type === "all") return `${date(r.start)} – ${date(r.end - 1)}`;
   if (type === "week") return `${date(r.start, { day: "numeric", month: "short" })} – ${date(r.end - 1)}`;
   if (type === "month") return date(r.start, { month: "long", year: "numeric" });
   return String(new Date(r.start * 1000 + 86400000).getFullYear());
@@ -41,7 +42,7 @@ function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: strin
     return (
       <>
         <h2 className="report-title">{title}</h2>
-        <Empty>No scrobbles in this {type}.</Empty>
+        <Empty>{type === "all" ? "No scrobbles yet." : `No scrobbles in this ${type}.`}</Empty>
       </>
     );
   }
@@ -60,17 +61,17 @@ function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: strin
     <div className="report">
       <h2 className="report-title">
         <Username name={name} />
-        's {type} in music{" "}
+        {type === "all" ? "'s all-time listening report" : `'s ${type} in music`}{" "}
         <span className="muted">
           · {title}
-          {offset === 0 ? " (so far)" : ""}
+          {offset === 0 && type !== "all" ? " (so far)" : ""}
         </span>
       </h2>
       <div className="stats boxed">
         <Stat
           label="Scrobbles"
           value={num(r.totals.playcount)}
-          hint={<Delta now={r.totals.playcount} before={r.previous.playcount} />}
+          hint={type !== "all" && <Delta now={r.totals.playcount} before={r.previous.playcount} />}
         />
         <Stat
           label="Listening time"
@@ -80,22 +81,25 @@ function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: strin
         <Stat
           label="Artists"
           value={num(r.totals.artists)}
-          hint={<Delta now={r.totals.artists} before={r.previous.artists} />}
+          hint={type !== "all" && <Delta now={r.totals.artists} before={r.previous.artists} />}
         />
         <Stat
           label="Albums"
           value={num(r.totals.albums)}
-          hint={<Delta now={r.totals.albums} before={r.previous.albums} />}
+          hint={type !== "all" && <Delta now={r.totals.albums} before={r.previous.albums} />}
         />
         <Stat
           label="Tracks"
           value={num(r.totals.tracks)}
-          hint={<Delta now={r.totals.tracks} before={r.previous.tracks} />}
+          hint={type !== "all" && <Delta now={r.totals.tracks} before={r.previous.tracks} />}
         />
       </div>
       <div className="cols even">
-        <Section title={type === "year" ? "Scrobbles by month" : "Scrobbles by day"}>
-          <BarChart data={byBucket} every={type === "month" ? 5 : 1} />
+        <Section title={type === "year" || type === "all" ? "Scrobbles by month" : "Scrobbles by day"}>
+          <BarChart
+            data={byBucket}
+            every={type === "all" ? Math.max(1, Math.ceil(byBucket.length / 12)) : type === "month" ? 5 : 1}
+          />
           <p className="muted small">
             Busiest: {busiestName} with {num(busiest.count)} scrobbles
           </p>
@@ -117,7 +121,7 @@ function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: strin
         </Section>
       </div>
       <div className="cols even">
-        <Section title={`New discoveries (${r.newArtists.count})`}>
+        <Section title={`${type === "all" ? "Artists discovered" : "New discoveries"} (${r.newArtists.count})`}>
           {r.newArtists.items.length ? (
             <Grid kind="artist" cols={3} items={r.newArtists.items} sub={(a) => `${num(a.playcount)} scrobbles`} />
           ) : (
@@ -171,7 +175,7 @@ function Body({ name, type, offset }: { name: string; type: ReportTab; offset: n
 export function Report({ name, type }: { name: string; type: ReportTab }) {
   const start = type === "stats" || type === "blasts" ? 0 : reportStart(type);
   const [offsetStr, setOffset] = useParam("offset", String(start));
-  const offset = Number(offsetStr);
+  const offset = type === "all" ? 0 : Number(offsetStr);
   const base = `${userUrl(name)}/listening-report`;
   return (
     <>
@@ -186,6 +190,9 @@ export function Report({ name, type }: { name: string; type: ReportTab }) {
           <Link className={type === "year" ? "active" : ""} to={`${base}/year`}>
             Yearly
           </Link>
+          <Link className={type === "all" ? "active" : ""} to={`${base}/all`}>
+            All time
+          </Link>
           <Link className={type === "stats" ? "active" : ""} to={`${base}/stats`}>
             Stats
           </Link>
@@ -193,14 +200,16 @@ export function Report({ name, type }: { name: string; type: ReportTab }) {
             Blasts from the past
           </Link>
         </nav>
-        <span className="row">
-          <Button kind="btn ghost small" onClick={() => setOffset(String(offset + 1))}>
-            <Ico.Left /> Earlier
-          </Button>
-          <Button kind="btn ghost small" disabled={offset === 0} onClick={() => setOffset(String(offset - 1))}>
-            Later <Ico.Right />
-          </Button>
-        </span>
+        {type !== "all" && (
+          <span className="row">
+            <Button kind="btn ghost small" onClick={() => setOffset(String(offset + 1))}>
+              <Ico.Left /> Earlier
+            </Button>
+            <Button kind="btn ghost small" disabled={offset === 0} onClick={() => setOffset(String(offset - 1))}>
+              Later <Ico.Right />
+            </Button>
+          </span>
+        )}
       </div>
       <Body name={name} type={type} offset={offset} />
     </>

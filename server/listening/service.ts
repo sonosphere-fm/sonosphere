@@ -160,28 +160,40 @@ export async function report(
     prevStart = Date.UTC(y, m - 1, 1) / 1000 - tz;
     keys = days(first, Math.round((next - first) / 86400));
     labels = keys.map((k) => String(Number(k.slice(8))));
-  } else {
+  } else if (type === "year") {
     const y = localNow.getUTCFullYear() - offset;
     start = Date.UTC(y, 0, 1) / 1000 - tz;
     end = Date.UTC(y + 1, 0, 1) / 1000 - tz;
     prevStart = Date.UTC(y - 1, 0, 1) / 1000 - tz;
     keys = Array.from({ length: 12 }, (_, i) => `${y}-${String(i + 1).padStart(2, "0")}`);
     labels = MONTHS;
+  } else {
+    start = Math.min((await repo.firstPlayedAt(userId)) ?? now(), now());
+    end = now() + 1;
+    prevStart = start;
+    const first = new Date((start + tz) * 1000);
+    const months =
+      (localNow.getUTCFullYear() - first.getUTCFullYear()) * 12 + localNow.getUTCMonth() - first.getUTCMonth() + 1;
+    keys = Array.from({ length: months }, (_, i) =>
+      new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + i, 1)).toISOString().slice(0, 7)
+    );
+    labels = keys;
   }
   const cur: repo.Scope = { userId, from: start, to: end, viewerId };
   const prev: repo.Scope = { userId, from: prevStart, to: start };
-  const bucketRows = await repo.series(cur, type === "year" ? "month" : "day", tzMin);
+  const bucketRows = await repo.series(cur, type === "year" || type === "all" ? "month" : "day", tzMin);
   const buckets = new Map(bucketRows.map((r) => [String(r.k), r.c]));
   const hourRows = await repo.series(cur, "hour", tzMin);
   const hours = new Map(hourRows.map((r) => [Number(r.k), r.c]));
   const fresh = await repo.newArtists(userId, start, end);
   return {
     type,
-    offset,
+    offset: type === "all" ? 0 : offset,
     start,
     end,
     totals: await repo.counts(cur),
-    previous: await repo.counts(prev),
+    previous:
+      type === "all" ? { playcount: 0, artists: 0, albums: 0, tracks: 0, listeners: 0 } : await repo.counts(prev),
     listeningSeconds: await repo.listeningSeconds(userId, start, end),
     buckets: keys.map((k, i) => ({ key: k, label: labels[i], count: buckets.get(k) || 0 })),
     clock: Array.from({ length: 24 }, (_, h) => ({ hour: h, count: hours.get(h) || 0 })),

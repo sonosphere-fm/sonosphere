@@ -47,10 +47,11 @@ export type Counts = { playcount: number; listeners: number; artists: number; al
 // `k` is the bucket (hour, week number, "YYYY-MM-DD" or "YYYY-MM"), `c` its play count.
 export type SeriesPoint = { k: string | number; c: number };
 
-export type ReportType = "week" | "month" | "year";
-export const reportType = (s: string | null | undefined): ReportType => (s === "month" || s === "year" ? s : "week");
+export type ReportType = "week" | "month" | "year" | "all";
+export const reportType = (s: string | null | undefined): ReportType =>
+  s === "month" || s === "year" || s === "all" ? s : "week";
 // Weekly and monthly reports open on the last finished one, yearly on this year.
-export const reportStart = (type: ReportType) => (type === "year" ? 0 : 1);
+export const reportStart = (type: ReportType) => (type === "year" || type === "all" ? 0 : 1);
 
 export type Report = {
   type: ReportType;
