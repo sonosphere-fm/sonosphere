@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/bun";
 import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import { listeningChanged } from "../realtime";
-import type { EditScope, Report, ScrobbleResult } from "../../shared/listening";
+import type { EditScope, Report, ReportType, ScrobbleResult } from "../../shared/listening";
 
 /** Nothing about it has been checked yet. */
 export type ScrobbleInput = {
@@ -102,12 +102,12 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /**
- * One week (Monday to Sunday) or calendar year in the listener's time zone. `offset` counts back from the
+ * One week (Monday to Sunday), calendar month or calendar year in the listener's time zone. `offset` counts back from the
  * current one; `tzMin` is their offset from UTC in minutes.
  */
 export async function report(
   userId: number,
-  type: "week" | "year",
+  type: ReportType,
   offset: number,
   tzMin: number,
   viewerId = 0
@@ -118,6 +118,9 @@ export async function report(
   let end: number;
   let prevStart: number;
   let keys: string[];
+  let labels: string[];
+  const days = (from: number, n: number) =>
+    Array.from({ length: n }, (_, i) => new Date((from + i * 86400) * 1000).toISOString().slice(0, 10));
   if (type === "week") {
     const dow = (localNow.getUTCDay() + 6) % 7;
     const monday =
@@ -125,18 +128,29 @@ export async function report(
     start = monday - tz;
     end = start + 7 * 86400;
     prevStart = start - 7 * 86400;
-    keys = Array.from({ length: 7 }, (_, i) => new Date((monday + i * 86400) * 1000).toISOString().slice(0, 10));
+    keys = days(monday, 7);
+    labels = DAYS;
+  } else if (type === "month") {
+    const y = localNow.getUTCFullYear();
+    const m = localNow.getUTCMonth() - offset;
+    const first = Date.UTC(y, m, 1) / 1000;
+    const next = Date.UTC(y, m + 1, 1) / 1000;
+    start = first - tz;
+    end = next - tz;
+    prevStart = Date.UTC(y, m - 1, 1) / 1000 - tz;
+    keys = days(first, Math.round((next - first) / 86400));
+    labels = keys.map((k) => String(Number(k.slice(8))));
   } else {
     const y = localNow.getUTCFullYear() - offset;
     start = Date.UTC(y, 0, 1) / 1000 - tz;
     end = Date.UTC(y + 1, 0, 1) / 1000 - tz;
     prevStart = Date.UTC(y - 1, 0, 1) / 1000 - tz;
     keys = Array.from({ length: 12 }, (_, i) => `${y}-${String(i + 1).padStart(2, "0")}`);
+    labels = MONTHS;
   }
-  const labels = type === "week" ? DAYS : MONTHS;
   const cur: repo.Scope = { userId, from: start, to: end, viewerId };
   const prev: repo.Scope = { userId, from: prevStart, to: start };
-  const bucketRows = await repo.series(cur, type === "week" ? "day" : "month", tzMin);
+  const bucketRows = await repo.series(cur, type === "year" ? "month" : "day", tzMin);
   const buckets = new Map(bucketRows.map((r) => [String(r.k), r.c]));
   const hourRows = await repo.series(cur, "hour", tzMin);
   const hours = new Map(hourRows.map((r) => [Number(r.k), r.c]));
@@ -149,7 +163,7 @@ export async function report(
     totals: await repo.counts(cur),
     previous: await repo.counts(prev),
     listeningSeconds: await repo.listeningSeconds(userId, start, end),
-    buckets: keys.map((k, i) => ({ key: k, label: labels[i] ?? "", count: buckets.get(k) || 0 })),
+    buckets: keys.map((k, i) => ({ key: k, label: labels[i], count: buckets.get(k) || 0 })),
     clock: Array.from({ length: 24 }, (_, h) => ({ hour: h, count: hours.get(h) || 0 })),
     topArtists: (await repo.topArtists(cur, 10)).items,
     topAlbums: (await repo.topAlbums(cur, 10)).items,

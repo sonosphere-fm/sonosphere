@@ -36,7 +36,7 @@ import { Username } from "../../ui/username";
 import { ProfileShellTheme, profileAccentStyle } from "../../ui/profile-accent";
 import type { BlockResult } from "../../../shared/blocks";
 import type { UserEvents as UserEventList } from "../../../shared/events";
-import type { TopAlbum, TopArtist, TopTrack } from "../../../shared/listening";
+import { reportType, type TopAlbum, type TopArtist, type TopTrack } from "../../../shared/listening";
 import type { SuspendResult } from "../../../shared/reports";
 import type { Profile, UserRecent, UserTop } from "../../../shared/users";
 import { Journal, JournalPost, JournalEditor } from "./journal";
@@ -236,7 +236,7 @@ export function UserPage({ tab }: { tab: Tab }) {
                 )}
                 {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
                 {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
-                {tab === "report" && !locked && <Report name={u.username} type={p.type === "year" ? "year" : "week"} />}
+                {tab === "report" && !locked && <Report name={u.username} type={reportType(p.type)} />}
                 {tab === "following" && (
                   <People
                     path={`/user/following${qs({ name })}`}
@@ -493,6 +493,9 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
             </li>
             <li>
               <Link to={`${base}/listening-report/week`}>Weekly listening report</Link>
+            </li>
+            <li>
+              <Link to={`${base}/listening-report/month`}>Monthly listening report</Link>
             </li>
             <li>
               <Link to={`${base}/listening-report/year`}>Yearly listening report</Link>
