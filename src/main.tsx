@@ -842,6 +842,7 @@ function App() {
         <AuthContext.Provider value={{ me, setMe, refresh }}>
           <BrowserRouter>
             <PersonalShellTheme />
+            <Favicon />
             <PageMetadata />
             <PlayerProvider>
               <ScrollTop />
@@ -894,3 +895,4 @@ if (stylesheet?.media === "print") {
   mount();
 }
 import { PersonalShellTheme } from "./ui/profile-accent";
+import { Favicon } from "./ui/favicon";
