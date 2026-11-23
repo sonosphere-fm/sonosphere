@@ -4,10 +4,16 @@ import { Username } from "../../ui/username";
 import { Button, Input } from "../../kit";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ago, albumUrl, api, artistUrl, date, plural, qs, tagUrl, trackUrl, useApi, useParam } from "../../lib";
-import { Art, Async, Empty, Pager, useAction } from "../../ui/base";
+import { Art, Async, Empty, Pager, Section, useAction } from "../../ui/base";
 import { TrackList, UserList } from "../../ui/lists";
 import type { ObsessionRemoved, Obsessions as ObsessionList } from "../../../shared/obsessions";
-import type { PlaylistCreated, UserPlaylists } from "../../../shared/playlists";
+import {
+  type PlaylistCreated,
+  TEMPLATE_IDS,
+  TEMPLATES,
+  type TemplateId,
+  type UserPlaylists,
+} from "../../../shared/playlists";
 import type { TagCount } from "../../../shared/tags";
 import type {
   Neighbours as NeighbourList,
@@ -156,6 +162,12 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
     });
   };
 
+  const fromTemplate = (template: TemplateId) =>
+    act.run(async () => {
+      const r = await api<PlaylistCreated>("/playlists/template", { body: { template } });
+      nav(`/playlist/${r.id}`);
+    });
+
   return (
     <>
       {mine && (
@@ -172,6 +184,18 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
           </Button>
           {act.note}
         </form>
+      )}
+      {mine && (
+        <Section title="Start from a template">
+          <div className="templates">
+            {TEMPLATE_IDS.map((id) => (
+              <button type="button" key={id} disabled={act.busy} onClick={() => fromTemplate(id)}>
+                <strong>{TEMPLATES[id].title}</strong>
+                <span>{TEMPLATES[id].blurb}</span>
+              </button>
+            ))}
+          </div>
+        </Section>
       )}
       <Async q={q}>
         {(d) =>
