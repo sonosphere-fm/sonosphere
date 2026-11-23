@@ -161,8 +161,9 @@ export function DatePicker({
     const r = trigger.current!.getBoundingClientRect();
     const up = window.innerHeight - r.bottom < 440 && r.top > 520;
     const w = presets ? 452 : 316;
-    if (window.innerWidth > 480) {
-      const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + window.scrollX;
+    const page = document.documentElement.clientWidth;
+    if (page > 480) {
+      const left = Math.max(8, Math.min(r.left, page - w - 8)) + window.scrollX;
       const top = (up ? r.top - 6 : r.bottom + 6) + window.scrollY;
       setAt({ left, top, up });
     } else {
