@@ -39,7 +39,7 @@ export function Username({
     const link = document.createElement("link");
     link.id = id;
     link.rel = "stylesheet";
-    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replaceAll("%20", "+")}&display=swap`;
+    link.href = `https://api.fonts.coollabs.io/css2?family=${encodeURIComponent(family).replaceAll("%20", "+")}&display=swap`;
     document.head.append(link);
   }, [family, selected]);
   return (
