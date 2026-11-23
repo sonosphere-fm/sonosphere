@@ -1,23 +1,14 @@
 import { DatePicker } from "../../datepicker";
 import { Username } from "../../ui/username";
-import { useEffect, useState, type FormEvent } from "react";
-import { Button, Input, Select, Modal } from "../../kit";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Button, Input } from "../../kit";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { api, artistUrl, date, invalidateAll, enc, num, plural, qs, useApi, userUrl } from "../../lib";
 import { Art, Async, Empty, Pager, PeriodPicker, Section, Stat, useAction } from "../../ui/base";
 import { BarChart, weekTrend } from "../../ui/charts";
 import { Grid, RankList, TrackList, type TrackRow } from "../../ui/lists";
-import type { Ok } from "../../lib";
-import type {
-  EditScope,
-  RecentTrack,
-  ScopeCounts,
-  ScrobbleEdited,
-  ScrobblesDeleted,
-  TopAlbum,
-  TopArtist,
-  TopTrack,
-} from "../../../shared/listening";
+import { ScrobbleMenu } from "../../ui/scrobble-menu";
+import type { RecentTrack, ScrobblesDeleted, TopAlbum, TopArtist, TopTrack } from "../../../shared/listening";
 import type { UserArtistLibrary, UserRecent, UserTop } from "../../../shared/users";
 
 // One cached path serves either /user/recent or /user/top (by `kind`), so rows are told apart by shape.
@@ -26,9 +17,6 @@ const isRecent = (i: LibraryRow): i is RecentTrack => "playedAt" in i;
 const isArtist = (i: LibraryRow): i is TopArtist => !("title" in i);
 const isAlbum = (i: LibraryRow): i is TopAlbum => "title" in i && !("duration" in i);
 const isTopTrack = (i: LibraryRow): i is TopTrack => "duration" in i && "listeners" in i;
-
-type Scope = "one" | EditScope;
-const toScope = (v: string): Scope => (v === "track" || v === "album" || v === "artist" ? v : "one");
 
 function toTs(d: string, end = false) {
   if (!d) return undefined;
@@ -100,76 +88,6 @@ function DateRange() {
   );
 }
 
-function EditScrobble({ row, onClose, onSaved }: { row: RecentTrack; onClose: () => void; onSaved: () => void }) {
-  const [f, setF] = useState({ artist: row.artist, track: row.title, album: row.album || "" });
-  const [scope, setScope] = useState<Scope>("one");
-  const act = useAction();
-  const counts = useApi<ScopeCounts>(`/scrobble/${row.id}/scope`).data;
-
-  const field = (k: keyof typeof f, label: string) => (
-    <label>
-      {label}
-      <Input
-        value={f[k]}
-        onChange={(e) => setF({ ...f, [k]: e.target.value })}
-        required={k !== "album"}
-        maxLength={255}
-      />
-    </label>
-  );
-
-  // The wider the correction, the fewer fields it can sensibly change.
-  const options: [string, string][] = [["one", "This scrobble only"]];
-  if ((counts?.track ?? 0) > 1) options.push(["track", `All ${num(counts?.track)} scrobbles of this track`]);
-  if ((counts?.album ?? 0) > 1) options.push(["album", `All ${num(counts?.album)} scrobbles from this album`]);
-  if ((counts?.artist ?? 0) > 1) options.push(["artist", `All ${num(counts?.artist)} scrobbles by this artist`]);
-  const n = scope === "one" ? 1 : (counts?.[scope] ?? 1);
-
-  const save = (e: FormEvent) => {
-    e.preventDefault();
-    act.run(async () => {
-      await api<ScrobbleEdited>(`/scrobble/${row.id}`, {
-        method: "PATCH",
-        body: scope === "one" ? f : { ...f, scope },
-      });
-      if (scope !== "one") invalidateAll();
-      onSaved();
-      onClose();
-    });
-  };
-
-  return (
-    <Modal title="Edit scrobble" onClose={onClose}>
-      <form className="form" onSubmit={save}>
-        {options.length > 1 && (
-          <label>
-            Apply to
-            <Select label="Apply to" value={scope} onChange={(v) => setScope(toScope(v))} options={options} />
-          </label>
-        )}
-        {(scope === "one" || scope === "track") && field("track", "Track")}
-        {field("artist", "Artist")}
-        {scope !== "artist" && field("album", "Album")}
-        {scope === "artist" && (
-          <p className="muted small">
-            Every scrobble of {row.artist} in your library moves to the artist you enter. Track and album names stay as
-            they are.
-          </p>
-        )}
-        {scope === "album" && (
-          <p className="muted small">
-            Every scrobble from {row.album || "this album"} gets this artist and album. Track names stay as they are.
-          </p>
-        )}
-        {act.note}
-        <Button kind="btn" loading={act.busy}>
-          {n > 1 ? `Update ${num(n)} scrobbles` : "Save"}
-        </Button>
-      </form>
-    </Modal>
-  );
-}
-
 function summary(d: UserRecent | UserTop, kind: string) {
   if ("hidden" in d) return "";
   if (kind === "scrobbles") return plural(d.total, "scrobble");
@@ -179,6 +97,7 @@ function summary(d: UserRecent | UserTop, kind: string) {
 
 export function Library({ name, mine }: { name: string; mine: boolean }) {
   const kind = useParams().kind || "scrobbles";
+  const selectedScrobble = useLocation().state?.selectedScrobble;
   const base = `${userUrl(name)}/library`;
   const [sp] = useSearchParams();
   const page = Number(sp.get("page")) || 1;
@@ -193,7 +112,6 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   const q = useApi<UserRecent | UserTop>(
     kind === "scrobbles" ? `/user/recent${qs(params)}` : `/user/top${qs({ ...params, kind })}`
   );
-  const [editing, setEditing] = useState<RecentTrack | null>(null);
   // Scrobbles picked for bulk delete; null when not in select mode.
   const [picked, setPicked] = useState<Set<number> | null>(null);
   const [confirm, setConfirm] = useState(false);
@@ -204,7 +122,18 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     setConfirm(false);
   };
 
-  useEffect(stopPicking, [kind, page]);
+  useEffect(() => {
+    stopPicking();
+    if (
+      mine &&
+      kind === "scrobbles" &&
+      page === 1 &&
+      typeof selectedScrobble === "number" &&
+      Number.isSafeInteger(selectedScrobble) &&
+      selectedScrobble > 0
+    )
+      setPicked(new Set([selectedScrobble]));
+  }, [name, mine, kind, page, selectedScrobble]);
 
   const pick = (id: number, on: boolean) => {
     setConfirm(false);
@@ -222,8 +151,6 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
       stopPicking();
       invalidateAll();
     });
-
-  const removeOne = (id: number) => api<Ok>(`/scrobble/${id}`, { method: "DELETE" }).then(q.reload);
 
   const search = sp.toString() ? `?${new URLSearchParams([...sp].filter(([k]) => k !== "page"))}` : "";
   const rank = (page - 1) * 50 + 1;
@@ -265,26 +192,14 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   };
 
   const rowActions = (r: TrackRow<RecentTrack>) => {
-    if (r._np) return null;
-    if (picked) {
-      return (
-        <Input
-          type="checkbox"
-          aria-label={`Select ${r.title}`}
-          checked={picked.has(r.id)}
-          onChange={(e) => pick(r.id, e.target.checked)}
-        />
-      );
-    }
+    if (r._np || !picked) return null;
     return (
-      <span className="row-actions">
-        <Button kind="link small" onClick={() => setEditing(r)}>
-          Edit
-        </Button>
-        <Button kind="link small" onClick={() => removeOne(r.id)}>
-          Delete
-        </Button>
-      </span>
+      <Input
+        type="checkbox"
+        aria-label={`Select ${r.title}`}
+        checked={picked.has(r.id)}
+        onChange={(e) => pick(r.id, e.target.checked)}
+      />
     );
   };
 
@@ -301,7 +216,9 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
           items={d.items.filter(isRecent)}
           nowPlaying={"nowPlaying" in d ? d.nowPlaying : null}
           time
-          actions={mine ? rowActions : undefined}
+          actions={mine && picked ? rowActions : undefined}
+          onSelect={mine && picked ? (r) => pick(r.id, !picked.has(r.id)) : undefined}
+          timeActions={mine && !picked ? (r) => <ScrobbleMenu row={r} onSelect={() => pick(r.id, true)} /> : undefined}
         />
       );
     }
@@ -322,7 +239,6 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
         </nav>
         <DateRange />
       </div>
-      {editing && <EditScrobble row={editing} onClose={() => setEditing(null)} onSaved={q.reload} />}
       <Async q={q}>
         {(d) => (
           <>

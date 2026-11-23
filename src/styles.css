@@ -876,6 +876,9 @@
   .chartlist tr:hover td {
     background: var(--accent-faint);
   }
+  .chartlist tr.selectable {
+    cursor: pointer;
+  }
   .chartlist tr.now td {
     background: var(--now);
   }
@@ -926,6 +929,75 @@
   }
   .c-time {
     width: 150px;
+  }
+  .track-tail {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .track-tail:has(.scrobble-menu-trigger) {
+    --scrobble-action-size: 28px;
+    --scrobble-action-space: calc(var(--scrobble-action-size) + 8px);
+    min-height: var(--scrobble-action-size);
+    padding-inline-start: var(--scrobble-action-space);
+  }
+  .track-tail:has(.scrobble-menu-trigger) > .track-time {
+    white-space: nowrap;
+  }
+  .track-tail:has(.scrobble-menu-trigger) > .track-time-actions {
+    position: absolute;
+    inset-inline-end: 0;
+    top: 50%;
+    translate: 0 -50%;
+  }
+  /* Hide only the trigger: native dialogs inherit pointer events from their DOM ancestors. */
+  .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger {
+    position: relative;
+    width: var(--scrobble-action-size);
+    min-width: var(--scrobble-action-size);
+    height: var(--scrobble-action-size);
+    min-height: var(--scrobble-action-size);
+    padding: 0;
+    background: transparent;
+    color: var(--muted);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
+  .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger .ico {
+    width: 16px;
+    height: 16px;
+  }
+  .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger:hover,
+  .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger[aria-expanded="true"] {
+    background: var(--fill-hover);
+    color: var(--ink);
+  }
+  .chartlist tr:is(:hover, :has(:focus-visible)) .track-tail:has(.scrobble-menu-trigger) > .track-time,
+  .track-tail:has(.scrobble-menu-trigger[aria-expanded="true"]) > .track-time {
+    translate: calc(-1 * var(--scrobble-action-space)) 0;
+  }
+  .chartlist tr:is(:hover, :has(:focus-visible)) .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger,
+  .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger[aria-expanded="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .astryx-dropdown-menu-item.scrobble-menu-item {
+    min-height: 32px;
+    padding: 4px 8px;
+  }
+  .astryx-dropdown-menu-item.scrobble-menu-item .ico {
+    width: 16px;
+    height: 16px;
+  }
+  .astryx-dropdown-menu-item.scrobble-menu-item.scrobble-menu-delete,
+  .astryx-dropdown-menu-item.scrobble-menu-item.scrobble-menu-delete * {
+    color: var(--bad) !important;
   }
   .c-actions {
     white-space: nowrap;
@@ -2787,8 +2859,21 @@
     .row-actions {
       visibility: visible;
     }
+    .track-tail:has(.scrobble-menu-trigger) > .track-time {
+      translate: calc(-1 * var(--scrobble-action-space)) 0;
+    }
+    .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
   @media (pointer: coarse) {
+    .astryx-button.scrobble-menu-trigger.scrobble-menu-trigger::after {
+      inset: -8px;
+    }
+    .astryx-dropdown-menu-item.scrobble-menu-item {
+      min-height: 44px;
+    }
     .play-btn,
     .c-love .astryx-button {
       position: relative;
