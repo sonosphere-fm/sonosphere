@@ -47,19 +47,19 @@ export function profileAccentStyle(user: UserAppearance): CSSProperties | undefi
   const start = user.profileAccent;
   const end = isProfileAccent(user.profileAccentEnd) ? user.profileAccentEnd : start;
   const pair = (amount: number, light = "#fffdf7", dark = "#101012") =>
-    `light-dark(${mix(start, light, amount)}, ${mix(start, dark, amount)})`;
+    `light-dark(${mix(start, light, amount)}, ${mix(start, dark, amount * 0.32)})`;
   const surface = (amount: number, darkAmount = amount) =>
     `linear-gradient(110deg, light-dark(${mix(start, "#fffdf7", amount)}, ${mix(start, "#101012", darkAmount)}), light-dark(${mix(end, "#fffdf7", amount)}, ${mix(end, "#101012", darkAmount)}))`;
   const lightSurfaces = [start, end].map((color) => mix(color, "#fffdf7", 0.32));
-  const darkSurfaces = [start, end].map((color) => mix(color, "#101012", 0.32));
+  const darkSurfaces = [start, end].map((color) => mix(color, "#101012", 0.13));
   // White is readable across the entire sRGB gradient, including its middle.
   const barStart = textTone(start, false, ["#ffffff"]);
   const barEnd = textTone(end, false, ["#ffffff"]);
   // Tailwind's CSS optimizer drops all but one color-mix() custom property per rule, so mixes live here.
   const lightBg = mix(start, "#fffdf7", 0.12);
-  const darkBg = mix(start, "#101012", 0.12);
+  const darkBg = mix(start, "#101012", 0.048);
   const onBg = (color: string, amount: number) =>
-    `light-dark(${mix(color, lightBg, amount)}, ${mix(color, darkBg, amount)})`;
+    `light-dark(${mix(color, lightBg, amount)}, ${mix(color, darkBg, amount * 0.4)})`;
   return {
     "--profile-line": onBg(start, 0.25),
     "--profile-tint": onBg(start, 0.18),
@@ -79,9 +79,9 @@ export function profileAccentStyle(user: UserAppearance): CSSProperties | undefi
     "--profile-fill": pair(0.24),
     "--profile-fill-hover": pair(0.3),
     "--profile-edge": pair(0.55),
-    "--profile-page": surface(0.12, 0.18),
-    "--profile-surface": surface(0.2, 0.26),
-    "--profile-shell-bar": `linear-gradient(110deg, ${barStart}, ${barEnd})`,
+    "--profile-page": surface(0.12, 0.045),
+    "--profile-surface": surface(0.2, 0.08),
+    "--profile-shell-bar": `linear-gradient(110deg, light-dark(${barStart}, ${mix(start, "#101114", 0.16)}), light-dark(${barEnd}, ${mix(end, "#101114", 0.16)}))`,
     "--profile-banner-shade": `linear-gradient(0deg, light-dark(${mix(start, "#fffdf7", 0.12)}, ${mix(start, "#101012", 0.12)}), transparent 45%), linear-gradient(90deg, light-dark(${mix(start, "#fffdf7", 0.12)}b8, ${mix(start, "#101012", 0.12)}b8), light-dark(${mix(end, "#fffdf7", 0.12)}2e, ${mix(end, "#101012", 0.12)}2e))`,
     "--profile-bar": barStart,
   } as CSSProperties;

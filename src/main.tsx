@@ -119,7 +119,7 @@ function Header() {
 
   if (open)
     return (
-      <header className="site-header">
+      <header className="site-header bg-site-bar">
         <form
           className={`wrap ${searchForm}`}
           onSubmit={search}
@@ -164,7 +164,7 @@ function Header() {
   };
 
   return (
-    <header className="site-header">
+    <header className="site-header bg-site-bar">
       <div className="wrap">
         <Link to="/" className="logo" aria-label="Sonosphere home">
           <Logo />
@@ -826,7 +826,7 @@ function App() {
   if (!ready)
     return (
       <>
-        <header className="site-header">
+        <header className="site-header bg-site-bar">
           <div className="wrap">
             <span className="logo">
               <Logo />
