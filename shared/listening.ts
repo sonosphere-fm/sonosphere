@@ -69,6 +69,16 @@ export type Report = {
   tags: { name: string; weight: number }[];
 };
 
+export type Throwback = {
+  year: number;
+  from: string;
+  to: string;
+  playcount: number;
+  topArtists: TopArtist[];
+  topTracks: TopTrack[];
+};
+export type Blasts = { date: string; years: Throwback[] };
+
 export type DayCount = { date: string; count: number };
 export type ListeningStats = {
   year: number;

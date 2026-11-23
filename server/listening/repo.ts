@@ -12,6 +12,7 @@ import {
   inArray,
   isNotNull,
   lt,
+  min,
   ne,
   notExists,
   or,
@@ -672,6 +673,16 @@ export async function recordScrobbles(
 export async function series(s: Scope, bucket: Bucket, tzMin = 0): Promise<SeriesPoint[]> {
   const k = timeBucket(scrobbles.playedAt, bucket, Math.round(tzMin) * 60).as("k");
   return db.select({ k, c: count() }).from(scrobbles).where(within(s)).groupBy(sql`1`).orderBy(sql`1`);
+}
+
+export async function firstScrobble(userId: number): Promise<number | null> {
+  const row = await first(
+    db
+      .select({ t: min(scrobbles.playedAt) })
+      .from(scrobbles)
+      .where(eq(scrobbles.userId, userId))
+  );
+  return row?.t ?? null;
 }
 
 const span = (userId: number, from: number, to: number) =>

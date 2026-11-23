@@ -7,6 +7,7 @@ import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import { listeningChanged } from "../realtime";
 import {
+  type Blasts,
   daysBetween,
   type EditScope,
   type ListeningStats,
@@ -212,6 +213,39 @@ export async function stats(userId: number, offset: number, tzMin: number, viewe
     currentStreak: latest && daysBetween(latest, today) <= 1 ? last : 0,
     topShare: plays ? top.reduce((sum, a) => sum + a.playcount, 0) / plays : 0,
   };
+}
+
+const DAY = 86400;
+const isoDay = (t: number) => new Date(t * 1000).toISOString().slice(0, 10);
+
+/** The same week in each earlier year, centred on today minus `offset` weeks. */
+export async function blasts(userId: number, offset: number, tzMin: number, viewerId = 0): Promise<Blasts> {
+  const tz = Math.round(tzMin) * 60;
+  const centre = new Date((now() + tz - offset * 7 * DAY) * 1000);
+  const firstPlay = await repo.firstScrobble(userId);
+  const firstYear = firstPlay ? new Date((firstPlay + tz) * 1000).getUTCFullYear() : centre.getUTCFullYear();
+  const years = [];
+  for (let year = centre.getUTCFullYear() - 1; year >= firstYear; year--) years.push(year);
+  const all = await Promise.all(
+    years.map(async (year) => {
+      const mid = Date.UTC(year, centre.getUTCMonth(), centre.getUTCDate()) / 1000;
+      const scope: repo.Scope = { userId, viewerId, from: mid - 3 * DAY - tz, to: mid + 4 * DAY - tz };
+      const [counts, artists, tracks] = await Promise.all([
+        repo.counts(scope),
+        repo.topArtists(scope, 5),
+        repo.topTracks(scope, 5),
+      ]);
+      return {
+        year,
+        from: isoDay(mid - 3 * DAY),
+        to: isoDay(mid + 3 * DAY),
+        playcount: counts.playcount,
+        topArtists: artists.items,
+        topTracks: tracks.items,
+      };
+    })
+  );
+  return { date: isoDay(centre.getTime() / 1000), years: all.filter((y) => y.playcount) };
 }
 
 /** Keeps an album only when one is named. */

@@ -237,7 +237,10 @@ export function UserPage({ tab }: { tab: Tab }) {
                 {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
                 {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
                 {tab === "report" && !locked && (
-                  <Report name={u.username} type={p.type === "stats" ? "stats" : reportType(p.type)} />
+                  <Report
+                    name={u.username}
+                    type={p.type === "stats" || p.type === "blasts" ? p.type : reportType(p.type)}
+                  />
                 )}
                 {tab === "following" && (
                   <People
