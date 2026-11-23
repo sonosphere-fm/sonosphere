@@ -134,7 +134,7 @@ export function TrackList<R extends Row>({
             onClickCapture={
               onSelect && !r._np
                 ? (e) => {
-                    if ((e.target as Element).closest("button, input, label, .astryx-checkbox-input")) return;
+                    if ((e.target as Element).closest("button, input, label")) return;
                     e.preventDefault();
                     e.stopPropagation();
                     onSelect(r);
