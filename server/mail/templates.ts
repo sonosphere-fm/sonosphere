@@ -115,6 +115,18 @@ export const changeMail = (to: string, username: string, token: string) =>
     },
   ]);
 
+export const approveEmailChangeMail = (to: string, username: string, next: string, token: string) =>
+  build(to, "Approve your Sonosphere email change", "Approve email change", [
+    {
+      p: `${username} requested an email change to ${next}. Approve it here first; we will then send a verification link to the new address.`,
+    },
+    { button: "Approve email change", url: link("/verify", token) },
+    {
+      small:
+        "This link works for one hour. If you did not request this change, do not approve it and change your password.",
+    },
+  ]);
+
 export const emailChangedMail = (to: string, username: string, next: string) =>
   build(to, "Your Sonosphere email was changed", "Your email was changed", [
     { p: `The email for ${username} on Sonosphere is now ${next}. Mail about the account will go there from now on.` },

@@ -1,7 +1,7 @@
-import { and, eq, gt, isNull, lt, notLike } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lt, notLike } from "drizzle-orm";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
-import { db } from "../db/client";
-import { emailTokens, users } from "../db/schema";
+import { db, type Conn } from "../db/client";
+import { emailTokens, sessions, users } from "../db/schema";
 import { recordChange } from "../account/history";
 import { deleteAccount } from "../account/repo";
 import { bad, fail } from "../http";
@@ -9,14 +9,22 @@ import { send } from "../mail";
 import * as mail from "../mail/templates";
 import { findById, type User } from "../users/repo";
 import { digest, first, now, rid } from "../util";
-import { deleteSessionsOf, emailTaken } from "./repo";
+import { emailTaken } from "./repo";
 
-type Kind = "verify" | "change" | "reset";
-const LIFE: Record<Kind, number> = { verify: 3 * 86400, change: 3 * 86400, reset: 3600 };
+type Kind = "verify" | "change-confirm" | "change-approve" | "reset";
+const LIFE: Record<Kind, number> = {
+  verify: 3 * 86400,
+  "change-confirm": 3 * 86400,
+  "change-approve": 3600,
+  reset: 3600,
+};
 
 async function issue(userId: number, kind: Kind, email: string): Promise<string> {
   const token = rid(32);
   await db.transaction(async (tx) => {
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update");
+    if (!user || ((kind === "reset" || kind === "verify") && user.email !== email))
+      bad("Your credentials changed. Try again.");
     await tx.delete(emailTokens).where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, kind)));
     await tx.insert(emailTokens).values({
       hash: digest(token),
@@ -30,9 +38,9 @@ async function issue(userId: number, kind: Kind, email: string): Promise<string>
   return token;
 }
 
-async function take(token: unknown, kinds: Kind[]) {
+async function take(token: unknown, kinds: Kind[], conn: Conn = db) {
   if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return null;
-  const [row] = await db
+  const [row] = await conn
     .delete(emailTokens)
     .where(eq(emailTokens.hash, digest(token)))
     .returning();
@@ -45,7 +53,13 @@ export async function pendingEmail(userId: number): Promise<string | null> {
     db
       .select({ email: emailTokens.email })
       .from(emailTokens)
-      .where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, "change"), gt(emailTokens.expiresAt, now())))
+      .where(
+        and(
+          eq(emailTokens.userId, userId),
+          inArray(emailTokens.kind, ["change-confirm", "change-approve"]),
+          gt(emailTokens.expiresAt, now())
+        )
+      )
       .limit(1)
   );
   return row?.email ?? null;
@@ -58,27 +72,80 @@ export async function sendVerification(u: User): Promise<void> {
 
 export async function startEmailChange(u: User, email: string): Promise<void> {
   if (await emailTaken(email, u.id)) bad("That email is already in use");
-  await send(mail.changeMail(email, u.username, await issue(u.id, "change", email)));
+  const token = rid(32);
+  await db.transaction(async (tx) => {
+    const [current] = await tx.select().from(users).where(eq(users.id, u.id)).for("update");
+    if (!current || current.email !== u.email || current.passwordHash !== u.passwordHash)
+      bad("Your credentials changed. Refresh and try again.");
+    await tx
+      .delete(emailTokens)
+      .where(
+        and(eq(emailTokens.userId, u.id), inArray(emailTokens.kind, ["change", "change-confirm", "change-approve"]))
+      );
+    await tx.insert(emailTokens).values({
+      hash: digest(token),
+      userId: u.id,
+      kind: "change-approve",
+      email,
+      createdAt: now(),
+      expiresAt: now() + LIFE["change-approve"],
+    });
+  });
+  await send(mail.approveEmailChangeMail(u.email, u.username, email, token));
 }
 
-export async function confirmEmail(token: unknown): Promise<User> {
-  const t = (await take(token, ["verify", "change"])) ?? fail(400, "That link has expired or was already used");
-  const u = (await findById(t.userId)) ?? fail(400, "That link has expired or was already used");
-  if (t.kind === "verify") {
-    if (u.email !== t.email) fail(400, "That link is for an address this account no longer uses");
-    if (!u.emailVerifiedAt) {
-      await db.update(users).set({ emailVerifiedAt: now() }).where(eq(users.id, u.id));
-      await send(mail.welcomeMail(u.email, u.username));
+export async function confirmEmail(token: unknown): Promise<{ user: User; approvalPending: boolean }> {
+  const t = await db.transaction(async (tx) => {
+    if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token))
+      return fail(400, "That link has expired or was already used");
+    const [pending] = await tx
+      .select()
+      .from(emailTokens)
+      .where(eq(emailTokens.hash, digest(token)));
+    if (!pending) return fail(400, "That link has expired or was already used");
+    const [before] = await tx.select().from(users).where(eq(users.id, pending.userId)).for("update");
+    if (!before) return fail(400, "That link has expired or was already used");
+    const t =
+      (await take(token, ["verify", "change-confirm", "change-approve"], tx)) ??
+      fail(400, "That link has expired or was already used");
+    if (t.kind === "change-approve") {
+      // Rotate the secret: access to the new inbox alone cannot approve the change.
+      const next = rid(32);
+      await tx.insert(emailTokens).values({
+        hash: digest(next),
+        userId: t.userId,
+        kind: "change-confirm",
+        email: t.email,
+        createdAt: now(),
+        expiresAt: now() + LIFE["change-confirm"],
+      });
+      return { ...t, next, oldEmail: before.email };
     }
+    if (t.kind === "verify") {
+      if (before.email !== t.email) fail(400, "That link is for an address this account no longer uses");
+      if (!before.emailVerifiedAt) await tx.update(users).set({ emailVerifiedAt: now() }).where(eq(users.id, t.userId));
+    }
+    if (t.kind === "change-confirm") {
+      if (await emailTaken(t.email, t.userId)) fail(400, "That email is already in use by another account");
+      await tx.update(users).set({ email: t.email, emailVerifiedAt: now() }).where(eq(users.id, t.userId));
+      await tx.delete(emailTokens).where(eq(emailTokens.userId, t.userId));
+      await tx.delete(sessions).where(eq(sessions.userId, t.userId));
+      await recordChange(t.userId, "email", before.email, t.email, tx);
+    }
+    return { ...t, next: null, oldEmail: before.email };
+  });
+  const u = (await findById(t.userId)) ?? fail(400, "That link has expired or was already used");
+  if (t.kind === "change-approve" && t.next) {
+    await send(mail.changeMail(t.email, u.username, t.next));
+    return { user: u, approvalPending: true };
+  }
+  if (t.kind === "verify") {
+    await send(mail.welcomeMail(u.email, u.username));
   } else {
-    if (await emailTaken(t.email, u.id)) fail(400, "That email is already in use by another account");
-    const old = u.email;
-    await db.update(users).set({ email: t.email, emailVerifiedAt: now() }).where(eq(users.id, u.id));
-    await recordChange(u.id, "email", old, t.email);
-    await db.delete(emailTokens).where(and(eq(emailTokens.userId, u.id), eq(emailTokens.kind, "verify")));
+    const old = t.oldEmail;
     if (old !== t.email) await send(mail.emailChangedMail(old, u.username, t.email));
   }
-  return (await findById(u.id))!;
+  return { user: (await findById(u.id))!, approvalPending: false };
 }
 
 // Silent either way, so addresses cannot be probed.
@@ -89,18 +156,25 @@ export async function requestReset(email: string): Promise<void> {
 }
 
 export async function resetPassword(token: unknown, passwordHash: string): Promise<User> {
-  const t =
-    (await take(token, ["reset"])) ?? fail(400, "That reset link has expired or was already used. Ask for a new one.");
-  const u =
-    (await findById(t.userId)) ?? fail(400, "That reset link has expired or was already used. Ask for a new one.");
-  if (u.email !== t.email)
-    fail(400, "That reset link was sent to an address this account no longer uses. Ask for a new one.");
-  // the link reached the address, so it counts as confirmed
-  await db
-    .update(users)
-    .set({ passwordHash, emailVerifiedAt: u.emailVerifiedAt ?? now() })
-    .where(eq(users.id, u.id));
-  await deleteSessionsOf(u.id);
+  const expired = () => fail(400, "That reset link has expired or was already used. Ask for a new one.");
+  const u = await db.transaction(async (tx) => {
+    if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return expired();
+    const [pending] = await tx
+      .select()
+      .from(emailTokens)
+      .where(eq(emailTokens.hash, digest(token)));
+    if (!pending) return expired();
+    const [user] = await tx.select().from(users).where(eq(users.id, pending.userId)).for("update");
+    const t = (await take(token, ["reset"], tx)) ?? expired();
+    if (!user || user.banned || user.email !== t.email) return expired();
+    await tx
+      .update(users)
+      .set({ passwordHash, emailVerifiedAt: user.emailVerifiedAt ?? now() })
+      .where(eq(users.id, user.id));
+    await tx.delete(emailTokens).where(eq(emailTokens.userId, user.id));
+    await tx.delete(sessions).where(eq(sessions.userId, user.id));
+    return user;
+  });
   await send(mail.passwordChangedMail(u.email, u.username));
   return (await findById(u.id))!;
 }

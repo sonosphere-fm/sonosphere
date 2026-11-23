@@ -389,6 +389,7 @@ export function ResetPage() {
 }
 
 export function VerifyPage() {
+  const [approvalPending, setApprovalPending] = useState(false);
   const [sp] = useSearchParams();
   const token = sp.get("token") || "";
   const { me, refresh } = useAuth();
@@ -401,8 +402,9 @@ export function VerifyPage() {
   useEffect(() => {
     if (!token || started.current) return;
     started.current = true;
-    api<Ok>("/auth/verify", { body: { token } }).then(
-      () => {
+    api<Ok & { approvalPending: boolean }>("/auth/verify", { body: { token } }).then(
+      (result) => {
+        setApprovalPending(result.approvalPending);
         setState("done");
         refresh();
       },
@@ -416,7 +418,11 @@ export function VerifyPage() {
   } else if (state === "done") {
     body = (
       <>
-        <p>Your email is confirmed. Thanks!</p>
+        <p>
+          {approvalPending
+            ? "Email change approved. Follow the verification link sent to your new address to finish."
+            : "Your email is confirmed. Thanks!"}
+        </p>
         <p>{me ? <Link to="/">Go to your home page</Link> : <Link to="/login">Log in</Link>}</p>
       </>
     );

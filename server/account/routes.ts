@@ -1,5 +1,5 @@
 import { passwordChanged, passwordSet, startEmailChange } from "../auth/email";
-import { deleteSessionsOf, emailTaken } from "../auth/repo";
+import { emailTaken } from "../auth/repo";
 import { confirmedBy, endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
 import { confirmed, need, poster } from "../guards";
@@ -152,8 +152,7 @@ router.post<Ok>("/api/me/password", async (c) => {
   // an account made through another site sets its first password without one
   if (u.passwordHash && !(await passwordMatches(u, String(c.body.current || "")))) bad("Current password is incorrect");
   if (next.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
-  await repo.setPasswordHash(u.id, await hashPassword(next));
-  await deleteSessionsOf(u.id, tokenOf(c.req));
+  await repo.setPasswordHash(u.id, await hashPassword(next), u.passwordHash, tokenOf(c.req));
   await (u.passwordHash ? passwordChanged(u) : passwordSet(u));
   return { ok: true };
 });

@@ -74,10 +74,10 @@ router.post<Session>("/api/auth/reset", async (c) => {
   return { user: await me(u) };
 });
 
-router.post<Ok>("/api/auth/verify", async (c) => {
+router.post<Ok & { approvalPending: boolean }>("/api/auth/verify", async (c) => {
   await limit(`verify:${ipOf(c.req)}`, 20, 3600);
-  await confirmEmail(c.body.token);
-  return { ok: true };
+  const { approvalPending } = await confirmEmail(c.body.token);
+  return { ok: true, approvalPending };
 });
 
 router.post<Ok>("/api/me/verify", async (c) => {
