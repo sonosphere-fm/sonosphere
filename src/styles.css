@@ -7978,3 +7978,29 @@ html[data-profile-shell="custom"] :focus-visible {
   outline: 2px solid var(--accent, #6af4db);
   outline-offset: 2px;
 }
+
+/* Chart maker: compact form on the left, flexible artwork preview on the right. */
+@layer components {
+  .chart-maker {
+    grid-template-columns: 360px minmax(0, 1fr);
+  }
+  .chart-maker > .side {
+    background: var(--panel);
+    padding: 20px;
+  }
+  .chart-maker .section-head {
+    margin-bottom: 16px;
+  }
+  @media (max-width: 1100px) {
+    .chart-maker {
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 28px;
+    }
+  }
+  @media (max-width: 900px) {
+    .chart-maker {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+  }
+}

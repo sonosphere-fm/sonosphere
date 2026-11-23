@@ -132,13 +132,18 @@ function ChartsOverview() {
   return (
     <div className="wrap page">
       <h1 className="page-title">Charts</h1>
-      <nav className="tabs">
-        {CHART_PERIODS.map(([k, l]) => (
-          <Button key={k} kind={k === period ? "active" : ""} onClick={() => setPeriod(k)}>
-            {l}
-          </Button>
-        ))}
-      </nav>
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <nav className="tabs">
+          {CHART_PERIODS.map(([k, l]) => (
+            <Button key={k} kind={k === period ? "active" : ""} onClick={() => setPeriod(k)}>
+              {l}
+            </Button>
+          ))}
+        </nav>
+        <Button kind="btn ghost small" href="/charts/maker">
+          Chart creator
+        </Button>
+      </div>
       <p className="flex items-baseline gap-x-[18px] gap-y-1 flex-wrap -mt-2.5 mb-[26px] text-[14px] max-[600px]:mb-[18px]">
         <span className="text-site-muted">Jump to:</span>
         {JUMPS.map(([id, l]) => (

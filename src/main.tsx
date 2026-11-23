@@ -60,6 +60,7 @@ const ArtistPage = lazy(() => import("./pages/music/artist").then((m) => ({ defa
 const AlbumPage = lazy(() => import("./pages/music/album").then((m) => ({ default: m.AlbumPage })));
 const TrackPage = lazy(() => import("./pages/music/track").then((m) => ({ default: m.TrackPage })));
 const Charts = lazy(() => import("./pages/music/charts").then((m) => ({ default: m.Charts })));
+const ChartMaker = lazy(() => import("./pages/music/chart-maker").then((m) => ({ default: m.ChartMaker })));
 const SearchPage = lazy(() => import("./pages/music/search").then((m) => ({ default: m.SearchPage })));
 const TagPage = lazy(() => import("./pages/music/tag").then((m) => ({ default: m.TagPage })));
 const UserPage = lazy(() => import("./pages/user/index").then((m) => ({ default: m.UserPage })));
@@ -474,6 +475,7 @@ function Pages() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/charts" element={<Charts />} />
+      <Route path="/charts/maker" element={<ChartMaker />} />
       <Route path="/music" element={<Charts />} />
       <Route path="/search" element={<SearchPage />} />
       <Route path="/music/:artist" element={<ArtistPage tab="overview" />} />
