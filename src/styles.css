@@ -1589,7 +1589,7 @@
     display: flex;
     justify-content: center;
     padding: 96px 0;
-    color: var(--link);
+    color: light-dark(var(--link), var(--sun));
     animation: appear 0s linear 0.15s both;
   }
   .page-spinner svg {
