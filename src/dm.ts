@@ -1,5 +1,14 @@
 import { mutate, type LiveEvent } from "./lib";
-import type { DmGroup, DmGroupMessage, DmGroupPage, DmList, DmMessage, DmThread, DmThreadPage } from "../shared/dm";
+import type {
+  DmGroup,
+  DmGroupMessage,
+  DmGroupPage,
+  DmList,
+  DmMessage,
+  DmReaction,
+  DmThread,
+  DmThreadPage,
+} from "../shared/dm";
 
 export type Msg = DmMessage;
 export type Thread = DmThread;
@@ -16,7 +25,9 @@ type LocalChange =
   | { t: "dm-deleted"; threadId: number; id: number }
   | { t: "dm-group"; group: DmGroup; message: DmGroupMessage }
   | { t: "dm-group-gone"; groupId: number }
-  | { t: "dm-group-deleted"; groupId: number; id: number };
+  | { t: "dm-group-deleted"; groupId: number; id: number }
+  | { t: "dm-react"; threadId: number; id: number; reactions: DmReaction[] }
+  | { t: "dm-group-react"; groupId: number; id: number; reactions: DmReaction[] };
 
 /** Put a conversation at the top of the list it belongs in, and take it out of the other. */
 export function place(t: Thread | null, id = t?.id) {
@@ -56,7 +67,8 @@ export function applyDmEvent(e: LiveEvent | LocalChange) {
     mutate<ThreadReply>(threadPath(thread.id), (d) => ({ ...d, thread }));
   } else if (e.t === "dm-deleted") {
     const { id } = e;
-    const gone = <M extends Msg | null>(m: M): M => (m && m.id === id ? { ...m, body: "", deleted: true } : m);
+    const gone = <M extends Msg | null>(m: M): M =>
+      m && m.id === id ? { ...m, body: "", deleted: true, reactions: [] } : m;
     updateLists((t) => ({ ...t, last: gone(t.last) }));
     mutate<ThreadReply>(threadPath(e.threadId), (d) => ({ ...d, messages: d.messages.map(gone) }));
   } else if (e.t === "dm-group") {
@@ -71,9 +83,21 @@ export function applyDmEvent(e: LiveEvent | LocalChange) {
   } else if (e.t === "dm-group-deleted") {
     const { id } = e;
     const gone = <M extends DmGroupMessage | null>(m: M): M =>
-      m && m.id === id ? { ...m, body: "", deleted: true } : m;
+      m && m.id === id ? { ...m, body: "", deleted: true, reactions: [] } : m;
     mutate<ListReply>(INBOX, (d) => ({ ...d, groups: d.groups.map((g) => ({ ...g, last: gone(g.last) })) }));
     mutate<DmGroupPage>(groupPath(e.groupId), (d) => ({ ...d, messages: d.messages.map(gone) }));
+  } else if (e.t === "dm-react") {
+    const { id, reactions } = e;
+    mutate<ThreadReply>(threadPath(e.threadId), (d) => ({
+      ...d,
+      messages: d.messages.map((m) => (m.id === id ? { ...m, reactions } : m)),
+    }));
+  } else if (e.t === "dm-group-react") {
+    const { id, reactions } = e;
+    mutate<DmGroupPage>(groupPath(e.groupId), (d) => ({
+      ...d,
+      messages: d.messages.map((m) => (m.id === id ? { ...m, reactions } : m)),
+    }));
   } else if (e.t === "dm-read") {
     const { threadId, seen } = e;
     mutate<ThreadReply>(threadPath(threadId), (d) => ({

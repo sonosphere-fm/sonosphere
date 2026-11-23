@@ -2,7 +2,16 @@ import type { UserAppearance } from "./username-fonts";
 
 export type DmPolicy = "everyone" | "requests" | "following" | "nobody";
 export type DmUser = UserAppearance & { id: number; username: string; realname: string; image: string | null };
-export type DmMessage = { id: number; from: number; body: string; at: number; deleted: boolean };
+export const DM_REACTIONS = ["❤️", "😂", "😮", "😢", "👍", "🔥"] as const;
+export type DmReaction = { emoji: string; users: number[] };
+export type DmMessage = {
+  id: number;
+  from: number;
+  body: string;
+  at: number;
+  deleted: boolean;
+  reactions: DmReaction[];
+};
 export type DmCounts = { unread: number; requests: number };
 
 // `seen`: last message id the other person read (0 until accepted).
@@ -55,6 +64,7 @@ export type DmSent = { message: DmMessage; thread: DmThread };
 export type DmDone = { ok: true; counts: DmCounts };
 export type DmAccepted = { thread: DmThread; counts: DmCounts };
 export type DmUnsent = { ok: true };
+export type DmReacted = { reactions: DmReaction[] };
 export type DmGroupPage = {
   group: DmGroup;
   messages: DmGroupMessage[];
@@ -75,6 +85,8 @@ export type DmEvent =
   | { t: "dm-read"; threadId: number; seen: number }
   | { t: "dm-counts"; counts: DmCounts }
   | { t: "dm-typing"; threadId: number }
+  | { t: "dm-react"; threadId: number; id: number; reactions: DmReaction[] }
+  | { t: "dm-group-react"; groupId: number; id: number; reactions: DmReaction[] }
   | { t: "dm-group"; group: DmGroup; message: DmGroupMessage; counts: DmCounts }
   | { t: "dm-group-gone"; groupId: number; counts: DmCounts }
   | { t: "dm-group-deleted"; groupId: number; id: number; counts: DmCounts }

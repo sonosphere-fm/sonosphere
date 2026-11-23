@@ -226,6 +226,9 @@ export const messagesBetween = (
     .orderBy(desc(dmMessages.id))
     .limit(limit);
 
+export const findMessage = (id: number): Promise<Message | null> =>
+  first(db.select().from(dmMessages).where(eq(dmMessages.id, id)).limit(1));
+
 export const ownMessage = (id: number, senderId: number): Promise<Message | null> =>
   first(
     db

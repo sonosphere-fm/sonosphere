@@ -15,6 +15,7 @@ import { Button, Input, useConfirm } from "../kit";
 import { useTurnstile } from "./auth";
 import { ago, api, date, invalidateAll, liveSend, mutate, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
 import type { BlockResult } from "../../shared/blocks";
+import { DM_REACTIONS } from "../../shared/dm";
 import type {
   DmAccepted,
   DmClientMessage,
@@ -25,6 +26,7 @@ import type {
   DmGroupMessage,
   DmGroupPage,
   DmGroupSent,
+  DmReacted,
   DmSent,
   DmUnsent,
   DmUser,
@@ -410,22 +412,68 @@ function useMarkRead(unread: number, lastId: number, mark: () => void) {
   }, [unread, lastId]);
 }
 
+function Reactions({
+  m,
+  myId,
+  who,
+  canReact,
+  onReact,
+}: {
+  m: Msg;
+  myId: number;
+  who: (id: number) => string;
+  canReact: boolean;
+  onReact: (emoji: string) => void;
+}) {
+  if (!m.reactions.length) return null;
+  return (
+    <div className="dm-reactions">
+      {m.reactions.map((r) => {
+        const names = r.users.map(who).join(", ");
+        return (
+          <button
+            type="button"
+            key={r.emoji}
+            className="dm-reaction"
+            title={names}
+            aria-label={`${r.emoji} ${names}`}
+            aria-pressed={r.users.includes(myId)}
+            disabled={!canReact}
+            onClick={() => onReact(r.emoji)}
+          >
+            <span aria-hidden>{r.emoji}</span>
+            {r.users.length > 1 && <span>{r.users.length}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function Bubble({
   m,
   mine,
+  myId,
+  who,
   open,
   onToggle,
   unsendable,
   onUnsend,
   onReport,
+  canReact,
+  onReact,
 }: {
   m: Msg;
   mine: boolean;
+  myId: number;
+  who: (id: number) => string;
   open: boolean;
   onToggle: () => void;
   unsendable: boolean;
   onUnsend: () => void;
   onReport: () => void;
+  canReact: boolean;
+  onReact: (emoji: string) => void;
 }) {
   if (m.deleted) return <div className="dm-bubble gone">Message deleted</div>;
   let action = null;
@@ -446,6 +494,19 @@ function Bubble({
       <button type="button" className="dm-bubble" title={clock(m.at)} aria-expanded={open} onClick={onToggle}>
         {m.body}
       </button>
+      <Reactions m={m} myId={myId} who={who} canReact={canReact} onReact={onReact} />
+      {open && canReact && (
+        <div className="dm-picker" role="group" aria-label="React">
+          {DM_REACTIONS.map((e) => {
+            const on = m.reactions.some((r) => r.emoji === e && r.users.includes(myId));
+            return (
+              <button type="button" key={e} aria-pressed={on} onClick={() => onReact(e)}>
+                {e}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {open && (
         <div className="dm-meta muted small">
           {clock(m.at)}
@@ -565,6 +626,14 @@ function Conversation({ id, back }: { id: number; back: string }) {
       .then(() => applyDmEvent({ t: "dm-deleted", threadId: id, id: m.id }))
       .catch(() => {});
 
+  const react = (m: Msg, emoji: string) =>
+    api<DmReacted>(`/dm/message/${m.id}/react`, { body: { emoji } })
+      .then((r) => applyDmEvent({ t: "dm-react", threadId: id, id: m.id, reactions: r.reactions }))
+      .catch(() => {});
+
+  const canReact = t.status === "active" && d.can && !d.blocked;
+  const who = (uid: number) => (uid === me!.id ? "You" : other.username);
+
   // A report is filed against one message; staff see the ones around it.
   const lastTheirs = d.messages.findLast((m) => m.from !== me!.id && !m.deleted);
   const lastMine = d.messages.findLast((m) => m.from === me!.id && !m.deleted);
@@ -651,11 +720,15 @@ function Conversation({ id, back }: { id: number; back: string }) {
                 <Bubble
                   m={m}
                   mine={mine}
+                  myId={me!.id}
+                  who={who}
                   open={picked === m.id}
                   onToggle={() => setPicked(picked === m.id ? 0 : m.id)}
                   unsendable={Date.now() / 1000 - m.at < d.unsendFor}
                   onUnsend={() => unsend(m)}
                   onReport={() => setReporting(m.id)}
+                  canReact={canReact}
+                  onReact={(e) => react(m, e)}
                 />
                 {lastMine?.id === m.id && t.status === "active" && t.seen >= m.id && (
                   <div className="dm-meta muted small">Seen</div>
@@ -767,6 +840,16 @@ function GroupConversation({ id }: { id: number }) {
       .then(() => applyDmEvent({ t: "dm-group-deleted", groupId: id, id: m.id }))
       .catch(() => {});
 
+  const react = (m: Msg, emoji: string) =>
+    api<DmReacted>(`/dm/group/message/${m.id}/react`, { body: { emoji } })
+      .then((r) => applyDmEvent({ t: "dm-group-react", groupId: id, id: m.id, reactions: r.reactions }))
+      .catch(() => {});
+
+  const who = (uid: number) => {
+    if (uid === myId) return "You";
+    return g.members.find((u) => u.id === uid)?.username ?? "Someone who left";
+  };
+
   return (
     <>
       <header className="dm-head">
@@ -823,11 +906,15 @@ function GroupConversation({ id }: { id: number }) {
                   <Bubble
                     m={m}
                     mine={mine}
+                    myId={myId}
+                    who={who}
                     open={picked === m.id}
                     onToggle={() => setPicked(picked === m.id ? 0 : m.id)}
                     unsendable={Date.now() / 1000 - m.at < d.unsendFor}
                     onUnsend={() => unsend(m)}
                     onReport={() => setReporting(m.id)}
+                    canReact={d.can}
+                    onReact={(e) => react(m, e)}
                   />
                 </li>
               );

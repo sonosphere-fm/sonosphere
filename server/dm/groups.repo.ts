@@ -208,6 +208,15 @@ export async function markRead(groupId: number, userId: number, messageId: numbe
   await db.update(dmGroupMembers).set({ readId: messageId }).where(membership(groupId, userId));
 }
 
+export const findMessage = (id: number) =>
+  first(
+    db
+      .select()
+      .from(dmGroupMessages)
+      .where(and(eq(dmGroupMessages.id, id), isNull(dmGroupMessages.event)))
+      .limit(1)
+  );
+
 export const ownMessage = (id: number, senderId: number) =>
   first(
     db
