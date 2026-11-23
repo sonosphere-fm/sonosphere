@@ -6,7 +6,7 @@ import { date, num, qs, tagUrl, useApi, useParam, userUrl } from "../../lib";
 import { Async, Empty, Section, Stat } from "../../ui/base";
 import { BarChart } from "../../ui/charts";
 import { Grid, RankList, TrackList } from "../../ui/lists";
-import type { Report as ListeningReport } from "../../../shared/listening";
+import { type Report as ListeningReport, type ReportType, reportStart } from "../../../shared/listening";
 
 const hh = (hour: number) => String(hour).padStart(2, "0");
 const most = <T extends { count: number }>(xs: T[]) => [...xs].sort((a, b) => b.count - a.count)[0];
@@ -21,22 +21,13 @@ function Delta({ now, before }: { now: number; before: number }) {
   );
 }
 
-function reportTitle(r: ListeningReport, type: "week" | "year") {
+function reportTitle(r: ListeningReport, type: ReportType) {
   if (type === "week") return `${date(r.start, { day: "numeric", month: "short" })} – ${date(r.end - 1)}`;
+  if (type === "month") return date(r.start, { month: "long", year: "numeric" });
   return String(new Date(r.start * 1000 + 86400000).getFullYear());
 }
 
-function ReportBody({
-  r,
-  name,
-  type,
-  offset,
-}: {
-  r: ListeningReport;
-  name: string;
-  type: "week" | "year";
-  offset: number;
-}) {
+function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: string; type: ReportType; offset: number }) {
   const title = reportTitle(r, type);
   if (!r.totals.playcount) {
     return (
@@ -50,6 +41,10 @@ function ReportBody({
   const mins = Math.round((r.listeningSeconds % 3600) / 60);
   const days = Math.max(1, Math.round((Math.min(r.end, Date.now() / 1000) - r.start) / 86400));
   const busiest = most(r.buckets);
+  const busiestName =
+    type === "month"
+      ? date(Date.parse(busiest.key) / 1000, { day: "numeric", month: "long", timeZone: "UTC" })
+      : busiest.label;
   const peak = most(r.clock);
   const byBucket = r.buckets.map((b) => ({ label: b.label, value: b.count, tip: b.key }));
   const byHour = r.clock.map((c) => ({ label: hh(c.hour), value: c.count, tip: `${hh(c.hour)}:00–${hh(c.hour)}:59` }));
@@ -91,10 +86,10 @@ function ReportBody({
         />
       </div>
       <div className="cols even">
-        <Section title={type === "week" ? "Scrobbles by day" : "Scrobbles by month"}>
-          <BarChart data={byBucket} />
+        <Section title={type === "year" ? "Scrobbles by month" : "Scrobbles by day"}>
+          <BarChart data={byBucket} every={type === "month" ? 5 : 1} />
           <p className="muted small">
-            Busiest: {busiest.label} with {num(busiest.count)} scrobbles
+            Busiest: {busiestName} with {num(busiest.count)} scrobbles
           </p>
         </Section>
         <Section title="Listening clock">
@@ -142,8 +137,8 @@ function ReportBody({
   );
 }
 
-export function Report({ name, type }: { name: string; type: "week" | "year" }) {
-  const [offsetStr, setOffset] = useParam("offset", type === "week" ? "1" : "0");
+export function Report({ name, type }: { name: string; type: ReportType }) {
+  const [offsetStr, setOffset] = useParam("offset", String(reportStart(type)));
   const offset = Number(offsetStr);
   const q = useApi<ListeningReport>(`/user/report${qs({ name, type, offset, tz: -new Date().getTimezoneOffset() })}`);
   const base = `${userUrl(name)}/listening-report`;
@@ -153,6 +148,9 @@ export function Report({ name, type }: { name: string; type: "week" | "year" }) 
         <nav className="tabs sub">
           <Link className={type === "week" ? "active" : ""} to={`${base}/week`}>
             Weekly
+          </Link>
+          <Link className={type === "month" ? "active" : ""} to={`${base}/month`}>
+            Monthly
           </Link>
           <Link className={type === "year" ? "active" : ""} to={`${base}/year`}>
             Yearly

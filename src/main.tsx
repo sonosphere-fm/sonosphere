@@ -47,6 +47,7 @@ import {
   type Me,
 } from "./lib";
 import type { MeResponse } from "../shared/auth";
+import { reportStart, reportType } from "../shared/listening";
 import { applyDmEvent } from "./dm";
 import { PlayerProvider } from "./player";
 import { Art, Empty, Logo } from "./ui/base";
@@ -416,8 +417,8 @@ function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
       return [`/user/top${qs({ ...params, kind: p[3] })}`];
     }
     case "listening-report": {
-      const type = p[3] === "year" ? "year" : "week";
-      const offset = Number(sp.get("offset") || (type === "week" ? "1" : "0"));
+      const type = reportType(p[3]);
+      const offset = Number(sp.get("offset") || reportStart(type));
       return [`/user/report${qs({ name, type, offset, tz: -new Date().getTimezoneOffset() })}`];
     }
     case "loved":
