@@ -5,6 +5,7 @@ import { api } from "./api";
 import { appRoutes } from "./app";
 import { handleListenBrainz } from "./listenbrainz/routes";
 import { handleCompat } from "./compat/routes";
+import { sentryTunnel } from "./sentry-tunnel";
 import { dropStaleTokens } from "./compat/repo";
 import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
 import { sendDigests } from "./notifications/email";
@@ -72,6 +73,7 @@ const server = Bun.serve<SocketData>({
     "/api/user/nowplaying": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
     "/api/user/nowplaying/stream": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
     "/api/user/nowplaying/ws": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
+    "/api/diag": sentryTunnel,
     "/api/*": api.handle,
     "/discord": () =>
       new Response(null, { status: 302, headers: { Location: DISCORD_INVITE, "Cache-Control": "no-store" } }),
