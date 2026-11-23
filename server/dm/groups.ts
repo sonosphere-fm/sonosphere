@@ -6,6 +6,7 @@ import { mailMessage } from "../notifications/email";
 import { announceRemoved, canPost, DM, dmCounts, dmLimits, gate, tidy } from "./service";
 import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./groups.repo";
+import { checkReaction, reactionsOf, toggle } from "./reactions";
 import { atomically, connection, sentSinceTx } from "./repo";
 import type { Group, GroupMessage, Member } from "./groups.repo";
 import type {
@@ -15,6 +16,8 @@ import type {
   DmGroupMessage,
   DmGroupPage,
   DmGroupSent,
+  DmReacted,
+  DmReaction,
   DmUnsent,
   DmUser,
 } from "../../shared/dm";
@@ -74,7 +77,7 @@ async function addable(me: User, target: DmUser, others: number[]): Promise<bool
   }
 }
 
-const messageShape = (m: GroupMessage): DmGroupMessage => ({
+const messageShape = (m: GroupMessage, reactions: DmReaction[] = []): DmGroupMessage => ({
   id: m.id,
   from: m.senderId,
   name: m.name,
@@ -82,6 +85,7 @@ const messageShape = (m: GroupMessage): DmGroupMessage => ({
   event: m.event,
   at: m.createdAt,
   deleted: !!m.deletedAt,
+  reactions: m.deletedAt ? [] : reactions,
 });
 
 async function shape(group: Group, member: Member, userId: number): Promise<DmGroup> {
@@ -164,13 +168,18 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
 
 export async function page(me: User, groupId: unknown, before: number): Promise<DmGroupPage> {
   const { group, member } = await mine(groupId, me.id);
-  const rows = await repo.messagesBetween(group.id, member.clearedId, before, 51);
+  const rows = (await repo.messagesBetween(group.id, member.clearedId, before, 51)).reverse();
+  const shown = rows.slice(-50);
+  const reactions = await reactionsOf(
+    "group",
+    shown.map((m) => m.id)
+  );
   let why = "";
   if (me.suspended) why = "Your account is suspended from posting.";
   else if (me.dmMuted) why = "Messaging has been turned off for your account.";
   return {
     group: await shape(group, member, me.id),
-    messages: rows.slice(0, 50).reverse().map(messageShape),
+    messages: shown.map((m) => messageShape(m, reactions.get(m.id))),
     more: rows.length > 50,
     can: !why,
     why,
@@ -296,6 +305,19 @@ export async function unsend(me: User, messageId: unknown): Promise<DmUnsent> {
   if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "Messages can only be unsent for 15 minutes");
   await announceRemoved([await repo.softDeleteTx(connection, m.id, me.id, now())]);
   return { ok: true };
+}
+
+export async function react(me: User, messageId: unknown, emoji: unknown): Promise<DmReacted> {
+  const m = (await repo.findMessage(Number(messageId) || 0)) ?? fail(404, "Message not found");
+  const { member } = await mine(m.groupId, me.id);
+  if (m.id <= member.clearedId) fail(404, "Message not found");
+  canPost(me);
+  if (m.deletedAt) fail(403, "You can't react to this message");
+  const reactions = await toggle("group", m.id, me.id, await checkReaction(me.id, emoji));
+  for (const uid of await repo.memberIds(m.groupId)) {
+    push(uid, { t: "dm-group-react", groupId: m.groupId, id: m.id, reactions });
+  }
+  return { reactions };
 }
 
 export async function relayGroupTyping(userId: number, groupId: number): Promise<void> {

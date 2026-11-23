@@ -913,6 +913,21 @@ export const dmMessages = pgTable(
   ]
 );
 
+export const dmReactions = pgTable(
+  "dm_reactions",
+  {
+    messageId: integer("message_id")
+      .notNull()
+      .references(() => dmMessages.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emoji: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.messageId, table.userId, table.emoji] })]
+);
+
 export const dmGroups = pgTable("dm_groups", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   title: text().default("").notNull(),
@@ -962,6 +977,21 @@ export const dmGroupMessages = pgTable(
     index("dm_group_messages_group").on(table.groupId, table.id),
     index("dm_group_messages_sender").on(table.senderId, table.createdAt),
   ]
+);
+
+export const dmGroupReactions = pgTable(
+  "dm_group_reactions",
+  {
+    messageId: integer("message_id")
+      .notNull()
+      .references(() => dmGroupMessages.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emoji: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.messageId, table.userId, table.emoji] })]
 );
 
 export const dmFlags = pgTable(

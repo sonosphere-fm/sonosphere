@@ -12,6 +12,7 @@ import type {
   DmGroupPage,
   DmGroupSent,
   DmList,
+  DmReacted,
   DmSent,
   DmThreadPage,
   DmUnsent,
@@ -48,6 +49,7 @@ router.post<DmAccepted>("/api/dm/thread/:id/accept", (c) => dm.accept(need(c), c
 router.post<DmDone>("/api/dm/thread/:id/decline", (c) => dm.decline(need(c), c.params[0]));
 router.delete<DmDone>("/api/dm/thread/:id", (c) => dm.clear(need(c), c.params[0]));
 router.delete<DmUnsent>("/api/dm/message/:id", (c) => dm.unsend(need(c), c.params[0]));
+router.post<DmReacted>("/api/dm/message/:id/react", (c) => dm.react(need(c), c.params[0], c.body.emoji));
 
 router.get<DmGroupCandidates>("/api/dm/group/candidates", (c) => groups.candidates(need(c), c.q.get("group")));
 router.post<DmGroupSent>("/api/dm/group", (c) => groups.create(confirmed(need(c)), c.body.title, c.body.users));
@@ -64,6 +66,7 @@ router.delete<DmGroupSent>("/api/dm/group/:id/members/:user", (c) =>
 router.post<DmGroupSent>("/api/dm/group/:id/owner", (c) => groups.makeOwner(need(c), c.params[0], c.body.user));
 router.post<DmDone>("/api/dm/group/:id/leave", (c) => groups.leave(need(c), c.params[0]));
 router.delete<DmUnsent>("/api/dm/group/message/:id", (c) => groups.unsend(need(c), c.params[0]));
+router.post<DmReacted>("/api/dm/group/message/:id/react", (c) => groups.react(need(c), c.params[0], c.body.emoji));
 
 export function startDm(): void {
   onClientMessage((userId, msg) => {

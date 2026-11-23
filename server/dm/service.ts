@@ -7,6 +7,7 @@ import { now } from "../util";
 import { mailMessage } from "../notifications/email";
 import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./repo";
+import { checkReaction, reactionsOf, toggle } from "./reactions";
 import { softDeleteTx as softDeleteGroupTx, unreadGroups, memberIds, type GroupRemoved } from "./groups.repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
 import type {
@@ -17,6 +18,8 @@ import type {
   DmList,
   DmMessage,
   DmPolicy,
+  DmReacted,
+  DmReaction,
   DmSent,
   DmThread,
   DmThreadPage,
@@ -141,12 +144,13 @@ async function throttle(tx: Tx, from: User, body: string, startsThread: boolean,
   }
 }
 
-const messageShape = (m: Message): DmMessage => ({
+const messageShape = (m: Message, reactions: DmReaction[] = []): DmMessage => ({
   id: m.id,
   from: m.senderId,
   body: m.deletedAt ? "" : m.body,
   at: m.createdAt,
   deleted: !!m.deletedAt,
+  reactions: m.deletedAt ? [] : reactions,
 });
 
 // Null when the other account is gone.
@@ -298,11 +302,16 @@ export async function withUser(me: User, to: User): Promise<DmWith> {
 export async function page(me: User, threadId: unknown, before: number): Promise<DmThreadPage> {
   const t = await myThread(threadId, me.id);
   const cleared = side(t, me.id) === "lo" ? t.loCleared : t.hiCleared;
-  const rows = await repo.messagesBetween(t.id, cleared, before, 51);
+  const rows = (await repo.messagesBetween(t.id, cleared, before, 51)).reverse();
+  const shown = rows.slice(-50);
+  const reactions = await reactionsOf(
+    "dm",
+    shown.map((m) => m.id)
+  );
   const { can, why, blocked } = await allowed(me, await findById(otherId(t, me.id)));
   return {
     thread: await threadShape(t, me.id),
-    messages: rows.slice(0, 50).reverse().map(messageShape),
+    messages: shown.map((m) => messageShape(m, reactions.get(m.id))),
     more: rows.length > 50,
     can,
     why,
@@ -360,6 +369,20 @@ export async function unsend(me: User, messageId: unknown): Promise<DmUnsent> {
   if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "Messages can only be unsent for 15 minutes");
   await removeMessage(m.id, me.id);
   return { ok: true };
+}
+
+// Reactions are only for accepted conversations, so reacting can't reveal that a request was seen.
+export async function react(me: User, messageId: unknown, emoji: unknown): Promise<DmReacted> {
+  const m = (await repo.findMessage(Number(messageId) || 0)) ?? fail(404, "Message not found");
+  const t = await myThread(m.threadId, me.id);
+  const cleared = side(t, me.id) === "lo" ? t.loCleared : t.hiCleared;
+  if (m.id <= cleared) fail(404, "Message not found");
+  canPost(me);
+  const closed = t.status !== "active" || m.deletedAt || (await blockedEither(t.userLo, t.userHi));
+  if (closed) fail(403, "You can't react to this message");
+  const reactions = await toggle("dm", m.id, me.id, await checkReaction(me.id, emoji));
+  for (const uid of [t.userLo, t.userHi]) emit(uid, { t: "dm-react", threadId: t.id, id: m.id, reactions });
+  return { reactions };
 }
 
 // Typing indicators are only relayed inside an accepted conversation.
