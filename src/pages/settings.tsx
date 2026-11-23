@@ -708,7 +708,7 @@ function AccountSettings() {
       const u = (await api<ProfileSaved>("/me", { method: "PATCH", body: { email } })).user;
       setMe(u);
       setEmail(u.email);
-      return `We sent a link to ${u.pendingEmail ?? email}. Your email changes once you follow it.`;
+      return `Approve the change from your current inbox first. We will then send a verification link to ${u.pendingEmail ?? email}.`;
     });
   };
 

@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "../db/client";
 import { sessions, users } from "../db/schema";
-import { digest } from "../util";
+import { digest, now } from "../util";
 import { isAdmin, isStaff } from "../site/roles";
 import { findById, type User } from "../users/repo";
 
@@ -15,13 +15,15 @@ export async function sessionUser(token: string) {
     .select({ user: users })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.token, digest(token)), eq(users.banned, false)))
+    .where(
+      and(eq(sessions.token, digest(token)), eq(users.banned, false), gt(sessions.createdAt, now() - SESSION_LIFE))
+    )
     .limit(1);
   return row?.user ?? null;
 }
 
-const YEAR = 60 * 60 * 24 * 365;
-export const sessionCookie = (token: string, maxAge = YEAR) =>
+export const SESSION_LIFE = 60 * 60 * 24 * 365;
+export const sessionCookie = (token: string, maxAge = SESSION_LIFE) =>
   `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
 export const actAsCookie = (id: number) => `act_as=${id}; Path=/; HttpOnly; SameSite=Lax`;
 export const clearActAsCookie = () => "act_as=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";

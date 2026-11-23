@@ -1,6 +1,8 @@
-import { and, eq, inArray, type SQL } from "drizzle-orm";
+import { and, eq, inArray, ne, type SQL } from "drizzle-orm";
 import { db } from "../db/client";
-import { journals, modNotes, shouts, users } from "../db/schema";
+import { emailTokens, journals, modNotes, sessions, shouts, users } from "../db/schema";
+import { digest } from "../util";
+import { bad } from "../http";
 import { handOffGroupsTx } from "../dm/groups.repo";
 
 type ProfileFields = Partial<
@@ -29,8 +31,19 @@ type ProfileFields = Partial<
 export async function updateProfile(userId: number, fields: ProfileFields): Promise<void> {
   await db.update(users).set(fields).where(eq(users.id, userId));
 }
-export async function setPasswordHash(userId: number, passwordHash: string): Promise<void> {
-  await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+export async function setPasswordHash(
+  userId: number,
+  passwordHash: string,
+  expectedHash: string,
+  keepToken: string
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update");
+    if (!user || user.passwordHash !== expectedHash) bad("Your credentials changed. Refresh and try again.");
+    await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
+    await tx.delete(emailTokens).where(eq(emailTokens.userId, userId));
+    await tx.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, digest(keepToken))));
+  });
 }
 // Personal data goes by cascade; catalogue contributions stay. `onlyIf` is an extra condition the row must still meet.
 export async function deleteAccount(userId: number, onlyIf?: SQL): Promise<boolean> {
