@@ -48,14 +48,12 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   const profileAccentEnd = b.profileAccentEnd === undefined ? u.profileAccentEnd : b.profileAccentEnd;
   if (!isUsernameFont(usernameFont)) return bad("Choose a username font from the list");
   const colors = profileColors(profileAccent, profileAccentEnd);
-  const website = clean(b.website ?? u.website, 200);
   const links =
     b.links === undefined
       ? u.profileLinks
       : JSON.stringify(
           profileLinks(b.links) ?? bad("Add up to 8 valid http or https links, with labels up to 60 characters")
         );
-  if (website && !/^https?:\/\//i.test(website)) bad("Website must start with http:// or https://");
   // a new address only takes over once a link sent to it is followed
   if (b.email !== undefined) {
     const email = clean(b.email, 200).toLowerCase();
@@ -84,7 +82,6 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     pronouns !== u.pronouns ||
     about !== u.about ||
     country !== u.country ||
-    website !== u.website ||
     links !== u.profileLinks ||
     usernameFont !== u.usernameFont ||
     profileAccent !== u.profileAccent ||
@@ -116,7 +113,6 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     pronouns,
     about,
     country,
-    website,
     profileLinks: links,
     hideRecent: !!(b.hideRecent ?? u.hideRecent),
     privateListening: !!(b.privateListening ?? u.privateListening),

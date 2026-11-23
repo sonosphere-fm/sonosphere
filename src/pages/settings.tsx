@@ -114,14 +114,13 @@ function ProfileSettings() {
     realname: me!.realname,
     pronouns: me!.pronouns,
     country: me!.country,
-    website: me!.website,
     about: me!.about,
     links: me!.links ?? [],
     usernameFont: me!.usernameFont ?? "default",
     profileAccent: me!.profileAccent ?? null,
     profileAccentEnd: me!.profileAccentEnd ?? null,
   });
-  const set = (k: "realname" | "pronouns" | "website") => (e: ChangeEvent<HTMLInputElement>) =>
+  const set = (k: "realname" | "pronouns") => (e: ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.value });
 
   const upload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -209,10 +208,6 @@ function ProfileSettings() {
                 eventCounts={false}
               />
             </Suspense>
-          </label>
-          <label>
-            Website
-            <Input type="url" value={f.website} onChange={set("website")} placeholder="https://" maxLength={200} />
           </label>
           <div className="field-block">
             <div className="flex items-center justify-between gap-3 mb-2">

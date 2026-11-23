@@ -10,7 +10,6 @@ export type ProfileEdit = {
   pronouns?: string;
   about?: string;
   country?: string;
-  website?: string;
   links?: ProfileLink[];
   email?: string;
   hideRecent?: boolean;

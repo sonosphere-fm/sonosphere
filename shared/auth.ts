@@ -12,7 +12,6 @@ export type Me = UserAppearance & {
   pronouns: string;
   about: string;
   country: string;
-  website: string;
   links: ProfileLink[];
   image: string | null;
   banner: string | null;

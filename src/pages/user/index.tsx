@@ -333,7 +333,7 @@ function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: bool
 }
 
 function About({ u }: { u: Profile }) {
-  if (!u.about && !u.website && !u.links?.length) return null;
+  if (!u.about && !u.links?.length) return null;
   return (
     <Section title="About">
       <div className="profile-about">
@@ -348,13 +348,6 @@ function About({ u }: { u: Profile }) {
               </li>
             ))}
           </ul>
-        )}
-        {u.website && (
-          <p>
-            <a href={u.website} rel="nofollow noopener noreferrer" target="_blank">
-              {u.website.replace(/^https?:\/\//, "")}
-            </a>
-          </p>
         )}
       </div>
     </Section>

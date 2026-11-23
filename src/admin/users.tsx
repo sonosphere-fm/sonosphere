@@ -554,12 +554,6 @@ export function UserDetail() {
                       <dd>
                         {num(d.counts.sessions)} web, {num(d.counts.apiSessions)} app
                       </dd>
-                      {u.website && (
-                        <>
-                          <dt>Website</dt>
-                          <dd className="wrap-anywhere">{u.website}</dd>
-                        </>
-                      )}
                       <dt>Social</dt>
                       <dd>
                         {num(d.counts.followers)} followers, {num(d.counts.following)} following

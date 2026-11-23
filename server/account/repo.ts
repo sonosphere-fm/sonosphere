@@ -10,7 +10,6 @@ type ProfileFields = Partial<
     | "pronouns"
     | "about"
     | "country"
-    | "website"
     | "profileLinks"
     | "hideRecent"
     | "privateListening"

@@ -43,7 +43,6 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
     banner: u.bannerId,
     about: u.about,
     pronouns: u.pronouns,
-    website: u.website,
     links: storedProfileLinks(u.profileLinks),
     registeredAt: u.registeredAt,
     hidden: !visible,
