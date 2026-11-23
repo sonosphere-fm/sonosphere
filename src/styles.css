@@ -5709,10 +5709,16 @@
     vertical-align: middle;
     margin-inline-start: 6px;
   }
-  .hero h1 .user-labels {
+  /* labels sit beside the name and drop below it only when there's no room */
+  .hero-name {
     display: flex;
-    margin: 8px 0 0;
-    letter-spacing: normal;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+  }
+  .hero-name .user-labels {
+    margin: 0;
+    gap: 6px;
   }
   .user-label-editor-title {
     margin-top: 22px;
