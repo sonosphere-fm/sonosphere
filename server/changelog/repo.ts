@@ -18,6 +18,19 @@ export const postCount = async () => (await db.select({ n: count() }).from(chang
 export const findPost = (id: number): Promise<ChangelogPost | null> =>
   first(db.select().from(changelogPosts).where(eq(changelogPosts.id, id)).limit(1));
 
+export async function deletePost(actor: { id: number; username: string }, post: ChangelogPost, note: string) {
+  await transact(async (tx) => {
+    await tx.delete(changelogPosts).where(eq(changelogPosts.id, post.id));
+    await auditTx(tx, actor, {
+      action: "changelog.delete",
+      targetType: "changelog",
+      targetId: post.id,
+      label: post.title,
+      note,
+    });
+  });
+}
+
 export async function savePost(actor: { id: number; username: string }, text: ChangelogText, id?: number) {
   return transact(async (tx) => {
     const at = now();

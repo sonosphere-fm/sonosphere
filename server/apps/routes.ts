@@ -99,6 +99,7 @@ router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
 router.post<ListenToken>("/api/apps/listen-token", async (c) => {
   const u = confirmed(need(c));
   await throttle(`listen-token:${u.id}`, 10, 86_400, "You can create up to 10 tokens a day.");
+  await checkTurnstile(c.body.turnstile, ipOf(c.req), "listentoken");
   const token = crypto.randomUUID();
   await createSession(token, (await repo.appIdByKey("listenbrainz"))!, u.id);
   return { token };

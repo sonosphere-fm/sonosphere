@@ -43,7 +43,7 @@ import type {
   SpotifyStatus,
   SpotifySynced,
 } from "../../shared/spotify";
-import { Ico } from "../icons";
+import { Arrow, Ico } from "../icons";
 import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
 import { ImageCropper } from "../ui/image-cropper";
@@ -1084,11 +1084,17 @@ function AppSettings() {
   const c = useConfirm();
   const robot = useTurnstile("apiapp");
   const tokenAct = useAction();
+  const tokenRobot = useTurnstile("listentoken");
   const [token, setToken] = useState("");
 
   const newToken = () =>
     tokenAct.run(async () => {
-      setToken((await api<ListenToken>("/apps/listen-token", { body: {} })).token);
+      if (tokenRobot.on && !tokenRobot.token) throw new Error("Complete the check that you are not a robot");
+      try {
+        setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile: tokenRobot.token } })).token);
+      } finally {
+        tokenRobot.reset();
+      }
       q.reload();
     });
 
@@ -1127,35 +1133,47 @@ function AppSettings() {
         </div>
       </Section>
       <Section title="Connected applications">
-        <p>
-          To connect Pano Scrobbler, choose its custom Last.fm-compatible server and enter{" "}
-          <code>{window.location.origin}/2.0/</code>, your Sonosphere username and password. No API account is needed.{" "}
-          <Link to="/help#pano-scrobbler">Setup details</Link>.
-        </p>
-        <p>
-          Players that support ListenBrainz can scrobble here too: set the server URL to{" "}
-          <code>{window.location.origin}</code> and paste a token. <Link to="/help#listenbrainz">Setup details</Link>.
-        </p>
-        {token ? (
+        <div className="connect-card">
           <p>
-            Your token, shown only this once: <code>{token}</code>
+            Pano Scrobbler and other players with a custom Last.fm or ListenBrainz server option can scrobble here. No
+            API account is needed.
           </p>
-        ) : (
-          <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
-            Create ListenBrainz token
-          </Button>
-        )}
-        {tokenAct.note}
+          <div className="connect-method">
+            <CopyField label="Last.fm-compatible server URL" value={`${window.location.origin}/2.0/`} />
+            <span className="muted small">Sign in with your Sonosphere username and password.</span>
+          </div>
+          <div className="connect-method">
+            <CopyField label="ListenBrainz server URL" value={window.location.origin} />
+            <span className="muted small">Paste a token instead of a password.</span>
+          </div>
+          {token ? (
+            <div className="token-reveal">
+              <CopyField label="Your token" value={token} />
+              <p>Copy it now: it's shown only this once.</p>
+            </div>
+          ) : (
+            <>
+              {tokenRobot.view}
+              <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
+                Create ListenBrainz token
+              </Button>
+            </>
+          )}
+          {tokenAct.note}
+          <Link className="connect-more" to="/help#pano-scrobbler">
+            Setup details <Arrow />
+          </Link>
+        </div>
         <Async q={q}>
           {(d) =>
             d.sessions.length ? (
-              <ul className="plain">
+              <ul className="plain connected-apps">
                 {d.sessions.map((s) => (
-                  <li key={s.key} className="row between">
-                    <span>
-                      <b>{s.app}</b>{" "}
+                  <li key={s.key}>
+                    <span className="grow">
+                      <b>{s.app}</b>
                       <span className="muted small">
-                        connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}
+                        Connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}
                       </span>
                     </span>
                     <Button kind="btn ghost small" onClick={() => revoke(s.key)}>
@@ -1210,7 +1228,8 @@ function AppSettings() {
             )
           }
         </Async>
-        <form className="form" onSubmit={create}>
+        <form className="form connect-card new-app" onSubmit={create}>
+          <h3>New API account</h3>
           <label>
             Application name
             <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required maxLength={60} />
@@ -1243,6 +1262,27 @@ function AppSettings() {
         </form>
       </Section>
     </>
+  );
+}
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () =>
+    copyText(value).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  return (
+    <div className="copy-field">
+      <span className="copy-label">{label}</span>
+      <span className="copy-value">
+        <span onClick={selectContents}>{value}</span>
+        <Button kind="btn ghost small" type="button" onClick={copy}>
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </span>
+    </div>
   );
 }
 
