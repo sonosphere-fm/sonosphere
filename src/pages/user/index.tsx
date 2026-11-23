@@ -339,7 +339,7 @@ function About({ u }: { u: Profile }) {
       <div className="profile-about">
         <Markdown text={u.about} images />
         {!!u.links?.length && (
-          <ul className="list-none m-0 p-0 grid gap-2 [overflow-wrap:anywhere]">
+          <ul className="list-none m-0 p-0 grid [overflow-wrap:anywhere]">
             {u.links.map((link, i) => (
               <li key={i}>
                 <a href={link.url} rel="nofollow noopener noreferrer" target="_blank">
