@@ -3,14 +3,14 @@ import { confirmed, need } from "../guards";
 import { bad, fail, missing, oneOf, paging, Router } from "../http";
 import { range } from "../listening/period";
 import * as listening from "../listening/repo";
-import { report } from "../listening/service";
+import { report, stats } from "../listening/service";
 import { notify } from "../notifications/repo";
 import { neighbours } from "../recommend/service";
 import { isStaff } from "../site/roles";
 import { artistLibrary, people, profile } from "./profile";
 import * as repo from "./repo";
 import { canSee, canSeeCharts, requireUser } from "./service";
-import { type Report, reportType } from "../../shared/listening";
+import { type ListeningStats, type Report, reportType } from "../../shared/listening";
 import type {
   FollowResult,
   Neighbours,
@@ -97,6 +97,13 @@ router.get<Report>("/api/user/report", async (c) => {
   const offset = Math.max(0, Math.min(520, Number(c.q.get("offset")) || 0));
   const tz = Number(c.q.get("tz")) || 0;
   return report(u.id, type, offset, tz, c.user?.id);
+});
+
+router.get<ListeningStats>("/api/user/stats", async (c) => {
+  const u = await requireUser(c.q.get("name"));
+  if (!canSee(u, c.user)) return fail(403, PRIVATE);
+  const offset = Math.max(0, Math.min(100, Number(c.q.get("offset")) || 0));
+  return stats(u.id, offset, Number(c.q.get("tz")) || 0, c.user?.id);
 });
 
 router.get<UserTags>("/api/user/tags", async (c) => {

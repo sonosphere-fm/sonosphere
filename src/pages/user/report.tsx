@@ -6,7 +6,13 @@ import { date, num, qs, tagUrl, useApi, useParam, userUrl } from "../../lib";
 import { Async, Empty, Section, Stat } from "../../ui/base";
 import { BarChart } from "../../ui/charts";
 import { Grid, RankList, TrackList } from "../../ui/lists";
-import { type Report as ListeningReport, type ReportType, reportStart } from "../../../shared/listening";
+import {
+  type ListeningStats,
+  type Report as ListeningReport,
+  type ReportType,
+  reportStart,
+} from "../../../shared/listening";
+import { StatsBody } from "./stats";
 
 const hh = (hour: number) => String(hour).padStart(2, "0");
 const most = <T extends { count: number }>(xs: T[]) => [...xs].sort((a, b) => b.count - a.count)[0];
@@ -137,10 +143,19 @@ function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: strin
   );
 }
 
-export function Report({ name, type }: { name: string; type: ReportType }) {
-  const [offsetStr, setOffset] = useParam("offset", String(reportStart(type)));
-  const offset = Number(offsetStr);
+function Period({ name, type, offset }: { name: string; type: ReportType; offset: number }) {
   const q = useApi<ListeningReport>(`/user/report${qs({ name, type, offset, tz: -new Date().getTimezoneOffset() })}`);
+  return <Async q={q}>{(r) => <ReportBody r={r} name={name} type={type} offset={offset} />}</Async>;
+}
+
+function Stats({ name, offset }: { name: string; offset: number }) {
+  const q = useApi<ListeningStats>(`/user/stats${qs({ name, offset, tz: -new Date().getTimezoneOffset() })}`);
+  return <Async q={q}>{(s) => <StatsBody s={s} name={name} />}</Async>;
+}
+
+export function Report({ name, type }: { name: string; type: ReportType | "stats" }) {
+  const [offsetStr, setOffset] = useParam("offset", String(type === "stats" ? 0 : reportStart(type)));
+  const offset = Number(offsetStr);
   const base = `${userUrl(name)}/listening-report`;
   return (
     <>
@@ -155,6 +170,9 @@ export function Report({ name, type }: { name: string; type: ReportType }) {
           <Link className={type === "year" ? "active" : ""} to={`${base}/year`}>
             Yearly
           </Link>
+          <Link className={type === "stats" ? "active" : ""} to={`${base}/stats`}>
+            Stats
+          </Link>
         </nav>
         <span className="row">
           <Button kind="btn ghost small" onClick={() => setOffset(String(offset + 1))}>
@@ -165,7 +183,7 @@ export function Report({ name, type }: { name: string; type: ReportType }) {
           </Button>
         </span>
       </div>
-      <Async q={q}>{(r) => <ReportBody r={r} name={name} type={type} offset={offset} />}</Async>
+      {type === "stats" ? <Stats name={name} offset={offset} /> : <Period name={name} type={type} offset={offset} />}
     </>
   );
 }

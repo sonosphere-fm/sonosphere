@@ -6,7 +6,15 @@ import * as Sentry from "@sentry/bun";
 import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import { listeningChanged } from "../realtime";
-import type { EditScope, Report, ReportType, ScrobbleResult } from "../../shared/listening";
+import {
+  daysBetween,
+  type EditScope,
+  type ListeningStats,
+  type Report,
+  type ReportType,
+  type ScrobbleResult,
+  streaks,
+} from "../../shared/listening";
 
 /** Nothing about it has been checked yet. */
 export type ScrobbleInput = {
@@ -170,6 +178,39 @@ export async function report(
     topTracks: (await repo.topTracks(cur, 10)).items,
     newArtists: { count: fresh.length, items: fresh.slice(0, 6) },
     tags: await repo.playedTags(userId, start, end),
+  };
+}
+
+/** Daily scrobbles for one calendar year plus all-time streaks, in the listener's time zone. */
+export async function stats(userId: number, offset: number, tzMin: number, viewerId = 0): Promise<ListeningStats> {
+  const tz = Math.round(tzMin) * 60;
+  const localNow = new Date((now() + tz) * 1000);
+  const today = localNow.toISOString().slice(0, 10);
+  const year = localNow.getUTCFullYear() - offset;
+  const all = (await repo.series({ userId, viewerId }, "day", tzMin)).map((r) => ({
+    date: String(r.k),
+    count: r.c,
+  }));
+  const { longest, last } = streaks(all.map((d) => d.date));
+  const latest = all.at(-1)?.date;
+  const days = all.filter((d) => d.date.startsWith(`${year}-`));
+  const plays = days.reduce((sum, d) => sum + d.count, 0);
+  const scope: repo.Scope = {
+    userId,
+    viewerId,
+    from: Date.UTC(year, 0, 1) / 1000 - tz,
+    to: Date.UTC(year + 1, 0, 1) / 1000 - tz,
+  };
+  const top = plays ? (await repo.topArtists(scope, 10)).items : [];
+  return {
+    year,
+    firstYear: Number((all[0]?.date ?? today).slice(0, 4)),
+    today,
+    days,
+    activeDays: all.length,
+    longestStreak: longest,
+    currentStreak: latest && daysBetween(latest, today) <= 1 ? last : 0,
+    topShare: plays ? top.reduce((sum, a) => sum + a.playcount, 0) / plays : 0,
   };
 }
 
