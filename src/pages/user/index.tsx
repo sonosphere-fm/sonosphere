@@ -347,7 +347,13 @@ function About({ u }: { u: Profile }) {
           <ul className="list-none m-0 p-0 grid [overflow-wrap:anywhere]">
             {u.links.map((link, i) => (
               <li key={i}>
-                <a href={link.url} rel="nofollow noopener noreferrer" target="_blank">
+                <a
+                  className="inline-flex items-center gap-2"
+                  href={link.url}
+                  rel="nofollow noopener noreferrer"
+                  target="_blank"
+                >
+                  <ProfileLinkIcon icon={link.icon} />
                   {link.label || link.url.replace(/^https?:\/\//, "")}
                 </a>
               </li>
@@ -511,3 +517,4 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
     </div>
   );
 }
+import { ProfileLinkIcon } from "../../ui/profile-link-icon";
