@@ -1079,10 +1079,8 @@ const EMPTY_APP = { name: "", description: "", callbackUrl: "" };
 
 function AppSettings() {
   const q = useApi<Apps>("/apps");
-  const [f, setF] = useState(EMPTY_APP);
-  const act = useAction();
   const c = useConfirm();
-  const robot = useTurnstile("apiapp");
+  const [adding, setAdding] = useState(false);
   const tokenAct = useAction();
   const tokenRobot = useTurnstile("listentoken");
   const [token, setToken] = useState("");
@@ -1108,21 +1106,6 @@ function AppSettings() {
       danger: true,
       run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload),
     });
-
-  const create = (e: FormEvent) => {
-    e.preventDefault();
-    act.run(async () => {
-      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
-      try {
-        await api<AppOk>("/apps", { body: { ...f, turnstile: robot.token } });
-      } finally {
-        robot.reset();
-      }
-      setF(EMPTY_APP);
-      q.reload();
-      return "API account created.";
-    });
-  };
 
   return (
     <>
@@ -1190,8 +1173,9 @@ function AppSettings() {
       </Section>
       <Section title="Your API accounts" more="/developers" moreLabel="API docs">
         <Async q={q}>
-          {(d) =>
-            d.items.length ? (
+          {(d) => (
+            <>
+              {!d.items.length && <p className="muted">Create an API account to get a key and shared secret.</p>}
               <ul className="plain api-apps">
                 {d.items.map((a) => (
                   <li key={a.id}>
@@ -1222,46 +1206,72 @@ function AppSettings() {
                     </details>
                   </li>
                 ))}
+                <li>
+                  <details className="api-app" onToggle={(e) => setAdding(e.currentTarget.open)}>
+                    <summary>
+                      <Ico.Chevron />
+                      <b>New API account</b>
+                    </summary>
+                    {adding && <NewApp onCreated={q.reload} />}
+                  </details>
+                </li>
               </ul>
-            ) : (
-              <p className="muted">Create an API account to get a key and shared secret.</p>
-            )
-          }
+            </>
+          )}
         </Async>
-        <form className="form connect-card new-app" onSubmit={create}>
-          <h3>New API account</h3>
-          <label>
-            Application name
-            <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required maxLength={60} />
-          </label>
-          <label>
-            Description (optional)
-            <Input
-              value={f.description}
-              onChange={(e) => setF({ ...f, description: e.target.value })}
-              maxLength={300}
-            />
-          </label>
-          <label>
-            Callback URL (optional)
-            <Input
-              value={f.callbackUrl}
-              onChange={(e) => setF({ ...f, callbackUrl: e.target.value })}
-              maxLength={500}
-              placeholder="https://example.com/callback"
-            />
-          </label>
-          <p className="muted small">
-            For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.
-          </p>
-          {robot.view}
-          {act.note}
-          <Button kind="btn" loading={act.busy}>
-            Create API account
-          </Button>
-        </form>
       </Section>
     </>
+  );
+}
+
+function NewApp({ onCreated }: { onCreated: () => void }) {
+  const [f, setF] = useState(EMPTY_APP);
+  const act = useAction();
+  const robot = useTurnstile("apiapp");
+
+  const create = (e: FormEvent) => {
+    e.preventDefault();
+    act.run(async () => {
+      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      try {
+        await api<AppOk>("/apps", { body: { ...f, turnstile: robot.token } });
+      } finally {
+        robot.reset();
+      }
+      setF(EMPTY_APP);
+      onCreated();
+      return "API account created.";
+    });
+  };
+
+  return (
+    <form className="form new-app" onSubmit={create}>
+      <label>
+        Application name
+        <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required maxLength={60} />
+      </label>
+      <label>
+        Description (optional)
+        <Input value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} maxLength={300} />
+      </label>
+      <label>
+        Callback URL (optional)
+        <Input
+          value={f.callbackUrl}
+          onChange={(e) => setF({ ...f, callbackUrl: e.target.value })}
+          maxLength={500}
+          placeholder="https://example.com/callback"
+        />
+      </label>
+      <p className="muted small">
+        For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.
+      </p>
+      {robot.view}
+      {act.note}
+      <Button kind="btn" loading={act.busy}>
+        Create API account
+      </Button>
+    </form>
   );
 }
 

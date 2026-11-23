@@ -5669,19 +5669,11 @@
     align-items: flex-start;
     gap: 14px;
     padding: 22px 24px;
-    background: var(--panel);
-  }
-  .connect-card {
     margin-bottom: 16px;
-  }
-  .connect-card h3 {
-    margin: 0;
-    font-size: 19px;
+    background: var(--panel);
   }
   .connect-card > p {
     margin: 0;
-  }
-  .connect-card > p:not(.muted) {
     color: var(--ink-2);
   }
   .connect-method {
@@ -5753,8 +5745,8 @@
     gap: 2px;
   }
   .new-app {
-    max-width: none;
     align-items: stretch;
+    padding: 4px 0 20px;
   }
   .new-app > .astryx-button {
     align-self: flex-start;
