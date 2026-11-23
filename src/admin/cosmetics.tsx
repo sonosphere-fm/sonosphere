@@ -1,21 +1,16 @@
-import { useState, type FormEvent } from "react";
-import { Button, Input, Textarea } from "../kit";
+import { useEffect, useState, type FormEvent } from "react";
+import { Button, Input } from "../kit";
 import { api, useApi } from "../lib";
 import { Async, Section, useAction } from "../ui/base";
-import {
-  COSMETIC_SLOTS,
-  type Cosmetic,
-  type CosmeticsState,
-} from "../../shared/cosmetics";
+import { COSMETIC_SLOTS, type CosmeticSlot, type Cosmetic, type CosmeticsState } from "../../shared/cosmetics";
 
-const SLOT_LABELS = [
-  "Accessories",
-  "Frames",
-  "Username effects",
-  "Header backgrounds",
-  "Page effects",
-  "Scrobble effects",
-];
+const SLOT_LABELS: Record<CosmeticSlot, string> = {
+  accessory: "Accessories",
+  frame: "Frames",
+  name_fx: "Username effects",
+  page_fx: "Page effects",
+  scrobble_fx: "Scrobble effects",
+};
 
 type Result = {
   catalog: Cosmetic[];
@@ -25,118 +20,90 @@ type Result = {
 export function CosmeticsAdmin() {
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
-  const [users, setUsers] = useState("");
   const [ids, setIds] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const q = useApi<Result>(`/admin/cosmetics?name=${encodeURIComponent(name)}`);
   const act = useAction();
+  useEffect(() => {
+    if (!q.data) return;
+    setIds(q.data.state?.owned.map((c) => c.id) ?? []);
+  }, [q.data]);
   function searchUser(e: FormEvent) {
     e.preventDefault();
     setName(search.trim());
-    setUsers(search.trim());
   }
-  const apply = (action: string) =>
+  const ownedIds = q.data?.state?.owned.map((c) => c.id) ?? [];
+  const changed = ids.length !== ownedIds.length || ids.some((id) => !ownedIds.includes(id));
+  const apply = () =>
     act.run(async () => {
+      if (!q.data?.user) return;
       await api("/admin/cosmetics", {
         body: {
-          users: users.split(/[\s,]+/).filter(Boolean),
+          username: q.data.user.username,
           ids,
-          action,
+          action: "apply",
           note,
         },
       });
       q.reload();
-      return action === "grant" ? "Cosmetics granted." : "Cosmetics revoked.";
+      return "Cosmetics updated.";
     });
   return (
     <Section title="Cosmetics">
-      <form className="row" onSubmit={searchUser}>
-        <label>
+      <form className="flex flex-wrap items-end gap-2.5" onSubmit={searchUser}>
+        <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold">
           Find user
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input value={search} disabled={act.busy} onChange={(e) => setSearch(e.target.value)} />
         </label>
-        <Button kind="btn" type="submit">
+        <Button kind="btn" type="submit" disabled={act.busy}>
           Search
         </Button>
       </form>
       <Async q={q}>
-        {(d) => (
-          <>
-            {d.user && (
-              <p>
-                {d.user.username} owns:{" "}
-                {d.state?.owned.map((c) => c.name).join(", ") || "none"}.
-              </p>
-            )}
-            <div className="form">
-              <label>
-                Usernames (separate with commas or spaces)
-                <Textarea
-                  value={users}
-                  onChange={(e) => setUsers(e.target.value)}
-                />
-              </label>
-              <div className="w-full min-w-0 grid gap-5">
-                {COSMETIC_SLOTS.map((slot, index) => (
-                  <fieldset key={slot} className="m-0 min-w-0 border-0 p-0">
-                    <legend className="mb-2 p-0 font-semibold text-site-ink">
-                      {SLOT_LABELS[index]}
-                    </legend>
-                    <div className="cos-catalog w-full">
-                      {d.catalog
-                        .filter((c) => c.slot === slot)
-                        .map((c) => (
-                          <Button
-                            key={c.id}
-                            type="button"
-                            kind="btn ghost"
-                            aria-pressed={ids.includes(c.id)}
-                            disabled={act.busy}
-                            onClick={() =>
-                              setIds((v) =>
-                                v.includes(c.id)
-                                  ? v.filter((id) => id !== c.id)
-                                  : [...v, c.id],
-                              )
-                            }
-                          >
-                            {c.name}
-                          </Button>
-                        ))}
-                    </div>
-                  </fieldset>
-                ))}
+        {(d) =>
+          d.user && (
+            <>
+              <div className="form">
+                <div className="w-full min-w-0 grid gap-5">
+                  {COSMETIC_SLOTS.map((slot) => (
+                    <fieldset key={slot} className="m-0 min-w-0 border-0 p-0">
+                      <legend className="mb-2 p-0 font-semibold text-site-ink">{SLOT_LABELS[slot]}</legend>
+                      <div className="cos-catalog w-full">
+                        {d.catalog
+                          .filter((c) => c.slot === slot)
+                          .map((c) => (
+                            <Button
+                              key={c.id}
+                              type="button"
+                              kind={ids.includes(c.id) ? "btn" : "btn ghost"}
+                              aria-pressed={ids.includes(c.id)}
+                              disabled={act.busy}
+                              onClick={() =>
+                                setIds((v) => (v.includes(c.id) ? v.filter((id) => id !== c.id) : [...v, c.id]))
+                              }
+                            >
+                              {ids.includes(c.id) && <span aria-hidden="true">✓ </span>}
+                              {c.name}
+                            </Button>
+                          ))}
+                      </div>
+                    </fieldset>
+                  ))}
+                </div>
+                <label>
+                  Note
+                  <Input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
+                </label>
+                <div className="row">
+                  <Button kind="btn" type="button" disabled={act.busy || !changed} onClick={apply}>
+                    Apply
+                  </Button>
+                </div>
+                {act.note}
               </div>
-              <label>
-                Note
-                <Input
-                  value={note}
-                  maxLength={500}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </label>
-              <div className="row">
-                <Button
-                  kind="btn"
-                  type="button"
-                  disabled={act.busy || !ids.length || !users.trim()}
-                  onClick={() => apply("grant")}
-                >
-                  Grant selected
-                </Button>
-                <Button
-                  kind="btn ghost"
-                  type="button"
-                  disabled={act.busy || !ids.length || !users.trim()}
-                  onClick={() => apply("revoke")}
-                >
-                  Revoke selected
-                </Button>
-              </div>
-              {act.note}
-            </div>
-          </>
-        )}
+            </>
+          )
+        }
       </Async>
     </Section>
   );

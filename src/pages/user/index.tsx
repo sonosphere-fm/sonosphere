@@ -173,18 +173,17 @@ export function UserPage({ tab }: { tab: Tab }) {
             className="profile-theme"
             data-cos-motion={u.showCosmetics !== false ? "on" : "off"}
             data-now-playing={u.nowPlaying ? "on" : "off"}
-            data-header-fx={u.cosmetics?.find((c) => c.slot === "header_bg")?.id}
             data-scrobble-fx={u.cosmetics?.find((c) => c.slot === "scrobble_fx")?.id}
             data-profile-accent={u.profileAccent ? "custom" : undefined}
             style={profileAccentStyle(u)}
           >
             <ProfileShellTheme user={u} name={name} />
-            <ProfileCosmetics user={u} />
+            <ProfileCosmetics user={u} nowPlaying={!!u.nowPlaying} />
             <Hero
               tabs={<Tabs items={profileTabs(u, base, locked)} />}
               banner={u.banner}
               art={
-                <CosmeticAvatar name={u.username} size={180} appearance={u}>
+                <CosmeticAvatar name={u.username} size={180} appearance={u} nowPlaying={!!u.nowPlaying}>
                   <Art image={u.image} kind="user" />
                 </CosmeticAvatar>
               }

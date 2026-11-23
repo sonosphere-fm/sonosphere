@@ -34,15 +34,6 @@ export function LoveButton({
     api<Loved>("/love", { body: { artist: track.artist, track: track.title, loved: next } }).then(
       () => {
         onChange?.(next);
-        if (next) {
-          const el = document.activeElement;
-          if (el instanceof Element && el.closest('[data-scrobble-fx="scrob.heart"]')) {
-            const rect = el.getBoundingClientRect();
-            window.dispatchEvent(
-              new CustomEvent("cosmetic-heart", { detail: { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })
-            );
-          }
-        }
       },
       () => setOn(!next)
     );

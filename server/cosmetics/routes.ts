@@ -78,19 +78,17 @@ router.get("/api/admin/cosmetics", async (c) => {
 });
 router.post("/api/admin/cosmetics", async (c) => {
   const admin = adminOnly(c);
-  const names = Array.isArray(c.body.users) ? c.body.users : [];
+  const username = c.body.username;
+  if (typeof username !== "string" || !username.trim() || username.length > 100) return bad("Choose a user");
   const ids = Array.isArray(c.body.ids) ? c.body.ids : [];
-  if (!names.length || names.length > 50 || !ids.length || ids.length > 38)
-    return bad("Choose up to 50 users and 38 cosmetics");
-  if (!names.every((name) => typeof name === "string" && name.length <= 100)) return bad("Invalid usernames");
+  const action = c.body.action;
+  if (action !== "grant" && action !== "revoke" && action !== "apply") return bad("Choose a cosmetic action");
+  if ((action !== "apply" && !ids.length) || ids.length > COSMETICS.length)
+    return bad(`Choose up to ${COSMETICS.length} cosmetics`);
   if (c.body.note !== undefined && (typeof c.body.note !== "string" || c.body.note.length > 500))
     return bad("Notes must be at most 500 characters");
   if (!ids.every((id) => COSMETICS.some((x) => x.id === id))) return bad("Unknown cosmetic");
-  const action = c.body.action;
-  if (action !== "grant" && action !== "revoke") return bad("Choose grant or revoke");
-  const targets = await Promise.all(
-    [...new Set(names)].map(async (name) => (await findByName(String(name))) ?? missing("User"))
-  );
+  const user = (await findByName(username.trim())) ?? missing("User");
   const note = String(c.body.note ?? "")
     .trim()
     .slice(0, 500);
@@ -99,30 +97,34 @@ router.post("/api/admin/cosmetics", async (c) => {
       .insert(cosmetics)
       .values(COSMETICS.map((x) => ({ ...x, variants: JSON.stringify(x.colors) })))
       .onConflictDoNothing();
-    for (const user of targets.sort((a, b) => a.id - b.id)) {
-      await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for("update");
-      for (const id of [...new Set(ids)] as string[]) {
-        if (action === "grant")
-          await tx
-            .insert(userCosmetics)
-            .values({ userId: user.id, cosmeticId: id, grantedAt: now(), grantedBy: c.actor?.id ?? admin.id, note })
-            .onConflictDoNothing();
-        else {
-          await tx.delete(userEquipped).where(and(eq(userEquipped.userId, user.id), eq(userEquipped.cosmeticId, id)));
-          await tx
-            .delete(userCosmetics)
-            .where(and(eq(userCosmetics.userId, user.id), eq(userCosmetics.cosmeticId, id)));
-        }
-        await auditTx(tx, c.actor ?? admin, {
-          action: `cosmetics.${action}`,
-          targetType: "user",
-          targetId: user.id,
-          subjectId: user.id,
-          label: user.username,
-          note,
-          data: { cosmeticId: id },
-        });
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for("update");
+    const owned = await tx.select().from(userCosmetics).where(eq(userCosmetics.userId, user.id));
+    const ownedIds = new Set(owned.map((item) => item.cosmeticId));
+    const selected = new Set(ids as string[]);
+    const changes =
+      action === "apply"
+        ? COSMETICS.filter((item) => ownedIds.has(item.id) !== selected.has(item.id)).map((item) => item.id)
+        : [...selected];
+    for (const id of changes) {
+      const change = action === "apply" ? (selected.has(id) ? "grant" : "revoke") : action;
+      if (change === "grant")
+        await tx
+          .insert(userCosmetics)
+          .values({ userId: user.id, cosmeticId: id, grantedAt: now(), grantedBy: c.actor?.id ?? admin.id, note })
+          .onConflictDoNothing();
+      else {
+        await tx.delete(userEquipped).where(and(eq(userEquipped.userId, user.id), eq(userEquipped.cosmeticId, id)));
+        await tx.delete(userCosmetics).where(and(eq(userCosmetics.userId, user.id), eq(userCosmetics.cosmeticId, id)));
       }
+      await auditTx(tx, c.actor ?? admin, {
+        action: `cosmetics.${change}`,
+        targetType: "user",
+        targetId: user.id,
+        subjectId: user.id,
+        label: user.username,
+        note,
+        data: { cosmeticId: id },
+      });
     }
   });
   return { ok: true };

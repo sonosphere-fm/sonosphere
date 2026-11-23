@@ -7208,42 +7208,428 @@ html[data-profile-shell="custom"] :focus-visible {
     }
   }
 }
-/* Cosmetics overlays leave the artwork clipped and the decorations unobstructed. */
-.cos-slot-picker {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-  width: 100%;
-}
-.cos-slot-picker > .cos-slot-tabs {
-  margin: 0;
-  padding-bottom: 0;
-}
-.cos-owned-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-.cos-owned-item + .cos-owned-item {
-  margin-top: 10px;
-}
-.avatar:focus-visible .cos-avatar[data-motion="on"] .cos-accessory {
-  animation: cos-wiggle 0.7s ease-in-out;
-}
-.cos-preview .hero-name {
-  padding-top: 8px;
-}
-.cos-preview .hero-name [data-name-fx="bounce"]:hover > span {
-  animation: cos-hop 0.7s ease-in-out;
-}
-[data-name-fx="eq"] {
+/* ---------- Avatar wrapper ---------- */
+.cos-avatar {
   position: relative;
-  text-decoration: none !important;
+  display: inline-block;
+  flex: none;
+  max-width: 100%;
+  vertical-align: middle;
+  isolation: isolate;
+  line-height: 0;
+  --cos-ring: clamp(2px, calc(var(--avatar-size, 40px) * 0.06), 6px);
+}
+.hero-art > .cos-avatar {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1;
+}
+.avatar:has(.cos-avatar) {
+  overflow: visible;
+}
+.cos-media {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.cos-media > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-theme .hero-art:has(.cos-avatar),
+.profile-theme .hero:has(.cos-avatar) {
+  overflow: visible;
+}
+.cos-decoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cos-accessory {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.cos-layer-back {
+  z-index: 0;
+}
+.cos-layer-front {
+  z-index: 2;
+}
+
+/* ---------- Accessories: static; animate on hover / focus ---------- */
+.cos-ear {
+  transform-box: view-box;
+  transform-origin: 28px 18px;
+}
+.cos-acc-ears-dog .cos-ear {
+  transform-origin: 30px 8px;
+}
+.cos-acc-ears-bunny .cos-ear {
+  transform-origin: 26px 22px;
+}
+.cos-halo,
+.cos-cup,
+.cos-glint {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cos-halo {
+  filter: drop-shadow(0 0 2.5px var(--glow, #f2cd5c));
+}
+.cos-phones-neon {
+  filter: drop-shadow(0 0 2px #6af4db);
+}
+.cos-horn-glow {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-cat .cos-ear-l {
+  animation: cos-twitch 0.6s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-dog .cos-ear {
+  animation: cos-bounce 0.7s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-bunny .cos-ear-l {
+  animation: cos-droop 1.1s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-fox .cos-ear {
+  animation: cos-swivel 0.8s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-fox .cos-ear-r {
+  animation-delay: 0.08s;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-wolf .cos-ear {
+  animation: cos-tilt 1.4s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-ears-bear .cos-ear {
+  animation: cos-wiggle 0.5s ease-in-out 2;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-halo .cos-halo {
+  animation: cos-bob 1.4s ease-in-out infinite;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-horns .cos-horn-glow {
+  opacity: 1;
+  animation: cos-ember 1s ease-in-out infinite alternate;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-headphones .cos-cup {
+  animation: cos-pulse 0.5s ease-in-out infinite alternate;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-crown .cos-glint {
+  animation: cos-glint 0.9s ease-in-out;
+}
+
+@keyframes cos-twitch {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -14deg;
+  }
+  40% {
+    rotate: 4deg;
+  }
+  60% {
+    rotate: -8deg;
+  }
+  80% {
+    rotate: 1deg;
+  }
+}
+@keyframes cos-bounce {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: 9deg;
+  }
+  50% {
+    rotate: -3deg;
+  }
+  75% {
+    rotate: 5deg;
+  }
+}
+@keyframes cos-droop {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30%,
+  70% {
+    rotate: -38deg;
+  }
+}
+@keyframes cos-swivel {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  35% {
+    rotate: -9deg;
+  }
+  70% {
+    rotate: 4deg;
+  }
+}
+@keyframes cos-tilt {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  40%,
+  60% {
+    rotate: 7deg;
+  }
+}
+@keyframes cos-wiggle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: 7deg;
+  }
+  75% {
+    rotate: -7deg;
+  }
+}
+@keyframes cos-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+@keyframes cos-ember {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cos-pulse {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.12;
+  }
+}
+@keyframes cos-glint {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 150px 0;
+  }
+}
+
+/* ---------- Frames ---------- */
+.cos-frame {
+  position: absolute;
+  inset: calc(var(--cos-ring) * -1.2);
+  z-index: 2;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.cos-frame-vinyl,
+.cos-frame-pixel,
+.cos-frame-holo {
+  --_hole: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--cos-ring) * 1.2),
+    #000 calc(100% - var(--cos-ring) * 1.2 + 0.5px)
+  );
+  -webkit-mask: var(--_hole);
+  mask: var(--_hole);
+}
+.cos-frame-vinyl {
+  background:
+    conic-gradient(
+      from 20deg,
+      transparent 0 4%,
+      rgba(255, 255, 255, 0.4) 10%,
+      transparent 20% 52%,
+      rgba(255, 255, 255, 0.3) 60%,
+      transparent 70%
+    ),
+    repeating-radial-gradient(circle, #17161b 0 1.2px, #2c2b33 1.2px 2.4px);
+}
+.cos-frame-pixel {
+  background: repeating-conic-gradient(var(--accent, #e9a23b) 0 12deg, #2a2230 12deg 24deg);
+}
+.cos-frame-neon {
+  border: var(--cos-ring) solid var(--accent, #6af4db);
+  box-shadow:
+    0 0 calc(var(--cos-ring) * 2) var(--accent, #6af4db),
+    inset 0 0 calc(var(--cos-ring) * 1.5) var(--accent, #6af4db);
+}
+@property --holo-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.cos-frame-holo {
+  background: conic-gradient(from var(--holo-angle), #ff9ad5, #ffe29a, #9affc8, #9ad6ff, #c79aff, #ff9ad5);
+  transition: --holo-angle 0.25s linear;
+}
+.cos-frame-laurel {
+  inset: -9%;
+}
+.cos-laurel {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.cos-decoration[data-motion="on"] .cos-frame-neon {
+  animation: cos-breathe 3.4s ease-in-out infinite;
+}
+.cos-avatar[data-now-playing="on"] > .cos-decoration[data-motion="on"] .cos-frame-vinyl {
+  animation: cos-spin 3.6s linear infinite;
+}
+.cos-avatar[data-offscreen] .cos-frame,
+:root[data-cos-hidden] .cos-frame {
+  animation-play-state: paused !important;
+}
+@keyframes cos-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+@keyframes cos-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cos-decoration *,
+  .cos-frame {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Username effects ---------- */
+[data-name-fx] {
+  position: relative;
+}
+[data-name-fx="rainbow"],
+[data-name-fx="wave"],
+[data-name-fx="fire"],
+[data-name-fx="frost"],
+[data-name-fx="chrome"] {
+  background: linear-gradient(100deg, var(--ink), var(--accent), var(--ink));
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+[data-name-fx="rainbow"] {
+  background-image: linear-gradient(100deg, #ff416c, #ff922b, #ffe34d, #38e884, #34cfff, #7480ff, #d85cff, #ff416c);
+  filter: drop-shadow(0 0 3px #ff416c4d);
+}
+[data-name-fx="rainbow"][data-name-palette="pastel"] {
+  background-image: linear-gradient(100deg, #f4a9c4, #f5d69b, #afe0c2, #a9d3f5, #cfb5ed, #f4a9c4);
+  filter: drop-shadow(0 0 3px #cfb5ed66);
+}
+[data-name-fx="fire"] {
+  background-image: linear-gradient(100deg, light-dark(#96320f, #ffc47c), light-dark(#b9600d, #ff9475));
+}
+[data-name-fx="frost"] {
+  background-image: linear-gradient(100deg, light-dark(#116273, #b7f1ff), light-dark(#48589e, #cdd0ff));
+}
+[data-name-fx="chrome"] {
+  background-image: linear-gradient(180deg, var(--ink) 0%, var(--muted) 45%, var(--ink) 50%, var(--muted) 90%);
+}
+[data-name-fx="neon"] {
+  text-shadow:
+    0 0 5px var(--link),
+    0 0 12px var(--link);
+}
+[data-name-fx="glitch"] {
+  text-shadow:
+    -1px 0 #cd5587,
+    1px 0 #318995;
+}
+.cos-name-particles {
+  display: none;
+}
+.hero-name .cos-name-particles {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-text-fill-color: currentColor;
+}
+.cos-name-particles i {
+  position: absolute;
+  left: calc(5% + var(--particle) * 11%);
+  top: calc(15% + mod(var(--particle) * 37, 70) * 1%);
+  width: 0.12em;
+  height: 0.12em;
+  opacity: 0.65;
+  animation-play-state: paused;
+}
+[data-name-fx="sparkle"] .cos-name-particles i {
+  background: light-dark(#a46c0b, #ffe7a1);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  width: 0.24em;
+  height: 0.24em;
+  filter: drop-shadow(0 0 2px #ffcf3380);
+}
+[data-name-fx="frost"] .cos-name-particles i {
+  border: 1px solid light-dark(#367ca5, #d5f7ff);
+  box-shadow: 0 0 3px #8bdfff80;
+  rotate: 45deg;
+}
+[data-name-fx="fire"] .cos-name-particles i {
+  background: light-dark(#d35d1d, #ffb85c);
+  border-radius: 50%;
+  box-shadow: 0 0 4px #ff752980;
+  top: 80%;
+}
+.profile-theme[data-effects-active="on"] .hero-name .cos-name-particles i {
+  animation: cos-sparkle-trail 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--particle) * -0.37s);
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="frost"] .cos-name-particles i {
+  animation-name: cos-snow-drift;
+  animation-duration: 4s;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="fire"] .cos-name-particles i {
+  animation-name: cos-ember-rise;
+  animation-duration: 2s;
+}
+[data-name-fx="bounce"] > span {
+  display: inline-block;
+  white-space: pre;
 }
 .cos-eq {
   display: none;
+}
+.hero-name [data-name-fx="eq"] {
+  display: inline-block;
 }
 .hero-name .cos-eq {
   display: flex;
@@ -7261,337 +7647,133 @@ html[data-profile-shell="custom"] :focus-visible {
   transform-origin: bottom;
   transform: scaleY(0.5);
 }
-[data-now-playing="on"][data-cos-motion="on"] .cos-eq i {
+.profile-theme[data-effects-active="on"]
+  .hero-name
+  :is([data-name-fx="rainbow"], [data-name-fx="wave"], [data-name-fx="chrome"]) {
+  animation: cos-gradient 6s linear infinite;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="glitch"] {
+  animation: cos-glitch 7s steps(1) infinite;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="neon"] {
+  animation: cos-neon-flicker 5s linear infinite;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="bounce"] > span {
+  animation: cos-hop 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--letter) * 90ms);
+}
+.profile-theme[data-effects-active="on"][data-now-playing="on"] .cos-eq i {
   animation: cos-equalize 1.3s ease-in-out infinite;
   animation-delay: calc(var(--bar-index) * -170ms);
 }
-@keyframes cos-equalize {
-  0%,
-  100% {
-    transform: scaleY(0.3);
-  }
-  50% {
-    transform: scaleY(1);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cos-eq i {
-    animation: none !important;
-  }
-}
-[data-effects-active="off"] .cos-eq i {
-  animation-play-state: paused !important;
-}
-.cos-avatar[data-motion="off"] .cos-accessory {
-  animation: none !important;
-}
-.profile-theme[data-effects-active="off"] .hero-name [data-name-fx] > span {
-  animation-play-state: paused !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero-name [data-name-fx] > span {
-    animation: none !important;
-  }
-}
-.cos-preview {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  min-height: 150px;
-  padding: 36px 24px 20px;
-  background: var(--panel);
-}
-.cos-preview .hero-name {
-  font-size: 28px;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.hero-art > .cos-avatar {
-  width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 1;
-}
-.cos-avatar .image-placeholder {
-  border-radius: 50%;
-}
-.profile-theme[data-effects-active="off"]
-  :is(.hero-name [data-name-fx], .hero-name [data-name-fx]::after, .hero::before) {
-  animation-play-state: paused !important;
-}
-.cos-avatar[data-motion="off"] .cos-frame {
-  animation-play-state: paused !important;
-}
-.cos-avatar:hover .cos-frame-holo {
-  border-color: #87ddd2 #e8d09d #c8a1ed #e2b4da;
-}
-.cos-avatar[data-motion="on"] .cos-acc-halo {
-  filter: drop-shadow(0 0 2px #e8c97a);
-}
-[data-name-fx="bounce"] > span {
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="typewriter"] {
   display: inline-block;
-  white-space: pre;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="bounce"]:is(:hover, :focus-within) > span {
-  animation: cos-hop 0.7s ease-in-out;
-  animation-delay: calc(var(--letter) * 45ms);
-}
-.profile-theme[data-now-playing="on"][data-cos-motion="on"] .hero-name [data-name-fx="eq"] {
-  text-decoration-style: dashed;
-  animation: cos-breathe 1.8s ease-in-out infinite;
-}
-.profile-theme[data-now-playing="on"][data-cos-motion="on"] .hero-art .cos-frame-vinyl {
-  animation: cos-spin 12s linear infinite;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="fire"]::after {
-  content: "· ˙";
-  position: absolute;
-  font-size: 0.5em;
-  color: light-dark(#96320f, #ffc47c);
-  animation: cos-embers 3s ease-out infinite;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="frost"]::after {
-  content: "✧";
-  position: absolute;
-  font-size: 0.5em;
-  color: light-dark(#116273, #b7f1ff);
-  animation: cos-breathe 5s ease-in-out infinite;
-}
-@keyframes cos-hop {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-0.16em);
-  }
-}
-@keyframes cos-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes cos-embers {
-  from {
-    transform: translateY(0);
-    opacity: 0.7;
-  }
-  to {
-    transform: translateY(-1em);
-    opacity: 0;
-  }
-}
-.avatar:has(.cos-avatar),
-.hero-art:has(.cos-avatar) {
-  overflow: visible;
-}
-.cos-avatar {
-  position: relative;
-  display: inline-block;
-  flex: none;
-  max-width: 100%;
-  vertical-align: middle;
-}
-.cos-avatar > :is(.art, .image-wrap) {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-}
-.cos-avatar .art {
-  border-radius: 50%;
-}
-.cos-accessory {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  z-index: 2;
-  pointer-events: none;
-  transform-origin: 50% 20%;
-}
-.cos-frame {
-  position: absolute;
-  inset: -5%;
-  border: max(2px, calc(var(--avatar-size) * 0.035)) solid var(--accent);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
-}
-.cos-frame-vinyl {
-  border-color: #28282c;
-  outline: 1px solid #999;
-  box-shadow:
-    0 0 0 3px #28282c,
-    inset 0 0 0 2px #aaa;
-}
-.cos-frame-pixel {
-  border-radius: 0;
-  border-style: dashed;
-}
-.cos-frame-neon {
-  border-color: #74e5e7;
-  box-shadow: 0 0 8px #2c8e98;
-}
-.cos-frame-holo {
-  border-color: #c8a1ed #87ddd2 #e2b4da #e8d09d;
-}
-.cos-frame-laurel {
-  border-color: transparent #cfae55 #cfae55;
-  border-style: double;
-  border-width: max(4px, calc(var(--avatar-size) * 0.06));
-}
-.cos-avatar[data-motion="on"]:is(:hover, :focus-within) .cos-accessory {
-  animation: cos-wiggle 0.7s ease-in-out;
-}
-.cos-decoration[data-motion="off"] .cos-accessory {
-  animation: none !important;
-}
-.cos-avatar[data-motion="on"] .cos-frame-neon {
-  animation: cos-breathe 5s ease-in-out infinite;
-}
-.cos-decoration[data-motion="off"] .cos-frame {
-  animation: none !important;
-}
-.cos-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 5;
-  pointer-events: none;
-}
-.cos-catalog {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 8px;
-}
-.cos-catalog [aria-pressed="true"] {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-  background: var(--accent-tint);
-}
-[data-name-fx] {
-  text-shadow: 0 0 1px var(--bg);
-}
-[data-name-fx="rainbow"],
-[data-name-fx="wave"],
-[data-name-fx="fire"],
-[data-name-fx="frost"],
-[data-name-fx="chrome"] {
-  background: linear-gradient(100deg, var(--ink), var(--accent), var(--ink));
-  background-size: 200% 100%;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
-}
-[data-name-fx="fire"] {
-  background-image: linear-gradient(100deg, light-dark(#96320f, #ffc47c), light-dark(#b9600d, #ff9475));
-}
-[data-name-fx="frost"] {
-  background-image: linear-gradient(100deg, light-dark(#116273, #b7f1ff), light-dark(#48589e, #cdd0ff));
-}
-[data-name-fx="chrome"] {
-  background-image: linear-gradient(180deg, var(--ink) 0%, var(--muted) 45%, var(--ink) 50%, var(--muted) 90%);
-}
-[data-name-fx="neon"] {
-  text-shadow: 0 0 5px var(--accent);
-}
-[data-name-fx="glitch"] {
-  text-shadow:
-    -1px 0 #cd5587,
-    1px 0 #318995;
-}
-[data-name-fx="sparkle"]::after {
-  content: "✧";
-  font-size: 0.65em;
-  vertical-align: top;
-}
-[data-name-fx="eq"] {
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-underline-offset: 0.18em;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="rainbow"],
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="wave"],
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="chrome"] {
-  animation: cos-gradient 6s linear infinite;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="glitch"] {
-  animation: cos-glitch 7s steps(1) infinite;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="neon"],
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="sparkle"]::after {
-  animation: cos-breathe 5s ease-in-out infinite;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="bounce"]:hover {
-  animation: cos-wiggle 0.7s ease-in-out;
-}
-.profile-theme[data-cos-motion="on"] .hero-name [data-name-fx="typewriter"] {
-  display: inline-block;
-  clip-path: inset(0 0 0 0);
   animation: cos-type 1.5s steps(16) 1;
 }
-.profile-theme[data-header-fx] .hero {
-  position: relative;
-  isolation: isolate;
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="frost"] {
+  animation: cos-ice-shimmer 4s ease-in-out infinite;
 }
-.profile-theme[data-header-fx] .hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.3;
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="fire"] {
+  animation: cos-fire-glow 2s ease-in-out infinite alternate;
 }
-.profile-theme[data-header-fx] .hero > .wrap {
-  position: relative;
-  z-index: 1;
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="chrome"] {
+  background-size: 100% 300%;
+  animation: cos-chrome-sweep 4s ease-in-out infinite;
 }
-[data-header-fx="bg.aurora"] .hero::before {
-  background: linear-gradient(115deg, transparent 10%, #46b78e80 35%, #9778c780 60%, transparent 85%);
-  background-size: 200% 100%;
-}
-[data-header-fx="bg.vapor"] .hero::before {
-  background:
-    repeating-linear-gradient(0deg, transparent 0 28px, #ae69e880 29px 30px),
-    repeating-linear-gradient(90deg, transparent 0 45px, #ae69e880 46px 47px),
-    radial-gradient(ellipse at 50% 30%, #ffb78e80, transparent 35%);
-}
-[data-header-fx="bg.crt"] .hero::before {
-  background: repeating-linear-gradient(0deg, transparent 0 3px, #0005 4px 5px);
-}
-[data-header-fx="bg.spectro"] .hero::before {
-  background: repeating-linear-gradient(90deg, #5c9fba44 0 8px, #bb86ce55 9px 13px, #c7b36455 14px 20px);
-  background-size: 200% 100%;
-}
-[data-cos-motion="on"]:is([data-header-fx="bg.aurora"], [data-header-fx="bg.spectro"], [data-header-fx="bg.vapor"])
-  .hero::before {
-  animation: cos-gradient 24s linear infinite;
-}
-[data-cos-motion="off"] .cos-canvas {
-  display: none;
-}
-@keyframes cos-wiggle {
+@keyframes cos-sparkle-trail {
   0%,
   100% {
-    transform: rotate(0);
+    opacity: 0;
+    transform: translate(-0.3em, 0.15em) scale(0.2) rotate(0deg);
   }
-  35% {
-    transform: rotate(-5deg);
+  40% {
+    opacity: 1;
+    transform: translate(0, -0.1em) scale(1.3) rotate(90deg);
   }
-  70% {
-    transform: rotate(4deg);
+  80% {
+    opacity: 0;
+    transform: translate(0.4em, -0.3em) scale(0.3) rotate(180deg);
   }
 }
-@keyframes cos-breathe {
-  0%,
+@keyframes cos-snow-drift {
+  0% {
+    opacity: 0;
+    transform: translate(-0.2em, -0.5em) rotate(0deg);
+  }
+  25%,
+  60% {
+    opacity: 0.9;
+  }
   100% {
+    opacity: 0;
+    transform: translate(0.3em, 0.6em) rotate(160deg);
+  }
+}
+@keyframes cos-ember-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  20% {
     opacity: 1;
   }
+  100% {
+    opacity: 0;
+    transform: translate(0.25em, -1.2em) scale(0.1);
+  }
+}
+@keyframes cos-ice-shimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 0 1px #76cfff40);
+  }
   50% {
-    opacity: 0.65;
+    background-position: 100% 50%;
+    filter: drop-shadow(0 0 4px #76cfff80);
+  }
+}
+@keyframes cos-fire-glow {
+  from {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 0 1px #f5792040);
+  }
+  to {
+    background-position: 100% 50%;
+    filter: drop-shadow(0 -2px 4px #f5792080);
+  }
+}
+@keyframes cos-chrome-sweep {
+  0%,
+  100% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+}
+@keyframes cos-neon-flicker {
+  0%,
+  18%,
+  22%,
+  26%,
+  60%,
+  64%,
+  100% {
+    text-shadow:
+      0 0 3px var(--link),
+      0 0 10px var(--link);
+  }
+  20%,
+  24%,
+  62% {
+    text-shadow: 0 0 1px var(--link);
+  }
+  40%,
+  80% {
+    text-shadow:
+      0 0 5px var(--link),
+      0 0 16px var(--link);
   }
 }
 @keyframes cos-gradient {
@@ -7607,12 +7789,33 @@ html[data-profile-shell="custom"] :focus-visible {
   0%,
   94%,
   100% {
-    text-shadow: none;
+    text-shadow:
+      -1px 0 #cd5587,
+      1px 0 #318995;
   }
   95% {
     text-shadow:
-      -2px 0 #cd5587,
-      2px 0 #318995;
+      -3px 0 #cd5587,
+      3px 0 #318995;
+  }
+}
+@keyframes cos-hop {
+  0%,
+  40%,
+  100% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-0.16em);
+  }
+}
+@keyframes cos-equalize {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
   }
 }
 @keyframes cos-type {
@@ -7620,18 +7823,158 @@ html[data-profile-shell="custom"] :focus-visible {
     clip-path: inset(0 100% 0 0);
   }
   to {
-    clip-path: inset(0 0 0 0);
+    clip-path: inset(0);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cos-accessory,
-  .cos-frame,
   .hero-name [data-name-fx],
   .hero-name [data-name-fx]::after,
-  .profile-theme[data-header-fx] .hero::before {
+  .hero-name [data-name-fx] > span,
+  .hero-name .cos-name-particles i,
+  .cos-eq i {
     animation: none !important;
   }
-  .cos-canvas {
-    display: none;
-  }
+}
+
+/* ---------- Canvas ---------- */
+.cos-effects {
+  display: contents;
+}
+.cos-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 40;
+}
+.cos-canvas[data-contained] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  border-radius: inherit;
+}
+.cos-canvas[hidden] {
+  display: none;
+}
+
+.cos-preview.profile-theme {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ---------- Settings ---------- */
+.cos-catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.cos-catalog [aria-pressed="true"] {
+  background: var(--accent) !important;
+  color: var(--on-accent) !important;
+  border-color: var(--accent) !important;
+}
+.cos-preview {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 150px;
+  padding: 32px 24px 24px;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}
+.cos-preview .hero-name {
+  font-size: 28px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.cos-preview > :is(.cos-avatar, .cos-preview-details) {
+  position: relative;
+  z-index: 2;
+}
+.cos-master {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.cos-slot-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cos-slot-tabs button {
+  text-transform: capitalize;
+}
+.cos-slot-tabs button[data-equipped]::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  vertical-align: middle;
+}
+.cos-count {
+  margin-left: 6px;
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+.cos-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  justify-items: start;
+}
+.cos-owned-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.cos-swatches {
+  display: flex;
+  gap: 6px;
+}
+.cos-palette {
+  padding: 4px 8px;
+  border: 1px solid var(--edge);
+  background: var(--fill);
+  color: var(--ink);
+  cursor: pointer;
+}
+.cos-palette[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.cos-palette:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cos-palette:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cos-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--swatch, #888);
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+.cos-swatch[aria-pressed="true"] {
+  border-color: var(--text, #fff);
+  outline: 2px solid rgba(0, 0, 0, 0.35);
+  outline-offset: 0;
+}
+.cos-swatch:focus-visible {
+  outline: 2px solid var(--accent, #6af4db);
+  outline-offset: 2px;
 }
