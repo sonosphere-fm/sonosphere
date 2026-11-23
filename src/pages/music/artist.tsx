@@ -28,7 +28,7 @@ import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger, TagChips } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton, StationButton } from "../../player";
-import { UploadImage } from "./shared";
+import { UploadImage, RemoveScrobbles } from "./shared";
 import type {
   ArtistAlbums as ArtistAlbumsData,
   ArtistListeners as ArtistListenersData,
@@ -203,7 +203,9 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
                   <PlayButton queue={a.topTracks} label="Play artist" />
                   <StationButton type="artist" name={a.name} label="Artist radio" ghost />
                   {me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}
-                  <MoreMenu label={`More actions for ${a.name}`} link={shortMusicUrl("a", a.id)} />
+                  <MoreMenu label={`More actions for ${a.name}`} link={shortMusicUrl("a", a.id)}>
+                    {me && <RemoveScrobbles scope="artist" id={a.id} name={a.name} count={a.userPlaycount} />}
+                  </MoreMenu>
                   {me?.admin && (
                     <Suspense fallback={null}>
                       <AdminTools kind="artist" item={{ id: a.id, name: a.name, artist: null }} onDone={q.reload} />

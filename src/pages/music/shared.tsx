@@ -1,12 +1,14 @@
 import { useRef, type ChangeEvent, type ReactNode } from "react";
-import { Button } from "../../kit";
+import { createPortal } from "react-dom";
+import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
+import { Button, useConfirm } from "../../kit";
 import { Link } from "react-router-dom";
-import { api, imageUrl, qs } from "../../lib";
+import { api, imageUrl, invalidateAll, plural, qs } from "../../lib";
 import { useAction } from "../../ui/base";
 import { ImageWithFallback } from "../../ui/image";
 import type { Recommended } from "../../../shared/home";
 import type { ImageSaved } from "../../../shared/images";
-import type { TopAlbum, TopTrack } from "../../../shared/listening";
+import type { EditScope, ScrobblesDeleted, TopAlbum, TopTrack } from "../../../shared/listening";
 import type { Recommendation } from "../../../shared/recommend";
 
 type HeroProps = {
@@ -71,6 +73,45 @@ export function UploadImage({
         Upload image
       </Button>
       {act.note}
+    </>
+  );
+}
+
+/** MoreMenu item: removes every scrobble of this artist, album or track from the viewer's library. */
+export function RemoveScrobbles({
+  scope,
+  id,
+  name,
+  count,
+}: {
+  scope: EditScope;
+  id: number;
+  name: string;
+  count: number;
+}) {
+  const confirm = useConfirm();
+  if (!count) return null;
+  const of = scope === "artist" ? "by" : scope === "album" ? "from" : "of";
+  const remove = () =>
+    confirm.ask({
+      title: "Remove scrobbles?",
+      body: (
+        <>
+          Remove {plural(count, "scrobble")} {of} <b>{name}</b> in your library? This cannot be undone.
+        </>
+      ),
+      action: `Remove ${plural(count, "scrobble")}`,
+      danger: true,
+      run: async () => {
+        await api<ScrobblesDeleted>("/scrobbles/delete-by", { body: { scope, id } });
+        invalidateAll();
+      },
+    });
+  return (
+    <>
+      <DropdownMenuItem label="Remove scrobbles" variant="destructive" onClick={remove} />
+      {/* Outside the menu popover, which owns focus and hides its content when closed. */}
+      {createPortal(confirm.dialog, document.body)}
     </>
   );
 }

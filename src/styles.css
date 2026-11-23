@@ -999,6 +999,11 @@
   .astryx-dropdown-menu-item.scrobble-menu-item.scrobble-menu-delete * {
     color: var(--bad) !important;
   }
+  /* The theme's error text is cobalt in light mode; destructive menu items use the site danger color. */
+  .astryx-dropdown-menu-item[data-variant="destructive"],
+  .astryx-dropdown-menu-item[data-variant="destructive"] * {
+    color: var(--bad) !important;
+  }
   .c-actions {
     white-space: nowrap;
     text-align: right;

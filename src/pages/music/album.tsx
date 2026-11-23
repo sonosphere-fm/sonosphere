@@ -9,7 +9,7 @@ import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
-import { UploadImage } from "./shared";
+import { UploadImage, RemoveScrobbles } from "./shared";
 import type { AlbumPage as AlbumData } from "../../../shared/catalog";
 import {
   MusicHero,
@@ -63,7 +63,9 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
               <>
                 <PlayButton queue={a.tracks} label="Play album" />
                 {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
-                <MoreMenu label={`More actions for ${a.title}`} link={shortMusicUrl("r", a.id)} />
+                <MoreMenu label={`More actions for ${a.title}`} link={shortMusicUrl("r", a.id)}>
+                  {me && <RemoveScrobbles scope="album" id={a.id} name={a.title} count={a.userPlaycount} />}
+                </MoreMenu>
                 {me?.admin && (
                   <Suspense fallback={null}>
                     <AdminTools kind="album" item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} />
