@@ -27,6 +27,7 @@ export const landing = {
     "Scrobble the music you play, explore your listening history, and discover artists through community charts and recommendations.",
   ],
   "/charts": [TITLES.charts, "Explore the artists, albums, and tracks the Sonosphere community is listening to."],
+  "/charts/maker": [TITLES.chartMaker, "Make an album or artist chart from your Sonosphere listening history."],
   "/events": [TITLES.events, "Find upcoming concerts and festivals, browse lineups, and see who’s going."],
   "/help": [
     TITLES.help,

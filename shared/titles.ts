@@ -6,6 +6,7 @@ export const TITLES = {
   home: "Home",
   guestHome: "Sonosphere - Track what you love",
   charts: "Music Charts",
+  chartMaker: "Chart Maker",
   events: "Concerts & Music Events",
   addEvent: "Add a Music Event",
   help: "Scrobbling Help",
