@@ -1,11 +1,13 @@
 import { findItem, resolveTrack, type TrackNames, type TrackRef } from "../catalog/repo";
 import { correct } from "../corrections/service";
 import { bad } from "../http";
+import { saveRecordingMbids, tracksOfRecordings } from "../listenbrainz/repo";
 import { clean, norm, now } from "../util";
 import * as Sentry from "@sentry/bun";
 import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import { listeningChanged } from "../realtime";
+import type { ImportRow } from "../../shared/imports";
 import {
   type Blasts,
   daysBetween,
@@ -303,4 +305,37 @@ export async function importLoved(userId: number, list: unknown[]): Promise<numb
     entries.push({ artist: fixed.artist, track: fixed.track, lovedAt: ts > OLDEST && ts <= now() ? ts : now() });
   }
   return repo.loveTracks(userId, entries);
+}
+
+/** Imports a slice of a ListenBrainz export: scrobbles with their recording IDs, then loves for those recordings. */
+export async function importListenBrainz(userId: number, rows: ImportRow[]): Promise<number> {
+  const plays = rows.filter((r) => !r.score);
+  let accepted = 0;
+  if (plays.length) {
+    const results = await scrobbleMany(userId, plays, "import");
+    const pairs: { mbid: string; trackId: number }[] = [];
+    for (const [i, r] of results.entries()) {
+      const mbid = plays[i]!.recordingMbid;
+      if (r.accepted && mbid) pairs.push({ mbid, trackId: r.trackId });
+    }
+    await saveRecordingMbids(pairs);
+    accepted += results.filter((r) => r.accepted).length;
+  }
+  // Feedback names only a recording MBID, so a love can only be restored when that recording was imported above.
+  // A -1 score is a dislike; there is nowhere to store it, so it is left out.
+  const loves = rows.filter((r) => r.score === 1 && r.recordingMbid);
+  if (loves.length) accepted += await importFeedback(userId, loves);
+  return accepted;
+}
+
+async function importFeedback(userId: number, rows: ImportRow[]): Promise<number> {
+  const found = await tracksOfRecordings(rows.map((r) => r.recordingMbid!));
+  const entries: { trackId: number; lovedAt: number }[] = [];
+  for (const r of rows) {
+    const trackId = found.get(r.recordingMbid!);
+    if (!trackId) continue;
+    const ts = Math.floor(Number(r.timestamp));
+    entries.push({ trackId, lovedAt: ts > OLDEST && ts <= now() ? ts : now() });
+  }
+  return entries.length ? repo.loveTracksByIds(userId, entries) : 0;
 }

@@ -96,6 +96,15 @@ export async function recordingsOf(trackIds: number[]): Promise<Map<number, stri
   return new Map(rows.map((r) => [r.trackId, r.mbid]));
 }
 
+export async function tracksOfRecordings(mbids: string[]): Promise<Map<string, number>> {
+  if (!mbids.length) return new Map();
+  const rows = await db
+    .select({ mbid: recordingMbids.mbid, trackId: recordingMbids.trackId })
+    .from(recordingMbids)
+    .where(inArray(recordingMbids.mbid, [...new Set(mbids)]));
+  return new Map(rows.map((r) => [r.mbid, r.trackId]));
+}
+
 export async function mbidsOf(table: typeof artists | typeof albums, ids: number[]): Promise<Map<number, string>> {
   if (!ids.length) return new Map();
   const rows = await db.select({ id: table.id, mbid: table.mbid }).from(table).where(inArray(table.id, ids));

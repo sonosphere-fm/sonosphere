@@ -999,6 +999,22 @@ export async function setLoved(userId: number, trackId: number, loved: boolean):
   else await db.delete(lovedTracks).where(and(eq(lovedTracks.userId, userId), eq(lovedTracks.trackId, trackId)));
 }
 
+/** Returns how many were not loved already. Loved time comes from the imported data. */
+export async function loveTracksByIds(userId: number, list: { trackId: number; lovedAt: number }[]): Promise<number> {
+  return transact(async (tx) => {
+    let added = 0;
+    for (const t of list) {
+      const [row] = await tx
+        .insert(lovedTracks)
+        .values({ userId, trackId: t.trackId, createdAt: t.lovedAt })
+        .onConflictDoNothing()
+        .returning({ trackId: lovedTracks.trackId });
+      if (row) added++;
+    }
+    return added;
+  });
+}
+
 /** Returns how many were not loved already. */
 export async function loveTracks(
   userId: number,

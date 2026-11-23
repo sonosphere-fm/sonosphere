@@ -1153,7 +1153,7 @@ export const spotifyAuth = pgTable("spotify_auth", {
   createdAt: integer("created_at").notNull(),
 });
 
-// kind: "scrobbles" or "loved" (from a file), or "lastfm" (read from a Last.fm profile).
+// kind: "scrobbles" or "loved" (from a file), "lastfm" (read from a Last.fm profile), or "listenbrainz" (export ZIP).
 // status: "uploading" (file chunks still arriving), "queued", "running", "done", "failed" or "cancelled".
 // cursor: how many rows have been worked through (files), or Last.fm pages read in the current phase.
 export const importJobs = pgTable(
