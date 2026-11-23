@@ -5,6 +5,7 @@ import { obsessionsOf } from "../obsessions/repo";
 import { taste } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
+import { appearanceFor } from "./appearance";
 import { canSee, canSeeCharts } from "./service";
 import type { Person, Profile, PublicUser, UserArtistLibrary, WeekCount } from "../../shared/users";
 
@@ -40,6 +41,7 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
   ]);
   return {
     ...repo.publicUser(u),
+    ...(await appearanceFor(u.id)),
     banner: u.bannerId,
     about: u.about,
     pronouns: u.pronouns,

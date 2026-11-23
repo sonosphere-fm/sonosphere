@@ -33,6 +33,8 @@ import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
 import { UserLabels } from "../../ui/user-labels";
 import { Username } from "../../ui/username";
+import { CosmeticAvatar } from "../../ui/cosmetics";
+import { ProfileCosmetics } from "../../ui/profile-cosmetics";
 import { ProfileShellTheme, profileAccentStyle } from "../../ui/profile-accent";
 import type { BlockResult } from "../../../shared/blocks";
 import type { UserEvents as UserEventList } from "../../../shared/events";
@@ -169,14 +171,23 @@ export function UserPage({ tab }: { tab: Tab }) {
         return (
           <div
             className="profile-theme"
+            data-cos-motion={u.showCosmetics !== false ? "on" : "off"}
+            data-now-playing={u.nowPlaying ? "on" : "off"}
+            data-header-fx={u.cosmetics?.find((c) => c.slot === "header_bg")?.id}
+            data-scrobble-fx={u.cosmetics?.find((c) => c.slot === "scrobble_fx")?.id}
             data-profile-accent={u.profileAccent ? "custom" : undefined}
             style={profileAccentStyle(u)}
           >
             <ProfileShellTheme user={u} name={name} />
+            <ProfileCosmetics user={u} />
             <Hero
               tabs={<Tabs items={profileTabs(u, base, locked)} />}
               banner={u.banner}
-              art={<Art image={u.image} kind="user" />}
+              art={
+                <CosmeticAvatar name={u.username} size={180} appearance={u}>
+                  <Art image={u.image} kind="user" />
+                </CosmeticAvatar>
+              }
               kicker={u.followsYou ? "Follows you" : "Listener"}
               title={
                 <span className="hero-name">
