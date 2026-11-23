@@ -27,6 +27,7 @@ export const TITLES = {
   scrobble: "Scrobble Music",
   import: "Import Listening History",
   connect: "Connect a Music Player",
+  welcome: "Welcome",
   notFound: "Page Not Found",
   editJournal: "Edit Journal",
   profile: "Listener Profile",

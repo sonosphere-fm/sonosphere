@@ -5816,6 +5816,22 @@
     max-width: 62ch;
     color: var(--ink-2);
   }
+  .onboard {
+    padding: 32px 28px;
+    background: var(--panel);
+  }
+  .onboard h2 {
+    margin: 0 0 8px;
+    font-size: 24px;
+  }
+  .onboard p {
+    margin: 0 0 16px;
+    max-width: 62ch;
+    color: var(--ink-2);
+  }
+  .onboard .row {
+    margin-top: 24px;
+  }
   .import-status:not(:empty) {
     margin-bottom: 28px;
   }
