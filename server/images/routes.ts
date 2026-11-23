@@ -5,6 +5,7 @@ import { getJson, setJson } from "../kv";
 import { store } from "../storage";
 import { caps, spendRead } from "../storage/budget";
 import { convert, sniff } from "./process";
+import { stripGifMetadata } from "./metadata";
 import { fetchRemote, sized, type Picture } from "./remote";
 import * as repo from "./repo";
 import type { Ok } from "../../shared/auth";
@@ -35,7 +36,7 @@ async function siteBytes(): Promise<number> {
   return n;
 }
 
-// the bytes as uploaded are never stored or served, only the converted WebP
+// Store converted WebP or animation-preserving GIF, always stripped of metadata.
 async function storeImage(c: Ctx, userId: number, preserveGif = false): Promise<string> {
   await limit(`upload:${userId}`, 20, 3600, "Too many uploads. Wait a while and try again.");
   await limit(`upload-ip:${ipOf(c.req)}`, 40, 3600, "Too many uploads. Wait a while and try again.");
@@ -48,8 +49,14 @@ async function storeImage(c: Ctx, userId: number, preserveGif = false): Promise<
   if (!data.length) bad("Empty upload");
   const img = await convert(data);
   if (preserveGif && sniff(data) === "gif") {
-    if (used + data.length > caps.userBytes) fail(403, full);
-    return repo.saveGif(data, userId);
+    let stripped: Uint8Array;
+    try {
+      stripped = stripGifMetadata(data);
+    } catch {
+      return bad("That GIF could not be read");
+    }
+    if (used + stripped.length > caps.userBytes) fail(403, full);
+    return repo.saveGif(stripped, userId);
   }
   if (used + img.large.length + img.small.length > caps.userBytes) fail(403, full);
   return repo.saveImage(img, userId);
