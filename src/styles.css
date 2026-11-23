@@ -7132,3 +7132,74 @@ html[data-profile-shell="custom"] :focus-visible {
     }
   }
 }
+@layer components {
+  .username-font-picker {
+    position: relative;
+    min-width: 0;
+  }
+  .username-font-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--edge);
+    background: var(--card);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+  .username-font-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 120;
+    width: min(520px, calc(100vw - 48px));
+    max-height: 340px;
+    overflow: auto;
+    padding: 8px;
+    border: 1px solid var(--edge);
+    background: var(--card);
+  }
+  .username-font-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .username-font-grid button {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 58px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 16px;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+  .username-font-grid button:hover {
+    background: var(--fill-hover);
+  }
+  .username-font-grid button[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .username-font-picker button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .username-font-trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  @media (max-width: 480px) {
+    .username-font-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}

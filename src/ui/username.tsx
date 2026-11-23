@@ -29,6 +29,13 @@ export function Username({
     if (!family || !selected) return;
     const id = `username-font-${selected.id}`;
     if (document.getElementById(id)) return;
+    if ("url" in selected) {
+      const style = document.createElement("style");
+      style.id = id;
+      style.textContent = `@font-face { font-family: '${family}'; src: url('${selected.url}') format('${selected.format}'); font-display: swap; }`;
+      document.head.append(style);
+      return;
+    }
     const link = document.createElement("link");
     link.id = id;
     link.rel = "stylesheet";
