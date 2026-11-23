@@ -330,6 +330,9 @@ async function mirrorPlaying(link: repo.Link) {
       return;
     }
     await markActive(link.userId);
+    // after a quiet spell the recent poll sits up to an hour out, so playback brings it forward
+    const recentDue = await nextPoll(link, RECENT_EVERY, IDLE_RECENT_EVERY, QUIET_AFTER);
+    if (recentDue < link.recentAt) await repo.updateLink(link.userId, { recentAt: recentDue });
     const input = trackInput(reply.item);
     const ref = input && (await setNowPlaying(link.userId, input));
     if (ref) await setJson(mirrored, ref.trackId, 3600_000);
