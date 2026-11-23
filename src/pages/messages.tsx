@@ -1078,6 +1078,7 @@ function NewGroup() {
   const act = useAction();
   const [title, setTitle] = useState("");
   const [picked, setPicked] = useState<number[]>([]);
+  const [find, setFind] = useState("");
   const d = q.data;
   if (q.error) {
     return (
@@ -1089,6 +1090,14 @@ function NewGroup() {
   }
   if (!d) return null;
   const room = d.size - 1 - picked.length;
+  const needle = find.trim().toLowerCase();
+  const shown = d.users.filter(
+    (u) =>
+      !needle ||
+      picked.includes(u.id) ||
+      u.username.toLowerCase().includes(needle) ||
+      u.realname.toLowerCase().includes(needle)
+  );
 
   const toggle = (id: number, on: boolean) => {
     setPicked((ids) => (on ? [...ids, id] : ids.filter((x) => x !== id)));
@@ -1128,8 +1137,18 @@ function NewGroup() {
         {!d.users.length && (
           <p className="muted small">There's no one you can add yet. Start a conversation with someone first.</p>
         )}
+        {d.users.length > 8 && (
+          <Input
+            type="search"
+            value={find}
+            onChange={(e) => setFind(e.target.value)}
+            placeholder="Search people"
+            aria-label="Search people"
+          />
+        )}
+        {needle && !shown.length && <p className="muted small">No one matches "{find.trim()}".</p>}
         <ul className="dm-members">
-          {d.users.map((u) => {
+          {shown.map((u) => {
             const on = picked.includes(u.id);
             return (
               <li key={u.id}>
