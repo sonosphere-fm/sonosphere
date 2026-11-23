@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportState } from "../../shared/imports";
+import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportRow, type ImportState } from "../../shared/imports";
 import { Spinner } from "../icons";
 import { Button, Input, Select } from "../kit";
 import { importLastfm } from "../lastfm-import";
+import { parseListenBrainzZip } from "../listenbrainz-import";
 import { api, dateTime, num, plural, TITLES, useTitle } from "../lib";
 import { Section, useAction } from "../ui/base";
 
@@ -48,8 +49,6 @@ function parseCsv(text: string): string[][] {
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object";
 const get = (v: unknown, k: string) => (isObj(v) ? v[k] : undefined);
-
-type ImportRow = { artist: string; track: string; album: string; timestamp: number | undefined };
 
 function toStamp(v: unknown) {
   if (v === undefined || v === null || v === "") return undefined;
@@ -134,9 +133,12 @@ function useImportJob() {
 
 function importSource(job: ImportJob) {
   if (job.lastfmUser) return `Last.fm (${job.lastfmUser})`;
+  if (job.kind === "listenbrainz") return "your ListenBrainz export";
   if (job.kind === "loved") return "your loved tracks";
   return "your file";
 }
+
+const jobNoun = (job: ImportJob) => (job.kind === "loved" ? "loved track" : "scrobble");
 
 function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => void }) {
   const what = importSource(job);
@@ -146,7 +148,7 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
   if (job.status === "done") {
     return (
       <p className="form-ok">
-        Imported {plural(job.accepted, job.kind === "loved" ? "loved track" : "scrobble")} from {what}
+        Imported {plural(job.accepted, jobNoun(job))} from {what}
         {skipped > 0 ? `, skipped ${num(skipped)} duplicates/errors` : ""}.
       </p>
     );
@@ -155,8 +157,7 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
     return (
       <p className="form-error">
         The import from {what} stopped: {job.error}{" "}
-        {job.accepted > 0 &&
-          `${plural(job.accepted, job.kind === "loved" ? "loved track" : "scrobble")} imported before that stay.`}
+        {job.accepted > 0 && `${plural(job.accepted, jobNoun(job))} imported before that stay.`}
       </p>
     );
   }
@@ -164,7 +165,7 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
     return (
       <p className="muted">
         The import from {what} was cancelled
-        {job.accepted > 0 ? ` after ${plural(job.accepted, job.kind === "loved" ? "loved track" : "scrobble")}` : ""}.
+        {job.accepted > 0 ? ` after ${plural(job.accepted, jobNoun(job))}` : ""}.
       </p>
     );
   }
@@ -217,8 +218,9 @@ export function ImportPage() {
   const cancel = useAction();
   const [rows, setRows] = useState<ImportRow[] | null>(null);
   const [fileName, setFileName] = useState("");
+  const [fromUser, setFromUser] = useState<string | null>(null);
   const [progress, setProgress] = useState("");
-  const [what, setWhat] = useState<"scrobbles" | "loved">("scrobbles");
+  const [what, setWhat] = useState<"scrobbles" | "loved" | "listenbrainz">("scrobbles");
   const noun = what === "loved" ? "loved track" : "scrobble";
   const busy = job === undefined || active(job) || !!download || imp.busy;
 
@@ -258,18 +260,35 @@ export function ImportPage() {
     if (!file) return;
     setFileName(file.name);
     setRows(null);
+    setFromUser(null);
     setProgress("");
+    const zip = file.name.toLowerCase().endsWith(".zip");
     imp.run(async () => {
-      const body = await file.text();
-      const parsed = parseImport(file.name, body);
+      let parsed: ImportRow[];
+      if (zip) {
+        setProgress("Reading ListenBrainz export…");
+        const exportData = await parseListenBrainzZip(await file.arrayBuffer());
+        // Feedback goes last: the scrobbles above it save the recording IDs that loves are matched against.
+        parsed = [...exportData.listens, ...exportData.feedback];
+        setFromUser(exportData.username);
+        setWhat("listenbrainz");
+      } else {
+        const body = await file.text();
+        parsed = parseImport(file.name, body);
+        if (/loved/i.test(file.name) || /"lovedtracks"/.test(body.slice(0, 2000))) setWhat("loved");
+        else setWhat("scrobbles");
+      }
       if (!parsed.length)
-        throw new Error("Nothing found in that file. Expected columns: artist, album, track, timestamp.");
+        throw new Error(
+          zip
+            ? "No listens found in that ListenBrainz export."
+            : "Nothing found in that file. Expected columns: artist, album, track, timestamp."
+        );
       if (parsed.length > IMPORT_MAX) {
         throw new Error(
           `That file has ${num(parsed.length)} rows; an import can hold up to ${num(IMPORT_MAX)}. Split it and import it in parts.`
         );
       }
-      if (/loved/i.test(file.name) || /"lovedtracks"/.test(body.slice(0, 2000))) setWhat("loved");
       setRows(parsed);
     });
   };
@@ -365,16 +384,16 @@ export function ImportPage() {
         <Section title="Import a file">
           <fieldset className="card form" disabled={busy}>
             <p>
-              Import scrobbles or loved tracks from a CSV or JSON file. CSV columns: <code>artist</code>,{" "}
-              <code>album</code>, <code>track</code>, <code>timestamp</code> (Unix seconds or ISO date; only artist and
-              track are required).
+              Import scrobbles or loved tracks from a CSV or JSON file, or a ListenBrainz export ZIP. An export brings
+              in your scrobbles, loved tracks and recording IDs. CSV columns: <code>artist</code>, <code>album</code>,{" "}
+              <code>track</code>, <code>timestamp</code> (Unix seconds or ISO date; only artist and track are required).
             </p>
             <div className="import-row">
               <label>
                 File
                 <Input
                   type="file"
-                  accept=".csv,.json,text/csv,application/json"
+                  accept=".csv,.json,.zip,text/csv,application/json,application/zip,application/x-zip-compressed"
                   onChange={(e) => pick(e.target.files?.[0])}
                 />
               </label>
@@ -382,17 +401,21 @@ export function ImportPage() {
                 label="What the file contains"
                 disabled={busy}
                 value={what}
-                onChange={(value) => setWhat(value === "loved" ? "loved" : "scrobbles")}
+                onChange={(value) =>
+                  setWhat(value === "loved" ? "loved" : value === "listenbrainz" ? "listenbrainz" : "scrobbles")
+                }
                 options={[
                   ["scrobbles", "Scrobbles"],
                   ["loved", "Loved tracks"],
+                  ["listenbrainz", "ListenBrainz export"],
                 ]}
               />
             </div>
             {rows && (
               <>
                 <p>
-                  <b>{plural(rows.length, noun)}</b> found in {fileName}. First rows:
+                  <b>{plural(rows.length, noun)}</b> found in {fileName}
+                  {fromUser ? ` (ListenBrainz: ${fromUser})` : ""}. First rows:
                 </p>
                 <table className="chartlist compact">
                   <tbody>
@@ -406,7 +429,7 @@ export function ImportPage() {
                           </span>
                         </td>
                         <td className="c-time">
-                          {r.timestamp ? dateTime(r.timestamp) : what === "loved" ? "" : "now"}
+                          {r.timestamp ? dateTime(r.timestamp) : r.score || what === "loved" ? "" : "now"}
                         </td>
                       </tr>
                     ))}

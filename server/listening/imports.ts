@@ -4,16 +4,25 @@ import { importChunks, importJobs } from "../db/schema";
 import { need } from "../guards";
 import { bad, fail, int, missing, Router, throttle } from "../http";
 import { exclusive } from "../kv";
+import { setLatestImport } from "../listenbrainz/repo";
 import { lastfmCall } from "../metadata/sources";
 import { clean, now } from "../util";
 import * as Sentry from "@sentry/bun";
-import { importLoved, scrobbleMany } from "./service";
-import { IMPORT_CHUNK, IMPORT_MAX, type ImportJob, type ImportKind, type ImportState } from "../../shared/imports";
+import { importListenBrainz, importLoved, scrobbleMany } from "./service";
+import {
+  IMPORT_CHUNK,
+  IMPORT_MAX,
+  type ImportJob,
+  type ImportKind,
+  type ImportRow,
+  type ImportState,
+} from "../../shared/imports";
 
 const SLICE = 1000;
 const ACTIVE = ["uploading", "queued", "running"];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-type Row = { artist: string; track: string; album: string; timestamp?: number };
+type Row = ImportRow;
 type Job = typeof importJobs.$inferSelect;
 
 const shown = (j: Job): ImportJob => ({
@@ -78,12 +87,26 @@ async function startJob(userId: number, values: Pick<Job, "kind" | "status" | "t
 
 function readRow(v: unknown): Row | null {
   const r = (typeof v === "object" && v !== null ? v : {}) as Record<string, unknown>;
+  const raw = String(r.recordingMbid ?? "").toLowerCase();
+  const recordingMbid = UUID.test(raw) ? raw : undefined;
+  const ts = Number(r.timestamp);
+  const timestamp = Number.isFinite(ts) && ts > 0 ? Math.floor(ts) : undefined;
+  const score = Number(r.score);
+  if (score === 1 || score === -1) {
+    return recordingMbid
+      ? { artist: "", track: "", album: "", recordingMbid, score, ...(timestamp ? { timestamp } : {}) }
+      : null;
+  }
   const artist = clean(r.artist);
   const track = clean(r.track);
   if (!artist || !track) return null;
-  const ts = Number(r.timestamp);
-  const timestamp = Number.isFinite(ts) && ts > 0 ? { timestamp: Math.floor(ts) } : {};
-  return { artist, track, album: clean(r.album), ...timestamp };
+  return {
+    artist,
+    track,
+    album: clean(r.album),
+    ...(timestamp ? { timestamp } : {}),
+    ...(recordingMbid ? { recordingMbid } : {}),
+  };
 }
 
 type LfmText = string | { "#text"?: string; name?: string } | undefined;
@@ -183,11 +206,15 @@ async function fileStep(j: Job) {
   if (!chunk) return advance(j.id, { status: "done" });
   const rows = JSON.parse(chunk.rows) as Row[];
   const slice = rows.slice(offset, offset + SLICE);
-  const accepted =
-    j.kind === "loved"
-      ? await importLoved(j.userId, slice)
-      : (await scrobbleMany(j.userId, slice, "import")).filter((r) => r.accepted).length;
+  let accepted: number;
+  if (j.kind === "loved") accepted = await importLoved(j.userId, slice);
+  else if (j.kind === "listenbrainz") accepted = await importListenBrainz(j.userId, slice);
+  else accepted = (await scrobbleMany(j.userId, slice, "import")).filter((r) => r.accepted).length;
   const end = offset + slice.length >= rows.length;
+  if (end && j.kind === "listenbrainz") {
+    const latest = slice.reduce((m, r) => Math.max(m, r.score ? 0 : (r.timestamp ?? 0)), 0);
+    if (latest) await setLatestImport(j.userId, "listenbrainz", latest);
+  }
   if (end) await db.delete(importChunks).where(thisChunk);
   await advance(j.id, {
     status: "running",
@@ -269,7 +296,8 @@ router.get<ImportState>("/api/import", async (c) => {
 /** Starts a file import: the rows follow in chunks (POST /api/import/:id/chunk), then POST /api/import/:id/start. */
 router.post<ImportState>("/api/import", async (c) => {
   const u = need(c);
-  const kind = c.body.kind === "loved" ? "loved" : "scrobbles";
+  const kind: ImportKind =
+    c.body.kind === "loved" ? "loved" : c.body.kind === "listenbrainz" ? "listenbrainz" : "scrobbles";
   const lastfmUser = c.body.lastfmUser === undefined ? null : clean(c.body.lastfmUser, 40);
   if (lastfmUser !== null && !/^[A-Za-z][\w-]{1,30}$/.test(lastfmUser)) bad("That isn't a Last.fm username");
   const total = int(c.body.total);

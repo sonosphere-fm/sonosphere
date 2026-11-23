@@ -314,7 +314,7 @@ export function ChartMaker() {
                   <Input value={form.censorArtists} onChange={(e) => set("censorArtists", e.target.value)} />
                 </label>
                 <label>
-                  Albums as Artist — Album
+                  Albums as Artist - Album
                   <Input value={form.censorAlbums} onChange={(e) => set("censorAlbums", e.target.value)} />
                 </label>
                 <p className="text-site-muted text-[13px]">
