@@ -1066,11 +1066,17 @@ function AppSettings() {
   const c = useConfirm();
   const robot = useTurnstile("apiapp");
   const tokenAct = useAction();
+  const tokenRobot = useTurnstile("listentoken");
   const [token, setToken] = useState("");
 
   const newToken = () =>
     tokenAct.run(async () => {
-      setToken((await api<ListenToken>("/apps/listen-token", { body: {} })).token);
+      if (tokenRobot.on && !tokenRobot.token) throw new Error("Complete the check that you are not a robot");
+      try {
+        setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile: tokenRobot.token } })).token);
+      } finally {
+        tokenRobot.reset();
+      }
       q.reload();
     });
 
@@ -1131,9 +1137,12 @@ function AppSettings() {
                 <p>Copy it now: it's shown only this once.</p>
               </div>
             ) : (
-              <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
-                Create ListenBrainz token
-              </Button>
+              <>
+                {tokenRobot.view}
+                <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
+                  Create ListenBrainz token
+                </Button>
+              </>
             )}
             {tokenAct.note}
             <Link className="connect-more" to="/help#listenbrainz">
