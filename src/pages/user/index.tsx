@@ -511,6 +511,9 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
             <li>
               <Link to={`${base}/listening-report/year`}>Yearly listening report</Link>
             </li>
+            <li>
+              <Link to={`${base}/listening-report/all`}>All-time listening report</Link>
+            </li>
           </ul>
         </Section>
       </aside>

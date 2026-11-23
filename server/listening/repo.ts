@@ -635,6 +635,16 @@ export async function clearNowPlaying(userId: number, trackId?: number): Promise
 type NewScrobble = TrackNames & { playedAt: number };
 type Scrobbled = TrackRef & { id: number };
 
+export async function firstPlayedAt(userId: number): Promise<number | null> {
+  const [row] = await db
+    .select({ playedAt: scrobbles.playedAt })
+    .from(scrobbles)
+    .where(eq(scrobbles.userId, userId))
+    .orderBy(asc(scrobbles.playedAt))
+    .limit(1);
+  return row?.playedAt ?? null;
+}
+
 /** One entry per play, in order: where it was filed, or null when that play was already recorded. */
 export async function recordScrobbles(
   userId: number,
