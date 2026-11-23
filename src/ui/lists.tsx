@@ -75,6 +75,8 @@ export function TrackList<R extends Row>({
   showDuration,
   nowPlaying,
   actions,
+  timeActions,
+  onSelect,
   numbered,
   compact,
 }: {
@@ -86,6 +88,8 @@ export function TrackList<R extends Row>({
   showDuration?: boolean;
   nowPlaying?: Row | null;
   actions?: (row: TrackRow<R>) => ReactNode;
+  timeActions?: (row: R) => ReactNode;
+  onSelect?: (row: R) => void;
   numbered?: boolean;
   compact?: boolean;
 }) {
@@ -116,7 +120,49 @@ export function TrackList<R extends Row>({
       </thead>
       <tbody>
         {rows.map((r, i) => (
-          <tr key={r.id ?? `${r.artist}-${r.title}-${i}`} className={r._np ? "now" : ""}>
+          <tr
+            key={r.id ?? `${r.artist}-${r.title}-${i}`}
+            className={r._np ? "now" : onSelect ? "selectable" : ""}
+            onMouseDownCapture={
+              onSelect && !r._np
+                ? (e) => {
+                    // In-app links navigate on mousedown, before the selection click.
+                    if (e.button === 0 && (e.target as Element).closest("a")) e.preventDefault();
+                  }
+                : undefined
+            }
+            onClickCapture={
+              onSelect && !r._np
+                ? (e) => {
+                    if ((e.target as Element).closest("button, input, label, .astryx-checkbox-input")) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSelect(r);
+                  }
+                : undefined
+            }
+            onContextMenu={
+              timeActions && !r._np
+                ? (e) => {
+                    if (e.defaultPrevented) return;
+                    const trigger = e.currentTarget.querySelector<HTMLElement>("[data-scrobble-context-trigger]");
+                    if (!trigger) return;
+                    e.preventDefault();
+                    // ContextMenu cannot wrap table rows, so forward their cursor coordinates.
+                    trigger.dispatchEvent(
+                      new MouseEvent("contextmenu", {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                        detail: e.detail,
+                        button: 2,
+                      })
+                    );
+                  }
+                : undefined
+            }
+          >
             {(rank !== undefined || numbered) && (
               <td className="c-rank">{numbered ? r.position : rank! + i - (nowPlaying ? 1 : 0)}</td>
             )}
@@ -152,18 +198,25 @@ export function TrackList<R extends Row>({
             {count && <CountCell value={r[count] || 0} max={max} unit={trackUnit(count, r[count])} plain={compact} />}
             {time && (
               <td className="c-time">
-                {r._np ? (
-                  <span className="np">
-                    Scrobbling now{" "}
-                    <i className="eq">
-                      <i />
-                      <i />
-                      <i />
-                    </i>
-                  </span>
-                ) : (
-                  <span title={dateTime(r.playedAt!)}>{ago(r.playedAt!)}</span>
-                )}
+                <div className="track-tail">
+                  {r._np ? (
+                    <span className="np">
+                      Scrobbling now{" "}
+                      <i className="eq">
+                        <i />
+                        <i />
+                        <i />
+                      </i>
+                    </span>
+                  ) : (
+                    <>
+                      <span className="track-time" title={dateTime(r.playedAt!)}>
+                        {ago(r.playedAt!)}
+                      </span>
+                      {timeActions && <div className="track-time-actions">{timeActions(r)}</div>}
+                    </>
+                  )}
+                </div>
               </td>
             )}
           </tr>

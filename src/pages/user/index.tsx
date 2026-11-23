@@ -27,6 +27,7 @@ import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../.
 import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
 import { MoreMenu } from "../../ui/more-menu";
+import { ScrobbleMenu } from "../../ui/scrobble-menu";
 import { shortUrl } from "../../../shared/paths";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
@@ -417,7 +418,15 @@ function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean
         <Username user={u} /> keeps their recent listening private.
       </Empty>
     );
-  if (d.items.length || d.nowPlaying) return <TrackList items={d.items} nowPlaying={d.nowPlaying} time />;
+  if (d.items.length || d.nowPlaying)
+    return (
+      <TrackList
+        items={d.items}
+        nowPlaying={d.nowPlaying}
+        time
+        timeActions={mine ? (r) => <ScrobbleMenu row={r} /> : undefined}
+      />
+    );
   if (!mine) return <Empty>No scrobbles yet.</Empty>;
   return (
     <Empty>
