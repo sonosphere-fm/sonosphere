@@ -1,6 +1,6 @@
 import { DatePicker } from "../../datepicker";
 import { Username } from "../../ui/username";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Input } from "../../kit";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { api, artistUrl, date, invalidateAll, enc, num, plural, qs, useApi, userUrl } from "../../lib";
@@ -17,6 +17,14 @@ const isRecent = (i: LibraryRow): i is RecentTrack => "playedAt" in i;
 const isArtist = (i: LibraryRow): i is TopArtist => !("title" in i);
 const isAlbum = (i: LibraryRow): i is TopAlbum => "title" in i && !("duration" in i);
 const isTopTrack = (i: LibraryRow): i is TopTrack => "duration" in i && "listeners" in i;
+
+/** Ids from anchor to target inclusive, in display order; empty when either end is off the page. */
+export function rangeIds(ids: number[], anchor: number | null, target: number): number[] {
+  const a = anchor === null ? -1 : ids.indexOf(anchor);
+  const b = ids.indexOf(target);
+  if (a < 0 || b < 0) return [];
+  return ids.slice(Math.min(a, b), Math.max(a, b) + 1);
+}
 
 function toTs(d: string, end = false) {
   if (!d) return undefined;
@@ -114,10 +122,13 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   );
   // Scrobbles picked for bulk delete; null when not in select mode.
   const [picked, setPicked] = useState<Set<number> | null>(null);
+  // Origin of the next shift-range: the last row clicked, plain or shift.
+  const anchor = useRef<number | null>(null);
   const [confirm, setConfirm] = useState(false);
   const bulk = useAction();
 
   const stopPicking = () => {
+    anchor.current = null;
     setPicked(null);
     setConfirm(false);
   };
@@ -131,16 +142,44 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
       typeof selectedScrobble === "number" &&
       Number.isSafeInteger(selectedScrobble) &&
       selectedScrobble > 0
-    )
+    ) {
       setPicked(new Set([selectedScrobble]));
+      anchor.current = selectedScrobble;
+      // The seed rides in the history entry, so a refresh would reopen select mode. Consume it once;
+      // keep the router's key/idx and leave its in-memory location alone so this visit keeps the seed.
+      window.history.replaceState({ ...window.history.state, usr: null }, "");
+    }
   }, [name, mine, kind, page, selectedScrobble]);
 
   const pick = (id: number, on: boolean) => {
+    anchor.current = id;
     setConfirm(false);
     setPicked((prev) => {
       const n = new Set(prev);
       if (on) n.add(id);
       else n.delete(id);
+      return n;
+    });
+  };
+
+  // Shift-click gives every row between the anchor and this one the state this click produces,
+  // so shift-unchecking deselects a range too. The anchor then moves to this row, so the next
+  // shift-click ranges from here (select Xtal…Karma Police, then shift-uncheck back to Hyperballad).
+  const pickRange = (id: number, on: boolean) => {
+    const ids = rangeIds(
+      (q.data?.items.filter(isRecent) ?? []).map((r) => r.id),
+      anchor.current,
+      id
+    );
+    if (!ids.length) return pick(id, on);
+    anchor.current = id;
+    setConfirm(false);
+    setPicked((prev) => {
+      const n = new Set(prev);
+      for (const x of ids) {
+        if (on) n.add(x);
+        else n.delete(x);
+      }
       return n;
     });
   };
@@ -165,6 +204,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     }
     const all = picked.size === d.items.length;
     const toggleAll = () => {
+      anchor.current = null;
       setConfirm(false);
       setPicked(new Set(all ? [] : d.items.map((r: LibraryRow) => r.id)));
     };
@@ -198,7 +238,12 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
         type="checkbox"
         aria-label={`Select ${r.title}`}
         checked={picked.has(r.id)}
-        onChange={(e) => pick(r.id, e.target.checked)}
+        onChange={(e) => {
+          // React derives a checkbox's change from the click, so the native event carries shiftKey.
+          const shift = e.nativeEvent instanceof MouseEvent && e.nativeEvent.shiftKey;
+          if (shift) pickRange(r.id, e.target.checked);
+          else pick(r.id, e.target.checked);
+        }}
       />
     );
   };
@@ -217,7 +262,15 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
           nowPlaying={"nowPlaying" in d ? d.nowPlaying : null}
           time
           actions={mine && picked ? rowActions : undefined}
-          onSelect={mine && picked ? (r) => pick(r.id, !picked.has(r.id)) : undefined}
+          onSelect={
+            mine && picked
+              ? (r, e) => {
+                  const on = !picked.has(r.id);
+                  if (e.shiftKey) pickRange(r.id, on);
+                  else pick(r.id, on);
+                }
+              : undefined
+          }
           timeActions={mine && !picked ? (r) => <ScrobbleMenu row={r} onSelect={() => pick(r.id, true)} /> : undefined}
         />
       );

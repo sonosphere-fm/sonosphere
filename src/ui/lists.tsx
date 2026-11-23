@@ -89,7 +89,7 @@ export function TrackList<R extends Row>({
   nowPlaying?: Row | null;
   actions?: (row: TrackRow<R>) => ReactNode;
   timeActions?: (row: R) => ReactNode;
-  onSelect?: (row: R) => void;
+  onSelect?: (row: R, e: { shiftKey: boolean }) => void;
   numbered?: boolean;
   compact?: boolean;
 }) {
@@ -126,8 +126,12 @@ export function TrackList<R extends Row>({
             onMouseDownCapture={
               onSelect && !r._np
                 ? (e) => {
+                    if (e.button !== 0) return;
+                    const t = e.target as Element;
                     // In-app links navigate on mousedown, before the selection click.
-                    if (e.button === 0 && (e.target as Element).closest("a")) e.preventDefault();
+                    if (t.closest("a")) e.preventDefault();
+                    // Shift-click must not highlight row text while range-selecting; leave controls alone.
+                    else if (e.shiftKey && !t.closest("button, input, label")) e.preventDefault();
                   }
                 : undefined
             }
@@ -137,7 +141,7 @@ export function TrackList<R extends Row>({
                     if ((e.target as Element).closest("button, input, label")) return;
                     e.preventDefault();
                     e.stopPropagation();
-                    onSelect(r);
+                    onSelect(r, { shiftKey: e.shiftKey });
                   }
                 : undefined
             }
