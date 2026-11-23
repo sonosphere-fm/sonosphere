@@ -19,7 +19,6 @@ export type Profile = PublicUser & {
   banner: string | null;
   about: string;
   pronouns: string;
-  website: string;
   links: ProfileLink[];
   registeredAt: number;
   hidden: boolean;

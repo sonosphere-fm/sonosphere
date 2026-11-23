@@ -23,7 +23,6 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     pronouns: u.pronouns,
     about: u.about,
     country: u.country,
-    website: u.website,
     links: storedProfileLinks(u.profileLinks),
     image: u.imageId,
     banner: u.bannerId,

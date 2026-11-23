@@ -103,7 +103,6 @@ export type StaffUserPage = {
     realname: string;
     email?: string;
     country: string;
-    website: string;
     about: string;
     image: string | null;
     registeredAt: number;

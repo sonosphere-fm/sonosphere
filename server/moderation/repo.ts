@@ -11,6 +11,7 @@ import { dropJournalTx } from "../journals/repo";
 import { parseObject } from "../site/repo";
 import { now } from "../util";
 import type { PageRef } from "../../shared/admin";
+import { storedProfileLinks } from "../../shared/profile-links";
 
 const text = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
 
@@ -142,7 +143,8 @@ export async function reportTargetTx(conn: Conn, type: string, id: number): Prom
     const [u] = await conn.select().from(users).where(eq(users.id, id));
     if (!u) return null;
     const page = await pageOfTx(conn, "user", id);
-    const profile = [u.realname, u.about, u.website].filter(Boolean).join("\n");
+    const links = storedProfileLinks(u.profileLinks).map((l) => (l.label ? `${l.label}: ${l.url}` : l.url));
+    const profile = [u.realname, u.about, ...links].filter(Boolean).join("\n");
     return {
       authorId: u.id,
       author: u.username,

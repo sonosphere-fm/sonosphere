@@ -153,7 +153,6 @@ router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
       realname: u.realname,
       email: isAdmin(me) ? u.email : undefined,
       country: u.country,
-      website: u.website,
       about: u.about,
       image: u.imageId,
       registeredAt: u.registeredAt,
