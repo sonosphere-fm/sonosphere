@@ -73,12 +73,23 @@ export async function resolve(input: ScrobbleInput): Promise<TrackRef | null> {
 export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], source = "web"): Promise<ScrobbleResult[]> {
   const refused = (reason: string) => ({ accepted: false as const, reason });
   const checked = [];
+  const prepared = new Map<string, TrackNames | null>();
   for (const input of inputs) {
     const ts = Math.floor(Number(input.timestamp) || now());
     if (ts > now() + 3600) checked.push(refused("Timestamp is in the future"));
     else if (ts < OLDEST) checked.push(refused("Timestamp is too old"));
     else {
-      const n = await names(input);
+      const key = JSON.stringify([
+        clean(input.artist),
+        clean(input.track),
+        clean(input.album),
+        Number(input.duration) || 0,
+      ]);
+      let n = prepared.get(key);
+      if (n === undefined) {
+        n = await names(input);
+        prepared.set(key, n);
+      }
       checked.push(n ? { ...n, playedAt: ts } : refused("Artist and track are required"));
     }
   }

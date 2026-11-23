@@ -238,9 +238,18 @@ export type TrackNames = { artist: string; track: string; album?: string; durati
 /** `albumId` falls back to the album the track is already known to be on. */
 export type TrackRef = { artistId: number; trackId: number; albumId: number | null };
 
-export async function resolveTrackTx(tx: Tx, names: TrackNames): Promise<TrackRef> {
-  const artistId = await getOrCreateArtistTx(tx, names.artist);
-  const albumId = names.album ? await getOrCreateAlbumTx(tx, artistId, names.album) : null;
+export type ResolutionCache = { artists: Map<string, number>; albums: Map<string, number> };
+
+export async function resolveTrackTx(tx: Tx, names: TrackNames, cache?: ResolutionCache): Promise<TrackRef> {
+  const artistKey = norm(names.artist);
+  const artistId = cache?.artists.get(artistKey) ?? (await getOrCreateArtistTx(tx, names.artist));
+  cache?.artists.set(artistKey, artistId);
+  let albumId: number | null = null;
+  if (names.album) {
+    const albumKey = JSON.stringify([artistId, norm(names.album)]);
+    albumId = cache?.albums.get(albumKey) ?? (await getOrCreateAlbumTx(tx, artistId, names.album));
+    cache?.albums.set(albumKey, albumId);
+  }
   const trackId = await getOrCreateTrackTx(tx, artistId, names.track, names.duration ?? 0, albumId);
   if (albumId !== null) return { artistId, trackId, albumId };
   const [known] = await tx.select({ albumId: tracks.albumId }).from(tracks).where(eq(tracks.id, trackId));

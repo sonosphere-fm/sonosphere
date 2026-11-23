@@ -230,14 +230,21 @@ async function tick() {
       .set({ status: "cancelled", error: "The upload didn't finish." })
       .where(inArray(importJobs.id, ids));
   }
-  // a slice of each of the three longest-waiting imports per round, so a huge one doesn't hold up everyone else's
-  const jobs = await db
-    .select()
-    .from(importJobs)
-    .where(inArray(importJobs.status, ["queued", "running"]))
-    .orderBy(asc(importJobs.updatedAt))
-    .limit(3);
-  for (const j of jobs) await step(j);
+  // Keep successful file imports moving instead of sleeping two seconds after every slice.
+  // Reload progress/cancellation between slices; cap the round well below the lock lease.
+  const until = Date.now() + 10_000;
+  do {
+    const jobs = await db
+      .select()
+      .from(importJobs)
+      .where(inArray(importJobs.status, ["queued", "running"]))
+      .orderBy(asc(importJobs.updatedAt), asc(importJobs.id))
+      .limit(3);
+    if (!jobs.length) return;
+    for (const j of jobs) await step(j);
+    // Preserve retry pacing and Last.fm request pacing; only drain healthy local-file work.
+    if (jobs.some((j) => j.kind === "lastfm" || j.failures > 0)) return;
+  } while (Date.now() < until);
 }
 
 export function startImports() {
