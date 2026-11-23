@@ -133,7 +133,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
       try {
         const r = await api<Session>(`/auth/${login ? "login" : "signup"}`, { body: { ...f, turnstile: robot.token } });
         setMe(r.user);
-        nav(next);
+        nav(login || next !== "/" ? next : "/welcome");
       } catch (err) {
         robot.reset();
         throw err;
@@ -219,7 +219,7 @@ export function OAuthJoinPage() {
     act.run(async () => {
       const r = await api<OAuthCreated>("/auth/oauth/complete", { body: { username } });
       setMe(r.user);
-      nav(r.next);
+      nav(r.next === "/" ? "/welcome" : r.next);
     });
   };
 

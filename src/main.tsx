@@ -78,6 +78,7 @@ const Recommended = lazy(() => import("./pages/recommended").then((m) => ({ defa
 const ImportPage = lazy(() => import("./pages/import").then((m) => ({ default: m.ImportPage })));
 const ScrobblePage = lazy(() => import("./pages/scrobble").then((m) => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then((m) => ({ default: m.Connect })));
+const Welcome = lazy(() => import("./pages/welcome").then((m) => ({ default: m.Welcome })));
 const Help = lazy(() => import("./pages/help").then((m) => ({ default: m.Help })));
 const Changelog = lazy(() => import("./pages/changelog").then((m) => ({ default: m.Changelog })));
 const Developers = lazy(() => import("./pages/developers").then((m) => ({ default: m.Developers })));
@@ -639,6 +640,14 @@ function Pages() {
         element={
           <Private>
             <Connect />
+          </Private>
+        }
+      />
+      <Route
+        path="/welcome"
+        element={
+          <Private>
+            <Welcome />
           </Private>
         }
       />

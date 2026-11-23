@@ -60,6 +60,7 @@ const accountPages: Record<string, string> = {
   scrobble: TITLES.scrobble,
   import: TITLES.import,
   connect: TITLES.connect,
+  welcome: TITLES.welcome,
 };
 const artistTabs: Record<string, string> = {
   "+tracks": "tracks",
