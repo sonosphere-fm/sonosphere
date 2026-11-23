@@ -42,10 +42,12 @@ export function Username({
     link.href = `https://api.fonts.coollabs.io/css2?family=${encodeURIComponent(family).replaceAll("%20", "+")}&display=swap`;
     document.head.append(link);
   }, [family, selected]);
+  const nameEffect = user?.cosmetics?.find((c) => c.slot === "name_fx");
   return (
     <span
       {...props}
-      data-name-fx={user?.cosmetics?.find((c) => c.slot === "name_fx")?.id.replace("name.", "")}
+      data-name-fx={nameEffect?.id.replace("name.", "")}
+      data-name-palette={nameEffect?.options.color}
       style={family ? { ...style, fontFamily: `"${family}", var(--font-body, sans-serif)` } : style}
     >
       {(known === undefined || (font === undefined && user?.cosmetics === undefined)) && text ? (
@@ -71,6 +73,13 @@ export function Username({
         </>
       ) : (
         text
+      )}
+      {text && ["name.sparkle", "name.frost", "name.fire"].includes(nameEffect?.id ?? "") && (
+        <span className="cos-name-particles" aria-hidden="true">
+          {Array.from({ length: 9 }, (_, i) => (
+            <i key={i} style={{ "--particle": i } as import("react").CSSProperties} />
+          ))}
+        </span>
       )}
     </span>
   );

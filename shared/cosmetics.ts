@@ -1,11 +1,4 @@
-export const COSMETIC_SLOTS = [
-  "accessory",
-  "frame",
-  "name_fx",
-  "header_bg",
-  "page_fx",
-  "scrobble_fx",
-] as const;
+export const COSMETIC_SLOTS = ["accessory", "frame", "name_fx", "page_fx", "scrobble_fx"] as const;
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
 export type EquippedCosmetic = {
   slot: CosmeticSlot;
@@ -19,13 +12,7 @@ export type Cosmetic = {
   description: string;
   colors: string[];
 };
-const item = (
-  id: string,
-  name: string,
-  slot: CosmeticSlot,
-  colors = "",
-  description = name,
-): Cosmetic => ({
+const item = (id: string, name: string, slot: CosmeticSlot, colors = "", description = name): Cosmetic => ({
   id,
   name,
   slot,
@@ -33,12 +20,7 @@ const item = (
   colors: colors.split(",").filter(Boolean),
 });
 export const COSMETICS: Cosmetic[] = [
-  item(
-    "ears.cat",
-    "Cat Ears",
-    "accessory",
-    "black,white,orange,grey,calico,pink",
-  ),
+  item("ears.cat", "Cat Ears", "accessory", "black,white,orange,grey,calico,pink"),
   item("ears.dog", "Dog Ears", "accessory", "brown,golden,black,white,spotted"),
   item("ears.bunny", "Bunny Ears", "accessory", "white,pink,brown"),
   item("ears.fox", "Fox Ears", "accessory", "red,arctic,silver"),
@@ -55,8 +37,8 @@ export const COSMETICS: Cosmetic[] = [
     ["laurel", "Gold Laurel"],
     ["holo", "Holo Foil"],
   ].map(([id, name]) => item(`frame.${id}`, name, "frame")),
+  item("name.rainbow", "Rainbow Cycle", "name_fx", "non-pastel,pastel"),
   ...[
-    ["rainbow", "Rainbow Cycle"],
     ["glitch", "Glitch"],
     ["neon", "Neon Flicker"],
     ["wave", "Gradient Wave"],
@@ -68,16 +50,6 @@ export const COSMETICS: Cosmetic[] = [
     ["eq", "Equalizer Underline"],
     ["typewriter", "Typewriter"],
   ].map(([id, name]) => item(`name.${id}`, name, "name_fx")),
-  ...[
-    ["stars", "Twinkling Stars"],
-    ["aurora", "Aurora"],
-    ["sakura", "Sakura Petals"],
-    ["rain", "Rain on Glass"],
-    ["vapor", "Vaporwave Grid"],
-    ["crt", "CRT Scanlines"],
-    ["spectro", "Spectrogram"],
-    ["fireflies", "Fireflies"],
-  ].map(([id, name]) => item(`bg.${id}`, name, "header_bg")),
   item("fx.sparkles", "Page Sparkles", "page_fx"),
   item("fx.cursor", "Cursor Stardust", "page_fx"),
   item("fx.confetti", "Confetti Pop", "page_fx"),
