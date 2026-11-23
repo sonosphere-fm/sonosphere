@@ -14,8 +14,8 @@ function webp(input: Uint8Array, edge: number, quality: number) {
 }
 
 async function convert(input: Uint8Array) {
-  const large = await webp(input, SIZES.large, 82);
-  const small = await webp(input, SIZES.small, 78);
+  const large = stripWebpMetadata(await webp(input, SIZES.large, 82));
+  const small = stripWebpMetadata(await webp(input, SIZES.small, 78));
   const { width, height } = await new Image(large, OPTIONS).metadata();
   return {
     width,
@@ -34,3 +34,4 @@ if (import.meta.main) {
     process.stdout.write(JSON.stringify({ error: code }));
   }
 }
+import { stripWebpMetadata } from "./metadata";
