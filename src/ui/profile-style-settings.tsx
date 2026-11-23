@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { USERNAME_FONTS, type UsernameFont } from "../../shared/username-fonts";
+import type { UsernameFont } from "../../shared/username-fonts";
 import { ColorPicker } from "../colorpicker";
-import { Button, Select } from "../kit";
+import { Button } from "../kit";
 import { imageUrl, useAuth } from "../lib";
 import { imageAccents } from "./image-accent";
 import { Avatar } from "./base";
-import { FONT_PREVIEW_HEIGHT, FONT_PREVIEW_TOP, FONT_PREVIEWS } from "./font-previews";
+import { UsernameFontPicker } from "./username-font-picker";
 import { profileAccentStyle } from "./profile-accent";
 import { Username } from "./username";
 
@@ -17,22 +17,6 @@ const MODES: [Mode, string][] = [
   ["solid", "Solid accent"],
   ["gradient", "Gradient"],
 ];
-const FONT_OPTIONS = USERNAME_FONTS.map((entry): [string, string] => [entry.id, entry.label]);
-
-function FontName(id: string, label: string) {
-  const preview = FONT_PREVIEWS[id];
-  if (!preview) return label;
-  return (
-    <svg
-      className="font-preview"
-      viewBox={`0 ${FONT_PREVIEW_TOP} ${preview.width} ${FONT_PREVIEW_HEIGHT}`}
-      role="img"
-      aria-label={label}
-    >
-      <path d={preview.d} fill="currentColor" />
-    </svg>
-  );
-}
 
 function ColorField({
   label,
@@ -139,12 +123,10 @@ export function ProfileStyleSettings({
       <div className="row style-fields">
         <label>
           Username font
-          <Select
-            label="Username font"
+          <UsernameFontPicker
             value={value.usernameFont}
-            onChange={(font) => onChange({ usernameFont: font as UsernameFont })}
-            options={FONT_OPTIONS}
-            render={FontName}
+            onChange={(font) => onChange({ usernameFont: font })}
+            disabled={disabled}
           />
         </label>
         <div className="style-field">
