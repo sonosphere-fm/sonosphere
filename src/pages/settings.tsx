@@ -1391,7 +1391,9 @@ function ConfirmField({ value, onChange }: { value: string; onChange: (v: string
   }
   return (
     <label>
-      Type your username (<Username user={me!} />) to confirm
+      <span>
+        Type your username (<Username user={me!} />) to confirm
+      </span>
       <Input value={value} onChange={(e) => onChange(e.target.value)} required autoComplete="off" />
     </label>
   );
