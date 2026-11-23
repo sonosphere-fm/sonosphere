@@ -12,42 +12,12 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import * as Flags from "country-flag-icons/react/3x2";
 import { api, num } from "../lib";
 import type { EventPlace, EventPlaces } from "../../shared/events";
+import { COUNTRIES, COUNTRY_ALIASES, countryCode, countryName, countryNameOf } from "../../shared/countries";
 
 type Row = { key: string; label: string; sub?: string; count: number; icon?: ReactNode; place?: EventPlace };
 
-const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
 const FLAGS = Flags as unknown as Record<string, ComponentType<{ title?: string; className?: string }>>;
-const NOT_COUNTRIES = ["AC", "EU", "IC", "TA"];
-const COUNTRIES = Object.keys(FLAGS)
-  .filter((code) => /^[A-Z]{2}$/.test(code) && !NOT_COUNTRIES.includes(code))
-  .map((code) => ({ code, name: regionNames.of(code) ?? code }))
-  .filter((c) => c.name !== c.code);
-const ALIASES: Record<string, string> = {
-  uk: "GB",
-  "great britain": "GB",
-  england: "GB",
-  scotland: "GB",
-  wales: "GB",
-  usa: "US",
-  us: "US",
-  "united states of america": "US",
-  america: "US",
-  "south korea": "KR",
-  "north korea": "KP",
-  russia: "RU",
-  "czech republic": "CZ",
-  holland: "NL",
-};
-const byName = new Map<string, string>([
-  ...COUNTRIES.map((c) => [c.name.toLowerCase(), c.code] as const),
-  ...Object.entries(ALIASES),
-]);
-const codeOf = (name: string) => byName.get(name.trim().toLowerCase());
-const nameOf = (code: string) => COUNTRIES.find((c) => c.code === code)?.name ?? "";
-export function countryName(s: string) {
-  const c = codeOf(s);
-  return c ? nameOf(c) : "";
-}
+
 export function Flag({ code }: { code: string }) {
   const F = FLAGS[code];
   return F ? <F className="flag" /> : null;
@@ -234,27 +204,36 @@ export function PlaceInput({
   );
 }
 
-export function CountryInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function CountryInput({
+  value,
+  onChange,
+  eventCounts = true,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  eventCounts?: boolean;
+}) {
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   useEffect(() => {
+    if (!eventCounts) return;
     api<EventPlaces>("/events/places?field=country").then(
       (r) => {
         const m = new Map<string, number>();
         for (const p of r.items) {
-          const c = codeOf(p.name);
+          const c = countryCode(p.name);
           if (c) m.set(c, (m.get(c) ?? 0) + p.count);
         }
         setCounts(m);
       },
       () => {}
     );
-  }, []);
-  const code = codeOf(value);
-  const [text, setText] = useState(code ? nameOf(code) : value);
+  }, [eventCounts]);
+  const code = countryCode(value);
+  const [text, setText] = useState(code ? countryNameOf(code) : value);
   useEffect(() => {
     setText((t) => {
-      if (t && codeOf(t) === code) return t;
-      return code ? nameOf(code) : value;
+      if (t && countryCode(t) === code) return t;
+      return code ? countryNameOf(code) : value;
     });
   }, [value, code]);
   const ranked = useMemo(() => {
@@ -262,9 +241,9 @@ export function CountryInput({ value, onChange }: { value: string; onChange: (v:
     return [...COUNTRIES].sort((a, b) => events(b) - events(a) || a.name.localeCompare(b.name));
   }, [counts]);
   const q = fold(text.trim());
-  const picked = !!code && codeOf(text) === code;
+  const picked = !!code && countryCode(text) === code;
   const matches = (c: { code: string; name: string }) =>
-    fold(c.name).includes(q) || Object.entries(ALIASES).some(([a, k]) => k === c.code && a.startsWith(q));
+    fold(c.name).includes(q) || Object.entries(COUNTRY_ALIASES).some(([a, k]) => k === c.code && a.startsWith(q));
   const rows: Row[] = ranked
     .filter((c) => !q || picked || matches(c))
     .map((c) => ({ key: c.code, label: c.name, count: counts.get(c.code) ?? 0, icon: <Flag code={c.code} /> }));
@@ -278,12 +257,12 @@ export function CountryInput({ value, onChange }: { value: string; onChange: (v:
   };
   // a typed name or alias snaps to its country; anything else goes back to what was picked
   const leave = () => {
-    const c = codeOf(text);
+    const c = countryCode(text);
     if (c) {
-      setText(nameOf(c));
-      onChange(nameOf(c));
+      setText(countryNameOf(c));
+      onChange(countryNameOf(c));
     } else if (text.trim()) {
-      setText(code ? nameOf(code) : "");
+      setText(code ? countryNameOf(code) : "");
     }
   };
   return (
