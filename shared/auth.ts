@@ -29,6 +29,7 @@ export type Me = UserAppearance & {
   emailNotify: string;
   emailMuted: string[];
   theme: "light" | "system" | "dark";
+  useProfileTheme?: boolean;
   emailVerified: boolean;
   pendingEmail: string | null;
   hasPassword: boolean;

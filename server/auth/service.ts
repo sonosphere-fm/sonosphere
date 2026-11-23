@@ -40,6 +40,7 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     emailNotify: u.emailNotify,
     emailMuted: u.emailMuted.split(",").filter(Boolean),
     theme: u.theme === "dark" || u.theme === "system" ? u.theme : "light",
+    useProfileTheme: u.useProfileTheme,
     emailVerified: !!u.emailVerifiedAt,
     pendingEmail: await pendingEmail(u.id),
     hasPassword: !!u.passwordHash,

@@ -3,6 +3,7 @@ import type { ProfileLink } from "./profile-links";
 import type { UsernameFont } from "./username-fonts";
 
 export type ProfileEdit = {
+  useProfileTheme?: boolean;
   usernameFont?: UsernameFont;
   profileAccent?: string | null;
   profileAccentEnd?: string | null;

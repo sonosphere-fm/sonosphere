@@ -121,6 +121,7 @@ function ProfileSettings() {
     usernameFont: me!.usernameFont ?? "default",
     profileAccent: me!.profileAccent ?? null,
     profileAccentEnd: me!.profileAccentEnd ?? null,
+    useProfileTheme: me!.useProfileTheme ?? false,
   });
   const set = (k: "realname" | "pronouns") => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
@@ -192,6 +193,19 @@ function ProfileSettings() {
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
           <ProfileStyleSettings value={f} onChange={(style) => setF((f) => ({ ...f, ...style }))} disabled={act.busy} />
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={f.useProfileTheme}
+            disabled={act.busy}
+            className="profile-theme-check"
+            onClick={() => setF((f) => ({ ...f, useProfileTheme: !f.useProfileTheme }))}
+          >
+            <span className="profile-theme-check-box" aria-hidden="true">
+              {f.useProfileTheme && <Ico.Check />}
+            </span>
+            <span>Use my profile colors site-wide</span>
+          </button>
           <label>
             Display name
             <Input value={f.realname} onChange={set("realname")} maxLength={60} />
