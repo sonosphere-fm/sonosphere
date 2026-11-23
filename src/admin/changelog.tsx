@@ -1,10 +1,19 @@
 import { Suspense, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import type { ChangelogCommits, ChangelogPost, ChangelogSaved, ChangelogText } from "../../shared/changelog";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import type {
+  Changelog,
+  ChangelogCommits,
+  ChangelogDeleted,
+  ChangelogPost,
+  ChangelogSaved,
+  ChangelogText,
+} from "../../shared/changelog";
 import { Button, Input } from "../kit";
-import { api, invalidateAll, useApi, useTitle } from "../lib";
-import { Markdown, MdEditor } from "../md";
-import { Async, Empty, useAction } from "../ui/base";
+import { api, date, invalidateAll, qs, useApi, useAuth, useParam, useTitle } from "../lib";
+import { MdEditor } from "../md";
+import { Async, Empty, Pager, useAction } from "../ui/base";
+import { ChangelogArticle } from "../ui/changelog-post";
+import { PEOPLE, PERSON, useConfirm, useFlash } from "./common";
 
 function RecentCommits() {
   const q = useApi<ChangelogCommits>("/admin/changelog/commits");
@@ -52,6 +61,8 @@ function RecentCommits() {
 function Editor({ post }: { post?: ChangelogPost }) {
   const [text, setText] = useState<ChangelogText>(() => ({ title: post?.title ?? "", body: post?.body ?? "" }));
   const [preview, setPreview] = useState(false);
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
+  const me = useAuth().me!;
   const action = useAction();
   const nav = useNavigate();
   const save = (event: FormEvent) => {
@@ -69,7 +80,7 @@ function Editor({ post }: { post?: ChangelogPost }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_320px] gap-10 max-[1100px]:grid-cols-1">
       <form className="form min-w-0" onSubmit={save}>
-        <fieldset disabled={action.busy} className="border-0 p-0 m-0 min-w-0 grid gap-5">
+        <fieldset disabled={action.busy} className="border-0 p-0 m-0 min-w-0 self-stretch grid gap-5">
           <label>
             Title
             <Input
@@ -87,8 +98,15 @@ function Editor({ post }: { post?: ChangelogPost }) {
               </Button>
             </div>
             {preview ? (
-              <div className="min-h-[300px] border border-site-line p-4">
-                <Markdown text={text.body} images />
+              <div className="min-h-[300px] max-w-[68ch] border-t border-site-line">
+                <ChangelogArticle
+                  post={{
+                    title: text.title || "Untitled",
+                    body: text.body,
+                    author: post?.author ?? me.username,
+                    createdAt: post?.createdAt ?? now,
+                  }}
+                />
               </div>
             ) : (
               <MdEditor
@@ -107,7 +125,7 @@ function Editor({ post }: { post?: ChangelogPost }) {
             <Button type="submit" kind="btn" loading={action.busy}>
               {post ? "Save changes" : "Publish"}
             </Button>
-            <Button kind="btn ghost" href="/changelog">
+            <Button kind="btn ghost" href="/admin/changelog">
               Cancel
             </Button>
           </div>
@@ -160,6 +178,70 @@ export function ChangelogEditor() {
       ) : (
         <Editor key="new" />
       )}
+    </section>
+  );
+}
+
+export function ChangelogPosts() {
+  useTitle("Changelog posts");
+  const [page] = useParam("page", "1");
+  const q = useApi<Changelog>(`/changelog${qs({ page })}`);
+  const [modal, ask] = useConfirm();
+  const flash = useFlash();
+  const askDelete = (post: ChangelogPost) =>
+    ask({
+      title: `Delete “${post.title}”`,
+      action: "Delete post",
+      danger: true,
+      body: <p>Removes the post from the changelog. This can't be undone.</p>,
+      run: (note) =>
+        api<ChangelogDeleted>(`/admin/changelog/${post.id}/delete`, { body: { note } }).then(() => {
+          invalidateAll();
+          flash.set({ ok: true, text: `Deleted “${post.title}”.` });
+        }),
+    });
+  return (
+    <section>
+      {modal}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h2 className="m-0 text-[26px] font-site-display">Changelog posts</h2>
+        <Button kind="btn" href="/admin/changelog/new">
+          New post
+        </Button>
+      </div>
+      {flash.note}
+      <Async q={q}>
+        {(d) => (
+          <>
+            {d.items.length ? (
+              <ul className={PEOPLE}>
+                {d.items.map((post) => (
+                  <li key={post.id} className={PERSON}>
+                    <div className="grow">
+                      <Link className="strong [overflow-wrap:anywhere]" to={`/changelog#post-${post.id}`}>
+                        {post.title}
+                      </Link>
+                      <p className="m-0 text-[13px] text-site-muted">
+                        {date(post.createdAt)} · {post.author}
+                        {post.updatedAt !== post.createdAt && `, edited by ${post.editor}`}
+                      </p>
+                    </div>
+                    <Button kind="btn ghost small" href={`/admin/changelog/${post.id}/edit`}>
+                      Edit
+                    </Button>
+                    <Button kind="btn ghost small" onClick={() => askDelete(post)}>
+                      Delete
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty>No changelog posts yet.</Empty>
+            )}
+            <Pager total={d.total} limit={d.limit} />
+          </>
+        )}
+      </Async>
     </section>
   );
 }
