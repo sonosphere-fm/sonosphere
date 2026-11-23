@@ -62,6 +62,16 @@ https://sonosp.here {
 	}
 }
 
+# Plausible CE, run from /opt/plausible
+https://plausible.sonosphere.fm {
+	tls internal
+	import cloudflare
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8000 {
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+
 https://www.sonosphere.fm {
 	tls internal
 	import cloudflare
