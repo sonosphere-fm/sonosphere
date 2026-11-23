@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { USERNAME_FONTS, type UsernameFont } from "../../shared/username-fonts";
 import { ColorPicker } from "../colorpicker";
-import { Select } from "../kit";
-import { useAuth } from "../lib";
+import { Button, Select } from "../kit";
+import { imageUrl, useAuth } from "../lib";
+import { imageAccents } from "./image-accent";
 import { Avatar } from "./base";
 import { FONT_PREVIEW_HEIGHT, FONT_PREVIEW_TOP, FONT_PREVIEWS } from "./font-previews";
 import { profileAccentStyle } from "./profile-accent";
@@ -33,11 +34,59 @@ function FontName(id: string, label: string) {
   );
 }
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function ColorField({
+  label,
+  value,
+  onChange,
+  second = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  second?: boolean;
+}) {
+  const { me } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const pick = async (image: string) => {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const colors = await imageAccents(imageUrl(image));
+      onChange(colors[second ? 1 : 0]);
+    } catch {
+      setError("Could not read the picture. Try again or choose a color manually.");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="style-field">
       <span>{label}</span>
       <ColorPicker label={label} value={value} onChange={onChange} />
+      <div className="flex flex-wrap gap-3">
+        {me?.image && (
+          <Button type="button" kind="link small" disabled={busy} onClick={() => pick(me.image!)}>
+            From avatar
+          </Button>
+        )}
+        {me?.banner && (
+          <Button type="button" kind="link small" disabled={busy} onClick={() => pick(me.banner!)}>
+            From banner
+          </Button>
+        )}
+        {busy && (
+          <span className="muted small" role="status">
+            Picking color…
+          </span>
+        )}
+      </div>
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -112,7 +161,7 @@ export function ProfileStyleSettings({
       {mode !== "default" && (
         <div className="row style-fields">
           <ColorField label="Accent" value={start} onChange={setStart} />
-          {mode === "gradient" && <ColorField label="Second color" value={end} onChange={setEnd} />}
+          {mode === "gradient" && <ColorField label="Second color" value={end} onChange={setEnd} second />}
         </div>
       )}
     </fieldset>
