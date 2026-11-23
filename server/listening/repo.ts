@@ -642,30 +642,51 @@ export async function recordScrobbles(
   source: string
 ): Promise<(Scrobbled | null)[]> {
   return transactRetry(async (tx) => {
-    const out: (Scrobbled | null)[] = [];
+    const refs: TrackRef[] = [];
+    const resolved = new Map<string, TrackRef>();
+    const cache = { artists: new Map<string, number>(), albums: new Map<string, number>() };
     for (const play of plays) {
-      const ref = await resolveTrackTx(tx, play);
-      const [row] = await tx
-        .insert(scrobbles)
-        .values({
-          userId,
-          ...ref,
-          playedAt: play.playedAt,
-          source,
-          sentArtist: play.artist,
-          sentTrack: play.track,
-          sentAlbum: play.album || null,
-        })
-        .onConflictDoNothing()
-        .returning({ id: scrobbles.id });
-      if (!row) {
-        out.push(null);
-        continue;
+      // Explicit albums are stable within the transaction; album-less tracks can gain a fallback album later.
+      const key = JSON.stringify([play.artist, play.track, play.album, play.duration ?? 0]);
+      let ref = play.album ? resolved.get(key) : undefined;
+      if (!ref) {
+        ref = await resolveTrackTx(tx, play, cache);
+        if (play.album) resolved.set(key, ref);
       }
-      // a finished play ends the matching "now playing"
-      await tx.delete(playing).where(and(eq(playing.userId, userId), eq(playing.trackId, ref.trackId)));
-      out.push({ id: row.id, ...ref });
+      refs.push(ref);
     }
+    const out: (Scrobbled | null)[] = [];
+    const recorded = new Set<number>();
+    // Bound parameters and lock duration per statement while keeping the whole input transaction atomic.
+    for (let offset = 0; offset < plays.length; offset += 500) {
+      const batch = plays.slice(offset, offset + 500);
+      const rows = await tx
+        .insert(scrobbles)
+        .values(
+          batch.map((play, i) => ({
+            userId,
+            ...refs[offset + i],
+            playedAt: play.playedAt,
+            source,
+            sentArtist: play.artist,
+            sentTrack: play.track,
+            sentAlbum: play.album || null,
+          }))
+        )
+        .onConflictDoNothing()
+        .returning({ id: scrobbles.id, trackId: scrobbles.trackId, playedAt: scrobbles.playedAt });
+      const inserted = new Map(rows.map((row) => [`${row.trackId}:${row.playedAt}`, row.id]));
+      for (let i = 0; i < batch.length; i++) {
+        const ref = refs[offset + i]!;
+        const key = `${ref.trackId}:${batch[i]!.playedAt}`;
+        const id = inserted.get(key);
+        out.push(id === undefined ? null : { id, ...ref });
+        inserted.delete(key); // Only the first occurrence of a duplicate input is accepted.
+        if (id !== undefined) recorded.add(ref.trackId);
+      }
+    }
+    if (recorded.size)
+      await tx.delete(playing).where(and(eq(playing.userId, userId), inArray(playing.trackId, [...recorded])));
     return out;
   });
 }
