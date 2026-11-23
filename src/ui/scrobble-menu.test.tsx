@@ -90,10 +90,10 @@ test("row selection intercepts body and link clicks but leaves controls and now-
 
   const preventDefault = mock();
   const stopPropagation = mock();
-  const event = { button: 0, target: { closest: () => null }, preventDefault, stopPropagation };
+  const event = { button: 0, shiftKey: false, target: { closest: () => null }, preventDefault, stopPropagation };
   history.props.onClickCapture(event);
   expect(select).toHaveBeenCalledTimes(1);
-  expect(select).toHaveBeenCalledWith(row);
+  expect(select).toHaveBeenCalledWith(row, { shiftKey: false });
   expect(preventDefault).toHaveBeenCalledTimes(1);
   expect(stopPropagation).toHaveBeenCalledTimes(1);
 
@@ -101,6 +101,31 @@ test("row selection intercepts body and link clicks but leaves controls and now-
   expect(preventDefault).toHaveBeenCalledTimes(2);
   history.props.onClickCapture({ ...event, target: { closest: () => ({}) } });
   expect(select).toHaveBeenCalledTimes(1);
+});
+
+test("forwards shift to the selection handler and blocks shift text-selection on the row body", () => {
+  const select = mock();
+  const table = TrackList({ items: [row], onSelect: select });
+  const [history] = table.props.children[1].props.children;
+  const preventDefault = mock();
+  const stopPropagation = mock();
+  const shiftEvent = {
+    button: 0,
+    shiftKey: true,
+    target: { closest: () => null },
+    preventDefault,
+    stopPropagation,
+  };
+  history.props.onMouseDownCapture(shiftEvent);
+  expect(preventDefault).toHaveBeenCalledTimes(1);
+  history.props.onClickCapture(shiftEvent);
+  expect(select).toHaveBeenCalledWith(row, { shiftKey: true });
+  expect(preventDefault).toHaveBeenCalledTimes(2);
+
+  // Shift over a control is left to the control; no row-level text-selection block.
+  const onControl = { ...shiftEvent, target: { closest: (s: string) => (s.includes("input") ? {} : null) } };
+  history.props.onMouseDownCapture(onControl);
+  expect(preventDefault).toHaveBeenCalledTimes(2);
 });
 
 test("does not call timestamp actions in untimed track lists", () => {
