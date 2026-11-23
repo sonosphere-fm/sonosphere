@@ -30,18 +30,22 @@ const badge =
   "inline-flex items-center gap-1 max-w-full px-[7px] py-px " +
   "bg-[color:color-mix(in_srgb,var(--label-color)_16%,transparent)] " +
   "text-[color:color-mix(in_srgb,var(--label-color)_70%,var(--ink))] " +
-  "font-site font-semibold text-[11px] leading-[1.5] align-middle wrap-anywhere";
+  "font-site font-semibold leading-[1.5] align-middle wrap-anywhere tracking-normal";
+const sizes = { small: "text-[11px]", large: "text-[13px] sm:text-[15px] px-[9px] py-[2px] gap-[5px]" };
 
-export function UserLabelBadge({ label }: { label: UserLabel }) {
+export function UserLabelBadge({ label, large }: { label: UserLabel; large?: boolean }) {
   const Icon = icons[label.icon] ?? Star;
   return (
-    <span className={badge} style={{ "--label-color": label.color } as CSSProperties}>
-      <Icon className="flex-none" size={11} weight="fill" aria-hidden />
+    <span
+      className={`${badge} ${sizes[large ? "large" : "small"]}`}
+      style={{ "--label-color": label.color } as CSSProperties}
+    >
+      <Icon className="flex-none" size="1em" weight="fill" aria-hidden />
       <span>{label.text}</span>
     </span>
   );
 }
-function Labels({ name, all }: { name: string; all?: boolean }) {
+function Labels({ name, all, large }: { name: string; all?: boolean; large?: boolean }) {
   const { data } = useApi<LabelDirectory>("/user-labels");
   const ids = data?.users[name.toLowerCase()] ?? [];
   const labels = (all ? ids : ids.slice(0, 1))
@@ -51,12 +55,12 @@ function Labels({ name, all }: { name: string; all?: boolean }) {
   return (
     <span className="user-labels">
       {labels.map((label) => (
-        <UserLabelBadge key={label.id} label={label} />
+        <UserLabelBadge key={label.id} label={label} large={large} />
       ))}
     </span>
   );
 }
-export function UserLabels(props: { name: string; all?: boolean }) {
+export function UserLabels(props: { name: string; all?: boolean; large?: boolean }) {
   return (
     <Suspense fallback={null}>
       <Labels {...props} />

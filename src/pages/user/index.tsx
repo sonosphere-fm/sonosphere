@@ -179,10 +179,10 @@ export function UserPage({ tab }: { tab: Tab }) {
               art={<Art image={u.image} kind="user" />}
               kicker={u.followsYou ? "Follows you" : "Listener"}
               title={
-                <>
+                <span className="hero-name">
                   <Username user={u} />
-                  <UserLabels name={u.username} all />
-                </>
+                  <UserLabels name={u.username} all large />
+                </span>
               }
               sub={sub}
               stats={<ProfileStats u={u} base={base} locked={locked} />}
