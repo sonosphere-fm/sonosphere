@@ -13,6 +13,7 @@ if (!Sentry.getClient()) {
   const deployed = location.hostname === "sonosphere.fm";
   Sentry.init({
     dsn: dsn ?? (deployed ? "https://871bed67ac8e4f45ad7eaa2c78c19646@rustrak.edideaur.works/2" : undefined),
+    tunnel: dsn ? undefined : "/api/diag",
     enabled: import.meta.env?.VITE_SENTRY_DISABLED !== "1" && (deployed || !!dsn),
     environment: import.meta.env?.VITE_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
     release,
