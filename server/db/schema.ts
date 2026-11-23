@@ -66,6 +66,7 @@ export const users = pgTable("users", {
   hideRecent: boolean("hide_recent").default(false).notNull(),
   privateListening: boolean("private_listening").default(false).notNull(),
   shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),
+  showCosmetics: boolean("show_cosmetics").default(true).notNull(),
   useProfileTheme: boolean("use_profile_theme").default(false).notNull(),
   registeredAt: integer("registered_at").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
@@ -427,6 +428,53 @@ export const wikis = pgTable(
     }),
   ]
 );
+
+export const cosmetics = pgTable("cosmetics", {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  slot: text().notNull(),
+  description: text().notNull(),
+  variants: text(),
+  enabled: boolean().default(true).notNull(),
+});
+export const userCosmetics = pgTable(
+  "user_cosmetics",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    cosmeticId: text("cosmetic_id")
+      .notNull()
+      .references(() => cosmetics.id),
+    grantedAt: integer("granted_at").notNull(),
+    grantedBy: integer("granted_by").references(() => users.id, { onDelete: "set null" }),
+    note: text(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.cosmeticId] })]
+);
+export const userEquipped = pgTable(
+  "user_equipped",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    slot: text().notNull(),
+    cosmeticId: text("cosmetic_id")
+      .notNull()
+      .references(() => cosmetics.id),
+    options: text().notNull().default("{}"),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.slot] })]
+);
+export const cosmeticAudit = pgTable("cosmetic_audit", {
+  id: integer().primaryKey().generatedByDefaultAsIdentity(),
+  at: integer().notNull(),
+  adminId: integer("admin_id").references(() => users.id, { onDelete: "set null" }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  cosmeticId: text("cosmetic_id").notNull(),
+  action: text().notNull(),
+  note: text(),
+});
 
 export const shouts = pgTable(
   "shouts",

@@ -6,7 +6,7 @@ type NamedUser = UserAppearance & { username: string | null };
 
 function ResolvedUsername({ name }: { name: string }) {
   const appearance = useApi<UserAppearance>(`/user/appearance?name=${encodeURIComponent(name)}`);
-  return <Username name={name} font={appearance.data?.usernameFont ?? "default"} />;
+  return <Username user={{ username: name, ...appearance.data }} font={appearance.data?.usernameFont ?? "default"} />;
 }
 
 export function Username({
@@ -43,11 +43,32 @@ export function Username({
     document.head.append(link);
   }, [family, selected]);
   return (
-    <span {...props} style={family ? { ...style, fontFamily: `"${family}", var(--font-body, sans-serif)` } : style}>
-      {known === undefined && text ? (
+    <span
+      {...props}
+      data-name-fx={user?.cosmetics?.find((c) => c.slot === "name_fx")?.id.replace("name.", "")}
+      style={family ? { ...style, fontFamily: `"${family}", var(--font-body, sans-serif)` } : style}
+    >
+      {(known === undefined || (font === undefined && user?.cosmetics === undefined)) && text ? (
         <Suspense fallback={text}>
           <ResolvedUsername name={text} />
         </Suspense>
+      ) : user?.cosmetics?.some((c) => c.id === "name.bounce") && text ? (
+        <>
+          {Array.from(text).map((letter, i) => (
+            <span key={i} style={{ "--letter": i } as import("react").CSSProperties}>
+              {letter}
+            </span>
+          ))}
+        </>
+      ) : user?.cosmetics?.some((c) => c.id === "name.eq") ? (
+        <>
+          {text}
+          <span className="cos-eq" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((bar) => (
+              <i key={bar} style={{ "--bar-index": bar } as import("react").CSSProperties} />
+            ))}
+          </span>
+        </>
       ) : (
         text
       )}

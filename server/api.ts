@@ -1,4 +1,5 @@
 import { Router } from "./http";
+import { router as cosmetics } from "./cosmetics/routes";
 import { router as userLabels } from "./users/labels";
 import { router as account } from "./account/routes";
 import { router as usernameFont } from "./account/username-font";
@@ -40,6 +41,7 @@ import { router as adminSettings } from "./admin/settings";
 import { router as adminUsers } from "./admin/users";
 
 export const api = new Router().include(
+  cosmetics,
   userLabels,
   auth,
   oauth,

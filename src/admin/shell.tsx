@@ -11,6 +11,7 @@ import { Users, UserDetail } from "./users";
 import { Content } from "./content";
 import { Catalogue } from "./catalogue";
 import { Audit } from "./audit";
+import { CosmeticsAdmin } from "./cosmetics";
 import { SiteSettings } from "./settings";
 import { ChangelogEditor, ChangelogPosts } from "./changelog";
 
@@ -21,6 +22,7 @@ const SECTIONS: [string, string, boolean][] = [
   ["/admin/users", "Users", false],
   ["/admin/content", "Content", false],
   ["/admin/catalogue", "Catalogue", true],
+  ["/admin/cosmetics", "Cosmetics", true],
   ["/admin/changelog", "Changelog", true],
   ["/admin/audit", "Audit log", false],
   ["/admin/settings", "Site settings", true],
@@ -96,6 +98,7 @@ export function AdminPage() {
               <Route path="users/:name" element={<UserDetail />} />
               <Route path="content" element={<Content />} />
               <Route path="catalogue" element={adminOnly(<Catalogue />)} />
+              <Route path="cosmetics" element={adminOnly(<CosmeticsAdmin />)} />
               <Route path="audit" element={<Audit />} />
               <Route path="settings" element={adminOnly(<SiteSettings />)} />
               <Route path="changelog" element={adminOnly(<ChangelogPosts />)} />

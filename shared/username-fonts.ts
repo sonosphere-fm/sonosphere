@@ -64,6 +64,8 @@ export const isUsernameFont = (value: unknown): value is UsernameFont =>
 
 // Optional for cached viewers and older API consumers. Null accents use the site palette.
 export type UserAppearance = {
+  cosmetics?: import("./cosmetics").EquippedCosmetic[];
+  showCosmetics?: boolean;
   usernameFont?: UsernameFont;
   profileAccent?: string | null;
   profileAccentEnd?: string | null;

@@ -5,6 +5,7 @@ import { Pages, Select } from "../kit";
 import { Link, NavLink } from "react-router-dom";
 import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
 import { ImageWithFallback } from "./image";
+import { CosmeticAvatar } from "./cosmetics";
 
 export function Art({ image, kind = "album" }: { image?: string | null; kind?: "artist" | "album" | "user" }) {
   return (
@@ -172,7 +173,9 @@ export const Avatar = ({
 }) =>
   plain ? (
     <span className="avatar" style={{ width: size, height: size }} aria-hidden>
-      <Art image={user.image} kind="user" />
+      <CosmeticAvatar name={user.username} size={size}>
+        <Art image={user.image} kind="user" />
+      </CosmeticAvatar>
     </span>
   ) : (
     <Link
@@ -181,7 +184,9 @@ export const Avatar = ({
       style={{ width: size, height: size }}
       aria-label={user.username}
     >
-      <Art image={user.image} kind="user" />
+      <CosmeticAvatar name={user.username} size={size}>
+        <Art image={user.image} kind="user" />
+      </CosmeticAvatar>
     </Link>
   );
 
