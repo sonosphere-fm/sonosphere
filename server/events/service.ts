@@ -3,13 +3,15 @@ import { shoutCount } from "../shouts/repo";
 import { clean } from "../util";
 import * as repo from "./repo";
 import type { EventPage } from "../../shared/events";
+import { countryName } from "../../shared/countries";
 
 /** Adds the event with `creator` marked as going. Returns its id. */
 export async function addEvent(b: Body, creator: Viewer): Promise<number> {
   const title = clean(b.title, 120);
   const venue = clean(b.venue, 120);
   const city = clean(b.city, 80);
-  const country = clean(b.country, 80);
+  const givenCountry = clean(b.country, 80);
+  const country = givenCountry && (countryName(givenCountry) || bad("Pick a country from the list"));
   const startsAt = Math.floor(Number(b.startsAt));
   const given: unknown[] = Array.isArray(b.artists) ? b.artists : String(b.artists || "").split(",");
   const artists = given

@@ -1,4 +1,13 @@
-import { useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
@@ -40,6 +49,9 @@ import { ImageWithFallback } from "../ui/image";
 import { ImageCropper } from "../ui/image-cropper";
 import { UserList } from "../ui/lists";
 import { changeTheme, type ThemePref } from "../theme";
+
+// The country picker carries every flag, so it loads separately.
+const CountryInput = lazy(() => import("../ui/country").then((m) => ({ default: m.CountryInput })));
 
 const clock = (at: number) => new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -109,7 +121,7 @@ function ProfileSettings() {
     profileAccent: me!.profileAccent ?? null,
     profileAccentEnd: me!.profileAccentEnd ?? null,
   });
-  const set = (k: "realname" | "pronouns" | "country" | "website") => (e: ChangeEvent<HTMLInputElement>) =>
+  const set = (k: "realname" | "pronouns" | "website") => (e: ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.value });
 
   const upload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +202,13 @@ function ProfileSettings() {
           </label>
           <label>
             Country
-            <Input value={f.country} onChange={set("country")} maxLength={60} />
+            <Suspense fallback={<Input value={f.country} disabled />}>
+              <CountryInput
+                value={f.country}
+                onChange={(v) => setF((p) => ({ ...p, country: v }))}
+                eventCounts={false}
+              />
+            </Suspense>
           </label>
           <label>
             Website

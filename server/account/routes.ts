@@ -6,6 +6,7 @@ import { confirmed, need, poster } from "../guards";
 import { recordChange } from "./history";
 import { changeUsername, usernameStatus } from "./usernames";
 import type { UsernameStatus } from "../../shared/account";
+import { countryName } from "../../shared/countries";
 import { profileLinks } from "../../shared/profile-links";
 import { isUsernameFont } from "../../shared/username-fonts";
 import { profileColors } from "./profile-accent";
@@ -72,7 +73,12 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   const about = String(b.about ?? u.about)
     .trim()
     .slice(0, 2000);
-  const country = clean(b.country ?? u.country, 60);
+  // a country saved before the list existed stays until it's changed
+  const givenCountry = clean(b.country ?? u.country, 60);
+  const country =
+    givenCountry === u.country || !givenCountry
+      ? givenCountry
+      : countryName(givenCountry) || bad("Pick a country from the list");
   const publicChanged =
     realname !== u.realname ||
     pronouns !== u.pronouns ||
