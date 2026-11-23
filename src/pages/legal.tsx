@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTitle } from "../lib";
 
-const UPDATED = "November 21, 2026";
+const UPDATED = "November 23, 2026";
 const CONTACT = "legal@sonosphere.fm";
 const Mail = () => <a href={`mailto:${CONTACT}`}>{CONTACT}</a>;
 const D = ({ children }: { children: ReactNode }) => <b>"{children}"</b>;
@@ -1619,14 +1619,15 @@ export function Privacy() {
 
       <h2>14. International Data Transfers</h2>
       <p>
-        Sonosphere is based in, and the Service is operated from, the United States. Our service providers, which may
-        include Cloudflare, Amazon Web Services, Google and Microsoft, may store and process information in the United
-        States and other countries. If you access the Service from outside the United States, you acknowledge and agree
-        that your information will be transferred to, stored in and processed in the United States and such other
-        countries, which may have data protection laws that differ from, and may be less protective than, those of your
-        jurisdiction, and where government authorities may be able to access your information. To the extent required by
-        applicable Privacy Laws, we rely on appropriate safeguards or applicable derogations for such transfers,
-        including the necessity of the transfer for the performance of our contract with you.
+        Sonosphere is based in, and the Service is operated from, the United States. The servers that store your Account
+        and Listening Data are located in the State of California. Our service providers, which may include Cloudflare,
+        Amazon Web Services, Google and Microsoft, may store and process information in the United States and other
+        countries. If you access the Service from outside the United States, you acknowledge and agree that your
+        information will be transferred to, stored in and processed in the United States and such other countries, which
+        may have data protection laws that differ from, and may be less protective than, those of your jurisdiction, and
+        where government authorities may be able to access your information. To the extent required by applicable
+        Privacy Laws, we rely on appropriate safeguards or applicable derogations for such transfers, including the
+        necessity of the transfer for the performance of our contract with you.
       </p>
 
       <h2>15. Third-Party Services and Applications</h2>
