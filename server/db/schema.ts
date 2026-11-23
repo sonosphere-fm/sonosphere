@@ -437,6 +437,8 @@ export const shouts = pgTable(
     targetType: text("target_type").notNull(),
     targetId: integer("target_id").notNull(),
     body: text().notNull(),
+    parentId: integer("parent_id").references((): AnyPgColumn => shouts.id, { onDelete: "cascade" }),
+    deleted: boolean().default(false).notNull(),
     createdAt: integer("created_at").notNull(),
     artistRef: kindRef("target_type", "target_id", "artist", () => artists.id),
     albumRef: kindRef("target_type", "target_id", "album", () => albums.id),
@@ -448,6 +450,7 @@ export const shouts = pgTable(
   },
   (table) => [
     index("shouts_target").on(table.targetType, table.targetId, table.createdAt),
+    index("shouts_parent").on(table.parentId, table.createdAt, table.id),
     ...kindIndexes("shouts", {
       artist: table.artistRef,
       album: table.albumRef,
