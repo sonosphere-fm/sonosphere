@@ -101,6 +101,10 @@ export function Dashboard() {
                     </dd>
                     <dt>Sign-ups, 30 days</dt>
                     <dd>{num(t.newUsers30)}</dd>
+                    <dt>Emails, 30 days</dt>
+                    <dd>
+                      {num(d.mail30.sent)} sent, {num(d.mail30.opened)} seen, {num(d.mail30.clicked)} clicked the logo
+                    </dd>
                   </dl>
                 </Section>
               </aside>

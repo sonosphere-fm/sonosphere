@@ -51,6 +51,7 @@ export type Dashboard = {
   series: { scrobbles: DayCount[]; signups: DayCount[]; reports: DayCount[]; posts: DayCount[] };
   recentUsers: (PublicUser & { registeredAt: number })[];
   recentActions: AuditRow[];
+  mail30: { sent: number; opened: number; clicked: number };
 };
 
 export type StaffUserRow = UserAppearance & {

@@ -10,6 +10,7 @@ import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
 import { sendDigests } from "./notifications/email";
 import { reviewProbation } from "./trust/service";
 import { deliver } from "./mail";
+import { dropOldMailLog } from "./mail/routes";
 import { syncCorrections } from "./corrections/service";
 import { exclusive, releaseAll } from "./kv";
 import { sweepUnused } from "./images/repo";
@@ -106,6 +107,7 @@ const tidy = () => {
       dropStaleTokens(),
       sweepUnused(),
       dropExpiredEmailTokens(),
+      dropOldMailLog(),
       purgeUnverified(),
       sendDigests(),
       reviewProbation(),

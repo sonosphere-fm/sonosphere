@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { asc, eq, lte } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import { db } from "../db/client";
-import { outbox } from "../db/schema";
+import { mailLog, outbox } from "../db/schema";
 import { bump, exclusive } from "../kv";
 import { now } from "../util";
 import * as Sentry from "@sentry/bun";
@@ -37,10 +37,12 @@ const transport = smtp
   : nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "unix" });
 const DEV_DIR = join(env.DATA_DIR || "data", "mail");
 
-export type Mail = { to: string; subject: string; text: string; html: string };
+type Message = { to: string; subject: string; text: string; html: string };
+export type Mail = Message & { token: string };
 
-export async function send(m: Mail): Promise<void> {
+export async function send({ token, ...m }: Mail): Promise<void> {
   await db.insert(outbox).values({ ...m, nextAt: now(), createdAt: now() });
+  await db.insert(mailLog).values({ token, to: m.to, subject: m.subject, sentAt: now() });
   queueMicrotask(() => {
     deliver().catch((e) => {
       console.error("mail:", e);
@@ -65,7 +67,7 @@ const named = (s: string) => {
   return m && m[1] ? `${word(m[1])} <${m[2]}>` : s.trim();
 };
 
-function compose(m: Mail): string {
+function compose(m: Message): string {
   const boundary = hex(14);
   const part = (type: string, body: string) =>
     [`--${boundary}`, `Content-Type: ${type}; charset=utf-8`, "Content-Transfer-Encoding: base64", "", b64(body)].join(
@@ -87,7 +89,7 @@ function compose(m: Mail): string {
   ].join("\r\n");
 }
 
-async function sendOne(m: Mail): Promise<void> {
+async function sendOne(m: Message): Promise<void> {
   const info = await transport.sendMail({ envelope: { from: addressOf(FROM), to: [m.to] }, raw: compose(m) });
   if (smtp) return;
   await mkdir(DEV_DIR, { recursive: true });

@@ -138,6 +138,21 @@ export const outbox = pgTable(
   (t) => [index("outbox_next").on(t.nextAt)]
 );
 
+// token is in each email's logo image and link, so loading or clicking it marks the email seen
+export const mailLog = pgTable(
+  "mail_log",
+  {
+    token: text().primaryKey(),
+    to: text().notNull(),
+    subject: text().notNull(),
+    sentAt: integer("sent_at").notNull(),
+    openedAt: integer("opened_at"),
+    clickedAt: integer("clicked_at"),
+    opens: integer().default(0).notNull(),
+  },
+  (t) => [index("mail_log_sent").on(t.sentAt)]
+);
+
 export const oauthAccounts = pgTable(
   "oauth_accounts",
   {

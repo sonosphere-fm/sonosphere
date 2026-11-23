@@ -38,6 +38,8 @@ function partHtml(x: Part): string {
 // table layout and inline styles: what mail programs reliably show
 function build(to: string, subject: string, heading: string, parts: Part[], optional = false): Mail {
   const manage = `${SITE_URL}/settings/notifications`;
+  const token = crypto.randomUUID().replaceAll("-", "");
+  const tracked = `${SITE_URL}/api/mail/${token}`;
   const text = [
     heading,
     "",
@@ -55,14 +57,14 @@ function build(to: string, subject: string, heading: string, parts: Part[], opti
 <body style="margin:0;padding:0;background:${PAPER};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER}"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
-<tr><td style="background:${BLUE};padding:18px 28px"><a href="${esc(SITE_URL)}" style="color:${YELLOW};text-decoration:none;font-size:26px;font-weight:800;font-style:italic;letter-spacing:-.02em">sonosphere</a></td></tr>
+<tr><td style="background:${BLUE};padding:18px 28px"><a href="${esc(tracked)}/go" style="text-decoration:none"><img src="${esc(tracked)}/logo.png" width="208" height="32" alt="Sonosphere" style="display:block;border:0;color:${YELLOW};font-size:24px;font-weight:800;font-style:italic"></a></td></tr>
 <tr><td style="background:#ffffff;padding:32px 28px 16px">
 <h1 style="margin:0 0 20px;font-size:24px;line-height:1.25;color:${INK}">${esc(heading)}</h1>
 ${body}
 </td></tr>
 <tr><td style="padding:16px 28px;font-size:12px;line-height:1.5;color:${MUTED}">You are getting this because of an account at <a href="${esc(SITE_URL)}" style="color:${MUTED}">${siteName}</a>.${manageLink}</td></tr>
 </table></td></tr></table></body></html>`;
-  return { to, subject, text, html };
+  return { to, subject, text, html, token };
 }
 
 const link = (path: string, token: string) => `${SITE_URL}${path}?token=${token}`;
