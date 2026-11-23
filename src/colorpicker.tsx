@@ -81,8 +81,9 @@ export function ColorPicker({
   const show = () => {
     const r = trigger.current!.getBoundingClientRect();
     const up = window.innerHeight - r.bottom < 400 && r.top > 420;
-    if (window.innerWidth > 480) {
-      const left = Math.max(8, Math.min(r.left, window.innerWidth - 284)) + window.scrollX;
+    const page = document.documentElement.clientWidth;
+    if (page > 480) {
+      const left = Math.max(8, Math.min(r.left, page - 284)) + window.scrollX;
       const top = (up ? r.top - 6 : r.bottom + 6) + window.scrollY;
       setAt({ left, top, up });
     } else {
