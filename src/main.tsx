@@ -417,9 +417,11 @@ function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
       return [`/user/top${qs({ ...params, kind: p[3] })}`];
     }
     case "listening-report": {
+      const tz = -new Date().getTimezoneOffset();
+      if (p[3] === "stats") return [`/user/stats${qs({ name, offset: Number(sp.get("offset") || 0), tz })}`];
       const type = reportType(p[3]);
       const offset = Number(sp.get("offset") || reportStart(type));
-      return [`/user/report${qs({ name, type, offset, tz: -new Date().getTimezoneOffset() })}`];
+      return [`/user/report${qs({ name, type, offset, tz })}`];
     }
     case "loved":
       return [`/user/loved${qs({ name, page })}`];

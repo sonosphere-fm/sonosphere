@@ -69,6 +69,37 @@ export type Report = {
   tags: { name: string; weight: number }[];
 };
 
+export type DayCount = { date: string; count: number };
+export type ListeningStats = {
+  year: number;
+  firstYear: number;
+  today: string;
+  days: DayCount[];
+  activeDays: number;
+  longestStreak: Streak;
+  currentStreak: number;
+  topShare: number;
+};
+export type Streak = { days: number; end: string | null };
+
+const dayNumber = (date: string) => Date.parse(date) / 86400000;
+
+/** `dates` are "YYYY-MM-DD" in ascending order. `last` is the length of the run that ends on the final date. */
+export function streaks(dates: string[]): { longest: Streak; last: number } {
+  let longest: Streak = { days: 0, end: null };
+  let run = 0;
+  let prev = Number.NaN;
+  for (const d of dates) {
+    const n = dayNumber(d);
+    run = n === prev + 1 ? run + 1 : 1;
+    prev = n;
+    if (run > longest.days) longest = { days: run, end: d };
+  }
+  return { longest, last: run };
+}
+
+export const daysBetween = (from: string, to: string) => dayNumber(to) - dayNumber(from);
+
 export type ScrobbleResult =
   | { accepted: false; reason: string }
   | { accepted: true; id: number; artistId: number; trackId: number; albumId: number | null };
