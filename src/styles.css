@@ -44,40 +44,40 @@
   :root {
     --accent: light-dark(#2438d6, #5468ff);
     --accent-dark: light-dark(#1a299f, #6b7dff);
-    --accent-tint: light-dark(#ffe98a, #2a3796);
-    --accent-faint: light-dark(#ece7db, #1f2659);
+    --accent-tint: light-dark(#ffe98a, #252b42);
+    --accent-faint: light-dark(#ece7db, #202124);
     --link: light-dark(#2438d6, #ffd257);
     --now: light-dark(#ffe98a, rgba(255, 207, 51, 0.08));
     --now-hover: light-dark(#ffe066, rgba(255, 207, 51, 0.13));
     --np: light-dark(#1a299f, #ffd257);
-    --black: light-dark(#17150f, #070918);
+    --black: light-dark(#17150f, #08090b);
     --on-accent: #fff;
     --on-sun: #17150f;
-    --bar: #2438d6;
-    --bar-hover: #1a299f;
+    --bar: light-dark(#2438d6, #101114);
+    --bar-hover: light-dark(#1a299f, #242529);
     --banner: #ffcf33;
     --sun: #ffcf33;
     --sun-dark: #f2bd0e;
     --ink: light-dark(#17150f, #f3efe4);
-    --ink-2: light-dark(#45413a, #d3d0d8);
-    --muted: light-dark(#6b665c, #9da2c6);
-    --line: light-dark(#d9d2c3, #262c5e);
-    --panel: light-dark(#ece7db, #121636);
-    --bg: light-dark(#f6f2e9, #0c0f27);
-    --card: light-dark(#fffdf7, #181d45);
+    --ink-2: light-dark(#45413a, #cbc9c4);
+    --muted: light-dark(#6b665c, #9b9ca3);
+    --line: light-dark(#d9d2c3, #2a2b30);
+    --panel: light-dark(#ece7db, #141518);
+    --bg: light-dark(#f6f2e9, #0c0d10);
+    --card: light-dark(#fffdf7, #1a1b1f);
     --ok: light-dark(#1b7a3d, #6fd492);
     --bad: light-dark(#c2321f, #ff8f7d);
-    --bad-tint: light-dark(#f6d9d2, #3a1e34);
+    --bad-tint: light-dark(#f6d9d2, #301c1b);
     --inset: light-dark(rgba(40, 30, 10, 0.1), rgba(0, 0, 0, 0.45));
-    --zebra: light-dark(rgba(120, 100, 60, 0.05), rgba(140, 160, 255, 0.035));
-    --tint: light-dark(rgba(120, 100, 60, 0.12), rgba(140, 160, 255, 0.1));
-    --veil: rgba(255, 255, 255, 0.45);
-    --veil-hover: rgba(255, 255, 255, 0.7);
-    --bar-fill-hover: light-dark(#ffe066, #3d50e0);
-    --scroll: light-dark(#bdb4a2, #343c7c);
-    --scroll-thin: light-dark(#c9c1b0, #343c7c);
-    --art-none: light-dark(#e0d9ca, #1f2659);
-    --art-glyph: light-dark(#bdb5a3, #343c7c);
+    --zebra: light-dark(rgba(120, 100, 60, 0.05), rgba(255, 255, 255, 0.025));
+    --tint: light-dark(rgba(120, 100, 60, 0.12), rgba(255, 255, 255, 0.06));
+    --veil: light-dark(rgba(255, 255, 255, 0.45), rgba(12, 13, 16, 0.65));
+    --veil-hover: light-dark(rgba(255, 255, 255, 0.7), rgba(12, 13, 16, 0.85));
+    --bar-fill-hover: light-dark(#ffe066, #333a54);
+    --scroll: light-dark(#bdb4a2, #45464e);
+    --scroll-thin: light-dark(#c9c1b0, #35363d);
+    --art-none: light-dark(#e0d9ca, #222328);
+    --art-glyph: light-dark(#bdb5a3, #55565f);
     --font: "Source Sans 3 Variable", "Helvetica Neue", Arial, sans-serif;
     --display: "Radio Canada Variable", "Helvetica Neue", Arial, sans-serif;
     --mono: var(--font); /* labels and links use the body family; monospace is only for code */
@@ -4652,9 +4652,9 @@
   }
 
   :root {
-    --fill: light-dark(#e6e0d2, #1f2659);
-    --fill-hover: light-dark(#d9d2c3, #29316e);
-    --edge: light-dark(#bfb7a5, #3a4385);
+    --fill: light-dark(#e6e0d2, #232429);
+    --fill-hover: light-dark(#d9d2c3, #303137);
+    --edge: light-dark(#bfb7a5, #45464f);
   }
   .chip,
   .hero .chip,
@@ -6961,6 +6961,15 @@ html[data-profile-shell="custom"] [data-astryx-theme] {
   --color-border: var(--edge);
   color: var(--ink);
 }
+.site-header.bg-site-bar {
+  background: light-dark(#2438d6, #101114);
+}
+
+/* Keep the canvas explicit: the CSS optimizer can inline the earlier --bg value. */
+body {
+  background: light-dark(#f6f2e9, #0c0d10);
+}
+
 html[data-profile-shell="custom"] :is(.site-header, #root > footer, footer.bg-site-bar, .vplayer-bar, .vplayer-x) {
   background: var(--profile-shell-bar);
   color: #fff;
