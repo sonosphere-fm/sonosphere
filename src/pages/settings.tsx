@@ -1114,44 +1114,38 @@ function AppSettings() {
           <SpotifySettings />
         </div>
       </Section>
-      <Section title="Scrobbler apps">
-        <div className="connect-grid">
-          <div className="connect-card">
-            <h3>Last.fm-compatible apps</h3>
-            <p>
-              Pano Scrobbler and other apps with a custom server option. Sign in with your Sonosphere username and
-              password. No API account is needed.
-            </p>
-            <CopyField label="Server URL" value={`${window.location.origin}/2.0/`} />
-            <Link className="connect-more" to="/help#pano-scrobbler">
-              Setup details <Arrow />
-            </Link>
-          </div>
-          <div className="connect-card">
-            <h3>ListenBrainz apps</h3>
-            <p>Players that support ListenBrainz. Set the server URL and paste a token.</p>
-            <CopyField label="Server URL" value={window.location.origin} />
-            {token ? (
-              <div className="token-reveal">
-                <CopyField label="Your token" value={token} />
-                <p>Copy it now: it's shown only this once.</p>
-              </div>
-            ) : (
-              <>
-                {tokenRobot.view}
-                <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
-                  Create ListenBrainz token
-                </Button>
-              </>
-            )}
-            {tokenAct.note}
-            <Link className="connect-more" to="/help#listenbrainz">
-              Setup details <Arrow />
-            </Link>
-          </div>
-        </div>
-      </Section>
       <Section title="Connected applications">
+        <div className="connect-card">
+          <p>
+            Pano Scrobbler and other players with a custom Last.fm or ListenBrainz server option can scrobble here. No
+            API account is needed.
+          </p>
+          <div className="connect-method">
+            <CopyField label="Last.fm-compatible server URL" value={`${window.location.origin}/2.0/`} />
+            <span className="muted small">Sign in with your Sonosphere username and password.</span>
+          </div>
+          <div className="connect-method">
+            <CopyField label="ListenBrainz server URL" value={window.location.origin} />
+            <span className="muted small">Paste a token instead of a password.</span>
+          </div>
+          {token ? (
+            <div className="token-reveal">
+              <CopyField label="Your token" value={token} />
+              <p>Copy it now: it's shown only this once.</p>
+            </div>
+          ) : (
+            <>
+              {tokenRobot.view}
+              <Button kind="btn small" loading={tokenAct.busy} onClick={newToken}>
+                Create ListenBrainz token
+              </Button>
+            </>
+          )}
+          {tokenAct.note}
+          <Link className="connect-more" to="/help#pano-scrobbler">
+            Setup details <Arrow />
+          </Link>
+        </div>
         <Async q={q}>
           {(d) =>
             d.sessions.length ? (

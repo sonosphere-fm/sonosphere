@@ -5663,11 +5663,6 @@
   .api-app > .astryx-button {
     margin-bottom: 14px;
   }
-  .connect-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-  }
   .connect-card {
     display: flex;
     flex-direction: column;
@@ -5676,13 +5671,24 @@
     padding: 22px 24px;
     background: var(--panel);
   }
+  .connect-card {
+    margin-bottom: 16px;
+  }
   .connect-card h3 {
     margin: 0;
     font-size: 19px;
   }
   .connect-card > p {
-    margin: -6px 0 0;
+    margin: 0;
+  }
+  .connect-card > p:not(.muted) {
     color: var(--ink-2);
+  }
+  .connect-method {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-self: stretch;
   }
   .connect-more {
     display: inline-flex;
@@ -5714,6 +5720,7 @@
   .copy-value > span {
     flex: 1;
     min-width: 0;
+    font-size: 15px;
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
   }
