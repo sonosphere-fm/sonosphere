@@ -1,7 +1,7 @@
 {
 	auto_https disable_redirects
 	servers {
-		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32 127.0.0.1/8 ::1
 		client_ip_headers CF-Connecting-IP
 		timeouts {
 			idle 15m
@@ -38,14 +38,14 @@
 	}
 }
 
-# Cloudflare "Full" mode accepts Caddy's self-signed certificate
-https://sonosphere.fm {
+# Cloudflare "Full" mode accepts Caddy's self-signed certificate; cloudflared connects over plain http
+https://sonosphere.fm, http://sonosphere.fm {
 	tls internal
 	import site
 }
 
 # short links: sonosp.here/<username> and sonosp.here/<a|r|t>/<id>
-https://sonosp.here {
+https://sonosp.here, http://sonosp.here {
 	tls internal
 	import cloudflare
 	handle / {
@@ -63,7 +63,7 @@ https://sonosp.here {
 }
 
 # Plausible CE, run from /opt/plausible
-https://plausible.sonosphere.fm {
+https://plausible.sonosphere.fm, http://plausible.sonosphere.fm {
 	tls internal
 	import cloudflare
 	encode zstd gzip
@@ -72,7 +72,7 @@ https://plausible.sonosphere.fm {
 	}
 }
 
-https://www.sonosphere.fm {
+https://www.sonosphere.fm, http://www.sonosphere.fm {
 	tls internal
 	import cloudflare
 	redir https://sonosphere.fm{uri} 301
