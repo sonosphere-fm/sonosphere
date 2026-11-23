@@ -232,6 +232,13 @@
       "when": 1795382881776,
       "tag": "0032_listenbrainz",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795398422292,
+      "tag": "0033_mail_log",
+      "breakpoints": true
     }
   ]
 }
