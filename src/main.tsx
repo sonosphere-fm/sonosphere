@@ -418,7 +418,9 @@ function userTabApi(p: string[], sp: URLSearchParams, name: string): string[] {
     }
     case "listening-report": {
       const tz = -new Date().getTimezoneOffset();
-      if (p[3] === "stats") return [`/user/stats${qs({ name, offset: Number(sp.get("offset") || 0), tz })}`];
+      if (p[3] === "stats" || p[3] === "blasts") {
+        return [`/user/${p[3]}${qs({ name, offset: Number(sp.get("offset") || 0), tz })}`];
+      }
       const type = reportType(p[3]);
       const offset = Number(sp.get("offset") || reportStart(type));
       return [`/user/report${qs({ name, type, offset, tz })}`];

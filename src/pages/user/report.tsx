@@ -7,11 +7,13 @@ import { Async, Empty, Section, Stat } from "../../ui/base";
 import { BarChart } from "../../ui/charts";
 import { Grid, RankList, TrackList } from "../../ui/lists";
 import {
+  type Blasts,
   type ListeningStats,
   type Report as ListeningReport,
   type ReportType,
   reportStart,
 } from "../../../shared/listening";
+import { BlastsBody } from "./blasts";
 import { StatsBody } from "./stats";
 
 const hh = (hour: number) => String(hour).padStart(2, "0");
@@ -153,8 +155,22 @@ function Stats({ name, offset }: { name: string; offset: number }) {
   return <Async q={q}>{(s) => <StatsBody s={s} name={name} />}</Async>;
 }
 
-export function Report({ name, type }: { name: string; type: ReportType | "stats" }) {
-  const [offsetStr, setOffset] = useParam("offset", String(type === "stats" ? 0 : reportStart(type)));
+function Throwbacks({ name, offset }: { name: string; offset: number }) {
+  const q = useApi<Blasts>(`/user/blasts${qs({ name, offset, tz: -new Date().getTimezoneOffset() })}`);
+  return <Async q={q}>{(b) => <BlastsBody b={b} name={name} />}</Async>;
+}
+
+export type ReportTab = ReportType | "stats" | "blasts";
+
+function Body({ name, type, offset }: { name: string; type: ReportTab; offset: number }) {
+  if (type === "stats") return <Stats name={name} offset={offset} />;
+  if (type === "blasts") return <Throwbacks name={name} offset={offset} />;
+  return <Period name={name} type={type} offset={offset} />;
+}
+
+export function Report({ name, type }: { name: string; type: ReportTab }) {
+  const start = type === "stats" || type === "blasts" ? 0 : reportStart(type);
+  const [offsetStr, setOffset] = useParam("offset", String(start));
   const offset = Number(offsetStr);
   const base = `${userUrl(name)}/listening-report`;
   return (
@@ -173,6 +189,9 @@ export function Report({ name, type }: { name: string; type: ReportType | "stats
           <Link className={type === "stats" ? "active" : ""} to={`${base}/stats`}>
             Stats
           </Link>
+          <Link className={type === "blasts" ? "active" : ""} to={`${base}/blasts`}>
+            Blasts from the past
+          </Link>
         </nav>
         <span className="row">
           <Button kind="btn ghost small" onClick={() => setOffset(String(offset + 1))}>
@@ -183,7 +202,7 @@ export function Report({ name, type }: { name: string; type: ReportType | "stats
           </Button>
         </span>
       </div>
-      {type === "stats" ? <Stats name={name} offset={offset} /> : <Period name={name} type={type} offset={offset} />}
+      <Body name={name} type={type} offset={offset} />
     </>
   );
 }
