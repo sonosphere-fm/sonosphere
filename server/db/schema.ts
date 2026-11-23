@@ -66,6 +66,7 @@ export const users = pgTable("users", {
   hideRecent: boolean("hide_recent").default(false).notNull(),
   privateListening: boolean("private_listening").default(false).notNull(),
   shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),
+  useProfileTheme: boolean("use_profile_theme").default(false).notNull(),
   registeredAt: integer("registered_at").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   suspended: boolean().default(false).notNull(),

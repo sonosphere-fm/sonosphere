@@ -2,6 +2,7 @@ import { useLayoutEffect, type CSSProperties } from "react";
 import { useLocation } from "react-router-dom";
 import { isProfileAccent } from "../../shared/profile-accent";
 import type { UserAppearance } from "../../shared/username-fonts";
+import { useAuth } from "../lib";
 
 function luminance(hex: string) {
   const channels = [1, 3, 5].map((offset) => {
@@ -86,6 +87,45 @@ export function profileAccentStyle(user: UserAppearance): CSSProperties | undefi
   } as CSSProperties;
 }
 
+const shellPalettes = new Map<string, CSSProperties>();
+let appliedKeys: string[] = [];
+
+function applyShellPalette() {
+  const root = document.documentElement;
+  for (const key of appliedKeys) root.style.removeProperty(key);
+  const style = shellPalettes.get("profile") ?? shellPalettes.get("personal");
+  appliedKeys = style ? Object.keys(style) : [];
+  if (!style) {
+    root.removeAttribute("data-profile-shell");
+    return;
+  }
+  for (const [key, value] of Object.entries(style)) root.style.setProperty(key, String(value));
+  root.setAttribute("data-profile-shell", "custom");
+}
+
+function mountPalette(key: string, style: CSSProperties | undefined) {
+  if (style) shellPalettes.set(key, style);
+  else shellPalettes.delete(key);
+  applyShellPalette();
+  return () => {
+    shellPalettes.delete(key);
+    applyShellPalette();
+  };
+}
+
+export function PersonalShellTheme() {
+  const { me } = useAuth();
+  const id = me?.id;
+  const enabled = me?.useProfileTheme;
+  const profileAccent = me?.profileAccent;
+  const profileAccentEnd = me?.profileAccentEnd;
+  useLayoutEffect(
+    () => mountPalette("personal", enabled ? profileAccentStyle({ profileAccent, profileAccentEnd }) : undefined),
+    [id, enabled, profileAccent, profileAccentEnd]
+  );
+  return null;
+}
+
 /** Layout cleanup also runs when Suspense hides a profile during navigation. */
 export function ProfileShellTheme({ user, name }: { user: UserAppearance & { username: string }; name: string }) {
   const { pathname } = useLocation();
@@ -94,24 +134,7 @@ export function ProfileShellTheme({ user, name }: { user: UserAppearance & { use
     // useApi defers paths: never apply the previous listener's palette to a new route.
     if (user.username.toLowerCase() !== name.toLowerCase()) return;
     const style = profileAccentStyle({ profileAccent, profileAccentEnd });
-    if (!style) return;
-    const root = document.documentElement;
-    const previous = Object.keys(style).map((key) => [
-      key,
-      root.style.getPropertyValue(key),
-      root.style.getPropertyPriority(key),
-    ]);
-    const attribute = root.getAttribute("data-profile-shell");
-    for (const [key, value] of Object.entries(style)) root.style.setProperty(key, String(value));
-    root.setAttribute("data-profile-shell", "custom");
-    return () => {
-      for (const [key, value, priority] of previous) {
-        if (value) root.style.setProperty(key, value, priority);
-        else root.style.removeProperty(key);
-      }
-      if (attribute === null) root.removeAttribute("data-profile-shell");
-      else root.setAttribute("data-profile-shell", attribute);
-    };
+    return mountPalette("profile", style);
   }, [pathname, name, user.username, profileAccent, profileAccentEnd]);
   return null;
 }

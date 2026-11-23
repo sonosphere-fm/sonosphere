@@ -43,6 +43,8 @@ router.post<MeResponse>("/api/me/username/undo", async (c) => {
 router.patch<ProfileSaved>("/api/me", async (c) => {
   const u = need(c);
   const b = c.body;
+  if (b.useProfileTheme !== undefined && typeof b.useProfileTheme !== "boolean")
+    bad("Choose whether to use your profile theme");
   const usernameFont = b.usernameFont === undefined ? u.usernameFont : b.usernameFont;
   const profileAccent = b.profileAccent === undefined ? u.profileAccent : b.profileAccent;
   const profileAccentEnd = b.profileAccentEnd === undefined ? u.profileAccentEnd : b.profileAccentEnd;
@@ -107,6 +109,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   const theme =
     b.theme === undefined ? undefined : (oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme"));
   await repo.updateProfile(u.id, {
+    useProfileTheme: b.useProfileTheme === undefined ? u.useProfileTheme : (b.useProfileTheme as boolean),
     usernameFont,
     ...colors,
     realname,

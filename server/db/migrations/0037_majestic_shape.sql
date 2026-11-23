@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "use_profile_theme" boolean DEFAULT false NOT NULL;

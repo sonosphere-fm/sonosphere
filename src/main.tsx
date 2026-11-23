@@ -841,6 +841,7 @@ function App() {
       <LinkProvider component={RouteLink}>
         <AuthContext.Provider value={{ me, setMe, refresh }}>
           <BrowserRouter>
+            <PersonalShellTheme />
             <PageMetadata />
             <PlayerProvider>
               <ScrollTop />
@@ -892,3 +893,4 @@ if (stylesheet?.media === "print") {
 } else {
   mount();
 }
+import { PersonalShellTheme } from "./ui/profile-accent";
