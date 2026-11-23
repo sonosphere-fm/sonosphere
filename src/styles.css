@@ -1232,6 +1232,34 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  .templates button {
+    display: grid;
+    gap: 4px;
+    align-content: start;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--fill);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .templates button:hover:not(:disabled) {
+    background: var(--fill-hover);
+  }
+  .templates button:disabled {
+    cursor: wait;
+  }
+  .templates span {
+    color: var(--muted);
+    font-size: 13px;
+  }
   .pixels-wrap {
     overflow-x: auto;
   }

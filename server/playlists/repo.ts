@@ -84,6 +84,26 @@ export async function createPlaylist(userId: number, title: string, description:
   return row.id;
 }
 
+export async function createFilledPlaylist(
+  userId: number,
+  title: string,
+  description: string,
+  trackIds: number[]
+): Promise<number> {
+  return transact(async (tx) => {
+    const at = now();
+    const [row] = await tx
+      .insert(playlists)
+      .values({ userId, title, description, createdAt: at })
+      .returning({ id: playlists.id });
+    if (!row) throw new Error("Playlist was not saved");
+    await tx
+      .insert(playlistTracks)
+      .values(trackIds.map((trackId, i) => ({ playlistId: row.id, trackId, position: i + 1, addedAt: at })));
+    return row.id;
+  });
+}
+
 export async function updatePlaylist(id: number, title: string, description: string): Promise<void> {
   await db.update(playlists).set({ title, description }).where(eq(playlists.id, id));
 }

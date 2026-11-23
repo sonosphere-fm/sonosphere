@@ -1,10 +1,17 @@
 import { confirmed, need } from "../guards";
-import { bad, missing, Router, throttle } from "../http";
+import { bad, missing, oneOf, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
-import { requireOwn, trackToAdd } from "./service";
-import type { PlaylistCreated, PlaylistOk, PlaylistPage, UserPlaylists } from "../../shared/playlists";
+import { requireOwn, templateTracks, trackToAdd } from "./service";
+import {
+  type PlaylistCreated,
+  type PlaylistOk,
+  type PlaylistPage,
+  TEMPLATE_IDS,
+  TEMPLATES,
+  type UserPlaylists,
+} from "../../shared/playlists";
 import { wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
@@ -35,6 +42,16 @@ router.post<PlaylistCreated>("/api/playlists", async (c) => {
     .trim()
     .slice(0, 500);
   return { id: await repo.createPlaylist(u.id, title, description) };
+});
+
+router.post<PlaylistCreated>("/api/playlists/template", async (c) => {
+  const u = confirmed(need(c));
+  const template = oneOf(c.body.template, TEMPLATE_IDS) ?? bad("Unknown template");
+  const ids = await templateTracks(u.id, template);
+  if (!ids.length) bad("There isn't enough listening for this template yet");
+  await throttle(`playlist:${u.id}`, 30, 86_400, "You can make up to 30 playlists a day.");
+  const { title, blurb } = TEMPLATES[template];
+  return { id: await repo.createFilledPlaylist(u.id, title, blurb, ids) };
 });
 
 router.patch<PlaylistOk>("/api/playlist/:id", async (c) => {

@@ -12,6 +12,7 @@ import {
   inArray,
   isNotNull,
   lt,
+  max,
   min,
   ne,
   notExists,
@@ -683,6 +684,26 @@ export async function firstScrobble(userId: number): Promise<number | null> {
       .where(eq(scrobbles.userId, userId))
   );
   return row?.t ?? null;
+}
+
+/** Most played first. "after" keeps tracks first played since `since`, "before" ones not played since. */
+export async function tracksOnlyPlayed(
+  userId: number,
+  side: "after" | "before",
+  since: number,
+  limit: number
+): Promise<number[]> {
+  const edge =
+    side === "after" ? gte(min(scrobbles.playedAt), since) : and(lt(max(scrobbles.playedAt), since), gte(count(), 3));
+  const rows = await db
+    .select({ id: scrobbles.trackId })
+    .from(scrobbles)
+    .where(eq(scrobbles.userId, userId))
+    .groupBy(scrobbles.trackId)
+    .having(edge)
+    .orderBy(desc(count()))
+    .limit(limit);
+  return rows.map((r) => r.id);
 }
 
 const span = (userId: number, from: number, to: number) =>
