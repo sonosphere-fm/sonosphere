@@ -6412,6 +6412,9 @@
   .image-cropper {
     padding: 0 24px 24px;
     color: var(--ink);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
   .crop-workspace {
     position: relative;
@@ -6425,7 +6428,8 @@
   .crop-frame {
     position: relative;
     width: 100%;
-    max-width: 340px;
+    /* the dialog stops at 75dvh; the frame gives way so the controls stay in view */
+    max-width: clamp(160px, calc(75dvh - 400px), 340px);
     overflow: hidden;
     background: #232633;
     cursor: grab;
@@ -6594,6 +6598,14 @@
     }
     .crop-tools {
       margin-top: -12px;
+    }
+  }
+  @media (max-height: 760px) {
+    .crop-workspace {
+      padding: 16px 18px;
+    }
+    .crop-controls {
+      padding: 14px 0 10px;
     }
   }
   @media (prefers-reduced-motion: reduce) {
