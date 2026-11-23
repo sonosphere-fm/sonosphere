@@ -1148,7 +1148,8 @@
   .feed li.unread {
     background: var(--accent-faint);
     border-left: 3px solid var(--accent);
-    padding-left: 10px;
+    margin: 0 -13px;
+    padding-inline: 10px 13px;
   }
   .strong.inline {
     display: inline;
