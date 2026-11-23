@@ -26,3 +26,4 @@ export type ChangelogPost = {
 export type ChangelogText = { title: string; body: string };
 export type ChangelogSaved = { id: number };
 export type ChangelogCommits = { items: ChangelogEntry[] };
+export type ChangelogDeleted = { ok: true };

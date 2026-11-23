@@ -1,5 +1,13 @@
-import type { Changelog, ChangelogCommits, ChangelogPost, ChangelogSaved, ChangelogText } from "../../shared/changelog";
+import type {
+  Changelog,
+  ChangelogCommits,
+  ChangelogDeleted,
+  ChangelogPost,
+  ChangelogSaved,
+  ChangelogText,
+} from "../../shared/changelog";
 import { adminOnly } from "../guards";
+import { note } from "../admin/common";
 import { bad, fail, missing, paging, Router, throttle, type Body } from "../http";
 import { getHistory } from "./history";
 import * as repo from "./repo";
@@ -53,4 +61,11 @@ router.patch<ChangelogSaved>("/api/admin/changelog/:id", async (c) => {
   const user = adminOnly(c);
   await throttle(`changelog-write:${user.id}`, 60, 3600);
   return (await repo.savePost(c.actor ?? user, textOf(c.body), postId(c.params[0]!))) ?? missing("Changelog post");
+});
+
+router.post<ChangelogDeleted>("/api/admin/changelog/:id/delete", async (c) => {
+  const user = adminOnly(c);
+  const post = (await repo.findPost(postId(c.params[0]!))) ?? missing("Changelog post");
+  await repo.deletePost(c.actor ?? user, post, note(c));
+  return { ok: true };
 });

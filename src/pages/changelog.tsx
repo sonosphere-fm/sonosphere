@@ -1,8 +1,8 @@
 import type { Changelog as ChangelogData } from "../../shared/changelog";
 import { Button } from "../kit";
-import { date, qs, useApi, useAuth, useParam, useTitle } from "../lib";
-import { Markdown } from "../md";
+import { qs, useApi, useAuth, useParam, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
+import { ChangelogArticle } from "../ui/changelog-post";
 
 export function Changelog() {
   useTitle("Changelog");
@@ -16,9 +16,14 @@ export function Changelog() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h1 className="page-title mb-0">Changelog</h1>
           {admin && (
-            <Button kind="btn" href="/admin/changelog/new">
-              New post
-            </Button>
+            <div className="row">
+              <Button kind="btn ghost" href="/admin/changelog">
+                Manage posts
+              </Button>
+              <Button kind="btn" href="/admin/changelog/new">
+                New post
+              </Button>
+            </div>
           )}
         </div>
         {q.error ? (
@@ -35,24 +40,17 @@ export function Changelog() {
                 {data.items.length ? (
                   <div className="border-t border-site-line">
                     {data.items.map((post) => (
-                      <article key={post.id} id={`post-${post.id}`} className="border-b border-site-line py-7">
-                        <div className="flex flex-wrap items-baseline justify-between gap-3">
-                          <h2 className="m-0 text-[26px] font-site-display font-bold [overflow-wrap:anywhere]">
-                            {post.title}
-                          </h2>
-                          {admin && (
+                      <ChangelogArticle
+                        key={post.id}
+                        post={post}
+                        actions={
+                          admin && (
                             <Button kind="btn ghost small" href={`/admin/changelog/${post.id}/edit`}>
                               Edit
                             </Button>
-                          )}
-                        </div>
-                        <p className="text-[13px] text-site-muted mt-2 mb-5">
-                          <time dateTime={new Date(post.createdAt * 1000).toISOString()}>{date(post.createdAt)}</time>
-                          {" · "}
-                          <Username name={post.author} />
-                        </p>
-                        <Markdown text={post.body} images className="prose max-w-[68ch] [overflow-wrap:anywhere]" />
-                      </article>
+                          )
+                        }
+                      />
                     ))}
                   </div>
                 ) : (
@@ -67,4 +65,3 @@ export function Changelog() {
     </div>
   );
 }
-import { Username } from "../ui/username";
