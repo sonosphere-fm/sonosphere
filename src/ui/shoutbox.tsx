@@ -7,7 +7,7 @@ import { Empty, Async, useAction, Avatar } from "./base";
 import { UserLabels } from "./user-labels";
 import type { ItemType } from "../../shared/catalog";
 import type { ReportOk } from "../../shared/reports";
-import type { ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
+import type { Shout, ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
 
 const REASONS: [string, string][] = [
   ["spam", "Spam or advertising"],
@@ -126,7 +126,6 @@ export function Shoutbox({
       q.reload();
     });
   };
-  const remove = (shoutId: number) => api<ShoutDeleted>(`/shouts/${shoutId}`, { method: "DELETE" }).then(q.reload);
   let compose;
   if (q.data?.enabled === false) {
     compose = <p className="muted">This wall is turned off.</p>;
@@ -164,29 +163,15 @@ export function Shoutbox({
             {d.items.length === 0 && <Empty>{wall ? "No posts yet." : "No comments yet."} Be the first.</Empty>}
             <ul className="shouts">
               {d.items.map((s) => (
-                <li key={s.id}>
-                  <Avatar user={s.author} />
-                  <div className="grow">
-                    <div>
-                      <Link className="strong" to={userUrl(s.author.username)}>
-                        <Username user={s.author} />
-                      </Link>{" "}
-                      <UserLabels name={s.author.username} />{" "}
-                      <span className="muted small" title={dateTime(s.createdAt)}>
-                        {ago(s.createdAt)}
-                      </span>
-                    </div>
-                    <p>{s.body}</p>
-                  </div>
-                  <span className="inline-flex gap-2.5 whitespace-nowrap">
-                    {me && me.username !== s.author.username && <ReportButton type="shout" id={s.id} />}
-                    {me && (me.username === s.author.username || d.canModerate) && (
-                      <Button kind="link small" onClick={() => remove(s.id)}>
-                        Delete
-                      </Button>
-                    )}
-                  </span>
-                </li>
+                <ShoutThread
+                  key={s.id}
+                  shout={s}
+                  type={type}
+                  targetId={id}
+                  enabled={d.enabled}
+                  canModerate={d.canModerate}
+                  reload={q.reload}
+                />
               ))}
             </ul>
             {d.total > limit && (
@@ -206,3 +191,156 @@ export function Shoutbox({
   );
 }
 import { Username } from "./username";
+
+function ShoutThread({
+  shout: s,
+  type,
+  targetId,
+  enabled,
+  canModerate,
+  reload,
+  depth = 0,
+}: {
+  shout: Shout;
+  type: ItemType;
+  targetId: number;
+  enabled: boolean;
+  canModerate: boolean;
+  reload: () => void;
+  depth?: number;
+}) {
+  const { me } = useAuth();
+  const [replying, setReplying] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [text, setText] = useState("");
+  const [page, setPage] = useState(1);
+  const act = useAction();
+  const replies = useApi<ShoutList>(
+    expanded ? `/shouts${qs({ type, id: targetId, parentId: s.id, page, limit: 10 })}` : null
+  );
+  const refresh = () => {
+    reload();
+    replies.reload();
+  };
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (act.busy || !text.trim()) return;
+    act.run(async () => {
+      await api<ShoutPosted>("/shouts", { body: { type, id: targetId, parentId: s.id, body: text } });
+      setText("");
+      setReplying(false);
+      setExpanded(true);
+      setPage(1);
+      refresh();
+    });
+  };
+  return (
+    <li className="shout-thread" style={{ display: "block" }}>
+      <div className="flex gap-3 items-start min-w-0">
+        {!s.deleted && <Avatar user={s.author} />}
+        <div className="grow min-w-0">
+          {!s.deleted && (
+            <div>
+              <Link className="strong" to={userUrl(s.author.username)}>
+                <Username user={s.author} />
+              </Link>{" "}
+              <UserLabels name={s.author.username} />{" "}
+              <span className="muted small" title={dateTime(s.createdAt)}>
+                {ago(s.createdAt)}
+              </span>
+            </div>
+          )}
+          <p>{s.deleted ? <span className="muted">This post was deleted.</span> : s.body}</p>
+          <div className="flex flex-wrap gap-3">
+            {me && enabled && (
+              <Button type="button" kind="link small" onClick={() => setReplying(!replying)}>
+                Reply
+              </Button>
+            )}
+            {!s.deleted && me && me.username !== s.author.username && <ReportButton type="shout" id={s.id} />}
+            {!s.deleted && me && (me.username === s.author.username || canModerate) && (
+              <Button
+                type="button"
+                kind="link small"
+                disabled={act.busy}
+                onClick={() =>
+                  act.run(async () => {
+                    await api<ShoutDeleted>(`/shouts/${s.id}`, { method: "DELETE" });
+                    reload();
+                  })
+                }
+              >
+                Delete
+              </Button>
+            )}
+            {(s.replyCount > 0 || expanded) && (
+              <Button type="button" kind="link small" onClick={() => setExpanded(!expanded)}>
+                {expanded ? "Hide replies" : `Show replies (${s.replyCount})`}
+              </Button>
+            )}
+          </div>
+          {replying && (
+            <form className="form mt-3" onSubmit={submit}>
+              <Textarea
+                autoFocus
+                rows={2}
+                aria-label="Your reply"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                maxLength={1000}
+              />
+              <div className="flex gap-3">
+                <Button type="submit" loading={act.busy} disabled={!text.trim()}>
+                  Post reply
+                </Button>
+                <Button type="button" kind="link small" onClick={() => setReplying(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
+          {act.note}
+        </div>
+      </div>
+      {expanded && (
+        <div className={depth < 3 ? "ml-3 pl-3 border-l border-site-line mt-3" : "mt-3"}>
+          <Async q={replies}>
+            {(d) => (
+              <>
+                <ul className="shouts">
+                  {d.items.map((reply) => (
+                    <ShoutThread
+                      key={reply.id}
+                      shout={reply}
+                      type={type}
+                      targetId={targetId}
+                      enabled={d.enabled}
+                      canModerate={d.canModerate}
+                      reload={refresh}
+                      depth={depth + 1}
+                    />
+                  ))}
+                </ul>
+                {d.total > 10 && (
+                  <div className="row">
+                    <Button type="button" kind="link small" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                      Previous replies
+                    </Button>
+                    <Button
+                      type="button"
+                      kind="link small"
+                      disabled={page * 10 >= d.total}
+                      onClick={() => setPage(page + 1)}
+                    >
+                      More replies
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </Async>
+        </div>
+      )}
+    </li>
+  );
+}

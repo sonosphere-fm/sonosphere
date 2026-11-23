@@ -166,7 +166,7 @@ export async function removeContentTx(
   id: number,
   by: number
 ): Promise<Removed | GroupRemoved | null> {
-  if (type === "shout") await tx.delete(shouts).where(eq(shouts.id, id));
+  if (type === "shout") await tx.update(shouts).set({ body: "", deleted: true }).where(eq(shouts.id, id));
   else if (type === "wiki") await tx.delete(wikis).where(eq(wikis.id, id));
   else if (type === "journal") await dropJournalTx(tx, id);
   else if (type === "dm") return softDeleteTx(tx, id, by, now());

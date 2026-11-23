@@ -29,7 +29,10 @@ function Message({ n, me }: { n: Notification; me: string }) {
   if (n.type === "comment") {
     return (
       <span>
-        {actor} commented on <Link to={`${userUrl(me)}/journal/${String(n.data.journalId)}`}>{text(n.data.title)}</Link>
+        {actor} {n.data.reply ? "replied to your comment on" : "commented on"}{" "}
+        <Link to={`${userUrl(text(n.data.journalUsername) || me)}/journal/${String(n.data.journalId)}`}>
+          {text(n.data.title)}
+        </Link>
         <Quote body={text(n.data.body)} />
       </span>
     );
@@ -37,7 +40,8 @@ function Message({ n, me }: { n: Notification; me: string }) {
   if (n.type === "follow") return <span>{actor} started following you.</span>;
   return (
     <span>
-      {actor} wrote on <Link to={`${userUrl(me)}/wall`}>your wall</Link>
+      {actor} {n.data.reply ? "replied to your post on" : "wrote on"}{" "}
+      <Link to={`${userUrl(text(n.data.wallUsername) || me)}/wall`}>{n.data.reply ? "a wall" : "your wall"}</Link>
       <Quote body={text(n.data.body)} />
     </span>
   );

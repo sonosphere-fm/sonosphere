@@ -29,11 +29,16 @@ function describe(
     return { line: `${who} started following you`, url: userPage(actor ?? to.username), button: "See their profile" };
   }
   if (type === "shout") {
-    return { line: `${who} wrote on your wall`, quote, url: userPage(to.username), button: "See your wall" };
+    return {
+      line: data.reply ? `${who} replied to your wall post` : `${who} wrote on your wall`,
+      quote,
+      url: `${userPage(str(data.wallUsername) || to.username)}/wall`,
+      button: "See the wall",
+    };
   }
   if (type === "comment") {
     const title = str(data.title) || "your journal post";
-    const url = `${userPage(to.username)}/journal/${Number(data.journalId)}`;
+    const url = `${userPage(str(data.journalUsername) || to.username)}/journal/${Number(data.journalId)}`;
     return { line: `${who} commented on “${title}”`, quote, url, button: "See the comment" };
   }
   return null;

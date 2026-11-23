@@ -1,7 +1,7 @@
 import { findItem } from "../catalog/repo";
 import { pageOf } from "../moderation/repo";
 import type { Item } from "../catalog/service";
-import { bad, fail, type Viewer } from "../http";
+import { bad, fail, missing, type Viewer } from "../http";
 import { notify } from "../notifications/repo";
 import { audit } from "../site/audit";
 import { setting } from "../site/settings";
@@ -16,7 +16,7 @@ export function ownerOf(it: Item): number | null {
 
 export const wallOpen = (it: Item): boolean => it.type !== "user" || it.row.shoutsEnabled;
 
-export async function post(author: Viewer, it: Item, text: unknown): Promise<number> {
+export async function post(author: Viewer, it: Item, text: unknown, parentId: number | null = null): Promise<number> {
   const body = String(text || "").trim();
   const max = await setting("maxShoutLength");
   if (!body) bad("Write something first");
@@ -24,7 +24,11 @@ export async function post(author: Viewer, it: Item, text: unknown): Promise<num
   const owner = ownerOf(it);
   if (owner && owner !== author.id && (await blockedEither(owner, author.id))) fail(403, "You can't post here");
   if (!wallOpen(it)) fail(403, "This user has turned off their wall");
-  const id = await repo.addShout(author.id, it.type, it.row.id, body);
+  const parent = parentId === null ? null : ((await repo.findShout(parentId)) ?? missing("Post"));
+  if (parent && (parent.targetType !== it.type || parent.targetId !== it.row.id))
+    bad("Reply on the same wall as the post");
+  if (parent && (await blockedEither(parent.authorId, author.id))) fail(403, "You can't reply to this post");
+  const id = await repo.addShout(author.id, it.type, it.row.id, body, parentId);
   if (it.type === "user") await notify(it.row.id, "shout", author.id, { body: body.slice(0, 140) });
   if (it.type === "journal") {
     await notify(it.row.userId, "comment", author.id, {
@@ -32,6 +36,22 @@ export async function post(author: Viewer, it: Item, text: unknown): Promise<num
       journalId: it.row.id,
       title: it.row.title,
     });
+  }
+  if (parent && parent.authorId !== owner) {
+    if (it.type === "user")
+      await notify(parent.authorId, "shout", author.id, {
+        body: body.slice(0, 140),
+        wallUsername: it.row.username,
+        reply: true,
+      });
+    if (it.type === "journal")
+      await notify(parent.authorId, "comment", author.id, {
+        body: body.slice(0, 140),
+        journalId: it.row.id,
+        title: it.row.title,
+        journalUsername: (await findItem("user", it.row.userId))?.username,
+        reply: true,
+      });
   }
   return id;
 }
