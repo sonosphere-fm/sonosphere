@@ -11,7 +11,7 @@ function isDarkMode() {
 function currentBackground() {
   const root = document.documentElement;
   if (root.dataset.profileShell === "custom") {
-    const accent = root.style.getPropertyValue("--profile-accent").trim();
+    const accent = root.style.getPropertyValue("--profile-accent-raw").trim();
     if (accent) return accent;
   }
   return isDarkMode() ? "#101114" : "#2438d6";

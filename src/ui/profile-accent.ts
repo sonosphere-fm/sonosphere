@@ -33,14 +33,16 @@ function mix(hex: string, base: string, amount: number) {
   );
 }
 
-// Move toward black/white until text is readable on every supplied surface.
-function textTone(hex: string, dark: boolean, backgrounds: string[]) {
+// Move toward black/white until the color reaches `min` contrast on every supplied surface.
+function textTone(hex: string, dark: boolean, backgrounds: string[], min = 7) {
   for (let step = 0; step <= 100; step++) {
     const color = mix(dark ? "#ffffff" : "#000000", hex, step / 100);
-    if (backgrounds.every((background) => contrast(color, background) >= 7)) return color;
+    if (backgrounds.every((background) => contrast(color, background) >= min)) return color;
   }
   return dark ? "#ffffff" : "#000000";
 }
+
+const onColor = (hex: string) => (contrast(hex, "#000000") > contrast(hex, "#ffffff") ? "#000000" : "#ffffff");
 
 export function profileAccentStyle(user: UserAppearance): CSSProperties | undefined {
   if (!isProfileAccent(user.profileAccent)) return undefined;
@@ -52,27 +54,31 @@ export function profileAccentStyle(user: UserAppearance): CSSProperties | undefi
     `linear-gradient(110deg, light-dark(${mix(start, "#fffdf7", amount)}, ${mix(start, "#101012", darkAmount)}), light-dark(${mix(end, "#fffdf7", amount)}, ${mix(end, "#101012", darkAmount)}))`;
   const lightSurfaces = [start, end].map((color) => mix(color, "#fffdf7", 0.32));
   const darkSurfaces = [start, end].map((color) => mix(color, "#101012", 0.13));
+  // Very dark accents would vanish into the dark page, so lift them to UI contrast there.
+  const startDark = textTone(start, true, darkSurfaces, 3);
+  const endDark = textTone(end, true, darkSurfaces, 3);
   // White is readable across the entire sRGB gradient, including its middle.
   const barStart = textTone(start, false, ["#ffffff"]);
   const barEnd = textTone(end, false, ["#ffffff"]);
   // Tailwind's CSS optimizer drops all but one color-mix() custom property per rule, so mixes live here.
   const lightBg = mix(start, "#fffdf7", 0.12);
   const darkBg = mix(start, "#101012", 0.048);
-  const onBg = (color: string, amount: number) =>
-    `light-dark(${mix(color, lightBg, amount)}, ${mix(color, darkBg, amount * 0.4)})`;
+  const onBg = (light: string, dark: string, amount: number) =>
+    `light-dark(${mix(light, lightBg, amount)}, ${mix(dark, darkBg, amount * 0.4)})`;
   return {
-    "--profile-line": onBg(start, 0.25),
-    "--profile-tint": onBg(start, 0.18),
-    "--profile-faint": onBg(start, 0.08),
-    "--profile-now-hover": onBg(start, 0.23),
+    "--profile-line": onBg(start, startDark, 0.25),
+    "--profile-tint": onBg(start, startDark, 0.18),
+    "--profile-faint": onBg(start, startDark, 0.08),
+    "--profile-now-hover": onBg(start, startDark, 0.23),
     "--profile-black": mix(start, "#080808", 0.08),
     "--profile-zebra": `${start}0d`,
     "--profile-wash": `${start}1f`,
-    "--profile-chart": `linear-gradient(90deg, ${onBg(start, 0.24)}, ${onBg(end, 0.24)})`,
-    "--profile-accent": start,
-    "--profile-accent-end": end,
+    "--profile-chart": `linear-gradient(90deg, ${onBg(start, startDark, 0.24)}, ${onBg(end, endDark, 0.24)})`,
+    "--profile-accent": `light-dark(${start}, ${startDark})`,
+    "--profile-accent-raw": start,
+    "--profile-accent-end": `light-dark(${end}, ${endDark})`,
     "--profile-text": `light-dark(${textTone(start, false, lightSurfaces)}, ${textTone(start, true, darkSurfaces)})`,
-    "--profile-on-accent": contrast(start, "#000000") > contrast(start, "#ffffff") ? "#000000" : "#ffffff",
+    "--profile-on-accent": `light-dark(${onColor(start)}, ${onColor(startDark)})`,
     "--profile-bg": pair(0.12),
     "--profile-panel": pair(0.2),
     "--profile-card": pair(0.07),
