@@ -50,8 +50,8 @@ function decode(base64: string | null): Image | null {
   }
 }
 
-function setFont(ctx: Ctx, size: number) {
-  ctx.font = `${Math.max(1, size * FONT_SCALE).toFixed(2)}px "${FAMILY}", sans-serif`;
+function setFont(ctx: Ctx, size: number, weight = 400) {
+  ctx.font = `${weight} ${Math.max(1, size * FONT_SCALE).toFixed(2)}px "${FAMILY}", sans-serif`;
 }
 
 function measure(ctx: Ctx, text: string) {
@@ -100,25 +100,6 @@ function drawFitted(ctx: Ctx, image: Image, size: number, cover: boolean) {
   const dw = ratio < 1 ? size * ratio : size;
   const dh = ratio > 1 ? size / ratio : size;
   ctx.drawImage(image, (size - dw) / 2, (size - dh) / 2, dw, dh);
-}
-
-function textColorFor(ctx: Ctx, size: number): "black" | "white" {
-  const startY = Math.floor((size * 3) / 4);
-  const data = ctx.getImageData(0, startY, size, size - startY).data;
-  const pixels = data.length / 4;
-  if (!pixels) return "white";
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    r += data[i]!;
-    g += data[i + 1]!;
-    b += data[i + 2]!;
-  }
-  r /= pixels;
-  g /= pixels;
-  b /= pixels;
-  return Math.sqrt(r * r * 0.299 + g * g * 0.587 + b * b * 0.114) > 130 ? "black" : "white";
 }
 
 function dominantColor(ctx: Ctx, size: number): Rgb | null {
@@ -194,31 +175,43 @@ function rainbowSort(cells: Drawn[]): Drawn[] {
 }
 
 function addTitle(ctx: Ctx, size: number, scale: number, top: string | null, bottom: string | null) {
-  const textColor = textColorFor(ctx, size);
-  const backdrop = textColor === "black" ? "255, 255, 255" : "0, 0, 0";
-  let fontSize = 17 * scale;
-  setFont(ctx, fontSize);
-  if ((bottom && measure(ctx, bottom).width > size) || (top && measure(ctx, top).width > size)) {
-    fontSize -= 5 * scale;
-    setFont(ctx, fontSize);
-  }
-  const topBounds = top ? measure(ctx, top) : null;
-  const bottomBounds = bottom ? measure(ctx, bottom) : null;
-  const widest = Math.max(topBounds?.width ?? 0, bottomBounds?.width ?? 0);
-  const left = (size - widest) / 2 - 6 * scale;
-  const right = (size + widest) / 2 + 6 * scale;
-  const rectTop = bottom ? size - 44 * scale : size - 23 * scale;
+  const inset = 8 * scale;
+  const padX = 9 * scale;
+  const padY = 6 * scale;
+  const maxWidth = size - 2 * (inset + padX);
+  const lines = [
+    { text: top, size: 16 * scale, weight: 600 },
+    { text: bottom, size: 14 * scale, weight: 400 },
+  ]
+    .filter((line): line is { text: string; size: number; weight: number } => !!line.text)
+    .map((line) => {
+      setFont(ctx, line.size, line.weight);
+      const text = fitText(ctx, line.text, maxWidth);
+      return { ...line, text, width: ctx.measureText(text).width, height: line.size * FONT_SCALE * 1.25 };
+    });
+  if (!lines.length) return;
 
-  ctx.fillStyle = `rgba(${backdrop}, ${(140 / 255).toFixed(3)})`;
+  const boxWidth = Math.max(...lines.map((line) => line.width)) + padX * 2;
+  const boxHeight = lines.reduce((sum, line) => sum + line.height, 0) + padY * 2;
+  const left = (size - boxWidth) / 2;
+  let y = size - inset - boxHeight;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.62)";
   ctx.beginPath();
-  ctx.roundRect(left, rectTop, right - left, size - 1 - rectTop, 4 * scale);
+  ctx.roundRect(left, y, boxWidth, boxHeight, 6 * scale);
   ctx.fill();
 
-  ctx.fillStyle = textColor;
   ctx.textAlign = "center";
-  if (top && topBounds) ctx.fillText(top, size / 2, size - (bottom ? 39 : 20) * scale - topBounds.top);
-  if (bottom && bottomBounds) ctx.fillText(bottom, size / 2, size - 20 * scale - bottomBounds.top);
+  ctx.textBaseline = "middle";
+  y += padY;
+  for (const line of lines) {
+    setFont(ctx, line.size, line.weight);
+    ctx.fillStyle = line.weight > 400 ? "#ffffff" : "rgba(255, 255, 255, 0.85)";
+    ctx.fillText(line.text, size / 2, y + line.height / 2);
+    y += line.height;
+  }
   ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
 }
 
 function addFadeTitle(
@@ -261,7 +254,7 @@ function addFadeTitle(
     y -= capHeight + 7.5 * scale;
   }
   if (top) {
-    setFont(ctx, 17 * scale);
+    setFont(ctx, 17 * scale, 600);
     ctx.fillStyle = "rgb(255, 255, 255)";
     ctx.fillText(fitText(ctx, top, maxWidth), left, y);
   }
