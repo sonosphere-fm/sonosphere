@@ -97,7 +97,12 @@ function within(s: Scope, ...more: SQL[]): SQL | undefined {
 const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
 
 const artistCols = { id: artists.id, name: artists.name, image: artists.imageId };
-const albumCols = { id: albums.id, title: albums.title, image: albums.imageId, artist: artists.name };
+const albumCols = {
+  id: albums.id,
+  title: albums.title,
+  image: sql<string | null>`COALESCE(${albums.imageId}, ${artists.imageId})`,
+  artist: artists.name,
+};
 const trackCols = {
   id: tracks.id,
   title: tracks.title,
