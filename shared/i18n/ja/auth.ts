@@ -56,25 +56,6 @@ export default {
   sendNewLink: "{link}から新しいリンクを送信できます。",
   accountSettingsLink: "アカウント設定",
   confirmEmailTitle: "メールアドレスの確認",
-  welcomeTitle: "Sonosphereへようこそ、{name}さん！",
-  welcomeUsedLastfm: "Last.fmを使ったことはありますか？",
-  welcomeIntro: "Sonosphereはあなたが聴いた音楽を記録します。まずは今の状況を教えてください。",
-  welcomeHaveAccount: "はい、アカウントがあります",
-  welcomeNew: "いいえ、はじめてです",
-  welcomeBringTitle: "スクロブルを引き継ごう",
-  welcomeBringBody:
-    "Last.fmの履歴をインポートすると、そこで再生したすべての曲をもとにプロフィール、チャート、おすすめが作られます。Last.fmのアカウントはそのまま残ります。",
-  welcomeImport: "Last.fmからインポート",
-  welcomeSkip: "今はスキップ",
-  welcomeWhatTitle: "スクロブルとは？",
-  welcomeWhatBody:
-    "スクロブルとは、再生した1曲の記録です。トラック、アーティスト、聴いた日時が残ります。音楽を聴くアプリを接続すれば、再生した曲が自動でプロフィールにスクロブルされます。",
-  welcomeWhatBody2:
-    "スクロブルが貯まると、トップアーティスト、アルバム、トラックのチャートができあがり、おすすめや「似た者リスナー」（好みが最も近いリスナー）にも反映されます。",
-  welcomeNext: "次へ",
-  welcomeConnectPlayer: "プレーヤーを接続",
-  welcomeConnectBody:
-    "プレーヤーを接続すると、これから再生する曲がすべてスクロブルされます。Spotify、デスクトッププレーヤー、スマホアプリに対応しています。",
   connectTitle: "アプリケーションを接続",
   connectDone: "{app}が接続されました。",
   connectClose: "このページを閉じて、アプリケーションに戻ってください。",
