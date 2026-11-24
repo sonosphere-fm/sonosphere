@@ -94,10 +94,12 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
           <li key={f.user.username}>
             <Avatar user={f.user} />
             <div className="grow">
-              <Link className="strong" to={userUrl(f.user.username)}>
-                <Username user={f.user} />
-              </Link>{" "}
-              <UserLabels name={f.user.username} />
+              <span>
+                <Link className="strong" to={userUrl(f.user.username)}>
+                  <Username user={f.user} />
+                </Link>
+                <UserLabels name={f.user.username} />
+              </span>
               <span className="muted">
                 {tx("music.trackByArtist", {
                   track: <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link>,
