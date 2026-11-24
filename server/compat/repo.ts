@@ -1,4 +1,4 @@
-import { and, count, countDistinct, desc, eq, gt, lt, sql } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { trackImage } from "../catalog/art";
 import { db } from "../db/client";
 import { matches } from "../db/dialect";
@@ -229,6 +229,168 @@ export function chartTopTags(
     .orderBy(desc(uses))
     .limit(limit)
     .offset(offset);
+}
+
+export const tagCount = (): Promise<number> => total(db.select({ c: count() }).from(tags));
+
+export function userArtistTagCounts(userId: number, artistIds: number[]): Promise<Map<number, number>> {
+  if (!artistIds.length) return Promise.resolve(new Map());
+  return db
+    .select({ id: taggings.itemId, c: count() })
+    .from(taggings)
+    .where(and(eq(taggings.userId, userId), eq(taggings.itemType, "artist"), inArray(taggings.itemId, artistIds)))
+    .groupBy(taggings.itemId)
+    .then((rows) => new Map(rows.map((r) => [r.id, r.c])));
+}
+
+export type PersonalArtist = { name: string; image: string | null };
+export type PersonalAlbum = { title: string; image: string | null; artist: string };
+export type PersonalTrack = { title: string; image: string | null; artist: string };
+
+const taggedBy = (userId: number, tagId: number, type: string) =>
+  and(eq(taggings.userId, userId), eq(taggings.tagId, tagId), eq(taggings.itemType, type));
+
+export const personalTagCount = (userId: number, tagId: number, type: string): Promise<number> =>
+  total(
+    db
+      .select({ c: count() })
+      .from(taggings)
+      .where(taggedBy(userId, tagId, type))
+  );
+
+export function personalTagArtists(
+  userId: number,
+  tagId: number,
+  limit: number,
+  offset: number
+): Promise<PersonalArtist[]> {
+  return db
+    .select({ name: artists.name, image: artists.imageId })
+    .from(taggings)
+    .innerJoin(artists, eq(artists.id, taggings.itemId))
+    .where(taggedBy(userId, tagId, "artist"))
+    .orderBy(desc(taggings.createdAt), artists.name)
+    .limit(limit)
+    .offset(offset);
+}
+
+export function personalTagAlbums(
+  userId: number,
+  tagId: number,
+  limit: number,
+  offset: number
+): Promise<PersonalAlbum[]> {
+  return db
+    .select({ title: albums.title, image: albums.imageId, artist: artists.name })
+    .from(taggings)
+    .innerJoin(albums, eq(albums.id, taggings.itemId))
+    .innerJoin(artists, eq(artists.id, albums.artistId))
+    .where(taggedBy(userId, tagId, "album"))
+    .orderBy(desc(taggings.createdAt), albums.title)
+    .limit(limit)
+    .offset(offset);
+}
+
+export function personalTagTracks(
+  userId: number,
+  tagId: number,
+  limit: number,
+  offset: number
+): Promise<PersonalTrack[]> {
+  return db
+    .select({ title: tracks.title, image: trackImage(), artist: artists.name })
+    .from(taggings)
+    .innerJoin(tracks, eq(tracks.id, taggings.itemId))
+    .innerJoin(artists, eq(artists.id, tracks.artistId))
+    .leftJoin(albums, eq(albums.id, tracks.albumId))
+    .where(taggedBy(userId, tagId, "track"))
+    .orderBy(desc(taggings.createdAt), tracks.title)
+    .limit(limit)
+    .offset(offset);
+}
+
+export type GeoArtist = {
+  id: number;
+  name: string;
+  image: string | null;
+  playcount: number;
+  listeners: number;
+};
+export type GeoTrack = {
+  id: number;
+  title: string;
+  duration: number;
+  artist: string;
+  image: string | null;
+  playcount: number;
+  listeners: number;
+};
+
+// Plays by listeners whose profile country is the requested one.
+export async function geoTopArtists(
+  country: string,
+  limit: number,
+  offset: number
+): Promise<{ items: GeoArtist[]; total: number }> {
+  const listeners = countDistinct(userArtists.userId).as("listeners");
+  const playcount = sql<number>`SUM(${userArtists.plays})`.as("playcount");
+  const w = eq(users.country, country);
+  const items = await db
+    .select({ id: artists.id, name: artists.name, image: artists.imageId, listeners, playcount })
+    .from(userArtists)
+    .innerJoin(artists, eq(artists.id, userArtists.artistId))
+    .innerJoin(users, eq(users.id, userArtists.userId))
+    .where(w)
+    .groupBy(artists.id)
+    .orderBy(desc(listeners), desc(playcount), artists.name)
+    .limit(limit)
+    .offset(offset);
+  const all = await total(
+    db
+      .select({ c: countDistinct(userArtists.artistId) })
+      .from(userArtists)
+      .innerJoin(users, eq(users.id, userArtists.userId))
+      .where(w)
+  );
+  return { items, total: all };
+}
+
+export async function geoTopTracks(
+  country: string,
+  limit: number,
+  offset: number
+): Promise<{ items: GeoTrack[]; total: number }> {
+  const listeners = countDistinct(userTracks.userId).as("listeners");
+  const playcount = sql<number>`SUM(${userTracks.plays})`.as("playcount");
+  const w = eq(users.country, country);
+  const items = await db
+    .select({
+      id: tracks.id,
+      title: tracks.title,
+      duration: tracks.duration,
+      artist: artists.name,
+      image: trackImage(),
+      listeners,
+      playcount,
+    })
+    .from(userTracks)
+    .innerJoin(tracks, eq(tracks.id, userTracks.trackId))
+    .innerJoin(artists, eq(artists.id, tracks.artistId))
+    .leftJoin(albums, eq(albums.id, tracks.albumId))
+    .innerJoin(users, eq(users.id, userTracks.userId))
+    .where(w)
+    .groupBy(tracks.id, artists.id, albums.id)
+    .orderBy(desc(listeners), desc(playcount), tracks.title)
+    .limit(limit)
+    .offset(offset);
+  const all = await total(
+    db
+      .select({ c: countDistinct(userTracks.trackId) })
+      .from(userTracks)
+      .innerJoin(users, eq(users.id, userTracks.userId))
+      .where(w)
+  );
+  return { items, total: all };
 }
 
 // Desktop sign-in tokens are valid for an hour; app sessions expire after a year idle.

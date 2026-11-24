@@ -1,18 +1,19 @@
 import { createHash } from "node:crypto";
 import { findAlbum, findArtist, findItem, findTag, findTrack, hasLoved } from "../catalog/repo";
-import { mbidOfAlbum, mbidOfArtist } from "../corrections/service";
+import { correct, mbidOfAlbum, mbidOfArtist } from "../corrections/service";
 import { range } from "../listening/period";
 import { counts, nowPlaying, recent, setLoved, top } from "../listening/repo";
 import { resolve, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { similarArtists, similarTracks } from "../recommend/service";
 import { confirmed } from "../guards";
 import { fail as refuse, limit } from "../http";
-import { addTags, removeTag, taggerCount, taggingCount, topTags } from "../tags/repo";
+import { addTags, myTags, relatedTags, removeTag, taggerCount, taggingCount, topTags } from "../tags/repo";
 import { namesFrom } from "../tags/service";
 import { limit as trustLimit } from "../trust/service";
 import { findById, findByName, followingCount, lovedCount, type User } from "../users/repo";
 import { like, now, norm, rid } from "../util";
 import { latestWiki } from "../wiki/repo";
+import { countryName } from "../../shared/countries";
 import * as repo from "./repo";
 
 export class ApiError extends Error {
@@ -44,10 +45,14 @@ function text(v: unknown): string {
 // Numbers match the stored key with the same digits.
 const key = (v: unknown): string => (typeof v === "number" && v ? String(v) : text(v));
 
-function page(p: Params, def = 50): Page {
-  const limit = Math.min(1000, Math.max(1, Number(p.limit) || def));
+function page(p: Params, def = 50, max = 1000): Page {
+  const limit = Math.min(max, Math.max(1, Number(p.limit) || def));
   const pg = Math.max(1, Number(p.page) || 1);
   return { limit, page: pg, offset: (pg - 1) * limit };
+}
+
+function chartLimit(p: Params): number {
+  return Math.min(1000, Math.max(1, Number(p.limit) || 50));
 }
 
 function period(p: Params, name: unknown = p.period): [number, number] {
@@ -222,6 +227,55 @@ async function tagMutation(c: Call, type: string, id: number, remove: boolean): 
 
 function searchResults(query: unknown, matches: Reply) {
   return { ...matches, "@attr": { for: query || "" } };
+}
+
+const WEEK = 7 * 86400;
+// Last.fm's weekly charts begin on 13 February 2005 at 12:00 UTC.
+const FIRST_WEEK = 1108296000;
+
+function lastWeekEnd(at = now()): number {
+  const d = new Date(at * 1000);
+  const sinceMonday = (d.getUTCDay() + 6) % 7;
+  const noon = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12) / 1000 - sinceMonday * 86400;
+  return noon > at ? noon - WEEK : noon;
+}
+
+function weekRange(p: Params): [number, number] {
+  if (p.from !== undefined && p.to !== undefined) {
+    const from = Number(p.from);
+    const to = Number(p.to);
+    if (Number.isFinite(from) && Number.isFinite(to) && from < to) return [from, to];
+  }
+  const end = lastWeekEnd();
+  return [end - WEEK, end];
+}
+
+function weeks(): Reply[] {
+  const end = lastWeekEnd();
+  const chart: Reply[] = [];
+  for (let from = FIRST_WEEK; from + WEEK <= end; from += WEEK) {
+    chart.push({ "#text": "", from: String(from), to: String(from + WEEK) });
+  }
+  return chart;
+}
+
+function countryOf(p: Params): string {
+  const raw = text(p.country);
+  if (!raw) fail(6, "country param required");
+  return countryName(raw) || fail(6, "country param invalid");
+}
+
+async function tagUser(c: Call): Promise<number> {
+  if (c.p.user) return (await userOf(c.p.user)).id;
+  if (c.p.sk) return session(c);
+  return fail(6, "Invalid parameters - Your request is missing a required parameter");
+}
+
+// The tags one person applied to an artist, album or track.
+async function itemTags(c: Call, type: string, id: number, attrs: Record<string, string>): Promise<Reply> {
+  const uid = await tagUser(c);
+  const names = [...(await myTags(uid, type, id))].sort((a, b) => a.localeCompare(b));
+  return { tags: { tag: names.map((name) => ({ name, url: tagUrl(c, name) })), "@attr": attrs } };
 }
 
 // One scrobble as artist/track/..., or a batch as artist[0]/track[0]/... up to 50.
@@ -423,7 +477,107 @@ const methods: Record<string, Method> = {
     const rows = (await tagsOpen(c, u)) ? await repo.userTopTags(u.id, c.pg.limit) : [];
     return { toptags: { tag: rows.map((t) => ({ name: t.name, count: String(t.count), url: tagUrl(c, t.name) })) } };
   },
+  "user.getpersonaltags": async (c) => {
+    const u = await userOf(c.p.user);
+    const g = await tagOf(c.p);
+    const type = text(c.p.taggingtype).toLowerCase();
+    if (type !== "artist" && type !== "album" && type !== "track")
+      fail(6, "Invalid parameters - Your request is missing a required parameter");
+    const total = await repo.personalTagCount(u.id, g.id, type);
+    const attributes = attr({ user: u.username, tag: g.name }, c.pg, total);
+    if (type === "artist") {
+      const rows = await repo.personalTagArtists(u.id, g.id, c.pg.limit, c.pg.offset);
+      const artist = rows.map((a) => ({
+        name: a.name,
+        mbid: "",
+        url: artistUrl(c, a.name),
+        streamable: "0",
+        image: img(a.image, c.origin),
+      }));
+      return { taggings: { artists: { artist }, "@attr": attributes } };
+    }
+    if (type === "album") {
+      const rows = await repo.personalTagAlbums(u.id, g.id, c.pg.limit, c.pg.offset);
+      const album = rows.map((a) => ({
+        name: a.title,
+        artist: { name: a.artist, mbid: "", url: artistUrl(c, a.artist) },
+        mbid: "",
+        url: albumUrl(c, a.artist, a.title),
+        image: img(a.image, c.origin),
+      }));
+      return { taggings: { albums: { album }, "@attr": attributes } };
+    }
+    const rows = await repo.personalTagTracks(u.id, g.id, c.pg.limit, c.pg.offset);
+    const track = rows.map((t) => ({
+      name: t.title,
+      artist: { name: t.artist, mbid: "", url: artistUrl(c, t.artist) },
+      mbid: "",
+      url: trackUrl(c, t.artist, t.title),
+      streamable: "0",
+      image: img(t.image, c.origin),
+    }));
+    return { taggings: { tracks: { track }, "@attr": attributes } };
+  },
+  "user.getweeklyartistchart": async (c) => {
+    const u = await userOf(c.p.user);
+    const [from, to] = weekRange(c.p);
+    const r = shut(u) ?? (await top("artists", { userId: u.id, from, to }, chartLimit(c.p), 0));
+    const artist = r.items.map((a, i) => ({
+      "@attr": { rank: String(i + 1) },
+      name: a.name,
+      mbid: mbidOfArtist(a.name),
+      playcount: String(a.playcount),
+      url: artistUrl(c, a.name),
+    }));
+    return { weeklyartistchart: { artist, "@attr": { user: u.username, from: String(from), to: String(to) } } };
+  },
+  "user.getweeklyalbumchart": async (c) => {
+    const u = await userOf(c.p.user);
+    const [from, to] = weekRange(c.p);
+    const r = shut(u) ?? (await top("albums", { userId: u.id, from, to }, chartLimit(c.p), 0));
+    const album = r.items.map((a, i) => ({
+      artist: { "#text": a.artist, mbid: mbidOfArtist(a.artist) },
+      "@attr": { rank: String(i + 1) },
+      mbid: mbidOfAlbum(a.artist, a.title),
+      playcount: String(a.playcount),
+      name: a.title,
+      url: albumUrl(c, a.artist, a.title),
+    }));
+    return { weeklyalbumchart: { album, "@attr": { user: u.username, from: String(from), to: String(to) } } };
+  },
+  "user.getweeklytrackchart": async (c) => {
+    const u = await userOf(c.p.user);
+    const [from, to] = weekRange(c.p);
+    const r = shut(u) ?? (await top("tracks", { userId: u.id, from, to }, chartLimit(c.p), 0));
+    const track = r.items.map((t, i) => ({
+      artist: { "#text": t.artist, mbid: mbidOfArtist(t.artist) },
+      "@attr": { rank: String(i + 1) },
+      mbid: "",
+      url: trackUrl(c, t.artist, t.title),
+      image: img(t.image, c.origin),
+      name: t.title,
+      playcount: String(t.playcount),
+    }));
+    return { weeklytrackchart: { track, "@attr": { user: u.username, from: String(from), to: String(to) } } };
+  },
+  "user.getweeklychartlist": async (c) => {
+    const user = text(c.p.user);
+    return { weeklychartlist: { chart: weeks(), "@attr": user ? { user } : {} } };
+  },
 
+  "artist.getcorrection": async (c) => {
+    const name = text(c.p.artist) || fail(6, "Invalid parameters - Your request is missing a required parameter");
+    const fixed = correct(name, "").artist;
+    if (norm(fixed) === norm(name)) return { corrections: "" };
+    return {
+      corrections: {
+        correction: {
+          artist: { name: fixed, mbid: mbidOfArtist(fixed), url: artistUrl(c, fixed) },
+          "@attr": { index: "0" },
+        },
+      },
+    };
+  },
   "artist.getinfo": async (c) => {
     const me = c.p.sk ? await session(c) : undefined;
     const a = await artistOf(c.p);
@@ -478,6 +632,10 @@ const methods: Record<string, Method> = {
     const a = await artistOf(c.p);
     return { toptags: { ...(await tagsShape(c, "artist", a.id)), "@attr": { artist: a.name } } };
   },
+  "artist.gettags": async (c) => {
+    const a = await artistOf(c.p);
+    return itemTags(c, "artist", a.id, { artist: a.name });
+  },
   "artist.search": async (c) => {
     const pattern = searchFor(c.p.artist);
     const rows = await repo.searchArtists(pattern, c.pg.limit, c.pg.offset);
@@ -522,6 +680,10 @@ const methods: Record<string, Method> = {
     const al = await albumOf(c.p);
     return { toptags: { ...(await tagsShape(c, "album", al.id)), "@attr": { artist: al.artist, album: al.title } } };
   },
+  "album.gettags": async (c) => {
+    const al = await albumOf(c.p);
+    return itemTags(c, "album", al.id, { artist: al.artist, album: al.title });
+  },
   "album.search": async (c) => {
     const pattern = searchFor(c.p.album);
     const rows = await repo.searchAlbums(pattern, c.pg.limit, c.pg.offset);
@@ -539,6 +701,31 @@ const methods: Record<string, Method> = {
     };
   },
 
+  "track.getcorrection": async (c) => {
+    const artist = text(c.p.artist) || fail(6, "Invalid parameters - Your request is missing a required parameter");
+    const title = text(c.p.track) || fail(6, "Invalid parameters - Your request is missing a required parameter");
+    const fixed = correct(artist, title);
+    const found = await findTrack(fixed.artist, fixed.track);
+    const attr = {
+      index: "0",
+      artistcorrected: norm(fixed.artist) === norm(artist) ? "0" : "1",
+      trackcorrected: norm(fixed.track) === norm(title) ? "0" : "1",
+    };
+    if (!found) return { corrections: { correction: { track: { url: "", artist: { url: "" } }, "@attr": attr } } };
+    return {
+      corrections: {
+        correction: {
+          track: {
+            name: found.title,
+            mbid: "",
+            url: trackUrl(c, found.artist, found.title),
+            artist: { name: found.artist, mbid: mbidOfArtist(found.artist), url: artistUrl(c, found.artist) },
+          },
+          "@attr": attr,
+        },
+      },
+    };
+  },
   "track.getinfo": async (c) => {
     const me = c.p.sk ? await session(c) : undefined;
     const t = await trackOf(c.p);
@@ -579,6 +766,10 @@ const methods: Record<string, Method> = {
     const t = await trackOf(c.p);
     return { toptags: { ...(await tagsShape(c, "track", t.id)), "@attr": { artist: t.artist, track: t.title } } };
   },
+  "track.gettags": async (c) => {
+    const t = await trackOf(c.p);
+    return itemTags(c, "track", t.id, { artist: t.artist, track: t.title });
+  },
   "track.search": async (c) => {
     const pattern = searchFor(c.p.track);
     const artist = c.p.artist ? norm(text(c.p.artist)) : null;
@@ -606,6 +797,29 @@ const methods: Record<string, Method> = {
       },
     };
   },
+  "tag.gettoptags": async () => {
+    const rows = await repo.chartTopTags(50, 0);
+    return {
+      toptags: {
+        tag: rows.map((t) => ({ name: t.name, count: t.taggings, reach: t.reach })),
+        "@attr": { offset: 0, num_res: rows.length, total: await repo.tagCount() },
+      },
+    };
+  },
+  "tag.getsimilar": async (c) => {
+    const g = await tagOf(c.p);
+    const rows = await relatedTags(g.id, 50);
+    return {
+      similartags: {
+        tag: rows.map((t) => ({ name: t.name, url: tagUrl(c, t.name), streamable: "1" })),
+        "@attr": { tag: g.name },
+      },
+    };
+  },
+  "tag.getweeklychartlist": async (c) => {
+    const tag = text(c.p.tag) || fail(6, "Invalid parameters - Your request is missing a required parameter");
+    return { weeklychartlist: { chart: weeks(), "@attr": { tag } } };
+  },
   "tag.gettopartists": async (c) => {
     const g = await tagOf(c.p);
     const rows = await repo.tagTopArtists(g.id, c.pg.limit, c.pg.offset);
@@ -623,6 +837,41 @@ const methods: Record<string, Method> = {
     const artistIds = await repo.taggedArtistIds(g.id);
     const r = await top("albums", { artistIds, global: true }, c.pg.limit, c.pg.offset);
     return { albums: { album: ranked(r.items.map(albumShape(c)), c.pg), "@attr": { tag: g.name } } };
+  },
+  "geo.gettopartists": async (c) => {
+    const country = countryOf(c.p);
+    const r = await repo.geoTopArtists(country, c.pg.limit, c.pg.offset);
+    const artist = r.items.map((a) => ({ ...artistShape(c)(a), streamable: "0" }));
+    return { topartists: { artist, "@attr": attr({ country }, c.pg, r.total) } };
+  },
+  "geo.gettoptracks": async (c) => {
+    const country = countryOf(c.p);
+    const r = await repo.geoTopTracks(country, c.pg.limit, c.pg.offset);
+    const track = r.items.map((t, i) => ({
+      ...trackShape(c)(t),
+      streamable: { "#text": "0", fulltrack: "0" },
+      "@attr": { rank: String(c.pg.offset + i) },
+    }));
+    return { tracks: { track, "@attr": attr({ country }, c.pg, r.total) } };
+  },
+  "library.getartists": async (c) => {
+    const u = await userOf(c.p.user);
+    const from = Number(c.p.from);
+    const to = Number(c.p.to);
+    const ranged =
+      c.p.from !== undefined && c.p.to !== undefined && Number.isFinite(from) && Number.isFinite(to) && from < to;
+    const scope = ranged ? { userId: u.id, from, to } : { userId: u.id };
+    const r = shut(u) ?? (await top("artists", scope, c.pg.limit, c.pg.offset));
+    const counts = await repo.userArtistTagCounts(
+      u.id,
+      r.items.map((a) => a.id)
+    );
+    const artist = r.items.map((a) => ({
+      ...artistShape(c)(a),
+      streamable: "0",
+      tagcount: String(counts.get(a.id) ?? 0),
+    }));
+    return { artists: { artist, "@attr": attr({ user: u.username }, c.pg, r.total) } };
   },
   "chart.gettopartists": async (c) => {
     const r = await top("artists", { global: true }, c.pg.limit, c.pg.offset);
@@ -651,5 +900,5 @@ export async function call(p: Params, origin: string): Promise<Reply> {
   const name = String(p.method || "").toLowerCase();
   const method = Object.hasOwn(methods, name) ? methods[name] : undefined;
   if (!method) fail(3, "Invalid Method - No method with that name in this package");
-  return method({ p, origin, app, pg: page(p) });
+  return method({ p, origin, app, pg: page(p, 50, name === "library.getartists" ? 2000 : 1000) });
 }
