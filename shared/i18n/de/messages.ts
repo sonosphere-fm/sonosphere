@@ -98,6 +98,7 @@ export default {
     "{name} folgt dir nicht, daher kommt deine Nachricht als Anfrage an. Bis zu einer Antwort kannst du bis zu 3 Nachrichten ohne Links senden.",
   sayHello: "Sag {name} Hallo.",
   someone: "Jemand",
+  hudInGroup: "{name} in {group}",
   notifyComment: "{actor} hat {title} kommentiert",
   notifyCommentReply: "{actor} hat auf deinen Kommentar zu {title} geantwortet",
   notifyFollow: "{actor} folgt dir jetzt.",

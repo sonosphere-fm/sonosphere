@@ -116,6 +116,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     hideRecent: !!(b.hideRecent ?? u.hideRecent),
     privateListening: !!(b.privateListening ?? u.privateListening),
     shoutsEnabled: !!(b.shoutsEnabled ?? u.shoutsEnabled),
+    notifyPopups: !!(b.notifyPopups ?? u.notifyPopups),
     ...(dmPolicy && { dmPolicy }),
     // a digest starts counting from when it was picked, so the first one doesn't cover everything before
     ...(emailNotify && { emailNotify, ...(emailNotify !== u.emailNotify && { digestAt: now() }) }),

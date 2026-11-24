@@ -16,6 +16,7 @@ export type ProfileEdit = {
   hideRecent?: boolean;
   privateListening?: boolean;
   shoutsEnabled?: boolean;
+  notifyPopups?: boolean;
   dmPolicy?: string;
   emailNotify?: string;
   emailMuted?: string[];

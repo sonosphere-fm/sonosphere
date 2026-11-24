@@ -94,6 +94,7 @@ export default {
     "{name} আপনাকে অনুসরণ করেন না, তাই আপনার বার্তা অনুরোধ হিসেবে পৌঁছাবে। তারা উত্তর না দেওয়া পর্যন্ত আপনি লিংক ছাড়া সর্বোচ্চ ৩টি বার্তা পাঠাতে পারবেন।",
   sayHello: "{name}-কে হ্যালো বলুন।",
   someone: "কেউ",
+  hudInGroup: "{group}-এ {name}",
   notifyComment: "{actor} {title}-এ মন্তব্য করেছেন",
   notifyCommentReply: "{actor} {title}-এ আপনার মন্তব্যের উত্তর দিয়েছেন",
   notifyFollow: "{actor} আপনাকে অনুসরণ করা শুরু করেছেন।",

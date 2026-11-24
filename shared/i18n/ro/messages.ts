@@ -105,6 +105,7 @@ export default {
     "{name} nu te urmărește, așa că mesajul tău va ajunge ca cerere. Poți trimite până la 3 mesaje, fără linkuri, până îți răspunde.",
   sayHello: "Salută-l pe {name}.",
   someone: "Cineva",
+  hudInGroup: "{name} în {group}",
   notifyComment: "{actor} a comentat la {title}",
   notifyCommentReply: "{actor} a răspuns la comentariul tău de la {title}",
   notifyFollow: "{actor} a început să te urmărească.",

@@ -2,26 +2,12 @@ import { need } from "../guards";
 import { Router } from "../http";
 import * as repo from "./repo";
 import type { Notifications, NotificationsRead } from "../../shared/notifications";
-import { userAppearance } from "../users/appearance";
 
 export const router = new Router();
 
-function details(json: string): Record<string, unknown> {
-  const v: unknown = JSON.parse(json);
-  return typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
-}
-
 router.get<Notifications>("/api/notifications", async (c) => {
   const rows = await repo.latestFor(need(c).id);
-  const items = rows.map((n) => ({
-    id: n.id,
-    type: n.type,
-    data: details(n.data),
-    read: n.read,
-    createdAt: n.createdAt,
-    actor: { ...userAppearance(n), username: n.username, image: n.image },
-  }));
-  return { items };
+  return { items: rows.map(repo.shape) };
 });
 
 router.post<NotificationsRead>("/api/notifications/read", async (c) => {

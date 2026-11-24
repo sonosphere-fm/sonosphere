@@ -108,6 +108,7 @@ export default {
     "{name} не підписаний на тебе, тож твоє повідомлення надійде як запит. Поки немає відповіді, можна надіслати до 3 повідомлень без посилань.",
   sayHello: "Привітайся з {name}.",
   someone: "Хтось",
+  hudInGroup: "{name} у {group}",
   notifyComment: "{actor} прокоментував {title}",
   notifyCommentReply: "{actor} відповів на твій коментар до {title}",
   notifyFollow: "{actor} підписався на тебе.",

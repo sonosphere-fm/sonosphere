@@ -16,6 +16,7 @@ type ProfileFields = Partial<
     | "hideRecent"
     | "privateListening"
     | "shoutsEnabled"
+    | "notifyPopups"
     | "dmPolicy"
     | "emailNotify"
     | "emailMuted"

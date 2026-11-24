@@ -1,62 +1,9 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ago, api, useApi, useAuth, userUrl, useTitle } from "../lib";
-import type { Notification, Notifications, NotificationsRead } from "../../shared/notifications";
+import { ago, api, useApi, useAuth, useTitle } from "../lib";
+import type { Notifications, NotificationsRead } from "../../shared/notifications";
 import { Async, Avatar, Empty } from "../ui/base";
-import { UserLabels } from "../ui/user-labels";
-import { t, tx } from "../i18n";
-
-// `data` is free-form JSON, so anything that isn't a string reads as empty.
-const text = (v: unknown) => (typeof v === "string" ? v : "");
-
-function Quote({ body }: { body: string }) {
-  if (!body) return null;
-  return (
-    <>
-      : <span className="muted">“{body}”</span>
-    </>
-  );
-}
-
-function Message({ n, me }: { n: Notification; me: string }) {
-  const actor = (
-    <>
-      <Link className="strong inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
-        <Username user={n.actor} name={n.actor.username || t("messages.someone")} />
-      </Link>
-      {n.actor.username && <UserLabels name={n.actor.username} />}
-    </>
-  );
-  if (n.type === "comment") {
-    return (
-      <span>
-        {tx(n.data.reply ? "messages.notifyCommentReply" : "messages.notifyComment", {
-          actor,
-          title: (
-            <Link to={`${userUrl(text(n.data.journalUsername) || me)}/journal/${String(n.data.journalId)}`}>
-              {text(n.data.title)}
-            </Link>
-          ),
-        })}
-        <Quote body={text(n.data.body)} />
-      </span>
-    );
-  }
-  if (n.type === "follow") return <span>{tx("messages.notifyFollow", { actor })}</span>;
-  return (
-    <span>
-      {tx(n.data.reply ? "messages.notifyWallReply" : "messages.notifyWall", {
-        actor,
-        wall: (
-          <Link to={`${userUrl(text(n.data.wallUsername) || me)}/wall`}>
-            {n.data.reply ? t("messages.aWall") : t("messages.yourWall")}
-          </Link>
-        ),
-      })}
-      <Quote body={text(n.data.body)} />
-    </span>
-  );
-}
+import { NoticeText } from "../ui/notice";
+import { t } from "../i18n";
 
 export function Inbox() {
   const q = useApi<Notifications>("/notifications");
@@ -84,7 +31,7 @@ export function Inbox() {
                     <span className="avatar" />
                   )}
                   <div className="grow">
-                    <Message n={n} me={me!.username} />
+                    <NoticeText n={n} me={me!.username} />
                   </div>
                   <span className="muted small nowrap">{ago(n.createdAt)}</span>
                 </li>
@@ -98,4 +45,3 @@ export function Inbox() {
     </div>
   );
 }
-import { Username } from "../ui/username";

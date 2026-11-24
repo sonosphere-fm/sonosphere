@@ -101,6 +101,7 @@ export default {
     "{name} tev neseko, tāpēc tava ziņa pienāks kā pieprasījums. Līdz atbildei vari nosūtīt līdz 3 ziņām bez saitēm.",
   sayHello: "Sasveicinies ar {name}.",
   someone: "Kāds",
+  hudInGroup: "{name} grupā {group}",
   notifyComment: "{actor} komentēja {title}",
   notifyCommentReply: "{actor} atbildēja uz tavu komentāru pie {title}",
   notifyFollow: "{actor} sāka tev sekot.",

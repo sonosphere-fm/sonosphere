@@ -68,6 +68,7 @@ export const users = pgTable("users", {
   shoutsEnabled: boolean("shouts_enabled").default(true).notNull(),
   showCosmetics: boolean("show_cosmetics").default(true).notNull(),
   useProfileTheme: boolean("use_profile_theme").default(false).notNull(),
+  notifyPopups: boolean("notify_popups").default(true).notNull(),
   registeredAt: integer("registered_at").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   suspended: boolean().default(false).notNull(),

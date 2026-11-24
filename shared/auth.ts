@@ -19,6 +19,7 @@ export type Me = UserAppearance & {
   hideRecent: boolean;
   privateListening: boolean;
   shoutsEnabled: boolean;
+  notifyPopups: boolean;
   registeredAt: number;
   admin: boolean;
   role: Role;

@@ -30,6 +30,7 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     hideRecent: u.hideRecent,
     privateListening: u.privateListening,
     shoutsEnabled: u.shoutsEnabled,
+    notifyPopups: u.notifyPopups,
     registeredAt: u.registeredAt,
     admin: u.isAdmin,
     role: roleOf(u),

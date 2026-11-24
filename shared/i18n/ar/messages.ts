@@ -116,6 +116,7 @@ export default {
   requestIntro: "{name} لا يتابعك، لذا ستصل رسالتك كطلب. يمكنك إرسال حتى 3 رسائل، دون روابط، حتى يرد.",
   sayHello: "قل مرحبًا لـ {name}.",
   someone: "شخص ما",
+  hudInGroup: "{name} في {group}",
   notifyComment: "علّق {actor} على {title}",
   notifyCommentReply: "ردّ {actor} على تعليقك على {title}",
   notifyFollow: "بدأ {actor} متابعتك.",

@@ -93,6 +93,7 @@ export default {
     "{name}এ আপোনাক অনুসৰণ নকৰে, সেয়ে আপোনাৰ বাৰ্তা অনুৰোধ হিচাপে যাব। তেওঁলোকে উত্তৰ নিদিয়ালৈকে আপুনি লিংক নোহোৱাকৈ সৰ্বাধিক 3টা বাৰ্তা পঠিয়াব পাৰে।",
   sayHello: "{name}ক নমস্কাৰ জনাওক।",
   someone: "কোনোবা",
+  hudInGroup: "{group}ত {name}",
   notifyComment: "{actor}এ {title}ত মন্তব্য কৰিলে",
   notifyCommentReply: "{actor}এ {title}ত আপোনাৰ মন্তব্যৰ উত্তৰ দিলে",
   notifyFollow: "{actor}এ আপোনাক অনুসৰণ কৰিবলৈ আৰম্ভ কৰিলে।",

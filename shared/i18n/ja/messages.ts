@@ -95,6 +95,7 @@ export default {
     "{name}はあなたをフォローしていないため、メッセージはリクエストとして届きます。返信があるまで、リンクなしのメッセージを3件まで送れます。",
   sayHello: "{name}にあいさつしましょう。",
   someone: "誰か",
+  hudInGroup: "{group}の{name}",
   notifyComment: "{actor}が{title}にコメントしました",
   notifyCommentReply: "{actor}が{title}でのあなたのコメントに返信しました",
   notifyFollow: "{actor}があなたをフォローしました。",

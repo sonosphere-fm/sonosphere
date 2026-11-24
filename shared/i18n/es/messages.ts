@@ -97,6 +97,7 @@ export default {
     "{name} no te sigue, así que tu mensaje le llegará como solicitud. Puedes enviar hasta 3 mensajes, sin enlaces, hasta que responda.",
   sayHello: "Saluda a {name}.",
   someone: "Alguien",
+  hudInGroup: "{name} en {group}",
   notifyComment: "{actor} comentó en {title}",
   notifyCommentReply: "{actor} respondió a tu comentario en {title}",
   notifyFollow: "{actor} empezó a seguirte.",

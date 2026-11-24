@@ -323,6 +323,13 @@
       "when": 1795558536949,
       "tag": "0045_foamy_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1795563663348,
+      "tag": "0046_dry_eternals",
+      "breakpoints": true
     }
   ]
 }

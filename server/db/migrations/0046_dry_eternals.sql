@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "notify_popups" boolean DEFAULT true NOT NULL;

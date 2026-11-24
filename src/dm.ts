@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { mutate, type LiveEvent } from "./lib";
 import type {
   DmGroup,
@@ -106,4 +107,10 @@ export function applyDmEvent(e: LiveEvent | LocalChange) {
     }));
     updateLists((t) => (t.id === threadId ? { ...t, seen: Math.max(t.seen, seen) } : t));
   }
+}
+
+export function groupName(g: DmGroup, myId: number) {
+  if (g.title) return g.title;
+  const others = g.members.filter((m) => m.id !== myId).map((m) => m.username);
+  return others.length ? others.join(", ") : t("messages.justYou");
 }

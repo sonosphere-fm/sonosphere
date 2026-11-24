@@ -97,6 +97,7 @@ export default {
     "{name} ne te suit pas, ton message arrivera donc sous forme de demande. Tu peux envoyer jusqu'à 3 messages, sans lien, jusqu'à sa réponse.",
   sayHello: "Dis bonjour à {name}.",
   someone: "Quelqu'un",
+  hudInGroup: "{name} dans {group}",
   notifyComment: "{actor} a commenté {title}",
   notifyCommentReply: "{actor} a répondu à ton commentaire sur {title}",
   notifyFollow: "{actor} a commencé à te suivre.",

@@ -92,6 +92,7 @@ export default {
     "{name} మిమ్మల్ని ఫాలో అవ్వడం లేదు, కాబట్టి మీ సందేశం అభ్యర్థనగా చేరుతుంది. వారు జవాబిచ్చే వరకు మీరు లింక్‌లు లేకుండా 3 సందేశాల వరకు పంపవచ్చు.",
   sayHello: "{name}కి హలో చెప్పండి.",
   someone: "ఎవరో",
+  hudInGroup: "{group}లో {name}",
   notifyComment: "{actor} {title}పై వ్యాఖ్యానించారు",
   notifyCommentReply: "{title}పై మీ వ్యాఖ్యకు {actor} జవాబిచ్చారు",
   notifyFollow: "{actor} మిమ్మల్ని ఫాలో అవ్వడం ప్రారంభించారు.",
