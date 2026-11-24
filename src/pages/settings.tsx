@@ -12,7 +12,6 @@ import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
 import { ProfileLinkIcon } from "../ui/profile-link-icon";
-import { PROFILE_LINK_ICONS, type ProfileLinkIcon as ProfileLinkIconName } from "../../shared/profile-links";
 import { ProfileStyleSettings } from "../ui/profile-style-settings";
 import { Username } from "../ui/username";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -260,22 +259,6 @@ function ProfileSettings() {
             <legend className="field-label mb-2">Profile links</legend>
             {f.links.map((link, index) => (
               <div key={index} className="grid gap-2 border-b border-site-line pb-3">
-                <div className="flex items-center gap-3">
-                  <ProfileLinkIcon icon={link.icon} />
-                  <Select
-                    label={`Link ${index + 1} icon`}
-                    value={link.icon ?? "link"}
-                    options={PROFILE_LINK_ICONS.map(([id, label]) => [id, label])}
-                    onChange={(icon) =>
-                      setF((f) => ({
-                        ...f,
-                        links: f.links.map((item, i) =>
-                          i === index ? { ...item, icon: icon as ProfileLinkIconName } : item
-                        ),
-                      }))
-                    }
-                  />
-                </div>
                 <div className="grid gap-2 min-w-0">
                   <label>
                     Label
@@ -291,7 +274,10 @@ function ProfileSettings() {
                     />
                   </label>
                   <label>
-                    URL
+                    <span className="inline-flex items-center gap-2">
+                      URL
+                      <ProfileLinkIcon url={link.url} />
+                    </span>
                     <Input
                       type="url"
                       required

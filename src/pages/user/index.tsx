@@ -376,7 +376,7 @@ function About({ u }: { u: Profile }) {
                   rel="nofollow noopener noreferrer"
                   target="_blank"
                 >
-                  <ProfileLinkIcon icon={link.icon} />
+                  <ProfileLinkIcon url={link.url} />
                   {link.label || link.url.replace(/^https?:\/\//, "")}
                 </a>
               </li>

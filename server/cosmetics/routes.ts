@@ -68,12 +68,11 @@ router.patch<CosmeticsState>("/api/me/cosmetics", async (c) => {
 });
 router.get("/api/admin/cosmetics", async (c) => {
   adminOnly(c);
-  const name = c.q.get("name");
-  const user = name ? ((await findByName(name)) ?? missing("User")) : null;
+  const user = (await findByName(c.q.get("name") ?? "")) ?? missing("User");
   return {
     catalog: COSMETICS,
-    user: user ? { id: user.id, username: user.username } : null,
-    state: user ? await state(user.id) : null,
+    user: { id: user.id, username: user.username },
+    state: await state(user.id),
   };
 });
 router.post("/api/admin/cosmetics", async (c) => {
