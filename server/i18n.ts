@@ -11,6 +11,18 @@ import pl from "../shared/i18n/pl/server";
 import ru from "../shared/i18n/ru/server";
 import it from "../shared/i18n/it/server";
 import indonesian from "../shared/i18n/id/server";
+import hindi from "../shared/i18n/hi/server";
+import bengali from "../shared/i18n/bn/server";
+import marathi from "../shared/i18n/mr/server";
+import telugu from "../shared/i18n/te/server";
+import tamil from "../shared/i18n/ta/server";
+import gujarati from "../shared/i18n/gu/server";
+import urdu from "../shared/i18n/ur/server";
+import kannada from "../shared/i18n/kn/server";
+import malayalam from "../shared/i18n/ml/server";
+import punjabi from "../shared/i18n/pa/server";
+import odia from "../shared/i18n/or/server";
+import assamese from "../shared/i18n/as/server";
 import turkish from "../shared/i18n/tr/server";
 import sv from "../shared/i18n/sv/server";
 import uk from "../shared/i18n/uk/server";
@@ -43,6 +55,18 @@ const CATALOGS: Record<Locale, Catalog<typeof en>> = {
   ru,
   it,
   id: indonesian,
+  hi: hindi,
+  bn: bengali,
+  mr: marathi,
+  te: telugu,
+  ta: tamil,
+  gu: gujarati,
+  ur: urdu,
+  kn: kannada,
+  ml: malayalam,
+  pa: punjabi,
+  or: odia,
+  as: assamese,
   tr: turkish,
   sv,
   uk,

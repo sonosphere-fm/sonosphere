@@ -12,6 +12,18 @@ export const LOCALES = [
   "ru",
   "it",
   "id",
+  "hi",
+  "bn",
+  "mr",
+  "te",
+  "ta",
+  "gu",
+  "ur",
+  "kn",
+  "ml",
+  "pa",
+  "or",
+  "as",
   "tr",
   "sv",
   "uk",
@@ -35,6 +47,18 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   ru: "Русский",
   it: "Italiano",
   id: "Bahasa Indonesia",
+  hi: "हिन्दी",
+  bn: "বাংলা",
+  mr: "मराठी",
+  te: "తెలుగు",
+  ta: "தமிழ்",
+  gu: "ગુજરાતી",
+  ur: "اردو",
+  kn: "ಕನ್ನಡ",
+  ml: "മലയാളം",
+  pa: "ਪੰਜਾਬੀ",
+  or: "ଓଡ଼ିଆ",
+  as: "অসমীয়া",
   tr: "Türkçe",
   sv: "Svenska",
   uk: "Українська",
@@ -43,7 +67,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   "zh-Hans": "简体中文",
   "zh-Hant": "繁體中文",
 };
-export const RTL: ReadonlySet<Locale> = new Set(["he", "ar"]);
+export const RTL: ReadonlySet<Locale> = new Set(["he", "ar", "ur"]);
 export const isLocale = (v: unknown): v is Locale => LOCALES.includes(v as Locale);
 
 export type Plural = Partial<Record<Intl.LDMLPluralRule, string>> & { other: string };
