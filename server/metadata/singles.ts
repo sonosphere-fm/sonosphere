@@ -2,8 +2,9 @@ import { catRow, describe, merge, type Actor } from "../admin/catalogue.repo";
 import { exclusive } from "../kv";
 import * as repo from "./repo";
 import * as src from "./sources";
+import { AUTOMATIC_ACTOR } from "../../shared/admin";
 
-const AUTOMATIC: Actor = { id: null, username: "Automatic" };
+const AUTOMATIC: Actor = { id: null, username: AUTOMATIC_ACTOR };
 
 async function typeAlbums() {
   const rows = await repo.untypedAlbums(src.mbLocal() ? 500 : 5);

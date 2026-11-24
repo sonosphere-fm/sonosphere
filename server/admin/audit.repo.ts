@@ -1,12 +1,13 @@
-import { and, asc, count, eq, like as likeOp, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, like as likeOp, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { db } from "../db/client";
 import { auditLog } from "../db/schema";
 import { like } from "../util";
 import { auditRows, auditSubject } from "../site/repo";
-import type { AuditRow } from "../../shared/admin";
+import { AUTOMATIC_ACTOR, type AuditRow } from "../../shared/admin";
 
 // Empty strings mean "any". `action` is an exact action ("user.ban") or a group ("user").
-export type AuditFilter = { actor: string; action: string; subject: string; term: string };
+// Automatic entries are left out unless `automatic` is set or an actor is picked.
+export type AuditFilter = { actor: string; action: string; subject: string; term: string; automatic: boolean };
 
 const contains = (column: AnyColumn, term: string) => sql`${column} LIKE ${like(term)} ESCAPE '\\'`;
 
@@ -21,6 +22,7 @@ function where(f: AuditFilter): SQL | undefined {
   );
   return and(
     f.actor ? sql`lower(${auditLog.actorName}) = ${f.actor.toLowerCase()}` : undefined,
+    f.automatic || f.actor ? undefined : ne(auditLog.actorName, AUTOMATIC_ACTOR),
     action,
     f.subject ? bySubject : undefined,
     f.term ? or(contains(auditLog.targetLabel, f.term), contains(auditLog.note, f.term)) : undefined
