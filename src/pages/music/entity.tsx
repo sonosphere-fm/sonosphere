@@ -1,6 +1,7 @@
 import { Ico } from "../../icons";
 import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { t } from "../../i18n";
 import { artistUrl, date, imageUrl, num, short, trackUrl, useApi, useAuth } from "../../lib";
 import { Art, Avatar, Section } from "../../ui/base";
 import { ImageWithFallback } from "../../ui/image";
@@ -101,7 +102,7 @@ export function YourScrobbles({ count, to }: { count: number; to?: string }) {
     <div className="yours">
       <Avatar user={me} size={34} />
       <div>
-        <span>Your scrobbles</span>
+        <span>{t("music.yourScrobbles")}</span>
         {count && to ? <Link to={to}>{num(count)}</Link> : <b>{num(count)}</b>}
       </div>
     </div>
@@ -134,13 +135,13 @@ const BY_ARTIST =
 
 export function ByArtist({ name, image }: { name: string; image?: string | null }) {
   return (
-    <Section title="Artist">
+    <Section title={t("music.artist")}>
       <Link className={BY_ARTIST} to={artistUrl(name)}>
         <Art image={image} kind="artist" />
         <span>
           <strong className="text-[18px] group-hover:underline">{name}</strong>
           <span className="text-[14px] text-site-link">
-            View artist <Ico.Right />
+            {t("music.viewArtist")} <Ico.Right />
           </span>
         </span>
       </Link>
@@ -152,9 +153,9 @@ export function Trend({ data }: { data: TrendPoint[] }) {
   const weeks = weekTrend(data);
   if (weeks.every((w) => !w.value)) return null;
   return (
-    <Section title="Scrobble stats">
+    <Section title={t("music.scrobbleStats")}>
       <BarChart data={weeks} height={110} every={5} />
-      <p className="muted small">Scrobbles per week, last 6 months</p>
+      <p className="muted small">{t("music.scrobblesPerWeek")}</p>
     </Section>
   );
 }
@@ -162,7 +163,7 @@ export function Trend({ data }: { data: TrendPoint[] }) {
 export function Listeners({ items, more }: { items: Listener[]; more?: string }) {
   if (!items.length) return null;
   return (
-    <Section title="Listeners" more={more} moreLabel="View all listeners" foot>
+    <Section title={t("music.listeners")} more={more} moreLabel={t("music.viewAllListeners")} foot>
       <div className="listeners2">
         <UserList items={items} />
       </div>
@@ -178,30 +179,30 @@ const TRENDING_ITEM =
 export function TrendingBand() {
   const q = useApi<Charts>("/charts?kind=tracks&limit=6");
   // Every item is a track with kind=tracks; the filter narrows the type.
-  const items = (q.data?.items ?? []).filter((t) => "duration" in t);
+  const items = (q.data?.items ?? []).filter((item) => "duration" in item);
   if (!items.length) return null;
   return (
     <div className="trending bg-site-panel text-site-ink pt-[34px] pb-10 [border-block-style:none]">
       <div className="wrap">
         <header className="flex items-baseline gap-3 mb-[18px]">
-          <h2 className="flex-1 text-[24px] text-site-ink">Trending tracks</h2>
+          <h2 className="flex-1 text-[24px] text-site-ink">{t("music.trendingTracks")}</h2>
           <Link className="more text-site-link font-medium hover:underline" to="/charts?kind=tracks">
-            View all trending tracks <Ico.Right />
+            {t("music.viewAllTrending")} <Ico.Right />
           </Link>
         </header>
         <ol className={TRENDING_LIST}>
-          {items.map((t, i) => (
-            <li key={t.id} className="flex flex-col min-w-0">
-              <Link className={TRENDING_ITEM} to={trackUrl(t.artist, t.title)}>
-                <Art image={t.image} />
+          {items.map((track, i) => (
+            <li key={track.id} className="flex flex-col min-w-0">
+              <Link className={TRENDING_ITEM} to={trackUrl(track.artist, track.title)}>
+                <Art image={track.image} />
                 <b className="text-[22px] text-site-link font-site-display">{i + 1}</b>
-                <strong className="truncate">{t.title}</strong>
+                <strong className="truncate">{track.title}</strong>
               </Link>
               <Link
                 className="truncate text-[13px] text-site-muted hover:text-site-link hover:underline"
-                to={artistUrl(t.artist)}
+                to={artistUrl(track.artist)}
               >
-                {t.artist}
+                {track.artist}
               </Link>
             </li>
           ))}

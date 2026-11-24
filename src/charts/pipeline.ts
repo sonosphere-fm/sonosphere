@@ -1,4 +1,5 @@
 import type { SonoChartsClient } from "./data";
+import { t } from "../i18n";
 import { CHART } from "./constants";
 import { MetadataClient, normalizeName } from "./metadata";
 import type { ChartItem, ChartSettings } from "./options";
@@ -47,7 +48,7 @@ export async function buildChartData(
       ? settings.filteredArtist
       : null;
 
-  report("Fetching top list…");
+  report(t("music.chartFetching"));
   const result = await sono.top(username, kind, settings.timeSettings.period, count, serverArtistFilter);
   if (result.hidden) return { status: "Hidden", amount: 0, extra };
   settings.userPlaycount = result.counts?.playcount || 0;
@@ -61,7 +62,7 @@ export async function buildChartData(
   }
 
   if (settings.hasGenreFilter) {
-    report("Matching genres…");
+    report(t("music.chartMatchingGenres"));
     const artistNames = [...new Set(items.map((item) => item.artistName).filter(Boolean))];
     const matched = await metadata.getArtistsInGenres(artistNames, settings.filteredGenres);
     items = items.filter((item) => matched.has(item.artistName));
@@ -72,9 +73,9 @@ export async function buildChartData(
   let shortage: ChartDataStatus | null = null;
   if (!settings.artistChart && (settings.releaseYearFilter || settings.releaseDecadeFilter || settings.filterSingles)) {
     if (settings.releaseYearFilter || settings.releaseDecadeFilter) {
-      report("Looking up release dates…");
+      report(t("music.chartReleaseDates"));
       const enriched = await metadata.enrichAlbums(items, (done, total) =>
-        report("Looking up release dates…", `${done}/${total}`)
+        report(t("music.chartReleaseDates"), `${done}/${total}`)
       );
       items.forEach((item, index) => {
         item.metadata = enriched[index];
@@ -92,7 +93,7 @@ export async function buildChartData(
     }
 
     if (!shortage && settings.filterSingles) {
-      report("Looking up singles…");
+      report(t("music.chartSingles"));
       const artistNames = [...new Set(items.map((item) => item.artistName).filter(Boolean))];
       const singles = await metadata.getSingles(artistNames);
       items = items.filter(
@@ -112,7 +113,7 @@ export async function buildChartData(
   const withoutImage = taken.filter((item) => !item.coverUrl && !item.fallbackImageUrl);
   const fallbackCount = Math.min(3, withoutImage.length);
   if (fallbackCount > 0) {
-    report("Filling in missing artwork…");
+    report(t("music.chartFallbackArt"));
     for (let i = 0; i < fallbackCount; i += 1) {
       const item = withoutImage[i];
       try {
@@ -136,8 +137,8 @@ export async function buildChartData(
   settings.fileDescription = taken
     .map((item, index) =>
       settings.artistChart
-        ? `#${index + 1} ${item.artistName}, `
-        : `#${index + 1} ${item.albumName} by ${item.artistName}, `
+        ? t("music.chartDescArtist", { rank: index + 1, artist: item.artistName })
+        : t("music.chartDescAlbum", { rank: index + 1, album: item.albumName ?? "", artist: item.artistName })
     )
     .join("");
 

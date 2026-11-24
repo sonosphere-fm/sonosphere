@@ -60,7 +60,7 @@ router.get<EventList>("/api/events", async (c) => {
 });
 
 router.get<EventPlaces>("/api/events/places", async (c) => {
-  const field = oneOf(c.q.get("field"), ["venue", "city", "country"] as const) ?? fail(400, "Unknown field");
+  const field = oneOf(c.q.get("field"), ["venue", "city", "country"] as const) ?? fail(400, "unknownField");
   return { items: await repo.places(field, norm(c.q.get("q") || "").slice(0, 80)) };
 });
 
@@ -68,13 +68,13 @@ router.get<EventPage>("/api/event/:id", (c) => eventPage(Number(c.params[0]), c.
 
 router.post<EventCreated>("/api/events", async (c) => {
   const u = confirmed(need(c));
-  await throttle(`event:${u.id}`, 10, 86_400, "You can add up to 10 events a day.");
+  await throttle(`event:${u.id}`, 10, 86_400, "tooManyEventsToday");
   return { id: await addEvent(c.body, u) };
 });
 
 router.delete<EventOk>("/api/event/:id", async (c) => {
   const deleted = await repo.deleteOwnEvent(Number(c.params[0]), need(c).id);
-  if (!deleted) fail(403, "Only the creator can delete an event");
+  if (!deleted) fail(403, "onlyCreatorDeleteEvent");
   return { ok: true };
 });
 

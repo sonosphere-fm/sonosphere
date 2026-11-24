@@ -1,6 +1,7 @@
 import { requireItem, requireTrack } from "../catalog/service";
 import { need } from "../guards";
 import { bad, int, missing, oneOf, Router, throttle, type Ctx } from "../http";
+import { requestLocale } from "../i18n";
 import { clean } from "../util";
 import * as repo from "./repo";
 import { editScrobble, editScrobbles, importLoved, scrobbleMany, setNowPlaying, type ScrobbleInput } from "./service";
@@ -23,16 +24,16 @@ const text = (v: unknown): string | null => (typeof v === "string" ? v : null);
 async function ownScrobble(c: Ctx) {
   const id = int(c.params[0]);
   const found = id === null ? null : await repo.findScrobble(need(c).id, id);
-  return found ?? missing("Scrobble");
+  return found ?? missing("scrobbleNotFound");
 }
 
 router.post<ScrobbleResponse>("/api/scrobble", async (c) => {
   const u = need(c);
-  await throttle(`scrobble-web:${u.id}`, 200, 3600, "Too many scrobbles from the website this hour. Try again later.");
+  await throttle(`scrobble-web:${u.id}`, 200, 3600, "tooManyScrobblesFromWebsite");
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [c.body];
-  if (list.length > 5000) bad("At most 5000 scrobbles per request");
+  if (list.length > 5000) bad("tooManyScrobblesPerRequest");
   const inputs = list.map(asInput);
-  const results = await scrobbleMany(u.id, inputs, clean(c.body.source, 20) || "web");
+  const results = await scrobbleMany(u.id, inputs, clean(c.body.source, 20) || "web", requestLocale(c.req));
   const details: ScrobbleResponse["details"] = [];
   let accepted = 0;
   results.forEach((r, i) => {
@@ -46,14 +47,14 @@ router.post<ScrobbleResponse>("/api/scrobble", async (c) => {
 router.post<Ok>("/api/nowplaying", async (c) => {
   const u = need(c);
   if (c.body.stop) await repo.clearNowPlaying(u.id);
-  else if (!(await setNowPlaying(u.id, c.body))) bad("Artist and track are required");
+  else if (!(await setNowPlaying(u.id, c.body))) bad("artistTrackRequired");
   return { ok: true };
 });
 
 router.delete<Ok>("/api/scrobble/:id", async (c) => {
   const u = need(c);
   const id = int(c.params[0]);
-  if (id === null || !(await repo.deleteScrobble(u.id, id))) missing("Scrobble");
+  if (id === null || !(await repo.deleteScrobble(u.id, id))) missing("scrobbleNotFound");
   return { ok: true };
 });
 
@@ -72,13 +73,13 @@ router.post<ScrobblesDeleted>("/api/scrobbles/delete", async (c) => {
   const u = need(c);
   const raw = Array.isArray(c.body.ids) ? c.body.ids : [];
   const ids = raw.map(Number).filter(Number.isInteger).slice(0, 1000);
-  if (!ids.length) bad("Pick at least one scrobble");
+  if (!ids.length) bad("pickLeastOneScrobble");
   return { deleted: await repo.deleteScrobbles(u.id, ids) };
 });
 
 router.post<ScrobblesDeleted>("/api/scrobbles/delete-by", async (c) => {
   const u = need(c);
-  const scope = oneOf(c.body.scope, SCOPES) ?? bad("Choose what to remove scrobbles of");
+  const scope = oneOf(c.body.scope, SCOPES) ?? bad("chooseWhatRemoveScrobbles");
   const item = await requireItem(scope, c.body.id, [scope]);
   return { deleted: await repo.deleteScrobblesBy(u.id, scope, item.row.id) };
 });
@@ -86,7 +87,7 @@ router.post<ScrobblesDeleted>("/api/scrobbles/delete-by", async (c) => {
 router.post<LovedImported>("/api/love/import", async (c) => {
   const u = need(c);
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [];
-  if (list.length > 5000) bad("At most 5000 loved tracks per request");
+  if (list.length > 5000) bad("tooManyLovesPerRequest");
   const accepted = await importLoved(u.id, list);
   return { accepted, ignored: list.length - accepted };
 });

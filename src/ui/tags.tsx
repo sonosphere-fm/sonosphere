@@ -1,5 +1,6 @@
 import { Ico } from "../icons";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { t } from "../i18n";
 import { Button } from "../kit";
 import { Link } from "react-router-dom";
 import { api, num, qs, tagUrl, useAuth } from "../lib";
@@ -10,9 +11,9 @@ import type { ItemTags, TagCount, TagSuggestions } from "../../shared/tags";
 export function TagChips({ tags }: { tags: { name: string; count?: number }[] }) {
   return (
     <span className="chips">
-      {tags.map((t) => (
-        <Link key={t.name} className="chip" to={tagUrl(t.name)}>
-          {t.name}
+      {tags.map((tag) => (
+        <Link key={tag.name} className="chip" to={tagUrl(tag.name)}>
+          {tag.name}
         </Link>
       ))}
     </span>
@@ -28,10 +29,10 @@ export function Tagger({ type, id, tags, myTags }: { type: ItemType; id: number;
   }, [id, type]);
   return (
     <div className="flex flex-wrap gap-2.5 items-center col-span-full">
-      {state.tags.length ? <TagChips tags={state.tags} /> : <span className="muted">No tags yet.</span>}
+      {state.tags.length ? <TagChips tags={state.tags} /> : <span className="muted">{t("music.noTags")}</span>}
       {me && !open && (
         <Button kind="chip add" onClick={() => setOpen(true)}>
-          <Ico.Plus /> {state.myTags.length ? "Edit my tags" : "Add tags"}
+          <Ico.Plus /> {state.myTags.length ? t("music.editMyTags") : t("music.addTags")}
         </Button>
       )}
       {me && open && (
@@ -74,13 +75,13 @@ function TagInput({
           if (n === seq.current) setItems(d.items);
         })
         .catch(() => {});
-    const t = setTimeout(load, q ? 120 : 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(load, q ? 120 : 0);
+    return () => clearTimeout(timer);
   }, [q]);
   useEffect(() => setActive(0), [q]);
-  const has = (n: string) => mine.some((t) => same(t, n));
-  const known = items.filter((t) => !has(t.name)).slice(0, 8);
-  const offerNew = q && !has(q) && !known.some((t) => same(t.name, q));
+  const has = (n: string) => mine.some((tag) => same(tag, n));
+  const known = items.filter((tag) => !has(tag.name)).slice(0, 8);
+  const offerNew = q && !has(q) && !known.some((tag) => same(tag.name, q));
   const opts: TagOpt[] = offerNew ? [{ name: q, count: 0, fresh: true }, ...known] : known;
   const save = (body: { tags: string[] } | { tag: string }, path = "/tags") => {
     setError("");
@@ -130,14 +131,14 @@ function TagInput({
     <div className="tag-edit">
       <div className="tag-row">
         <div className="tag-field" onMouseDown={focusField}>
-          {mine.map((t) => (
-            <span key={t} className="tag-token">
-              {t}
+          {mine.map((tag) => (
+            <span key={tag} className="tag-token">
+              {tag}
               <button
                 type="button"
-                aria-label={`Remove tag ${t}`}
-                title="Remove"
-                onClick={() => save({ tag: t }, "/tags/remove")}
+                aria-label={t("music.removeTag", { tag })}
+                title={t("music.remove")}
+                onClick={() => save({ tag }, "/tags/remove")}
               >
                 <Ico.X />
               </button>
@@ -148,8 +149,8 @@ function TagInput({
             autoFocus
             value={text}
             maxLength={200}
-            placeholder={mine.length ? "Add another…" : "Type a tag, then Enter"}
-            aria-label="Add a tag"
+            placeholder={mine.length ? t("music.addAnotherTag") : t("music.typeATag")}
+            aria-label={t("music.addATag")}
             role="combobox"
             aria-expanded={openList}
             aria-controls={listId}
@@ -164,10 +165,10 @@ function TagInput({
             onBlur={() => setShow(false)}
           />
           {openList && (
-            <ul className="tag-suggest" id={listId} role="listbox" aria-label="Tag suggestions">
+            <ul className="tag-suggest" id={listId} role="listbox" aria-label={t("music.tagSuggestions")}>
               {!q && (
                 <li className="tag-suggest-head" role="presentation">
-                  Recent and popular
+                  {t("music.recentAndPopular")}
                 </li>
               )}
               {opts.map((o, i) => (
@@ -181,15 +182,15 @@ function TagInput({
                   onMouseEnter={() => setActive(i)}
                   onClick={() => add([o.name])}
                 >
-                  <span>{o.fresh ? <>Add “{o.name}”</> : o.name}</span>
-                  <small>{o.fresh ? "new tag" : num(o.count)}</small>
+                  <span>{o.fresh ? t("music.addNewTag", { name: o.name }) : o.name}</span>
+                  <small>{o.fresh ? t("music.newTag") : num(o.count)}</small>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <Button kind="btn small ghost" onClick={onDone}>
-          Done
+          {t("music.done")}
         </Button>
       </div>
       {error && <p className="form-error small">{error}</p>}

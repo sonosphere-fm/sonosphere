@@ -3,6 +3,7 @@ import { useState, type KeyboardEvent } from "react";
 import type { ProfileLink } from "../../shared/profile-links";
 import { Ico } from "../icons";
 import { Button, Input } from "../kit";
+import { t } from "../i18n";
 import { ProfileLinkIcon } from "./profile-link-icon";
 
 const MAX_LINKS = 8;
@@ -32,7 +33,7 @@ export function ProfileLinksEditor({
   };
   return (
     <fieldset className="border-0 p-0 m-0 min-w-0 w-full grid gap-2">
-      <legend className="field-label mb-2">Profile links</legend>
+      <legend className="field-label mb-2">{t("settings.profileLinks")}</legend>
       {links.length > 0 && (
         <ol className="list-none m-0 p-0 grid gap-2">
           {links.map((link, index) => (
@@ -54,7 +55,7 @@ export function ProfileLinksEditor({
                 id={`profile-link-grip-${index}`}
                 type="button"
                 className="profile-link-grip"
-                aria-label={`Reorder link ${index + 1}. Use the up and down arrow keys to move it.`}
+                aria-label={t("settings.linkReorder", { n: index + 1 })}
                 onPointerDown={() => setGrabbed(index)}
                 onPointerUp={() => setGrabbed(null)}
                 onKeyDown={nudge(index)}
@@ -64,8 +65,8 @@ export function ProfileLinksEditor({
               <ProfileLinkIcon url={link.url} />
               <div className="profile-link-label">
                 <Input
-                  aria-label={`Link ${index + 1} label`}
-                  placeholder="Label"
+                  aria-label={t("settings.linkLabelAria", { n: index + 1 })}
+                  placeholder={t("settings.linkLabel")}
                   value={link.label}
                   maxLength={60}
                   onChange={(e) => edit(index, { label: e.target.value })}
@@ -73,7 +74,7 @@ export function ProfileLinksEditor({
               </div>
               <div className="profile-link-url">
                 <Input
-                  aria-label={`Link ${index + 1} URL`}
+                  aria-label={t("settings.linkUrlAria", { n: index + 1 })}
                   type="url"
                   required
                   placeholder="https://"
@@ -85,7 +86,7 @@ export function ProfileLinksEditor({
               <Button
                 type="button"
                 kind="btn ghost small"
-                aria-label={`Remove link ${index + 1}`}
+                aria-label={t("settings.linkRemove", { n: index + 1 })}
                 onClick={() => onChange(links.filter((_, i) => i !== index))}
               >
                 <Ico.X />
@@ -101,7 +102,7 @@ export function ProfileLinksEditor({
           disabled={links.length >= MAX_LINKS}
           onClick={() => onChange([...links, { label: "", url: "" }])}
         >
-          <Ico.Plus /> Add link
+          <Ico.Plus /> {t("settings.addLink")}
         </Button>
       </div>
     </fieldset>

@@ -1,6 +1,7 @@
 import { Ico, Spinner } from "../../icons";
 import { Suspense, useState } from "react";
 import { SiteBanner } from "../../banner";
+import { t, tx } from "../../i18n";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
 import { artistUrl, date, prefetch, qs, TITLES, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
@@ -61,14 +62,11 @@ function HomeFeed({ name }: { name: string }) {
     <>
       {!hidden && (
         <div className="welcome relative pr-10 mb-6">
-          <Button kind="bare welcome-x" aria-label="Dismiss" onClick={dismiss}>
+          <Button kind="bare welcome-x" aria-label={t("music.dismiss")} onClick={dismiss}>
             <Ico.X />
           </Button>
-          <h1 className="text-[24px] m-0 mb-2 max-[600px]:text-[20px]">Welcome to Sonosphere, {name}!</h1>
-          <p className="m-0 text-site-ink-2 max-w-[62ch]">
-            The more you scrobble, the better these picks get. Recommendations are continually updated as you scrobble
-            more music.
-          </p>
+          <h1 className="text-[24px] m-0 mb-2 max-[600px]:text-[20px]">{t("music.welcome", { name })}</h1>
+          <p className="m-0 text-site-ink-2 max-w-[62ch]">{t("music.welcomeBody")}</p>
         </div>
       )}
       <Pane>
@@ -81,16 +79,16 @@ function HomeFeed({ name }: { name: string }) {
 function PlayRows() {
   return (
     <ul className="play-rows list-none m-0 mb-7 p-0">
-      <StationRow type="library" label="Play your library" />
-      <StationRow type="mix" label="Play your mix" />
-      <StationRow type="recommended" label="Play your recommendations" />
+      <StationRow type="library" label={t("music.playLibrary")} />
+      <StationRow type="mix" label={t("music.playMix")} />
+      <StationRow type="recommended" label={t("music.playRecommendations")} />
     </ul>
   );
 }
 
 function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: string }) {
   return (
-    <Section title="Friends' listening" more={`${userUrl(me)}/following`} moreLabel="Following">
+    <Section title={t("music.friendsListening")} more={`${userUrl(me)}/following`} moreLabel={t("music.following")}>
       <ul className="feed">
         {friends.slice(0, 8).map((f) => (
           <li key={f.user.username}>
@@ -100,14 +98,16 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
                 <Username user={f.user} />
               </Link>{" "}
               <UserLabels name={f.user.username} />
-              <span>
-                <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link>{" "}
-                <span className="muted">by</span> <Link to={artistUrl(f.track.artist)}>{f.track.artist}</Link>
+              <span className="muted">
+                {tx("music.trackByArtist", {
+                  track: <Link to={trackUrl(f.track.artist, f.track.title)}>{f.track.title}</Link>,
+                  artist: <Link to={artistUrl(f.track.artist)}>{f.track.artist}</Link>,
+                })}
               </span>
             </div>
             {f.nowPlaying ? (
               <span className="np small">
-                Scrobbling now{" "}
+                {t("music.scrobblingNow")}{" "}
                 <i className="eq">
                   <i />
                   <i />
@@ -128,19 +128,19 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
 
 function FriendLoves({ items }: { items: FriendLove[] }) {
   return (
-    <Section title="Loved by friends">
+    <Section title={t("music.lovedByFriends")}>
       <ul className="plain">
-        {items.map((t) => (
-          <li key={t.user + t.id}>
-            <Link className="strong" to={trackUrl(t.artist, t.title)}>
-              {t.title}
+        {items.map((love) => (
+          <li key={love.user + love.id}>
+            <Link className="strong" to={trackUrl(love.artist, love.title)}>
+              {love.title}
             </Link>{" "}
-            <span className="muted">- {t.artist}</span>
+            <span className="muted">- {love.artist}</span>
             <br />
             <span className="muted small">
               <Ico.Heart on />{" "}
-              <Link to={userUrl(t.user)}>
-                <Username name={t.user} />
+              <Link to={userUrl(love.user)}>
+                <Username name={love.user} />
               </Link>
             </span>
           </li>
@@ -176,7 +176,7 @@ export function Home() {
         />
       )}
       {!me && <SiteBanner />}
-      <Suspense fallback={me ? <Spinner page /> : <div role="status" aria-label="Loading music charts" />}>
+      <Suspense fallback={me ? <Spinner page /> : <div role="status" aria-label={t("music.loadingCharts")} />}>
         <HomeContent name={me?.username} />
       </Suspense>
     </>
@@ -212,23 +212,23 @@ function HomeContent({ name }: { name?: string }) {
                     {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={name} />}
                   </>
                 )}
-                <Section title={week ? "Trending artists" : "Top artists"} more="/charts">
+                <Section title={week ? t("music.trendingArtists") : t("music.topArtists")} more="/charts">
                   <Grid kind="artist" cols={4} items={d.trendingArtists.slice(0, 8)} />
                 </Section>
-                <Section title={week ? "Top tracks this week" : "Top tracks"} more="/charts?kind=tracks">
+                <Section title={week ? t("music.topTracksThisWeek") : t("music.topTracks")} more="/charts?kind=tracks">
                   <TrackList items={d.trendingTracks} rank={1} count="listeners" />
                 </Section>
-                <Section title={week ? "Albums on the rise" : "Top albums"} more="/charts?kind=albums">
+                <Section title={week ? t("music.albumsOnTheRise") : t("music.topAlbums")} more="/charts?kind=albums">
                   <Grid kind="album" items={d.trendingAlbums} />
                 </Section>
               </div>
               <aside className="side">
                 {name && <PlayRows />}
                 {name && d.friendLoves && d.friendLoves.length > 0 && <FriendLoves items={d.friendLoves} />}
-                <Section title="Popular tags" more="/charts?kind=tags">
+                <Section title={t("music.popularTags")} more="/charts?kind=tags">
                   <TagChips tags={d.tags} />
                 </Section>
-                <Section title="Upcoming events" more="/events">
+                <Section title={t("music.upcomingEvents")} more="/events">
                   <EventList items={d.events} />
                 </Section>
               </aside>
@@ -245,7 +245,7 @@ function HomeRecent({ name }: { name: string }) {
   if (!q.data?.items.length) return null;
   const nowPlaying = "nowPlaying" in q.data ? q.data.nowPlaying : null;
   return (
-    <Section title="Your recent tracks" more={`${userUrl(name)}/library`} moreLabel="Library">
+    <Section title={t("music.yourRecentTracks")} more={`${userUrl(name)}/library`} moreLabel={t("music.library")}>
       <TrackList items={q.data.items} nowPlaying={nowPlaying} time />
     </Section>
   );

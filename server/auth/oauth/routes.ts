@@ -3,6 +3,7 @@
 import { recordChange } from "../../account/history";
 import { need } from "../../guards";
 import { bad, ipOf, limit, Router, type Ctx } from "../../http";
+import { requestLocale } from "../../i18n";
 import { getJson, setJson, takeJson } from "../../kv";
 import { SITE_URL } from "../../mail";
 import { findById } from "../../users/repo";
@@ -168,23 +169,23 @@ function suggest(name: string): string {
 }
 
 router.get<OAuthPending>("/api/auth/oauth/pending", async (c) => {
-  const pd = (await pendingOf(c)) ?? bad("This sign-up has expired. Start again from the join page.");
+  const pd = (await pendingOf(c)) ?? bad("signUpExpiredStartAgain");
   return { provider: providerLabel(pd.provider), username: suggest(pd.name), email: pd.email };
 });
 
 router.post<OAuthCreated>("/api/auth/oauth/complete", async (c) => {
-  await limit(`signup:${ipOf(c.req)}`, 5, 3600, "Too many sign-ups from here. Try again later.");
+  await limit(`signup:${ipOf(c.req)}`, 5, 3600, "tooManySignups");
   const t = cookieOf(c, "oauth_ticket");
   const key = `oauth:pending:${digest(t)}`;
-  const pd = (t && (await getJson<Pending>(key))) || bad("This sign-up has expired. Start again from the join page.");
+  const pd = (t && (await getJson<Pending>(key))) || bad("signUpExpiredStartAgain");
   const username = clean(c.body.username, 15);
   await checkNewAccount(username, pd.email);
   if (await repo.findLink(pd.provider, pd.subject)) {
-    bad(`That ${providerLabel(pd.provider)} account is already connected to an account here. Log in instead.`);
+    bad("providerAlreadyConnected", { provider: providerLabel(pd.provider) });
   }
-  if (!(await takeJson<Pending>(key))) bad("This sign-up has expired. Start again from the join page.");
+  if (!(await takeJson<Pending>(key))) bad("signUpExpiredStartAgain");
   // the provider confirmed the address, so it counts as confirmed here
-  const u = await createAccount(username, pd.email, "", true);
+  const u = await createAccount(username, pd.email, "", requestLocale(c.req), true);
   await repo.addLink(pd.provider, pd.subject, u.id, pd.name);
   c.headers.append("Set-Cookie", cookie("oauth_ticket", "", 0));
   await startSession(c.headers, u.id);
@@ -206,8 +207,8 @@ router.post<Ok>("/api/me/logins/unlink", async (c) => {
   const u = need(c);
   const provider = String(c.body.provider || "");
   const links = await repo.linksOf(u.id);
-  if (!links.some((l) => l.provider === provider)) bad("That isn't connected");
-  if (!u.passwordHash && links.length === 1) bad("Set a password first, or you won't be able to log in");
+  if (!links.some((l) => l.provider === provider)) bad("isntConnected");
+  if (!u.passwordHash && links.length === 1) bad("setPasswordFirstWontAble");
   await repo.removeLink(u.id, provider);
   return { ok: true };
 });

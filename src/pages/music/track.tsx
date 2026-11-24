@@ -2,6 +2,7 @@ import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../../icons";
 import { Lyrics } from "../../ui/lyrics";
 import { lazy, useState, type FormEvent, Suspense } from "react";
+import { t } from "../../i18n";
 import { Button, Input, Modal } from "../../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -10,7 +11,6 @@ import {
   artistUrl,
   dec,
   dur,
-  plural,
   qs,
   releaseTitle,
   trackUrl,
@@ -45,7 +45,9 @@ import {
   TrendingBand,
 } from "./entity";
 
-const AdminTools = lazy(() => import("../../admin/page-tools").then((m) => ({ default: m.AdminTools })));
+const AdminTools = lazy(() =>
+  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.AdminTools }))
+);
 
 type ModalProps = { track: Pick<TrackData, "id" | "title">; onClose: () => void };
 
@@ -58,7 +60,7 @@ function AddToPlaylist({ track, onClose }: ModalProps) {
   const add = (id: number) =>
     act.run(async () => {
       await api<PlaylistOk>(`/playlist/${id}/tracks`, { body: { trackId: track.id } });
-      return "Added to playlist.";
+      return t("music.addedToPlaylist");
     });
 
   const create = (e: FormEvent) => {
@@ -68,26 +70,26 @@ function AddToPlaylist({ track, onClose }: ModalProps) {
       await api<PlaylistOk>(`/playlist/${r.id}/tracks`, { body: { trackId: track.id } });
       setTitle("");
       q.reload();
-      return "Playlist created and track added.";
+      return t("music.playlistCreatedAdded");
     });
   };
 
   return (
-    <Modal title={`Add “${track.title}” to a playlist`} onClose={onClose}>
+    <Modal title={t("music.addToPlaylistTitle", { title: track.title })} onClose={onClose}>
       <Async q={q}>
         {(d) => (
           <ul className="plain">
             {d.items.map((p) => (
               <li key={p.id} className="row between">
                 <span>
-                  <b>{p.title}</b> <span className="muted small">{plural(p.trackCount, "track")}</span>
+                  <b>{p.title}</b> <span className="muted small">{t("music.trackCount", { count: p.trackCount })}</span>
                 </span>
                 <Button kind="btn small" loading={act.busy} onClick={() => add(p.id)}>
-                  Add
+                  {t("music.add")}
                 </Button>
               </li>
             ))}
-            {!d.items.length && <li className="muted">You have no playlists yet.</li>}
+            {!d.items.length && <li className="muted">{t("music.noPlaylists")}</li>}
           </ul>
         )}
       </Async>
@@ -95,12 +97,12 @@ function AddToPlaylist({ track, onClose }: ModalProps) {
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="New playlist title"
-          aria-label="New playlist title"
+          placeholder={t("music.newPlaylistTitle")}
+          aria-label={t("music.newPlaylistTitle")}
           maxLength={100}
         />
         <Button kind="btn small" loading={act.busy} disabled={!title.trim()}>
-          Create & add
+          {t("music.createAndAdd")}
         </Button>
       </form>
       {act.note}
@@ -123,16 +125,16 @@ function SetObsession({ track, onClose }: ModalProps) {
   };
 
   return (
-    <Modal title="Set as your earworm" onClose={onClose}>
+    <Modal title={t("music.setEarwormTitle")} onClose={onClose}>
       <form className="form" onSubmit={submit}>
-        <p>Your current earworm is shown at the top of your profile.</p>
+        <p>{t("music.earwormHint")}</p>
         <label>
-          Why this track? (optional)
+          {t("music.earwormWhy")}
           <Input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={300} autoFocus />
         </label>
         {act.note}
         <Button kind="btn" loading={act.busy}>
-          Set earworm
+          {t("music.setEarworm")}
         </Button>
       </form>
     </Modal>
@@ -150,63 +152,75 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
   const act = useAction();
   useTitle(releaseTitle(track, artist, tab === "wiki"));
 
-  const scrobbleNow = (t: TrackData) =>
+  const scrobbleNow = (item: TrackData) =>
     act.run(async () => {
-      await api<ScrobbleResponse>("/scrobble", { body: { artist: t.artist, track: t.title, album: t.album || "" } });
+      await api<ScrobbleResponse>("/scrobble", {
+        body: { artist: item.artist, track: item.title, album: item.album || "" },
+      });
       q.reload();
-      return "Scrobbled.";
+      return t("music.scrobbled");
     });
 
   return (
     <Async q={q}>
-      {(t) => (
+      {(item) => (
         <>
           <MusicHero
-            image={t.image ?? t.artistImage}
-            cover={!!t.image}
-            title={t.title}
-            over={<Link to={artistUrl(t.artist)}>{t.artist}</Link>}
+            image={item.image ?? item.artistImage}
+            cover={!!item.image}
+            title={item.title}
+            over={<Link to={artistUrl(item.artist)}>{item.artist}</Link>}
             tabs={
               <Tabs
                 items={[
-                  [base, "Overview", true],
-                  [`${base}/+wiki`, "Wiki"],
+                  [base, t("music.overview"), true],
+                  [`${base}/+wiki`, t("music.wiki")],
                 ]}
               />
             }
             stats={
               <>
-                <HeroStat label="Listeners" value={t.listeners} />
-                <HeroStat label="Scrobbles" value={t.playcount} />
+                <HeroStat label={t("music.listeners")} value={item.listeners} />
+                <HeroStat label={t("music.scrobbles")} value={item.playcount} />
               </>
             }
             cards={
-              tab === "overview" && t.album ? (
+              tab === "overview" && item.album ? (
                 <FeatureCard
-                  label="From the album"
-                  to={albumUrl(t.artist, t.album)}
-                  image={t.image}
-                  title={t.album}
-                  sub={t.artist}
+                  label={t("music.fromTheAlbum")}
+                  to={albumUrl(item.artist, item.album)}
+                  image={item.image}
+                  title={item.album}
+                  sub={item.artist}
                 />
               ) : null
             }
             actions={
               <>
-                <PlayButton queue={[t, ...t.similar]} label="Play track" />
-                <LoveButton track={t} loved={t.loved} label onChange={q.reload} />
+                <PlayButton queue={[item, ...item.similar]} label={t("music.playTrack")} />
+                <LoveButton track={item} loved={item.loved} label onChange={q.reload} />
                 <Button kind="btn ghost" type="button" onClick={() => setModal("links")}>
-                  <Ico.External /> Open in
+                  <Ico.External /> {t("music.openIn")}
                 </Button>
-                <MoreMenu label={`More actions for ${t.title}`} link={shortMusicUrl("t", t.id)}>
-                  {me && <DropdownMenuItem label="Add to playlist" onClick={() => setModal("playlist")} />}
-                  {me && <DropdownMenuItem label="Set as earworm" onClick={() => setModal("obsession")} />}
-                  {me && <DropdownMenuItem label="Scrobble now" isDisabled={act.busy} onClick={() => scrobbleNow(t)} />}
-                  {me && <RemoveScrobbles scope="track" id={t.id} name={t.title} count={t.userPlaycount} />}
+                <MoreMenu label={t("music.moreActionsFor", { name: item.title })} link={shortMusicUrl("t", item.id)}>
+                  {me && <DropdownMenuItem label={t("music.addToPlaylist")} onClick={() => setModal("playlist")} />}
+                  {me && <DropdownMenuItem label={t("music.setAsEarworm")} onClick={() => setModal("obsession")} />}
+                  {me && (
+                    <DropdownMenuItem
+                      label={t("music.scrobbleNow")}
+                      isDisabled={act.busy}
+                      onClick={() => scrobbleNow(item)}
+                    />
+                  )}
+                  {me && <RemoveScrobbles scope="track" id={item.id} name={item.title} count={item.userPlaycount} />}
                 </MoreMenu>
                 {me?.admin && (
                   <Suspense fallback={null}>
-                    <AdminTools kind="track" item={{ id: t.id, name: t.title, artist: t.artist }} onDone={q.reload} />
+                    <AdminTools
+                      kind="track"
+                      item={{ id: item.id, name: item.title, artist: item.artist }}
+                      onDone={q.reload}
+                    />
                   </Suspense>
                 )}
               </>
@@ -216,48 +230,48 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
           </MusicHero>
           {modal === "playlist" && (
             <Suspense fallback={null}>
-              <AddToPlaylist track={t} onClose={() => setModal(null)} />
+              <AddToPlaylist track={item} onClose={() => setModal(null)} />
             </Suspense>
           )}
           {modal === "links" && (
-            <TrackLinks key={t.id} artist={t.artist} title={t.title} onClose={() => setModal(null)} />
+            <TrackLinks key={item.id} artist={item.artist} title={item.title} onClose={() => setModal(null)} />
           )}
-          {modal === "obsession" && <SetObsession track={t} onClose={() => setModal(null)} />}
+          {modal === "obsession" && <SetObsession track={item} onClose={() => setModal(null)} />}
           <div className="wrap page mpage">
             <Pane>
               {tab === "wiki" ? (
-                <WikiPage type="track" id={t.id} title={t.title} />
+                <WikiPage type="track" id={item.id} title={item.title} />
               ) : (
                 <div className="cols">
                   <div className="main">
-                    <YourScrobbles count={t.userPlaycount} />
+                    <YourScrobbles count={item.userPlaycount} />
                     <About
-                      wiki={t.wiki}
+                      wiki={item.wiki}
                       to={`${base}/+wiki`}
                       facts={[
-                        ["Length", t.duration > 0 ? dur(t.duration) : "Unknown"],
-                        ["Loved by", plural(t.loves, "listener")],
+                        [t("music.length"), item.duration > 0 ? dur(item.duration) : t("music.unknown")],
+                        [t("music.lovedBy"), t("music.listenerCount", { count: item.loves })],
                       ]}
                     >
-                      <Tagger type="track" id={t.id} tags={t.tags} myTags={t.myTags} />
+                      <Tagger type="track" id={item.id} tags={item.tags} myTags={item.myTags} />
                     </About>
-                    <Lyrics track={t} />
-                    <Section title="Similar tracks" aside={<PlayButton queue={t.similar} />}>
-                      <TrackList items={t.similar} count="listeners" />
+                    <Lyrics track={item} />
+                    <Section title={t("music.similarTracks")} aside={<PlayButton queue={item.similar} />}>
+                      <TrackList items={item.similar} count="listeners" />
                     </Section>
-                    {t.albums.length > 0 && (
-                      <Section title="Appears on">
-                        <Grid below kind="album" cols={4} items={t.albums} />
+                    {item.albums.length > 0 && (
+                      <Section title={t("music.appearsOn")}>
+                        <Grid below kind="album" cols={4} items={item.albums} />
                       </Section>
                     )}
-                    <Listeners items={t.topListeners} />
-                    <Section title="Wall">
-                      <Shoutbox type="track" id={t.id} limit={10} />
+                    <Listeners items={item.topListeners} />
+                    <Section title={t("music.wall")}>
+                      <Shoutbox type="track" id={item.id} limit={10} />
                     </Section>
                   </div>
                   <aside className="side">
-                    <ByArtist name={t.artist} image={t.artistImage} />
-                    <Trend data={t.trend} />
+                    <ByArtist name={item.artist} image={item.artistImage} />
+                    <Trend data={item.trend} />
                   </aside>
                 </div>
               )}

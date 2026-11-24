@@ -1,4 +1,5 @@
-import { CHART, PERIODS, TitleSetting, type PeriodInfo, type PeriodKey } from "./constants";
+import { t } from "../i18n";
+import { CHART, PERIODS, periodLabel, TitleSetting, type PeriodInfo, type PeriodKey } from "./constants";
 
 export type ChartItem = {
   index: number;
@@ -137,7 +138,7 @@ export class ChartSettings {
     const periodKey = hasFilters ? "all" : options.timePeriod;
     const period = PERIODS[periodKey] || PERIODS.weekly;
     settings.timeSettings = { period: periodKey, ...period };
-    settings.timespanString = period.description;
+    settings.timespanString = periodLabel(settings.timeSettings.period);
     settings.timespanUrlString = period.urlParameter;
     settings.customOptionsEnabled =
       settings.titleSetting !== TitleSetting.Titles ||
@@ -153,19 +154,21 @@ export class ChartSettings {
   /** Port of ChartOptions.SettingsLines. */
   settingsLines(): string[] {
     const lines: string[] = [];
-    const noun = this.artistChart ? "artists" : "albums";
+    const artists = this.artistChart;
 
-    if (this.releaseYearFilter) lines.push(`Releases from ${this.releaseYearFilter} only.`);
-    if (this.releaseDecadeFilter) lines.push(`Releases from the ${this.releaseDecadeFilter}s only.`);
-    if (this.filterSingles) lines.push("Hiding singles.");
-    if (this.skipWithoutImage) lines.push(`Skipping ${noun} without images.`);
-    if (this.skipNsfw) lines.push(`Skipping NSFW ${noun}.`);
-    if (this.titleSetting === TitleSetting.TitlesDisabled) {
-      lines.push(`${this.artistChart ? "Artist" : "Album"} titles disabled.`);
+    if (this.releaseYearFilter) lines.push(t("music.chartLineYear", { year: this.releaseYearFilter }));
+    if (this.releaseDecadeFilter) lines.push(t("music.chartLineDecade", { decade: this.releaseDecadeFilter }));
+    if (this.filterSingles) lines.push(t("music.chartLineHidingSingles"));
+    if (this.skipWithoutImage) {
+      lines.push(artists ? t("music.chartLineSkipArtistsNoImage") : t("music.chartLineSkipAlbumsNoImage"));
     }
-    if (this.filteredArtist && !this.artistChart) lines.push(`Only albums by ${this.filteredArtist}.`);
-    if (this.hasGenreFilter) lines.push(`Genres: ${this.filteredGenres.join(", ")}.`);
-    if (this.rainbowSortingEnabled) lines.push("Rainbow sorted.");
+    if (this.skipNsfw) lines.push(artists ? t("music.chartLineSkipArtistsNsfw") : t("music.chartLineSkipAlbumsNsfw"));
+    if (this.titleSetting === TitleSetting.TitlesDisabled) {
+      lines.push(artists ? t("music.chartLineArtistTitlesOff") : t("music.chartLineAlbumTitlesOff"));
+    }
+    if (this.filteredArtist && !artists) lines.push(t("music.chartLineOnlyBy", { artist: this.filteredArtist }));
+    if (this.hasGenreFilter) lines.push(t("music.chartLineGenres", { genres: this.filteredGenres.join(", ") }));
+    if (this.rainbowSortingEnabled) lines.push(t("music.chartLineRainbow"));
     return lines;
   }
 }

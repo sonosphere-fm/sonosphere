@@ -22,7 +22,7 @@ export async function requireArtist(name: string | null): Promise<repo.Artist> {
     (await repo.findArtist(n)) ??
     (await repo.findArtist(correct(n, "").artist)) ??
     (await viaAlias("artist", [name], (to) => repo.findArtist(to[0]!))) ??
-    missing("Artist")
+    missing("artistNotFound")
   );
 }
 
@@ -30,7 +30,7 @@ export async function requireAlbum(artist: string | null, title: string | null):
   return (
     (await repo.findAlbum(artist || "", title || "")) ??
     (await viaAlias("album", [artist, title], (to) => repo.findAlbum(to[0]!, to[1]!))) ??
-    missing("Album")
+    missing("albumNotFound")
   );
 }
 
@@ -38,12 +38,12 @@ export async function requireTrack(artist: string | null, title: string | null):
   return (
     (await repo.findTrack(artist || "", title || "")) ??
     (await viaAlias("track", [artist, title], (to) => repo.findTrack(to[0]!, to[1]!))) ??
-    missing("Track")
+    missing("trackNotFound")
   );
 }
 
 export const requireTag = async (name: string | null): Promise<repo.Tag> =>
-  (await repo.findTag(name || "")) ?? missing("Tag");
+  (await repo.findTag(name || "")) ?? missing("tagNotFound");
 
 const isType = <K extends ItemType>(type: unknown, allowed: readonly K[]): type is K =>
   typeof type === "string" && (allowed as readonly string[]).includes(type);
@@ -54,9 +54,9 @@ export async function requireItem<K extends ItemType = ItemType>(
   id: unknown,
   allowed: readonly K[] = repo.ITEM_TYPES as K[]
 ): Promise<Item<K>> {
-  if (!isType(type, allowed)) return bad("Invalid item type");
+  if (!isType(type, allowed)) return bad("invalidItemType");
   const n = Number(id);
-  if (!Number.isSafeInteger(n)) return missing("Item");
+  if (!Number.isSafeInteger(n)) return missing("itemNotFound");
   const row = await repo.findItem(type, n);
-  return row ? ({ type, row } as Item<K>) : missing("Item");
+  return row ? ({ type, row } as Item<K>) : missing("itemNotFound");
 }

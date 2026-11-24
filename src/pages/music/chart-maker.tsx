@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { CHART, PERIOD_OPTIONS, TITLE_OPTIONS, type PeriodKey } from "../../charts/constants";
+import { CHART, periodOptions, titleOptions, type PeriodKey } from "../../charts/constants";
 import { SonoChartsClient } from "../../charts/data";
 import { MetadataClient } from "../../charts/metadata";
 import { ChartSettings, type MakerOptions } from "../../charts/options";
 import { buildChartData, type ChartDataResult, type ChartDataStatus } from "../../charts/pipeline";
 import { renderChart } from "../../charts/renderer";
+import { t } from "../../i18n";
 import { Button, Input, Select } from "../../kit";
 import { TITLES, useAuth, useTitle } from "../../lib";
 import { Section } from "../../ui/base";
@@ -48,14 +49,19 @@ const INITIAL: Form = {
 type Drawn = { width: number; height: number; count: number };
 
 function statusMessage(result: ChartDataResult, settings: ChartSettings): string {
-  const size = `${settings.width}x${settings.height}`;
+  const params = {
+    amount: result.amount,
+    needed: settings.imagesNeeded,
+    extra: result.extra,
+    size: `${settings.width}x${settings.height}`,
+  };
   const messages: Record<Exclude<ChartDataStatus, "Ok">, string> = {
-    TooManyImages: `A chart can hold at most ${CHART.MAX_IMAGES} images (15x15).`,
-    Hidden: "This user keeps their listening charts private.",
-    NotEnough: `Not enough items (found ${result.amount}, need ${settings.imagesNeeded}). Try another period or fewer skipped items; about ${result.extra} extra items were requested.`,
-    NotEnoughReleaseYear: `Only ${result.amount} releases match that year — ${settings.imagesNeeded} are needed for a ${size} chart.`,
-    NotEnoughReleaseDecade: `Only ${result.amount} releases match that decade — ${settings.imagesNeeded} are needed for a ${size} chart.`,
-    NotEnoughNonSingles: `Only ${result.amount} non-single releases were found — ${settings.imagesNeeded} are needed for a ${size} chart.`,
+    TooManyImages: t("music.chartTooMany", { max: CHART.MAX_IMAGES }),
+    Hidden: t("music.chartHidden"),
+    NotEnough: t("music.chartNotEnough", params),
+    NotEnoughReleaseYear: t("music.chartNotEnoughYear", params),
+    NotEnoughReleaseDecade: t("music.chartNotEnoughDecade", params),
+    NotEnoughNonSingles: t("music.chartNotEnoughNonSingles", params),
   };
   return messages[result.status as Exclude<ChartDataStatus, "Ok">];
 }
@@ -66,7 +72,7 @@ export function ChartMaker() {
   const [form, setForm] = useState<Form>(INITIAL);
   const [usernameTouched, setUsernameTouched] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState("Ready.");
+  const [status, setStatus] = useState(() => t("music.chartReady"));
   const [error, setError] = useState(false);
   const [lines, setLines] = useState<string[]>([]);
   const [description, setDescription] = useState("");
@@ -88,17 +94,17 @@ export function ChartMaker() {
     const height = Number(form.height);
     if (!username) {
       setError(true);
-      setStatus("Enter a Sonosphere username.");
+      setStatus(t("music.chartEnterUsername"));
       return;
     }
     if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
       setError(true);
-      setStatus("Columns and rows must be whole numbers of at least 1.");
+      setStatus(t("music.chartWholeNumbers"));
       return;
     }
     if (width * height > CHART.MAX_IMAGES) {
       setError(true);
-      setStatus(`A chart can hold at most ${CHART.MAX_IMAGES} images (15x15).`);
+      setStatus(t("music.chartTooMany", { max: CHART.MAX_IMAGES }));
       return;
     }
     if (!canvas.current) return;
@@ -127,7 +133,7 @@ export function ChartMaker() {
     setLines([]);
     setDescription("");
     setDrawn(null);
-    setStatus("Starting…");
+    setStatus(t("music.chartStarting"));
     const report = (stage: string, detail?: string) => setStatus(detail ? `${stage} ${detail}` : stage);
 
     try {
@@ -143,7 +149,7 @@ export function ChartMaker() {
         return;
       }
 
-      setStatus("Drawing chart…");
+      setStatus(t("music.chartDrawing"));
       try {
         await document.fonts.load(`16px ${CHART.FONT_FAMILY}`);
       } catch {
@@ -153,10 +159,12 @@ export function ChartMaker() {
       setLines(settings.settingsLines());
       setDescription(settings.fileDescription);
       setDrawn({ width: canvas.current.width, height: canvas.current.height, count: info.drawn });
-      setStatus(`Chart ready — ${info.drawn} items at ${canvas.current.width} × ${canvas.current.height} px.`);
+      setStatus(
+        t("music.chartDone", { count: info.drawn, width: canvas.current.width, height: canvas.current.height })
+      );
     } catch (cause) {
       setError(true);
-      setStatus(cause instanceof Error ? cause.message : "Could not make the chart.");
+      setStatus(cause instanceof Error ? cause.message : t("music.chartFailed"));
     } finally {
       setBusy(false);
     }
@@ -170,7 +178,7 @@ export function ChartMaker() {
     image.toBlob((blob) => {
       if (!blob) {
         setError(true);
-        setStatus("Could not export the chart as PNG.");
+        setStatus(t("music.chartExportFailed"));
         return;
       }
       const url = URL.createObjectURL(blob);
@@ -184,14 +192,14 @@ export function ChartMaker() {
 
   return (
     <div className="wrap page">
-      <h1 className="page-title">Chart maker</h1>
+      <h1 className="page-title">{t("music.chartMaker")}</h1>
       <div className="cols chart-maker">
         <aside className="side">
           <form onSubmit={generate}>
-            <Section title="Chart">
+            <Section title={t("music.chartSection")}>
               <div className="grid gap-3">
                 <label>
-                  Username
+                  {t("music.chartUsername")}
                   <Input
                     value={form.username}
                     onChange={(e) => {
@@ -203,29 +211,29 @@ export function ChartMaker() {
                   />
                 </label>
                 <label>
-                  Type
+                  {t("music.chartType")}
                   <Select
-                    label="Type"
+                    label={t("music.chartType")}
                     value={form.kind}
                     onChange={(v) => set("kind", v as Form["kind"])}
                     options={[
-                      ["albums", "Albums"],
-                      ["artists", "Artists"],
+                      ["albums", t("music.albums")],
+                      ["artists", t("music.artists")],
                     ]}
                   />
                 </label>
                 <label>
-                  Period
+                  {t("music.chartPeriod")}
                   <Select
-                    label="Period"
+                    label={t("music.chartPeriod")}
                     value={form.period}
                     onChange={(v) => set("period", v as PeriodKey)}
-                    options={PERIOD_OPTIONS}
+                    options={periodOptions()}
                   />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="grid gap-1.5">
-                    Columns
+                    {t("music.chartColumns")}
                     <Input
                       type="number"
                       min="1"
@@ -235,7 +243,7 @@ export function ChartMaker() {
                     />
                   </label>
                   <label className="grid gap-1.5">
-                    Rows
+                    {t("music.chartRows")}
                     <Input
                       type="number"
                       min="1"
@@ -246,30 +254,30 @@ export function ChartMaker() {
                   </label>
                 </div>
                 <label>
-                  Titles
+                  {t("music.chartTitles")}
                   <Select
-                    label="Titles"
+                    label={t("music.chartTitles")}
                     value={form.titles}
                     onChange={(v) => set("titles", v as Form["titles"])}
-                    options={TITLE_OPTIONS}
+                    options={titleOptions()}
                   />
                 </label>
               </div>
             </Section>
 
-            <Section title="Options">
+            <Section title={t("music.chartOptions")}>
               <div className="grid gap-3">
                 <label className="check">
-                  <Input type="checkbox" checked={form.skip} onChange={(e) => set("skip", e.target.checked)} /> Skip
-                  items without artwork
+                  <Input type="checkbox" checked={form.skip} onChange={(e) => set("skip", e.target.checked)} />{" "}
+                  {t("music.chartSkipNoArt")}
                 </label>
                 <label className="check">
                   <Input type="checkbox" checked={form.rainbow} onChange={(e) => set("rainbow", e.target.checked)} />{" "}
-                  Rainbow sort by cover colour
+                  {t("music.chartRainbow")}
                 </label>
                 <label className="check">
-                  <Input type="checkbox" checked={form.sfw} onChange={(e) => set("sfw", e.target.checked)} /> Skip NSFW
-                  artwork
+                  <Input type="checkbox" checked={form.sfw} onChange={(e) => set("sfw", e.target.checked)} />{" "}
+                  {t("music.chartSkipNsfw")}
                 </label>
                 <label className="check">
                   <Input
@@ -277,58 +285,56 @@ export function ChartMaker() {
                     checked={form.hideSingles}
                     onChange={(e) => set("hideSingles", e.target.checked)}
                   />{" "}
-                  Hide singles
+                  {t("music.chartHideSingles")}
                 </label>
               </div>
             </Section>
 
-            <Section title="Filters">
+            <Section title={t("music.chartFilters")}>
               <div className="grid gap-3">
                 <label>
-                  Release year or decade
+                  {t("music.chartReleaseFilter")}
                   <Input
                     value={form.releaseFilter}
                     onChange={(e) => set("releaseFilter", e.target.value)}
-                    placeholder="1999 or 1990s"
+                    placeholder={t("music.chartReleasePlaceholder")}
                   />
                 </label>
                 <label>
-                  Artist
+                  {t("music.chartArtist")}
                   <Input value={form.filteredArtist} onChange={(e) => set("filteredArtist", e.target.value)} />
                 </label>
                 <label>
-                  Genres, comma separated
+                  {t("music.chartGenres")}
                   <Input
                     value={form.genres}
                     onChange={(e) => set("genres", e.target.value)}
-                    placeholder="indie, rock"
+                    placeholder={t("music.chartGenresPlaceholder")}
                   />
                 </label>
               </div>
             </Section>
 
-            <Section title="Censor list">
+            <Section title={t("music.chartCensorList")}>
               <div className="grid gap-3">
                 <label>
-                  Artists, comma separated
+                  {t("music.chartCensorArtists")}
                   <Input value={form.censorArtists} onChange={(e) => set("censorArtists", e.target.value)} />
                 </label>
                 <label>
-                  Albums as Artist - Album
+                  {t("music.chartCensorAlbums")}
                   <Input value={form.censorAlbums} onChange={(e) => set("censorAlbums", e.target.value)} />
                 </label>
-                <p className="text-site-muted text-[13px]">
-                  Prefix an entry with nsfw: to hide it with Skip NSFW artwork.
-                </p>
+                <p className="text-site-muted text-[13px]">{t("music.chartCensorHint")}</p>
               </div>
             </Section>
 
             <div className="flex flex-wrap gap-2">
               <Button type="submit" loading={busy} disabled={busy}>
-                Make chart
+                {t("music.chartMake")}
               </Button>
               <Button type="button" kind="btn ghost" onClick={download} disabled={busy || !drawn}>
-                Download PNG
+                {t("music.chartDownload")}
               </Button>
             </div>
           </form>
@@ -339,8 +345,13 @@ export function ChartMaker() {
             {status}
           </p>
           <div className="border border-site-line bg-site-panel p-5 overflow-auto">
-            <canvas ref={canvas} hidden={!drawn} className="block max-w-full h-auto" aria-label="Generated chart" />
-            {!drawn && <p className="text-site-muted">Your chart will appear here.</p>}
+            <canvas
+              ref={canvas}
+              hidden={!drawn}
+              className="block max-w-full h-auto"
+              aria-label={t("music.chartGenerated")}
+            />
+            {!drawn && <p className="text-site-muted">{t("music.chartPlaceholder")}</p>}
           </div>
           {lines.length > 0 && (
             <ul className="text-site-muted text-[13px] mt-3 pl-5 list-disc">
@@ -352,10 +363,10 @@ export function ChartMaker() {
           {drawn && (
             <>
               <p className="text-site-muted text-[13px] mt-3">
-                {drawn.count} items · {drawn.width} × {drawn.height} px
+                {t("music.chartSize", { count: drawn.count, width: drawn.width, height: drawn.height })}
               </p>
               <details className="text-site-muted text-[13px] mt-2">
-                <summary>Image description</summary>
+                <summary>{t("music.chartImageDescription")}</summary>
                 <p className="[overflow-wrap:anywhere]">{description}</p>
               </details>
             </>

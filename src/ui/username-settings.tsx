@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { UsernameStatus } from "../../shared/account";
 import type { MeResponse } from "../../shared/auth";
 import { Button, Input } from "../kit";
+import { t, tx } from "../i18n";
 import { api, dateTime, invalidateAll, useApi, useAuth } from "../lib";
 import { Async, Section, useAction } from "./base";
 
@@ -23,23 +24,20 @@ export function UsernameSettings() {
       invalidateAll();
       setMe(result.user);
       setUsername(result.user!.username);
-      return undo ? "Username restored. You can change it again in 7 days." : "Username changed.";
+      return undo ? t("settings.usernameRestored") : t("settings.usernameChanged");
     });
   const submit = (event: FormEvent) => {
     event.preventDefault();
     change();
   };
   return (
-    <Section title="Username">
-      <p className="muted small">
-        You can change your username once every 7 days. Your previous name redirects to your profile for 14 days, then
-        becomes available to others.
-      </p>
+    <Section title={t("settings.username")}>
+      <p className="muted small">{t("settings.usernameIntro")}</p>
       {q.error && (
         <div role="alert">
           <p>{q.error.message}</p>
           <Button type="button" kind="btn ghost small" onClick={q.reload}>
-            Try again
+            {t("settings.tryAgain")}
           </Button>
         </div>
       )}
@@ -47,7 +45,7 @@ export function UsernameSettings() {
         {(status) => (
           <form className="form" onSubmit={submit}>
             <label>
-              Username
+              {t("settings.username")}
               <Input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
@@ -59,22 +57,24 @@ export function UsernameSettings() {
                 disabled={action.busy}
               />
             </label>
-            <p className="muted small">2–15 characters: letters, numbers, - and _, starting with a letter.</p>
+            <p className="muted small">{t("settings.usernameRules")}</p>
             {status.changeAfter > at && (
-              <p className="muted small">You can change your username again on {dateTime(status.changeAfter)}.</p>
+              <p className="muted small">{t("settings.usernameChangeAfter", { date: dateTime(status.changeAfter) })}</p>
             )}
             {action.note}
             <Button type="submit" kind="btn" loading={action.busy} disabled={status.changeAfter > at}>
-              Change username
+              {t("settings.changeUsername")}
             </Button>
             {status.undo && status.undo.expiresAt > at && (
               <div className="border-t border-site-line pt-4 mt-2">
                 <p className="muted small">
-                  Restore <Username name={status.undo.username} font={me?.usernameFont} /> until{" "}
-                  {dateTime(status.undo.expiresAt)}. Undo starts a new 7-day cooldown.
+                  {tx("settings.usernameRestoreUntil", {
+                    name: <Username name={status.undo.username} font={me?.usernameFont} />,
+                    date: dateTime(status.undo.expiresAt),
+                  })}
                 </p>
                 <Button type="button" kind="btn ghost" loading={action.busy} onClick={() => change(true)}>
-                  Undo username change
+                  {t("settings.undoUsernameChange")}
                 </Button>
               </div>
             )}

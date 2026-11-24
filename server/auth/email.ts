@@ -5,6 +5,8 @@ import { emailTokens, sessions, users } from "../db/schema";
 import { recordChange } from "../account/history";
 import { deleteAccount } from "../account/repo";
 import { bad, fail } from "../http";
+import { userLocale } from "../i18n";
+import { isLocale, type Locale } from "../../shared/i18n/core";
 import { send } from "../mail";
 import * as mail from "../mail/templates";
 import { findById, type User } from "../users/repo";
@@ -23,8 +25,7 @@ async function issue(userId: number, kind: Kind, email: string): Promise<string>
   const token = rid(32);
   await db.transaction(async (tx) => {
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update");
-    if (!user || ((kind === "reset" || kind === "verify") && user.email !== email))
-      bad("Your credentials changed. Try again.");
+    if (!user || ((kind === "reset" || kind === "verify") && user.email !== email)) bad("credentialsChangedTryAgain");
     await tx.delete(emailTokens).where(and(eq(emailTokens.userId, userId), eq(emailTokens.kind, kind)));
     await tx.insert(emailTokens).values({
       hash: digest(token),
@@ -65,18 +66,19 @@ export async function pendingEmail(userId: number): Promise<string | null> {
   return row?.email ?? null;
 }
 
-export async function sendVerification(u: User): Promise<void> {
+export async function sendVerification(u: User, fallback: Locale): Promise<void> {
   if (u.emailVerifiedAt) return;
-  await send(mail.verifyMail(u.email, u.username, await issue(u.id, "verify", u.email)));
+  const locale = isLocale(u.locale) ? u.locale : fallback;
+  await send(mail.verifyMail(locale, u.email, u.username, await issue(u.id, "verify", u.email)));
 }
 
 export async function startEmailChange(u: User, email: string): Promise<void> {
-  if (await emailTaken(email, u.id)) bad("That email is already in use");
+  if (await emailTaken(email, u.id)) bad("emailAlreadyUse");
   const token = rid(32);
   await db.transaction(async (tx) => {
     const [current] = await tx.select().from(users).where(eq(users.id, u.id)).for("update");
     if (!current || current.email !== u.email || current.passwordHash !== u.passwordHash)
-      bad("Your credentials changed. Refresh and try again.");
+      bad("credentialsChangedRefreshTryAgain");
     await tx
       .delete(emailTokens)
       .where(
@@ -91,23 +93,21 @@ export async function startEmailChange(u: User, email: string): Promise<void> {
       expiresAt: now() + LIFE["change-approve"],
     });
   });
-  await send(mail.approveEmailChangeMail(u.email, u.username, email, token));
+  await send(mail.approveEmailChangeMail(userLocale(u), u.email, u.username, email, token));
 }
 
 export async function confirmEmail(token: unknown): Promise<{ user: User; approvalPending: boolean }> {
   const t = await db.transaction(async (tx) => {
-    if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token))
-      return fail(400, "That link has expired or was already used");
+    if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return fail(400, "linkExpiredWasAlreadyUsed");
     const [pending] = await tx
       .select()
       .from(emailTokens)
       .where(eq(emailTokens.hash, digest(token)));
-    if (!pending) return fail(400, "That link has expired or was already used");
+    if (!pending) return fail(400, "linkExpiredWasAlreadyUsed");
     const [before] = await tx.select().from(users).where(eq(users.id, pending.userId)).for("update");
-    if (!before) return fail(400, "That link has expired or was already used");
+    if (!before) return fail(400, "linkExpiredWasAlreadyUsed");
     const t =
-      (await take(token, ["verify", "change-confirm", "change-approve"], tx)) ??
-      fail(400, "That link has expired or was already used");
+      (await take(token, ["verify", "change-confirm", "change-approve"], tx)) ?? fail(400, "linkExpiredWasAlreadyUsed");
     if (t.kind === "change-approve") {
       // Rotate the secret: access to the new inbox alone cannot approve the change.
       const next = rid(32);
@@ -122,11 +122,11 @@ export async function confirmEmail(token: unknown): Promise<{ user: User; approv
       return { ...t, next, oldEmail: before.email };
     }
     if (t.kind === "verify") {
-      if (before.email !== t.email) fail(400, "That link is for an address this account no longer uses");
+      if (before.email !== t.email) fail(400, "linkAddressAccountNoLonger");
       if (!before.emailVerifiedAt) await tx.update(users).set({ emailVerifiedAt: now() }).where(eq(users.id, t.userId));
     }
     if (t.kind === "change-confirm") {
-      if (await emailTaken(t.email, t.userId)) fail(400, "That email is already in use by another account");
+      if (await emailTaken(t.email, t.userId)) fail(400, "emailAlreadyUseByAnother");
       await tx.update(users).set({ email: t.email, emailVerifiedAt: now() }).where(eq(users.id, t.userId));
       await tx.delete(emailTokens).where(eq(emailTokens.userId, t.userId));
       await tx.delete(sessions).where(eq(sessions.userId, t.userId));
@@ -134,16 +134,16 @@ export async function confirmEmail(token: unknown): Promise<{ user: User; approv
     }
     return { ...t, next: null, oldEmail: before.email };
   });
-  const u = (await findById(t.userId)) ?? fail(400, "That link has expired or was already used");
+  const u = (await findById(t.userId)) ?? fail(400, "linkExpiredWasAlreadyUsed");
   if (t.kind === "change-approve" && t.next) {
-    await send(mail.changeMail(t.email, u.username, t.next));
+    await send(mail.changeMail(userLocale(u), t.email, u.username, t.next));
     return { user: u, approvalPending: true };
   }
   if (t.kind === "verify") {
-    await send(mail.welcomeMail(u.email, u.username));
+    await send(mail.welcomeMail(userLocale(u), u.email, u.username));
   } else {
     const old = t.oldEmail;
-    if (old !== t.email) await send(mail.emailChangedMail(old, u.username, t.email));
+    if (old !== t.email) await send(mail.emailChangedMail(userLocale(u), old, u.username, t.email));
   }
   return { user: (await findById(u.id))!, approvalPending: false };
 }
@@ -152,11 +152,11 @@ export async function confirmEmail(token: unknown): Promise<{ user: User; approv
 export async function requestReset(email: string): Promise<void> {
   const u = await first(db.select().from(users).where(eq(users.email, email)).limit(1));
   if (!u || u.banned) return;
-  await send(mail.resetMail(u.email, u.username, await issue(u.id, "reset", u.email)));
+  await send(mail.resetMail(userLocale(u), u.email, u.username, await issue(u.id, "reset", u.email)));
 }
 
 export async function resetPassword(token: unknown, passwordHash: string): Promise<User> {
-  const expired = () => fail(400, "That reset link has expired or was already used. Ask for a new one.");
+  const expired = () => fail(400, "resetLinkExpiredWasAlready");
   const u = await db.transaction(async (tx) => {
     if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return expired();
     const [pending] = await tx
@@ -175,12 +175,12 @@ export async function resetPassword(token: unknown, passwordHash: string): Promi
     await tx.delete(sessions).where(eq(sessions.userId, user.id));
     return user;
   });
-  await send(mail.passwordChangedMail(u.email, u.username));
+  await send(mail.passwordChangedMail(userLocale(u), u.email, u.username));
   return (await findById(u.id))!;
 }
 
-export const passwordChanged = (u: User) => send(mail.passwordChangedMail(u.email, u.username));
-export const passwordSet = (u: User) => send(mail.passwordSetMail(u.email, u.username));
+export const passwordChanged = (u: User) => send(mail.passwordChangedMail(userLocale(u), u.email, u.username));
+export const passwordSet = (u: User) => send(mail.passwordSetMail(userLocale(u), u.email, u.username));
 
 export async function dropExpiredEmailTokens(): Promise<void> {
   await db.delete(emailTokens).where(lt(emailTokens.expiresAt, now()));

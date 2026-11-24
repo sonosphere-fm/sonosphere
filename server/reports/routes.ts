@@ -9,18 +9,12 @@ export const router = new Router();
 
 function moderator(c: Ctx): Viewer {
   const u = need(c);
-  return u.isAdmin ? u : fail(403, "Moderators only");
+  return u.isAdmin ? u : fail(403, "moderatorsOnly");
 }
 
 router.post<ReportOk>("/api/reports", async (c) => {
   const u = confirmed(need(c));
-  await limit(
-    u,
-    `report:${u.id}`,
-    20,
-    3600,
-    "You have sent a lot of reports. The team will get to them; try again later."
-  );
+  await limit(u, `report:${u.id}`, 20, 3600, "tooManyReports");
   await service.fileReport(u, {
     type: String(c.body.type),
     id: Number(c.body.id),

@@ -1,5 +1,6 @@
 import { Ico, Spinner } from "../../icons";
 import { lazy, Suspense, useState } from "react";
+import { t } from "../../i18n";
 import { Select } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -9,8 +10,7 @@ import {
   dec,
   enc,
   num,
-  PERIODS,
-  plural,
+  periods,
   qs,
   short,
   trackUrl,
@@ -50,7 +50,9 @@ import {
   SIDE_LINKS,
 } from "./entity";
 
-const AdminTools = lazy(() => import("../../admin/page-tools").then((m) => ({ default: m.AdminTools })));
+const AdminTools = lazy(() =>
+  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.AdminTools }))
+);
 
 type ArtistTab = "overview" | "tracks" | "albums" | "similar" | "wiki" | "listeners" | "shoutbox";
 
@@ -59,7 +61,7 @@ function HeroCards({ a, top }: { a: ArtistData; top: TopTrack | undefined }) {
     <>
       {a.latestAlbum && (
         <FeatureCard
-          label="Latest release"
+          label={t("music.latestRelease")}
           to={albumUrl(a.name, a.latestAlbum.title)}
           image={a.latestAlbum.image}
           title={a.latestAlbum.title}
@@ -68,11 +70,11 @@ function HeroCards({ a, top }: { a: ArtistData; top: TopTrack | undefined }) {
       )}
       {top && (
         <FeatureCard
-          label={a.weekTrack ? "Popular this week" : "Most popular track"}
+          label={a.weekTrack ? t("music.popularThisWeek") : t("music.mostPopularTrack")}
           to={trackUrl(a.name, top.title)}
           image={top.image}
           title={top.title}
-          sub={`${num(top.listeners)} listeners`}
+          sub={t("music.listenerCount", { count: top.listeners })}
         />
       )}
     </>
@@ -80,10 +82,13 @@ function HeroCards({ a, top }: { a: ArtistData; top: TopTrack | undefined }) {
 }
 
 function albumSub(x: ArtistData["topAlbums"][number]) {
-  const details = [x.releaseDate && releaseDate(x.releaseDate), x.trackCount > 0 && plural(x.trackCount, "track")];
+  const details = [
+    x.releaseDate && releaseDate(x.releaseDate),
+    x.trackCount > 0 && t("music.trackCount", { count: x.trackCount }),
+  ];
   return (
     <>
-      <span>{num(x.listeners)} listeners</span>
+      <span>{t("music.listenerCount", { count: x.listeners })}</span>
       <span>{details.filter(Boolean).join(" · ")}</span>
     </>
   );
@@ -102,58 +107,59 @@ function Overview({ a, base }: { a: ArtistData; base: string }) {
           wiki={a.wiki}
           to={`${base}/+wiki`}
           facts={[
-            ["Albums", num(a.albumCount)],
-            ["Tracks", num(a.trackCount)],
-            ["Wall posts", num(a.shoutCount)],
+            [t("music.albums"), num(a.albumCount)],
+            [t("music.tracks"), num(a.trackCount)],
+            [t("music.wallPosts"), num(a.shoutCount)],
           ]}
         >
           <Tagger type="artist" id={a.id} tags={a.tags} myTags={a.myTags} />
         </About>
         <ArtistTopTracks name={a.name} base={base} initial={a.topTracks} />
-        <Section title="Albums" more={`${base}/+albums`} moreLabel="View all albums" foot>
+        <Section title={t("music.albums")} more={`${base}/+albums`} moreLabel={t("music.viewAllAlbums")} foot>
           <Grid below kind="album" cols={4} items={a.topAlbums.slice(0, 4)} sub={albumSub} />
         </Section>
         {a.topSingles.length > 0 && (
-          <Section title="Singles" more={`${base}/+albums?type=singles`} moreLabel="View all singles" foot>
+          <Section
+            title={t("music.singles")}
+            more={`${base}/+albums?type=singles`}
+            moreLabel={t("music.viewAllSingles")}
+            foot
+          >
             <Grid below kind="album" cols={4} items={a.topSingles} sub={albumSub} />
           </Section>
         )}
         <Listeners items={a.topListeners} more={`${base}/+listeners`} />
-        <Section title="Wall" more={`${base}/+wall`} moreLabel="View the whole wall" foot>
+        <Section title={t("music.wall")} more={`${base}/+wall`} moreLabel={t("music.viewWholeWall")} foot>
           <Shoutbox type="artist" id={a.id} limit={3} />
         </Section>
-        <Section title="Similar artists" more={`${base}/+similar`} moreLabel="View all similar artists" foot>
+        <Section title={t("music.similarArtists")} more={`${base}/+similar`} moreLabel={t("music.viewAllSimilar")} foot>
           <Grid below kind="artist" cols={6} items={a.similar} />
         </Section>
       </div>
       <aside className="side">
         {a.similar.length > 0 && (
-          <Section title="Similar to">
+          <Section title={t("music.similarTo")}>
             <Grid
               below
               kind="artist"
               cols={3}
               items={a.similar.slice(0, 3)}
-              sub={(x) => <span>{short(x.listeners)} listeners</span>}
+              sub={(x) => <span>{t("music.listenerCountShort", { count: x.listeners, n: short(x.listeners) })}</span>}
             />
           </Section>
         )}
         <Trend data={a.trend} />
-        <Section title="Upcoming events">
-          {a.events.length ? (
-            <EventList items={a.events} />
-          ) : (
-            <p className="muted">We don't have any upcoming events for this artist right now.</p>
-          )}
+        <Section title={t("music.upcomingEvents")}>
+          {a.events.length ? <EventList items={a.events} /> : <p className="muted">{t("music.noArtistEvents")}</p>}
           <p className={SIDE_LINKS}>
             <Link to="/events/add">
-              <Ico.Plus /> Add event
+              <Ico.Plus /> {t("music.addEvent")}
             </Link>
-            <Link to="/events">View all events</Link>
+            <Link to="/events">{t("music.viewAllEvents")}</Link>
           </p>
         </Section>
         {(a.mbid || a.spotifyId) && (
-          <Section title="Elsewhere">
+          <Section title={t("music.elsewhere")}>
             <p className={SIDE_LINKS}>
               {a.mbid && (
                 <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">
@@ -184,13 +190,13 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
       {(a) => {
         const top = a.weekTrack || a.topTracks[0];
         const tabs: [string, string, boolean?][] = [
-          [base, "Overview", true],
-          [`${base}/+tracks`, "Tracks"],
-          [`${base}/+albums`, "Albums"],
-          [`${base}/+similar`, "Similar artists"],
-          [`${base}/+wiki`, "Wiki"],
-          [`${base}/+listeners`, "Listeners"],
-          [`${base}/+wall`, `Wall (${a.shoutCount})`],
+          [base, t("music.overview"), true],
+          [`${base}/+tracks`, t("music.tracks")],
+          [`${base}/+albums`, t("music.albums")],
+          [`${base}/+similar`, t("music.similarArtists")],
+          [`${base}/+wiki`, t("music.wiki")],
+          [`${base}/+listeners`, t("music.listeners")],
+          [`${base}/+wall`, t("music.wallCount", { count: a.shoutCount })],
         ];
         return (
           <>
@@ -200,10 +206,10 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
               tabs={<Tabs items={tabs} />}
               actions={
                 <>
-                  <PlayButton queue={a.topTracks} label="Play artist" />
-                  <StationButton type="artist" name={a.name} label="Artist radio" ghost />
+                  <PlayButton queue={a.topTracks} label={t("music.playArtist")} />
+                  <StationButton type="artist" name={a.name} label={t("music.artistRadio")} ghost />
                   {me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}
-                  <MoreMenu label={`More actions for ${a.name}`} link={shortMusicUrl("a", a.id)}>
+                  <MoreMenu label={t("music.moreActionsFor", { name: a.name })} link={shortMusicUrl("a", a.id)}>
                     {me && <RemoveScrobbles scope="artist" id={a.id} name={a.name} count={a.userPlaycount} />}
                   </MoreMenu>
                   {me?.admin && (
@@ -215,8 +221,8 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
               }
               stats={
                 <>
-                  <HeroStat label="Listeners" value={a.listeners} />
-                  <HeroStat label="Scrobbles" value={a.playcount} />
+                  <HeroStat label={t("music.listeners")} value={a.listeners} />
+                  <HeroStat label={t("music.scrobbles")} value={a.playcount} />
                 </>
               }
               cards={tab === "overview" && (a.latestAlbum || top) ? <HeroCards a={a} top={top} /> : null}
@@ -250,7 +256,7 @@ function ArtistTopTracks({ name, base, initial }: { name: string; base: string; 
     <>
       <PlayButton queue={items} />
       <span className="ml-auto">
-        <Select label="Time period" value={period} onChange={setPeriod} options={PERIODS} />
+        <Select label={t("music.timePeriod")} value={period} onChange={setPeriod} options={periods()} />
       </span>
     </>
   );
@@ -258,13 +264,13 @@ function ArtistTopTracks({ name, base, initial }: { name: string; base: string; 
   let body;
   if (!overall && q.loading) body = <Spinner page />;
   else if (items.length) body = <TrackList items={items} rank={1} count="listeners" showArtist={false} />;
-  else body = <Empty>No one has scrobbled {name} in this period.</Empty>;
+  else body = <Empty>{t("music.noArtistScrobbles", { name })}</Empty>;
 
   return (
     <Section
-      title="Top tracks"
+      title={t("music.topTracks")}
       more={`${base}/+tracks${overall ? "" : qs({ period })}`}
-      moreLabel="View all tracks"
+      moreLabel={t("music.viewAllTracks")}
       foot
       aside={aside}
     >
@@ -281,7 +287,7 @@ function ArtistTracks({ name }: { name: string }) {
   return (
     <>
       <div className="toolbar">
-        <h2>Top tracks</h2>
+        <h2>{t("music.topTracks")}</h2>
         <PeriodPicker />
       </div>
       <Async q={q}>
@@ -296,11 +302,6 @@ function ArtistTracks({ name }: { name: string }) {
   );
 }
 
-const RELEASE_TYPES: [string, string][] = [
-  ["albums", "Albums"],
-  ["singles", "Singles"],
-];
-
 function ArtistAlbums({ name }: { name: string }) {
   const [sp, setSp] = useSearchParams();
   const page = Number(sp.get("page")) || 1;
@@ -310,8 +311,16 @@ function ArtistAlbums({ name }: { name: string }) {
   return (
     <>
       <div className="toolbar">
-        <h2>{type === "singles" ? "Singles" : "Albums"}</h2>
-        <Select label="Show" value={type} onChange={pick} options={RELEASE_TYPES} />
+        <h2>{type === "singles" ? t("music.singles") : t("music.albums")}</h2>
+        <Select
+          label={t("music.show")}
+          value={type}
+          onChange={pick}
+          options={[
+            ["albums", t("music.albums")],
+            ["singles", t("music.singles")],
+          ]}
+        />
       </div>
       <Async q={q}>
         {(d) => (
@@ -322,7 +331,8 @@ function ArtistAlbums({ name }: { name: string }) {
               items={d.items}
               sub={(x) => (
                 <>
-                  {x.releaseDate?.slice(0, 4)} · {plural(x.trackCount, "track")} · {num(x.listeners)} listeners
+                  {x.releaseDate?.slice(0, 4)} · {t("music.trackCount", { count: x.trackCount })} ·{" "}
+                  {t("music.listenerCount", { count: x.listeners })}
                 </>
               )}
             />
@@ -350,17 +360,17 @@ function ArtistSimilar({ name }: { name: string }) {
                   <Link className="strong" to={artistUrl(s.name)}>
                     {s.name}
                   </Link>
-                  <span className="muted small">{num(s.listeners)} listeners</span>
+                  <span className="muted small">{t("music.listenerCount", { count: s.listeners })}</span>
                   <TagChips tags={s.tags.map((n) => ({ name: n }))} />
                 </div>
-                <div className="match" title={`${Math.round(s.match * 100)}% match`}>
+                <div className="match" title={t("music.match", { percent: Math.round(s.match * 100) })}>
                   <span style={{ width: `${Math.min(100, s.match * 100)}%` }} />
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <Empty>Not enough listening data to find similar artists yet.</Empty>
+          <Empty>{t("music.noSimilar")}</Empty>
         )
       }
     </Async>

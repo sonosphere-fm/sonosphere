@@ -4,13 +4,15 @@ import { Button, Input } from "../kit";
 import { api, useApi } from "../lib";
 import { Async, Section, useAction } from "../ui/base";
 import { COSMETIC_SLOTS, type CosmeticSlot, type Cosmetic, type CosmeticsState } from "../../shared/cosmetics";
+import type { AdminKey } from "./common";
+import { t } from "./i18n";
 
-const SLOT_LABELS: Record<CosmeticSlot, string> = {
-  accessory: "Accessories",
-  frame: "Frames",
-  name_fx: "Username effects",
-  page_fx: "Page effects",
-  scrobble_fx: "Scrobble effects",
+const SLOT_LABELS: Record<CosmeticSlot, AdminKey> = {
+  accessory: "admin.slotAccessory",
+  frame: "admin.slotFrame",
+  name_fx: "admin.slotNameFx",
+  page_fx: "admin.slotPageFx",
+  scrobble_fx: "admin.slotScrobbleFx",
 };
 
 type Result = {
@@ -40,17 +42,17 @@ export function CosmeticsAdmin({ name }: { name: string }) {
         },
       });
       q.reload();
-      return "Cosmetics updated.";
+      return t("admin.cosmeticsUpdated");
     });
   return (
-    <Section title="Cosmetics">
+    <Section title={t("admin.cosmetics")}>
       <Async q={q}>
         {(d) => (
           <div className="form">
             <div className="w-full min-w-0 grid gap-5">
               {COSMETIC_SLOTS.map((slot) => (
                 <fieldset key={slot} className="m-0 min-w-0 border-0 p-0">
-                  <legend className="mb-2 p-0 font-semibold text-site-ink">{SLOT_LABELS[slot]}</legend>
+                  <legend className="mb-2 p-0 font-semibold text-site-ink">{t(SLOT_LABELS[slot])}</legend>
                   <div className="cos-catalog w-full">
                     {d.catalog
                       .filter((c) => c.slot === slot)
@@ -74,12 +76,12 @@ export function CosmeticsAdmin({ name }: { name: string }) {
               ))}
             </div>
             <label>
-              Note
+              {t("admin.note")}
               <Input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
             </label>
             <div className="row">
               <Button kind="btn" type="button" disabled={act.busy || !changed} onClick={apply}>
-                Apply
+                {t("admin.apply")}
               </Button>
             </div>
             {act.note}

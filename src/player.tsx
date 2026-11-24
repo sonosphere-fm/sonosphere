@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "./kit";
+import { t } from "./i18n";
 import { Link, useNavigate } from "react-router-dom";
 import { api, artistUrl, imageUrl, qs, trackUrl, useAuth } from "./lib";
 import { errorText } from "./ui/base";
@@ -477,16 +478,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     isCurrent: (t: PTrack) => same(state.queue[state.index], t),
   };
 
-  const t = state.queue[state.index];
+  const track = state.queue[state.index];
   const hasNext = state.index < state.queue.length - 1;
   const showCover = (state.status === "ready" && state.spotify) || state.status === "saved";
-  const cover = state.spotify?.art || (state.status === "saved" ? savedArt : null) || t?.image;
+  const cover = state.spotify?.art || (state.status === "saved" ? savedArt : null) || track?.image;
   const coverSrc = cover ? imageUrl(cover) : null;
   return (
     <Ctx.Provider value={value}>
       {children}
-      <div className={t ? "vplayer" : "vplayer off"} role="region" aria-label="Player" aria-hidden={!t}>
-        <button type="button" className="vplayer-x" aria-label="Close player" onClick={close}>
+      <div
+        className={track ? "vplayer" : "vplayer off"}
+        role="region"
+        aria-label={t("player.player")}
+        aria-hidden={!track}
+      >
+        <button type="button" className="vplayer-x" aria-label={t("player.closePlayer")} onClick={close}>
           <Ico.X />
         </button>
         <div className="vplayer-screen">
@@ -503,7 +509,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           )}
         </div>
         <SeekBar position={state.position} length={live(state.status) ? state.length : 0} onSeek={seek} />
-        {t && (
+        {track && (
           <div className="vplayer-bar">
             <div className="vplayer-meta">
               {state.station && (
@@ -512,27 +518,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
                 </small>
               )}
               <TrackMeta
-                track={t}
+                track={track}
                 status={state.status}
                 spotify={!!state.spotify}
                 scrobbled={!!me && state.scrobbled}
               />
             </div>
-            <button type="button" aria-label="Previous track" disabled={!live(state.status)} onClick={prev}>
+            <button type="button" aria-label={t("player.previousTrack")} disabled={!live(state.status)} onClick={prev}>
               <Ico.Prev />
             </button>
             <button
               type="button"
-              aria-label={state.playing ? "Pause" : "Play"}
+              aria-label={state.playing ? t("player.pause") : t("player.play")}
               disabled={!live(state.status)}
               onClick={toggle}
             >
               {state.playing ? <Ico.Pause /> : <Ico.Play />}
             </button>
-            <button type="button" aria-label="Next track" disabled={!hasNext} onClick={next}>
+            <button type="button" aria-label={t("player.nextTrack")} disabled={!hasNext} onClick={next}>
               <Ico.Next />
             </button>
-            <ExternalLink track={t} spotifyId={state.spotify?.id} videoId={state.videoId} />
+            <ExternalLink track={track} spotifyId={state.spotify?.id} videoId={state.videoId} />
           </div>
         )}
       </div>
@@ -551,8 +557,8 @@ function TrackMeta({
   spotify: boolean;
   scrobbled: boolean;
 }) {
-  if (status === "missing") return <span>Track unavailable.</span>;
-  if (status === "finding") return <span>Finding “{track.title}”…</span>;
+  if (status === "missing") return <span>{t("player.trackUnavailable")}</span>;
+  if (status === "finding") return <span>{t("player.finding", { title: track.title })}</span>;
   return (
     <>
       <Link to={trackUrl(track.artist, track.title)} className="strong">
@@ -561,12 +567,12 @@ function TrackMeta({
       <span>
         <Link to={artistUrl(track.artist)}>{track.artist}</Link>
         {spotify ? (
-          <em> · on Spotify</em>
+          <em> · {t("player.onSpotify")}</em>
         ) : (
           scrobbled && (
             <em>
               {" "}
-              · <Ico.Check /> Scrobbled
+              · <Ico.Check /> {t("player.scrobbled")}
             </em>
           )
         )}
@@ -582,8 +588,8 @@ function ExternalLink({ track, spotifyId, videoId }: { track: PTrack; spotifyId?
         href={`https://open.spotify.com/track/${spotifyId}`}
         target="_blank"
         rel="noreferrer"
-        aria-label="Open in Spotify"
-        title="Open in Spotify"
+        aria-label={t("player.openInSpotify")}
+        title={t("player.openInSpotify")}
       >
         <SpotifyMark />
       </a>
@@ -594,15 +600,21 @@ function ExternalLink({ track, spotifyId, videoId }: { track: PTrack; spotifyId?
         href={`https://www.youtube.com/watch?v=${videoId}`}
         target="_blank"
         rel="noreferrer"
-        aria-label="Watch on YouTube"
-        title="Watch on YouTube"
+        aria-label={t("player.watchOnYouTube")}
+        title={t("player.watchOnYouTube")}
       >
         <VideoMark />
       </a>
     );
   const search = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${track.artist} ${track.title}`)}`;
   return (
-    <a href={search} target="_blank" rel="noreferrer" aria-label="Search on YouTube" title="Search on YouTube">
+    <a
+      href={search}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={t("player.searchOnYouTube")}
+      title={t("player.searchOnYouTube")}
+    >
       <VideoMark />
     </a>
   );
@@ -674,12 +686,12 @@ function SeekBar({ position, length, onSeek }: { position: number; length: numbe
     <div
       className={length ? "vplayer-progress seekable" : "vplayer-progress"}
       role="slider"
-      aria-label="Seek"
+      aria-label={t("player.seek")}
       tabIndex={length ? 0 : -1}
       aria-valuemin={0}
       aria-valuemax={Math.round(length)}
       aria-valuenow={Math.round(position)}
-      aria-valuetext={`${clock(position)} of ${clock(length)}`}
+      aria-valuetext={t("player.timeOf", { position: clock(position), length: clock(length) })}
       title={length ? shownTime : undefined}
       onPointerDown={onPointerDown}
       onPointerMove={(e) => {
@@ -697,9 +709,9 @@ function SeekBar({ position, length, onSeek }: { position: number; length: numbe
 
 export function PlayButton({ queue, index = 0, label }: { queue: PTrack[]; index?: number; label?: string }) {
   const p = usePlayer();
-  const t = queue[index];
-  if (!t) return null;
-  const current = p.isCurrent(t);
+  const track = queue[index];
+  if (!track) return null;
+  const current = p.isCurrent(track);
   const active = current && p.state.playing;
   const click = () => (current && live(p.state.status) ? p.toggle() : p.play(queue, index));
   if (label)
@@ -707,7 +719,7 @@ export function PlayButton({ queue, index = 0, label }: { queue: PTrack[]; index
       <Button kind="btn" onClick={click}>
         {active ? (
           <>
-            <Ico.Pause /> Pause
+            <Ico.Pause /> {t("player.pause")}
           </>
         ) : (
           <>
@@ -719,7 +731,7 @@ export function PlayButton({ queue, index = 0, label }: { queue: PTrack[]; index
   return (
     <Button
       kind={"play-btn" + (current ? " on" : "")}
-      aria-label={active ? "Pause" : `Play ${t.title}`}
+      aria-label={active ? t("player.pause") : t("player.playTitle", { title: track.title })}
       onClick={click}
     >
       {active ? <Ico.Pause /> : <Ico.Play />}
@@ -762,7 +774,7 @@ export function StationButton({
       <Button kind={ghost ? "btn ghost" : "btn"} type="button" loading={busy} onClick={click}>
         {active ? (
           <>
-            <Ico.Pause /> Pause
+            <Ico.Pause /> {t("player.pause")}
           </>
         ) : (
           <>
@@ -792,7 +804,12 @@ export function StationRow({ type, label }: { type: "library" | "recommended" | 
   };
   return (
     <li>
-      <Button kind={"play-btn" + (on ? " on" : "")} type="button" aria-label={active ? "Pause" : label} onClick={click}>
+      <Button
+        kind={"play-btn" + (on ? " on" : "")}
+        type="button"
+        aria-label={active ? t("player.pause") : label}
+        onClick={click}
+      >
         {active ? <Ico.Pause /> : <Ico.Play />}
       </Button>
       <span>

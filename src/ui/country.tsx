@@ -13,6 +13,7 @@ import * as Flags from "country-flag-icons/react/3x2";
 import { api, num } from "../lib";
 import type { EventPlace, EventPlaces } from "../../shared/events";
 import { COUNTRIES, COUNTRY_ALIASES, countryCode, countryName, countryNameOf } from "../../shared/countries";
+import { locale, t } from "../i18n";
 
 type Row = { key: string; label: string; sub?: string; count: number; icon?: ReactNode; place?: EventPlace };
 
@@ -24,6 +25,13 @@ export function Flag({ code }: { code: string }) {
 }
 
 const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+const regionNames = () => new Intl.DisplayNames([locale()], { type: "region" });
+
+function localCountry(name: string) {
+  const code = countryCode(name);
+  return code ? (regionNames().of(code) ?? name) : name;
+}
 
 function Suggest({
   label,
@@ -132,7 +140,7 @@ function Suggest({
                 {r.sub && <small>{r.sub}</small>}
               </span>
               {r.count > 0 && (
-                <span className="suggest-count" title={`${num(r.count)} ${r.count === 1 ? "event" : "events"}`}>
+                <span className="suggest-count" title={t("common.eventCount", { count: r.count })}>
                   {num(r.count)}
                 </span>
               )}
@@ -170,10 +178,10 @@ export function PlaceInput({
         () => {}
       );
     };
-    const t = setTimeout(load, 150);
+    const timer = setTimeout(load, 150);
     return () => {
       live = false;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [field, value]);
   const typed = value.trim().toLowerCase();
@@ -185,7 +193,7 @@ export function PlaceInput({
         label: p.name,
         count: p.count,
         place: p,
-        sub: [p.city, p.country].filter(Boolean).join(", ") || undefined,
+        sub: [p.city, p.country && localCountry(p.country)].filter(Boolean).join(", ") || undefined,
       }));
   const pick = (r: Row) => {
     onChange(r.label);
@@ -193,7 +201,7 @@ export function PlaceInput({
   };
   return (
     <Suggest
-      label={field === "venue" ? "Venue" : "City"}
+      label={field === "venue" ? t("common.venue") : t("common.city")}
       value={value}
       onText={onChange}
       rows={rows}
@@ -228,48 +236,58 @@ export function CountryInput({
       () => {}
     );
   }, [eventCounts]);
+  const lang = locale();
+  const localized = useMemo(() => {
+    const names = regionNames();
+    return COUNTRIES.map((c) => ({ ...c, local: names.of(c.code) ?? c.name }));
+  }, [lang]);
+  const byLocal = useMemo(() => new Map(localized.map((c) => [c.local.toLowerCase(), c.code])), [localized]);
+  const codeOf = (s: string) => countryCode(s) ?? byLocal.get(s.trim().toLowerCase());
+  const localName = (c: string) => localized.find((x) => x.code === c)?.local ?? "";
   const code = countryCode(value);
-  const [text, setText] = useState(code ? countryNameOf(code) : value);
+  const [text, setText] = useState(code ? localName(code) : value);
   useEffect(() => {
-    setText((t) => {
-      if (t && countryCode(t) === code) return t;
-      return code ? countryNameOf(code) : value;
+    setText((current) => {
+      if (current && codeOf(current) === code) return current;
+      return code ? localName(code) : value;
     });
   }, [value, code]);
   const ranked = useMemo(() => {
     const events = (c: { code: string }) => counts.get(c.code) ?? 0;
-    return [...COUNTRIES].sort((a, b) => events(b) - events(a) || a.name.localeCompare(b.name));
-  }, [counts]);
+    return [...localized].sort((a, b) => events(b) - events(a) || a.local.localeCompare(b.local, lang));
+  }, [counts, localized, lang]);
   const q = fold(text.trim());
-  const picked = !!code && countryCode(text) === code;
-  const matches = (c: { code: string; name: string }) =>
-    fold(c.name).includes(q) || Object.entries(COUNTRY_ALIASES).some(([a, k]) => k === c.code && a.startsWith(q));
+  const picked = !!code && codeOf(text) === code;
+  const matches = (c: { code: string; name: string; local: string }) =>
+    fold(c.local).includes(q) ||
+    fold(c.name).includes(q) ||
+    Object.entries(COUNTRY_ALIASES).some(([a, k]) => k === c.code && a.startsWith(q));
   const rows: Row[] = ranked
     .filter((c) => !q || picked || matches(c))
-    .map((c) => ({ key: c.code, label: c.name, count: counts.get(c.code) ?? 0, icon: <Flag code={c.code} /> }));
-  const type = (t: string) => {
-    setText(t);
-    if (!t.trim()) onChange("");
+    .map((c) => ({ key: c.code, label: c.local, count: counts.get(c.code) ?? 0, icon: <Flag code={c.code} /> }));
+  const type = (v: string) => {
+    setText(v);
+    if (!v.trim()) onChange("");
   };
   const pick = (r: Row) => {
     setText(r.label);
-    onChange(r.label);
+    onChange(countryNameOf(r.key));
   };
   // a typed name or alias snaps to its country; anything else goes back to what was picked
   const leave = () => {
-    const c = countryCode(text);
+    const c = codeOf(text);
     if (c) {
-      setText(countryNameOf(c));
+      setText(localName(c));
       onChange(countryNameOf(c));
     } else if (text.trim()) {
-      setText(code ? countryNameOf(code) : "");
+      setText(code ? localName(code) : "");
     }
   };
   return (
     <Suggest
-      label="Country"
+      label={t("common.country")}
       value={text}
-      placeholder="Search countries"
+      placeholder={t("common.searchCountries")}
       icon={picked ? <Flag code={code} /> : undefined}
       rows={rows}
       onText={type}

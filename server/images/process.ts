@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { fail } from "../http";
+import type { ErrorKey } from "../i18n";
 import { SIZES } from "./convert";
 
 export type Converted = { width: number; height: number; large: Uint8Array; small: Uint8Array };
@@ -17,12 +18,12 @@ export function sniff(b: Uint8Array): "jpeg" | "png" | "webp" | "gif" | null {
 const SCRIPT = join(import.meta.dir, "convert.ts");
 const TIME_LIMIT_MS = 30_000;
 const MAX_RUNNING = 2;
-const PROCESSING_FAILED = "The picture could not be processed. Try again.";
+const PROCESSING_FAILED = "pictureProcessingFailed";
 
-const REASONS: Record<string, string> = {
-  ERR_IMAGE_TOO_MANY_PIXELS: "That image is too large. Use one under 40 megapixels.",
-  ERR_IMAGE_UNKNOWN_FORMAT: "Upload a PNG, JPEG, WebP or GIF image",
-  ERR_IMAGE_FORMAT_UNSUPPORTED: "Upload a PNG, JPEG, WebP or GIF image",
+const REASONS: Record<string, ErrorKey> = {
+  ERR_IMAGE_TOO_MANY_PIXELS: "imageTooManyPixels",
+  ERR_IMAGE_UNKNOWN_FORMAT: "uploadPngJpegWebpGif",
+  ERR_IMAGE_FORMAT_UNSUPPORTED: "uploadPngJpegWebpGif",
 };
 
 let running = 0;
@@ -65,9 +66,9 @@ const isWebp = (base64: string) => sniff(Buffer.from(base64.slice(0, 24), "base6
 const isEdge = (n: unknown) => Number.isInteger(n) && (n as number) > 0 && (n as number) <= SIZES.large;
 
 export async function convert(input: Uint8Array): Promise<Converted> {
-  if (!sniff(input)) fail(400, "Upload a PNG, JPEG, WebP or GIF image");
+  if (!sniff(input)) fail(400, "uploadPngJpegWebpGif");
   const out = await slot(() => runChild(input));
-  if (out.error) fail(400, REASONS[out.error] ?? "That file could not be read as an image");
+  if (out.error) fail(400, REASONS[out.error] ?? "fileNotAnImage");
   if (!isEdge(out.width) || !isEdge(out.height) || !isWebp(out.large) || !isWebp(out.small))
     fail(500, PROCESSING_FAILED);
   return {

@@ -21,8 +21,7 @@ router.get<Charts>("/api/charts", async (c) => {
     const items = await repo.tagChart(pg.limit, pg.offset);
     return { items, total: await repo.usedTagCount(), ...pg };
   }
-  const kind =
-    oneOf(c.q.get("kind"), ["artists", "albums", "tracks"]) ?? bad("kind must be artists, albums, tracks or tags");
+  const kind = oneOf(c.q.get("kind"), ["artists", "albums", "tracks"]) ?? bad("kindArtistsAlbumsTracksTags");
   const top = await siteTop(kind, { from, to, viewerId: c.user?.id }, pg.limit, pg.offset);
   return { ...top, ...pg };
 });

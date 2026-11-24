@@ -14,8 +14,8 @@ router.get<SearchResults>("/api/search", async (c) => {
   const pg = paging(c.q, type === "all" ? 8 : 32, 50);
   if (!term) return { artists: [], albums: [], tracks: [], tags: [], users: [] };
   const who = c.user ? `u${c.user.id}` : ipOf(c.req);
-  await throttle(`search:${who}`, 60, 60, "Too many searches. Wait a moment and try again.");
-  await throttle(`search-h:${who}`, 1000, 3600, "Too many searches. Try again later.");
+  await throttle(`search:${who}`, 60, 60, "tooManySearchesWaitMoment");
+  await throttle(`search-h:${who}`, 1000, 3600, "tooManySearchesTryAgain");
   const query = { term, limit: pg.limit, offset: pg.offset };
   const want = (t: string) => type === "all" || type === t;
   const ours = {

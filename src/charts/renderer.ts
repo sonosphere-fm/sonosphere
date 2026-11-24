@@ -1,3 +1,4 @@
+import { locale, t } from "../i18n";
 import { CHART, TitleSetting } from "./constants";
 import { mapWithConcurrency } from "./metadata";
 import type { ChartItem, ChartSettings } from "./options";
@@ -26,7 +27,9 @@ function escapeXml(value: string): string {
 
 export function placeholderDataUri(label: string, kind: "unknown" | "censored"): string {
   const censored = kind === "censored";
-  const text = censored ? "CENSORED" : escapeXml(String(label || "").slice(0, 42) || "No image");
+  const text = escapeXml(
+    censored ? t("music.chartCensored") : String(label || "").slice(0, 42) || t("music.chartNoImage")
+  );
   const background = censored ? "#1b1b1f" : "#3c3a40";
   const foreground = censored ? "#f08b86" : "#c9c6c1";
   const svg =
@@ -214,7 +217,7 @@ function measure(ctx: CanvasRenderingContext2D, text: string) {
 
 function textElements(text: string): string[] {
   if (typeof Intl.Segmenter !== "undefined") {
-    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    const segmenter = new Intl.Segmenter(locale(), { granularity: "grapheme" });
     return [...segmenter.segment(text)].map((entry) => entry.segment);
   }
   return Array.from(text);
@@ -410,10 +413,10 @@ export async function renderChart(
   const cellSize = getCellSize(settings.width, settings.height);
   const scale = cellSize / CHART.BASE_CELL_SIZE;
   const items = settings.artistChart ? settings.artists : settings.albums;
-  if (!items.length) throw new Error("There are no items to render.");
+  if (!items.length) throw new Error(t("music.chartNoItems"));
 
   const report = (stage: string, detail?: string) => onProgress?.(stage, detail);
-  report("Loading artwork…", `0/${items.length}`);
+  report(t("music.chartLoadingArt"), `0/${items.length}`);
 
   const loaded = await mapWithConcurrency(items, CHART.MAX_CONCURRENT_COVER_LOADS, async (item, index) => {
     let image: HTMLImageElement;
@@ -426,7 +429,8 @@ export async function renderChart(
       image = cover.image;
       validImage = cover.validImage;
     }
-    if (index % 5 === 0 || index === items.length - 1) report("Loading artwork…", `${index + 1}/${items.length}`);
+    if (index % 5 === 0 || index === items.length - 1)
+      report(t("music.chartLoadingArt"), `${index + 1}/${items.length}`);
     return { item, image, validImage };
   });
 
@@ -436,13 +440,13 @@ export async function renderChart(
     cellCanvas.width = cellSize;
     cellCanvas.height = cellSize;
     const ctx = cellCanvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) throw new Error("Canvas is not available in this browser.");
+    if (!ctx) throw new Error(t("music.chartNoCanvas"));
     drawFitted(ctx, entry.image, cellSize, settings.artistChart);
 
     const { topName, bottomName } = namesFor(entry.item, settings);
     const plays =
       settings.titleSetting === TitleSetting.TitlesWithPlays && entry.item.userPlaycount
-        ? `${new Intl.NumberFormat().format(entry.item.userPlaycount)} plays`
+        ? t("music.chartPlays", { count: entry.item.userPlaycount })
         : null;
 
     if (settings.titleSetting === TitleSetting.Titles && scale >= 0.4) {
@@ -469,7 +473,7 @@ export async function renderChart(
   output.width = cellSize * settings.width;
   output.height = cellSize * settings.height;
   const context = output.getContext("2d");
-  if (!context) throw new Error("Canvas is not available in this browser.");
+  if (!context) throw new Error(t("music.chartNoCanvas"));
   // fmbot encodes to JPEG with alpha ignored, so letterboxed gaps appear black.
   context.fillStyle = "#000000";
   context.fillRect(0, 0, output.width, output.height);

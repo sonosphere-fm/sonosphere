@@ -4,6 +4,7 @@ import { ago, api, useApi, useAuth, userUrl, useTitle } from "../lib";
 import type { Notification, Notifications, NotificationsRead } from "../../shared/notifications";
 import { Async, Avatar, Empty } from "../ui/base";
 import { UserLabels } from "../ui/user-labels";
+import { t, tx } from "../i18n";
 
 // `data` is free-form JSON, so anything that isn't a string reads as empty.
 const text = (v: unknown) => (typeof v === "string" ? v : "");
@@ -21,7 +22,7 @@ function Message({ n, me }: { n: Notification; me: string }) {
   const actor = (
     <>
       <Link className="strong inline" to={n.actor.username ? userUrl(n.actor.username) : "#"}>
-        <Username user={n.actor} name={n.actor.username || "Someone"} />
+        <Username user={n.actor} name={n.actor.username || t("messages.someone")} />
       </Link>
       {n.actor.username && <UserLabels name={n.actor.username} />}
     </>
@@ -29,19 +30,29 @@ function Message({ n, me }: { n: Notification; me: string }) {
   if (n.type === "comment") {
     return (
       <span>
-        {actor} {n.data.reply ? "replied to your comment on" : "commented on"}{" "}
-        <Link to={`${userUrl(text(n.data.journalUsername) || me)}/journal/${String(n.data.journalId)}`}>
-          {text(n.data.title)}
-        </Link>
+        {tx(n.data.reply ? "messages.notifyCommentReply" : "messages.notifyComment", {
+          actor,
+          title: (
+            <Link to={`${userUrl(text(n.data.journalUsername) || me)}/journal/${String(n.data.journalId)}`}>
+              {text(n.data.title)}
+            </Link>
+          ),
+        })}
         <Quote body={text(n.data.body)} />
       </span>
     );
   }
-  if (n.type === "follow") return <span>{actor} started following you.</span>;
+  if (n.type === "follow") return <span>{tx("messages.notifyFollow", { actor })}</span>;
   return (
     <span>
-      {actor} {n.data.reply ? "replied to your post on" : "wrote on"}{" "}
-      <Link to={`${userUrl(text(n.data.wallUsername) || me)}/wall`}>{n.data.reply ? "a wall" : "your wall"}</Link>
+      {tx(n.data.reply ? "messages.notifyWallReply" : "messages.notifyWall", {
+        actor,
+        wall: (
+          <Link to={`${userUrl(text(n.data.wallUsername) || me)}/wall`}>
+            {n.data.reply ? t("messages.aWall") : t("messages.yourWall")}
+          </Link>
+        ),
+      })}
       <Quote body={text(n.data.body)} />
     </span>
   );
@@ -50,7 +61,7 @@ function Message({ n, me }: { n: Notification; me: string }) {
 export function Inbox() {
   const q = useApi<Notifications>("/notifications");
   const { me, refresh } = useAuth();
-  useTitle("Inbox");
+  useTitle(t("messages.inbox"));
 
   useEffect(() => {
     if (q.data?.items.some((n) => !n.read)) {
@@ -60,7 +71,7 @@ export function Inbox() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Inbox</h1>
+      <h1 className="page-title">{t("messages.inbox")}</h1>
       <Async q={q}>
         {(d) =>
           d.items.length ? (
@@ -80,7 +91,7 @@ export function Inbox() {
               ))}
             </ul>
           ) : (
-            <Empty>Nothing yet. Follows and posts on your wall will show up here.</Empty>
+            <Empty>{t("messages.inboxEmpty")}</Empty>
           )
         }
       </Async>

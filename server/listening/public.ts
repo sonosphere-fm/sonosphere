@@ -49,24 +49,24 @@ function errorResponse(error: unknown) {
 }
 
 function publicUser(user: User | null): User {
-  if (!user || user.banned) throw new HttpError(404, "User not found");
+  if (!user || user.banned) throw new HttpError(404, "userNotFound");
   // This API always uses public visibility, even if the request carries the owner's session cookie.
-  if (!canSee(user, null)) throw new HttpError(403, "This user keeps their listening private");
+  if (!canSee(user, null)) throw new HttpError(403, "userKeepsTheirListeningPrivate");
   return user;
 }
 
 async function requestUser(req: Request): Promise<User> {
   const wait = await hits(`public-nowplaying:${ipOf(req)}`, 60, 60);
-  if (wait) throw new HttpError(429, "Too many requests. Try again shortly.", wait);
+  if (wait) throw new HttpError(429, "tooManyRequestsTryAgain", wait);
   const name = new URL(req.url).searchParams.get("name");
-  if (!name || name.length > 60) throw new HttpError(400, "name is required (at most 60 characters)");
+  if (!name || name.length > 60) throw new HttpError(400, "nameRequiredMost60Characters");
   return publicUser(await findByName(name));
 }
 
 function checkCapacity(ip: string) {
   let count = 0;
   for (const set of connections.values()) for (const c of set) if (c.ip === ip) count++;
-  if (count >= MAX_PER_IP) throw new HttpError(429, "Too many live connections", 30);
+  if (count >= MAX_PER_IP) throw new HttpError(429, "tooManyLiveConnections", 30);
 }
 
 function originOf(req: Request) {

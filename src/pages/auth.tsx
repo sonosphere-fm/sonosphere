@@ -4,7 +4,8 @@ import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { api, qs, TITLES, useApi, useAuth, useTitle } from "../lib";
 import { useAction } from "../ui/base";
 import type { AuthConfig, OAuthCreated, OAuthPending, Ok, Session } from "../../shared/auth";
-import { OAUTH_ERRORS, OAuthButtons } from "../ui/oauth";
+import { oauthError as oauthErrorText, OAuthButtons } from "../ui/oauth";
+import { t, tx } from "../i18n";
 
 const safeNext = (n: string | null) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/");
 
@@ -22,8 +23,8 @@ const loadTurnstile = () =>
     s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     s.async = true;
     s.onload = () => {
-      const t = (window as unknown as { turnstile?: Turnstile }).turnstile;
-      if (t) ok(t);
+      const turnstile = (window as unknown as { turnstile?: Turnstile }).turnstile;
+      if (turnstile) ok(turnstile);
       else no(new Error("no turnstile"));
     };
     s.onerror = () => {
@@ -46,10 +47,10 @@ export function useTurnstile(action: string) {
     if (!key || !box.current) return;
     let gone = false;
     loadTurnstile().then(
-      (t) => {
+      (turnstile) => {
         if (gone || !box.current) return;
         const theme = document.documentElement.dataset.theme;
-        const id = t.render(box.current, {
+        const id = turnstile.render(box.current, {
           sitekey: key,
           action,
           size: "flexible",
@@ -64,7 +65,7 @@ export function useTurnstile(action: string) {
             setFailed(true);
           },
         });
-        widget.current = { t, id };
+        widget.current = { t: turnstile, id };
       },
       () => setFailed(true)
     );
@@ -85,7 +86,7 @@ export function useTurnstile(action: string) {
       <div ref={box} />
       {failed && (
         <p className="form-error" role="alert">
-          The robot check could not load. Refresh the page and try again.
+          {t("auth.robotFailed")}
         </p>
       )}
     </div>
@@ -97,15 +98,18 @@ export function useTurnstile(action: string) {
 function Agreement() {
   return (
     <p className="muted small">
-      By creating an account you agree to the{" "}
-      <Link to="/terms" target="_blank">
-        Terms of Service
-      </Link>{" "}
-      and{" "}
-      <Link to="/privacy" target="_blank">
-        Privacy Policy
-      </Link>
-      , and confirm you are at least 13.
+      {tx("auth.agreement", {
+        terms: (
+          <Link to="/terms" target="_blank">
+            {t("auth.termsLink")}
+          </Link>
+        ),
+        privacy: (
+          <Link to="/privacy" target="_blank">
+            {t("auth.privacyLink")}
+          </Link>
+        ),
+      })}
     </p>
   );
 }
@@ -119,7 +123,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const act = useAction();
   const robot = useTurnstile(mode === "login" ? "login" : "signup");
   const config = useApi<AuthConfig>("/auth/config").data;
-  const oauthError = OAUTH_ERRORS[sp.get("oauth") ?? ""];
+  const oauthError = oauthErrorText(sp.get("oauth"));
   const login = mode === "login";
   useTitle(login ? TITLES.login : TITLES.join);
   if (me) return <Navigate to={next} replace />;
@@ -129,7 +133,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
       try {
         const r = await api<Session>(`/auth/${login ? "login" : "signup"}`, { body: { ...f, turnstile: robot.token } });
         setMe(r.user);
@@ -143,7 +147,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">{login ? "Log in" : "Join Sonosphere"}</h1>
+      <h1 className="page-title">{login ? t("auth.logIn") : t("auth.joinSonosphere")}</h1>
       <form className="form card" onSubmit={submit}>
         {oauthError && (
           <p className="form-error" role="alert">
@@ -152,7 +156,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
         )}
         <OAuthButtons providers={config?.oauth ?? []} next={next} />
         <label>
-          {login ? "Username or email" : "Username"}
+          {login ? t("auth.usernameOrEmail") : t("auth.username")}
           <Input
             value={f.username}
             onChange={set("username")}
@@ -164,12 +168,12 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
         </label>
         {!login && (
           <label>
-            Email
+            {t("auth.email")}
             <Input type="email" value={f.email} onChange={set("email")} autoComplete="email" required />
           </label>
         )}
         <label>
-          Password
+          {t("auth.password")}
           <Input
             type="password"
             value={f.password}
@@ -183,21 +187,25 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
         {!login && <Agreement />}
         {act.note}
         <Button kind="btn" loading={act.busy}>
-          {login ? "Log in" : "Create account"}
+          {login ? t("auth.logIn") : t("auth.createAccount")}
         </Button>
       </form>
       {login ? (
         <>
           <p>
-            <Link to="/forgot">Forgot your password?</Link>
+            <Link to="/forgot">{t("auth.forgotPassword")}</Link>
           </p>
           <p>
-            New here? <Link to={`/join${qs({ next: sp.get("next") })}`}>Create an account</Link>.
+            {tx("auth.newHere", {
+              link: <Link to={`/join${qs({ next: sp.get("next") })}`}>{t("auth.createAnAccount")}</Link>,
+            })}
           </p>
         </>
       ) : (
         <p>
-          Already have an account? <Link to={`/login${qs({ next: sp.get("next") })}`}>Log in</Link>.
+          {tx("auth.haveAccount", {
+            link: <Link to={`/login${qs({ next: sp.get("next") })}`}>{t("auth.logIn")}</Link>,
+          })}
         </p>
       )}
     </div>
@@ -231,18 +239,16 @@ export function OAuthJoinPage() {
           {q.error.message}
         </p>
         <p>
-          <Link to="/join">Back to the join page</Link>
+          <Link to="/join">{t("auth.backToJoin")}</Link>
         </p>
       </div>
     );
   } else if (q.data) {
     body = (
       <form className="form card" onSubmit={submit}>
-        <p>
-          You're signing up with {q.data.provider} as <strong>{q.data.email}</strong>. Pick a username to finish.
-        </p>
+        <p>{tx("auth.oauthSigningUp", { provider: q.data.provider, email: <strong>{q.data.email}</strong> })}</p>
         <label>
-          Username
+          {t("auth.username")}
           <Input
             value={username}
             onChange={(e) => setName(e.target.value)}
@@ -252,14 +258,11 @@ export function OAuthJoinPage() {
             maxLength={15}
           />
         </label>
-        <p className="muted small">
-          2 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in
-          Settings, which some scrobbler apps need.
-        </p>
+        <p className="muted small">{t("auth.oauthUsernameHint")}</p>
         <Agreement />
         {act.note}
         <Button kind="btn" loading={act.busy}>
-          Create account
+          {t("auth.createAccount")}
         </Button>
       </form>
     );
@@ -267,7 +270,7 @@ export function OAuthJoinPage() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Join Sonosphere</h1>
+      <h1 className="page-title">{t("auth.joinSonosphere")}</h1>
       {body}
     </div>
   );
@@ -283,7 +286,7 @@ export function ForgotPage() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
       try {
         await api<Ok>("/auth/forgot", { body: { email, turnstile: robot.token } });
         setSent(email);
@@ -296,22 +299,17 @@ export function ForgotPage() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Reset your password</h1>
+      <h1 className="page-title">{t("auth.resetTitle")}</h1>
       {sent ? (
         <div className="card form">
-          <p>
-            If an account uses <strong>{sent}</strong>, a link to choose a new password is on its way. It works for one
-            hour.
-          </p>
-          <p className="muted small">
-            Nothing after a few minutes? Check your spam folder, or make sure you used the address you signed up with.
-          </p>
+          <p>{tx("auth.resetSent", { email: <strong>{sent}</strong> })}</p>
+          <p className="muted small">{t("auth.resetSpam")}</p>
         </div>
       ) : (
         <form className="form card" onSubmit={submit}>
-          <p>Enter the email address on your account and we will send you a link to choose a new password.</p>
+          <p>{t("auth.resetIntro")}</p>
           <label>
-            Email
+            {t("auth.email")}
             <Input
               type="email"
               value={email}
@@ -324,12 +322,12 @@ export function ForgotPage() {
           {robot.view}
           {act.note}
           <Button kind="btn" loading={act.busy}>
-            Send reset link
+            {t("auth.sendResetLink")}
           </Button>
         </form>
       )}
       <p>
-        <Link to="/login">Back to log in</Link>
+        <Link to="/login">{t("auth.backToLogIn")}</Link>
       </p>
     </div>
   );
@@ -355,11 +353,11 @@ export function ResetPage() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Choose a new password</h1>
+      <h1 className="page-title">{t("auth.newPasswordTitle")}</h1>
       {token ? (
         <form className="form card" onSubmit={submit}>
           <label>
-            New password
+            {t("auth.newPassword")}
             <Input
               type="password"
               value={pw}
@@ -370,18 +368,15 @@ export function ResetPage() {
               autoFocus
             />
           </label>
-          <p className="muted small">At least 8 characters. You will be signed out everywhere else.</p>
+          <p className="muted small">{t("auth.newPasswordHint")}</p>
           {act.note}
           <Button kind="btn" loading={act.busy}>
-            Save password
+            {t("auth.savePassword")}
           </Button>
         </form>
       ) : (
         <div className="card form">
-          <p>
-            This link is missing its code. Open the link from the email again, or{" "}
-            <Link to="/forgot">ask for a new one</Link>.
-          </p>
+          <p>{tx("auth.resetMissingCode", { link: <Link to="/forgot">{t("auth.askForNewOne")}</Link> })}</p>
         </div>
       )}
     </div>
@@ -393,9 +388,7 @@ export function VerifyPage() {
   const [sp] = useSearchParams();
   const token = sp.get("token") || "";
   const { me, refresh } = useAuth();
-  const [state, setState] = useState<"working" | "done" | string>(
-    token ? "working" : "This link is missing its code. Open the link from the email again."
-  );
+  const [state, setState] = useState<"working" | "done" | string>(token ? "working" : t("auth.verifyMissingCode"));
   useTitle(TITLES.verify);
   const started = useRef(false);
 
@@ -414,16 +407,12 @@ export function VerifyPage() {
 
   let body;
   if (state === "working") {
-    body = <p>Confirming...</p>;
+    body = <p>{t("auth.confirming")}</p>;
   } else if (state === "done") {
     body = (
       <>
-        <p>
-          {approvalPending
-            ? "Email change approved. Follow the verification link sent to your new address to finish."
-            : "Your email is confirmed. Thanks!"}
-        </p>
-        <p>{me ? <Link to="/">Go to your home page</Link> : <Link to="/login">Log in</Link>}</p>
+        <p>{approvalPending ? t("auth.emailChangeApproved") : t("auth.emailConfirmed")}</p>
+        <p>{me ? <Link to="/">{t("auth.goHome")}</Link> : <Link to="/login">{t("auth.logIn")}</Link>}</p>
       </>
     );
   } else {
@@ -434,11 +423,11 @@ export function VerifyPage() {
         </p>
         <p>
           {me ? (
-            <>
-              You can send a new link from <Link to="/settings/account">your account settings</Link>.
-            </>
+            tx("auth.sendNewLink", {
+              link: <Link to="/settings/account">{t("auth.accountSettingsLink")}</Link>,
+            })
           ) : (
-            <Link to="/login">Log in</Link>
+            <Link to="/login">{t("auth.logIn")}</Link>
           )}
         </p>
       </>
@@ -447,7 +436,7 @@ export function VerifyPage() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Confirm your email</h1>
+      <h1 className="page-title">{t("auth.confirmEmailTitle")}</h1>
       <div className="card form">{body}</div>
     </div>
   );

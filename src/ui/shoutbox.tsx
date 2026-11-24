@@ -2,6 +2,7 @@ import { Ico } from "../icons";
 import { useState, type FormEvent } from "react";
 import { Button, Modal, Select, Textarea } from "../kit";
 import { Link } from "react-router-dom";
+import { t, tx } from "../i18n";
 import { ago, api, dateTime, qs, useApi, useAuth, userUrl } from "../lib";
 import { Empty, Async, useAction, Avatar } from "./base";
 import { UserLabels } from "./user-labels";
@@ -9,18 +10,18 @@ import type { ItemType } from "../../shared/catalog";
 import type { ReportOk } from "../../shared/reports";
 import type { Shout, ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
 
-const REASONS: [string, string][] = [
-  ["spam", "Spam or advertising"],
-  ["abuse", "Harassment or abuse"],
-  ["inappropriate", "Offensive or inappropriate"],
-  ["impersonation", "Impersonation"],
-  ["other", "Something else"],
+const reasons = (): [string, string][] => [
+  ["spam", t("messages.reasonSpam")],
+  ["abuse", t("messages.reasonAbuse")],
+  ["inappropriate", t("messages.reasonInappropriate")],
+  ["impersonation", t("messages.reasonImpersonation")],
+  ["other", t("messages.reasonOther")],
 ];
 
 export function ReportButton({
   type,
   id,
-  label = "Report",
+  label = t("messages.report"),
   open: forced,
   onClose,
 }: {
@@ -59,31 +60,30 @@ export function ReportButton({
         </Button>
       )}
       {shown && (
-        <Modal title="Report to moderators" onClose={close}>
+        <Modal title={t("messages.reportTitle")} onClose={close}>
           {sent ? (
             <div className="form">
-              <p>Thanks. A moderator will take a look.</p>
+              <p>{t("messages.reportThanks")}</p>
               <Button kind="btn" type="button" onClick={close}>
-                Done
+                {t("messages.done")}
               </Button>
             </div>
           ) : (
             <form className="form" onSubmit={submit}>
               {(type === "dm" || type === "group") && (
                 <p className="muted small">
-                  Moderators will see the reported message and a few around it.{" "}
-                  {type === "dm" ? "The other person isn't notified." : "No one in the group is notified."}
+                  {type === "dm" ? t("messages.reportContextDm") : t("messages.reportContextGroup")}
                 </p>
               )}
               <label>
-                Reason
-                <Select label="Reason" value={reason} onChange={setReason} options={REASONS} />
+                {t("messages.reason")}
+                <Select label={t("messages.reason")} value={reason} onChange={setReason} options={reasons()} />
               </label>
               <label>
-                Additional details
+                {t("messages.additionalDetails")}
                 <Textarea
                   rows={3}
-                  placeholder="Optional"
+                  placeholder={t("messages.optional")}
                   value={detail}
                   onChange={(e) => setDetail(e.target.value)}
                   maxLength={1000}
@@ -91,7 +91,7 @@ export function ReportButton({
               </label>
               {act.note}
               <Button kind="btn" loading={act.busy}>
-                Submit report
+                {t("messages.submitReport")}
               </Button>
             </form>
           )}
@@ -128,7 +128,7 @@ export function Shoutbox({
   };
   let compose;
   if (q.data?.enabled === false) {
-    compose = <p className="muted">This wall is turned off.</p>;
+    compose = <p className="muted">{t("messages.wallOff")}</p>;
   } else if (me) {
     compose = (
       <form onSubmit={post} className="flex gap-2.5 items-start mb-2 [&_textarea]:flex-1">
@@ -137,19 +137,21 @@ export function Shoutbox({
           rows={2}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={wall ? "Write on the wall…" : "Leave a comment…"}
-          aria-label={`Your ${word}`}
+          placeholder={wall ? t("messages.writeOnWall") : t("messages.leaveComment")}
+          aria-label={wall ? t("messages.yourPost") : t("messages.yourComment")}
           maxLength={1000}
         />
         <Button kind="btn" loading={act.busy} disabled={!text.trim()}>
-          {wall ? "Post" : "Comment"}
+          {wall ? t("messages.post") : t("messages.comment")}
         </Button>
       </form>
     );
   } else {
     compose = (
       <p className="muted">
-        <Link to="/login">Log in</Link> to {wall ? "write on the wall" : "leave a comment"}.
+        {tx(wall ? "messages.loginToWrite" : "messages.loginToComment", {
+          login: <Link to="/login">{t("messages.logIn")}</Link>,
+        })}
       </p>
     );
   }
@@ -160,7 +162,7 @@ export function Shoutbox({
       <Async q={q}>
         {(d) => (
           <>
-            {d.items.length === 0 && <Empty>{wall ? "No posts yet." : "No comments yet."} Be the first.</Empty>}
+            {d.items.length === 0 && <Empty>{wall ? t("messages.noPostsYet") : t("messages.noCommentsYet")}</Empty>}
             <ul className="shouts">
               {d.items.map((s) => (
                 <ShoutThread
@@ -177,10 +179,10 @@ export function Shoutbox({
             {d.total > limit && (
               <div className="row">
                 <Button kind="btn ghost small" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                  <Ico.Left /> Newer
+                  <Ico.Left /> {t("messages.newer")}
                 </Button>
                 <Button kind="btn ghost small" disabled={page * limit >= d.total} onClick={() => setPage(page + 1)}>
-                  Older <Ico.Right />
+                  {t("messages.older")} <Ico.Right />
                 </Button>
               </div>
             )}
@@ -250,11 +252,11 @@ function ShoutThread({
               </span>
             </div>
           )}
-          <p>{s.deleted ? <span className="muted">This post was deleted.</span> : s.body}</p>
+          <p>{s.deleted ? <span className="muted">{t("messages.postDeleted")}</span> : s.body}</p>
           <div className="flex flex-wrap gap-3">
             {me && enabled && (
               <Button type="button" kind="link small" onClick={() => setReplying(!replying)}>
-                Reply
+                {t("messages.reply")}
               </Button>
             )}
             {!s.deleted && me && me.username !== s.author.username && <ReportButton type="shout" id={s.id} />}
@@ -270,12 +272,12 @@ function ShoutThread({
                   })
                 }
               >
-                Delete
+                {t("messages.delete")}
               </Button>
             )}
             {(s.replyCount > 0 || expanded) && (
               <Button type="button" kind="link small" onClick={() => setExpanded(!expanded)}>
-                {expanded ? "Hide replies" : `Show replies (${s.replyCount})`}
+                {expanded ? t("messages.hideReplies") : t("messages.showReplies", { count: s.replyCount })}
               </Button>
             )}
           </div>
@@ -284,17 +286,17 @@ function ShoutThread({
               <Textarea
                 autoFocus
                 rows={2}
-                aria-label="Your reply"
+                aria-label={t("messages.yourReply")}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 maxLength={1000}
               />
               <div className="flex gap-3">
                 <Button type="submit" loading={act.busy} disabled={!text.trim()}>
-                  Post reply
+                  {t("messages.postReply")}
                 </Button>
                 <Button type="button" kind="link small" onClick={() => setReplying(false)}>
-                  Cancel
+                  {t("messages.cancel")}
                 </Button>
               </div>
             </form>
@@ -324,7 +326,7 @@ function ShoutThread({
                 {d.total > 10 && (
                   <div className="row">
                     <Button type="button" kind="link small" disabled={page === 1} onClick={() => setPage(page - 1)}>
-                      Previous replies
+                      {t("messages.previousReplies")}
                     </Button>
                     <Button
                       type="button"
@@ -332,7 +334,7 @@ function ShoutThread({
                       disabled={page * 10 >= d.total}
                       onClick={() => setPage(page + 1)}
                     >
-                      More replies
+                      {t("messages.moreReplies")}
                     </Button>
                   </div>
                 )}

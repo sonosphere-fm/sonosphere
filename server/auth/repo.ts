@@ -2,6 +2,7 @@ import { and, count, eq, ne, or, sql } from "drizzle-orm";
 import { db, transact } from "../db/client";
 import { lockUsernameClaims, usernameUnavailable } from "../account/usernames";
 import { bad } from "../http";
+import type { Locale } from "../../shared/i18n/core";
 import { notifications, reports, sessions, users } from "../db/schema";
 import { digest, first, norm, now } from "../util";
 import type { User } from "../users/repo";
@@ -44,11 +45,12 @@ export async function createUser(
   username: string,
   email: string,
   passwordHash: string,
+  locale: Locale,
   emailVerified = false
 ): Promise<number> {
   return transact(async (tx) => {
     await lockUsernameClaims(tx);
-    if (await usernameUnavailable(username, tx)) return bad("That username is taken or temporarily reserved");
+    if (await usernameUnavailable(username, tx)) return bad("usernameTakenTemporarilyReserved");
     const [row] = await tx
       .insert(users)
       .values({
@@ -56,6 +58,7 @@ export async function createUser(
         usernameNorm: norm(username),
         email,
         passwordHash,
+        locale,
         registeredAt: now(),
         emailVerifiedAt: emailVerified ? now() : null,
       })

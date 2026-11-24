@@ -4,6 +4,9 @@ import { Button } from "../kit";
 import { albumUrl, artistUrl, trackUrl } from "../lib";
 import { DetailsDialog, RenameDialog, TracklistDialog, type EditTarget } from "./catalogue";
 import { useRole } from "./common";
+import { t } from "./i18n";
+
+export { ready } from "./i18n";
 
 type Kind = "artist" | "album" | "track";
 type Props = { kind: Kind; item: EditTarget; onDone: () => void };
@@ -30,10 +33,10 @@ export function AdminTools({ kind, item, onDone }: Props) {
   return (
     <>
       <Button kind="btn ghost" type="button" onClick={() => setOpen("details")}>
-        Edit details
+        {t("admin.editDetails")}
       </Button>
       <Button kind="btn ghost" type="button" onClick={() => setOpen("rename")}>
-        Rename
+        {t("admin.rename")}
       </Button>
       {open === "details" && <DetailsDialog kind={kind} item={item} close={close} done={saved} />}
       {open === "rename" && <RenameDialog kind={kind} item={item} close={close} done={renamed} />}
@@ -51,7 +54,7 @@ export function TracklistTool({ item, onDone }: Omit<Props, "kind">) {
   return (
     <>
       <Button kind="link small" type="button" onClick={() => setOpen(true)}>
-        Edit
+        {t("admin.edit")}
       </Button>
       {open && <TracklistDialog item={item} close={() => setOpen(false)} done={saved} />}
     </>

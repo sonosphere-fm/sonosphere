@@ -27,12 +27,12 @@ import { wantCovers } from "../metadata/wanted";
 
 export const router = new Router();
 
-const PRIVATE = "This user keeps their listening private";
+const PRIVATE = "userKeepsTheirListeningPrivate";
 const KINDS = ["artists", "albums", "tracks"] as const;
 
 router.get<Profile>("/api/user", async (c) => {
   const u = await requireUser(c.q.get("name"));
-  if (u.banned && !isStaff(c.user)) return missing("User");
+  if (u.banned && !isStaff(c.user)) return missing("userNotFound");
   return profile(u, c.user);
 });
 
@@ -52,7 +52,7 @@ router.get<UserTop>("/api/user/top", async (c) => {
   const u = await requireUser(c.q.get("name"));
   const pg = paging(c.q);
   const [from, to] = range(c.q);
-  const kind = oneOf(c.q.get("kind"), KINDS) ?? bad("kind must be artists, albums or tracks");
+  const kind = oneOf(c.q.get("kind"), KINDS) ?? bad("kindArtistsAlbumsTracks");
   if (!canSeeCharts(u, c.user)) return { items: [], total: 0, hidden: true, ...pg };
   const scope: listening.Scope = { userId: u.id, from, to, viewerId: c.user?.id };
   if (c.q.get("artist")) scope.artistId = (await requireArtist(c.q.get("artist"))).id;
@@ -123,12 +123,12 @@ router.get<UserTags>("/api/user/tags", async (c) => {
 
 router.post<FollowResult>("/api/follow", async (c) => {
   const u = need(c);
-  await limit(u, `follow:${u.id}`, 100, 3600, "That is a lot of follows. Try again in a while.");
+  await limit(u, `follow:${u.id}`, 100, 3600, "lotFollowsTryAgainWhile");
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
   const follow = c.body.follow !== false;
-  if (t.id === u.id) bad("You can't follow yourself");
+  if (t.id === u.id) bad("cantFollowYourself");
   if (follow) confirmed(u);
-  if (follow && (await repo.blockedEither(u.id, t.id))) fail(403, "You can't follow this user");
+  if (follow && (await repo.blockedEither(u.id, t.id))) fail(403, "cantFollowUser");
   if (!follow) await repo.unfollow(u.id, t.id);
   else if (await repo.follow(u.id, t.id)) await notify(t.id, "follow", u.id);
   return { isFollowing: follow };

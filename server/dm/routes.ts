@@ -1,5 +1,6 @@
 import { confirmed, need } from "../guards";
 import { ipOf, Router } from "../http";
+import { requestLocale } from "../i18n";
 import { onClientMessage } from "../realtime";
 import { checkTurnstile } from "../auth/turnstile";
 import { requireUser } from "../users/service";
@@ -31,10 +32,10 @@ router.get<DmList>("/api/dm", async (c) => {
 
 router.get<DmWith>("/api/dm/with", async (c) => {
   const me = need(c);
-  return dm.withUser(me, await requireUser(c.q.get("name")));
+  return dm.withUser(requestLocale(c.req), me, await requireUser(c.q.get("name")));
 });
 
-router.get<DmThreadPage>("/api/dm/thread/:id", (c) => dm.page(need(c), c.params[0], before(c)));
+router.get<DmThreadPage>("/api/dm/thread/:id", (c) => dm.page(requestLocale(c.req), need(c), c.params[0], before(c)));
 
 router.post<DmSent>("/api/dm/send", async (c) => {
   const me = confirmed(need(c));
@@ -53,7 +54,7 @@ router.post<DmReacted>("/api/dm/message/:id/react", (c) => dm.react(need(c), c.p
 
 router.get<DmGroupCandidates>("/api/dm/group/candidates", (c) => groups.candidates(need(c), c.q.get("group")));
 router.post<DmGroupSent>("/api/dm/group", (c) => groups.create(confirmed(need(c)), c.body.title, c.body.users));
-router.get<DmGroupPage>("/api/dm/group/:id", (c) => groups.page(need(c), c.params[0], before(c)));
+router.get<DmGroupPage>("/api/dm/group/:id", (c) => groups.page(requestLocale(c.req), need(c), c.params[0], before(c)));
 router.post<DmGroupSent>("/api/dm/group/:id/send", (c) => groups.send(confirmed(need(c)), c.params[0], c.body.body));
 router.post<DmDone>("/api/dm/group/:id/read", (c) => groups.read(need(c), c.params[0]));
 router.post<DmGroupSent>("/api/dm/group/:id/title", (c) => groups.rename(need(c), c.params[0], c.body.title));

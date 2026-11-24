@@ -1,3 +1,4 @@
+import { requestLocale, tr } from "../i18n";
 import { confirmed, need } from "../guards";
 import { bad, missing, oneOf, Router, throttle } from "../http";
 import { requireUser } from "../users/service";
@@ -9,7 +10,6 @@ import {
   type PlaylistOk,
   type PlaylistPage,
   TEMPLATE_IDS,
-  TEMPLATES,
   type UserPlaylists,
 } from "../../shared/playlists";
 import { wantCovers } from "../metadata/wanted";
@@ -22,7 +22,7 @@ router.get<UserPlaylists>("/api/user/playlists", async (c) => {
 });
 
 router.get<PlaylistPage>("/api/playlist/:id", async (c) => {
-  const p = (await repo.findPlaylist(Number(c.params[0]))) ?? missing("Playlist");
+  const p = (await repo.findPlaylist(Number(c.params[0]))) ?? missing("playlistNotFound");
   return {
     id: p.id,
     title: p.title,
@@ -36,8 +36,8 @@ router.get<PlaylistPage>("/api/playlist/:id", async (c) => {
 
 router.post<PlaylistCreated>("/api/playlists", async (c) => {
   const u = confirmed(need(c));
-  const title = clean(c.body.title, 100) || bad("Give the playlist a title");
-  await throttle(`playlist:${u.id}`, 30, 86_400, "You can make up to 30 playlists a day.");
+  const title = clean(c.body.title, 100) || bad("givePlaylistTitle");
+  await throttle(`playlist:${u.id}`, 30, 86_400, "tooManyPlaylistsToday");
   const description = String(c.body.description || "")
     .trim()
     .slice(0, 500);
@@ -46,11 +46,13 @@ router.post<PlaylistCreated>("/api/playlists", async (c) => {
 
 router.post<PlaylistCreated>("/api/playlists/template", async (c) => {
   const u = confirmed(need(c));
-  const template = oneOf(c.body.template, TEMPLATE_IDS) ?? bad("Unknown template");
+  const template = oneOf(c.body.template, TEMPLATE_IDS) ?? bad("unknownTemplate");
   const ids = await templateTracks(u.id, template);
-  if (!ids.length) bad("There isn't enough listening for this template yet");
-  await throttle(`playlist:${u.id}`, 30, 86_400, "You can make up to 30 playlists a day.");
-  const { title, blurb } = TEMPLATES[template];
+  if (!ids.length) bad("notEnoughListeningForTemplate");
+  await throttle(`playlist:${u.id}`, 30, 86_400, "tooManyPlaylistsToday");
+  const lang = requestLocale(c.req);
+  const title = tr(lang, `playlists.${template}Title`);
+  const blurb = tr(lang, `playlists.${template}Blurb`);
   return { id: await repo.createFilledPlaylist(u.id, title, blurb, ids) };
 });
 

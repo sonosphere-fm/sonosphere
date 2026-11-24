@@ -29,8 +29,8 @@ export async function reactionsOf(kind: Kind, ids: number[]): Promise<Map<number
 }
 
 export async function checkReaction(userId: number, emoji: unknown): Promise<string> {
-  const picked = DM_REACTIONS.find((e) => e === emoji) ?? fail(400, "Pick one of the reactions");
-  if (!(await attempt(`dm-react:${userId}`, 60, 60_000))) fail(429, "You're reacting too quickly");
+  const picked = DM_REACTIONS.find((e) => e === emoji) ?? fail(400, "pickOneReactions");
+  if (!(await attempt(`dm-react:${userId}`, 60, 60_000))) fail(429, "youreReactingTooQuickly");
   return picked;
 }
 

@@ -31,6 +31,8 @@ import { ScrobbleMenu } from "../../ui/scrobble-menu";
 import { shortUrl } from "../../../shared/paths";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import { Hero } from "../music/shared";
+import { ProfileLinkIcon } from "../../ui/profile-link-icon";
+import { t, tx } from "../../i18n";
 import { UserLabels } from "../../ui/user-labels";
 import { Username } from "../../ui/username";
 import { CosmeticAvatar } from "../../ui/cosmetics";
@@ -42,6 +44,7 @@ import type { UserEvents as UserEventList } from "../../../shared/events";
 import { reportType, type TopAlbum, type TopArtist, type TopTrack } from "../../../shared/listening";
 import type { SuspendResult } from "../../../shared/reports";
 import type { Profile, UserRecent, UserTop } from "../../../shared/users";
+import type { TasteLabel } from "../../../shared/recommend";
 import { Journal, JournalPost, JournalEditor } from "./journal";
 import { Library, LibraryArtist } from "./library";
 import { Report } from "./report";
@@ -81,19 +84,19 @@ const setBlock = (username: string, block: boolean) => api<BlockResult>("/block"
 
 function profileTabs(u: Profile, base: string, locked: boolean) {
   const tabs: [string, string, boolean?][] = [
-    [base, "Overview", true],
-    [`${base}/listening-report`, "Reports"],
-    [`${base}/library`, "Library"],
-    [`${base}/following`, `Following (${u.following})`],
-    [`${base}/followers`, `Followers (${u.followers})`],
-    [`${base}/loved`, "Loved"],
-    [`${base}/journal`, "Journal"],
-    [`${base}/earworms`, "Earworms"],
-    [`${base}/playlists`, "Playlists"],
-    [`${base}/events`, "Events"],
-    [`${base}/soundalikes`, "Soundalikes"],
-    [`${base}/tags`, "Tags"],
-    [`${base}/wall`, `Wall (${u.shoutCount})`],
+    [base, t("user.tabOverview"), true],
+    [`${base}/listening-report`, t("user.tabReports")],
+    [`${base}/library`, t("user.tabLibrary")],
+    [`${base}/following`, t("user.tabFollowing", { count: u.following })],
+    [`${base}/followers`, t("user.tabFollowers", { count: u.followers })],
+    [`${base}/loved`, t("user.tabLoved")],
+    [`${base}/journal`, t("user.tabJournal")],
+    [`${base}/earworms`, t("user.tabEarworms")],
+    [`${base}/playlists`, t("user.tabPlaylists")],
+    [`${base}/events`, t("user.tabEvents")],
+    [`${base}/soundalikes`, t("user.tabSoundalikes")],
+    [`${base}/tags`, t("user.tabTags")],
+    [`${base}/wall`, t("user.tabWall", { count: u.shoutCount })],
   ];
   if (!locked) return tabs;
   // A private listener's profile has no listening tabs, numbers or station for anyone else.
@@ -102,13 +105,13 @@ function profileTabs(u: Profile, base: string, locked: boolean) {
 }
 
 function ProfileStats({ u, base, locked }: { u: Profile; base: string; locked: boolean }) {
-  const followers = <Stat label="Followers" value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} />;
+  const followers = <Stat label={t("user.statFollowers")} value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} />;
   if (locked) return followers;
   return (
     <>
-      <Stat label="Scrobbles" value={<Link to={`${base}/library`}>{num(u.playcount)}</Link>} />
-      <Stat label="Artists" value={<Link to={`${base}/library/artists`}>{num(u.artistCount)}</Link>} />
-      <Stat label="Loved tracks" value={<Link to={`${base}/loved`}>{num(u.lovedCount)}</Link>} />
+      <Stat label={t("user.statScrobbles")} value={<Link to={`${base}/library`}>{num(u.playcount)}</Link>} />
+      <Stat label={t("user.statArtists")} value={<Link to={`${base}/library/artists`}>{num(u.artistCount)}</Link>} />
+      <Stat label={t("user.statLovedTracks")} value={<Link to={`${base}/loved`}>{num(u.lovedCount)}</Link>} />
       {followers}
     </>
   );
@@ -120,25 +123,25 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
     return (
       <>
         <Button kind="btn ghost" href="/settings">
-          Edit profile
+          {t("user.editProfile")}
         </Button>
         <Button kind="btn ghost" href={`${userUrl(u.username)}/cosmetics`}>
-          Cosmetics
+          {t("user.cosmetics")}
         </Button>
         <Button kind="btn ghost" href="/scrobble">
-          Scrobble manually
+          {t("user.scrobbleManually")}
         </Button>
-        <MoreMenu label={`More actions for ${u.username}`} link={shortUrl(u.username)} />
+        <MoreMenu label={t("user.moreActions", { name: u.username })} link={shortUrl(u.username)} />
       </>
     );
   }
   return (
     <>
       {!u.blocked && <FollowButton username={u.username} following={u.isFollowing} onChange={onChange} />}
-      {!u.hidden && <StationButton type="library" name={u.username} label="Play library" ghost />}
+      {!u.hidden && <StationButton type="library" name={u.username} label={t("user.playLibrary")} ghost />}
       {me && !u.blocked && (
         <Button kind="btn ghost" href={`/messages/to/${encodeURIComponent(u.username)}`}>
-          Message
+          {t("user.message")}
         </Button>
       )}
       <ProfileMenu u={u} onChange={onChange} />
@@ -167,12 +170,8 @@ export function UserPage({ tab }: { tab: Tab }) {
         const mine = me?.username === u.username;
         const locked = u.locked && !mine;
         const details = [u.realname, u.pronouns, u.country].filter(Boolean).join(" · ");
-        const sub = (
-          <>
-            {details}
-            {details && " · "}scrobbling since {date(u.registeredAt)}
-          </>
-        );
+        const since = t("user.scrobblingSince", { date: date(u.registeredAt) });
+        const sub = details ? `${details} · ${since}` : since;
         return (
           <div
             className="profile-theme"
@@ -192,7 +191,7 @@ export function UserPage({ tab }: { tab: Tab }) {
                   <Art image={u.image} kind="user" />
                 </CosmeticAvatar>
               }
-              kicker={u.followsYou ? "Follows you" : "Listener"}
+              kicker={u.followsYou ? t("user.followsYou") : t("user.listener")}
               title={
                 <span className="hero-name">
                   <Username user={u} />
@@ -206,22 +205,15 @@ export function UserPage({ tab }: { tab: Tab }) {
             <div className="wrap page">
               {u.blocked && (
                 <p className="notice">
-                  You've blocked <Username user={u} />. They can't follow you or post on your profile, and you won't see
-                  their wall posts.{" "}
+                  {tx("user.blockedNotice", { name: <Username user={u} /> })}{" "}
                   <Button kind="link" type="button" onClick={() => setBlock(u.username, false).then(q.reload)}>
-                    Unblock
+                    {t("user.unblock")}
                   </Button>
                 </p>
               )}
               {u.suspended && (mine || me?.admin) && (
                 <p className="notice">
-                  {mine ? (
-                    "Your account has been suspended from posting on walls, wikis and journal posts by a moderator. Listening and scrobbling still work."
-                  ) : (
-                    <>
-                      <Username user={u} /> is suspended from posting.
-                    </>
-                  )}
+                  {mine ? t("user.suspendedSelf") : tx("user.suspendedOther", { name: <Username user={u} /> })}
                 </p>
               )}
               <Pane>
@@ -231,23 +223,17 @@ export function UserPage({ tab }: { tab: Tab }) {
                   (mine ? (
                     <JournalEditor name={u.username} />
                   ) : (
-                    <Empty>
-                      Only <Username user={u} /> can write here.
-                    </Empty>
+                    <Empty>{tx("user.onlyOwnerWrite", { name: <Username user={u} /> })}</Empty>
                   ))}
                 {tab === "journal-edit" &&
                   (mine ? (
                     <JournalEditor name={u.username} id={Number(p.post)} />
                   ) : (
-                    <Empty>
-                      Only <Username user={u} /> can edit this post.
-                    </Empty>
+                    <Empty>{tx("user.onlyOwnerEdit", { name: <Username user={u} /> })}</Empty>
                   ))}
                 {tab === "overview" && <Overview u={u} mine={mine} locked={locked} />}
                 {locked && LISTENING_TABS.includes(tab) && (
-                  <Empty>
-                    <Username user={u} /> keeps their listening private.
-                  </Empty>
+                  <Empty>{tx("user.listeningPrivate", { name: <Username user={u} /> })}</Empty>
                 )}
                 {tab === "library" && !locked && <Library name={u.username} mine={mine} />}
                 {tab === "library-artist" && !locked && <LibraryArtist name={u.username} artist={dec(p.artist)} />}
@@ -260,14 +246,10 @@ export function UserPage({ tab }: { tab: Tab }) {
                 {tab === "following" && (
                   <People
                     path={`/user/following${qs({ name })}`}
-                    empty={
-                      <>
-                        <Username user={u} /> isn't following anyone yet.
-                      </>
-                    }
+                    empty={tx("user.notFollowingAnyone", { name: <Username user={u} /> })}
                   />
                 )}
-                {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty="No followers yet." />}
+                {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty={t("user.noFollowers")} />}
                 {tab === "loved" && !locked && <Loved name={u.username} />}
                 {tab === "obsessions" && <Obsessions name={u.username} mine={mine} />}
                 {tab === "playlists" && <Playlists name={u.username} mine={mine} />}
@@ -279,9 +261,7 @@ export function UserPage({ tab }: { tab: Tab }) {
                   (mine ? (
                     <CosmeticsSettings />
                   ) : (
-                    <Empty>
-                      Only <Username user={u} /> can change their cosmetics.
-                    </Empty>
+                    <Empty>{tx("user.onlyOwnerCosmetics", { name: <Username user={u} /> })}</Empty>
                   ))}
               </Pane>
             </div>
@@ -306,11 +286,11 @@ function ProfileMenu({ u, onChange }: { u: Profile; onChange: () => void }) {
 
   return (
     <>
-      <MoreMenu label={`More actions for ${u.username}`} link={shortUrl(u.username)}>
-        {me && <DropdownMenuItem label={u.blocked ? "Unblock user" : "Block user"} onClick={toggleBlock} />}
-        {me && <DropdownMenuItem label="Report profile" onClick={() => setReporting(true)} />}
+      <MoreMenu label={t("user.moreActions", { name: u.username })} link={shortUrl(u.username)}>
+        {me && <DropdownMenuItem label={u.blocked ? t("user.unblockUser") : t("user.blockUser")} onClick={toggleBlock} />}
+        {me && <DropdownMenuItem label={t("user.reportProfile")} onClick={() => setReporting(true)} />}
         {me?.admin && (
-          <DropdownMenuItem label={u.suspended ? "Lift suspension" : "Suspend from posting"} onClick={toggleSuspend} />
+          <DropdownMenuItem label={u.suspended ? t("user.liftSuspension") : t("user.suspendFromPosting")} onClick={toggleSuspend} />
         )}
       </MoreMenu>
       <ReportButton type="user" id={u.id} open={reporting} onClose={() => setReporting(false)} />
@@ -327,9 +307,9 @@ function UserEvents({ name }: { name: string }) {
           <EventList items={d.items} />
         ) : (
           <Empty>
-            No events yet.{" "}
+            {t("user.noEvents")}{" "}
             <Link to="/events">
-              Find something to go to <Ico.Right />
+              {t("user.findEvents")} <Ico.Right />
             </Link>
           </Empty>
         )
@@ -343,12 +323,10 @@ function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: bool
   return (
     <div className="cols">
       <div className="main">
-        <Section title="Listening">
-          <Empty>
-            <Username user={u} /> keeps their listening private.
-          </Empty>
+        <Section title={t("user.listening")}>
+          <Empty>{tx("user.listeningPrivate", { name: <Username user={u} /> })}</Empty>
         </Section>
-        <Section title="Wall" more={`${userUrl(u.username)}/wall`} moreLabel="Whole wall">
+        <Section title={t("user.wall")} more={`${userUrl(u.username)}/wall`} moreLabel={t("user.wholeWall")}>
           <Shoutbox type="user" id={u.id} limit={5} />
         </Section>
       </div>
@@ -363,7 +341,7 @@ function Overview({ u, mine, locked }: { u: Profile; mine: boolean; locked: bool
 function About({ u }: { u: Profile }) {
   if (!u.about && !u.links?.length) return null;
   return (
-    <Section title="About">
+    <Section title={t("user.about")}>
       <div className="profile-about">
         <Markdown text={u.about} images />
         {!!u.links?.length && (
@@ -392,7 +370,7 @@ function Earworm({ u }: { u: Profile }) {
   const o = u.obsession;
   if (!o) return null;
   return (
-    <Section title="Current earworm" more={`${userUrl(u.username)}/earworms`} moreLabel="All">
+    <Section title={t("user.currentEarworm")} more={`${userUrl(u.username)}/earworms`} moreLabel={t("user.all")}>
       <div className="obsession">
         <Link to={trackUrl(o.artist, o.title)}>
           <Art image={o.image} />
@@ -411,28 +389,40 @@ function Earworm({ u }: { u: Profile }) {
   );
 }
 
+function tasteLabel(label: TasteLabel) {
+  const labels: Record<TasteLabel, string> = {
+    Super: t("user.tasteSuper"),
+    "Very High": t("user.tasteVeryHigh"),
+    High: t("user.tasteHigh"),
+    Medium: t("user.tasteMedium"),
+    Low: t("user.tasteLow"),
+    "Very Low": t("user.tasteVeryLow"),
+  };
+  return labels[label];
+}
+
 function Compatibility({ taste }: { taste: NonNullable<Profile["taste"]> }) {
   return (
-    <Section title="Your compatibility">
+    <Section title={t("user.yourCompatibility")}>
       <div className="taste">
         <div className="taste-bar">
           <span style={{ width: `${Math.max(4, taste.score * 100)}%` }} />
         </div>
-        <b>{taste.label}</b>
+        <b>{tasteLabel(taste.label)}</b>
       </div>
       {taste.artists.length > 0 ? (
         <p className="small">
-          You both listen to{" "}
-          {taste.artists.map((a, i) => (
-            <span key={a.name}>
-              {i > 0 && ", "}
-              <Link to={artistUrl(a.name)}>{a.name}</Link>
-            </span>
-          ))}
-          .
+          {tx("user.bothListenTo", {
+            artists: taste.artists.map((a, i) => (
+              <span key={a.name}>
+                {i > 0 && ", "}
+                <Link to={artistUrl(a.name)}>{a.name}</Link>
+              </span>
+            )),
+          })}
         </p>
       ) : (
-        <p className="muted small">No artists in common yet.</p>
+        <p className="muted small">{t("user.noArtistsInCommon")}</p>
       )}
     </Section>
   );
@@ -441,9 +431,7 @@ function Compatibility({ taste }: { taste: NonNullable<Profile["taste"]> }) {
 function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean }) {
   if ("hidden" in d)
     return (
-      <Empty>
-        <Username user={u} /> keeps their recent listening private.
-      </Empty>
+      <Empty>{tx("user.recentPrivate", { name: <Username user={u} /> })}</Empty>
     );
   if (d.items.length || d.nowPlaying)
     return (
@@ -454,17 +442,19 @@ function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean
         timeActions={mine ? (r) => <ScrobbleMenu row={r} /> : undefined}
       />
     );
-  if (!mine) return <Empty>No scrobbles yet.</Empty>;
+  if (!mine) return <Empty>{t("user.noScrobbles")}</Empty>;
   return (
     <Empty>
-      Nothing scrobbled yet. Press play on any track, <Link to="/scrobble">scrobble manually</Link>, or connect a
-      scrobbler from{" "}
-      <Link to="/settings/applications">
-        Settings
-        <Arrow say=", " />
-        Applications
-      </Link>
-      .
+      {tx("user.nothingScrobbled", {
+        manual: <Link to="/scrobble">{t("user.scrobbleManuallyLink")}</Link>,
+        settings: (
+          <Link to="/settings/applications">
+            {t("user.settingsLink")}
+            <Arrow say=", " />
+            {t("user.applicationsLink")}
+          </Link>
+        ),
+      })}
     </Empty>
   );
 }
@@ -486,27 +476,27 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   return (
     <div className="cols">
       <div className="main">
-        <Section title="Recent tracks" more={`${base}/library`} moreLabel="More tracks">
+        <Section title={t("user.recentTracks")} more={`${base}/library`} moreLabel={t("user.moreTracks")}>
           <Async q={recent}>{(d) => <RecentTracks d={d} u={u} mine={mine} />}</Async>
         </Section>
         <div className="toolbar">
-          <h2>Top music</h2>
+          <h2>{t("user.topMusic")}</h2>
           <PeriodPicker def="7day" />
         </div>
-        <Section title="Top artists" more={`${base}/library/artists?period=${period}`}>
+        <Section title={t("user.topArtists")} more={`${base}/library/artists?period=${period}`}>
           <Async q={artists}>
-            {(d) => <Grid kind="artist" cols={4} items={d.items} sub={(a) => `${num(a.playcount)} scrobbles`} />}
+            {(d) => <Grid kind="artist" cols={4} items={d.items} sub={(a) => t("user.scrobbleCount", { count: a.playcount })} />}
           </Async>
         </Section>
-        <Section title="Top albums" more={`${base}/library/albums?period=${period}`}>
+        <Section title={t("user.topAlbums")} more={`${base}/library/albums?period=${period}`}>
           <Async q={albums}>
-            {(d) => <Grid kind="album" cols={4} items={d.items} sub={(a) => `${num(a.playcount)} scrobbles`} />}
+            {(d) => <Grid kind="album" cols={4} items={d.items} sub={(a) => t("user.scrobbleCount", { count: a.playcount })} />}
           </Async>
         </Section>
-        <Section title="Top tracks" more={`${base}/library/tracks?period=${period}`}>
+        <Section title={t("user.topTracks")} more={`${base}/library/tracks?period=${period}`}>
           <Async q={tracks}>{(d) => <TrackList items={d.items} rank={1} count="playcount" />}</Async>
         </Section>
-        <Section title="Wall" more={`${base}/wall`} moreLabel="Whole wall">
+        <Section title={t("user.wall")} more={`${base}/wall`} moreLabel={t("user.wholeWall")}>
           <Shoutbox type="user" id={u.id} limit={5} />
         </Section>
       </div>
@@ -514,28 +504,28 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
         <About u={u} />
         {u.taste && <Compatibility taste={u.taste} />}
         <Earworm u={u} />
-        <Section title="Library">
+        <Section title={t("user.library")}>
           <ul className="plain">
             <li>
-              <Link to={`${base}/library/artists`}>{num(u.artistCount)} artists</Link>
+              <Link to={`${base}/library/artists`}>{t("user.artistCount", { count: u.artistCount })}</Link>
             </li>
             <li>
-              <Link to={`${base}/library/albums`}>{num(u.albumCount)} albums</Link>
+              <Link to={`${base}/library/albums`}>{t("user.albumCount", { count: u.albumCount })}</Link>
             </li>
             <li>
-              <Link to={`${base}/library/tracks`}>{num(u.trackCount)} tracks</Link>
+              <Link to={`${base}/library/tracks`}>{t("user.trackCount", { count: u.trackCount })}</Link>
             </li>
             <li>
-              <Link to={`${base}/listening-report/week`}>Weekly listening report</Link>
+              <Link to={`${base}/listening-report/week`}>{t("user.weeklyReport")}</Link>
             </li>
             <li>
-              <Link to={`${base}/listening-report/month`}>Monthly listening report</Link>
+              <Link to={`${base}/listening-report/month`}>{t("user.monthlyReport")}</Link>
             </li>
             <li>
-              <Link to={`${base}/listening-report/year`}>Yearly listening report</Link>
+              <Link to={`${base}/listening-report/year`}>{t("user.yearlyReport")}</Link>
             </li>
             <li>
-              <Link to={`${base}/listening-report/all`}>All-time listening report</Link>
+              <Link to={`${base}/listening-report/all`}>{t("user.allTimeReport")}</Link>
             </li>
           </ul>
         </Section>
@@ -543,4 +533,3 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
     </div>
   );
 }
-import { ProfileLinkIcon } from "../../ui/profile-link-icon";

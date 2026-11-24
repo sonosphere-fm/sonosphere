@@ -7,6 +7,7 @@ import { recordChange } from "./history";
 import { changeUsername, usernameStatus } from "./usernames";
 import type { UsernameStatus } from "../../shared/account";
 import { countryName } from "../../shared/countries";
+import { isLocale } from "../../shared/i18n/core";
 import { profileLinks } from "../../shared/profile-links";
 import { isUsernameFont } from "../../shared/username-fonts";
 import { profileColors } from "./profile-accent";
@@ -43,27 +44,22 @@ router.post<MeResponse>("/api/me/username/undo", async (c) => {
 router.patch<ProfileSaved>("/api/me", async (c) => {
   const u = need(c);
   const b = c.body;
-  if (b.useProfileTheme !== undefined && typeof b.useProfileTheme !== "boolean")
-    bad("Choose whether to use your profile theme");
+  if (b.useProfileTheme !== undefined && typeof b.useProfileTheme !== "boolean") bad("chooseWhetherUseProfileTheme");
   const usernameFont = b.usernameFont === undefined ? u.usernameFont : b.usernameFont;
   const profileAccent = b.profileAccent === undefined ? u.profileAccent : b.profileAccent;
   const profileAccentEnd = b.profileAccentEnd === undefined ? u.profileAccentEnd : b.profileAccentEnd;
-  if (!isUsernameFont(usernameFont)) return bad("Choose a username font from the list");
+  if (!isUsernameFont(usernameFont)) return bad("chooseUsernameFontFromList");
   const colors = profileColors(profileAccent, profileAccentEnd);
   const links =
-    b.links === undefined
-      ? u.profileLinks
-      : JSON.stringify(
-          profileLinks(b.links) ?? bad("Add up to 8 valid http or https links, with labels up to 60 characters")
-        );
+    b.links === undefined ? u.profileLinks : JSON.stringify(profileLinks(b.links) ?? bad("invalidProfileLinks"));
   // a new address only takes over once a link sent to it is followed
   if (b.email !== undefined) {
     const email = clean(b.email, 200).toLowerCase();
-    if (!validEmail(email)) bad("Enter a valid email address");
+    if (!validEmail(email)) bad("enterValidEmailAddress");
     if (email !== u.email) {
-      if (await emailTaken(email, u.id)) bad("That email is already in use");
-      await limit(`email-change-m:${u.id}`, 1, 30, "Wait 30 seconds before trying another address.");
-      await throttle(`email-change:${u.id}`, 20, 86_400, "Too many email changes today. Try again tomorrow.");
+      if (await emailTaken(email, u.id)) bad("emailAlreadyUse");
+      await limit(`email-change-m:${u.id}`, 1, 30, "waitBeforeAnotherAddress");
+      await throttle(`email-change:${u.id}`, 20, 86_400, "tooManyEmailChangesToday");
       await startEmailChange(u, email);
     }
   }
@@ -78,7 +74,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   const country =
     givenCountry === u.country || !givenCountry
       ? givenCountry
-      : countryName(givenCountry) || bad("Pick a country from the list");
+      : countryName(givenCountry) || bad("pickCountryFromList");
   const publicChanged =
     realname !== u.realname ||
     pronouns !== u.pronouns ||
@@ -90,15 +86,14 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     profileAccentEnd !== u.profileAccentEnd;
   if (publicChanged) confirmed(u);
 
-  const dmPolicy =
-    b.dmPolicy === undefined ? undefined : (oneOf(b.dmPolicy, POLICIES) ?? bad("Pick who can message you"));
+  const dmPolicy = b.dmPolicy === undefined ? undefined : (oneOf(b.dmPolicy, POLICIES) ?? bad("pickWhoMessage"));
   const emailNotify =
     b.emailNotify === undefined
       ? undefined
       : (oneOf(
           b.emailNotify,
           EMAIL_MODES.map((m) => m[0])
-        ) ?? bad("Pick how often to get emails"));
+        ) ?? bad("pickHowOftenGetEmails"));
   let emailMuted: string | undefined;
   if (Array.isArray(b.emailMuted)) {
     const picked: unknown[] = b.emailMuted;
@@ -106,8 +101,8 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
       .filter((k) => picked.includes(k))
       .join(",");
   }
-  const theme =
-    b.theme === undefined ? undefined : (oneOf(b.theme, ["light", "system", "dark"]) ?? bad("Pick a theme"));
+  const theme = b.theme === undefined ? undefined : (oneOf(b.theme, ["light", "system", "dark"]) ?? bad("pickTheme"));
+  const locale = b.locale === undefined || b.locale === "" || isLocale(b.locale) ? b.locale : bad("pickLanguage");
   await repo.updateProfile(u.id, {
     useProfileTheme: b.useProfileTheme === undefined ? u.useProfileTheme : (b.useProfileTheme as boolean),
     usernameFont,
@@ -125,13 +120,14 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     ...(emailNotify && { emailNotify, ...(emailNotify !== u.emailNotify && { digestAt: now() }) }),
     ...(emailMuted !== undefined && { emailMuted }),
     ...(theme && { theme }),
+    ...(locale !== undefined && { locale }),
   });
   await recordChange(u.id, "realname", u.realname, realname);
-  return { user: await me((await findById(u.id)) ?? missing("User"), c.actor) };
+  return { user: await me((await findById(u.id)) ?? missing("userNotFound"), c.actor) };
 });
 
 router.post<MeResponse>("/api/me/stop-impersonating", async (c) => {
-  const actor = c.actor ?? fail(401, "You need to log in to do that");
+  const actor = c.actor ?? fail(401, "needLogin");
   const user = await me(actor);
   if (isAdmin(actor) && c.user && actor.id !== c.user.id) {
     await audit(actor, {
@@ -150,8 +146,8 @@ router.post<Ok>("/api/me/password", async (c) => {
   const u = need(c);
   const next = String(c.body.next || "");
   // an account made through another site sets its first password without one
-  if (u.passwordHash && !(await passwordMatches(u, String(c.body.current || "")))) bad("Current password is incorrect");
-  if (next.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
+  if (u.passwordHash && !(await passwordMatches(u, String(c.body.current || "")))) bad("currentPasswordIncorrect");
+  if (next.length < MIN_PASSWORD) bad("passwordsNeedLeast8Characters");
   await repo.setPasswordHash(u.id, await hashPassword(next), u.passwordHash, tokenOf(c.req));
   await (u.passwordHash ? passwordChanged(u) : passwordSet(u));
   return { ok: true };
@@ -160,7 +156,7 @@ router.post<Ok>("/api/me/password", async (c) => {
 router.post<Ok>("/api/me/delete", async (c) => {
   const u = need(c);
   if (!(await confirmedBy(u, String(c.body.password || ""))))
-    bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
+    bad(u.passwordHash ? "passwordIncorrect" : "notYourUsername");
   await repo.deleteAccount(u.id);
   // the sessions went with the account; this only clears the cookie
   await endSession(c.headers);
@@ -171,7 +167,7 @@ router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async (c) => {
   const u = need(c);
   const actor = c.actor && isAdmin(c.actor) && c.actor.id !== u.id ? c.actor : null;
   if (!actor && !(await confirmedBy(u, String(c.body.password || ""))))
-    bad(u.passwordHash ? "Password is incorrect" : "That isn't your username");
+    bad(u.passwordHash ? "passwordIncorrect" : "notYourUsername");
   const deleted = await deleteAllScrobbles(
     u.id,
     actor
@@ -192,12 +188,7 @@ router.post<ScrobblesCleared>("/api/me/clear-scrobbles", async (c) => {
 
 router.get("/api/me/export", async (c) => {
   const u = need(c);
-  await throttle(
-    `export:${u.id}`,
-    10,
-    3600,
-    "You have downloaded your data a few times already. Try again in an hour."
-  );
+  await throttle(`export:${u.id}`, 10, 3600, "tooManyDataDownloads");
   const loved = c.q.get("what") === "loved";
   const csv = c.q.get("format") === "csv";
   const rows = loved ? await exportLoved(u.id) : await exportScrobbles(u.id);

@@ -7,8 +7,8 @@ export async function edit(author: Viewer, type: string, id: number, text: unkno
   const content = String(text || "")
     .trim()
     .slice(0, 20000);
-  if (content.length < 10) bad("Wiki text needs at least 10 characters");
-  if (!isStaff(author) && (await repo.wikiLock(type, id))) fail(403, "This wiki is locked by a moderator");
+  if (content.length < 10) bad("wikiTextNeedsLeast10");
+  if (!isStaff(author) && (await repo.wikiLock(type, id))) fail(403, "wikiLockedByModerator");
   await repo.addWikiVersion(type, id, content, author.id);
   return repo.latestWiki(type, id);
 }

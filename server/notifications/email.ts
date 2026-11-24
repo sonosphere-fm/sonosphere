@@ -7,6 +7,7 @@ import { attempt } from "../kv";
 import { send, SITE_URL } from "../mail";
 import { digestMail, noticeMail, type NoticeLine } from "../mail/templates";
 import { findById, type User } from "../users/repo";
+import { tr, userLocale, type ServerKey } from "../i18n";
 import { now } from "../util";
 import * as Sentry from "@sentry/bun";
 import type { EmailKind } from "../../shared/notifications";
@@ -23,23 +24,34 @@ function describe(
   actor: string | null,
   data: Record<string, unknown>
 ): (NoticeLine & { button: string }) | null {
-  const who = actor ?? "Someone";
+  const locale = userLocale(to);
   const quote = str(data.body) || undefined;
+  const title = str(data.title);
+  const said = (named: ServerKey, anonymous: ServerKey) =>
+    actor === null ? tr(locale, anonymous, { title }) : tr(locale, named, { who: actor, title });
   if (type === "follow") {
-    return { line: `${who} started following you`, url: userPage(actor ?? to.username), button: "See their profile" };
+    return {
+      line: said("mail.followed", "mail.followedBySomeone"),
+      url: userPage(actor ?? to.username),
+      button: tr(locale, "mail.seeProfile"),
+    };
   }
   if (type === "shout") {
     return {
-      line: data.reply ? `${who} replied to your wall post` : `${who} wrote on your wall`,
+      line: data.reply
+        ? said("mail.wallReply", "mail.wallReplyBySomeone")
+        : said("mail.wallPost", "mail.wallPostBySomeone"),
       quote,
       url: `${userPage(str(data.wallUsername) || to.username)}/wall`,
-      button: "See the wall",
+      button: tr(locale, "mail.seeWall"),
     };
   }
   if (type === "comment") {
-    const title = str(data.title) || "your journal post";
     const url = `${userPage(str(data.journalUsername) || to.username)}/journal/${Number(data.journalId)}`;
-    return { line: `${who} commented on “${title}”`, quote, url, button: "See the comment" };
+    const line = title
+      ? said("mail.commented", "mail.commentedBySomeone")
+      : said("mail.commentedOnJournal", "mail.commentedOnJournalBySomeone");
+    return { line, quote, url, button: tr(locale, "mail.seeComment") };
   }
   return null;
 }
@@ -56,7 +68,8 @@ export async function mailNotice(
     const actor = await findById(actorId);
     const n = describe(to, type, actor?.username ?? null, data);
     // at most 10 an hour; anything past that still shows in the inbox
-    if (n && (await attempt(`mail-notice:${userId}`, 10, 3600_000))) await send(noticeMail(to.email, n));
+    if (n && (await attempt(`mail-notice:${userId}`, 10, 3600_000)))
+      await send(noticeMail(userLocale(to), to.email, n));
   } catch (e) {
     console.error("notification mail:", e);
     Sentry.captureException(e);
@@ -74,22 +87,23 @@ export async function mailMessage(
   try {
     if (!wantsNow(to, "message")) return;
     if (!(await attempt(`mail-dm:${to.id}:${threadId}`, 1, 3600_000))) return;
+    const locale = userLocale(to);
     if (request) {
       await send(
-        noticeMail(to.email, {
-          line: `${from} sent you a message request`,
+        noticeMail(locale, to.email, {
+          line: tr(locale, "mail.messageRequest", { from }),
           url: `${SITE_URL}/messages/requests`,
-          button: "See the request",
+          button: tr(locale, "mail.seeRequest"),
         })
       );
     } else {
       const quote = body.length > 200 ? `${body.slice(0, 200)}…` : body;
       await send(
-        noticeMail(to.email, {
-          line: `${from} sent you a message`,
+        noticeMail(locale, to.email, {
+          line: tr(locale, "mail.messageSent", { from }),
           quote,
           url: `${SITE_URL}/messages`,
-          button: "Read it",
+          button: tr(locale, "mail.readIt"),
         })
       );
     }
@@ -128,6 +142,7 @@ export async function sendDigests(): Promise<void> {
     await db.update(users).set({ digestAt: t }).where(eq(users.id, u.id));
     // first pass after picking a digest: start counting from now
     if (since === null) continue;
+    const locale = userLocale(u);
     const off = [...muted(u)];
     const rows = await db
       .select({ type: notifications.type, data: notifications.data, actor: users.username })
@@ -151,13 +166,13 @@ export async function sendDigests(): Promise<void> {
       const group = await groupUnreadSince(u.id, since);
       const dm = { messages: direct.messages + group.messages, people: direct.people + group.people };
       if (dm.messages) {
-        const messages = `${dm.messages} new message${dm.messages === 1 ? "" : "s"}`;
-        const people = `${dm.people} ${dm.people === 1 ? "person" : "people"}`;
-        lines.unshift({ line: `${messages} from ${people}`, url: `${SITE_URL}/messages`, button: "" });
+        const people = tr(locale, "mail.digestPeople", { count: dm.people });
+        const line = tr(locale, "mail.digestMessages", { count: dm.messages, people });
+        lines.unshift({ line, url: `${SITE_URL}/messages`, button: "" });
       }
     }
     if (!lines.length) continue;
     const more = Math.max(0, lines.length - MAX_LINES);
-    await send(digestMail(u.email, u.username, u.emailNotify === "weekly", lines.slice(0, MAX_LINES), more));
+    await send(digestMail(locale, u.email, u.username, u.emailNotify === "weekly", lines.slice(0, MAX_LINES), more));
   }
 }

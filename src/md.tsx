@@ -8,7 +8,8 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { api } from "./lib";
+import { api, num } from "./lib";
+import { t, type MessageKey } from "./i18n";
 import type { ImageSaved } from "../shared/images";
 import {
   Code,
@@ -127,7 +128,9 @@ export function Markdown({
           if (!part) return null;
           const image = /^!\[([^\]\n]*)\]\(([^\s)]+)\)$/.exec(part);
           if (image && !/^\/api\/image\/[a-f0-9]{32}$/.test(image[2]!))
-            return <span key={index}>{image[1] || "External image"} (upload this image to display it)</span>;
+            return (
+              <span key={index}>{t("common.mdUploadToDisplay", { alt: image[1] || t("common.mdExternalImage") })}</span>
+            );
           return image ? (
             <img
               key={index}
@@ -290,16 +293,19 @@ type Edit = (text: string, sel: Sel) => { text: string; sel: Sel };
 
 /** Wraps the selection in a marker, or unwraps it if it already is. */
 const wrap =
-  (m: string, placeholder: string, close = m): Edit =>
-  (t, [a, b]) => {
-    if (t.slice(a - m.length, a) === m && t.slice(b, b + close.length) === close) {
+  (m: string, placeholder: MessageKey, close = m): Edit =>
+  (text, [a, b]) => {
+    if (text.slice(a - m.length, a) === m && text.slice(b, b + close.length) === close) {
       return {
-        text: t.slice(0, a - m.length) + t.slice(a, b) + t.slice(b + close.length),
+        text: text.slice(0, a - m.length) + text.slice(a, b) + text.slice(b + close.length),
         sel: [a - m.length, b - m.length],
       };
     }
-    const inner = t.slice(a, b) || placeholder;
-    return { text: t.slice(0, a) + m + inner + close + t.slice(b), sel: [a + m.length, a + m.length + inner.length] };
+    const inner = text.slice(a, b) || t(placeholder);
+    return {
+      text: text.slice(0, a) + m + inner + close + text.slice(b),
+      sel: [a + m.length, a + m.length + inner.length],
+    };
   };
 
 const ANY_PREFIX = /^(#{1,3}\s+|>\s?|\s*[-*•]\s+|\s*\d{1,3}[.)]\s+)/;
@@ -319,19 +325,19 @@ const prefix =
     return { text: t.slice(0, from) + next + t.slice(to), sel: [Math.max(from, a + shift), Math.max(from, b + shift)] };
   };
 
-const insertLink: Edit = (t, [a, b]) => {
-  const inner = t.slice(a, b) || "link text";
+const insertLink: Edit = (text, [a, b]) => {
+  const inner = text.slice(a, b) || t("common.mdLinkText");
   const url = "https://";
   const caret = a + inner.length + 3 + url.length;
-  return { text: `${t.slice(0, a)}[${inner}](${url})${t.slice(b)}`, sel: [caret, caret] };
+  return { text: `${text.slice(0, a)}[${inner}](${url})${text.slice(b)}`, sel: [caret, caret] };
 };
 
 const IMAGE_TOOL = {
-  label: "Image",
+  name: "common.mdImage" as MessageKey,
   keys: undefined,
   Icon: Image,
   edit: ((text, [a, b]) => {
-    const alt = text.slice(a, b) || "Image description";
+    const alt = text.slice(a, b) || t("common.mdImageDescription");
     const inserted = `![${alt}](https://)`;
     return {
       text: text.slice(0, a) + inserted + text.slice(b),
@@ -340,32 +346,32 @@ const IMAGE_TOOL = {
   }) as Edit,
 };
 
-const TOOLS: { label: string; keys?: string; Icon: PhIcon; edit: Edit }[] = [
-  { label: "Bold", keys: "b", Icon: TextB, edit: wrap("**", "bold text") },
-  { label: "Italic", keys: "i", Icon: TextItalic, edit: wrap("*", "italic text") },
-  { label: "Strikethrough", Icon: TextStrikethrough, edit: wrap("~~", "struck text") },
-  { label: "Code", keys: "e", Icon: Code, edit: wrap("`", "code") },
-  { label: "Link", keys: "k", Icon: LinkSimple, edit: insertLink },
-  { label: "Heading", Icon: TextHTwo, edit: prefix(() => "## ", /^#{1,3}\s+/) },
-  { label: "Quote", Icon: Quotes, edit: prefix(() => "> ", /^>\s?/) },
-  { label: "Bulleted list", Icon: ListBullets, edit: prefix(() => "- ", /^\s*[-*•]\s+/) },
-  { label: "Numbered list", Icon: ListNumbers, edit: prefix((i) => `${i + 1}. `, /^\s*\d{1,3}[.)]\s+/) },
+const TOOLS: { name: MessageKey; keys?: string; Icon: PhIcon; edit: Edit }[] = [
+  { name: "common.mdBold", keys: "b", Icon: TextB, edit: wrap("**", "common.mdBoldText") },
+  { name: "common.mdItalic", keys: "i", Icon: TextItalic, edit: wrap("*", "common.mdItalicText") },
+  { name: "common.mdStrikethrough", Icon: TextStrikethrough, edit: wrap("~~", "common.mdStruckText") },
+  { name: "common.mdCode", keys: "e", Icon: Code, edit: wrap("`", "common.mdCodeText") },
+  { name: "common.mdLink", keys: "k", Icon: LinkSimple, edit: insertLink },
+  { name: "common.mdHeading", Icon: TextHTwo, edit: prefix(() => "## ", /^#{1,3}\s+/) },
+  { name: "common.mdQuote", Icon: Quotes, edit: prefix(() => "> ", /^>\s?/) },
+  { name: "common.mdBulletedList", Icon: ListBullets, edit: prefix(() => "- ", /^\s*[-*•]\s+/) },
+  { name: "common.mdNumberedList", Icon: ListNumbers, edit: prefix((i) => `${i + 1}. `, /^\s*\d{1,3}[.)]\s+/) },
 ];
 
 /** Highlighted element selector to the toolbar button it lights up. */
-const ON: [string, string][] = [
-  ["strong", "Bold"],
-  ["em", "Italic"],
-  ["s, del", "Strikethrough"],
-  ["code", "Code"],
-  [".md-link", "Link"],
-  [".md-h", "Heading"],
-  [".md-quote", "Quote"],
-  [".md-ul", "Bulleted list"],
-  [".md-ol", "Numbered list"],
+const ON: [string, MessageKey][] = [
+  ["strong", "common.mdBold"],
+  ["em", "common.mdItalic"],
+  ["s, del", "common.mdStrikethrough"],
+  ["code", "common.mdCode"],
+  [".md-link", "common.mdLink"],
+  [".md-h", "common.mdHeading"],
+  [".md-quote", "common.mdQuote"],
+  [".md-ul", "common.mdBulletedList"],
+  [".md-ol", "common.mdNumberedList"],
 ];
 
-const MOD_LABEL = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+";
+const modLabel = () => (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : t("common.mdCtrl"));
 
 // Enter inside a list carries the bullet on; Enter on an empty bullet ends the list.
 const newlineEdit: Edit = (t, [a, b]) => {
@@ -418,7 +424,7 @@ export function MdEditor({
   const change = useRef(onChange);
   change.current = onChange;
 
-  // the toolbar formats the caret is sitting in, as a "|"-joined list of tool labels
+  // the toolbar formats the caret is sitting in, as a "|"-joined list of tool keys
   const [on, setOn] = useState("");
   const scan = useCallback(() => {
     const el = ref.current;
@@ -549,7 +555,7 @@ export function MdEditor({
       step(redo, undo);
       return;
     }
-    const tool = !e.shiftKey && TOOLS.find((t) => t.keys === key);
+    const tool = !e.shiftKey && TOOLS.find((x) => x.keys === key);
     if (tool) {
       e.preventDefault();
       apply(tool.edit);
@@ -565,15 +571,17 @@ export function MdEditor({
   const active = new Set(on.split("|"));
   return (
     <div className="md-editor">
-      <div className="md-tools" role="toolbar" aria-label="Formatting">
-        {(images && !imageUpload ? [...TOOLS, IMAGE_TOOL] : TOOLS).map(({ label, keys, Icon, edit }, i) => (
+      <div className="md-tools" role="toolbar" aria-label={t("common.mdFormatting")}>
+        {(images && !imageUpload ? [...TOOLS, IMAGE_TOOL] : TOOLS).map(({ name, keys, Icon, edit }, i) => (
           <button
-            key={label}
+            key={name}
             type="button"
-            className={`md-tool${i === 5 ? " gap" : ""}${active.has(label) ? " on" : ""}`}
-            aria-pressed={active.has(label)}
-            title={keys ? `${label} (${MOD_LABEL}${keys.toUpperCase()})` : label}
-            aria-label={label}
+            className={`md-tool${i === 5 ? " gap" : ""}${active.has(name) ? " on" : ""}`}
+            aria-pressed={active.has(name)}
+            title={
+              keys ? t("common.mdShortcut", { label: t(name), shortcut: modLabel() + keys.toUpperCase() }) : t(name)
+            }
+            aria-label={t(name)}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => apply(edit)}
           >
@@ -584,8 +592,8 @@ export function MdEditor({
           <button
             type="button"
             className="md-tool"
-            aria-label="Upload image"
-            title="Upload image"
+            aria-label={t("common.mdUploadImage")}
+            title={t("common.mdUploadImage")}
             disabled={uploading}
             onClick={() => uploadInput.current?.click()}
           >
@@ -605,7 +613,7 @@ export function MdEditor({
             if (!file || uploading) return;
             setUploadError("");
             if (file.size > 8_000_000) {
-              setUploadError("Images must be under 8 MB");
+              setUploadError(t("common.mdImagesUnder8"));
               return;
             }
             setUploading(true);
@@ -614,12 +622,11 @@ export function MdEditor({
                 raw: file,
                 headers: { "Content-Type": file.type },
               });
-              const next = `${latestValue.current}\n\n![Image description](/api/image/${saved.image})`;
-              if (maxLength && next.length > maxLength)
-                throw new Error("There isn't enough room in this post for another image.");
+              const next = `${latestValue.current}\n\n![${t("common.mdImageDescription")}](/api/image/${saved.image})`;
+              if (maxLength && next.length > maxLength) throw new Error(t("common.mdNoRoom"));
               onChange(next);
             } catch (error) {
-              setUploadError(error instanceof Error ? error.message : "Image upload failed. Try again.");
+              setUploadError(error instanceof Error ? error.message : t("common.mdUploadFailed"));
             } finally {
               setUploading(false);
             }
@@ -628,7 +635,7 @@ export function MdEditor({
       )}
       {uploading && (
         <p role="status" className="small muted">
-          Uploading image…
+          {t("common.mdUploading")}
         </p>
       )}
       {uploadError && (
@@ -663,7 +670,7 @@ export function MdEditor({
       />
       {maxLength && value.length > maxLength * 0.9 ? (
         <div className="md-count">
-          {value.length.toLocaleString()} / {maxLength.toLocaleString()}
+          {num(value.length)} / {num(maxLength)}
         </div>
       ) : null}
     </div>

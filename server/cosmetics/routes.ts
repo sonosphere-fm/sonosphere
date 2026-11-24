@@ -29,11 +29,11 @@ router.get<CosmeticsState>("/api/me/cosmetics", (c) => state(need(c).id));
 router.patch<CosmeticsState>("/api/me/cosmetics", async (c) => {
   const u = need(c);
   if (c.body.showCosmetics !== undefined) {
-    if (typeof c.body.showCosmetics !== "boolean") return bad("Choose whether to show animations");
+    if (typeof c.body.showCosmetics !== "boolean") return bad("chooseWhetherShowAnimations");
     await db.update(users).set({ showCosmetics: c.body.showCosmetics }).where(eq(users.id, u.id));
   } else {
     const slot = String(c.body.slot);
-    if (!COSMETIC_SLOTS.some((value) => value === slot)) return bad("Choose a cosmetic slot");
+    if (!COSMETIC_SLOTS.some((value) => value === slot)) return bad("chooseCosmeticSlot");
     await transact(async (tx) => {
       // Serialize grants, revokes and equipment for this user.
       await tx.select({ id: users.id }).from(users).where(eq(users.id, u.id)).for("update");
@@ -41,17 +41,17 @@ router.patch<CosmeticsState>("/api/me/cosmetics", async (c) => {
         await tx.delete(userEquipped).where(and(eq(userEquipped.userId, u.id), eq(userEquipped.slot, slot)));
         return;
       }
-      const item = COSMETICS.find((x) => x.id === c.body.id && x.slot === slot) ?? bad("Choose a cosmetic");
+      const item = COSMETICS.find((x) => x.id === c.body.id && x.slot === slot) ?? bad("chooseCosmetic");
       const [catalogItem] = await tx.select().from(cosmetics).where(eq(cosmetics.id, item.id));
-      if (!catalogItem?.enabled) return bad("This cosmetic is unavailable");
+      if (!catalogItem?.enabled) return bad("cosmeticUnavailable");
       const [own] = await tx
         .select()
         .from(userCosmetics)
         .where(and(eq(userCosmetics.userId, u.id), eq(userCosmetics.cosmeticId, item.id)));
-      if (!own) return bad("Ask an admin for this cosmetic first");
+      if (!own) return bad("askAdminCosmeticFirst");
       const color = c.body.color;
       if (item.colors.length && (typeof color !== "string" || !item.colors.includes(color)))
-        return bad("Choose an allowed color");
+        return bad("chooseAllowedColor");
       const value = {
         userId: u.id,
         slot,
@@ -68,7 +68,7 @@ router.patch<CosmeticsState>("/api/me/cosmetics", async (c) => {
 });
 router.get("/api/admin/cosmetics", async (c) => {
   adminOnly(c);
-  const user = (await findByName(c.q.get("name") ?? "")) ?? missing("User");
+  const user = (await findByName(c.q.get("name") ?? "")) ?? missing("userNotFound");
   return {
     catalog: COSMETICS,
     user: { id: user.id, username: user.username },
@@ -78,16 +78,16 @@ router.get("/api/admin/cosmetics", async (c) => {
 router.post("/api/admin/cosmetics", async (c) => {
   const admin = adminOnly(c);
   const username = c.body.username;
-  if (typeof username !== "string" || !username.trim() || username.length > 100) return bad("Choose a user");
+  if (typeof username !== "string" || !username.trim() || username.length > 100) return bad("chooseUser");
   const ids = Array.isArray(c.body.ids) ? c.body.ids : [];
   const action = c.body.action;
-  if (action !== "grant" && action !== "revoke" && action !== "apply") return bad("Choose a cosmetic action");
+  if (action !== "grant" && action !== "revoke" && action !== "apply") return bad("chooseCosmeticAction");
   if ((action !== "apply" && !ids.length) || ids.length > COSMETICS.length)
-    return bad(`Choose up to ${COSMETICS.length} cosmetics`);
+    return bad("tooManyCosmetics", { max: COSMETICS.length });
   if (c.body.note !== undefined && (typeof c.body.note !== "string" || c.body.note.length > 500))
-    return bad("Notes must be at most 500 characters");
-  if (!ids.every((id) => COSMETICS.some((x) => x.id === id))) return bad("Unknown cosmetic");
-  const user = (await findByName(username.trim())) ?? missing("User");
+    return bad("notesMustMost500Characters");
+  if (!ids.every((id) => COSMETICS.some((x) => x.id === id))) return bad("unknownCosmetic");
+  const user = (await findByName(username.trim())) ?? missing("userNotFound");
   const note = String(c.body.note ?? "")
     .trim()
     .slice(0, 500);

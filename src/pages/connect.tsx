@@ -1,6 +1,7 @@
 import { Arrow, Ico } from "../icons";
 import { useState } from "react";
 import { Button } from "../kit";
+import { t, tx } from "../i18n";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, qs, TITLES, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Async, Empty, useAction } from "../ui/base";
@@ -47,9 +48,9 @@ export function Connect() {
       return (
         <div className="card">
           <p className="form-ok">
-            <Ico.Check /> {app.name} is connected.
+            <Ico.Check /> {t("auth.connectDone", { app: app.name })}
           </p>
-          <p>You can close this page and return to the application.</p>
+          <p>{t("auth.connectClose")}</p>
         </div>
       );
     }
@@ -57,41 +58,36 @@ export function Connect() {
     return (
       <div className="card form">
         <p>
-          <b>{app.name}</b>{" "}
-          <span className="muted">
-            by{" "}
-            <Link to={userUrl(app.owner)}>
-              <Username name={app.owner} />
-            </Link>
-          </span>{" "}
-          wants to connect to your Sonosphere account
-          {me && (
-            <>
-              {" "}
-              (
+          {tx(me ? "auth.connectWantsAs" : "auth.connectWants", {
+            app: <b>{app.name}</b>,
+            owner: (
+              <span className="muted">
+                {tx("auth.connectBy", {
+                  owner: (
+                    <Link to={userUrl(app.owner)}>
+                      <Username name={app.owner} />
+                    </Link>
+                  ),
+                })}
+              </span>
+            ),
+            me: me && (
               <b>
                 <Username user={me} />
               </b>
-              )
-            </>
-          )}
-          .
+            ),
+          })}
         </p>
         {app.description && <p className="muted">{app.description}</p>}
-        <p>
-          It will be able to scrobble, update “now playing”, love tracks and add tags on your behalf. You can disconnect
-          it at any time in Settings
-          <Arrow say=", " />
-          Applications.
-        </p>
+        <p>{tx("auth.connectScope", { arrow: <Arrow say=", " /> })}</p>
         {act.note}
-        {destination && <p className="muted small">After approving you'll be sent back to {destination}.</p>}
+        {destination && <p className="muted small">{t("auth.connectSentBack", { destination })}</p>}
         <div className="row">
           <Button kind="btn" loading={act.busy} onClick={allow}>
-            Yes, allow access
+            {t("auth.connectAllow")}
           </Button>
           <Button kind="btn ghost" href="/">
-            No, cancel
+            {t("auth.connectCancel")}
           </Button>
         </div>
       </div>
@@ -100,13 +96,11 @@ export function Connect() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Connect an application</h1>
+      <h1 className="page-title">{t("auth.connectTitle")}</h1>
       {apiKey ? (
         <Async q={q}>{consent}</Async>
       ) : (
-        <Empty>
-          This link is missing its <code>api_key</code>.
-        </Empty>
+        <Empty>{tx("auth.connectMissingKey", { param: <code>api_key</code> })}</Empty>
       )}
     </div>
   );

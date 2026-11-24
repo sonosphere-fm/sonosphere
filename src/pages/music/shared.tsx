@@ -1,9 +1,10 @@
 import { useRef, type ChangeEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
+import { t, tx } from "../../i18n";
 import { Button, useConfirm } from "../../kit";
 import { Link } from "react-router-dom";
-import { api, imageUrl, invalidateAll, plural, qs } from "../../lib";
+import { api, imageUrl, invalidateAll, qs } from "../../lib";
 import { useAction } from "../../ui/base";
 import { ImageWithFallback } from "../../ui/image";
 import type { Recommended } from "../../../shared/home";
@@ -70,7 +71,7 @@ export function UploadImage({
     <>
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden onChange={upload} />
       <Button kind="btn ghost" type="button" loading={act.busy} onClick={() => input.current?.click()}>
-        Upload image
+        {t("music.uploadImage")}
       </Button>
       {act.note}
     </>
@@ -91,16 +92,18 @@ export function RemoveScrobbles({
 }) {
   const confirm = useConfirm();
   if (!count) return null;
-  const of = scope === "artist" ? "by" : scope === "album" ? "from" : "of";
+  const params = { count, name: <b>{name}</b> };
+  const body =
+    scope === "artist"
+      ? tx("music.removeScrobblesBy", params)
+      : scope === "album"
+        ? tx("music.removeScrobblesFrom", params)
+        : tx("music.removeScrobblesOf", params);
   const remove = () =>
     confirm.ask({
-      title: "Remove scrobbles?",
-      body: (
-        <>
-          Remove {plural(count, "scrobble")} {of} <b>{name}</b> in your library? This cannot be undone.
-        </>
-      ),
-      action: `Remove ${plural(count, "scrobble")}`,
+      title: t("music.removeScrobblesTitle"),
+      body: <>{body}</>,
+      action: t("music.removeScrobblesAction", { count }),
       danger: true,
       run: async () => {
         await api<ScrobblesDeleted>("/scrobbles/delete-by", { body: { scope, id } });
@@ -109,7 +112,7 @@ export function RemoveScrobbles({
     });
   return (
     <>
-      <DropdownMenuItem label="Remove scrobbles" variant="destructive" onClick={remove} />
+      <DropdownMenuItem label={t("music.removeScrobbles")} variant="destructive" onClick={remove} />
       {/* Outside the menu popover, which owns focus and hides its content when closed. */}
       {createPortal(confirm.dialog, document.body)}
     </>
@@ -118,12 +121,12 @@ export function RemoveScrobbles({
 
 export type HomeTab = "home" | "artists" | "albums" | "tracks" | "events";
 
-const HOME_TABS: [HomeTab, string, string][] = [
-  ["home", "All recommendations", "/"],
-  ["artists", "Artists", "/recommended"],
-  ["albums", "Albums", "/recommended?show=albums"],
-  ["tracks", "Tracks", "/recommended?show=tracks"],
-  ["events", "Events", "/recommended?show=events"],
+const homeTabs = (): [HomeTab, string, string][] => [
+  ["home", t("music.allRecommendations"), "/"],
+  ["artists", t("music.artists"), "/recommended"],
+  ["albums", t("music.albums"), "/recommended?show=albums"],
+  ["tracks", t("music.tracks"), "/recommended?show=tracks"],
+  ["events", t("music.events"), "/recommended?show=events"],
 ];
 
 export function TopTabs({ children }: { children: ReactNode }) {
@@ -137,7 +140,7 @@ export function TopTabs({ children }: { children: ReactNode }) {
 export function HomeTabs({ at }: { at: HomeTab }) {
   return (
     <TopTabs>
-      {HOME_TABS.map(([k, l, to]) => (
+      {homeTabs().map(([k, l, to]) => (
         <Link key={k} className={at === k ? "active" : ""} to={to}>
           {l}
         </Link>
@@ -166,17 +169,14 @@ export function mixRecs(d: Pick<Recommended, "artists" | "tracks" | "albums">, l
 export function ImportPrompt() {
   return (
     <div className="import-prompt">
-      <h2>Bring your scrobbles with you</h2>
-      <p>
-        Recommendations need some listening history to go on. Import your scrobbles from Last.fm or a file and they fill
-        in from everything you have played, or connect a player to start scrobbling now.
-      </p>
+      <h2>{t("music.importTitle")}</h2>
+      <p>{t("music.importBody")}</p>
       <div className="row">
         <Button kind="btn" href="/import">
-          Import your scrobbles
+          {t("music.importScrobbles")}
         </Button>
         <Button kind="btn ghost" href="/settings/applications">
-          Connect a player
+          {t("music.connectPlayer")}
         </Button>
       </div>
     </div>

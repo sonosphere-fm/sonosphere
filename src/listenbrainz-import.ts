@@ -3,6 +3,7 @@
 // dependency is needed. Sizes are checked before inflating to avoid a hostile archive exhausting the tab. ListenBrainz
 // exports use plain DEFLATE with sizes in the central directory, so ZIP64 and encrypted entries aren't expected.
 import { IMPORT_MAX, type ImportRow } from "../shared/imports";
+import { t } from "./i18n";
 
 export type ListenBrainzExport = {
   username: string | null;
@@ -40,12 +41,12 @@ function directory(buffer: ArrayBuffer): Entry[] {
       break;
     }
   }
-  if (end < 0) throw new Error("That file isn't a ListenBrainz export ZIP.");
+  if (end < 0) throw new Error(t("player.lbNotZip"));
   const count = view.getUint16(end + 10, true);
   let p = view.getUint32(end + 16, true);
   const entries: Entry[] = [];
   for (let i = 0; i < count; i++) {
-    if (view.getUint32(p, true) !== CENTRAL) throw new Error("The ListenBrainz export ZIP is damaged.");
+    if (view.getUint32(p, true) !== CENTRAL) throw new Error(t("player.lbDamaged"));
     const nameLen = view.getUint16(p + 28, true);
     const extraLen = view.getUint16(p + 30, true);
     const commentLen = view.getUint16(p + 32, true);
@@ -63,14 +64,14 @@ function directory(buffer: ArrayBuffer): Entry[] {
 
 async function inflate(bytes: Uint8Array, method: number, size: number): Promise<Uint8Array> {
   if (method === 0) {
-    if (bytes.length !== size) throw new Error("The ListenBrainz export ZIP is damaged.");
+    if (bytes.length !== size) throw new Error(t("player.lbDamaged"));
     return bytes;
   }
-  if (method !== 8) throw new Error("The ListenBrainz export ZIP uses an unsupported compression format.");
+  if (method !== 8) throw new Error(t("player.lbCompression"));
   const body = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
   const stream = new Response(body).body!.pipeThrough(new DecompressionStream("deflate-raw"));
   const out = new Uint8Array(await new Response(stream).arrayBuffer());
-  if (out.length !== size) throw new Error("The ListenBrainz export ZIP is damaged.");
+  if (out.length !== size) throw new Error(t("player.lbDamaged"));
   return out;
 }
 
@@ -82,9 +83,8 @@ export async function readExportFiles(buffer: ArrayBuffer): Promise<Map<string, 
   let total = 0;
   for (const e of directory(buffer)) {
     if (!/\.jsonl?$/.test(e.name)) continue;
-    if (e.size > MAX_FILE || total + e.size > MAX_TOTAL)
-      throw new Error("That ListenBrainz export is too large to read.");
-    if (view.getUint32(e.offset, true) !== LOCAL) throw new Error("The ListenBrainz export ZIP is damaged.");
+    if (e.size > MAX_FILE || total + e.size > MAX_TOTAL) throw new Error(t("player.lbTooLarge"));
+    if (view.getUint32(e.offset, true) !== LOCAL) throw new Error(t("player.lbDamaged"));
     const nameLen = view.getUint16(e.offset + 26, true);
     const extraLen = view.getUint16(e.offset + 28, true);
     const start = e.offset + 30 + nameLen + extraLen;
@@ -182,7 +182,6 @@ export async function parseListenBrainzZip(buffer: ArrayBuffer): Promise<ListenB
   } catch {
     // The name is only used as a label; an absent or broken user.json is harmless.
   }
-  if (!listens.length && !feedbackRows.length)
-    throw new Error("No listens or feedback found in that ListenBrainz export.");
+  if (!listens.length && !feedbackRows.length) throw new Error(t("player.lbEmpty"));
   return { username, listens, feedback: feedbackRows };
 }

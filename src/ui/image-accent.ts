@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 /** Sample a small first frame; rank quantized colors by coverage and chroma. */
 export async function imageAccents(url: string): Promise<string[]> {
   const image = new Image();
@@ -8,7 +10,7 @@ export async function imageAccents(url: string): Promise<string[]> {
   canvas.width = 64;
   canvas.height = 64;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) throw new Error("Your browser could not read the picture.");
+  if (!ctx) throw new Error(t("common.pictureUnreadable"));
   ctx.drawImage(image, 0, 0, 64, 64);
   const pixels = ctx.getImageData(0, 0, 64, 64).data;
   const bins = new Map<number, { count: number; r: number; g: number; b: number }>();
@@ -32,7 +34,7 @@ export async function imageAccents(url: string): Promise<string[]> {
       return { rgb, score: bin.count * (1 + (max - min) / 64) * (useful ? 1 : 0.05) };
     })
     .sort((a, b) => b.score - a.score);
-  if (!colors.length) throw new Error("That picture has no visible colors.");
+  if (!colors.length) throw new Error(t("common.pictureNoColors"));
   const first = colors[0];
   const second = colors.find(({ rgb }) => rgb.reduce((sum, v, i) => sum + (v - first.rgb[i]) ** 2, 0) > 6400) ?? first;
   return [first, second].map(({ rgb }) => "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join(""));

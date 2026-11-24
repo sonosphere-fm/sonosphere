@@ -2,11 +2,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Ico } from "../icons";
 import { Button, SearchField, Select, Textarea } from "../kit";
-import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, useTitle } from "../lib";
+import { ago, api, date, dateTime, num, qs, useApi, useAuth, useTitle } from "../lib";
 import { Async, Avatar, Empty, Pager, Section, errorText } from "../ui/base";
 import { Badge, COUNT, FACTS, FILTERBAR, LIST, PEOPLE, PERSON, QUOTE, RED } from "./common";
 import { SCROLL, SEARCH, TABLE, TOOLBAR, USER_HEAD, USER_HEAD_SUB, USER_HEAD_TITLE, WHO } from "./common";
-import { adminUrl, useQuery, useRole, useConfirm, useFlash, FLAG, StatusBadges } from "./common";
+import { adminUrl, useQuery, useRole, useConfirm, useFlash, flagLabel, StatusBadges, type AdminKey } from "./common";
+import { t, tx } from "./i18n";
 import type {
   DmFlagList,
   DmMessageDeleted,
@@ -23,11 +24,12 @@ import type {
 
 // Moderators see the spam flags; only admins can list or read conversations. The server checks both, asks for a reason
 // before it shows a transcript, and writes every opening to the audit log.
-const DM_STATUS: Record<string, [string, string]> = {
-  active: ["Active", ""],
-  request: ["Request", "warn"],
-  declined: ["Declined", ""],
+const DM_STATUS: Record<string, [AdminKey, string]> = {
+  active: ["admin.dmActive", ""],
+  request: ["admin.dmRequest", "warn"],
+  declined: ["admin.dmDeclined", ""],
 };
+const dmStatusLabel = (s: string) => (DM_STATUS[s] ? t(DM_STATUS[s][0]) : s);
 const flagsChanged = () => window.dispatchEvent(new Event("spin:dmflags"));
 
 export function FlagCount() {
@@ -39,7 +41,7 @@ export function FlagCount() {
   }, []);
   if (!q.data?.openFlags) return null;
   return (
-    <span className={COUNT} title="Open spam flags">
+    <span className={COUNT} title={t("admin.openSpamFlags")}>
       {q.data.openFlags}
     </span>
   );
@@ -49,7 +51,7 @@ type LivePerson = Extract<DmPerson, { username: string }>;
 const isLive = (u: DmPerson): u is LivePerson => u.username !== null;
 
 function DmStatus({ s }: { s: string }) {
-  return <Badge tone={DM_STATUS[s]?.[1]}>{DM_STATUS[s]?.[0] ?? s}</Badge>;
+  return <Badge tone={DM_STATUS[s]?.[1]}>{dmStatusLabel(s)}</Badge>;
 }
 
 function Pair({ users }: { users: DmPerson[] }) {
@@ -57,7 +59,7 @@ function Pair({ users }: { users: DmPerson[] }) {
     <span className="adm-pair">
       {users.map((u, i) => (
         <span key={u.id ?? i} className={WHO}>
-          {i > 0 && <span className="muted small">and</span>}
+          {i > 0 && <span className="muted small">{t("admin.and")}</span>}
           {u.username ? (
             <>
               <Avatar user={u} size={24} />
@@ -66,7 +68,7 @@ function Pair({ users }: { users: DmPerson[] }) {
               </Link>
             </>
           ) : (
-            <span className="muted">deleted account</span>
+            <span className="muted">{t("admin.deletedAccount")}</span>
           )}
         </span>
       ))}
@@ -81,14 +83,14 @@ export function Messages() {
   const role = useRole();
   const [sp, set] = useQuery();
   const tab = role === "admin" ? sp.get("tab") || "threads" : "flags";
-  useTitle("Messages");
-  const tabs: [string, string][] =
+  useTitle(t("admin.navMessages"));
+  const tabs: [string, AdminKey][] =
     role === "admin"
       ? [
-          ["threads", "Conversations"],
-          ["flags", "Spam flags"],
+          ["threads", "admin.conversations"],
+          ["flags", "admin.spamFlags"],
         ]
-      : [["flags", "Spam flags"]];
+      : [["flags", "admin.spamFlags"]];
   return (
     <>
       <div className={TOOLBAR}>
@@ -100,7 +102,7 @@ export function Messages() {
               className={tab === k ? "active" : ""}
               onClick={() => set({ tab: k === "threads" ? "" : k, q: "", user: "", status: "" })}
             >
-              {l}
+              {t(l)}
             </button>
           ))}
         </nav>
@@ -124,29 +126,26 @@ function Threads() {
   };
   return (
     <>
-      <p className="muted small">
-        Conversations are private. This list shows who talks to whom but no text; opening one asks for a reason and is
-        written to the audit log.
-      </p>
+      <p className="muted small">{t("admin.threadsIntro")}</p>
       <div className={FILTERBAR}>
         <form className={SEARCH} onSubmit={search}>
           <SearchField
             value={text}
             onChange={setText}
-            placeholder="Either person's username"
-            label="Search conversations"
+            placeholder={t("admin.eitherUsername")}
+            label={t("admin.searchConversations")}
             clearable
           />
         </form>
         <Select
-          label="Status"
+          label={t("admin.status")}
           value={status}
           onChange={(v) => set({ status: v })}
           options={[
-            ["", "Any status"],
-            ["active", "Active"],
-            ["request", "Requests"],
-            ["declined", "Declined"],
+            ["", t("admin.anyStatus")],
+            ["active", t("admin.dmActive")],
+            ["request", t("admin.dmRequests")],
+            ["declined", t("admin.dmDeclined")],
           ]}
         />
       </div>
@@ -154,69 +153,73 @@ function Threads() {
         {(d) => (
           <>
             <p className="muted small">
-              {plural(d.total, "conversation")}
-              {d.user && (
-                <>
-                  {" "}
-                  with{" "}
-                  <Link to={adminUrl(d.user)}>
-                    <Username name={d.user} />
-                  </Link>
-                </>
-              )}
-              {term && <> matching “{term}”</>}
+              {d.user
+                ? tx(term ? "admin.conversationsWithMatching" : "admin.conversationsWith", {
+                    count: d.total,
+                    user: (
+                      <Link to={adminUrl(d.user)}>
+                        <Username name={d.user} />
+                      </Link>
+                    ),
+                    term,
+                  })
+                : t(term ? "admin.conversationsMatching" : "admin.conversationCount", { count: d.total, term })}
               {d.user && (
                 <>
                   {" "}
                   ·{" "}
                   <Button kind="link small" type="button" onClick={() => set({ user: "" })}>
-                    Show everyone's
+                    {t("admin.showEveryones")}
                   </Button>
                 </>
               )}
             </p>
             {d.items.length === 0 ? (
-              <Empty>No conversations match.</Empty>
+              <Empty>{t("admin.noConversationsMatch")}</Empty>
             ) : (
               <div className={SCROLL}>
                 <table className={TABLE}>
                   <thead>
                     <tr>
-                      <th>Between</th>
-                      <th>Status</th>
-                      <th className="num">Messages</th>
-                      <th className="num">Open reports</th>
-                      <th>Started</th>
-                      <th>Last activity</th>
+                      <th>{t("admin.colBetween")}</th>
+                      <th>{t("admin.status")}</th>
+                      <th className="num">{t("admin.navMessages")}</th>
+                      <th className="num">{t("admin.openReportsLabel")}</th>
+                      <th>{t("admin.started")}</th>
+                      <th>{t("admin.lastActivity")}</th>
                       <th />
                     </tr>
                   </thead>
                   <tbody>
-                    {d.items.map((t) => (
-                      <tr key={t.id}>
+                    {d.items.map((th) => (
+                      <tr key={th.id}>
                         <td>
-                          <Pair users={t.users} />
+                          <Pair users={th.users} />
                         </td>
                         <td className="nowrap">
-                          <DmStatus s={t.status} />
-                          {t.requester && <span className="muted small"> from {t.requester}</span>}
+                          <DmStatus s={th.status} />
+                          {th.requester && (
+                            <span className="muted small"> {t("admin.fromName", { name: th.requester })}</span>
+                          )}
                         </td>
                         <td className="num">
-                          {num(t.messages)}
-                          {t.deleted > 0 && <span className="muted small"> ({num(t.deleted)} deleted)</span>}
+                          {num(th.messages)}
+                          {th.deleted > 0 && (
+                            <span className="muted small"> {t("admin.deletedParen", { count: th.deleted })}</span>
+                          )}
                         </td>
                         <td className="num">
-                          {t.reports ? <b className={RED}>{t.reports}</b> : <span className="muted">0</span>}
+                          {th.reports ? <b className={RED}>{th.reports}</b> : <span className="muted">0</span>}
                         </td>
-                        <td className="nowrap" title={dateTime(t.createdAt)}>
-                          {date(t.createdAt)}
+                        <td className="nowrap" title={dateTime(th.createdAt)}>
+                          {date(th.createdAt)}
                         </td>
-                        <td className="nowrap muted" title={dateTime(t.lastAt)}>
-                          {ago(t.lastAt)}
+                        <td className="nowrap muted" title={dateTime(th.lastAt)}>
+                          {ago(th.lastAt)}
                         </td>
                         <td className="right">
-                          <Button kind="btn ghost small" href={`/admin/messages/${t.id}`}>
-                            Open
+                          <Button kind="btn ghost small" href={`/admin/messages/${th.id}`}>
+                            {t("admin.open")}
                           </Button>
                         </td>
                       </tr>
@@ -246,8 +249,11 @@ export function Transcript() {
   const [more, setMore] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [reason, setReason] = useState(sp.get("report") ? `Report #${sp.get("report")}` : "");
-  useTitle("Conversation");
+  const [reason, setReason] = useState(() => {
+    const report = sp.get("report");
+    return report ? t("admin.reportNumber", { report }) : "";
+  });
+  useTitle(t("admin.conversation"));
   const load = async () => {
     try {
       const d = await api<DmTranscript>(`/admin/dm/threads/${id}`);
@@ -317,16 +323,13 @@ export function Transcript() {
     });
   const deleteMessage = (m: DmTranscriptMessage) =>
     ask({
-      title: "Delete message",
-      action: "Delete",
+      title: t("admin.deleteMessage"),
+      action: t("admin.delete"),
       danger: true,
       body: (
         <>
           <blockquote className={QUOTE}>{m.body}</blockquote>
-          <p>
-            It disappears for both people at once. It stays visible here, marked as deleted by you.
-            {m.reports ? " Its open reports are closed." : ""}
-          </p>
+          <p>{m.reports ? t("admin.deleteMessageReportsBody") : t("admin.deleteMessageBody")}</p>
         </>
       ),
       run: (note) =>
@@ -342,17 +345,17 @@ export function Transcript() {
   const toggleMute = (u: LivePerson) => {
     if (u.dmMuted) {
       ask({
-        title: `Turn messaging back on for ${u.username}`,
-        action: "Allow messaging",
-        body: <p>They will be able to send direct messages again.</p>,
+        title: t("admin.unmuteTitle", { name: u.username }),
+        action: t("admin.allowMessaging"),
+        body: <p>{t("admin.unmuteBody")}</p>,
         run: (note) => muteUser(u.username, false, note).then(() => setMuted(u.id, false)),
       });
     } else {
       ask({
-        title: `Turn off messaging for ${u.username}`,
-        action: "Turn off",
+        title: t("admin.muteTitle", { name: u.username }),
+        action: t("admin.turnOff"),
         danger: true,
-        body: <p>They won't be able to send direct messages to anyone. They can still read their conversations.</p>,
+        body: <p>{t("admin.muteBodyShort")}</p>,
         run: (note) => muteUser(u.username, true, note).then(() => setMuted(u.id, true)),
       });
     }
@@ -363,15 +366,15 @@ export function Transcript() {
       <>
         <p className="small">
           <Link to="/admin/messages">
-            <Ico.Left /> All conversations
+            <Ico.Left /> {t("admin.allConversations")}
           </Link>
         </p>
-        {error ? <Empty>{error}</Empty> : <p className="muted">Loading…</p>}
+        {error ? <Empty>{error}</Empty> : <p className="muted">{t("admin.loading")}</p>}
       </>
     );
   }
-  const t = data.thread;
-  const byId: Record<number, DmPerson | undefined> = Object.fromEntries(t.users.map((u) => [u.id, u]));
+  const thread = data.thread;
+  const byId: Record<number, DmPerson | undefined> = Object.fromEntries(thread.users.map((u) => [u.id, u]));
   const msgs: DmTranscriptMessage[] = data.locked ? [] : [...older, ...data.messages];
   const minutes = Math.round((data.window || 1800) / 60);
   return (
@@ -379,39 +382,39 @@ export function Transcript() {
       {modal}
       <p className="small">
         <Link to="/admin/messages">
-          <Ico.Left /> All conversations
+          <Ico.Left /> {t("admin.allConversations")}
         </Link>
       </p>
       <div className={USER_HEAD}>
         <div className="grow">
           <h2 className={USER_HEAD_TITLE}>
-            <Pair users={t.users} />
+            <Pair users={thread.users} />
           </h2>
           <p className={`muted ${USER_HEAD_SUB}`}>
-            <DmStatus s={t.status} /> Started by {t.requester || "a deleted account"} {ago(t.createdAt)} · last message{" "}
-            {ago(t.lastAt)}
+            <DmStatus s={thread.status} />{" "}
+            {t("admin.startedBy", {
+              name: thread.requester || t("admin.aDeletedAccount"),
+              started: ago(thread.createdAt),
+              last: ago(thread.lastAt),
+            })}
           </p>
         </div>
       </div>
       <div className="cols">
         <div className="main">
           {data.locked ? (
-            <Section title="Read this conversation">
-              <p>
-                Direct messages are private. Opening this one writes your name, the time, who the conversation is
-                between and your reason to the audit log, where other staff can see it. Access lasts {minutes} minutes,
-                then you'll be asked again.
-              </p>
+            <Section title={t("admin.readConversation")}>
+              <p>{t("admin.readConversationBody", { count: minutes })}</p>
               <form className="form adm-dm-open" onSubmit={submitReason}>
                 <label>
-                  Reason
+                  {t("admin.reason")}
                   <Textarea
                     rows={2}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     maxLength={1000}
-                    placeholder="For example: report #12, harassment complaint"
-                    aria-label="Reason"
+                    placeholder={t("admin.reasonPlaceholder")}
+                    aria-label={t("admin.reason")}
                     autoFocus
                   />
                 </label>
@@ -422,34 +425,31 @@ export function Transcript() {
                 )}
                 <div className="row">
                   <Button kind="btn" loading={busy} disabled={reason.trim().length < 3}>
-                    Open conversation
+                    {t("admin.openConversation")}
                   </Button>
                 </div>
               </form>
             </Section>
           ) : (
-            <Section title="Transcript">
-              <p className="muted small">
-                Opened {ago(data.openedAt)}: “{data.reason}”. Messages removed by either person or by staff are shown
-                here but hidden from both people.
-              </p>
+            <Section title={t("admin.transcript")}>
+              <p className="muted small">{t("admin.openedReason", { ago: ago(data.openedAt), reason: data.reason })}</p>
               {flash.note}
               {more && (
                 <div className="adm-dm-more">
                   <Button kind="btn ghost small" type="button" loading={busy} onClick={() => loadOlder(msgs[0].id)}>
-                    Load older messages
+                    {t("admin.loadOlder")}
                   </Button>
                 </div>
               )}
               {msgs.length === 0 ? (
-                <Empty>No messages.</Empty>
+                <Empty>{t("admin.noMessages")}</Empty>
               ) : (
                 <ol className="adm-dm">
                   {msgs.map((m) => {
                     const who = byId[m.from];
-                    const name = who?.username ?? "deleted account";
-                    const side = m.from === t.users[0].id ? "lo" : "hi";
-                    const deletedBy = m.bySender ? `${name}, the sender` : m.deletedBy || "staff";
+                    const name = who?.username ?? t("admin.deletedAccount");
+                    const side = m.from === thread.users[0].id ? "lo" : "hi";
+                    const deletedBy = m.bySender ? t("admin.theSender", { name }) : m.deletedBy || t("admin.staff");
                     return (
                       <li key={m.id} className={[m.deletedAt ? "gone" : "", side].join(" ")}>
                         <div className="adm-dm-meta">
@@ -465,18 +465,18 @@ export function Transcript() {
                           <span className="muted small" title={dateTime(m.at)}>
                             {dateTime(m.at)}
                           </span>
-                          {m.reports > 0 && <Badge tone="warn">{plural(m.reports, "open report")}</Badge>}
-                          {m.deletedAt && <Badge>Deleted</Badge>}
+                          {m.reports > 0 && <Badge tone="warn">{t("admin.openReports", { count: m.reports })}</Badge>}
+                          {m.deletedAt && <Badge>{t("admin.deleted")}</Badge>}
                           {!m.deletedAt && (
                             <Button kind="link small" type="button" onClick={() => deleteMessage(m)}>
-                              Delete
+                              {t("admin.delete")}
                             </Button>
                           )}
                         </div>
                         <p className="adm-dm-body">{m.body}</p>
                         {m.deletedAt && (
                           <p className="muted small">
-                            Deleted by {deletedBy} {ago(m.deletedAt)}
+                            {t("admin.deletedBy", { name: deletedBy, ago: ago(m.deletedAt) })}
                           </p>
                         )}
                       </li>
@@ -488,37 +488,39 @@ export function Transcript() {
           )}
         </div>
         <aside className="side">
-          <Section title="Conversation">
+          <Section title={t("admin.conversation")}>
             <dl className={FACTS}>
-              <dt>Status</dt>
+              <dt>{t("admin.status")}</dt>
               <dd>
-                {DM_STATUS[t.status]?.[0] ?? t.status}
-                {t.status !== "active" && t.requester ? `, sent by ${t.requester}` : ""}
+                {thread.status !== "active" && thread.requester
+                  ? t("admin.statusSentBy", { status: dmStatusLabel(thread.status), name: thread.requester })
+                  : dmStatusLabel(thread.status)}
               </dd>
-              <dt>Started</dt>
-              <dd>{dateTime(t.createdAt)}</dd>
-              <dt>Last message</dt>
-              <dd>{dateTime(t.lastAt)}</dd>
-              <dt>Messages</dt>
+              <dt>{t("admin.started")}</dt>
+              <dd>{dateTime(thread.createdAt)}</dd>
+              <dt>{t("admin.lastMessage")}</dt>
+              <dd>{dateTime(thread.lastAt)}</dd>
+              <dt>{t("admin.navMessages")}</dt>
               <dd>
-                {num(t.messages)}
-                {t.deleted ? `, ${num(t.deleted)} deleted` : ""}
+                {thread.deleted
+                  ? t("admin.messagesDeleted", { messages: num(thread.messages), deleted: num(thread.deleted) })
+                  : num(thread.messages)}
               </dd>
-              <dt>Open reports</dt>
+              <dt>{t("admin.openReportsLabel")}</dt>
               <dd>
-                {t.reports ? (
+                {thread.reports ? (
                   <Link to="/admin/reports?type=dm">
-                    <b className={RED}>{t.reports}</b>
+                    <b className={RED}>{thread.reports}</b>
                   </Link>
                 ) : (
-                  "None"
+                  t("admin.noneCap")
                 )}
               </dd>
             </dl>
           </Section>
-          <Section title="People">
+          <Section title={t("admin.people")}>
             <ul className={`${PEOPLE} adm-dm-people`}>
-              {t.users.filter(isLive).map((u) => (
+              {thread.users.filter(isLive).map((u) => (
                 <li key={u.id} className={PERSON}>
                   <Avatar user={u} size={32} />
                   <span className="grow">
@@ -526,11 +528,11 @@ export function Transcript() {
                       <Username name={u.username} />
                     </Link>{" "}
                     <StatusBadges u={u} />
-                    {u.dmMuted && <Badge tone="warn">Messaging off</Badge>}
+                    {u.dmMuted && <Badge tone="warn">{t("admin.messagingOff")}</Badge>}
                   </span>
                   {u.role === "user" && !u.banned && (
                     <Button kind="link small" type="button" onClick={() => toggleMute(u)}>
-                      {u.dmMuted ? "Allow messaging" : "Turn off messaging"}
+                      {u.dmMuted ? t("admin.allowMessaging") : t("admin.turnOffMessaging")}
                     </Button>
                   )}
                 </li>
@@ -559,25 +561,23 @@ function Flags() {
   return (
     <>
       {modal}
-      <p className="muted small">
-        The message limits raise a flag when someone sends the same text to many people, starts a lot of new
-        conversations, or hits the daily cap. The message that tripped it is shown as a sample.
-      </p>
+      <p className="muted small">{t("admin.flagsIntro")}</p>
       <div className={TOOLBAR}>
         <nav className="tabs sub">
-          {[
-            ["open", "Open"],
-            ["resolved", "Resolved"],
-            ["all", "All"],
-          ].map(([k, l]) => (
+          {(
+            [
+              ["open", "admin.flagsOpen"],
+              ["resolved", "admin.flagsResolved"],
+              ["all", "admin.flagsAll"],
+            ] as const
+          ).map(([k, l]) => (
             <button
               key={k}
               type="button"
               className={status === k ? "active" : ""}
               onClick={() => set({ status: k === "open" ? "" : k })}
             >
-              {l}
-              {k === "open" && q.data ? ` (${q.data.open})` : ""}
+              {k === "open" && q.data ? t("admin.labelCount", { label: t(l), count: q.data.open }) : t(l)}
             </button>
           ))}
         </nav>
@@ -585,61 +585,53 @@ function Flags() {
       <Async q={q}>
         {(d) => (
           <>
-            {d.items.length === 0 && <Empty>{status === "open" ? "No open spam flags." : "No flags match."}</Empty>}
+            {d.items.length === 0 && (
+              <Empty>{status === "open" ? t("admin.noOpenFlags") : t("admin.noFlagsMatch")}</Empty>
+            )}
             <ul className={LIST}>
               {d.items.map((f) => {
                 const u = f.user;
                 const plain = u.role === "user";
                 const resolve = () =>
                   ask({
-                    title: "Resolve flag",
-                    action: "Resolve",
-                    note: "Resolution note",
-                    body: <p>Close this flag for {u.username}. A new one is raised if the limits trip again.</p>,
+                    title: t("admin.resolveFlag"),
+                    action: t("admin.resolve"),
+                    note: t("admin.resolutionNote"),
+                    body: <p>{t("admin.resolveBody", { name: u.username })}</p>,
                     run: (note) => api<Ok>(`/admin/dm/flags/${f.id}/resolve`, { body: { note } }).then(done),
                   });
                 const allow = () =>
                   ask({
-                    title: `Turn messaging back on for ${u.username}`,
-                    action: "Allow messaging",
-                    body: <p>They will be able to send direct messages again.</p>,
+                    title: t("admin.unmuteTitle", { name: u.username }),
+                    action: t("admin.allowMessaging"),
+                    body: <p>{t("admin.unmuteBody")}</p>,
                     run: (note) => userPost(u.username, "dm-mute", { muted: false, note }),
                   });
                 const mute = () =>
                   ask({
-                    title: `Turn off messaging for ${u.username}`,
-                    action: "Turn off",
+                    title: t("admin.muteTitle", { name: u.username }),
+                    action: t("admin.turnOff"),
                     danger: true,
-                    body: (
-                      <p>
-                        They won't be able to send direct messages. They can still read their conversations and use the
-                        rest of the site.
-                      </p>
-                    ),
+                    body: <p>{t("admin.muteBody")}</p>,
                     run: (note) => userPost(u.username, "dm-mute", { muted: true, note }),
                   });
                 const suspend = () =>
                   ask({
-                    title: "Suspend from posting",
-                    action: "Suspend",
+                    title: t("admin.suspendTitle"),
+                    action: t("admin.suspend"),
                     danger: true,
-                    body: (
-                      <p>
-                        {u.username} can keep listening and scrobbling but can't post on walls, journals, wiki edits or
-                        send messages.
-                      </p>
-                    ),
+                    body: <p>{t("admin.suspendBody", { name: u.username })}</p>,
                     run: (note) => userPost(u.username, "suspend", { suspended: true, note }),
                   });
                 return (
                   <li key={f.id}>
                     <div className="row adm-flag-head">
-                      <span className="badge">{FLAG[f.kind] ?? f.kind}</span>
+                      <span className="badge">{flagLabel(f.kind)}</span>
                       <Link className="strong" to={adminUrl(u.username)}>
                         <Username name={u.username} />
                       </Link>
                       <StatusBadges u={u} />
-                      {u.dmMuted && <Badge tone="warn">Messaging off</Badge>}
+                      {u.dmMuted && <Badge tone="warn">{t("admin.messagingOff")}</Badge>}
                       <span className="muted small" title={dateTime(f.createdAt)}>
                         {ago(f.createdAt)}
                       </span>
@@ -647,37 +639,40 @@ function Flags() {
                     <p className="small">
                       {f.detail}
                       {f.detail && " · "}
-                      {plural(f.threadsDay, "new conversation")} in the last day
+                      {t("admin.newConversationsDay", { count: f.threadsDay })}
                     </p>
                     {f.sample && <blockquote className={QUOTE}>{f.sample}</blockquote>}
                     {f.resolvedAt ? (
                       <p className="muted small">
-                        Resolved {ago(f.resolvedAt)} by {f.resolver || "a deleted staff account"}
+                        {t("admin.resolvedBy", {
+                          ago: ago(f.resolvedAt),
+                          name: f.resolver || t("admin.aDeletedStaffAccount"),
+                        })}
                       </p>
                     ) : (
                       <div className="row adm-flag-act">
                         <Button kind="btn ghost small" type="button" onClick={resolve}>
-                          Resolve
+                          {t("admin.resolve")}
                         </Button>
                         {d.canRead && (
                           <Button kind="btn ghost small" href={`/admin/messages${qs({ user: u.username })}`}>
-                            Their conversations
+                            {t("admin.theirConversations")}
                           </Button>
                         )}
                         {plain &&
                           !u.banned &&
                           (u.dmMuted ? (
                             <Button kind="btn ghost small" type="button" onClick={allow}>
-                              Allow messaging
+                              {t("admin.allowMessaging")}
                             </Button>
                           ) : (
                             <Button kind="btn ghost small" type="button" onClick={mute}>
-                              Turn off messaging
+                              {t("admin.turnOffMessaging")}
                             </Button>
                           ))}
                         {plain && !u.banned && !u.suspended && (
                           <Button kind="btn danger small" type="button" onClick={suspend}>
-                            Suspend
+                            {t("admin.suspend")}
                           </Button>
                         )}
                       </div>
@@ -690,9 +685,7 @@ function Flags() {
           </>
         )}
       </Async>
-      {role !== "admin" && (
-        <p className="muted small">Only admins can read conversations. Reported messages are in the reports queue.</p>
-      )}
+      {role !== "admin" && <p className="muted small">{t("admin.adminsReadOnly")}</p>}
     </>
   );
 }

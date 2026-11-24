@@ -1,5 +1,6 @@
 import { Ico } from "../icons";
 import { useState, type FormEvent } from "react";
+import { t, tx } from "../i18n";
 import { Button } from "../kit";
 import { Markdown, MdEditor, plainMd } from "../md";
 import { Link } from "react-router-dom";
@@ -21,9 +22,9 @@ export function WikiSummary({
   if (!wiki)
     return (
       <p className="muted">
-        There's no wiki for this yet.{" "}
+        {t("music.noWikiYet")}{" "}
         <Link to={to}>
-          Start it <Ico.Right />
+          {t("music.startIt")} <Ico.Right />
         </Link>
       </p>
     );
@@ -36,7 +37,7 @@ export function WikiSummary({
     <p className={`max-w-[72ch] leading-[1.6] ${flush ? "m-0" : "mb-[26px]"}`}>
       {text}
       <Link to={to}>
-        {short ? "Read more" : "View wiki"} <Ico.Right />
+        {short ? t("music.readMore") : t("music.viewWiki")} <Ico.Right />
       </Link>
     </p>
   );
@@ -71,9 +72,9 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
               {editing ? (
                 <form onSubmit={save} className="form">
                   <div className="field-block">
-                    <span className="field-label">Wiki for {title}</span>
+                    <span className="field-label">{t("music.wikiFor", { title })}</span>
                     <MdEditor
-                      label={`Wiki for ${title}`}
+                      label={t("music.wikiFor", { title })}
                       rows={14}
                       value={text}
                       onChange={setText}
@@ -84,35 +85,33 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
                   {act.note}
                   <div className="row">
                     <Button kind="btn" loading={act.busy}>
-                      Save version {versions.length ? versions[0].version + 1 : 1}
+                      {t("music.saveVersion", { version: versions.length ? versions[0].version + 1 : 1 })}
                     </Button>
                     <Button type="button" kind="btn ghost" onClick={() => setEditing(false)}>
-                      Cancel
+                      {t("music.cancel")}
                     </Button>
                   </div>
                 </form>
               ) : (
                 <>
-                  {current ? (
-                    <Markdown text={current.content} />
-                  ) : (
-                    <Empty>Nobody has written a wiki for {title} yet.</Empty>
-                  )}
+                  {current ? <Markdown text={current.content} /> : <Empty>{t("music.noWikiFor", { title })}</Empty>}
                   {current && (
                     <p className="muted small">
-                      Version {current.version} · edited by{" "}
-                      {current.author ? (
-                        <Link to={userUrl(current.author)}>
-                          <Username name={current.author} />
-                        </Link>
-                      ) : (
-                        "a deleted user"
-                      )}{" "}
-                      on {date(current.createdAt)}
+                      {tx("music.wikiVersionLine", {
+                        version: current.version,
+                        author: current.author ? (
+                          <Link to={userUrl(current.author)}>
+                            <Username name={current.author} />
+                          </Link>
+                        ) : (
+                          t("music.aDeletedUser")
+                        ),
+                        date: date(current.createdAt),
+                      })}
                       {current.author !== me?.username && (
                         <>
                           {" "}
-                          · <ReportButton type="wiki" id={current.id} label="Report this version" />
+                          · <ReportButton type="wiki" id={current.id} label={t("music.reportVersion")} />
                         </>
                       )}
                     </p>
@@ -120,34 +119,32 @@ export function WikiPage({ type, id, title }: { type: ItemType; id: number; titl
                   {me ? (
                     <div className="mt-5">
                       <Button kind="btn" onClick={edit}>
-                        {current ? "Edit wiki" : "Write the wiki"}
+                        {current ? t("music.editWiki") : t("music.writeWiki")}
                       </Button>
                     </div>
                   ) : (
-                    <p>
-                      <Link to="/login">Log in</Link> to edit this wiki.
-                    </p>
+                    <p>{tx("music.logInToEditWiki", { login: <Link to="/login">{t("music.logIn")}</Link> })}</p>
                   )}
                 </>
               )}
             </div>
             <aside className="side">
-              <h3>History</h3>
+              <h3>{t("music.history")}</h3>
               {versions.length ? (
                 <ul className="plain">
                   {versions.map((v) => (
                     <li key={v.id}>
                       <Button kind={"link" + (v === current ? " on" : "")} onClick={() => setShown(v.version)}>
-                        Version {v.version}
+                        {t("music.version", { version: v.version })}
                       </Button>{" "}
                       <span className="muted small">
-                        {v.author ? <Username name={v.author} /> : "deleted"} · {date(v.createdAt)}
+                        {v.author ? <Username name={v.author} /> : t("music.deleted")} · {date(v.createdAt)}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="muted">No versions yet.</p>
+                <p className="muted">{t("music.noVersions")}</p>
               )}
             </aside>
           </div>

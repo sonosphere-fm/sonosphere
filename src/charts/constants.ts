@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 /** Values mirrored from fmbot's FMBot.Core/Charts renderer and options. */
 export const CHART = {
   DEFAULT_CHART_SIZE: 3,
@@ -17,35 +19,38 @@ export const CHART = {
 export type PeriodKey = "weekly" | "monthly" | "quarterly" | "half" | "yearly" | "all";
 
 export type PeriodInfo = {
-  description: string;
   apiParameter: string;
   urlParameter: string;
 };
 
 /** Sonosphere uses the same period strings as the Last.fm API. */
 export const PERIODS: Record<PeriodKey, PeriodInfo> = {
-  weekly: { description: "Weekly", apiParameter: "7day", urlParameter: "date_preset=LAST_7_DAYS" },
-  monthly: { description: "Monthly", apiParameter: "1month", urlParameter: "date_preset=LAST_30_DAYS" },
-  quarterly: { description: "Quarterly", apiParameter: "3month", urlParameter: "date_preset=LAST_90_DAYS" },
-  half: { description: "Half-yearly", apiParameter: "6month", urlParameter: "date_preset=LAST_180_DAYS" },
-  yearly: { description: "Yearly", apiParameter: "12month", urlParameter: "date_preset=LAST_365_DAYS" },
-  all: { description: "Overall", apiParameter: "overall", urlParameter: "date_preset=ALL" },
+  weekly: { apiParameter: "7day", urlParameter: "date_preset=LAST_7_DAYS" },
+  monthly: { apiParameter: "1month", urlParameter: "date_preset=LAST_30_DAYS" },
+  quarterly: { apiParameter: "3month", urlParameter: "date_preset=LAST_90_DAYS" },
+  half: { apiParameter: "6month", urlParameter: "date_preset=LAST_180_DAYS" },
+  yearly: { apiParameter: "12month", urlParameter: "date_preset=LAST_365_DAYS" },
+  all: { apiParameter: "overall", urlParameter: "date_preset=ALL" },
 };
 
-export const TITLE_OPTIONS: [string, string][] = [
-  ["titles", "Names"],
-  ["plays", "Names + play counts"],
-  ["none", "No titles"],
+export const periodLabel = (key: PeriodKey) =>
+  ({
+    weekly: t("music.chartWeekly"),
+    monthly: t("music.chartMonthly"),
+    quarterly: t("music.chartQuarterly"),
+    half: t("music.chartHalfYearly"),
+    yearly: t("music.chartYearly"),
+    all: t("music.chartOverall"),
+  })[key];
+
+export const titleOptions = (): [string, string][] => [
+  ["titles", t("music.chartTitlesNames")],
+  ["plays", t("music.chartTitlesPlays")],
+  ["none", t("music.chartTitlesNone")],
 ];
 
-export const PERIOD_OPTIONS: [string, string][] = [
-  ["weekly", "Weekly"],
-  ["monthly", "Monthly"],
-  ["quarterly", "Quarterly"],
-  ["half", "Half-yearly"],
-  ["yearly", "Yearly"],
-  ["all", "Overall"],
-];
+export const periodOptions = (): [string, string][] =>
+  (Object.keys(PERIODS) as PeriodKey[]).map((key) => [key, periodLabel(key)]);
 
 export enum TitleSetting {
   Titles = 1,

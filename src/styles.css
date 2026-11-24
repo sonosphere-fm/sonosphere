@@ -6312,6 +6312,14 @@
     font-size: 13px;
     font-variant-numeric: tabular-nums;
   }
+  .language-icon {
+    width: 21px;
+    flex: none;
+  }
+  .language-current {
+    color: var(--color-site-sun);
+    font-weight: 600;
+  }
   .flag {
     width: 21px;
     height: 14px;

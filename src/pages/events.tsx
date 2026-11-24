@@ -18,6 +18,7 @@ import { Grid, UserList } from "../ui/lists";
 import { Shoutbox } from "../ui/shoutbox";
 import { DatePicker } from "../datepicker";
 import { Hero } from "./music/shared";
+import { t, tx } from "../i18n";
 
 // Acts that would plausibly share a bill, one picked per page load for the placeholder.
 const LINEUPS = [
@@ -35,13 +36,9 @@ const PlaceInput = lazy(() => import("../ui/country").then((m) => ({ default: m.
 const CountryInput = lazy(() => import("../ui/country").then((m) => ({ default: m.CountryInput })));
 
 function NearNote({ near }: { near: Events["near"] }) {
-  if (!near) return <p className="muted small">We couldn't tell where you are from your connection.</p>;
-  return (
-    <p className="muted small">
-      Roughly {near.city ? `${near.city}, ${near.country}` : near.country}, going by your connection
-      {near.wide && ". Nothing close by yet, so these are a bit further out"}.
-    </p>
-  );
+  if (!near) return <p className="muted small">{t("events.nearUnknown")}</p>;
+  const place = near.city ? `${near.city}, ${near.country}` : near.country;
+  return <p className="muted small">{t(near.wide ? "events.nearWide" : "events.near", { place })}</p>;
 }
 
 export function EventsPage() {
@@ -64,35 +61,35 @@ export function EventsPage() {
   return (
     <div className="wrap page">
       <div className="toolbar">
-        <h1 className="page-title">Events</h1>
+        <h1 className="page-title">{t("events.title")}</h1>
         <Button kind="btn" href="/events/add">
-          <Ico.Plus /> Add event
+          <Ico.Plus /> {t("events.addEvent")}
         </Button>
       </div>
       <div className="toolbar">
         <nav className="tabs sub">
           <Button kind={when !== "past" && when !== "near" ? "active" : ""} onClick={() => setWhen("upcoming")}>
-            Upcoming
+            {t("events.upcoming")}
           </Button>
           <Button kind={when === "near" ? "active" : ""} onClick={() => setWhen("near")}>
-            Near you
+            {t("events.nearYou")}
           </Button>
           <Button kind={when === "past" ? "active" : ""} onClick={() => setWhen("past")}>
-            Past
+            {t("events.past")}
           </Button>
         </nav>
         <form className="inline-form" onSubmit={filter}>
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="City, country or venue"
-            aria-label="Filter events by place"
+            placeholder={t("events.filterPlaceholder")}
+            aria-label={t("events.filterLabel")}
           />
-          <Button kind="btn ghost small">Filter</Button>
+          <Button kind="btn ghost small">{t("events.filter")}</Button>
           {me && (
             <label className="check">
-              <Input type="checkbox" checked={!!mine} onChange={(e) => setMine(e.target.checked ? "1" : "")} /> Artists
-              I listen to
+              <Input type="checkbox" checked={!!mine} onChange={(e) => setMine(e.target.checked ? "1" : "")} />{" "}
+              {t("events.artistsIListenTo")}
             </label>
           )}
         </form>
@@ -111,20 +108,16 @@ export function EventsPage() {
 }
 
 function Listed({ e }: { e: EventData }) {
-  if (e.source === "musicbrainz") return <>Listed on MusicBrainz</>;
-  if (e.source === "ticketmaster") return <>Listed on Ticketmaster</>;
-  return (
-    <>
-      Added by{" "}
-      {e.creator ? (
-        <Link to={userUrl(e.creator)}>
-          <Username name={e.creator} />
-        </Link>
-      ) : (
-        "a deleted user"
-      )}
-    </>
+  if (e.source === "musicbrainz") return <>{t("events.listedOn", { source: "MusicBrainz" })}</>;
+  if (e.source === "ticketmaster") return <>{t("events.listedOn", { source: "Ticketmaster" })}</>;
+  const user = e.creator ? (
+    <Link to={userUrl(e.creator)}>
+      <Username name={e.creator} />
+    </Link>
+  ) : (
+    t("events.deletedUser")
   );
+  return <>{tx("events.addedBy", { user })}</>;
 }
 
 export function EventPage() {
@@ -142,8 +135,8 @@ export function EventPage() {
 
   const askDelete = () =>
     c.ask({
-      title: "Delete this event?",
-      action: "Delete event",
+      title: t("events.deleteConfirm"),
+      action: t("events.deleteEvent"),
       danger: true,
       run: () => api<EventOk>(`/event/${id}`, { method: "DELETE" }).then(() => nav("/events")),
     });
@@ -157,7 +150,7 @@ export function EventPage() {
           <>
             {c.dialog}
             <Hero
-              kicker="Event"
+              kicker={t("events.event")}
               title={e.title}
               sub={
                 <>
@@ -167,8 +160,8 @@ export function EventPage() {
               }
               stats={
                 <>
-                  <Stat label="Going" value={num(e.going)} />
-                  <Stat label="Interested" value={num(e.interested)} />
+                  <Stat label={t("events.going")} value={num(e.going)} />
+                  <Stat label={t("events.interested")} value={num(e.interested)} />
                 </>
               }
               actions={
@@ -176,10 +169,10 @@ export function EventPage() {
                   <Button kind={going ? "btn" : "btn ghost"} onClick={() => attend(going ? null : "going")}>
                     {going ? (
                       <>
-                        <Ico.Check /> Going
+                        <Ico.Check /> {t("events.going")}
                       </>
                     ) : (
-                      "I'm going"
+                      t("events.imGoing")
                     )}
                   </Button>
                   <Button
@@ -188,15 +181,15 @@ export function EventPage() {
                   >
                     {interested ? (
                       <>
-                        <Ico.Check /> Interested
+                        <Ico.Check /> {t("events.interested")}
                       </>
                     ) : (
-                      "Interested"
+                      t("events.interested")
                     )}
                   </Button>
                   {e.mine && (
                     <Button kind="btn ghost" onClick={askDelete}>
-                      Delete event
+                      {t("events.deleteEvent")}
                     </Button>
                   )}
                 </>
@@ -205,39 +198,39 @@ export function EventPage() {
             <div className="wrap page">
               <div className="cols">
                 <div className="main">
-                  <Section title="Line-up">
+                  <Section title={t("events.lineup")}>
                     <Grid kind="artist" cols={4} items={e.artists} />
                   </Section>
                   {e.description && (
-                    <Section title="Details">
+                    <Section title={t("events.details")}>
                       <Markdown text={e.description} />
                     </Section>
                   )}
                   {e.url && (
                     <p>
                       <a href={e.url} target="_blank" rel="nofollow noopener noreferrer">
-                        {e.source === "musicbrainz" ? "More on MusicBrainz" : "Tickets and information"}{" "}
+                        {e.source === "musicbrainz" ? t("events.moreOnMusicBrainz") : t("events.tickets")}{" "}
                         <Ico.External />
                       </a>
                     </p>
                   )}
-                  <Section title="Wall">
+                  <Section title={t("events.wall")}>
                     <Shoutbox type="event" id={e.id} />
                   </Section>
                 </div>
                 <aside className="side">
-                  <Section title={`Going (${e.going})`}>
+                  <Section title={t("events.goingCount", { count: e.going })}>
                     {e.attendees.going.length ? (
                       <UserList items={e.attendees.going} />
                     ) : (
-                      <p className="muted">Nobody yet.</p>
+                      <p className="muted">{t("events.nobodyYet")}</p>
                     )}
                   </Section>
-                  <Section title={`Interested (${e.interested})`}>
+                  <Section title={t("events.interestedCount", { count: e.interested })}>
                     {e.attendees.interested.length ? (
                       <UserList items={e.attendees.interested} />
                     ) : (
-                      <p className="muted">Nobody yet.</p>
+                      <p className="muted">{t("events.nobodyYet")}</p>
                     )}
                   </Section>
                   <p className="muted small">
@@ -273,7 +266,7 @@ export function EventAdd() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (!f.when) throw new Error("Pick a date and time for the event.");
+      if (!f.when) throw new Error(t("events.pickDate"));
       const startsAt = Math.floor(new Date(f.when).getTime() / 1000);
       const r = await api<EventCreated>("/events", { body: { ...f, startsAt } });
       nav(`/event/${r.id}`);
@@ -282,23 +275,18 @@ export function EventAdd() {
 
   return (
     <div className="wrap page narrow">
-      <h1 className="page-title">Add an event</h1>
+      <h1 className="page-title">{t("events.addAnEvent")}</h1>
       <form className="form card" onSubmit={submit}>
         <label>
-          Line-up (comma separated, headliner first)
+          {t("events.lineupLabel")}
           <Input value={f.artists} onChange={set("artists")} required placeholder={LINEUP_HINT} />
         </label>
         <label>
-          Title (optional)
-          <Input
-            value={f.title}
-            onChange={set("title")}
-            maxLength={120}
-            placeholder="Defaults to “Headliner at Venue”"
-          />
+          {t("events.titleOptional")}
+          <Input value={f.title} onChange={set("title")} maxLength={120} placeholder={t("events.titlePlaceholder")} />
         </label>
         <label>
-          Venue
+          {t("events.venue")}
           <PlaceInput
             field="venue"
             value={f.venue}
@@ -312,7 +300,7 @@ export function EventAdd() {
         </label>
         <div className="row">
           <label className="grow">
-            City
+            {t("events.city")}
             <PlaceInput
               field="city"
               value={f.city}
@@ -323,31 +311,31 @@ export function EventAdd() {
             />
           </label>
           <label className="grow">
-            Country
+            {t("events.country")}
             <CountryInput value={f.country} onChange={(v) => setF((p) => ({ ...p, country: v }))} />
           </label>
         </div>
         <label>
-          Date and time
+          {t("events.dateTime")}
           <DatePicker
             time
-            label="Date and time"
+            label={t("events.dateTime")}
             value={f.when}
             onChange={(v) => setF({ ...f, when: v })}
             defaultTime="20:00"
           />
         </label>
         <label>
-          Link (optional)
+          {t("events.linkOptional")}
           <Input type="url" value={f.url} onChange={set("url")} placeholder="https://" />
         </label>
         <label>
-          Description (optional)
+          {t("events.descriptionOptional")}
           <Textarea rows={4} value={f.description} onChange={set("description")} maxLength={3000} />
         </label>
         {act.note}
         <Button kind="btn" loading={act.busy}>
-          Add event
+          {t("events.addEvent")}
         </Button>
       </form>
     </div>

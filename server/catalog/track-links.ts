@@ -10,7 +10,7 @@ const remoteJson = (url: string) =>
     headers: { Accept: "application/json" },
     redirect: "error",
     signal: AbortSignal.timeout(4500),
-  }).catch(() => fail(502, "Song links are temporarily unavailable."));
+  }).catch(() => fail(502, "songLinksTemporarilyUnavailable"));
 
 export async function resolveTrackLinks(song: Song): Promise<TrackLinks> {
   const key = `track-links:${JSON.stringify([song.artist, song.title, song.album, song.duration])}`;
@@ -25,9 +25,9 @@ export async function resolveTrackLinks(song: Song): Promise<TrackLinks> {
     limit: "50",
   });
   const response = await remoteJson(`https://itunes.apple.com/search?${query}`);
-  if (!response.ok) fail(502, "Song links are temporarily unavailable.");
+  if (!response.ok) fail(502, "songLinksTemporarilyUnavailable");
 
-  const body = (await response.json().catch(() => fail(502, "Song links are temporarily unavailable."))) as {
+  const body = (await response.json().catch(() => fail(502, "songLinksTemporarilyUnavailable"))) as {
     results?: {
       kind?: string;
       trackName?: string;
@@ -71,7 +71,7 @@ export async function resolveTrackLinks(song: Song): Promise<TrackLinks> {
   };
   const resolved = await remoteJson(`https://link.binimum.org/api/v1/resolve/apple_music/${best.trackId}`);
   if (resolved.ok) {
-    const mapping = (await resolved.json().catch(() => fail(502, "Song links are temporarily unavailable."))) as {
+    const mapping = (await resolved.json().catch(() => fail(502, "songLinksTemporarilyUnavailable"))) as {
       spotify?: unknown;
       tidal?: unknown;
       youtube?: unknown;
@@ -83,7 +83,7 @@ export async function resolveTrackLinks(song: Song): Promise<TrackLinks> {
     if (typeof mapping?.youtube === "string" && /^[a-zA-Z0-9_-]{11}$/.test(mapping.youtube))
       links.youtube = `https://www.youtube.com/watch?v=${mapping.youtube}`;
   } else if (resolved.status !== 404 && resolved.status !== 422) {
-    fail(502, "Song links are temporarily unavailable.");
+    fail(502, "songLinksTemporarilyUnavailable");
   }
 
   await setJson(key, links, 86_400_000);

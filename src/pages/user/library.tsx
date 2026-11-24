@@ -3,7 +3,8 @@ import { Username } from "../../ui/username";
 import { useEffect, useRef, useState } from "react";
 import { Button, Input } from "../../kit";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { api, artistUrl, date, invalidateAll, enc, num, plural, qs, useApi, userUrl } from "../../lib";
+import { api, artistUrl, date, invalidateAll, enc, num, qs, useApi, userUrl } from "../../lib";
+import { t, tx } from "../../i18n";
 import { Art, Async, Empty, Pager, PeriodPicker, Section, Stat, useAction } from "../../ui/base";
 import { BarChart, weekTrend } from "../../ui/charts";
 import { Grid, RankList, TrackList, type TrackRow } from "../../ui/lists";
@@ -31,11 +32,11 @@ function toTs(d: string, end = false) {
   return Math.floor(new Date(d + "T00:00:00").getTime() / 1000) + (end ? 86400 : 0);
 }
 
-const LIBRARY_TABS = [
-  ["", "Scrobbles"],
-  ["/artists", "Artists"],
-  ["/albums", "Albums"],
-  ["/tracks", "Tracks"],
+const libraryTabs = () => [
+  ["", t("user.statScrobbles")],
+  ["/artists", t("user.statArtists")],
+  ["/albums", t("user.statAlbums")],
+  ["/tracks", t("user.statTracks")],
 ];
 
 function DateRange() {
@@ -63,22 +64,22 @@ function DateRange() {
   return (
     <span className="daterange">
       <label>
-        From{" "}
+        {t("user.from")}{" "}
         <DatePicker
           compact
-          label="From"
-          placeholder="Any date"
+          label={t("user.from")}
+          placeholder={t("user.anyDate")}
           value={from}
           onChange={(v) => set("from", v)}
           max={to || "now"}
         />
       </label>
       <label>
-        to{" "}
+        {t("user.toLower")}{" "}
         <DatePicker
           compact
-          label="To"
-          placeholder="Any date"
+          label={t("user.to")}
+          placeholder={t("user.anyDate")}
           value={to}
           onChange={(v) => set("to", v)}
           min={from || undefined}
@@ -87,7 +88,7 @@ function DateRange() {
       </label>
       {from || to ? (
         <Button kind="link" onClick={clear}>
-          Clear
+          {t("user.clear")}
         </Button>
       ) : (
         <PeriodPicker />
@@ -96,11 +97,18 @@ function DateRange() {
   );
 }
 
+function kindCount(kind: string, count: number) {
+  if (kind === "artists") return t("user.artistCount", { count });
+  if (kind === "albums") return t("user.albumCount", { count });
+  return t("user.trackCount", { count });
+}
+
 function summary(d: UserRecent | UserTop, kind: string) {
   if ("hidden" in d) return "";
-  if (kind === "scrobbles") return plural(d.total, "scrobble");
-  const scrobbles = "counts" in d && d.counts ? ` · ${plural(d.counts.playcount, "scrobble")}` : "";
-  return `${plural(d.total, kind.slice(0, -1))}${scrobbles}`;
+  if (kind === "scrobbles") return t("user.scrobbleCount", { count: d.total });
+  const total = kindCount(kind, d.total);
+  if (!("counts" in d && d.counts)) return total;
+  return `${total} · ${t("user.scrobbleCount", { count: d.counts.playcount })}`;
 }
 
 export function Library({ name, mine }: { name: string; mine: boolean }) {
@@ -198,7 +206,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     if (!picked) {
       return (
         <Button kind="btn ghost small" type="button" onClick={() => setPicked(new Set())}>
-          Select scrobbles
+          {t("user.selectScrobbles")}
         </Button>
       );
     }
@@ -210,21 +218,21 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     };
     return (
       <>
-        <b>{picked.size} selected</b>
+        <b>{t("user.selectedCount", { count: picked.size })}</b>
         <Button kind="link small" type="button" onClick={toggleAll}>
-          {all ? "Select none" : "Select all on this page"}
+          {all ? t("user.selectNone") : t("user.selectAllOnPage")}
         </Button>
         {confirm ? (
           <Button kind="btn danger small" type="button" loading={bulk.busy} onClick={removePicked}>
-            Yes, delete {plural(picked.size, "scrobble")}
+            {t("user.confirmDeleteScrobbles", { count: picked.size })}
           </Button>
         ) : (
           <Button kind="btn ghost small" type="button" disabled={!picked.size} onClick={() => setConfirm(true)}>
-            Delete selected
+            {t("user.deleteSelected")}
           </Button>
         )}
         <Button kind="link small" type="button" onClick={stopPicking}>
-          Cancel
+          {t("user.cancel")}
         </Button>
         {bulk.note}
       </>
@@ -236,7 +244,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     return (
       <Input
         type="checkbox"
-        aria-label={`Select ${r.title}`}
+        aria-label={t("user.selectTrack", { title: r.title })}
         checked={picked.has(r.id)}
         onChange={(e) => {
           // React derives a checkbox's change from the click, so the native event carries shiftKey.
@@ -251,9 +259,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   const list = (d: UserRecent | UserTop) => {
     if ("hidden" in d)
       return (
-        <Empty>
-          <Username name={name} /> keeps their listening history private.
-        </Empty>
+        <Empty>{tx("user.historyPrivate", { name: <Username name={name} /> })}</Empty>
       );
     if (kind === "scrobbles") {
       return (
@@ -284,7 +290,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
     <>
       <div className="toolbar">
         <nav className="tabs sub">
-          {LIBRARY_TABS.map(([p, l]) => (
+          {libraryTabs().map(([p, l]) => (
             <Link key={p} className={(p.slice(1) || "scrobbles") === kind ? "active" : ""} to={base + p + search}>
               {l}
             </Link>
@@ -308,7 +314,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
 
 function LibraryArtists({ items, name, rank }: { items: TopArtist[]; name: string; rank: number }) {
   const max = Math.max(1, ...items.map((i) => i.playcount));
-  if (!items.length) return <Empty>Nothing to show for this period.</Empty>;
+  if (!items.length) return <Empty>{t("user.nothingForPeriod")}</Empty>;
   return (
     <table className="chartlist">
       <tbody>
@@ -328,7 +334,7 @@ function LibraryArtists({ items, name, rank }: { items: TopArtist[]; name: strin
             <td className="c-bar">
               <Link className="bar" to={`${userUrl(name)}/library/music/${enc(a.name)}`}>
                 <span style={{ width: `${(a.playcount / max) * 100}%` }} />
-                <b>{num(a.playcount)}</b> <em>scrobbles</em>
+                <b>{num(a.playcount)}</b> <em>{t("user.scrobblesWord", { count: a.playcount })}</em>
               </Link>
             </td>
           </tr>
@@ -346,34 +352,32 @@ export function LibraryArtist({ name, artist }: { name: string; artist: string }
         <>
           <div className="toolbar">
             <h2>
-              <Link to={`${userUrl(name)}/library/artists`}>Library</Link> /{" "}
+              <Link to={`${userUrl(name)}/library/artists`}>{t("user.library")}</Link> /{" "}
               <Link to={artistUrl(d.artist.name)}>{d.artist.name}</Link>
             </h2>
           </div>
           {d.counts.playcount === 0 ? (
-            <Empty>
-              <Username name={name} /> hasn't scrobbled {d.artist.name} yet.
-            </Empty>
+            <Empty>{tx("user.notScrobbledArtist", { name: <Username name={name} />, artist: d.artist.name })}</Empty>
           ) : (
             <>
               <div className="stats boxed">
-                <Stat label="Scrobbles" value={num(d.counts.playcount)} />
-                <Stat label="Albums" value={num(d.counts.albums)} />
-                <Stat label="Tracks" value={num(d.counts.tracks)} />
-                <Stat label="First scrobbled" value={date(d.first ?? 0)} />
+                <Stat label={t("user.statScrobbles")} value={num(d.counts.playcount)} />
+                <Stat label={t("user.statAlbums")} value={num(d.counts.albums)} />
+                <Stat label={t("user.statTracks")} value={num(d.counts.tracks)} />
+                <Stat label={t("user.firstScrobbled")} value={date(d.first ?? 0)} />
               </div>
-              <Section title="Scrobbles over the last year">
+              <Section title={t("user.scrobblesLastYear")}>
                 <BarChart data={weekTrend(d.trend)} height={120} every={8} />
               </Section>
               <div className="cols">
                 <div className="main">
-                  <Section title="Tracks">
+                  <Section title={t("user.statTracks")}>
                     <TrackList items={d.tracks} rank={1} count="playcount" showArtist={false} />
                   </Section>
                 </div>
                 <aside className="side">
-                  <Section title="Albums">
-                    <Grid kind="album" cols={2} items={d.albums} sub={(a) => `${num(a.playcount)} scrobbles`} />
+                  <Section title={t("user.statAlbums")}>
+                    <Grid kind="album" cols={2} items={d.albums} sub={(a) => t("user.scrobbleCount", { count: a.playcount })} />
                   </Section>
                 </aside>
               </div>

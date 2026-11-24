@@ -1,10 +1,6 @@
-import {
-  useEffect,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-} from "react";
-import { COSMETIC_SLOTS, type CosmeticsState } from "../../shared/cosmetics";
+import { useEffect, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { COSMETIC_SLOTS, type CosmeticSlot, type CosmeticsState } from "../../shared/cosmetics";
+import { t, type MessageKey } from "../i18n";
 import { api, invalidateAll, useApi, useAuth } from "../lib";
 import { Button } from "../kit";
 import { Async, Section, useAction } from "./base";
@@ -14,17 +10,20 @@ import { Username } from "./username";
 
 type Equipped = CosmeticsState["equipped"][number];
 type View = { equipped: Equipped[]; showCosmetics: boolean };
-type Patch =
-  | { slot: string; id: string | null; color?: string }
-  | { showCosmetics: boolean };
+type Patch = { slot: string; id: string | null; color?: string } | { showCosmetics: boolean };
 
 const SLOTS: readonly string[] = COSMETIC_SLOTS;
-const label = (slot: string) => slot.replaceAll("_", " ");
+const SLOT_LABELS = {
+  accessory: "settings.slotAccessory",
+  frame: "settings.slotFrame",
+  name_fx: "settings.slotNameFx",
+  page_fx: "settings.slotPageFx",
+  scrobble_fx: "settings.slotScrobbleFx",
+} as const satisfies Record<CosmeticSlot, MessageKey>;
 
 /** What the preview should look like once the server accepts the patch. */
 function applyPatch(view: View, patch: Patch): View {
-  if ("showCosmetics" in patch)
-    return { ...view, showCosmetics: patch.showCosmetics };
+  if ("showCosmetics" in patch) return { ...view, showCosmetics: patch.showCosmetics };
   const rest = view.equipped.filter((e) => e.slot !== patch.slot);
   if (!patch.id) return { ...view, equipped: rest };
   const next = {
@@ -69,8 +68,7 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
     const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (!step) return;
     e.preventDefault();
-    const next =
-      SLOTS[(SLOTS.indexOf(slot) + step + SLOTS.length) % SLOTS.length];
+    const next = SLOTS[(SLOTS.indexOf(slot) + step + SLOTS.length) % SLOTS.length];
     setSlot(next);
     document.getElementById(`cos-tab-${next}`)?.focus();
   };
@@ -81,12 +79,7 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
   return (
     <div className="form cos-settings">
       <div className="cos-preview profile-theme">
-        <CosmeticAvatar
-          name={me!.username}
-          image={me!.image}
-          size={96}
-          appearance={appearance}
-        />
+        <CosmeticAvatar name={me!.username} image={me!.image} size={96} appearance={appearance} />
         <div className="hero-name">
           <Username user={{ ...me!, cosmetics: view.equipped }} />
         </div>
@@ -101,19 +94,16 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
           disabled={act.busy}
           onClick={() => save({ showCosmetics: !view.showCosmetics })}
         >
-          Show cosmetics: {view.showCosmetics ? "on" : "off"}
+          {view.showCosmetics ? t("settings.showCosmeticsOn") : t("settings.showCosmeticsOff")}
         </Button>
-        <p className="muted small">
-          Turning this off stops animated effects for everyone. Static
-          decorations stay visible.
-        </p>
+        <p className="muted small">{t("settings.showCosmeticsHint")}</p>
       </div>
 
       <div className="cos-slot-picker">
         <nav
           className="tabs sub cos-slot-tabs"
           role="tablist"
-          aria-label="Cosmetic slots"
+          aria-label={t("settings.cosmeticSlots")}
           onKeyDown={onTabKey}
         >
           {SLOTS.map((s) => {
@@ -128,45 +118,28 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
                 aria-controls="cos-panel"
                 tabIndex={s === slot ? 0 : -1}
                 className={s === slot ? "active" : ""}
-                data-equipped={
-                  view.equipped.some((e) => e.slot === s) ? "" : undefined
-                }
+                data-equipped={view.equipped.some((e) => e.slot === s) ? "" : undefined}
                 onClick={() => setSlot(s)}
               >
-                {label(s)}
+                {t(SLOT_LABELS[s as CosmeticSlot])}
                 {count > 0 && <span className="cos-count">{count}</span>}
               </button>
             );
           })}
         </nav>
 
-        <div
-          id="cos-panel"
-          role="tabpanel"
-          aria-labelledby={`cos-tab-${slot}`}
-          className="cos-panel"
-        >
-          {owned.length === 0 && (
-            <p className="muted">
-              Ask an admin to get something for this slot.
-            </p>
-          )}
+        <div id="cos-panel" role="tabpanel" aria-labelledby={`cos-tab-${slot}`} className="cos-panel">
+          {owned.length === 0 && <p className="muted">{t("settings.cosmeticSlotEmpty")}</p>}
           {owned.map((c) => {
             const eq = view.equipped.find((e) => e.id === c.id);
             return (
-              <div
-                key={c.id}
-                className="cos-owned-item"
-                data-equipped={eq ? "" : undefined}
-              >
+              <div key={c.id} className="cos-owned-item" data-equipped={eq ? "" : undefined}>
                 <Button
                   type="button"
                   kind={eq ? "btn" : "btn ghost"}
                   aria-pressed={!!eq}
                   disabled={act.busy}
-                  onClick={() =>
-                    !eq && save({ slot, id: c.id, color: c.colors[0] })
-                  }
+                  onClick={() => !eq && save({ slot, id: c.id, color: c.colors[0] })}
                 >
                   {c.name}
                 </Button>
@@ -174,7 +147,7 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
                   <div
                     className="cos-swatches"
                     role="group"
-                    aria-label={`${c.name} colour`}
+                    aria-label={t("settings.cosmeticColour", { name: c.name })}
                   >
                     {c.colors.map((color) => (
                       <button
@@ -199,13 +172,8 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
             );
           })}
           {current && (
-            <Button
-              type="button"
-              kind="btn ghost"
-              disabled={act.busy}
-              onClick={() => save({ slot, id: null })}
-            >
-              Remove
+            <Button type="button" kind="btn ghost" disabled={act.busy} onClick={() => save({ slot, id: null })}>
+              {t("settings.remove")}
             </Button>
           )}
         </div>
@@ -218,9 +186,8 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
 export default function CosmeticsSettings() {
   const q = useApi<CosmeticsState>("/me/cosmetics");
   return (
-    <Section title="Cosmetics">
+    <Section title={t("settings.cosmetics")}>
       <Async q={q}>{(d) => <Editor d={d} reload={q.reload} />}</Async>
     </Section>
   );
 }
-  

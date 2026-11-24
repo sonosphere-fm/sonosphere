@@ -22,7 +22,7 @@ router.get<TagSuggestions>("/api/tags/suggest", async (c) => {
 
 router.post<ItemTags>("/api/tags", async (c) => {
   const u = confirmed(need(c));
-  await limit(u, `tag:${u.id}`, 100, 3600, "That is a lot of tagging. Try again in a while.");
+  await limit(u, `tag:${u.id}`, 100, 3600, "tooManyTagEdits");
   const it = await requireItem(c.body.type, c.body.id, TAGGABLE);
   await repo.addTags(u.id, it.type, it.row.id, namesFrom(c.body.tags));
   return tagsOn(u.id, it.type, it.row.id);

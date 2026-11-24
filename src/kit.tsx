@@ -17,6 +17,7 @@ import { Selector, SelectorOption, type SelectorOptionData } from "@astryxdesign
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Pagination } from "@astryxdesign/core/Pagination";
 import { Ico } from "./icons";
+import { t } from "./i18n";
 
 const SERVER_PATHS = /^(https?:|\/api\/|\/discord$)/;
 
@@ -53,7 +54,7 @@ export function Button({ kind = "", children, disabled, loading, type, title, hr
   else if (k.includes("danger")) variant = "destructive";
   const extra = k.filter((c) => !["btn", "ghost", "danger", "small"].includes(c));
   const className = [solid ? "" : "bare", ...extra].filter(Boolean).join(" ") || undefined;
-  const label = rest["aria-label"] || textOf(children).replace(/\s+/g, " ").trim() || title || "Button";
+  const label = rest["aria-label"] || textOf(children).replace(/\s+/g, " ").trim() || title || t("common.button");
   const link = href ? { href, ...(download ? { download: true } : {}) } : { type: type ?? "submit" };
   // Astryx's props leave out `title`, but it passes extra props on to the <button>
   const dom = { ...rest, title };
@@ -92,7 +93,7 @@ export function Input({
   ref,
   ...rest
 }: InputProps) {
-  const label = rest["aria-label"] || placeholder || name || "Field";
+  const label = rest["aria-label"] || placeholder || name || t("common.field");
   if (type === "checkbox") {
     return (
       <CheckboxInput
@@ -152,7 +153,7 @@ export function SearchField({
   onChange,
   placeholder,
   autoFocus,
-  label = "Search",
+  label = t("common.search"),
   clearable,
 }: SearchFieldProps) {
   return (
@@ -165,11 +166,11 @@ export function SearchField({
         autoFocus={autoFocus}
       />
       {clearable && value && (
-        <Button kind="search-clear" type="button" aria-label="Clear search" onClick={() => onChange("")}>
+        <Button kind="search-clear" type="button" aria-label={t("common.clearSearch")} onClick={() => onChange("")}>
           <Ico.XCircle />
         </Button>
       )}
-      <Button kind="search-go" aria-label="Search">
+      <Button kind="search-go" aria-label={t("common.search")}>
         <Ico.Search />
       </Button>
     </div>
@@ -190,7 +191,7 @@ export function Textarea({
 }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <TextArea
-      label={rest["aria-label"] || placeholder || name || "Text"}
+      label={rest["aria-label"] || placeholder || name || t("common.text")}
       isLabelHidden
       value={String(value ?? "")}
       onChange={(_, e) => onChange?.(e)}
@@ -311,7 +312,7 @@ function Confirm({ a, close }: { a: Ask; close: () => void }) {
             {a.action}
           </Button>
           <Button kind="btn ghost" type="button" onClick={close}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
@@ -323,7 +324,7 @@ export function Pages({ page, pages, onChange }: { page: number; pages: number; 
   return (
     <div className="pager">
       <Pagination
-        label="Pagination"
+        label={t("common.pagination")}
         page={page}
         totalPages={pages}
         onChange={onChange}

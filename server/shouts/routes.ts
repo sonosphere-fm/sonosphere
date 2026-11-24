@@ -17,8 +17,8 @@ router.get<ShoutList>("/api/shouts", async (c) => {
   const parentId = rawParent === null ? null : Number(rawParent);
   if (parentId !== null) {
     const parent = Number.isSafeInteger(parentId) ? await repo.findShout(parentId) : null;
-    if (!parent || parent.targetType !== it.type || parent.targetId !== it.row.id) return missing("Post");
-    if (await blockedEither(parent.authorId, viewerId)) return missing("Post");
+    if (!parent || parent.targetType !== it.type || parent.targetId !== it.row.id) return missing("postNotFound");
+    if (await blockedEither(parent.authorId, viewerId)) return missing("postNotFound");
   }
   return {
     items: await repo.listShouts(it.type, it.row.id, viewerId, pg.limit, pg.offset, parentId),
@@ -31,19 +31,18 @@ router.get<ShoutList>("/api/shouts", async (c) => {
 
 router.post<ShoutPosted>("/api/shouts", async (c) => {
   const u = confirmed(poster(c));
-  await limit(u, `shout:${u.id}`, 10, 300, "Slow down a little before posting again.");
-  await limit(u, `shout-h:${u.id}`, 60, 3600, "You have posted a lot in the last hour. Try again later.");
+  await limit(u, `shout:${u.id}`, 10, 300, "slowDownPosting");
+  await limit(u, `shout-h:${u.id}`, 60, 3600, "tooManyPostsThisHour");
   const it = await requireItem(c.body.type, c.body.id);
   const parentId = c.body.parentId === undefined ? null : Number(c.body.parentId);
-  if (parentId !== null && (!Number.isSafeInteger(parentId) || parentId <= 0))
-    return bad("Choose a valid post to reply to");
+  if (parentId !== null && (!Number.isSafeInteger(parentId) || parentId <= 0)) return bad("chooseValidPostReply");
   return { id: await post(u, it, c.body.body, parentId) };
 });
 
 router.delete<ShoutDeleted>("/api/shouts/:id", async (c) => {
   const u = need(c);
   const id = Number(c.params[0]);
-  const s = (Number.isSafeInteger(id) ? await repo.findShout(id) : null) ?? missing("Post");
+  const s = (Number.isSafeInteger(id) ? await repo.findShout(id) : null) ?? missing("postNotFound");
   await remove(u, s);
   return { ok: true };
 });

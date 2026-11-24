@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "@phosphor-icons/react";
 import { api, useAuth } from "../lib";
 import { changeTheme } from "../theme";
+import { t } from "../i18n";
 import { useAction } from "./base";
 import type { ProfileSaved } from "../../shared/account";
 
@@ -47,7 +48,7 @@ export function ThemeToggle() {
         throw error;
       }
     });
-  const label = dark ? "Switch to light mode" : "Switch to dark mode";
+  const label = dark ? t("common.switchToLight") : t("common.switchToDark");
   return (
     <span className="footer-theme inline-flex items-center gap-2.5">
       <button type="button" className={button} aria-label={label} title={label} onClick={toggle} disabled={act.busy}>

@@ -1,4 +1,5 @@
 import { Router, bad, fail, missing } from "../http";
+import type { ErrorKey } from "../i18n";
 import { adminOnly } from "../guards";
 import { findItem } from "../catalog/repo";
 import { queue } from "../recommend/repo";
@@ -23,10 +24,19 @@ import type {
 export const router = new Router({ jsonOnly: true });
 
 const KINDS: readonly repo.Kind[] = ["artist", "album", "track"];
-const kindOf = (k: unknown): repo.Kind => KINDS.find((kind) => kind === k) ?? bad("Pick artist, album or track");
-const NAMES: Record<repo.Kind, string> = { artist: "Artist", album: "Album", track: "Track" };
+const kindOf = (k: unknown): repo.Kind => KINDS.find((kind) => kind === k) ?? bad("pickArtistAlbumTrack");
+const NOT_FOUND: Record<repo.Kind, ErrorKey> = {
+  artist: "artistNotFound",
+  album: "albumNotFound",
+  track: "trackNotFound",
+};
+const CLASH: Record<repo.Kind, ErrorKey> = {
+  artist: "artistNameClash",
+  album: "albumNameClash",
+  track: "trackNameClash",
+};
 const item = async (kind: repo.Kind, id: number): Promise<repo.CatRow> =>
-  (await repo.catRow(kind, id)) ?? missing(NAMES[kind]);
+  (await repo.catRow(kind, id)) ?? missing(NOT_FOUND[kind]);
 
 router.get<CatalogueSearch>("/api/admin/catalogue/search", async (c) => {
   adminOnly(c);
@@ -72,7 +82,7 @@ router.post<CatalogueMerged>("/api/admin/catalogue/merge", async (c) => {
   const src = Number(c.body.source);
   const dst = Number(c.body.target);
   const why = note(c);
-  if (src === dst) bad("Pick two different items");
+  if (src === dst) bad("pickTwoDifferentItems");
   const s = await item(kind, src);
   const d = await item(kind, dst);
   const { detail, artists } = await repo.merge(kind, src, dst, me, (detail) => ({
@@ -93,10 +103,7 @@ async function rename(me: repo.Actor, kind: repo.Kind, r: repo.CatRow, name: str
   const n = norm(name);
   const clash = await repo.nameClash(kind, r, n);
   if (clash !== null) {
-    let existing = "an artist";
-    if (kind === "album") existing = `an album by ${r.artist}`;
-    if (kind === "track") existing = `a track by ${r.artist}`;
-    fail(409, `There's already ${existing} called “${name}”. Merge the two instead (#${clash}).`);
+    fail(409, CLASH[kind], { artist: r.artist ?? "", name, id: clash });
   }
   await repo.rename(kind, r.id, name, n);
   await audit(me, {
@@ -114,7 +121,7 @@ router.post<Ok>("/api/admin/catalogue/rename", async (c) => {
   const kind = kindOf(c.body.kind);
   const r = await item(kind, Number(c.body.id));
   const name = clean(c.body.name);
-  if (!name) bad("Enter a name");
+  if (!name) bad("enterName");
   await rename(me, kind, r, name, note(c));
   return { ok: true };
 });
@@ -135,17 +142,14 @@ const validDate = (d: string) => DATE.test(d) && (d.length === 4 || !Number.isNa
 function fieldValue(key: keyof CatalogueDetails, v: unknown): string | number | null {
   if (key === "duration") {
     const n = Number(v);
-    return Number.isInteger(n) && n >= 0 && n <= MAX_DURATION
-      ? n
-      : bad("Enter the length in seconds, or as minutes:seconds");
+    return Number.isInteger(n) && n >= 0 && n <= MAX_DURATION ? n : bad("enterLengthSecondsMinutesSeconds");
   }
   const s = clean(v) || null;
   if (s === null) return null;
-  if (key === "mbid")
-    return MBID.test(s.toLowerCase()) ? s.toLowerCase() : bad("A MusicBrainz ID looks like 3f1c2b4e-…, 36 characters");
-  if (key === "spotifyId") return SPOTIFY_ID.test(s) ? s : bad("A Spotify ID is 22 letters and digits");
-  if (key === "releaseDate") return validDate(s) ? s : bad("Enter the release date as YYYY or YYYY-MM-DD");
-  return RELEASE_TYPES.includes(s) ? s : bad("Pick a release type");
+  if (key === "mbid") return MBID.test(s.toLowerCase()) ? s.toLowerCase() : bad("invalidMbidFormat");
+  if (key === "spotifyId") return SPOTIFY_ID.test(s) ? s : bad("invalidSpotifyId");
+  if (key === "releaseDate") return validDate(s) ? s : bad("enterReleaseDateYyyyYyyy");
+  return RELEASE_TYPES.includes(s) ? s : bad("pickReleaseType");
 }
 
 type Changes = Record<string, { from: unknown; to: unknown }>;
@@ -164,7 +168,7 @@ async function editDetails(
     const from = before[k as keyof CatalogueDetails];
     if (from !== to) fields[k] = { from, to };
   }
-  if (!Object.keys(fields).length) bad("Nothing changed");
+  if (!Object.keys(fields).length) bad("nothingChanged");
   await repo.setDetails(kind, r.id, set, me, {
     action: "catalogue.edit",
     targetType: kind,
@@ -192,12 +196,12 @@ router.post<Ok>("/api/admin/catalogue/details", async (c) => {
   return { ok: true };
 });
 
-const changedSince = () => fail(409, "It has been changed again since. Edit it by hand instead.");
+const changedSince = () => fail(409, "changedAgainSince");
 const sameIds = (a: unknown, b: number[]) => Array.isArray(a) && a.join() === b.join();
 
 router.post<Ok>("/api/admin/catalogue/revert", async (c) => {
   const me = adminOnly(c);
-  const e = (await repo.auditEntry(Number(c.body.id))) ?? missing("Log entry");
+  const e = (await repo.auditEntry(Number(c.body.id))) ?? missing("logEntryNotFound");
   const kind = kindOf(e.targetType);
   const r = await item(kind, e.targetId ?? 0);
   const why = note(c);
@@ -217,8 +221,7 @@ router.post<Ok>("/api/admin/catalogue/revert", async (c) => {
     const from = e.data.from as number[];
     const current = (await repo.tracklist(r.id)).map((t) => t.id);
     if (!sameIds(e.data.to, current)) changedSince();
-    if ((await repo.existingTracks(from)) !== from.length)
-      fail(409, "Some of those tracks have been deleted or merged since. Edit the list by hand instead.");
+    if ((await repo.existingTracks(from)) !== from.length) fail(409, "tracksChangedSince");
     await repo.setTracklist(r, from, me, (after) => ({
       action: "catalogue.tracklist",
       targetType: "album",
@@ -227,7 +230,7 @@ router.post<Ok>("/api/admin/catalogue/revert", async (c) => {
       note: why,
       data: { from: current, to: after, ...extra },
     }));
-  } else bad("This change can't be undone");
+  } else bad("changeCantUndone");
   return { ok: true };
 });
 
@@ -237,7 +240,7 @@ const MAX_TRACKS = 300;
 function entryOf(v: unknown): repo.TracklistEntry {
   if (typeof v === "number" && Number.isInteger(v)) return v;
   const title = typeof v === "string" ? clean(v) : "";
-  return title || bad("A new track needs a title");
+  return title || bad("newTrackNeedsTitle");
 }
 
 router.get<Tracklist>("/api/admin/catalogue/tracklist", async (c) => {
@@ -250,10 +253,10 @@ router.post<Ok>("/api/admin/catalogue/tracklist", async (c) => {
   const me = adminOnly(c);
   const a = await item("album", Number(c.body.id));
   const raw: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [];
-  if (raw.length > MAX_TRACKS) bad(`An album can list at most ${MAX_TRACKS} tracks`);
+  if (raw.length > MAX_TRACKS) bad("albumTooManyTracks", { max: MAX_TRACKS });
   const entries = raw.map(entryOf);
   const ids = entries.filter((e) => typeof e === "number");
-  if ((await repo.existingTracks(ids)) !== new Set(ids).size) bad("A track no longer exists. Reload and try again.");
+  if ((await repo.existingTracks(ids)) !== new Set(ids).size) bad("trackNoLongerExistsReload");
   const before = await repo.tracklist(a.id);
   const why = note(c);
   await repo.setTracklist(a, entries, me, (after) => ({
@@ -279,7 +282,7 @@ router.post<OrphansDeleted>("/api/admin/catalogue/orphans/delete", async (c) => 
   const kind = kindOf(c.body.kind);
   const ids = idList(c.body.ids, 500);
   const why = note(c);
-  if (!ids.length) bad("Pick at least one item");
+  if (!ids.length) bad("pickLeastOneItem");
   const deleted = await repo.deleteOrphans(kind, ids, me, (gone, names) => ({
     action: "catalogue.orphans",
     targetType: kind,
@@ -304,7 +307,7 @@ router.get<AdminTagList>("/api/admin/tags", async (c) => {
 
 router.post<TagDeleted>("/api/admin/tags/delete", async (c) => {
   const me = adminOnly(c);
-  const g = (await findItem("tag", Number(c.body.id))) ?? missing("Tag");
+  const g = (await findItem("tag", Number(c.body.id))) ?? missing("tagNotFound");
   const why = note(c);
   const uses = await repo.deleteTag(g.id, me, (uses) => ({
     action: "tag.delete",

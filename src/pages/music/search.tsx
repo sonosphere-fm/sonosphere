@@ -1,5 +1,6 @@
 import { Ico } from "../../icons";
 import { useState, type FormEvent } from "react";
+import { t } from "../../i18n";
 import { Button, SearchField } from "../../kit";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { qs, searchTitle, useApi, useParam, useTitle } from "../../lib";
@@ -9,13 +10,13 @@ import { TagChips } from "../../ui/tags";
 import type { SearchResults } from "../../../shared/search";
 import { TopTabs } from "./shared";
 
-const TYPES = [
-  ["all", "Top results"],
-  ["artists", "Artists"],
-  ["albums", "Albums"],
-  ["tracks", "Tracks"],
-  ["tags", "Tags"],
-  ["users", "Listeners"],
+const types = () => [
+  ["all", t("music.topResults")],
+  ["artists", t("music.artists")],
+  ["albums", t("music.albums")],
+  ["tracks", t("music.tracks")],
+  ["tags", t("music.tags")],
+  ["users", t("music.listeners")],
 ];
 
 export function SearchPage() {
@@ -39,7 +40,7 @@ export function SearchPage() {
         clearable
         value={box}
         onChange={setBox}
-        placeholder="Search for an artist, album, track, tag or listener…"
+        placeholder={t("music.searchPlaceholder")}
         autoFocus={!term}
       />
     </form>
@@ -48,7 +49,7 @@ export function SearchPage() {
   if (!term) {
     return (
       <div className="wrap page">
-        <h1 className="page-title center">Search for music, tags and listeners</h1>
+        <h1 className="page-title center">{t("music.searchHeading")}</h1>
         <div className="max-w-[640px] mx-auto">{field("max-w-[720px] mb-6")}</div>
       </div>
     );
@@ -63,7 +64,7 @@ export function SearchPage() {
       return (
         <p className="more-link">
           <Button kind="link" onClick={() => setType(k)}>
-            More {label} <Ico.Chevron />
+            {label} <Ico.Chevron />
           </Button>
         </p>
       );
@@ -72,36 +73,33 @@ export function SearchPage() {
     return (
       <>
         {inMain.every((x) => !x.length) && (
-          <Empty>
-            No {allType ? "music" : "results"} found for “{term}”. Anything you scrobble gets added to the catalogue
-            automatically.
-          </Empty>
+          <Empty>{allType ? t("music.noMusicFound", { term }) : t("music.noResultsFound", { term })}</Empty>
         )}
         {d.artists.length > 0 && (
-          <Section title="Artists">
+          <Section title={t("music.artists")}>
             <Grid flush kind="artist" items={d.artists} />
-            {more("artists", "artists", d.artists.length)}
+            {more("artists", t("music.moreArtists"), d.artists.length)}
           </Section>
         )}
         {d.albums.length > 0 && (
-          <Section title="Albums">
+          <Section title={t("music.albums")}>
             <Grid flush kind="album" items={d.albums} />
-            {more("albums", "albums", d.albums.length)}
+            {more("albums", t("music.moreAlbums"), d.albums.length)}
           </Section>
         )}
         {d.tracks.length > 0 && (
-          <Section title="Tracks">
+          <Section title={t("music.tracks")}>
             <TrackList items={d.tracks} showDuration />
-            {more("tracks", "tracks", d.tracks.length)}
+            {more("tracks", t("music.moreTracks"), d.tracks.length)}
           </Section>
         )}
         {!allType && d.tags.length > 0 && (
-          <Section title="Tags">
+          <Section title={t("music.tags")}>
             <TagChips tags={d.tags} />
           </Section>
         )}
         {!allType && d.users.length > 0 && (
-          <Section title="Listeners">
+          <Section title={t("music.listeners")}>
             <UserList items={d.users} />
           </Section>
         )}
@@ -117,10 +115,10 @@ export function SearchPage() {
   return (
     <>
       <div className="wrap">
-        <h1 className="page-title mt-7 mb-2">Search results for “{term}”</h1>
+        <h1 className="page-title mt-7 mb-2">{t("music.searchResultsFor", { term })}</h1>
       </div>
       <TopTabs>
-        {TYPES.map(([k, l]) => (
+        {types().map(([k, l]) => (
           <Button key={k} kind={k === type ? "active" : ""} onClick={() => setType(k)}>
             {l}
           </Button>
@@ -134,22 +132,19 @@ export function SearchPage() {
           </div>
           <aside className="side">
             {type === "all" && q.data && q.data.tags.length > 0 && (
-              <Section title="Tags">
+              <Section title={t("music.tags")}>
                 <TagChips tags={q.data.tags} />
               </Section>
             )}
             {type === "all" && q.data && q.data.users.length > 0 && (
-              <Section title="Listeners">
+              <Section title={t("music.listeners")}>
                 <UserList items={q.data.users.slice(0, 5)} />
               </Section>
             )}
-            <Section title="Can't find it?">
-              <p className="muted">
-                Sonosphere's catalogue grows as people listen. Scrobble a track and its artist and album pages appear
-                straight away.
-              </p>
+            <Section title={t("music.cantFindIt")}>
+              <p className="muted">{t("music.catalogueGrows")}</p>
               <Button kind="btn ghost" href="/scrobble">
-                Scrobble a track
+                {t("music.scrobbleTrack")}
               </Button>
             </Section>
           </aside>
@@ -164,10 +159,10 @@ function PagerSimple({ page, more }: { page: number; more: boolean }) {
   return (
     <>
       <Button disabled={page <= 1} onClick={() => setPage(String(page - 1))}>
-        <Ico.Left /> Previous
+        <Ico.Left /> {t("music.previous")}
       </Button>
       <Button disabled={!more} onClick={() => setPage(String(page + 1))}>
-        Next <Ico.Right />
+        {t("music.next")} <Ico.Right />
       </Button>
     </>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { Ico } from "./icons";
+import { locale, t } from "./i18n";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -21,23 +22,25 @@ const addMonths = (d: Date, n: number) => {
 const same = (a: Date | null, b: Date | null) => !!a && !!b && ymd(a) === ymd(b);
 
 // getWeekInfo() is the new name of the weekInfo getter; neither is in TypeScript's lib yet.
+const regional = () => (locale() === "en" ? navigator.language : locale());
+
 type WeekInfo = { firstDay: number };
 type LocaleWithWeek = Intl.Locale & { getWeekInfo?: () => WeekInfo; weekInfo?: WeekInfo };
-const FIRST = (() => {
+function firstDay() {
   try {
-    const l: LocaleWithWeek = new Intl.Locale(navigator.language);
+    const l: LocaleWithWeek = new Intl.Locale(regional());
     return ((l.getWeekInfo?.() ?? l.weekInfo)?.firstDay ?? 1) % 7;
   } catch {
     return 1;
   }
-})();
-const H12 = (() => {
+}
+function hour12() {
   try {
-    return !!new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12;
+    return !!new Intl.DateTimeFormat(regional(), { hour: "numeric" }).resolvedOptions().hour12;
   } catch {
     return false;
   }
-})();
+}
 
 type Bound = string | "now" | undefined;
 const bound = (b: Bound) => (b === "now" ? new Date() : parse(b));
@@ -60,9 +63,9 @@ function Num({ value, min, max, onChange, label, onEnter }: NumProps) {
     onChange(((((value - min + n) % span) + span) % span) + min);
   };
   const type = (raw: string) => {
-    const t = raw.replace(/\D/g, "").slice(-2);
-    setDraft(t);
-    if (t && +t >= min && +t <= max) onChange(+t);
+    const digits = raw.replace(/\D/g, "").slice(-2);
+    setDraft(digits);
+    if (digits && +digits >= min && +digits <= max) onChange(+digits);
   };
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "ArrowUp") {
@@ -128,6 +131,8 @@ export function DatePicker({
   const grid = useRef<HTMLDivElement>(null);
   const pop = useRef<HTMLDivElement>(null);
   const moveFocus = useRef(false);
+  const weekStart = firstDay();
+  const h12 = hour12();
 
   const lo = bound(min);
   const hi = bound(max);
@@ -150,8 +155,8 @@ export function DatePicker({
   };
   const baseTime = () => {
     if (sel) return [sel.getHours(), sel.getMinutes()];
-    const t = /^(\d\d):(\d\d)$/.exec(defaultTime);
-    if (t) return [+t[1], +t[2]];
+    const hm = /^(\d\d):(\d\d)$/.exec(defaultTime);
+    if (hm) return [+hm[1], +hm[2]];
     const n = new Date();
     return [n.getHours(), n.getMinutes()];
   };
@@ -215,7 +220,7 @@ export function DatePicker({
     setCur(clampDay(d));
   };
   const keyTarget = (e: KeyboardEvent): Date | null => {
-    const wd = (cur.getDay() - FIRST + 7) % 7;
+    const wd = (cur.getDay() - weekStart + 7) % 7;
     const months = mode === "months";
     const year = e.shiftKey || months;
     switch (e.key) {
@@ -258,7 +263,7 @@ export function DatePicker({
 
   const today = day0(new Date());
   const first = new Date(cur.getFullYear(), cur.getMonth(), 1);
-  const start = addDays(first, -((first.getDay() - FIRST + 7) % 7));
+  const start = addDays(first, -((first.getDay() - weekStart + 7) % 7));
   const days = Array.from({ length: 42 }, (_, i) => addDays(start, i));
   const noPrev = !!lo && (mode === "days" ? addDays(first, -1) < day0(lo) : cur.getFullYear() <= lo.getFullYear());
   const noNext = !!hi && (mode === "days" ? addMonths(first, 1) > day0(hi) : cur.getFullYear() >= hi.getFullYear());
@@ -268,19 +273,23 @@ export function DatePicker({
     if (!sel) return "";
     const diff = Math.round((+day0(sel) - +today) / 864e5);
     let d: string;
-    if (diff === 0) d = "Today";
-    else if (diff === -1) d = "Yesterday";
-    else if (diff === 1) d = "Tomorrow";
+    if (diff === 0) d = t("common.today");
+    else if (diff === -1) d = t("common.yesterday");
+    else if (diff === 1) d = t("common.tomorrow");
     else
-      d = sel.toLocaleDateString(undefined, {
+      d = sel.toLocaleDateString(locale(), {
         weekday: compact ? undefined : "short",
         day: "numeric",
         month: "short",
         year: sel.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
       });
-    return time ? `${d}, ${sel.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}` : d;
+    if (!time) return d;
+    return t("common.dateAndTime", {
+      date: d,
+      time: sel.toLocaleTimeString(regional(), { hour: "numeric", minute: "2-digit" }),
+    });
   })();
-  const hint = placeholder ?? (time ? "Pick a date and time" : "Pick a date");
+  const hint = placeholder ?? (time ? t("common.pickDateTime") : t("common.pickDate"));
   const popClass = "dp dp-pop" + (at?.up ? " up" : "") + (presets ? " with-presets" : "");
   const dayClass = (d: Date) =>
     "dp-day" +
@@ -312,22 +321,20 @@ export function DatePicker({
           <button
             type="button"
             className="dp-nav"
-            aria-label={mode === "days" ? "Previous month" : "Previous year"}
+            aria-label={mode === "days" ? t("common.previousMonth") : t("common.previousYear")}
             disabled={noPrev}
             onClick={() => go(addMonths(cur, mode === "days" ? -1 : -12))}
           >
             <Ico.ChevLeft />
           </button>
           <button type="button" className="dp-title" aria-live="polite" onClick={toggleMode}>
-            {mode === "days"
-              ? cur.toLocaleDateString(undefined, { month: "long", year: "numeric" })
-              : cur.getFullYear()}
+            {mode === "days" ? cur.toLocaleDateString(locale(), { month: "long", year: "numeric" }) : cur.getFullYear()}
             <Ico.ChevDown />
           </button>
           <button
             type="button"
             className="dp-nav"
-            aria-label={mode === "days" ? "Next month" : "Next year"}
+            aria-label={mode === "days" ? t("common.nextMonth") : t("common.nextYear")}
             disabled={noNext}
             onClick={() => go(addMonths(cur, mode === "days" ? 1 : 12))}
           >
@@ -338,7 +345,7 @@ export function DatePicker({
           <div className="dp-grid" ref={grid} role="grid" onKeyDown={gridKey}>
             {days.slice(0, 7).map((d) => (
               <span key={d.getDay()} className="dp-wd" aria-hidden>
-                {d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}
+                {d.toLocaleDateString(locale(), { weekday: "short" }).slice(0, 2)}
               </span>
             ))}
             {days.map((d) => (
@@ -350,7 +357,7 @@ export function DatePicker({
                 tabIndex={same(d, cur) ? 0 : -1}
                 aria-pressed={same(d, sel)}
                 aria-current={same(d, today) ? "date" : undefined}
-                aria-label={d.toLocaleDateString(undefined, {
+                aria-label={d.toLocaleDateString(locale(), {
                   weekday: "long",
                   day: "numeric",
                   month: "long",
@@ -378,7 +385,7 @@ export function DatePicker({
                   className={"dp-month" + (on ? " sel" : "")}
                   onClick={() => pickMonth(d)}
                 >
-                  {d.toLocaleDateString(undefined, { month: "short" })}
+                  {d.toLocaleDateString(locale(), { month: "short" })}
                 </button>
               );
             })}
@@ -386,24 +393,31 @@ export function DatePicker({
         )}
         {time && (
           <div className="dp-time">
-            <span className="dp-time-label">Time</span>
+            <span className="dp-time-label">{t("common.time")}</span>
             <Num
-              label="Hour"
-              value={H12 ? h % 12 || 12 : h}
-              min={H12 ? 1 : 0}
-              max={H12 ? 12 : 23}
-              onChange={(n) => setTime(H12 ? (n % 12) + (pm ? 12 : 0) : n, m)}
+              label={t("common.hour")}
+              value={h12 ? h % 12 || 12 : h}
+              min={h12 ? 1 : 0}
+              max={h12 ? 12 : 23}
+              onChange={(n) => setTime(h12 ? (n % 12) + (pm ? 12 : 0) : n, m)}
               onEnter={close}
             />
             <b>:</b>
-            <Num label="Minute" value={m} min={0} max={59} onChange={(n) => setTime(h, n)} onEnter={close} />
-            {H12 && (
-              <span className="dp-ampm" role="group" aria-label="AM or PM">
+            <Num
+              label={t("common.minute")}
+              value={m}
+              min={0}
+              max={59}
+              onChange={(n) => setTime(h, n)}
+              onEnter={close}
+            />
+            {h12 && (
+              <span className="dp-ampm" role="group" aria-label={t("common.amOrPm")}>
                 <button type="button" aria-pressed={!pm} onClick={() => pm && setTime(h - 12, m)}>
-                  AM
+                  {t("common.am")}
                 </button>
                 <button type="button" aria-pressed={pm} onClick={() => !pm && setTime(h + 12, m)}>
-                  PM
+                  {t("common.pm")}
                 </button>
               </span>
             )}
@@ -412,12 +426,12 @@ export function DatePicker({
         <div className="dp-foot">
           {!off(today) && (
             <button type="button" className="dp-link" onClick={() => (time ? commit(new Date()) : pickDay(today))}>
-              {time ? "Now" : "Today"}
+              {time ? t("common.now") : t("common.today")}
             </button>
           )}
           {time && (
             <button type="button" className="dp-done" onClick={() => close()}>
-              Done
+              {t("common.done")}
             </button>
           )}
         </div>
@@ -445,7 +459,7 @@ export function DatePicker({
         className={"dp-trigger native-input" + (open ? " open" : "")}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${label}: ${shown || hint}`}
+        aria-label={t("common.fieldValue", { label, value: shown || hint })}
         onClick={() => (open ? close() : show())}
       >
         <Ico.Calendar />

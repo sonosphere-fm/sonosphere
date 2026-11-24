@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
+import { t, tx } from "../i18n";
 import { Button, Input, Textarea, useConfirm } from "../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, dur, plural, useApi, userUrl, useTitle } from "../lib";
+import { api, dur, useApi, userUrl, useTitle } from "../lib";
 import { Art, Async, Empty, useAction } from "../ui/base";
 import { TrackList } from "../ui/lists";
 import { PlayButton } from "../player";
@@ -20,9 +21,9 @@ export function PlaylistPage() {
 
   const askDelete = (p: PlaylistData) =>
     c.ask({
-      title: "Delete this playlist?",
-      body: `“${p.title}” will be gone for good.`,
-      action: "Delete playlist",
+      title: t("music.deletePlaylistTitle"),
+      body: t("music.deletePlaylistBody", { title: p.title }),
+      action: t("music.deletePlaylist"),
       danger: true,
       run: () =>
         api<PlaylistOk>(`/playlist/${id}`, { method: "DELETE" }).then(() => nav(`${userUrl(p.owner)}/playlists`)),
@@ -52,26 +53,29 @@ export function PlaylistPage() {
   return (
     <Async q={q}>
       {(p) => {
-        const length = dur(p.tracks.reduce((s, t) => s + t.duration, 0)) || "0:00";
+        const length = dur(p.tracks.reduce((s, track) => s + track.duration, 0)) || "0:00";
         const sub = (
           <>
-            by{" "}
-            <Link to={userUrl(p.owner)}>
-              <Username name={p.owner} />
-            </Link>{" "}
-            · {plural(p.tracks.length, "track")} · {length}
+            {tx("music.playlistBy", {
+              owner: (
+                <Link to={userUrl(p.owner)}>
+                  <Username name={p.owner} />
+                </Link>
+              ),
+            })}{" "}
+            · {t("music.trackCount", { count: p.tracks.length })} · {length}
           </>
         );
         const actions = (
           <>
-            <PlayButton queue={p.tracks} label="Play playlist" />
+            <PlayButton queue={p.tracks} label={t("music.playPlaylist")} />
             {p.mine && (
               <>
                 <Button kind="btn ghost" onClick={() => setEdit({ title: p.title, description: p.description })}>
-                  Edit details
+                  {t("music.editDetails")}
                 </Button>
                 <Button kind="btn ghost" onClick={() => askDelete(p)}>
-                  Delete
+                  {t("music.delete")}
                 </Button>
               </>
             )}
@@ -82,7 +86,7 @@ export function PlaylistPage() {
             {c.dialog}
             <Hero
               art={<Art image={p.tracks[0]?.image} />}
-              kicker="Playlist"
+              kicker={t("music.playlist")}
               title={p.title}
               sub={sub}
               actions={actions}
@@ -93,7 +97,7 @@ export function PlaylistPage() {
               {edit && (
                 <form className="form card" onSubmit={saveDetails}>
                   <label>
-                    Title
+                    {t("music.title")}
                     <Input
                       value={edit.title}
                       onChange={(e) => setEdit({ ...edit, title: e.target.value })}
@@ -102,7 +106,7 @@ export function PlaylistPage() {
                     />
                   </label>
                   <label>
-                    Description
+                    {t("music.description")}
                     <Textarea
                       rows={3}
                       value={edit.description}
@@ -113,17 +117,17 @@ export function PlaylistPage() {
                   {act.note}
                   <div className="row">
                     <Button kind="btn" loading={act.busy}>
-                      Save
+                      {t("music.save")}
                     </Button>
                     <Button type="button" kind="btn ghost" onClick={() => setEdit(null)}>
-                      Cancel
+                      {t("music.cancel")}
                     </Button>
                   </div>
                 </form>
               )}
               {p.tracks.length ? (
                 <TrackList
-                  items={p.tracks.map((t, i) => ({ ...t, position: i + 1 }))}
+                  items={p.tracks.map((track, i) => ({ ...track, position: i + 1 }))}
                   numbered
                   showDuration
                   actions={
@@ -131,35 +135,33 @@ export function PlaylistPage() {
                       ? (r) =>
                           r._np ? null : (
                             <Button kind="link small" onClick={() => removeEntry(r.entryId)}>
-                              Remove
+                              {t("music.remove")}
                             </Button>
                           )
                       : undefined
                   }
                 />
               ) : (
-                <Empty>
-                  This playlist is empty.{p.mine && " Add tracks below, or use “+ Playlist” on any track page."}
-                </Empty>
+                <Empty>{p.mine ? t("music.playlistEmptyMine") : t("music.playlistEmpty")}</Empty>
               )}
               {p.mine && (
                 <form className="inline-form" onSubmit={addTrack}>
                   <Input
                     value={add.artist}
                     onChange={(e) => setAdd({ ...add, artist: e.target.value })}
-                    placeholder="Artist"
-                    aria-label="Artist"
+                    placeholder={t("music.artist")}
+                    aria-label={t("music.artist")}
                     required
                   />
                   <Input
                     value={add.track}
                     onChange={(e) => setAdd({ ...add, track: e.target.value })}
-                    placeholder="Track"
-                    aria-label="Track"
+                    placeholder={t("music.track")}
+                    aria-label={t("music.track")}
                     required
                   />
                   <Button kind="btn" loading={act.busy}>
-                    Add track
+                    {t("music.addTrack")}
                   </Button>
                   {!edit && act.note}
                 </form>

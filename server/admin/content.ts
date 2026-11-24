@@ -82,7 +82,7 @@ router.get<ContentList>("/api/admin/content", async (c) => {
     }
     return { items, total: await repo.wikiCount(filter), ...pg };
   }
-  return bad("Unknown content kind");
+  return bad("unknownContentKind");
 });
 
 router.post<Ok>("/api/admin/content/delete", async (c) => {
@@ -90,8 +90,8 @@ router.post<Ok>("/api/admin/content/delete", async (c) => {
   const kind = String(c.body.kind);
   const id = Number(c.body.id);
   const why = note(c);
-  if (!["shout", "journal", "wiki"].includes(kind)) bad("Unknown content kind");
-  const t = (await reportTarget(kind, id)) ?? missing("That content");
+  if (!["shout", "journal", "wiki"].includes(kind)) bad("unknownContentKind");
+  const t = (await reportTarget(kind, id)) ?? missing("contentNotFound");
   await repo.removeContent(kind, id, me, why, (closedReports) => ({
     action: `${kind}.delete`,
     targetType: kind,
@@ -105,9 +105,9 @@ router.post<Ok>("/api/admin/content/delete", async (c) => {
 });
 
 async function wikiPage(type: string, id: number): Promise<PageRef> {
-  if (!repo.isWikiType(type)) return bad("Invalid wiki type");
-  if (!(await repo.wikiItemExists(type, id))) return missing("Page");
-  return (await pageOf(type, id)) ?? missing("Page");
+  if (!repo.isWikiType(type)) return bad("invalidWikiType");
+  if (!(await repo.wikiItemExists(type, id))) return missing("pageNotFound");
+  return (await pageOf(type, id)) ?? missing("pageNotFound");
 }
 
 router.get<WikiHistory>("/api/admin/wiki", async (c) => {
@@ -127,10 +127,10 @@ router.get<WikiHistory>("/api/admin/wiki", async (c) => {
 
 router.post<WikiReverted>("/api/admin/wiki/revert", async (c) => {
   const me = staff(c);
-  const w = (await repo.wikiRevision(Number(c.body.revision))) ?? missing("Revision");
+  const w = (await repo.wikiRevision(Number(c.body.revision))) ?? missing("revisionNotFound");
   const page = await wikiPage(w.itemType, w.itemId);
   const top = await repo.topVersion(w.itemType, w.itemId);
-  if (top === w.version) bad("That's already the current version");
+  if (top === w.version) bad("thatsAlreadyCurrentVersion");
   await repo.addWikiVersion(w.itemType, w.itemId, w.content, me.id, top + 1);
   await audit(me, {
     action: "wiki.revert",

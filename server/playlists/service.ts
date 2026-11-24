@@ -8,12 +8,12 @@ import * as repo from "./repo";
 import type { TemplateId } from "../../shared/playlists";
 
 export const requireOwn = async (id: number, userId: number): Promise<repo.Playlist> =>
-  (await repo.findOwnPlaylist(id, userId)) ?? missing("Playlist");
+  (await repo.findOwnPlaylist(id, userId)) ?? missing("playlistNotFound");
 
 // Artist and track names are added to the catalogue if new.
 export async function trackToAdd(b: Body): Promise<number> {
   if (b.trackId) return (await requireItem("track", b.trackId, ["track"])).row.id;
-  const r = (await resolve(b)) ?? bad("Artist and track are required");
+  const r = (await resolve(b)) ?? bad("artistTrackRequired");
   return r.trackId;
 }
 

@@ -4,24 +4,42 @@ import { Button, Input, Modal, Textarea } from "../kit";
 import { useAuth } from "../lib";
 import { errorText } from "../ui/base";
 import type { Role } from "../../shared/site";
+import { t, tx } from "./i18n";
 
 export type { Role };
-export const REASON: Record<string, string> = {
-  spam: "Spam",
-  abuse: "Harassment",
-  inappropriate: "Inappropriate",
-  impersonation: "Impersonation",
-  other: "Other",
+export type AdminKey = Parameters<typeof t>[0];
+
+const label = (keys: Record<string, AdminKey>) => (value: unknown) => {
+  const key = keys[String(value)];
+  return key ? t(key) : String(value);
 };
-export const TYPE: Record<string, string> = {
-  shout: "Wall post",
-  wiki: "Wiki edit",
-  journal: "Journal post",
-  user: "Profile",
-  dm: "Direct message",
-  group: "Group message",
+const REASON_KEY: Record<string, AdminKey> = {
+  spam: "admin.reasonSpam",
+  abuse: "admin.reasonAbuse",
+  inappropriate: "admin.reasonInappropriate",
+  impersonation: "admin.reasonImpersonation",
+  other: "admin.reasonOther",
 };
-export const ROLE: Record<Role, string> = { user: "User", moderator: "Moderator", admin: "Admin" };
+export const REASONS = Object.keys(REASON_KEY);
+export const reasonLabel = label(REASON_KEY);
+const TYPE_KEY: Record<string, AdminKey> = {
+  shout: "admin.typeShout",
+  wiki: "admin.typeWiki",
+  journal: "admin.typeJournal",
+  user: "admin.typeUser",
+  dm: "admin.typeDm",
+  group: "admin.typeGroup",
+};
+export const TYPES = Object.keys(TYPE_KEY);
+export const typeLabel = label(TYPE_KEY);
+export const roleLabel = label({ user: "admin.roleUser", moderator: "admin.roleModerator", admin: "admin.roleAdmin" });
+export const outcomeLabel = label({
+  dismissed: "admin.outcomeDismissed",
+  "content removed": "admin.outcomeContentRemoved",
+  "author suspended": "admin.outcomeAuthorSuspended",
+  "author muted": "admin.outcomeAuthorMuted",
+  "account deleted": "admin.outcomeAccountDeleted",
+});
 export const adminUrl = (name: string) => `/admin/users/${encodeURIComponent(name)}`;
 
 /** Sets several search params in one update. Any change but paging goes back to page 1. */
@@ -82,11 +100,11 @@ function Confirm({ ask, close }: { ask: Ask; close: () => void }) {
         {ask.body && <div className="[&_p]:m-[0_0_6px]">{ask.body}</div>}
         {ask.typed && (
           <label>
-            Type <code className={CODE}>{ask.typed}</code> to confirm
+            {tx("admin.typeToConfirm", { text: <code className={CODE}>{ask.typed}</code> })}
             <Input
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
-              aria-label="Confirmation"
+              aria-label={t("admin.confirmation")}
               autoComplete="off"
               autoFocus
             />
@@ -94,13 +112,13 @@ function Confirm({ ask, close }: { ask: Ask; close: () => void }) {
         )}
         {ask.note !== false && (
           <label>
-            {ask.note || "Note for the audit log"} <span className="muted small">Optional</span>
+            {ask.note || t("admin.auditNote")} <span className="muted small">{t("admin.optional")}</span>
             <Textarea
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={1000}
-              aria-label="Note"
+              aria-label={t("admin.note")}
             />
           </label>
         )}
@@ -110,7 +128,7 @@ function Confirm({ ask, close }: { ask: Ask; close: () => void }) {
             {ask.action}
           </Button>
           <Button kind="btn ghost" type="button" onClick={close}>
-            Cancel
+            {t("admin.cancel")}
           </Button>
         </div>
       </form>
@@ -159,11 +177,11 @@ export function useFlash() {
   ) : null;
   return { run, set: setMsg, note };
 }
-export const FLAG: Record<string, string> = {
-  "copy-paste": "Copy-paste",
-  volume: "Volume",
-  "new-conversations": "New conversations",
-};
+export const flagLabel = label({
+  "copy-paste": "admin.flagCopyPaste",
+  volume: "admin.flagVolume",
+  "new-conversations": "admin.flagNewConversations",
+});
 
 export const cx = (...parts: string[]) => parts.join(" ");
 
@@ -274,11 +292,11 @@ export function StatusBadges({
 }) {
   return (
     <>
-      {u.role !== "user" && <Badge tone={u.role}>{ROLE[u.role]}</Badge>}
-      {u.banned && <Badge tone="bad">Banned</Badge>}
-      {u.suspended && !u.banned && <Badge tone="warn">Suspended</Badge>}
-      {u.unconfirmed && !u.banned && <Badge>Unconfirmed</Badge>}
-      {u.probation && !u.banned && <Badge>Probation</Badge>}
+      {u.role !== "user" && <Badge tone={u.role}>{roleLabel(u.role)}</Badge>}
+      {u.banned && <Badge tone="bad">{t("admin.banned")}</Badge>}
+      {u.suspended && !u.banned && <Badge tone="warn">{t("admin.suspended")}</Badge>}
+      {u.unconfirmed && !u.banned && <Badge>{t("admin.unconfirmed")}</Badge>}
+      {u.probation && !u.banned && <Badge>{t("admin.probation")}</Badge>}
     </>
   );
 }

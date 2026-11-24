@@ -1,4 +1,5 @@
 import { bad, fail, paging as pageInput, type Ctx } from "../http";
+import type { ErrorKey } from "../i18n";
 import { configAdmins, isAdmin, isStaff } from "../site/roles";
 import { requireUser } from "../users/service";
 import type { User } from "../users/repo";
@@ -13,25 +14,25 @@ export const idList = (v: unknown, max: number): number[] =>
 export const targetUser = (name: string): Promise<User> => requireUser(name);
 
 type AccountAction = "suspend" | "ban" | "role" | "delete" | "sessions" | "mute" | "impersonate";
-const VERB: Record<AccountAction, string> = {
-  suspend: "suspend",
-  ban: "ban",
-  role: "change the role of",
-  delete: "delete",
-  sessions: "sign out",
-  mute: "turn off messaging for",
-  impersonate: "act as",
+const OWN_ACCOUNT: Record<AccountAction, ErrorKey> = {
+  suspend: "cantSuspendOwnAccount",
+  ban: "cantBanOwnAccount",
+  role: "cantChangeOwnRole",
+  delete: "cantDeleteOwnAccount",
+  sessions: "cantSignOutOwnAccount",
+  mute: "cantMuteOwnAccount",
+  impersonate: "cantImpersonateOwnAccount",
 };
 
 // `configured` is configAdmins(), passed in so this can run inside a transaction.
 export function checkCanAct(actor: User, target: User, action: AccountAction, configured: string[]): void {
-  if (target.id === actor.id) bad(`You can't ${VERB[action]} your own account`);
-  if (isStaff(target) && !isAdmin(actor)) fail(403, "Only admins can act on staff accounts");
+  if (target.id === actor.id) bad(OWN_ACCOUNT[action]);
+  if (isStaff(target) && !isAdmin(actor)) fail(403, "onlyAdminsActStaffAccounts");
   if (action !== "sessions" && configured.includes(target.usernameNorm)) {
-    bad(`${target.username} is an admin by server configuration (ADMIN_USERS); change it there`);
+    bad("configuredAdmin", { username: target.username });
   }
   if (action !== "role" && action !== "sessions" && isStaff(target)) {
-    bad(`${target.username} is staff: change their role to user first`);
+    bad("demoteStaffFirst", { username: target.username });
   }
 }
 

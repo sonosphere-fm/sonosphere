@@ -41,6 +41,7 @@ import {
   XCircle,
   type Icon,
 } from "@phosphor-icons/react";
+import { t } from "./i18n";
 
 const mk =
   (C: Icon, solid = false) =>
@@ -99,7 +100,7 @@ export const Ico = {
 const srOnly = "absolute w-px h-px overflow-hidden [clip:rect(0_0_0_0)] [clip-path:inset(50%)] whitespace-nowrap";
 
 /** An arrow between two words, as in "old > new". Screen readers hear `say`. */
-export const Arrow = ({ say = "to" }: { say?: string }) => (
+export const Arrow = ({ say = t("common.arrowTo") }: { say?: string }) => (
   <span className="arrow">
     <ArrowRight className="ico" aria-hidden weight="bold" />
     <span className={srOnly}>{say}</span>
@@ -115,7 +116,7 @@ export const arrowed = (s: string | null) => {
 };
 
 export const Spinner = ({ page }: { page?: boolean }) => (
-  <div className={page ? "spinner page-spinner" : "spinner"} role="status" aria-label="Loading">
+  <div className={page ? "spinner page-spinner" : "spinner"} role="status" aria-label={t("common.loading")}>
     <CircleNotch aria-hidden weight="bold" />
   </div>
 );

@@ -21,6 +21,7 @@ type ProfileFields = Partial<
     | "emailMuted"
     | "digestAt"
     | "theme"
+    | "locale"
     | "useProfileTheme"
     | "usernameFont"
     | "profileAccent"
@@ -39,7 +40,7 @@ export async function setPasswordHash(
 ): Promise<void> {
   await db.transaction(async (tx) => {
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).for("update");
-    if (!user || user.passwordHash !== expectedHash) bad("Your credentials changed. Refresh and try again.");
+    if (!user || user.passwordHash !== expectedHash) bad("credentialsChangedRefreshTryAgain");
     await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
     await tx.delete(emailTokens).where(eq(emailTokens.userId, userId));
     await tx.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, digest(keepToken))));

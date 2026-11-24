@@ -5,6 +5,7 @@ import { Button, Input } from "../kit";
 import { api, dateTime, invalidateAll, useApi, useAuth } from "../lib";
 import { Async, Section, useAction } from "../ui/base";
 import { useConfirm } from "./common";
+import { t } from "./i18n";
 
 export function ManageUsernames({ name, onChange }: { name: string; onChange: () => void }) {
   const path = `/admin/users/${encodeURIComponent(name)}/username`;
@@ -23,14 +24,9 @@ export function ManageUsernames({ name, onChange }: { name: string; onChange: ()
   const change = (event: FormEvent) => {
     event.preventDefault();
     ask({
-      title: "Change username",
-      action: "Change username",
-      body: (
-        <p>
-          Rename {name} to {username}. This bypasses the current cooldown and starts a new 7-day cooldown. The previous
-          name is reserved for 14 days.
-        </p>
-      ),
+      title: t("admin.changeUsername"),
+      action: t("admin.changeUsername"),
+      body: <p>{t("admin.renameBody", { name, username })}</p>,
       run: (note) =>
         action.run(async () => {
           const result = await api<{ username: string }>(path, { body: { username, note } });
@@ -41,29 +37,23 @@ export function ManageUsernames({ name, onChange }: { name: string; onChange: ()
   };
   const manage = (kind: "release" | "cooldown") =>
     ask({
-      title: kind === "release" ? "Release reserved usernames" : "Remove username cooldown",
-      action: kind === "release" ? "Release usernames" : "Remove cooldown",
+      title: kind === "release" ? t("admin.releaseReservedTitle") : t("admin.removeCooldownTitle"),
+      action: kind === "release" ? t("admin.releaseUsernames") : t("admin.removeCooldown"),
       danger: kind === "release",
-      body: (
-        <p>
-          {kind === "release"
-            ? "All reserved previous usernames will become available immediately. Their redirects and Undo will stop; history stays stored."
-            : `${name} will be able to change their username immediately.`}
-        </p>
-      ),
+      body: <p>{kind === "release" ? t("admin.releaseBody") : t("admin.removeCooldownBody", { name })}</p>,
       run: async (note) => {
         await api(path + "/" + kind, { body: { note } });
         await reload();
       },
     });
   return (
-    <Section title="Usernames">
+    <Section title={t("admin.usernames")}>
       {modal}
       {q.error && (
         <p role="alert">
           {q.error.message}{" "}
           <Button kind="link small" onClick={q.reload}>
-            Try again
+            {t("admin.tryAgain")}
           </Button>
         </p>
       )}
@@ -72,18 +62,18 @@ export function ManageUsernames({ name, onChange }: { name: string; onChange: ()
           <>
             <form className="form" onSubmit={change}>
               <label>
-                Username
+                {t("admin.username")}
                 <Input required maxLength={15} value={username} onChange={(event) => setUsername(event.target.value)} />
               </label>
               {action.note}
               <Button kind="btn ghost small" loading={action.busy}>
-                Change username
+                {t("admin.changeUsername")}
               </Button>
             </form>
             <p className="muted small">
               {status.changeAfter > Date.now() / 1000
-                ? `Cooldown ends ${dateTime(status.changeAfter)}.`
-                : "No active username cooldown."}
+                ? t("admin.cooldownEnds", { date: dateTime(status.changeAfter) })
+                : t("admin.noCooldown")}
             </p>
             <Button
               type="button"
@@ -91,19 +81,20 @@ export function ManageUsernames({ name, onChange }: { name: string; onChange: ()
               disabled={status.changeAfter <= Date.now() / 1000}
               onClick={() => manage("cooldown")}
             >
-              Remove cooldown
+              {t("admin.removeCooldown")}
             </Button>
-            <h4 className="mt-5 mb-2">Reserved previous usernames</h4>
+            <h4 className="mt-5 mb-2">{t("admin.reservedUsernames")}</h4>
             {status.held.length ? (
               <ul className="plain">
                 {status.held.map((held, index) => (
                   <li key={index}>
-                    {held.username} <span className="muted small">until {dateTime(held.expiresAt)}</span>
+                    {held.username}{" "}
+                    <span className="muted small">{t("admin.until", { date: dateTime(held.expiresAt) })}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="muted small">None.</p>
+              <p className="muted small">{t("admin.noneDot")}</p>
             )}
             <Button
               type="button"
@@ -111,7 +102,7 @@ export function ManageUsernames({ name, onChange }: { name: string; onChange: ()
               disabled={!status.held.length}
               onClick={() => manage("release")}
             >
-              Release all reserved usernames
+              {t("admin.releaseAllReserved")}
             </Button>
           </>
         )}

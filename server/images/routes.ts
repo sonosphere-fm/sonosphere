@@ -17,12 +17,12 @@ const MAX_BYTES = 8_000_000;
 const IMMUTABLE = { "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff" };
 
 async function readCapped(req: Request, max: number): Promise<Uint8Array> {
-  if (Number(req.headers.get("content-length")) > max) bad("Images must be under 8 MB");
+  if (Number(req.headers.get("content-length")) > max) bad("imagesMustUnder8Mb");
   const parts: Uint8Array[] = [];
   let n = 0;
   for await (const chunk of req.body ?? []) {
     n += chunk.length;
-    if (n > max) bad("Images must be under 8 MB");
+    if (n > max) bad("imagesMustUnder8Mb");
     parts.push(chunk);
   }
   return Buffer.concat(parts);
@@ -38,22 +38,21 @@ async function siteBytes(): Promise<number> {
 
 // Store converted WebP or animation-preserving GIF, always stripped of metadata.
 async function storeImage(c: Ctx, userId: number, preserveGif = false): Promise<string> {
-  await limit(`upload:${userId}`, 20, 3600, "Too many uploads. Wait a while and try again.");
-  await limit(`upload-ip:${ipOf(c.req)}`, 40, 3600, "Too many uploads. Wait a while and try again.");
-  const full = "You have used all the space for your pictures.";
+  await limit(`upload:${userId}`, 20, 3600, "tooManyUploadsWaitWhile");
+  await limit(`upload-ip:${ipOf(c.req)}`, 40, 3600, "tooManyUploadsWaitWhile");
+  const full = "pictureSpaceFull";
   const used = await repo.bytesBy(userId);
   if (used >= caps.userBytes) fail(403, full);
-  if (caps.siteBytes !== null && (await siteBytes()) >= caps.siteBytes)
-    fail(503, "Picture uploads are paused for now.");
+  if (caps.siteBytes !== null && (await siteBytes()) >= caps.siteBytes) fail(503, "pictureUploadsPausedNow");
   const data = await readCapped(c.req, MAX_BYTES);
-  if (!data.length) bad("Empty upload");
+  if (!data.length) bad("emptyUpload");
   const img = await convert(data);
   if (preserveGif && sniff(data) === "gif") {
     let stripped: Uint8Array;
     try {
       stripped = stripGifMetadata(data);
     } catch {
-      return bad("That GIF could not be read");
+      return bad("gifCouldNotRead");
     }
     if (used + stripped.length > caps.userBytes) fail(403, full);
     return repo.saveGif(stripped, userId);
@@ -86,7 +85,7 @@ function recall(key: string): Picture | null {
 }
 
 async function stored(key: string): Promise<Picture | null> {
-  if (!(await spendRead())) fail(503, "Pictures are unavailable for the rest of today");
+  if (!(await spendRead())) fail(503, "picturesUnavailableRestToday");
   const data = await store.get(key);
   return data && { mime: "image/webp", data };
 }
@@ -114,21 +113,21 @@ async function load(id: string, small: boolean): Promise<Picture | null> {
 }
 
 router.get("/api/image/:id", async (c) => {
-  await limit(`image:${ipOf(c.req)}`, 1500, 60, "Too many requests");
+  await limit(`image:${ipOf(c.req)}`, 1500, 60, "tooManyRequests");
   const id = c.params[0] ?? "";
-  if (!/^[0-9a-f]{32}$/.test(id)) missing("Image");
+  if (!/^[0-9a-f]{32}$/.test(id)) missing("imageNotFound");
   const small = c.q.get("s") === "small";
   const key = small ? `${id}-s` : id;
-  const pic = recall(key) ?? remember(key, (await load(id, small)) ?? missing("Image"));
+  const pic = recall(key) ?? remember(key, (await load(id, small)) ?? missing("imageNotFound"));
   return new Response(pic.data, { headers: { "Content-Type": pic.mime, ...IMMUTABLE } });
 });
 
 // album art the player found on Spotify, given an address of ours like every other picture
 router.post<ImageSaved>("/api/image/art", async (c) => {
   need(c);
-  await limit(`art:${ipOf(c.req)}`, 300, 3600, "Too many requests");
+  await limit(`art:${ipOf(c.req)}`, 300, 3600, "tooManyRequests");
   const url = String(c.body.url ?? "");
-  if (!SPOTIFY_ART.test(url)) bad("Unknown picture");
+  if (!SPOTIFY_ART.test(url)) bad("unknownPicture");
   const image = new Bun.CryptoHasher("sha256").update(url).digest("hex").slice(0, 32);
   await setJson(artKey(image), url, ART_LIFE);
   return { image };
@@ -158,6 +157,6 @@ router.delete<Ok>("/api/image", async (c) => {
   const type = c.q.get("type") ?? "user";
   if (type === "banner") await repo.setUserBanner(u.id, null);
   else if (type === "user") await repo.setUserImage(u.id, null);
-  else bad("type must be user or banner");
+  else bad("typeMustUserBanner");
   return { ok: true };
 });

@@ -1,4 +1,6 @@
 import { fail, HttpError } from "../http";
+import { tr } from "../i18n";
+import type { Locale } from "../../shared/i18n/core";
 import { push } from "../realtime";
 import { blockedEither, findById, type User } from "../users/repo";
 import { now } from "../util";
@@ -28,7 +30,7 @@ const GROUP = {
   NEW_PER_DAY: 10,
 };
 
-const notFound = (): never => fail(404, "Conversation not found");
+const notFound = (): never => fail(404, "conversationNotFound");
 
 async function mine(id: unknown, userId: number): Promise<{ group: Group; member: Member }> {
   return (await repo.groupFor(Number(id) || 0, userId)) ?? notFound();
@@ -36,22 +38,22 @@ async function mine(id: unknown, userId: number): Promise<{ group: Group; member
 
 async function owned(id: unknown, me: User): Promise<Group> {
   const { group } = await mine(id, me.id);
-  if (group.ownerId !== me.id) fail(403, "Only the group's owner can do that");
+  if (group.ownerId !== me.id) fail(403, "onlyGroupsOwnerDo");
   canPost(me);
   return group;
 }
 
 function cleanTitle(input: unknown): string {
   const title = tidy(input).replace(/\s+/g, " ");
-  if (title.length > GROUP.TITLE_LENGTH) fail(400, `Group names can be up to ${GROUP.TITLE_LENGTH} characters`);
+  if (title.length > GROUP.TITLE_LENGTH) fail(400, "groupNameTooLong", { max: GROUP.TITLE_LENGTH });
   return title;
 }
 
 // Only people the adder already has an accepted conversation with, who could still be messaged directly,
 // and who haven't blocked (or been blocked by) anyone already in the group.
 async function checkAddable(me: User, target: User | null, others: number[]): Promise<User> {
-  if (!target) return fail(404, "User not found");
-  const refuse = () => fail(403, `You can't add ${target.username}`);
+  if (!target) return fail(404, "userNotFound");
+  const refuse = () => fail(403, "cantAddUser", { username: target.username });
   try {
     await gate(me, target);
   } catch (e) {
@@ -59,7 +61,7 @@ async function checkAddable(me: User, target: User | null, others: number[]): Pr
     throw e;
   }
   if (!(await repo.hasActiveThread(me.id, target.id))) {
-    fail(403, `You can only add people you already have a conversation with`);
+    fail(403, "onlyAddPeopleAlreadyConversation");
   }
   for (const id of others) {
     if (id !== target.id && (await blockedEither(id, target.id))) refuse();
@@ -140,8 +142,8 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
   canPost(me);
   const title = cleanTitle(rawTitle);
   const ids = [...new Set(Array.isArray(rawIds) ? rawIds.map(Number) : [])].filter((id) => id !== me.id);
-  if (ids.length < 2) fail(400, "Pick at least two people for a group");
-  if (ids.length + 1 > GROUP.MAX_MEMBERS) fail(400, `Groups can have up to ${GROUP.MAX_MEMBERS} people`);
+  if (ids.length < 2) fail(400, "pickLeastTwoPeopleGroup");
+  if (ids.length + 1 > GROUP.MAX_MEMBERS) fail(400, "groupTooBig", { max: GROUP.MAX_MEMBERS });
   const people: User[] = [];
   for (const id of ids)
     people.push(
@@ -155,7 +157,7 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
   const { groupId, id } = await atomically(async (tx) => {
     const t = now();
     if (!me.isAdmin && (await repo.createdSinceTx(tx, me.id, t - 86400)) >= newGroups) {
-      fail(429, "You've started a lot of groups today. Try again tomorrow.");
+      fail(429, "youveStartedLotGroupsToday");
     }
     const group = await repo.createTx(tx, me.id, title, t);
     for (const p of people) await repo.addMemberTx(tx, group.id, p.id, t);
@@ -166,7 +168,7 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
   return announced(me, groupId, id);
 }
 
-export async function page(me: User, groupId: unknown, before: number): Promise<DmGroupPage> {
+export async function page(locale: Locale, me: User, groupId: unknown, before: number): Promise<DmGroupPage> {
   const { group, member } = await mine(groupId, me.id);
   const rows = (await repo.messagesBetween(group.id, member.clearedId, before, 51)).reverse();
   const shown = rows.slice(-50);
@@ -175,8 +177,8 @@ export async function page(me: User, groupId: unknown, before: number): Promise<
     shown.map((m) => m.id)
   );
   let why = "";
-  if (me.suspended) why = "Your account is suspended from posting.";
-  else if (me.dmMuted) why = "Messaging has been turned off for your account.";
+  if (me.suspended) why = tr(locale, "errors.suspendedFromPostingNotice");
+  else if (me.dmMuted) why = tr(locale, "errors.messagingOffNotice");
   return {
     group: await shape(group, member, me.id),
     messages: shown.map((m) => messageShape(m, reactions.get(m.id))),
@@ -193,16 +195,15 @@ export async function send(me: User, groupId: unknown, rawBody: unknown): Promis
   const { group } = await mine(groupId, me.id);
   canPost(me);
   const body = tidy(rawBody);
-  if (!body) fail(400, "Write a message first");
-  if (body.length > DM.MAX_LENGTH) fail(400, `Messages can be up to ${DM.MAX_LENGTH} characters`);
+  if (!body) fail(400, "writeMessageFirst");
+  if (body.length > DM.MAX_LENGTH) fail(400, "messageTooLong", { max: DM.MAX_LENGTH });
   const lim = await dmLimits(me);
   const id = await atomically(async (tx) => {
     const t = now();
     const sent = async (since: number) =>
       (await sentSinceTx(tx, me.id, since)) + (await repo.sentSinceTx(tx, me.id, since));
-    if ((await sent(t - 60)) >= lim.perMinute)
-      fail(429, "You're sending messages too quickly. Wait a moment and try again.");
-    if ((await sent(t - 86400)) >= lim.perDay) fail(429, "You've reached today's message limit.");
+    if ((await sent(t - 60)) >= lim.perMinute) fail(429, "youreSendingMessagesTooQuickly");
+    if ((await sent(t - 86400)) >= lim.perDay) fail(429, "youveReachedTodaysMessageLimit");
     return repo.addMessageTx(tx, group.id, me.id, body, null, t);
   });
   const out = await announced(me, group.id, id);
@@ -226,7 +227,7 @@ export async function read(me: User, groupId: unknown): Promise<DmDone> {
 export async function rename(me: User, groupId: unknown, rawTitle: unknown): Promise<DmGroupSent> {
   const group = await owned(groupId, me);
   const title = cleanTitle(rawTitle);
-  if (title === group.title) fail(400, "That's already the group's name");
+  if (title === group.title) fail(400, "thatsAlreadyGroupsName");
   const line = title ? `${me.username} named the group "${title}"` : `${me.username} removed the group's name`;
   const id = await atomically(async (tx) => {
     await repo.updateTx(tx, group.id, { title });
@@ -239,8 +240,8 @@ export async function addMember(me: User, groupId: unknown, userId: unknown): Pr
   const group = await owned(groupId, me);
   const inGroup = await repo.memberIds(group.id);
   const target = await checkAddable(me, await findById(Number(userId) || 0), inGroup);
-  if (inGroup.includes(target.id)) fail(400, `${target.username} is already in this group`);
-  if (inGroup.length >= GROUP.MAX_MEMBERS) fail(400, `Groups can have up to ${GROUP.MAX_MEMBERS} people`);
+  if (inGroup.includes(target.id)) fail(400, "alreadyInGroup", { username: target.username });
+  if (inGroup.length >= GROUP.MAX_MEMBERS) fail(400, "groupTooBig", { max: GROUP.MAX_MEMBERS });
   const id = await atomically(async (tx) => {
     const t = now();
     await repo.addMemberTx(tx, group.id, target.id, t);
@@ -251,14 +252,14 @@ export async function addMember(me: User, groupId: unknown, userId: unknown): Pr
 
 async function memberOf(groupId: number, userId: unknown): Promise<User> {
   const target = await findById(Number(userId) || 0);
-  if (!target || !(await repo.groupFor(groupId, target.id))) return fail(404, "That person isn't in this group");
+  if (!target || !(await repo.groupFor(groupId, target.id))) return fail(404, "personIsntGroup");
   return target;
 }
 
 export async function removeMember(me: User, groupId: unknown, userId: unknown): Promise<DmGroupSent> {
   const group = await owned(groupId, me);
   const target = await memberOf(group.id, userId);
-  if (target.id === me.id) fail(400, "Leave the group instead");
+  if (target.id === me.id) fail(400, "leaveGroupInstead");
   const id = await atomically(async (tx) => {
     await repo.removeMemberTx(tx, group.id, target.id);
     return repo.addMessageTx(tx, group.id, me.id, `${me.username} removed ${target.username}`, "removed", now());
@@ -269,7 +270,7 @@ export async function removeMember(me: User, groupId: unknown, userId: unknown):
 export async function makeOwner(me: User, groupId: unknown, userId: unknown): Promise<DmGroupSent> {
   const group = await owned(groupId, me);
   const target = await memberOf(group.id, userId);
-  if (target.id === me.id) fail(400, "You're already the owner");
+  if (target.id === me.id) fail(400, "youreAlreadyOwner");
   const id = await atomically(async (tx) => {
     await repo.updateTx(tx, group.id, { ownerId: target.id });
     return repo.addMessageTx(tx, group.id, me.id, `${me.username} made ${target.username} the owner`, "owner", now());
@@ -300,19 +301,19 @@ export async function leave(me: User, groupId: unknown): Promise<DmDone> {
 }
 
 export async function unsend(me: User, messageId: unknown): Promise<DmUnsent> {
-  const m = (await repo.ownMessage(Number(messageId) || 0, me.id)) ?? fail(404, "Message not found");
+  const m = (await repo.ownMessage(Number(messageId) || 0, me.id)) ?? fail(404, "messageNotFound");
   await mine(m.groupId, me.id);
-  if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "Messages can only be unsent for 15 minutes");
+  if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "messagesOnlyUnsent15Minutes");
   await announceRemoved([await repo.softDeleteTx(connection, m.id, me.id, now())]);
   return { ok: true };
 }
 
 export async function react(me: User, messageId: unknown, emoji: unknown): Promise<DmReacted> {
-  const m = (await repo.findMessage(Number(messageId) || 0)) ?? fail(404, "Message not found");
+  const m = (await repo.findMessage(Number(messageId) || 0)) ?? fail(404, "messageNotFound");
   const { member } = await mine(m.groupId, me.id);
-  if (m.id <= member.clearedId) fail(404, "Message not found");
+  if (m.id <= member.clearedId) fail(404, "messageNotFound");
   canPost(me);
-  if (m.deletedAt) fail(403, "You can't react to this message");
+  if (m.deletedAt) fail(403, "cantReactMessage");
   const reactions = await toggle("group", m.id, me.id, await checkReaction(me.id, emoji));
   for (const uid of await repo.memberIds(m.groupId)) {
     push(uid, { t: "dm-group-react", groupId: m.groupId, id: m.id, reactions });
