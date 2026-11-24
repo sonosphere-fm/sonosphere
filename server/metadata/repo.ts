@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { db, transact, transactRetry } from "../db/client";
-import { albums, albumTracks, artists, spotifyArtistPics, tracks } from "../db/schema";
+import { albums, albumTracks, artists, scrobbles, spotifyArtistPics, tracks } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx } from "../catalog/repo";
 import { offer } from "../images/gallery";
 import { first, norm, now } from "../util";
@@ -76,10 +76,10 @@ export const albumByMbid = (artistId: number, mbid: string) =>
       .limit(1)
   );
 
-const plainQuotes = (s: string) =>
-  norm(s)
-    .replace(/[‘’ʼ`´]/g, "'")
-    .replace(/[“”]/g, '"');
+/** "Song (Remix)", "Song - Remix" and "Song – Remix" are one track on the same album. */
+const played = sql<boolean>`EXISTS (SELECT 1 FROM ${scrobbles} WHERE ${scrobbles.trackId} = ${tracks.id})`;
+
+const titleKey = (s: string) => norm(s).replace(/[^\p{L}\p{N}]+/gu, "") || norm(s);
 
 /** Tracks already on the album that the published list doesn't have (a bonus track someone scrobbled) go after it. */
 export async function setTrackList(
@@ -94,17 +94,29 @@ export async function setTrackList(
         .set({ position })
         .where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, trackId)));
     const listed = await tx
-      .select({ id: tracks.id, title: tracks.title })
+      .select({
+        id: tracks.id,
+        title: tracks.title,
+        played,
+      })
       .from(albumTracks)
       .innerJoin(tracks, eq(tracks.id, albumTracks.trackId))
-      .where(eq(albumTracks.albumId, albumId));
-    const known = new Map(listed.map((t) => [plainQuotes(t.title), t.id]));
+      .where(eq(albumTracks.albumId, albumId))
+      .orderBy(desc(played), asc(albumTracks.position));
+    const known = new Map<string, number>();
+    for (const t of listed) if (!known.has(titleKey(t.title))) known.set(titleKey(t.title), t.id);
     const ids: number[] = [];
     for (const [i, t] of list.entries()) {
       const id =
-        known.get(plainQuotes(t.title)) ?? (await getOrCreateTrackTx(tx, artistId, t.title, t.seconds, albumId, i + 1));
+        known.get(titleKey(t.title)) ?? (await getOrCreateTrackTx(tx, artistId, t.title, t.seconds, albumId, i + 1));
       if (!ids.includes(id)) ids.push(id);
     }
+    const keys = new Set(list.map((t) => titleKey(t.title)));
+    const dupes = listed
+      .filter((t) => !t.played && !ids.includes(t.id) && keys.has(titleKey(t.title)))
+      .map((t) => t.id);
+    if (dupes.length)
+      await tx.delete(albumTracks).where(and(eq(albumTracks.albumId, albumId), inArray(albumTracks.trackId, dupes)));
     for (const [i, id] of ids.entries()) await place(id, i + 1);
     const rest = await tx
       .select({ id: albumTracks.trackId })
