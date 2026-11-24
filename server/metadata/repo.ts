@@ -76,10 +76,10 @@ export const albumByMbid = (artistId: number, mbid: string) =>
       .limit(1)
   );
 
-export async function trackListSize(albumId: number): Promise<number> {
-  const rows = await db.select({ id: albumTracks.trackId }).from(albumTracks).where(eq(albumTracks.albumId, albumId));
-  return rows.length;
-}
+const plainQuotes = (s: string) =>
+  norm(s)
+    .replace(/[‘’ʼ`´]/g, "'")
+    .replace(/[“”]/g, '"');
 
 /** Tracks already on the album that the published list doesn't have (a bonus track someone scrobbled) go after it. */
 export async function setTrackList(
@@ -93,9 +93,16 @@ export async function setTrackList(
         .update(albumTracks)
         .set({ position })
         .where(and(eq(albumTracks.albumId, albumId), eq(albumTracks.trackId, trackId)));
+    const listed = await tx
+      .select({ id: tracks.id, title: tracks.title })
+      .from(albumTracks)
+      .innerJoin(tracks, eq(tracks.id, albumTracks.trackId))
+      .where(eq(albumTracks.albumId, albumId));
+    const known = new Map(listed.map((t) => [plainQuotes(t.title), t.id]));
     const ids: number[] = [];
     for (const [i, t] of list.entries()) {
-      const id = await getOrCreateTrackTx(tx, artistId, t.title, t.seconds, albumId, i + 1);
+      const id =
+        known.get(plainQuotes(t.title)) ?? (await getOrCreateTrackTx(tx, artistId, t.title, t.seconds, albumId, i + 1));
       if (!ids.includes(id)) ids.push(id);
     }
     for (const [i, id] of ids.entries()) await place(id, i + 1);

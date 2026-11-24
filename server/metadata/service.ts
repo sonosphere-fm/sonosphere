@@ -232,7 +232,7 @@ async function fillAlbum(id: number, artist: string, hint?: src.MbAlbum | null):
   });
   const spotify = albumOnSpotify(id, al.spAt, artist, al.title);
   const lastfm = albumOnLastfm(id, al.lfAt, artist, al.title);
-  if ((await repo.trackListSize(id)) < 2) {
+  if (!al.tracklistLocked) {
     let list = mbid ? await src.mbTrackList(mbid) : [];
     if (!list.length) list = (await lastfm())?.tracks ?? [];
     if (!list.length) {
@@ -298,7 +298,7 @@ async function fileAlbum(
   const id = await repo.addAlbum(artistId, sp.title, sp.date);
   if (!(await repo.claim("album", id, now() - MONTH))) return id;
   const al = await repo.albumRow(id);
-  if (al && (await repo.trackListSize(id)) < 2) {
+  if (al && !al.tracklistLocked) {
     const list = await src.spTrackList(sp.id);
     if (list.length) await repo.setTrackList(id, artistId, list);
   }
