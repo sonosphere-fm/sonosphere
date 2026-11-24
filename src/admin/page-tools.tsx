@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Button } from "../kit";
 import { albumUrl, artistUrl, trackUrl } from "../lib";
 import { DetailsDialog, RenameDialog, TracklistDialog, type EditTarget } from "./catalogue";
@@ -9,7 +10,7 @@ import { t } from "./i18n";
 export { ready } from "./i18n";
 
 type Kind = "artist" | "album" | "track";
-type Props = { kind: Kind; item: EditTarget; onDone: () => void };
+export type AdminEdit = "details" | "rename";
 
 function pageUrl(kind: Kind, name: string, artist: string | null) {
   if (kind === "artist") return artistUrl(name);
@@ -17,11 +18,20 @@ function pageUrl(kind: Kind, name: string, artist: string | null) {
   return trackUrl(artist!, name);
 }
 
-export function AdminTools({ kind, item, onDone }: Props) {
-  const [open, setOpen] = useState<"details" | "rename" | null>(null);
-  const nav = useNavigate();
+export function AdminItems({ pick }: { pick: (edit: AdminEdit) => void }) {
   if (useRole() !== "admin") return null;
-  const close = () => setOpen(null);
+  return (
+    <>
+      <DropdownMenuItem label={t("admin.editDetails")} onClick={() => pick("details")} />
+      <DropdownMenuItem label={t("admin.rename")} onClick={() => pick("rename")} />
+    </>
+  );
+}
+
+type DialogProps = { kind: Kind; item: EditTarget; edit: AdminEdit; close: () => void; onDone: () => void };
+
+export function AdminDialog({ kind, item, edit, close, onDone }: DialogProps) {
+  const nav = useNavigate();
   const saved = () => {
     close();
     onDone();
@@ -30,21 +40,11 @@ export function AdminTools({ kind, item, onDone }: Props) {
     close();
     nav(pageUrl(kind, name, item.artist), { replace: true });
   };
-  return (
-    <>
-      <Button kind="btn ghost" type="button" onClick={() => setOpen("details")}>
-        {t("admin.editDetails")}
-      </Button>
-      <Button kind="btn ghost" type="button" onClick={() => setOpen("rename")}>
-        {t("admin.rename")}
-      </Button>
-      {open === "details" && <DetailsDialog kind={kind} item={item} close={close} done={saved} />}
-      {open === "rename" && <RenameDialog kind={kind} item={item} close={close} done={renamed} />}
-    </>
-  );
+  if (edit === "details") return <DetailsDialog kind={kind} item={item} close={close} done={saved} />;
+  return <RenameDialog kind={kind} item={item} close={close} done={renamed} />;
 }
 
-export function TracklistTool({ item, onDone }: Omit<Props, "kind">) {
+export function TracklistTool({ item, onDone }: { item: EditTarget; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   if (useRole() !== "admin") return null;
   const saved = () => {
