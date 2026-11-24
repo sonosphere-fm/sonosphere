@@ -1,0 +1,105 @@
+import type en from "../en/mail";
+import type { Translation } from "../core";
+
+export default {
+  pasteLink: "Или вставь это в браузер:",
+  manageEmails: "Выбери, какие письма получать",
+  manageEmailsLine: "Выбери, какие письма получать: {url}",
+  footer: "Ты получаешь это письмо, потому что у тебя есть аккаунт на {site}.",
+  quoted: "«{text}»",
+
+  verifySubject: "Подтверди почту для Sonosphere",
+  verifyHeading: "Привет, {username}! Подтверди почту",
+  verifyBody:
+    "Спасибо, что присоединился к Sonosphere. Подтверди, что это твой адрес, чтобы вернуть доступ к аккаунту, если забудешь пароль.",
+  verifyButton: "Подтвердить почту",
+  verifyNote:
+    "Ссылка работает 3 дня, новую можно запросить в настройках. Аккаунты, не подтверждённые за {days} дн., удаляются. Если ты не регистрировался, просто проигнорируй это письмо, и аккаунт будет удалён.",
+
+  welcomeSubject: "Добро пожаловать в Sonosphere",
+  welcomeHeading: "Добро пожаловать, {username}",
+  welcomeIntro: "Почта подтверждена, аккаунт готов. С чего можно начать:",
+  welcomeImport:
+    "Перенеси свои скробблы. Импортируй историю прослушиваний из Last.fm или из файла, и твой профиль, чарты и рекомендации заполнятся всем, что ты слушал.",
+  welcomeImportButton: "Импортировать скробблы",
+  welcomeConnect:
+    "Потом подключи плеер, чтобы каждая песня, которую ты слушаешь, скробблилась в твой профиль. Подойдут Spotify, плееры на компьютере и приложения для телефона.",
+  welcomeConnectButton: "Подключить плеер",
+  welcomeFollow: "Подписывайся на друзей и находи музыкальных двойников: людей с самым близким тебе вкусом.",
+  welcomeProfile: "Твой профиль: {url}",
+
+  resetSubject: "Сброс пароля Sonosphere",
+  resetHeading: "Сброс пароля",
+  resetBody: "Кто-то (надеемся, что ты) запросил сброс пароля для {username} на Sonosphere.",
+  resetButton: "Выбрать новый пароль",
+  resetNote:
+    "Ссылка работает один час и только один раз. Если ты этого не запрашивал, проигнорируй письмо: пароль останется прежним.",
+
+  changeSubject: "Подтверди новую почту для Sonosphere",
+  changeHeading: "Подтверди новую почту",
+  changeBody:
+    "{username} на Sonosphere хочет теперь использовать этот адрес. Подтверди его, чтобы применить изменение.",
+  changeButton: "Подтвердить новую почту",
+  changeNote:
+    "Ссылка работает 3 дня. Пока ею не воспользуются, у аккаунта остаётся старый адрес. Если это был не ты, проигнорируй письмо.",
+
+  approveSubject: "Одобри смену почты на Sonosphere",
+  approveHeading: "Одобри смену почты",
+  approveBody:
+    "{username} запросил смену почты на {email}. Сначала одобри её здесь, затем мы отправим ссылку для подтверждения на новый адрес.",
+  approveButton: "Одобрить смену почты",
+  approveNote: "Ссылка работает один час. Если ты не запрашивал эту смену, не одобряй её и смени пароль.",
+
+  emailChangedSubject: "Почта в Sonosphere изменена",
+  emailChangedHeading: "Твоя почта изменена",
+  emailChangedBody: "Почта для {username} на Sonosphere теперь {email}. Письма об аккаунте будут приходить туда.",
+  emailChangedWarning:
+    "Если ты этого не делал, возможно, твой пароль знает кто-то другой. Сбрось его на странице входа и сообщи команде сайта.",
+
+  passwordChangedSubject: "Пароль в Sonosphere изменён",
+  passwordChangedHeading: "Твой пароль изменён",
+  passwordChangedBody:
+    "Пароль для {username} на Sonosphere только что изменили, и все остальные устройства вышли из аккаунта.",
+  passwordSetSubject: "Ты задал пароль на Sonosphere",
+  passwordSetHeading: "Ты задал пароль",
+  passwordSetBody:
+    "У {username} на Sonosphere теперь есть пароль. С ним можно входить и использовать его в приложениях-скробблерах, которые его просят. Вход через другие сайты тоже работает.",
+  notYouReset: "Если это был не ты, сразу сбрось пароль на странице входа.",
+  resetPasswordButton: "Сбросить пароль",
+
+  digestSubjectDaily: "Твой день на Sonosphere: новое ({count})",
+  digestSubjectWeekly: "Твоя неделя на Sonosphere: новое ({count})",
+  digestHeading: "Привет, {username}! Вот что ты пропустил",
+  digestMore: "И ещё {count} во входящих.",
+  digestMessages: {
+    one: "{count} новое сообщение от {people}",
+    few: "{count} новых сообщения от {people}",
+    many: "{count} новых сообщений от {people}",
+    other: "{count} нового сообщения от {people}",
+  },
+  digestPeople: {
+    one: "{count} человека",
+    few: "{count} человек",
+    many: "{count} человек",
+    other: "{count} человека",
+  },
+  openInbox: "Открыть входящие",
+
+  followed: "{who} подписывается на тебя",
+  followedBySomeone: "Кто-то подписался на тебя",
+  seeProfile: "Посмотреть профиль",
+  wallReply: "{who} отвечает на твою запись на стене",
+  wallReplyBySomeone: "Кто-то ответил на твою запись на стене",
+  wallPost: "{who} пишет на твоей стене",
+  wallPostBySomeone: "Кто-то написал на твоей стене",
+  seeWall: "Посмотреть стену",
+  commented: "{who} комментирует «{title}»",
+  commentedBySomeone: "Кто-то прокомментировал «{title}»",
+  commentedOnJournal: "{who} комментирует «твою запись в журнале»",
+  commentedOnJournalBySomeone: "Кто-то прокомментировал «твою запись в журнале»",
+  seeComment: "Посмотреть комментарий",
+  messageRequest: "{from} отправляет тебе запрос на переписку",
+  seeRequest: "Посмотреть запрос",
+  messageSent: "{from} пишет тебе",
+  readIt: "Прочитать",
+} satisfies Translation<typeof en>;

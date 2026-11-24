@@ -5,6 +5,17 @@ import ES from "country-flag-icons/react/3x2/ES";
 import DE from "country-flag-icons/react/3x2/DE";
 import RO from "country-flag-icons/react/3x2/RO";
 import LV from "country-flag-icons/react/3x2/LV";
+import FR from "country-flag-icons/react/3x2/FR";
+import JP from "country-flag-icons/react/3x2/JP";
+import KR from "country-flag-icons/react/3x2/KR";
+import BR from "country-flag-icons/react/3x2/BR";
+import PL from "country-flag-icons/react/3x2/PL";
+import RU from "country-flag-icons/react/3x2/RU";
+import IT from "country-flag-icons/react/3x2/IT";
+import TR from "country-flag-icons/react/3x2/TR";
+import SE from "country-flag-icons/react/3x2/SE";
+import CN from "country-flag-icons/react/3x2/CN";
+import TW from "country-flag-icons/react/3x2/TW";
 import { Globe } from "@phosphor-icons/react";
 import { api, useAuth } from "../lib";
 import { Select } from "../kit";
@@ -14,7 +25,24 @@ import { useAction } from "./base";
 import type { ProfileSaved } from "../../shared/account";
 
 const AUTO = "auto";
-const FLAGS: Record<Locale, ComponentType<{ className?: string }>> = { en: US, es: ES, de: DE, ro: RO, lv: LV };
+const FLAGS: Record<Locale, ComponentType<{ className?: string }>> = {
+  en: US,
+  es: ES,
+  de: DE,
+  ro: RO,
+  lv: LV,
+  fr: FR,
+  ja: JP,
+  ko: KR,
+  pt: BR,
+  pl: PL,
+  ru: RU,
+  it: IT,
+  tr: TR,
+  sv: SE,
+  "zh-Hans": CN,
+  "zh-Hant": TW,
+};
 
 function LanguageIcon({ value }: { value: string }) {
   if (!isLocale(value)) return <Globe size={18} weight="bold" className="language-icon" aria-hidden />;
