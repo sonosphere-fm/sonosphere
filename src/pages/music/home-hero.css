@@ -32,11 +32,13 @@
 }
 .banner h1 {
   margin: 0 0 14px;
+  color: var(--hero-ink);
   font: 700 56px / 1.15 var(--display, "Radio Canada Variable", Arial, sans-serif);
   letter-spacing: -0.035em;
 }
 .banner-copy > p {
   margin: 0;
+  color: var(--hero-ink);
   max-width: 560px;
   font-size: 20px;
   line-height: 1.5;
