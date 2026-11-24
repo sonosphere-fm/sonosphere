@@ -53,15 +53,23 @@ export async function importLastfm(
     const q = new URLSearchParams({ method, user, format: "json", page: String(page), limit: String(limit) });
     if (kind === "scrobbles") q.set("to", String(to));
     q.set("api_key", API_KEYS[key]!);
+    const request = new AbortController();
+    const abort = () => request.abort();
+    const timer = setTimeout(abort, 20_000);
+    signal.addEventListener("abort", abort);
     const response = await fetch(`https://ws.audioscrobbler.com/2.0/?${q}`, {
       credentials: "omit",
       referrerPolicy: "no-referrer",
-      signal: AbortSignal.any([signal, AbortSignal.timeout(20_000)]),
+      signal: request.signal,
     }).catch(() => {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", abort);
       signal.throwIfAborted();
       throw new Error(t("player.lastfmUnreachable"));
     });
     const body = (await response.json().catch(() => null)) as Reply | null;
+    clearTimeout(timer);
+    signal.removeEventListener("abort", abort);
     const error = Number(body?.error);
     if (response.status === 429 || error === 29) throw new Error(t("player.lastfmRateLimited"));
     // Rotate only for an invalid credential, never to get around a rate limit.
