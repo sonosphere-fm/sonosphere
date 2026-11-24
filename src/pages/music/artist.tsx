@@ -1,5 +1,5 @@
 import { Ico, Spinner } from "../../icons";
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { t } from "../../i18n";
 import { Select } from "../../kit";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -28,7 +28,8 @@ import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger, TagChips } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton, StationButton } from "../../player";
-import { UploadImage, RemoveScrobbles } from "./shared";
+import { UploadImage, RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
+import type { AdminEdit } from "../../admin/page-tools";
 import type {
   ArtistAlbums as ArtistAlbumsData,
   ArtistListeners as ArtistListenersData,
@@ -49,10 +50,6 @@ import {
   TrendingBand,
   SIDE_LINKS,
 } from "./entity";
-
-const AdminTools = lazy(() =>
-  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.AdminTools }))
-);
 
 type ArtistTab = "overview" | "tracks" | "albums" | "similar" | "wiki" | "listeners" | "shoutbox";
 
@@ -184,6 +181,7 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
   const base = artistUrl(name);
   const q = useApi<ArtistData>(`/artist${qs({ name })}`);
   const { me } = useAuth();
+  const [adminEdit, setAdminEdit] = useState<AdminEdit | null>(null);
   useTitle(artistTitle(name, tab));
   return (
     <Async q={q}>
@@ -211,12 +209,8 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
                   {me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}
                   <MoreMenu label={t("music.moreActionsFor", { name: a.name })} link={shortMusicUrl("a", a.id)}>
                     {me && <RemoveScrobbles scope="artist" id={a.id} name={a.name} count={a.userPlaycount} />}
+                    {me?.admin && <AdminItems pick={setAdminEdit} />}
                   </MoreMenu>
-                  {me?.admin && (
-                    <Suspense fallback={null}>
-                      <AdminTools kind="artist" item={{ id: a.id, name: a.name, artist: null }} onDone={q.reload} />
-                    </Suspense>
-                  )}
                 </>
               }
               stats={
@@ -227,6 +221,15 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
               }
               cards={tab === "overview" && (a.latestAlbum || top) ? <HeroCards a={a} top={top} /> : null}
             />
+            {adminEdit && (
+              <AdminDialog
+                kind="artist"
+                item={{ id: a.id, name: a.name, artist: null }}
+                edit={adminEdit}
+                close={() => setAdminEdit(null)}
+                onDone={q.reload}
+              />
+            )}
             <div className="wrap page mpage">
               <Pane>
                 {tab === "overview" && <Overview a={a} base={base} />}

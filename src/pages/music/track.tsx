@@ -1,7 +1,7 @@
 import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../../icons";
 import { Lyrics } from "../../ui/lyrics";
-import { lazy, useState, type FormEvent, Suspense } from "react";
+import { useState, type FormEvent, Suspense } from "react";
 import { t } from "../../i18n";
 import { Button, Input, Modal } from "../../kit";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -28,7 +28,8 @@ import { MoreMenu } from "../../ui/more-menu";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
-import { RemoveScrobbles } from "./shared";
+import { RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
+import type { AdminEdit } from "../../admin/page-tools";
 import type { TrackPage as TrackData } from "../../../shared/catalog";
 import type { ScrobbleResponse } from "../../../shared/listening";
 import type { ObsessionCreated } from "../../../shared/obsessions";
@@ -44,10 +45,6 @@ import {
   Listeners,
   TrendingBand,
 } from "./entity";
-
-const AdminTools = lazy(() =>
-  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.AdminTools }))
-);
 
 type ModalProps = { track: Pick<TrackData, "id" | "title">; onClose: () => void };
 
@@ -149,6 +146,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
   const q = useApi<TrackData>(`/track${qs({ artist, track })}`);
   const { me } = useAuth();
   const [modal, setModal] = useState<"playlist" | "obsession" | "links" | null>(null);
+  const [adminEdit, setAdminEdit] = useState<AdminEdit | null>(null);
   const act = useAction();
   useTitle(releaseTitle(track, artist, tab === "wiki"));
 
@@ -213,21 +211,22 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                     />
                   )}
                   {me && <RemoveScrobbles scope="track" id={item.id} name={item.title} count={item.userPlaycount} />}
+                  {me?.admin && <AdminItems pick={setAdminEdit} />}
                 </MoreMenu>
-                {me?.admin && (
-                  <Suspense fallback={null}>
-                    <AdminTools
-                      kind="track"
-                      item={{ id: item.id, name: item.title, artist: item.artist }}
-                      onDone={q.reload}
-                    />
-                  </Suspense>
-                )}
               </>
             }
           >
             {act.note}
           </MusicHero>
+          {adminEdit && (
+            <AdminDialog
+              kind="track"
+              item={{ id: item.id, name: item.title, artist: item.artist }}
+              edit={adminEdit}
+              close={() => setAdminEdit(null)}
+              onDone={q.reload}
+            />
+          )}
           {modal === "playlist" && (
             <Suspense fallback={null}>
               <AddToPlaylist track={item} onClose={() => setModal(null)} />

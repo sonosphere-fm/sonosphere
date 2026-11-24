@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent, type ReactNode } from "react";
+import { lazy, Suspense, useRef, type ChangeEvent, type ComponentProps, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { t, tx } from "../../i18n";
@@ -180,5 +180,25 @@ export function ImportPrompt() {
         </Button>
       </div>
     </div>
+  );
+}
+
+const adminTools = () => import("../../admin/page-tools").then(async (m) => (await m.ready, m));
+const LazyAdminItems = lazy(() => adminTools().then((m) => ({ default: m.AdminItems })));
+const LazyAdminDialog = lazy(() => adminTools().then((m) => ({ default: m.AdminDialog })));
+
+export function AdminItems(props: ComponentProps<typeof LazyAdminItems>) {
+  return (
+    <Suspense fallback={null}>
+      <LazyAdminItems {...props} />
+    </Suspense>
+  );
+}
+
+export function AdminDialog(props: ComponentProps<typeof LazyAdminDialog>) {
+  return (
+    <Suspense fallback={null}>
+      <LazyAdminDialog {...props} />
+    </Suspense>
   );
 }

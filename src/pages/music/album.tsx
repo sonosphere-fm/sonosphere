@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { t } from "../../i18n";
 import { albumUrl, artistUrl, dec, dur, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
@@ -10,7 +10,8 @@ import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
-import { UploadImage, RemoveScrobbles } from "./shared";
+import { UploadImage, RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
+import type { AdminEdit } from "../../admin/page-tools";
 import type { AlbumPage as AlbumData } from "../../../shared/catalog";
 import {
   MusicHero,
@@ -25,9 +26,6 @@ import {
   SIDE_LINKS,
 } from "./entity";
 
-const AdminTools = lazy(() =>
-  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.AdminTools }))
-);
 const TracklistTool = lazy(() =>
   import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.TracklistTool }))
 );
@@ -51,6 +49,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
   const base = albumUrl(artist, album);
   const q = useApi<AlbumData>(`/album${qs({ artist, album })}`);
   const { me } = useAuth();
+  const [adminEdit, setAdminEdit] = useState<AdminEdit | null>(null);
   useTitle(releaseTitle(album, artist, tab === "wiki"));
   return (
     <Async q={q}>
@@ -75,12 +74,8 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
                 {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
                 <MoreMenu label={t("music.moreActionsFor", { name: a.title })} link={shortMusicUrl("r", a.id)}>
                   {me && <RemoveScrobbles scope="album" id={a.id} name={a.title} count={a.userPlaycount} />}
+                  {me?.admin && <AdminItems pick={setAdminEdit} />}
                 </MoreMenu>
-                {me?.admin && (
-                  <Suspense fallback={null}>
-                    <AdminTools kind="album" item={{ id: a.id, name: a.title, artist: a.artist }} onDone={q.reload} />
-                  </Suspense>
-                )}
               </>
             }
             stats={
@@ -90,6 +85,15 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
               </>
             }
           />
+          {adminEdit && (
+            <AdminDialog
+              kind="album"
+              item={{ id: a.id, name: a.title, artist: a.artist }}
+              edit={adminEdit}
+              close={() => setAdminEdit(null)}
+              onDone={q.reload}
+            />
+          )}
           <div className="wrap page mpage">
             <Pane>
               {tab === "wiki" ? (
