@@ -352,5 +352,5 @@ export function seoContent(page: Page): string {
     ["/events", "Concerts and events"],
     ["/developers", "Developer API"],
   ];
-  return `<main class="wrap"><h1>${escape(page.title)}</h1><p>${escape(page.description)}</p><nav aria-label="Explore Sonosphere">${links.map(([path, name]) => `<p><a href="${path}">${name}</a></p>`).join("")}</nav></main>`;
+  return `<main class="seo-content"><h1>${escape(page.title)}</h1><p>${escape(page.description)}</p><nav aria-label="Explore Sonosphere">${links.map(([path, name]) => `<p><a href="${path}">${name}</a></p>`).join("")}</nav></main>`;
 }

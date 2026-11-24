@@ -1,6 +1,40 @@
-export const LOCALES = ["en", "es", "de", "ro", "lv"] as const;
+export const LOCALES = [
+  "en",
+  "es",
+  "de",
+  "ro",
+  "lv",
+  "fr",
+  "ja",
+  "ko",
+  "pt",
+  "pl",
+  "ru",
+  "it",
+  "tr",
+  "sv",
+  "zh-Hans",
+  "zh-Hant",
+] as const;
 export type Locale = (typeof LOCALES)[number];
-export const LOCALE_NAMES: Record<Locale, string> = { en: "English", es: "Español", de: "Deutsch", ro: "Română", lv: "Latviešu" };
+export const LOCALE_NAMES: Record<Locale, string> = {
+  en: "English",
+  es: "Español",
+  de: "Deutsch",
+  ro: "Română",
+  lv: "Latviešu",
+  fr: "Français",
+  ja: "日本語",
+  ko: "한국어",
+  pt: "Português (Brasil)",
+  pl: "Polski",
+  ru: "Русский",
+  it: "Italiano",
+  tr: "Türkçe",
+  sv: "Svenska",
+  "zh-Hans": "简体中文",
+  "zh-Hant": "繁體中文",
+};
 export const isLocale = (v: unknown): v is Locale => LOCALES.includes(v as Locale);
 
 export type Plural = Partial<Record<Intl.LDMLPluralRule, string>> & { other: string };
@@ -13,9 +47,16 @@ export type Translation<T> = { [K in keyof T]: T[K] extends string ? string : Pl
 export type Catalog<D> = { [N in keyof D]: Translation<D[N]> };
 export type Key<D> = { [N in keyof D & string]: `${N}.${keyof D[N] & string}` }[keyof D & string];
 
+/** Chinese is told apart by script, which older browsers only imply through the region. */
+function baseLocale(tag: string) {
+  const t = tag.trim().toLowerCase();
+  if (/^zh(?![a-z])/.test(t)) return /^zh[-_](hant|tw|hk|mo)(?![a-z])/.test(t) ? "zh-Hant" : "zh-Hans";
+  return t.split(/[-_;]/)[0];
+}
+
 export function matchLocale(wanted: readonly string[]): Locale {
   for (const tag of wanted) {
-    const base = tag.trim().toLowerCase().split(/[-_;]/)[0];
+    const base = baseLocale(tag);
     if (isLocale(base)) return base;
   }
   return "en";

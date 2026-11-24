@@ -67,6 +67,17 @@ const main = translator(en, {
   de: () => import("../shared/i18n/de/index"),
   ro: () => import("../shared/i18n/ro/index"),
   lv: () => import("../shared/i18n/lv/index"),
+  fr: () => import("../shared/i18n/fr/index"),
+  ja: () => import("../shared/i18n/ja/index"),
+  ko: () => import("../shared/i18n/ko/index"),
+  pt: () => import("../shared/i18n/pt/index"),
+  pl: () => import("../shared/i18n/pl/index"),
+  ru: () => import("../shared/i18n/ru/index"),
+  it: () => import("../shared/i18n/it/index"),
+  tr: () => import("../shared/i18n/tr/index"),
+  sv: () => import("../shared/i18n/sv/index"),
+  "zh-Hans": () => import("../shared/i18n/zh-Hans/index"),
+  "zh-Hant": () => import("../shared/i18n/zh-Hant/index"),
 });
 export const { t, tx } = main;
 export type MessageKey = Key<typeof en>;

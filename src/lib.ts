@@ -214,7 +214,6 @@ export async function copyText(text: string): Promise<boolean> {
 export const num = (n: number | undefined | null) => (n ?? 0).toLocaleString(locale());
 export const short = (n: number | undefined | null) =>
   new Intl.NumberFormat(locale(), { notation: "compact", maximumFractionDigits: 1 }).format(n ?? 0);
-export const plural = (n: number, word: string) => `${num(n)} ${word}${n === 1 ? "" : "s"}`;
 export const dur = (sec: number) => {
   if (sec <= 0) return "";
   return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
