@@ -7877,6 +7877,44 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 
 /* ---------- Settings ---------- */
+.profile-link-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 11rem) minmax(0, 1fr) auto;
+  grid-template-areas: "grip icon label url remove";
+  align-items: center;
+  gap: 8px;
+}
+.profile-link-row.is-grabbed {
+  opacity: 0.5;
+}
+.profile-link-grip {
+  grid-area: grip;
+  display: grid;
+  place-items: center;
+  padding: 6px 2px;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+}
+.profile-link-grip:active {
+  cursor: grabbing;
+}
+.profile-link-label {
+  grid-area: label;
+}
+.profile-link-url {
+  grid-area: url;
+}
+@media (max-width: 560px) {
+  .profile-link-row {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "grip icon label remove"
+      ". . url .";
+  }
+}
 .cos-catalog {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
