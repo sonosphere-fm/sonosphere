@@ -1,5 +1,5 @@
 const STALE_BUILD =
-  /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk .+ failed/i;
+  /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|Loading chunk .+ failed/i;
 const RELOAD_KEY = "stale-build-reload";
 const state = globalThis as typeof globalThis & { __spinAssetReload?: boolean };
 
