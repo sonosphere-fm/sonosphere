@@ -95,6 +95,7 @@ export default {
     "{name} ਤੁਹਾਨੂੰ ਫ਼ੌਲੋ ਨਹੀਂ ਕਰਦੇ, ਇਸ ਲਈ ਤੁਹਾਡਾ ਸੁਨੇਹਾ ਬੇਨਤੀ ਵਜੋਂ ਪਹੁੰਚੇਗਾ। ਉਨ੍ਹਾਂ ਦੇ ਜਵਾਬ ਦੇਣ ਤੱਕ ਤੁਸੀਂ ਲਿੰਕਾਂ ਤੋਂ ਬਿਨਾਂ 3 ਸੁਨੇਹੇ ਤੱਕ ਭੇਜ ਸਕਦੇ ਹੋ।",
   sayHello: "{name} ਨੂੰ ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਹੋ।",
   someone: "ਕੋਈ",
+  hudInGroup: "{group} ਵਿੱਚ {name}",
   notifyComment: "{actor} ਨੇ {title} 'ਤੇ ਟਿੱਪਣੀ ਕੀਤੀ",
   notifyCommentReply: "{actor} ਨੇ {title} 'ਤੇ ਤੁਹਾਡੀ ਟਿੱਪਣੀ ਦਾ ਜਵਾਬ ਦਿੱਤਾ",
   notifyFollow: "{actor} ਨੇ ਤੁਹਾਨੂੰ ਫ਼ੌਲੋ ਕਰਨਾ ਸ਼ੁਰੂ ਕੀਤਾ।",

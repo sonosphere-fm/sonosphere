@@ -473,45 +473,58 @@ function NotificationSettings() {
     save({ emailMuted });
   };
   return (
-    <Section title={t("settings.emailNotifications")}>
-      <div className="form">
-        {!me!.emailVerified && (
-          <p className="muted small">
-            {tx("settings.emailUnconfirmed", {
-              email: me!.email,
-              account: <Link to="/settings/account">{t("settings.tabAccount")}</Link>,
-            })}
-          </p>
-        )}
-        <label>
-          {t("settings.sendMeEmails")}
-          <Select
-            label={t("settings.emailFrequency")}
-            value={me!.emailNotify}
-            onChange={(v) => save({ emailNotify: v })}
-            options={EMAIL_MODES.map(([v]) => [v, t(EMAIL_MODE_LABELS[v])])}
-          />
-        </label>
-        {me!.emailNotify !== "instant" && !off && (
-          <p className="muted small">
-            {me!.emailNotify === "daily" ? t("settings.digestDaily") : t("settings.digestWeekly")}
-          </p>
-        )}
-        <p className="field-label">{t("settings.emailMeWhen")}</p>
-        {EMAIL_KINDS.map(([k]) => (
-          <label key={k} className="check">
-            <Input
-              type="checkbox"
-              checked={!off && !muted.has(k)}
-              disabled={off}
-              onChange={(e) => toggle(k, e.target.checked)}
-            />{" "}
-            {t(EMAIL_KIND_LABELS[k])}
+    <>
+      <Section title={t("settings.onScreenAlerts")}>
+        <div className="form">
+          <CheckOption
+            title={t("settings.notifyPopups")}
+            checked={me!.notifyPopups}
+            onChange={(notifyPopups) => save({ notifyPopups })}
+          >
+            {t("settings.notifyPopupsHint")}
+          </CheckOption>
+        </div>
+      </Section>
+      <Section title={t("settings.emailNotifications")}>
+        <div className="form">
+          {!me!.emailVerified && (
+            <p className="muted small">
+              {tx("settings.emailUnconfirmed", {
+                email: me!.email,
+                account: <Link to="/settings/account">{t("settings.tabAccount")}</Link>,
+              })}
+            </p>
+          )}
+          <label>
+            {t("settings.sendMeEmails")}
+            <Select
+              label={t("settings.emailFrequency")}
+              value={me!.emailNotify}
+              onChange={(v) => save({ emailNotify: v })}
+              options={EMAIL_MODES.map(([v]) => [v, t(EMAIL_MODE_LABELS[v])])}
+            />
           </label>
-        ))}
-        {act.note}
-      </div>
-    </Section>
+          {me!.emailNotify !== "instant" && !off && (
+            <p className="muted small">
+              {me!.emailNotify === "daily" ? t("settings.digestDaily") : t("settings.digestWeekly")}
+            </p>
+          )}
+          <p className="field-label">{t("settings.emailMeWhen")}</p>
+          {EMAIL_KINDS.map(([k]) => (
+            <label key={k} className="check">
+              <Input
+                type="checkbox"
+                checked={!off && !muted.has(k)}
+                disabled={off}
+                onChange={(e) => toggle(k, e.target.checked)}
+              />{" "}
+              {t(EMAIL_KIND_LABELS[k])}
+            </label>
+          ))}
+          {act.note}
+        </div>
+      </Section>
+    </>
   );
 }
 

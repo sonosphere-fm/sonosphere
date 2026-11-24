@@ -96,6 +96,7 @@ export default {
     "{name} não te segue, então sua mensagem vai chegar como solicitação. Você pode enviar até 3 mensagens, sem links, até a pessoa responder.",
   sayHello: "Diga oi para {name}.",
   someone: "Alguém",
+  hudInGroup: "{name} em {group}",
   notifyComment: "{actor} comentou em {title}",
   notifyCommentReply: "{actor} respondeu ao seu comentário em {title}",
   notifyFollow: "{actor} começou a te seguir.",

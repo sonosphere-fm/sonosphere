@@ -98,6 +98,7 @@ export default {
     "{name} tidak mengikutimu, jadi pesanmu akan tiba sebagai permintaan. Kamu dapat mengirim hingga 3 pesan, tanpa tautan, sampai mereka membalas.",
   sayHello: "Sapa {name}.",
   someone: "Seseorang",
+  hudInGroup: "{name} di {group}",
   notifyComment: "{actor} berkomentar di {title}",
   notifyCommentReply: "{actor} membalas komentarmu di {title}",
   notifyFollow: "{actor} mulai mengikutimu.",

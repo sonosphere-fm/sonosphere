@@ -93,6 +93,7 @@ export default {
     "{name} તમને ફૉલો કરતા નથી, તેથી તમારો સંદેશ વિનંતી તરીકે પહોંચશે. તેઓ જવાબ ન આપે ત્યાં સુધી તમે લિંક વગર 3 સંદેશા સુધી મોકલી શકો છો.",
   sayHello: "{name} ને હેલો કહો.",
   someone: "કોઈક",
+  hudInGroup: "{group}માં {name}",
   notifyComment: "{actor} એ {title} પર ટિપ્પણી કરી",
   notifyCommentReply: "{actor} એ {title} પરની તમારી ટિપ્પણીનો જવાબ આપ્યો",
   notifyFollow: "{actor} એ તમને ફૉલો કરવાનું શરૂ કર્યું.",

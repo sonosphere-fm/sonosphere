@@ -97,6 +97,7 @@ export default {
     "{name} آپ کو فالو نہیں کرتے، اس لیے آپ کا پیغام درخواست کے طور پر پہنچے گا۔ ان کے جواب دینے تک آپ لنکس کے بغیر زیادہ سے زیادہ 3 پیغامات بھیج سکتے ہیں۔",
   sayHello: "{name} کو ہیلو کہیں۔",
   someone: "کوئی",
+  hudInGroup: "{group} میں {name}",
   notifyComment: "{actor} نے {title} پر تبصرہ کیا",
   notifyCommentReply: "{actor} نے {title} پر آپ کے تبصرے کا جواب دیا",
   notifyFollow: "{actor} نے آپ کو فالو کرنا شروع کیا۔",

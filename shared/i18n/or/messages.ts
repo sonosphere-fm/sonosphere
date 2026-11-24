@@ -93,6 +93,7 @@ export default {
     "{name} ଆପଣଙ୍କୁ ଫଲୋ କରନ୍ତି ନାହିଁ, ତେଣୁ ଆପଣଙ୍କ ବାର୍ତ୍ତା ଏକ ଅନୁରୋଧ ଭାବେ ପହଞ୍ଚିବ। ସେମାନେ ଉତ୍ତର ନ ଦେବା ପର୍ଯ୍ୟନ୍ତ ଆପଣ ଲିଙ୍କ୍ ବିନା ସର୍ବାଧିକ 3ଟି ବାର୍ତ୍ତା ପଠାଇପାରିବେ।",
   sayHello: "{name}ଙ୍କୁ ନମସ୍କାର କୁହନ୍ତୁ।",
   someone: "କେହି ଜଣେ",
+  hudInGroup: "{group}ରେ {name}",
   notifyComment: "{actor} {title}ରେ ମନ୍ତବ୍ୟ କଲେ",
   notifyCommentReply: "{actor} {title}ରେ ଆପଣଙ୍କ ମନ୍ତବ୍ୟର ଉତ୍ତର ଦେଲେ",
   notifyFollow: "{actor} ଆପଣଙ୍କୁ ଫଲୋ କରିବା ଆରମ୍ଭ କଲେ।",

@@ -97,6 +97,7 @@ export default {
     "{name} följer inte dig, så ditt meddelande kommer fram som en förfrågan. Du kan skicka upp till 3 meddelanden, utan länkar, tills hen svarar.",
   sayHello: "Säg hej till {name}.",
   someone: "Någon",
+  hudInGroup: "{name} i {group}",
   notifyComment: "{actor} kommenterade {title}",
   notifyCommentReply: "{actor} svarade på din kommentar på {title}",
   notifyFollow: "{actor} började följa dig.",

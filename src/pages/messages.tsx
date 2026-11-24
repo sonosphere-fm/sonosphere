@@ -48,6 +48,7 @@ import {
   place,
   placeGroup,
   applyDmEvent,
+  groupName,
 } from "../dm";
 
 const clock = (at: number) => new Date(at * 1000).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
@@ -62,12 +63,6 @@ function dayLabel(at: number) {
 }
 
 const setBlocked = (username: string, block: boolean) => api<BlockResult>("/block", { body: { username, block } });
-
-function groupName(g: DmGroup, myId: number) {
-  if (g.title) return g.title;
-  const others = g.members.filter((m) => m.id !== myId).map((m) => m.username);
-  return others.length ? others.join(", ") : t("messages.justYou");
-}
 
 type View = "inbox" | "requests" | "thread" | "new" | "group" | "new-group";
 type Row = { kind: "thread"; at: number; t: Thread } | { kind: "group"; at: number; g: DmGroup };

@@ -88,6 +88,7 @@ export default {
     "{name} 沒有追蹤你，所以你的訊息會以請求的形式送達。在對方回覆之前，你最多可以傳送 3 則不含連結的訊息。",
   sayHello: "和 {name} 打個招呼吧。",
   someone: "某人",
+  hudInGroup: "{group} 中的 {name}",
   notifyComment: "{actor} 回應了{title}",
   notifyCommentReply: "{actor} 回覆了你在{title}上的回應",
   notifyFollow: "{actor} 追蹤了你。",

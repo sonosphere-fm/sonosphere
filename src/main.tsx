@@ -16,6 +16,7 @@ import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, usePageTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
 import { LanguageMenu } from "./ui/language-picker";
+import { Hud } from "./ui/hud";
 import { loadLocale, t } from "./i18n";
 import { Button, RouteLink } from "./kit";
 import "./sentry";
@@ -828,6 +829,11 @@ function App() {
       refresh();
       return;
     }
+    if (e.t === "notification") {
+      const unread = e.unread;
+      setMeRaw((m) => m && { ...m, unread });
+      return;
+    }
     applyDmEvent(e);
     if ("counts" in e) {
       const counts = e.counts;
@@ -867,6 +873,7 @@ function App() {
                 <Routed />
               </main>
               <Footer />
+              <Hud />
             </PlayerProvider>
           </BrowserRouter>
         </AuthContext.Provider>

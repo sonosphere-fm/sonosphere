@@ -88,6 +88,7 @@ export default {
     "{name} 没有关注你，所以你的消息会以请求的形式送达。在对方回复之前，你最多可以发送 3 条不含链接的消息。",
   sayHello: "和 {name} 打个招呼吧。",
   someone: "某人",
+  hudInGroup: "{group} 中的 {name}",
   notifyComment: "{actor} 评论了{title}",
   notifyCommentReply: "{actor} 回复了你在{title}上的评论",
   notifyFollow: "{actor} 关注了你。",

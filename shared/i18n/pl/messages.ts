@@ -108,6 +108,7 @@ export default {
     "{name} Cię nie obserwuje, więc Twoja wiadomość trafi jako prośba. Do czasu odpowiedzi możesz wysłać maksymalnie 3 wiadomości, bez linków.",
   sayHello: "Przywitaj się z {name}.",
   someone: "Ktoś",
+  hudInGroup: "{name} w {group}",
   notifyComment: "Nowy komentarz od {actor} pod {title}",
   notifyCommentReply: "Odpowiedź od {actor} na Twój komentarz pod {title}",
   notifyFollow: "{actor} obserwuje Cię od teraz.",

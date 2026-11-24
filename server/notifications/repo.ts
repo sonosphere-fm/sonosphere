@@ -3,7 +3,10 @@ import { db } from "../db/client";
 import { blocks, notifications, users } from "../db/schema";
 import { first, now } from "../util";
 import { mailNotice } from "./email";
-import { appearanceCols } from "../users/appearance";
+import { appearanceCols, userAppearance } from "../users/appearance";
+import { unreadCount } from "../auth/repo";
+import { push } from "../realtime";
+import type { Notification, NotificationEvent } from "../../shared/notifications";
 import type { UserAppearance } from "../../shared/username-fonts";
 
 export async function notify(userId: number, type: string, actorId: number, data: object = {}): Promise<void> {
@@ -16,7 +19,19 @@ export async function notify(userId: number, type: string, actorId: number, data
       .limit(1)
   );
   if (blocked) return;
-  await db.insert(notifications).values({ userId, type, actorId, data: JSON.stringify(data), createdAt: now() });
+  const [row] = await db
+    .insert(notifications)
+    .values({ userId, type, actorId, data: JSON.stringify(data), createdAt: now() })
+    .returning({ id: notifications.id });
+  const [added] = await rows().where(eq(notifications.id, row!.id));
+  if (added) {
+    const event: NotificationEvent = {
+      t: "notification",
+      notification: shape(added),
+      unread: await unreadCount(userId),
+    };
+    push(userId, event);
+  }
   await mailNotice(userId, type, actorId, data as Record<string, unknown>);
 }
 
@@ -30,7 +45,7 @@ type NotificationRow = Omit<UserAppearance, "usernameFont"> & { usernameFont: st
   image: string | null;
 };
 
-export const latestFor = (userId: number, limit = 100): Promise<NotificationRow[]> =>
+const rows = () =>
   db
     .select({
       id: notifications.id,
@@ -44,9 +59,24 @@ export const latestFor = (userId: number, limit = 100): Promise<NotificationRow[
     })
     .from(notifications)
     .leftJoin(users, eq(users.id, notifications.actorId))
-    .where(eq(notifications.userId, userId))
-    .orderBy(desc(notifications.createdAt))
-    .limit(limit);
+    .$dynamic();
+
+export const latestFor = (userId: number, limit = 100): Promise<NotificationRow[]> =>
+  rows().where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(limit);
+
+function details(json: string): Record<string, unknown> {
+  const v: unknown = JSON.parse(json);
+  return typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
+}
+
+export const shape = (n: NotificationRow): Notification => ({
+  id: n.id,
+  type: n.type,
+  data: details(n.data),
+  read: n.read,
+  createdAt: n.createdAt,
+  actor: { ...userAppearance(n), username: n.username, image: n.image },
+});
 
 export async function markAllRead(userId: number): Promise<void> {
   await db.update(notifications).set({ read: true }).where(eq(notifications.userId, userId));

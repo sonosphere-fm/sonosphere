@@ -109,6 +109,7 @@ export default {
     "{name} не подписан(а) на тебя, поэтому твоё сообщение придёт как запрос. До ответа можно отправить не больше 3 сообщений без ссылок.",
   sayHello: "Поздоровайся с {name}.",
   someone: "Кто-то",
+  hudInGroup: "{name} в {group}",
   notifyComment: "{actor} прокомментировал(а) {title}",
   notifyCommentReply: "{actor} ответил(а) на твой комментарий к {title}",
   notifyFollow: "{actor} подписался(-ась) на тебя.",

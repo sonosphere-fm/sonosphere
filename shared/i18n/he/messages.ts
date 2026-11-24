@@ -92,6 +92,7 @@ export default {
   requestIntro: "{name} לא עוקב אחריך, ולכן ההודעה תגיע כבקשה. אפשר לשלוח עד 3 הודעות, בלי קישורים, עד שתגיע תשובה.",
   sayHello: "להגיד שלום ל־{name}.",
   someone: "מישהו",
+  hudInGroup: "{name} ב{group}",
   notifyComment: "{actor} הגיב/ה על {title}",
   notifyCommentReply: "{actor} השיב/ה לתגובה שלך על {title}",
   notifyFollow: "{actor} התחיל/ה לעקוב אחריך.",

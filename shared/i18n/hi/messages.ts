@@ -94,6 +94,7 @@ export default {
     "{name} आपको फ़ॉलो नहीं करते, इसलिए आपका संदेश अनुरोध के रूप में पहुँचेगा। उनके जवाब देने तक आप बिना लिंक के अधिकतम 3 संदेश भेज सकते हैं।",
   sayHello: "{name} को हैलो कहें।",
   someone: "कोई",
+  hudInGroup: "{group} में {name}",
   notifyComment: "{actor} ने {title} पर टिप्पणी की",
   notifyCommentReply: "{actor} ने {title} पर आपकी टिप्पणी का जवाब दिया",
   notifyFollow: "{actor} ने आपको फ़ॉलो करना शुरू किया।",

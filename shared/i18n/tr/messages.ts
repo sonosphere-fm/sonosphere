@@ -97,6 +97,7 @@ export default {
     "{name} seni takip etmiyor, bu yüzden mesajın istek olarak ulaşacak. Yanıt verene kadar bağlantısız en fazla 3 mesaj gönderebilirsin.",
   sayHello: "Merhaba de: {name}",
   someone: "Biri",
+  hudInGroup: "{group} içinde {name}",
   notifyComment: "{actor} şu yazına yorum yaptı: {title}",
   notifyCommentReply: "{actor} şu yazıdaki yorumuna yanıt verdi: {title}",
   notifyFollow: "{actor} seni takip etmeye başladı.",

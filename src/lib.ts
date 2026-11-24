@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import type { DmClientMessage, DmEvent } from "../shared/dm";
 import type { Me } from "../shared/auth";
 import type { ListenMessage, ListeningEvent } from "../shared/live";
+import type { NotificationEvent } from "../shared/notifications";
 export type { Ok, Me } from "../shared/auth";
 import { locale, t } from "./i18n";
 
@@ -267,7 +268,7 @@ export function useTitle(title: string | null | undefined) {
 }
 
 // One WebSocket per tab while signed in or viewing listening data.
-export type LiveEvent = DmEvent | ListeningEvent | { t: "open"; again: boolean };
+export type LiveEvent = DmEvent | ListeningEvent | NotificationEvent | { t: "open"; again: boolean };
 type Outgoing = DmClientMessage | ListenMessage | { t: "ping" };
 const liveListeners = new Set<(e: LiveEvent) => void>();
 let sock: WebSocket | null = null;

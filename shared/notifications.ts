@@ -7,6 +7,7 @@ export type Notification = {
   actor: UserAppearance & { username: string | null; image: string | null };
 };
 export type Notifications = { items: Notification[] };
+export type NotificationEvent = { t: "notification"; notification: Notification; unread: number };
 export const EMAIL_KINDS = [
   ["follow", "Someone follows you"],
   ["shout", "Someone writes on your wall"],
