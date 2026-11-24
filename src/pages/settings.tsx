@@ -1058,6 +1058,7 @@ function AppSettings() {
           <Link className="connect-more" to="/help#pano-scrobbler">
             {t("settings.setupDetails")} <Arrow />
           </Link>
+          <Relay onCreated={q.reload} />
         </div>
         <Async q={q}>
           {(d) =>
@@ -1166,6 +1167,57 @@ function NewToken({ onCreated }: { onCreated: () => void }) {
       {act.note}
       <Button kind="btn small" loading={act.busy} onClick={create}>
         {t("settings.createListenToken")}
+      </Button>
+    </div>
+  );
+}
+
+function Relay({ onCreated }: { onCreated: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details className="relay" onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>
+        {t("settings.relayTitle")}
+        <Ico.ChevDown />
+      </summary>
+      <p>{t("settings.relayIntro")}</p>
+      <p className="muted small">{t("settings.relayPrivacy")}</p>
+      {open && (
+        <Suspense fallback={<Spinner />}>
+          <RelayLink onCreated={onCreated} />
+        </Suspense>
+      )}
+    </details>
+  );
+}
+
+function RelayLink({ onCreated }: { onCreated: () => void }) {
+  const act = useAction();
+  const robot = useTurnstile("listentoken");
+  const [link, setLink] = useState("");
+
+  const create = () =>
+    act.run(async () => {
+      const turnstile = await robot.check();
+      const { token } = await api<ListenToken>("/apps/relay-token", { body: { turnstile } });
+      setLink(`${window.location.origin}/relay/${token}/2.0/`);
+      onCreated();
+    });
+
+  if (link) {
+    return (
+      <div className="token-reveal">
+        <CopyField label={t("settings.yourRelayLink")} value={link} />
+        <p>{t("settings.tokenOnce")}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="new-token">
+      {robot.view}
+      {act.note}
+      <Button kind="btn small" loading={act.busy} onClick={create}>
+        {t("settings.createRelayLink")}
       </Button>
     </div>
   );

@@ -5918,6 +5918,35 @@
     font-weight: 600;
     color: var(--link);
   }
+  .relay {
+    align-self: stretch;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .relay summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    list-style: none;
+    cursor: pointer;
+  }
+  .relay summary::-webkit-details-marker {
+    display: none;
+  }
+  .relay[open] summary .ico {
+    rotate: 180deg;
+  }
+  .relay > p {
+    margin: 12px 0 0;
+    color: var(--ink-2);
+  }
+  .relay > .new-token,
+  .relay > .token-reveal {
+    margin-top: 14px;
+  }
   .copy-field {
     display: flex;
     flex-direction: column;

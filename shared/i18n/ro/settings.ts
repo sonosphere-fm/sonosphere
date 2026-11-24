@@ -247,6 +247,13 @@ export default {
   listenbrainzServerHint: "Lipește un token în loc de parolă.",
   createListenToken: "Creează token ListenBrainz",
   setupDetails: "Detalii de configurare",
+  relayTitle: "Releu de scrobble-uri",
+  relayIntro:
+    "Faci deja scrobble pe Last.fm? Folosește acest link ca URL de server Last.fm în player și continuă să te conectezi cu contul Last.fm. Fiecare scrobble ajunge în continuare pe Last.fm și este copiat și aici.",
+  relayPrivacy:
+    "Conectarea la Last.fm trece direct către Last.fm și nu este salvată niciodată. Păstrează linkul privat, ca pe o parolă.",
+  createRelayLink: "Creează link de releu",
+  yourRelayLink: "Linkul tău de releu",
   sessionDates: "Conectată {created}, folosită ultima dată {used}",
   noSessions: "Încă nicio aplicație nu poate face scrobble în contul tău.",
   apiAccounts: "Conturile tale API",

@@ -246,6 +246,13 @@ export default {
   listenbrainzServerHint: "Colle un jeton à la place d'un mot de passe.",
   createListenToken: "Créer un jeton ListenBrainz",
   setupDetails: "Détails de configuration",
+  relayTitle: "Relais de scrobbles",
+  relayIntro:
+    "Vous scrobblez déjà sur Last.fm ? Utilisez ce lien comme URL de serveur Last.fm dans votre lecteur et continuez à vous connecter avec votre compte Last.fm. Chaque scrobble part toujours sur Last.fm et est aussi copié ici.",
+  relayPrivacy:
+    "Votre connexion Last.fm est transmise directement à Last.fm et n'est jamais enregistrée. Gardez ce lien privé, comme un mot de passe.",
+  createRelayLink: "Créer un lien de relais",
+  yourRelayLink: "Votre lien de relais",
   sessionDates: "Connectée {created}, dernière utilisation {used}",
   noSessions: "Aucune application ne peut encore scrobbler sur ton compte.",
   apiAccounts: "Tes comptes API",

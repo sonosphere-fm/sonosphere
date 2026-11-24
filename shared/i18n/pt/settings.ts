@@ -240,6 +240,13 @@ export default {
   listenbrainzServerHint: "Cole um token em vez de uma senha.",
   createListenToken: "Criar token do ListenBrainz",
   setupDetails: "Detalhes de configuração",
+  relayTitle: "Relé de scrobbles",
+  relayIntro:
+    "Já faz scrobbles no Last.fm? Use este link como URL do servidor Last.fm no seu player e continue entrando com sua conta do Last.fm. Cada scrobble continua indo para o Last.fm e também é copiado aqui.",
+  relayPrivacy:
+    "Seu login do Last.fm passa direto para o Last.fm e nunca é armazenado. Mantenha o link privado, como uma senha.",
+  createRelayLink: "Criar link de relé",
+  yourRelayLink: "Seu link de relé",
   sessionDates: "Conectado {created}, último uso {used}",
   noSessions: "Nenhum aplicativo pode scrobblar na sua conta ainda.",
   apiAccounts: "Suas contas de API",

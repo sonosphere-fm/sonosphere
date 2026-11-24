@@ -241,6 +241,13 @@ export default {
   listenbrainzServerHint: "Klistra in en token i stället för ett lösenord.",
   createListenToken: "Skapa ListenBrainz-token",
   setupDetails: "Inställningsdetaljer",
+  relayTitle: "Scrobble-relä",
+  relayIntro:
+    "Scrobblar du redan till Last.fm? Använd länken som Last.fm-serveradress i din spelare och fortsätt logga in med ditt Last.fm-konto. Varje scrobble går fortfarande till Last.fm och kopieras även hit.",
+  relayPrivacy:
+    "Din Last.fm-inloggning skickas direkt vidare till Last.fm och sparas aldrig. Håll länken privat, som ett lösenord.",
+  createRelayLink: "Skapa relälänk",
+  yourRelayLink: "Din relälänk",
   sessionDates: "Kopplad {created}, senast använd {used}",
   noSessions: "Inga applikationer kan scrobbla till ditt konto än.",
   apiAccounts: "Dina API-konton",

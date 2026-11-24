@@ -239,6 +239,13 @@ export default {
   listenbrainzServerHint: "Tempel token alih-alih kata sandi.",
   createListenToken: "Buat token ListenBrainz",
   setupDetails: "Detail pengaturan",
+  relayTitle: "Relai scrobble",
+  relayIntro:
+    "Sudah scrobble ke Last.fm? Pakai tautan ini sebagai URL server Last.fm di pemutarmu dan tetap masuk dengan akun Last.fm-mu. Setiap scrobble tetap dikirim ke Last.fm dan juga disalin ke sini.",
+  relayPrivacy:
+    "Info masuk Last.fm-mu diteruskan langsung ke Last.fm dan tidak pernah disimpan. Jaga tautan ini tetap rahasia, seperti kata sandi.",
+  createRelayLink: "Buat tautan relai",
+  yourRelayLink: "Tautan relaimu",
   sessionDates: "Terhubung {created}, terakhir digunakan {used}",
   noSessions: "Belum ada aplikasi yang dapat scrobble ke akunmu.",
   apiAccounts: "Akun API-mu",

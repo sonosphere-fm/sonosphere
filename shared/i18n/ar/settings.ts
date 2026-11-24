@@ -253,6 +253,12 @@ export default {
   listenbrainzServerHint: "الصق رمزًا بدل كلمة المرور.",
   createListenToken: "إنشاء رمز ListenBrainz",
   setupDetails: "تفاصيل الإعداد",
+  relayTitle: "مُرحِّل الاستماعات",
+  relayIntro:
+    "هل تسجّل استماعاتك في Last.fm بالفعل؟ استخدم هذا الرابط كعنوان خادم Last.fm في مشغّلك وواصل تسجيل الدخول بحساب Last.fm. سيظل كل استماع يُرسَل إلى Last.fm ويُنسخ هنا أيضًا.",
+  relayPrivacy: "يمر تسجيل دخولك إلى Last.fm مباشرةً إلى Last.fm ولا يُخزَّن أبدًا. احتفظ بالرابط سرًا مثل كلمة المرور.",
+  createRelayLink: "إنشاء رابط الترحيل",
+  yourRelayLink: "رابط الترحيل الخاص بك",
   sessionDates: "رُبط {created}، آخر استخدام {used}",
   noSessions: "لا توجد تطبيقات يمكنها تسجيل السكروبل في حسابك بعد.",
   apiAccounts: "حسابات API الخاصة بك",

@@ -104,3 +104,13 @@ router.post<ListenToken>("/api/apps/listen-token", async (c) => {
   await createSession(token, (await repo.appIdByKey("listenbrainz"))!, u.id);
   return { token };
 });
+
+// a link to set as a player's Last.fm server, passing calls on to Last.fm and copying scrobbles here
+router.post<ListenToken>("/api/apps/relay-token", async (c) => {
+  const u = confirmed(need(c));
+  await throttle(`listen-token:${u.id}`, 10, 86_400, "tooManyTokensToday");
+  await checkTurnstile(c.body.turnstile, ipOf(c.req), "listentoken");
+  const token = crypto.randomUUID();
+  await createSession(token, (await repo.appIdByKey("relay"))!, u.id);
+  return { token };
+});

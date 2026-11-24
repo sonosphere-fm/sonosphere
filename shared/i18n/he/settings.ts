@@ -235,6 +235,12 @@ export default {
   listenbrainzServerHint: "מדביקים טוקן במקום סיסמה.",
   createListenToken: "יצירת טוקן ListenBrainz",
   setupDetails: "פרטי הגדרה",
+  relayTitle: "ממסר סקרובלים",
+  relayIntro:
+    "כבר מסקרבלים ל-Last.fm? השתמשו בקישור הזה ככתובת שרת Last.fm בנגן והמשיכו להתחבר עם חשבון Last.fm. כל סקרובל עדיין נשלח ל-Last.fm ומועתק גם לכאן.",
+  relayPrivacy: "ההתחברות ל-Last.fm עוברת ישירות ל-Last.fm ולעולם לא נשמרת. שמרו על הקישור בסוד, כמו סיסמה.",
+  createRelayLink: "יצירת קישור ממסר",
+  yourRelayLink: "קישור הממסר שלך",
   sessionDates: "חובר {created}, שימוש אחרון {used}",
   noSessions: "עדיין אין אפליקציות שיכולות לסקרבל לחשבון שלך.",
   apiAccounts: "חשבונות ה־API שלך",

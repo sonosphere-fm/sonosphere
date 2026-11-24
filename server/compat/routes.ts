@@ -5,16 +5,15 @@ import * as Sentry from "@sentry/bun";
 
 // A body that cannot be read is ignored.
 async function params(req: Request, url: URL): Promise<Params> {
+  return paramsOf(url, req.method === "POST" ? await req.text().catch(() => "") : "", req.headers.get("content-type"));
+}
+
+export function paramsOf(url: URL, body: string, type: string | null): Params {
   const p: Params = Object.fromEntries(url.searchParams);
-  if (req.method !== "POST") return p;
-  const type = req.headers.get("content-type") || "";
+  if (!body) return p;
   try {
-    if (type.includes("json")) {
-      const body: unknown = await req.json();
-      Object.assign(p, body);
-    } else {
-      for (const [k, v] of new URLSearchParams(await req.text())) p[k] = v;
-    }
+    if (type?.includes("json")) Object.assign(p, JSON.parse(body));
+    else for (const [k, v] of new URLSearchParams(body)) p[k] = v;
   } catch {}
   return p;
 }
@@ -58,11 +57,21 @@ function ok(json: boolean, body: Reply): Response {
   return new Response(`${XML}<lfm status="ok">${inner}</lfm>`, { headers: headers(json) });
 }
 
-function failed(json: boolean, error: number, message: string, status: number): Response {
+export function failed(json: boolean, error: number, message: string, status: number): Response {
   const body = json
     ? JSON.stringify({ error, message })
     : `${XML}<lfm status="failed"><error code="${error}">${message.replace(/[<&]/g, "")}</error></lfm>`;
   return new Response(body, { status, headers: headers(json) });
+}
+
+// About five calls a second, like Last.fm. Error 29 is what scrobbler apps back off on.
+export async function throttled(key: string, json: boolean): Promise<Response | null> {
+  const waits = await Promise.all([hits(key, 300, 60), hits(key, 6000, 3600), hits(key, 50_000, 86_400)]);
+  const wait = Math.max(...waits);
+  if (!wait) return null;
+  const r = failed(json, 29, "Rate limit exceeded", 429);
+  r.headers.set("Retry-After", String(wait));
+  return r;
 }
 
 const FORBIDDEN = [10, 9, 4, 13];
@@ -71,19 +80,9 @@ export async function handleCompat(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const p = await params(req, url);
   const json = p.format === "json";
-  // About five calls a second per address, like Last.fm. Error 29 is what scrobbler apps back off on.
   const ip = ipOf(req);
-  const waits = await Promise.all([
-    hits(`compat:${ip}`, 300, 60),
-    hits(`compat:${ip}`, 6000, 3600),
-    hits(`compat:${ip}`, 50_000, 86_400),
-  ]);
-  const wait = Math.max(...waits);
-  if (wait) {
-    const r = failed(json, 29, "Rate limit exceeded", 429);
-    r.headers.set("Retry-After", String(wait));
-    return r;
-  }
+  const slow = await throttled(`compat:${ip}`, json);
+  if (slow) return slow;
   // password sign-ins share the site log-in form's per-address limit
   if (String(p.method ?? "").toLowerCase() === "auth.getmobilesession") {
     try {

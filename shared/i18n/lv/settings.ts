@@ -246,6 +246,13 @@ export default {
   listenbrainzServerHint: "Paroles vietā ielīmē žetonu.",
   createListenToken: "Izveidot ListenBrainz žetonu",
   setupDetails: "Iestatīšanas informācija",
+  relayTitle: "Skroblu pārraide",
+  relayIntro:
+    "Jau skroblē uz Last.fm? Izmanto šo saiti kā Last.fm servera URL savā atskaņotājā un turpini pieteikties ar savu Last.fm kontu. Katrs skrobls joprojām nonāk Last.fm un tiek nokopēts arī šeit.",
+  relayPrivacy:
+    "Tava Last.fm pieteikšanās tiek nodota tieši Last.fm un nekad netiek saglabāta. Glabā saiti privātu kā paroli.",
+  createRelayLink: "Izveidot pārraides saiti",
+  yourRelayLink: "Tava pārraides saite",
   sessionDates: "Savienots {created}, pēdējoreiz lietots {used}",
   noSessions: "Pagaidām neviena lietotne nevar skroblēt tavā kontā.",
   apiAccounts: "Tavi API konti",
