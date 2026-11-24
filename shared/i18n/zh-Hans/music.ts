@@ -305,10 +305,8 @@ export default {
   version: "版本 {version}",
   deleted: "已删除",
   noVersions: "还没有版本。",
-  openInService: "在音乐服务中打开",
   tryAgain: "重试",
   findingLinks: "正在查找歌曲链接…",
   noLinks: "没有找到匹配的歌曲链接。",
-  searchBiniLink: "搜索 BiniLink",
   searchYouTube: "搜索 YouTube",
 } satisfies Translation<typeof en>;

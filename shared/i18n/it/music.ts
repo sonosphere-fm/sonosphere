@@ -319,10 +319,8 @@ export default {
   version: "Versione {version}",
   deleted: "eliminata",
   noVersions: "Ancora nessuna versione.",
-  openInService: "Apri in un servizio musicale",
   tryAgain: "Riprova",
   findingLinks: "Ricerca dei link al brano…",
   noLinks: "Nessun link al brano trovato.",
-  searchBiniLink: "Cerca su BiniLink",
   searchYouTube: "Cerca su YouTube",
 } satisfies Translation<typeof en>;

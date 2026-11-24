@@ -314,10 +314,8 @@ export default {
   version: "Version {version}",
   deleted: "raderad",
   noVersions: "Inga versioner än.",
-  openInService: "Öppna i en musiktjänst",
   tryAgain: "Försök igen",
   findingLinks: "Letar efter låtlänkar…",
   noLinks: "Inga matchande låtlänkar hittades.",
-  searchBiniLink: "Sök på BiniLink",
   searchYouTube: "Sök på YouTube",
 } satisfies Translation<typeof en>;

@@ -307,10 +307,8 @@ export default {
   version: "バージョン{version}",
   deleted: "削除済み",
   noVersions: "まだバージョンはありません。",
-  openInService: "音楽サービスで開く",
   tryAgain: "再試行",
   findingLinks: "曲のリンクを検索中…",
   noLinks: "一致する曲のリンクが見つかりませんでした。",
-  searchBiniLink: "BiniLinkで検索",
   searchYouTube: "YouTubeで検索",
 } satisfies Translation<typeof en>;

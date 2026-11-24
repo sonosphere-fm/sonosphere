@@ -328,10 +328,8 @@ export default {
   version: "Versija {version}",
   deleted: "dzēsts",
   noVersions: "Vēl nav versiju.",
-  openInService: "Atvērt mūzikas pakalpojumā",
   tryAgain: "Mēģināt vēlreiz",
   findingLinks: "Meklē dziesmu saites…",
   noLinks: "Atbilstošas dziesmu saites netika atrastas.",
-  searchBiniLink: "Meklēt BiniLink",
   searchYouTube: "Meklēt YouTube",
 } satisfies Translation<typeof en>;

@@ -313,10 +313,8 @@ export default {
   version: "Sürüm {version}",
   deleted: "silindi",
   noVersions: "Henüz sürüm yok.",
-  openInService: "Bir müzik servisinde aç",
   tryAgain: "Tekrar dene",
   findingLinks: "Şarkı bağlantıları aranıyor…",
   noLinks: "Eşleşen şarkı bağlantısı bulunamadı.",
-  searchBiniLink: "BiniLink'te ara",
   searchYouTube: "YouTube'da ara",
 } satisfies Translation<typeof en>;

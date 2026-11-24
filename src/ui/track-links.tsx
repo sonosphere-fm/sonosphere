@@ -1,90 +1,85 @@
-import { useEffect, useState } from "react";
+import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
+import { useState } from "react";
 import type { TrackLinks as Links } from "../../shared/catalog";
 import { t } from "../i18n";
-import { Button, Modal } from "../kit";
+import { Ico } from "../icons";
 import { api, qs } from "../lib";
+import { BrandIcon } from "./profile-link-icon";
 
 const services = [
-  ["spotify", "Spotify"],
-  ["appleMusic", "Apple Music"],
-  ["tidal", "TIDAL"],
-  ["youtube", "YouTube"],
+  ["spotify", "Spotify", "spotify", "#1ed760"],
+  ["appleMusic", "Apple Music", "apple", "#fa243c"],
+  ["tidal", "TIDAL", "tidal", undefined],
+  ["youtube", "YouTube", "youtube", "#ff0033"],
 ] as const;
 
-export function TrackLinks({ artist, title, onClose }: { artist: string; title: string; onClose: () => void }) {
+const found = new Map<string, Promise<Links>>();
+function linksFor(artist: string, title: string) {
+  const key = `${artist}\n${title}`;
+  let p = found.get(key);
+  if (!p) {
+    p = api<Links>(`/track/links${qs({ artist, track: title })}`);
+    p.catch(() => found.delete(key));
+    found.set(key, p);
+  }
+  return p;
+}
+
+export function OpenIn({ artist, title }: { artist: string; title: string }) {
   const [result, setResult] = useState<Links | null>(null);
-  const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    setError("");
-    setResult(null);
-    api<Links>(`/track/links${qs({ artist, track: title })}`).then(
-      (links) => {
-        if (active) setResult(links);
-      },
-      (error: Error) => {
-        if (active) setError(error.message);
-      }
-    );
-    return () => {
-      active = false;
-    };
-  }, [artist, title, attempt]);
-
-  const term = `${artist} ${title}`;
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
+    linksFor(artist, title).then(setResult, () => setFailed(true));
+  };
+  const open = (isOpen: boolean) => {
+    if (isOpen && !result) load();
+  };
+  const external = { target: "_blank", rel: "noopener noreferrer" } as const;
+  const listed = result ? services.filter(([key]) => result[key]) : [];
+  const button = {
+    label: t("music.openIn"),
+    variant: "secondary",
+    className: "btn ghost",
+    children: (
+      <>
+        <Ico.External /> {t("music.openIn")}
+      </>
+    ),
+  } as const;
   return (
-    <Modal title={t("music.openInService")} onClose={onClose}>
-      {error ? (
-        <div role="alert" className="mb-3">
-          <p>{error}</p>
-          <Button kind="btn ghost small" type="button" onClick={() => setAttempt((n) => n + 1)}>
-            {t("music.tryAgain")}
-          </Button>
-        </div>
+    <DropdownMenu
+      placement="below"
+      alignment="start"
+      hasChevron={false}
+      menuWidth={200}
+      button={button}
+      onOpenChange={open}
+    >
+      {failed ? (
+        <DropdownMenuItem label={t("music.tryAgain")} hasCloseOnSelect={false} onClick={load} />
       ) : !result ? (
-        <p role="status">{t("music.findingLinks")}</p>
+        <DropdownMenuItem label={t("music.findingLinks")} isDisabled />
       ) : (
-        <>
-          {services.some(([key]) => result[key]) ? (
-            <ul className="plain mb-3">
-              {services.map(([key, name]) => {
-                const url = result[key];
-                return url ? (
-                  <li key={key}>
-                    <a className="text-site-link hover:underline" href={url} target="_blank" rel="noopener noreferrer">
-                      {name}
-                    </a>
-                  </li>
-                ) : null;
-              })}
-            </ul>
-          ) : (
-            <p>{t("music.noLinks")}</p>
-          )}
-        </>
+        listed.map(([key, name, brand, color]) => (
+          <DropdownMenuItem
+            key={key}
+            icon={<BrandIcon brand={brand} color={color} />}
+            label={name}
+            href={result[key]}
+            {...external}
+          />
+        ))
       )}
-      <div className="row">
-        <a
-          className="text-site-link hover:underline"
-          href={`https://link.binimum.org/${qs({ q: term })}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t("music.searchBiniLink")}
-        </a>
-        {!result?.youtube && (
-          <a
-            className="text-site-link hover:underline"
-            href={`https://www.youtube.com/results${qs({ search_query: term })}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("music.searchYouTube")}
-          </a>
-        )}
-      </div>
-    </Modal>
+      {result && !listed.length && <DropdownMenuItem label={t("music.noLinks")} isDisabled />}
+      {result && !result.youtube && (
+        <DropdownMenuItem
+          icon={<BrandIcon brand="youtube" color="#ff0033" />}
+          label={t("music.searchYouTube")}
+          href={`https://www.youtube.com/results${qs({ search_query: `${artist} ${title}` })}`}
+          {...external}
+        />
+      )}
+    </DropdownMenu>
   );
 }

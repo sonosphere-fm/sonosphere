@@ -1,5 +1,4 @@
 import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
-import { Ico } from "../../icons";
 import { Lyrics } from "../../ui/lyrics";
 import { useState, type FormEvent, Suspense } from "react";
 import { t } from "../../i18n";
@@ -23,7 +22,7 @@ import { Async, Section, Tabs, useAction, Pane } from "../../ui/base";
 import { Grid, LoveButton, TrackList } from "../../ui/lists";
 import { shortMusicUrl } from "../../../shared/paths";
 import { Shoutbox } from "../../ui/shoutbox";
-import { TrackLinks } from "../../ui/track-links";
+import { OpenIn } from "../../ui/track-links";
 import { MoreMenu } from "../../ui/more-menu";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
@@ -145,7 +144,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
   const base = trackUrl(artist, track);
   const q = useApi<TrackData>(`/track${qs({ artist, track })}`);
   const { me } = useAuth();
-  const [modal, setModal] = useState<"playlist" | "obsession" | "links" | null>(null);
+  const [modal, setModal] = useState<"playlist" | "obsession" | null>(null);
   const [adminEdit, setAdminEdit] = useState<AdminEdit | null>(null);
   const act = useAction();
   useTitle(releaseTitle(track, artist, tab === "wiki"));
@@ -197,9 +196,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
               <>
                 <PlayButton queue={[item, ...item.similar]} label={t("music.playTrack")} />
                 <LoveButton track={item} loved={item.loved} label onChange={q.reload} />
-                <Button kind="btn ghost" type="button" onClick={() => setModal("links")}>
-                  <Ico.External /> {t("music.openIn")}
-                </Button>
+                <OpenIn key={item.id} artist={item.artist} title={item.title} />
                 <MoreMenu label={t("music.moreActionsFor", { name: item.title })} link={shortMusicUrl("t", item.id)}>
                   {me && <DropdownMenuItem label={t("music.addToPlaylist")} onClick={() => setModal("playlist")} />}
                   {me && <DropdownMenuItem label={t("music.setAsEarworm")} onClick={() => setModal("obsession")} />}
@@ -231,9 +228,6 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
             <Suspense fallback={null}>
               <AddToPlaylist track={item} onClose={() => setModal(null)} />
             </Suspense>
-          )}
-          {modal === "links" && (
-            <TrackLinks key={item.id} artist={item.artist} title={item.title} onClose={() => setModal(null)} />
           )}
           {modal === "obsession" && <SetObsession track={item} onClose={() => setModal(null)} />}
           <div className="wrap page mpage">

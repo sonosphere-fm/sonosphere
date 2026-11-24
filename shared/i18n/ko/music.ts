@@ -306,10 +306,8 @@ export default {
   version: "버전 {version}",
   deleted: "삭제됨",
   noVersions: "아직 버전이 없어요.",
-  openInService: "음악 서비스에서 열기",
   tryAgain: "다시 시도",
   findingLinks: "곡 링크를 찾는 중…",
   noLinks: "일치하는 곡 링크가 없어요.",
-  searchBiniLink: "BiniLink 검색",
   searchYouTube: "YouTube 검색",
 } satisfies Translation<typeof en>;
