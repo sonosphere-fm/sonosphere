@@ -48,3 +48,16 @@ export async function transactRetry<T>(fn: (tx: Tx) => Promise<T>, attempts = 3)
     }
   }
 }
+
+/** Retries an async database operation on retryable PostgreSQL errors (deadlock, serialization). */
+export async function retrySql<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const code = sqlState(e);
+      if (attempt >= attempts || !code || !RETRYABLE.has(code)) throw e;
+      await new Promise((r) => setTimeout(r, 50 * attempt + Math.random() * 50));
+    }
+  }
+}

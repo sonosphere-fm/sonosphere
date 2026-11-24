@@ -1,5 +1,5 @@
 import { and, eq, lt, notExists, sql } from "drizzle-orm";
-import { db } from "../db/client";
+import { db, retrySql } from "../db/client";
 import { albums, artists, changelogPosts, images, users } from "../db/schema";
 import { store } from "../storage";
 import { spendWrites } from "../storage/budget";
@@ -12,10 +12,9 @@ export const fileOf = (key: string, v: Variant) => (v === "small" ? `${key}-s.we
 async function putFiles(img: Converted, id: string): Promise<string> {
   await spendWrites(2);
   const key = `img/${id}`;
-  await Promise.all([
-    store.put(fileOf(key, "large"), img.large, "image/webp"),
-    store.put(fileOf(key, "small"), img.small, "image/webp"),
-  ]);
+  // sequential, not parallel: two puts to the same object prefix can trigger S3 rate limiting
+  await store.put(fileOf(key, "large"), img.large, "image/webp");
+  await store.put(fileOf(key, "small"), img.small, "image/webp");
   return key;
 }
 
@@ -29,16 +28,18 @@ export async function saveImage(img: Converted, uploaderId: number | null, at = 
   const id = rid(16);
   const key = await putFiles(img, id);
   try {
-    await db.insert(images).values({
-      id,
-      mime: "image/webp",
-      key,
-      size: img.large.length + img.small.length,
-      width: img.width,
-      height: img.height,
-      uploaderId,
-      createdAt: at,
-    });
+    await retrySql(() =>
+      db.insert(images).values({
+        id,
+        mime: "image/webp",
+        key,
+        size: img.large.length + img.small.length,
+        width: img.width,
+        height: img.height,
+        uploaderId,
+        createdAt: at,
+      })
+    );
     return id;
   } catch (e) {
     await deleteFiles(key).catch(() => {});
@@ -49,16 +50,18 @@ export async function saveImage(img: Converted, uploaderId: number | null, at = 
 export async function saveGif(data: Uint8Array, uploaderId: number): Promise<string> {
   const id = rid(16);
   const bytes = Buffer.from(data);
-  await db.insert(images).values({
-    id,
-    mime: "image/gif",
-    data: bytes,
-    size: bytes.length,
-    width: bytes.readUInt16LE(6),
-    height: bytes.readUInt16LE(8),
-    uploaderId,
-    createdAt: now(),
-  });
+  await retrySql(() =>
+    db.insert(images).values({
+      id,
+      mime: "image/gif",
+      data: bytes,
+      size: bytes.length,
+      width: bytes.readUInt16LE(6),
+      height: bytes.readUInt16LE(8),
+      uploaderId,
+      createdAt: now(),
+    })
+  );
   return id;
 }
 
@@ -107,7 +110,9 @@ export async function setCatalogueImage(type: "artist" | "album", id: number, im
 /** Records a picture hotlinked from another site; nothing is stored here. */
 export async function saveRemoteImage(url: string, width: number | null, height: number | null): Promise<string> {
   const id = rid(16);
-  await db.insert(images).values({ id, mime: "image/jpeg", url, width, height, uploaderId: null, createdAt: now() });
+  await retrySql(() =>
+    db.insert(images).values({ id, mime: "image/jpeg", url, width, height, uploaderId: null, createdAt: now() })
+  );
   return id;
 }
 

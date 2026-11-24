@@ -11,8 +11,8 @@ const TRANSIENT_CODES = new Set([
   "EAI_AGAIN",
 ]);
 
-/** Deleting an object is idempotent; retry transient failures, preserving the final error. */
-export async function retryS3Delete(op: () => Promise<void>): Promise<void> {
+/** Retry an idempotent S3 operation on transient failures, preserving the final error. */
+export async function retryS3<T>(op: () => Promise<T>): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
       return await op();
@@ -22,4 +22,9 @@ export async function retryS3Delete(op: () => Promise<void>): Promise<void> {
       await new Promise((r) => setTimeout(r, 100 * attempt));
     }
   }
+}
+
+/** Deleting an object is idempotent; retry transient failures, preserving the final error. */
+export async function retryS3Delete(op: () => Promise<void>): Promise<void> {
+  return retryS3(op);
 }

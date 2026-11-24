@@ -156,7 +156,7 @@ export function Home() {
     prefetch(RECOMMENDED);
     prefetch(recentOf(me.username));
   }
-  useTitle(me ? TITLES.home : TITLES.guestHome);
+  useTitle(me ? TITLES.home : TITLES?.guestHome);
   return (
     <>
       {me ? (
