@@ -2040,6 +2040,14 @@
     font-size: 26px;
     font-weight: 400;
   }
+  .section.sub .section-head {
+    margin-bottom: 10px;
+  }
+  .section.sub .section-head h3 {
+    flex: 1;
+    font-size: 17px;
+    color: var(--ink-2);
+  }
   .side {
     background: var(--panel);
     padding: 20px;

@@ -105,7 +105,9 @@ function profileTabs(u: Profile, base: string, locked: boolean) {
 }
 
 function ProfileStats({ u, base, locked }: { u: Profile; base: string; locked: boolean }) {
-  const followers = <Stat label={t("user.statFollowers")} value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} />;
+  const followers = (
+    <Stat label={t("user.statFollowers")} value={<Link to={`${base}/followers`}>{num(u.followers)}</Link>} />
+  );
   if (locked) return followers;
   return (
     <>
@@ -249,7 +251,9 @@ export function UserPage({ tab }: { tab: Tab }) {
                     empty={tx("user.notFollowingAnyone", { name: <Username user={u} /> })}
                   />
                 )}
-                {tab === "followers" && <People path={`/user/followers${qs({ name })}`} empty={t("user.noFollowers")} />}
+                {tab === "followers" && (
+                  <People path={`/user/followers${qs({ name })}`} empty={t("user.noFollowers")} />
+                )}
                 {tab === "loved" && !locked && <Loved name={u.username} />}
                 {tab === "obsessions" && <Obsessions name={u.username} mine={mine} />}
                 {tab === "playlists" && <Playlists name={u.username} mine={mine} />}
@@ -287,10 +291,15 @@ function ProfileMenu({ u, onChange }: { u: Profile; onChange: () => void }) {
   return (
     <>
       <MoreMenu label={t("user.moreActions", { name: u.username })} link={shortUrl(u.username)}>
-        {me && <DropdownMenuItem label={u.blocked ? t("user.unblockUser") : t("user.blockUser")} onClick={toggleBlock} />}
+        {me && (
+          <DropdownMenuItem label={u.blocked ? t("user.unblockUser") : t("user.blockUser")} onClick={toggleBlock} />
+        )}
         {me && <DropdownMenuItem label={t("user.reportProfile")} onClick={() => setReporting(true)} />}
         {me?.admin && (
-          <DropdownMenuItem label={u.suspended ? t("user.liftSuspension") : t("user.suspendFromPosting")} onClick={toggleSuspend} />
+          <DropdownMenuItem
+            label={u.suspended ? t("user.liftSuspension") : t("user.suspendFromPosting")}
+            onClick={toggleSuspend}
+          />
         )}
       </MoreMenu>
       <ReportButton type="user" id={u.id} open={reporting} onClose={() => setReporting(false)} />
@@ -429,10 +438,7 @@ function Compatibility({ taste }: { taste: NonNullable<Profile["taste"]> }) {
 }
 
 function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean }) {
-  if ("hidden" in d)
-    return (
-      <Empty>{tx("user.recentPrivate", { name: <Username user={u} /> })}</Empty>
-    );
+  if ("hidden" in d) return <Empty>{tx("user.recentPrivate", { name: <Username user={u} /> })}</Empty>;
   if (d.items.length || d.nowPlaying)
     return (
       <TrackList
@@ -483,17 +489,31 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
           <h2>{t("user.topMusic")}</h2>
           <PeriodPicker def="7day" />
         </div>
-        <Section title={t("user.topArtists")} more={`${base}/library/artists?period=${period}`}>
+        <Section sub title={t("music.artists")} more={`${base}/library/artists?period=${period}`}>
           <Async q={artists}>
-            {(d) => <Grid kind="artist" cols={4} items={d.items} sub={(a) => t("user.scrobbleCount", { count: a.playcount })} />}
+            {(d) => (
+              <Grid
+                kind="artist"
+                cols={4}
+                items={d.items}
+                sub={(a) => t("user.scrobbleCount", { count: a.playcount })}
+              />
+            )}
           </Async>
         </Section>
-        <Section title={t("user.topAlbums")} more={`${base}/library/albums?period=${period}`}>
+        <Section sub title={t("music.albums")} more={`${base}/library/albums?period=${period}`}>
           <Async q={albums}>
-            {(d) => <Grid kind="album" cols={4} items={d.items} sub={(a) => t("user.scrobbleCount", { count: a.playcount })} />}
+            {(d) => (
+              <Grid
+                kind="album"
+                cols={4}
+                items={d.items}
+                sub={(a) => t("user.scrobbleCount", { count: a.playcount })}
+              />
+            )}
           </Async>
         </Section>
-        <Section title={t("user.topTracks")} more={`${base}/library/tracks?period=${period}`}>
+        <Section sub title={t("music.tracks")} more={`${base}/library/tracks?period=${period}`}>
           <Async q={tracks}>{(d) => <TrackList items={d.items} rank={1} count="playcount" />}</Async>
         </Section>
         <Section title={t("user.wall")} more={`${base}/wall`} moreLabel={t("user.wholeWall")}>

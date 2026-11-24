@@ -59,6 +59,7 @@ export function Section({
   moreLabel = t("common.viewAll"),
   aside,
   foot,
+  sub,
   children,
 }: {
   title: ReactNode;
@@ -66,12 +67,14 @@ export function Section({
   moreLabel?: string;
   aside?: ReactNode;
   foot?: boolean;
+  sub?: boolean;
   children: ReactNode;
 }) {
+  const Heading = sub ? "h3" : "h2";
   return (
-    <section className="section">
+    <section className={sub ? "section sub" : "section"}>
       <header className="section-head">
-        <h2>{more ? <Link to={more}>{title}</Link> : title}</h2>
+        <Heading>{more ? <Link to={more}>{title}</Link> : title}</Heading>
         {aside}
         {more && !foot && (
           <Link className="more" to={more}>
