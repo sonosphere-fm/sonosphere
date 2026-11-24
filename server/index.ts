@@ -28,6 +28,7 @@ import { startMetadata } from "./metadata/service";
 import { syncAdmins } from "./site/roles";
 import { pg } from "./db/client";
 import { readiness } from "./readiness";
+import { llmsTxt } from "./developer-docs";
 
 const production = process.env.NODE_ENV === "production";
 
@@ -69,6 +70,7 @@ const server = Bun.serve<SocketData>({
   reusePort: true,
   development: production ? false : { hmr: true, console: false },
   routes: {
+    "/llms.txt": llmsTxt,
     "/health/ready": () => readiness(() => pg`SELECT 1`),
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv),
     "/api/user/nowplaying": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),
