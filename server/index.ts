@@ -28,7 +28,7 @@ import { startMetadata } from "./metadata/service";
 import { syncAdmins } from "./site/roles";
 import { pg } from "./db/client";
 import { readiness } from "./readiness";
-import { llmsTxt } from "./developer-docs";
+import { docsRoutes } from "./developer-docs";
 import { HTTPS } from "./auth/session";
 
 const production = process.env.NODE_ENV === "production";
@@ -101,7 +101,7 @@ const server = Bun.serve<SocketData>({
   maxRequestBodySize: MAX_REQUEST_BYTES,
   development: production ? false : { hmr: true, console: false },
   routes: secured({
-    "/llms.txt": llmsTxt,
+    ...docsRoutes,
     "/health/ready": () => readiness(() => pg`SELECT 1`),
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv),
     "/api/user/nowplaying": (req: Request, srv: Server<SocketData>) => publicNowPlaying(req, srv),

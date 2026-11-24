@@ -1,3 +1,5 @@
+import en from "../shared/i18n/en";
+import { type Block, catalogText, docPages, interpolate, isNested, type Item, type Span } from "../shared/docs";
 import { albumUrl, artistUrl, dec, tagUrl, trackUrl, userUrl } from "../shared/paths";
 import {
   ARTIST_TABS,
@@ -339,6 +341,7 @@ export function seoHead(page: Page): string {
     meta("name", "description", description),
     meta("name", "robots", page.index ? "index, follow, max-image-preview:large" : "noindex, follow"),
     url && `<link rel="canonical" href="${escape(url)}" data-seo>`,
+    docPage(page) && `<link rel="alternate" type="text/markdown" href="${escape(`${url}.md`)}" data-seo>`,
     ...Object.entries(og).flatMap(([key, value]) => (value ? [meta("property", `og:${key}`, value)] : [])),
     ...Object.entries(twitter).map(([key, value]) => meta("name", `twitter:${key}`, value)),
     page.index &&
@@ -349,8 +352,41 @@ export function seoHead(page: Page): string {
     .join("\n");
 }
 
+const docPage = (page: Page) => docPages(SITE_URL).find((doc) => doc.path === page.path);
+const english = catalogText("en", en);
+
+function inlineHtml(span: Span): string {
+  if (typeof span === "string") return escape(span);
+  if (Array.isArray(span)) return span.map(inlineHtml).join("");
+  if ("t" in span) return inlineHtml(interpolate(english(span.t), span.with));
+  if ("code" in span) return `<code>${escape(span.code)}</code>`;
+  if ("b" in span) return `<b>${inlineHtml(span.b)}</b>`;
+  if ("to" in span) return `<a href="${escape(span.to)}">${inlineHtml(span.label)}</a>`;
+  if ("href" in span) return `<a href="${escape(span.href)}">${inlineHtml(span.label)}</a>`;
+  return " &gt; ";
+}
+
+function itemHtml(item: Item): string {
+  if (!isNested(item)) return `<li>${inlineHtml(item)}</li>`;
+  return `<li>${inlineHtml(item.text)}<ul>${item.list.map(itemHtml).join("")}</ul></li>`;
+}
+
+function blockHtml(block: Block): string {
+  if ("h2" in block) return `<h2${block.id ? ` id="${block.id}"` : ""}>${inlineHtml(block.h2)}</h2>`;
+  if ("p" in block) return `<p>${inlineHtml(block.p)}</p>`;
+  if ("pre" in block) return `<pre><code>${escape(block.pre)}</code></pre>`;
+  if ("ul" in block) return `<ul>${block.ul.map(itemHtml).join("")}</ul>`;
+  return `<ol>${block.ol.map(itemHtml).join("")}</ol>`;
+}
+
 export function seoContent(page: Page): string {
   if (!page.index) return "";
+  const doc = docPage(page);
+  if (doc) {
+    const blocks = [...doc.body, ...doc.reference].map(blockHtml).join("");
+    const markdown = `<p><a href="${doc.path}.md" type="text/markdown">Markdown version</a></p>`;
+    return `<main class="seo-content"><article><h1>${escape(english(doc.title))}</h1>${blocks}${markdown}</article></main>`;
+  }
   const links = [
     ["/", "Sonosphere"],
     ["/charts", "Music charts"],
