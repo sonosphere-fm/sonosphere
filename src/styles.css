@@ -6120,8 +6120,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 5px;
-    vertical-align: middle;
-    margin-inline-start: 6px;
+    margin-inline-start: 8px;
   }
   /* labels sit beside the name and drop below it only when there's no room */
   .hero-name {

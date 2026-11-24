@@ -20,7 +20,7 @@ import type { Ok } from "../shared/auth";
 import type { ScrobbleResponse } from "../shared/listening";
 import type { Station as StationReply } from "../shared/stations";
 import type { VideoLookup } from "../shared/video";
-import { isTrack, openSpotify, type SdkState, type SpotifyOut } from "./spotify";
+import { artId, isTrack, openSpotify, type SdkState, type SdkTrack, type SpotifyOut } from "./spotify";
 
 export type PTrack = { title: string; artist: string; album?: string | null; image?: string | null; duration?: number };
 /** "saved": restored after a reload, waiting for a press of play (browsers don't let pages autoplay). */
@@ -172,6 +172,10 @@ type SpotifyLink = {
   off: boolean;
   uri: string;
   moved: boolean;
+  /** the track we last started, until Spotify confirms it paused */
+  played: string;
+  /** playing something started from another Spotify app */
+  external: boolean;
 };
 
 const trackKey = (t: PTrack) => `${t.artist}\n${t.title}`.toLowerCase();
@@ -197,16 +201,62 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const fallBack = useRef(() => {});
 
   // Connected on the first play, and given up on for the session if the link can't play.
-  const sp = useRef<SpotifyLink>({ out: null, opening: null, off: false, uri: "", moved: false });
+  const sp = useRef<SpotifyLink>({
+    out: null,
+    opening: null,
+    off: false,
+    uri: "",
+    moved: false,
+    played: "",
+    external: false,
+  });
+
+  // Playback sent to this device from another Spotify app takes over the player.
+  const adopt = (cur: SdkTrack & { id: string }, artist: string, st: SdkState) => {
+    const s = sp.current;
+    run.current.token++;
+    fallBack.current = () => {};
+    try {
+      yt.current?.stopVideo?.();
+    } catch {}
+    station.current = null;
+    s.uri = cur.uri;
+    s.played = cur.uri;
+    s.external = true;
+    const track = { title: cur.name, artist, album: cur.album.name, duration: Math.round(st.duration / 1000) };
+    setState({
+      ...empty,
+      queue: [track],
+      index: 0,
+      status: "ready",
+      playing: true,
+      spotify: { id: cur.id, art: null },
+      position: st.position / 1000,
+      length: st.duration / 1000,
+    });
+    const url = cur.album.images[0]?.url;
+    if (!url) return;
+    artId(url).then((art) => {
+      if (!art || s.uri !== cur.uri) return;
+      setState((v) => (v.spotify ? { ...v, spotify: { ...v.spotify, art } } : v));
+    });
+  };
 
   const onSpotify = (st: SdkState) => {
     const s = sp.current;
+    const cur = st.track_window.current_track;
+    if (st.paused) s.played = "";
+    const artist = cur?.artists[0]?.name;
+    if (cur?.id && artist && cur.type === "track" && !st.paused && !isTrack(cur, s.uri) && !isTrack(cur, s.played)) {
+      adopt({ ...cur, id: cur.id }, artist, st);
+      return;
+    }
     if (!ref.current.spotify || !s.uri) return;
-    const mine = isTrack(st.track_window.current_track, s.uri);
+    const mine = isTrack(cur, s.uri);
     if (mine && st.position > 0) s.moved = true;
     // Only one track is queued, so Spotify stops at its end: back at 0, paused, with our track current or just gone.
     const justGone = st.track_window.previous_tracks.some((t) => isTrack(t, s.uri));
-    if (st.paused && st.position === 0 && s.moved && (mine || justGone)) {
+    if (!s.external && st.paused && st.position === 0 && s.moved && (mine || justGone)) {
       s.uri = "";
       next();
       return;
@@ -246,16 +296,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         return out;
       }));
   };
-  // a different account means a different link
-  useEffect(
-    () => () => {
+  // Connected up front so this device shows up in the listener's other Spotify apps; a different account means a different link.
+  useEffect(() => {
+    spotify();
+    return () => {
       const s = sp.current;
       s.out?.close();
       s.out = null;
       s.off = false;
-    },
-    [me?.id]
-  );
+    };
+  }, [me?.id]);
 
   // A station tops itself up before it runs dry, skipping tracks heard in the last couple of batches.
   const refill = () => {
@@ -287,6 +337,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       yt.current?.stopVideo?.();
     } catch {}
     sp.current.uri = "";
+    sp.current.external = false;
     sp.current.out?.pause();
 
     if (!t) {
@@ -305,6 +356,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const hit = await out.find(t.artist, t.title);
       if (!hit || stale()) return false;
       sp.current.uri = hit.uri;
+      sp.current.played = hit.uri;
       sp.current.moved = false;
       if (!(await out.play(hit.uri, from.current * 1000)) || stale()) {
         sp.current.uri = "";
@@ -501,7 +553,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             ref={mount}
             style={{ visibility: state.status === "ready" && !state.spotify ? "visible" : "hidden" }}
           />
-          {showCover && <Cover key={`${state.index}:${state.status}`} src={coverSrc} />}
+          {showCover && <Cover key={`${state.index}:${state.status}:${state.spotify?.id}`} src={coverSrc} />}
           {!showCover && state.status !== "ready" && (
             <div className="vplayer-blank">
               <Mark />

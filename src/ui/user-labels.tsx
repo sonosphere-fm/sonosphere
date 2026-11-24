@@ -30,7 +30,7 @@ const badge =
   "inline-flex items-center gap-1 max-w-full px-[7px] py-px " +
   "bg-[color:color-mix(in_srgb,var(--label-color)_16%,transparent)] " +
   "text-[color:color-mix(in_srgb,var(--label-color)_70%,var(--ink))] " +
-  "font-site font-semibold leading-[1.5] align-middle wrap-anywhere tracking-normal";
+  "font-site font-semibold leading-[1.5] wrap-anywhere tracking-normal";
 const sizes = { small: "text-[11px]", large: "text-[13px] sm:text-[15px] px-[9px] py-[2px] gap-[5px]" };
 
 export function UserLabelBadge({ label, large }: { label: UserLabel; large?: boolean }) {
