@@ -16,6 +16,18 @@ export default {
   verifyNote:
     "O link vale por 3 dias; você pode pedir um novo em Configurações. Contas não confirmadas em {days} dias são excluídas. Se você não se cadastrou, ignore esta mensagem e a conta será removida.",
 
+  purgeSubject: {
+    one: "Sua conta no Sonosphere será excluída em {count} dia",
+    other: "Sua conta no Sonosphere será excluída em {count} dias",
+  },
+  purgeHeading: "Olá {username}, sua conta está prestes a ser excluída",
+  purgeBody: {
+    one: "Você ainda não confirmou seu e-mail. Se não confirmar em {count} dia, sua conta e tudo o que há nela serão excluídos permanentemente.",
+    other:
+      "Você ainda não confirmou seu e-mail. Se não confirmar em {count} dias, sua conta e tudo o que há nela serão excluídos permanentemente.",
+  },
+  purgeNote: "Se você não se cadastrou, ignore esta mensagem e a conta será removida.",
+
   welcomeSubject: "Boas-vindas ao Sonosphere",
   welcomeHeading: "Boas-vindas, {username}",
   welcomeIntro: "Seu e-mail está confirmado e sua conta está pronta. Algumas coisas para experimentar primeiro:",

@@ -16,6 +16,18 @@ export default {
   verifyNote:
     "Il link è valido per 3 giorni; puoi richiederne uno nuovo dalle Impostazioni. Gli account non confermati entro {days} giorni vengono eliminati. Se non ti sei iscritto, ignora questo messaggio e l’account verrà rimosso.",
 
+  purgeSubject: {
+    one: "Il tuo account Sonosphere verrà eliminato tra {count} giorno",
+    other: "Il tuo account Sonosphere verrà eliminato tra {count} giorni",
+  },
+  purgeHeading: "Ciao {username}, il tuo account sta per essere eliminato",
+  purgeBody: {
+    one: "Non hai ancora confermato la tua email. Se non la confermi entro {count} giorno, il tuo account e tutto il suo contenuto verranno eliminati definitivamente.",
+    other:
+      "Non hai ancora confermato la tua email. Se non la confermi entro {count} giorni, il tuo account e tutto il suo contenuto verranno eliminati definitivamente.",
+  },
+  purgeNote: "Se non ti sei registrato, ignora questo messaggio e l'account verrà rimosso.",
+
   welcomeSubject: "Benvenuto su Sonosphere",
   welcomeHeading: "Benvenuto, {username}",
   welcomeIntro: "La tua email è confermata e il tuo account è pronto. Ecco qualche cosa da provare subito:",

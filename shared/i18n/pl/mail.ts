@@ -16,6 +16,22 @@ export default {
   verifyNote:
     "Link działa przez 3 dni; nowy możesz zamówić w Ustawieniach. Konta niepotwierdzone w ciągu {days} dni są usuwane. Jeśli to nie ty się rejestrujesz, zignoruj tę wiadomość, a konto zostanie usunięte.",
 
+  purgeSubject: {
+    one: "Twoje konto Sonosphere zostanie usunięte za {count} dzień",
+    few: "Twoje konto Sonosphere zostanie usunięte za {count} dni",
+    many: "Twoje konto Sonosphere zostanie usunięte za {count} dni",
+    other: "Twoje konto Sonosphere zostanie usunięte za {count} dnia",
+  },
+  purgeHeading: "Cześć {username}, Twoje konto wkrótce zostanie usunięte",
+  purgeBody: {
+    one: "Nie potwierdziłeś jeszcze swojego adresu e-mail. Jeśli nie potwierdzisz go w ciągu {count} dnia, Twoje konto i cała jego zawartość zostaną trwale usunięte.",
+    few: "Nie potwierdziłeś jeszcze swojego adresu e-mail. Jeśli nie potwierdzisz go w ciągu {count} dni, Twoje konto i cała jego zawartość zostaną trwale usunięte.",
+    many: "Nie potwierdziłeś jeszcze swojego adresu e-mail. Jeśli nie potwierdzisz go w ciągu {count} dni, Twoje konto i cała jego zawartość zostaną trwale usunięte.",
+    other:
+      "Nie potwierdziłeś jeszcze swojego adresu e-mail. Jeśli nie potwierdzisz go w ciągu {count} dnia, Twoje konto i cała jego zawartość zostaną trwale usunięte.",
+  },
+  purgeNote: "Jeśli to nie Ty się rejestrowałeś, zignoruj tę wiadomość, a konto zostanie usunięte.",
+
   welcomeSubject: "Witaj w Sonosphere",
   welcomeHeading: "Witaj, {username}",
   welcomeIntro: "Twój e-mail jest potwierdzony, a konto gotowe. Kilka rzeczy na początek:",

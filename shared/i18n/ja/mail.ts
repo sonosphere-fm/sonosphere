@@ -16,6 +16,14 @@ export default {
   verifyNote:
     "リンクの有効期限は3日間です。新しいリンクは設定からリクエストできます。{days}日以内に確認されなかったアカウントは削除されます。登録した覚えがない場合は、このメールを無視してください。アカウントは削除されます。",
 
+  purgeSubject: { other: "Sonosphere のアカウントは {count} 日後に削除されます" },
+  purgeHeading: "{username} さん、アカウントがまもなく削除されます",
+  purgeBody: {
+    other:
+      "メールアドレスの確認がまだ完了していません。{count} 日以内に確認しないと、アカウントとそのすべての内容が完全に削除されます。",
+  },
+  purgeNote: "登録した覚えがない場合は、このメッセージを無視してください。アカウントは削除されます。",
+
   welcomeSubject: "Sonosphere へようこそ",
   welcomeHeading: "ようこそ、{username} さん",
   welcomeIntro: "メールアドレスが確認され、アカウントの準備ができました。まずはこんなことを試してみましょう:",

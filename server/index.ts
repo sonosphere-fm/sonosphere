@@ -8,7 +8,7 @@ import { handleRelay } from "./compat/relay";
 import { handleCompat } from "./compat/routes";
 import { sentryTunnel } from "./sentry-tunnel";
 import { dropStaleTokens } from "./compat/repo";
-import { dropExpiredEmailTokens, purgeUnverified } from "./auth/email";
+import { dropExpiredEmailTokens, purgeUnverified, warnUnverified } from "./auth/email";
 import { sendDigests } from "./notifications/email";
 import { reviewProbation } from "./trust/service";
 import { deliver } from "./mail";
@@ -150,6 +150,7 @@ const tidy = () => {
       dropExpiredEmailTokens(),
       dropOldMailLog(),
       purgeUnverified(),
+      warnUnverified(),
       sendDigests(),
       reviewProbation(),
     ]);

@@ -16,6 +16,14 @@ export default {
   verifyNote:
     "Tautan berlaku 3 hari; kamu dapat meminta yang baru dari Pengaturan. Akun yang tidak dikonfirmasi dalam {days} hari dihapus. Jika kamu tidak mendaftar, abaikan pesan ini dan akun akan dihapus.",
 
+  purgeSubject: { other: "Akun Sonosphere kamu akan dihapus dalam {count} hari" },
+  purgeHeading: "Hai {username}, akunmu akan segera dihapus",
+  purgeBody: {
+    other:
+      "Kamu belum mengonfirmasi email. Jika tidak dikonfirmasi dalam {count} hari, akunmu beserta seluruh isinya akan dihapus secara permanen.",
+  },
+  purgeNote: "Jika kamu tidak mendaftar, abaikan pesan ini dan akun akan dihapus.",
+
   welcomeSubject: "Selamat datang di Sonosphere",
   welcomeHeading: "Selamat datang, {username}",
   welcomeIntro: "Emailmu dikonfirmasi dan akunmu siap. Beberapa hal untuk dicoba dulu:",
