@@ -96,7 +96,17 @@ const preload = criticalFaces.map(
   ({ path }) => `<link rel="preload" href="${path}" as="font" type="font/woff2" crossorigin>`
 );
 const styleLink = /<link rel="stylesheet"[^>]+>/;
-const deferredStyle = `<link id="app-styles" media="print" onload="this.media='all'" onerror="this.media='all'" `;
+const deferredStyle = `<link id="app-styles" media="print" `;
+// a script rather than onload attributes, which the CSP blocks; the sheet may already be in by the time it runs
+const showStyle = `<script>
+{
+  const link = document.getElementById("app-styles");
+  const show = () => (link.media = "all");
+  if (link.sheet) show();
+  link.onload = show;
+  link.onerror = show;
+}
+</script>`;
 if (!styleLink.test(html)) die("Build failed: the guest home shell cannot find the app stylesheet.");
 await Bun.write(
   `${out}/home.html`,
@@ -106,7 +116,7 @@ await Bun.write(
       styleLink,
       (link) =>
         `${preload.join("")}<style>${criticalFaces.map(({ face }) => face).join("")}${critical.join("")}</style>` +
-        `${link.replace("<link ", deferredStyle)}<noscript>${link}</noscript>`
+        `${link.replace("<link ", deferredStyle)}${showStyle}<noscript>${link}</noscript>`
     )
 );
 await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff }));

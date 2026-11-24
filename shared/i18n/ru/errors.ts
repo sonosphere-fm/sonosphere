@@ -177,6 +177,7 @@ export default {
   eventNotFound: "Событие не найдено",
   staffOnly: "Только для команды",
   adminsOnly: "Только для админов",
+  notWhileImpersonating: "Нельзя менять данные для входа, действуя от имени пользователя",
   confirmEmailFirst:
     "Сначала подтверди адрес почты. Тебе должно было прийти письмо с подтверждением. Если его нет, отправь его снова в настройках, в разделе «Аккаунт».",
   kindArtistsAlbumsTracksTags: "kind должен быть artists, albums, tracks или tags",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "Название группы может быть до {max} символов",
   cantAddUser: "Нельзя добавить {username}",
   groupTooBig: "В группе может быть до {max} человек",
+  playlistFull: "В плейлисте может быть до {max} треков",
   messageTooLong: "Сообщение может быть до {max} символов",
   alreadyInGroup: "{username} уже в этой группе",
   accountNoLongerExists: "Этого аккаунта больше нет",

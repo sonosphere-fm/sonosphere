@@ -2,7 +2,7 @@ import { passwordChanged, passwordSet, startEmailChange } from "../auth/email";
 import { emailTaken } from "../auth/repo";
 import { confirmedBy, endSession, hashPassword, me, MIN_PASSWORD, passwordMatches, validEmail } from "../auth/service";
 import { POLICIES } from "../dm/service";
-import { confirmed, need, poster } from "../guards";
+import { confirmed, need, owner, poster } from "../guards";
 import { recordChange } from "./history";
 import { changeUsername, usernameStatus } from "./usernames";
 import type { UsernameStatus } from "../../shared/account";
@@ -57,6 +57,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     const email = clean(b.email, 200).toLowerCase();
     if (!validEmail(email)) bad("enterValidEmailAddress");
     if (email !== u.email) {
+      owner(c);
       if (await emailTaken(email, u.id)) bad("emailAlreadyUse");
       await limit(`email-change-m:${u.id}`, 1, 30, "waitBeforeAnotherAddress");
       await throttle(`email-change:${u.id}`, 20, 86_400, "tooManyEmailChangesToday");
@@ -84,7 +85,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     usernameFont !== u.usernameFont ||
     profileAccent !== u.profileAccent ||
     profileAccentEnd !== u.profileAccentEnd;
-  if (publicChanged) confirmed(u);
+  if (publicChanged) confirmed(poster(c));
 
   const dmPolicy = b.dmPolicy === undefined ? undefined : (oneOf(b.dmPolicy, POLICIES) ?? bad("pickWhoMessage"));
   const emailNotify =
@@ -143,7 +144,7 @@ router.post<MeResponse>("/api/me/stop-impersonating", async (c) => {
 });
 
 router.post<Ok>("/api/me/password", async (c) => {
-  const u = need(c);
+  const u = owner(c);
   const next = String(c.body.next || "");
   // an account made through another site sets its first password without one
   if (u.passwordHash && !(await passwordMatches(u, String(c.body.current || "")))) bad("currentPasswordIncorrect");

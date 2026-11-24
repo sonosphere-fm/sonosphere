@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, dur, useApi, userUrl, useTitle } from "../lib";
 import { Art, Async, Empty, useAction } from "../ui/base";
 import { TrackList } from "../ui/lists";
+import { ReportButton } from "../ui/shoutbox";
 import { PlayButton } from "../player";
 import { Hero } from "./music/shared";
 import type { PlaylistOk, PlaylistPage as PlaylistData } from "../../shared/playlists";
@@ -69,7 +70,7 @@ export function PlaylistPage() {
         const actions = (
           <>
             <PlayButton queue={p.tracks} label={t("music.playPlaylist")} />
-            {p.mine && (
+            {p.mine ? (
               <>
                 <Button kind="btn ghost" onClick={() => setEdit({ title: p.title, description: p.description })}>
                   {t("music.editDetails")}
@@ -78,6 +79,8 @@ export function PlaylistPage() {
                   {t("music.delete")}
                 </Button>
               </>
+            ) : (
+              <ReportButton type="playlist" id={p.id} />
             )}
           </>
         );

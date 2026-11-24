@@ -177,6 +177,7 @@ export default {
   eventNotFound: "इव्हेंट सापडला नाही",
   staffOnly: "फक्त स्टाफसाठी",
   adminsOnly: "फक्त अॅडमिनसाठी",
+  notWhileImpersonating: "वापरकर्ता म्हणून वावरताना या खात्याचे साइन-इन तपशील बदलता येत नाहीत",
   confirmEmailFirst:
     "कृपया आधी तुमचा ईमेल पत्ता निश्चित करा. तुम्हाला पडताळणी ईमेल मिळाला असेल. मिळाला नसल्यास, तुम्ही तो सेटिंग्जमध्ये खाते विभागातून पुन्हा पाठवू शकता.",
   kindArtistsAlbumsTracksTags: "kind हे artists, albums, tracks किंवा tags असावे",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "ग्रुपचे नाव जास्तीत जास्त {max} अक्षरांचे असू शकते",
   cantAddUser: "तुम्ही {username} ला जोडू शकत नाही",
   groupTooBig: "ग्रुपमध्ये जास्तीत जास्त {max} लोक असू शकतात",
+  playlistFull: "प्लेलिस्टमध्ये जास्तीत जास्त {max} ट्रॅक असू शकतात",
   messageTooLong: "संदेश जास्तीत जास्त {max} अक्षरांचे असू शकतात",
   alreadyInGroup: "{username} आधीच या ग्रुपमध्ये आहे",
   accountNoLongerExists: "हे खाते आता अस्तित्वात नाही",

@@ -1,7 +1,7 @@
 import { requireItem, requireTrack } from "../catalog/service";
-import { confirmed, need } from "../guards";
+import { confirmed, need, poster } from "../guards";
 import { Router, throttle, type Body } from "../http";
-import { requireUser } from "../users/service";
+import { requireVisibleUser } from "../users/service";
 import * as repo from "./repo";
 import type { ObsessionCreated, ObsessionRemoved, Obsessions } from "../../shared/obsessions";
 import { wantCovers } from "../metadata/wanted";
@@ -16,12 +16,12 @@ async function trackId(b: Body): Promise<number> {
 }
 
 router.get<Obsessions>("/api/user/obsessions", async (c) => {
-  const u = await requireUser(c.q.get("name"));
+  const u = await requireVisibleUser(c.q.get("name"), c.user);
   return { items: wantCovers(await repo.obsessionsOf(u.id, c.user?.id), (r) => r.trackId) };
 });
 
 router.post<ObsessionCreated>("/api/obsessions", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(poster(c));
   await throttle(`obsession:${u.id}`, 30, 3600);
   const id = await trackId(c.body);
   const comment = String(c.body.comment || "")

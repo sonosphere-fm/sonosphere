@@ -2,7 +2,7 @@
 // player's own key and signature stay valid, and what Last.fm accepts is copied into the user's listening.
 import * as Sentry from "@sentry/bun";
 import { findTrack } from "../catalog/repo";
-import { ipOf } from "../http";
+import { ipOf, readCapped } from "../http";
 import { setLoved } from "../listening/repo";
 import { resolve, scrobbleMany, setNowPlaying } from "../listening/service";
 import { appIdByKey } from "../apps/repo";
@@ -45,12 +45,13 @@ export async function handleRelay(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const token = url.pathname.split("/")[2] ?? "";
   const type = req.headers.get("content-type");
-  const size = Number(req.headers.get("content-length") || 0);
-  const body = req.method === "POST" && size <= MAX_BODY ? await req.text().catch(() => "") : "";
+  const empty = new Uint8Array();
+  const raw = req.method === "POST" ? await readCapped(req, MAX_BODY).catch(() => empty) : empty;
+  const body = raw ? new TextDecoder().decode(raw) : "";
   const p = paramsOf(url, body, type);
   const json = p.format === "json";
 
-  if (size > MAX_BODY || body.length > MAX_BODY) return failed(json, 6, "Request too large", 413);
+  if (!raw) return failed(json, 6, "Request too large", 413);
   const slow = await throttled(`compat:${ipOf(req)}`, json);
   if (slow) return slow;
   const userId = await userOf(token);

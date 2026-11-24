@@ -33,6 +33,7 @@ const ACTION: Record<string, AdminKey> = {
   "user.delete": "admin.actionUserDelete",
   "user.impersonate": "admin.actionUserImpersonate",
   "user.impersonate.stop": "admin.actionUserImpersonateStop",
+  "user.impersonate.request": "admin.actionUserImpersonateRequest",
   "user.clear-scrobbles": "admin.actionUserClearScrobbles",
   "note.add": "admin.actionNoteAdd",
   "note.delete": "admin.actionNoteDelete",

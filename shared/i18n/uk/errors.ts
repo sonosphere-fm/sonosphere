@@ -177,6 +177,7 @@ export default {
   eventNotFound: "Подію не знайдено",
   staffOnly: "Лише для команди",
   adminsOnly: "Лише для адміністраторів",
+  notWhileImpersonating: "Не можна змінювати дані для входу, діючи від імені користувача",
   confirmEmailFirst:
     "Спершу підтвердь свою адресу електронної пошти. Ти мав отримати лист із підтвердженням. Якщо ні, надішли його знову в Налаштуваннях, у розділі «Обліковий запис».",
   kindArtistsAlbumsTracksTags: "kind має бути artists, albums, tracks або tags",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "Назва групи може мати до {max} символів",
   cantAddUser: "Не можна додати {username}",
   groupTooBig: "У групі може бути до {max} людей",
+  playlistFull: "У плейлисті може бути до {max} треків",
   messageTooLong: "Повідомлення може мати до {max} символів",
   alreadyInGroup: "{username} уже в цій групі",
   accountNoLongerExists: "Цей обліковий запис більше не існує",

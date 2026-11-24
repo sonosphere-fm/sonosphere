@@ -177,6 +177,7 @@ export default {
   eventNotFound: "ایونٹ نہیں ملا",
   staffOnly: "صرف عملے کے لیے",
   adminsOnly: "صرف ایڈمنز کے لیے",
+  notWhileImpersonating: "صارف کے طور پر کام کرتے ہوئے آپ اس اکاؤنٹ کی سائن اِن تفصیلات نہیں بدل سکتے",
   confirmEmailFirst:
     "براہ کرم پہلے اپنے ای میل پتے کی تصدیق کریں۔ آپ کو تصدیقی ای میل مل جانی چاہیے تھی۔ اگر نہیں ملی تو آپ اسے ترتیبات میں اکاؤنٹ کے تحت دوبارہ بھیج سکتے ہیں۔",
   kindArtistsAlbumsTracksTags: "kind کی ویلیو artists، albums، tracks یا tags ہونی چاہیے",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "گروپ کا نام زیادہ سے زیادہ {max} حروف کا ہو سکتا ہے",
   cantAddUser: "آپ {username} کو شامل نہیں کر سکتے",
   groupTooBig: "گروپ میں زیادہ سے زیادہ {max} لوگ ہو سکتے ہیں",
+  playlistFull: "پلے لسٹ میں زیادہ سے زیادہ {max} ٹریکس ہو سکتے ہیں",
   messageTooLong: "پیغامات زیادہ سے زیادہ {max} حروف کے ہو سکتے ہیں",
   alreadyInGroup: "{username} پہلے سے اس گروپ میں ہیں",
   accountNoLongerExists: "یہ اکاؤنٹ اب موجود نہیں",

@@ -1,7 +1,7 @@
 import { requireItem } from "../catalog/service";
 import { adminOnly, confirmed, need, poster } from "../guards";
 import { bad, fail, ipOf, limit, missing, Router, type Ctx } from "../http";
-import { getJson, setJson } from "../kv";
+import { exclusive, getJson, setJson } from "../kv";
 import { store } from "../storage";
 import { caps, spendRead } from "../storage/budget";
 import { convert, sniff } from "./process";
@@ -37,10 +37,16 @@ async function siteBytes(): Promise<number> {
   return n;
 }
 
-// Store converted WebP or animation-preserving GIF, always stripped of metadata.
+// Store converted WebP or animation-preserving GIF, always stripped of metadata. One upload per user at a time,
+// so parallel uploads can't all fit under the space cap.
 async function storeImage(c: Ctx, userId: number, preserveGif = false): Promise<string> {
   await limit(`upload:${userId}`, 20, 3600, "tooManyUploadsWaitWhile");
   await limit(`upload-ip:${ipOf(c.req)}`, 40, 3600, "tooManyUploadsWaitWhile");
+  const stored = await exclusive(`upload-lock:${userId}`, 60_000, () => convertAndSave(c, userId, preserveGif));
+  return stored ?? fail(429, "tooManyUploadsWaitWhile");
+}
+
+async function convertAndSave(c: Ctx, userId: number, preserveGif: boolean): Promise<string> {
   const full = "pictureSpaceFull";
   const used = await repo.bytesBy(userId);
   if (used >= caps.userBytes) fail(403, full);

@@ -177,6 +177,7 @@ export default {
   eventNotFound: "ਇਵੈਂਟ ਨਹੀਂ ਮਿਲਿਆ",
   staffOnly: "ਸਿਰਫ਼ ਸਟਾਫ਼",
   adminsOnly: "ਸਿਰਫ਼ ਐਡਮਿਨ",
+  notWhileImpersonating: "ਵਰਤੋਂਕਾਰ ਵਜੋਂ ਕੰਮ ਕਰਦੇ ਹੋਏ ਤੁਸੀਂ ਇਸ ਖਾਤੇ ਦੇ ਸਾਈਨ-ਇਨ ਵੇਰਵੇ ਨਹੀਂ ਬਦਲ ਸਕਦੇ",
   confirmEmailFirst:
     "ਕਿਰਪਾ ਕਰਕੇ ਪਹਿਲਾਂ ਆਪਣੇ ਈਮੇਲ ਪਤੇ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ। ਤੁਹਾਨੂੰ ਇੱਕ ਪੁਸ਼ਟੀ ਈਮੇਲ ਮਿਲੀ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ। ਜੇ ਨਹੀਂ ਮਿਲੀ, ਤਾਂ ਤੁਸੀਂ ਇਸਨੂੰ ਸੈਟਿੰਗਾਂ ਵਿੱਚ, ਖਾਤਾ ਹੇਠਾਂ, ਦੁਬਾਰਾ ਭੇਜ ਸਕਦੇ ਹੋ।",
   kindArtistsAlbumsTracksTags: "kind ਦਾ ਮੁੱਲ artists, albums, tracks ਜਾਂ tags ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "ਗਰੁੱਪ ਦੇ ਨਾਮ {max} ਅੱਖਰਾਂ ਤੱਕ ਹੋ ਸਕਦੇ ਹਨ",
   cantAddUser: "ਤੁਸੀਂ {username} ਨੂੰ ਨਹੀਂ ਜੋੜ ਸਕਦੇ",
   groupTooBig: "ਗਰੁੱਪਾਂ ਵਿੱਚ {max} ਲੋਕਾਂ ਤੱਕ ਹੋ ਸਕਦੇ ਹਨ",
+  playlistFull: "ਪਲੇਲਿਸਟਾਂ ਵਿੱਚ {max} ਟਰੈਕਾਂ ਤੱਕ ਹੋ ਸਕਦੇ ਹਨ",
   messageTooLong: "ਸੁਨੇਹੇ {max} ਅੱਖਰਾਂ ਤੱਕ ਹੋ ਸਕਦੇ ਹਨ",
   alreadyInGroup: "{username} ਪਹਿਲਾਂ ਹੀ ਇਸ ਗਰੁੱਪ ਵਿੱਚ ਹੈ",
   accountNoLongerExists: "ਇਹ ਖਾਤਾ ਹੁਣ ਮੌਜੂਦ ਨਹੀਂ ਹੈ",

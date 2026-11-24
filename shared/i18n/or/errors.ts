@@ -177,6 +177,7 @@ export default {
   eventNotFound: "ଇଭେଣ୍ଟ ମିଳିଲା ନାହିଁ",
   staffOnly: "କେବଳ ଷ୍ଟାଫ୍",
   adminsOnly: "କେବଳ ଆଡମିନ୍",
+  notWhileImpersonating: "ୟୁଜର ଭାବେ କାର୍ଯ୍ୟ କରିବା ସମୟରେ ଏହି ଆକାଉଣ୍ଟର ସାଇନ୍-ଇନ୍ ବିବରଣୀ ବଦଳାଇ ହେବ ନାହିଁ",
   confirmEmailFirst:
     "ଦୟାକରି ପ୍ରଥମେ ଆପଣଙ୍କ ଇମେଲ୍ ଠିକଣା ନିଶ୍ଚିତ କରନ୍ତୁ। ଆପଣ ଏକ ଯାଞ୍ଚ ଇମେଲ୍ ପାଇଥିବା ଉଚିତ। ଯଦି ପାଇନାହାନ୍ତି, ସେଟିଂସରେ ଆକାଉଣ୍ଟ ଅଧୀନରୁ ଏହାକୁ ପୁଣି ପଠାଇପାରିବେ।",
   kindArtistsAlbumsTracksTags: "kind artists, albums, tracks କିମ୍ବା tags ହେବା ଉଚିତ",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "ଗ୍ରୁପ୍ ନାମ {max} ଅକ୍ଷର ପର୍ଯ୍ୟନ୍ତ ହୋଇପାରେ",
   cantAddUser: "ଆପଣ {username}ଙ୍କୁ ଯୋଡ଼ିପାରିବେ ନାହିଁ",
   groupTooBig: "ଗ୍ରୁପ୍‌ରେ {max} ଜଣ ପର୍ଯ୍ୟନ୍ତ ରହିପାରିବେ",
+  playlistFull: "ପ୍ଲେଲିଷ୍ଟରେ {max} ଟି ଟ୍ରାକ୍ ପର୍ଯ୍ୟନ୍ତ ରହିପାରିବ",
   messageTooLong: "ବାର୍ତ୍ତା {max} ଅକ୍ଷର ପର୍ଯ୍ୟନ୍ତ ହୋଇପାରେ",
   alreadyInGroup: "{username} ପୂର୍ବରୁ ଏହି ଗ୍ରୁପ୍‌ରେ ଅଛନ୍ତି",
   accountNoLongerExists: "ଏହି ଆକାଉଣ୍ଟ ଆଉ ନାହିଁ",

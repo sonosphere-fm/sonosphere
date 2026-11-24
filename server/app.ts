@@ -28,6 +28,10 @@ async function load() {
   return { assets, html: await page.text(), guestHome: await Bun.file(`${DIST}/home.html`).text() };
 }
 
+const SCRIPTS = "'self' https://plausible.sonosphere.fm https://challenges.cloudflare.com";
+const policy = (nonce: string) =>
+  `script-src ${SCRIPTS} 'nonce-${nonce}'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'`;
+
 const escapeScript = (json: string) =>
   json.replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, (c) => `\\u${c.charCodeAt(0).toString(16)}`);
 
@@ -58,13 +62,16 @@ export async function appRoutes() {
     const home = /^\/+$/u.test(url.pathname);
     const publicHome = home && !viewer;
     const seo = home && viewer ? { ...found, title: TITLES.home } : found;
+    const nonce = crypto.randomUUID().replaceAll("-", "");
     const page = (publicHome ? guestHome : html)
       .replace('<html lang="en">', () => `<html lang="en"${scheme}>`)
       .replace(/<title>[^<]*<\/title>/, () => seoHead(seo))
       .replace(/<div id=["']?root["']?>/, (root) => (publicHome ? root : root + seoContent(seo)))
-      .replace("</head>", () => `<script>window.__ME=${data}</script></head>`);
+      .replace("</head>", () => `<script>window.__ME=${data}</script></head>`)
+      .replace(/<script(?=[\s>])/g, `<script nonce="${nonce}"`);
     const headers = new Headers({
       "Content-Type": "text/html; charset=utf-8",
+      "Content-Security-Policy": policy(nonce),
       ...(home && {
         Link: "</api/home>; rel=preload; as=fetch; crossorigin=anonymous; fetchpriority=low, </api/site>; rel=preload; as=fetch; crossorigin=anonymous; fetchpriority=low",
       }),

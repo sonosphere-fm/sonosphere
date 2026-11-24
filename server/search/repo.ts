@@ -96,11 +96,13 @@ export function searchUsers({ term, limit, offset }: Query): Promise<FoundUser[]
     .select({ c: sql<number>`COALESCE(SUM(${userArtists.plays}), 0)` })
     .from(userArtists)
     .where(eq(userArtists.userId, users.id));
-  const playcount = sql<number>`(${plays})`.as("playcount");
+  // private listeners appear without their play count
+  const playcount = sql<number>`(CASE WHEN ${users.privateListening} THEN 0 ELSE (${plays}) END)`.as("playcount");
+  const named = or(matches(users.usernameNorm, like(term)), matches(sql`lower(${users.realname})`, like(term)));
   return db
     .select({ ...publicCols, playcount })
     .from(users)
-    .where(or(matches(users.usernameNorm, like(term)), matches(sql`lower(${users.realname})`, like(term))))
+    .where(and(named, eq(users.banned, false)))
     .orderBy(desc(playcount))
     .limit(limit)
     .offset(offset);

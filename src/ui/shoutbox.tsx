@@ -25,7 +25,7 @@ export function ReportButton({
   open: forced,
   onClose,
 }: {
-  type: "shout" | "wiki" | "journal" | "user" | "dm" | "group";
+  type: "shout" | "wiki" | "journal" | "event" | "playlist" | "obsession" | "user" | "dm" | "group";
   id: number;
   label?: string;
   open?: boolean;

@@ -178,6 +178,7 @@ export default {
   eventNotFound: "நிகழ்வு கிடைக்கவில்லை",
   staffOnly: "பணியாளர்களுக்கு மட்டும்",
   adminsOnly: "நிர்வாகிகளுக்கு மட்டும்",
+  notWhileImpersonating: "பயனராகச் செயல்படும்போது இந்தக் கணக்கின் உள்நுழைவு விவரங்களை மாற்ற முடியாது",
   confirmEmailFirst:
     "முதலில் உங்கள் மின்னஞ்சல் முகவரியை உறுதிப்படுத்துங்கள். உங்களுக்கு ஒரு சரிபார்ப்பு மின்னஞ்சல் வந்திருக்க வேண்டும். வரவில்லை என்றால், அமைப்புகளில் கணக்கு பகுதியிலிருந்து மீண்டும் அனுப்பலாம்.",
   kindArtistsAlbumsTracksTags: "kind என்பது artists, albums, tracks அல்லது tags ஆக இருக்க வேண்டும்",
@@ -315,6 +316,7 @@ export default {
   groupNameTooLong: "குழுப் பெயர்கள் {max} எழுத்துகள் வரை இருக்கலாம்",
   cantAddUser: "{username} ஐச் சேர்க்க முடியாது",
   groupTooBig: "குழுக்களில் {max} பேர் வரை இருக்கலாம்",
+  playlistFull: "பிளேலிஸ்ட்களில் {max} பாடல்கள் வரை இருக்கலாம்",
   messageTooLong: "செய்திகள் {max} எழுத்துகள் வரை இருக்கலாம்",
   alreadyInGroup: "{username} ஏற்கனவே இந்தக் குழுவில் உள்ளார்",
   accountNoLongerExists: "இந்தக் கணக்கு இனி இல்லை",

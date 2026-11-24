@@ -174,6 +174,7 @@ export default {
   eventNotFound: "Event not found",
   staffOnly: "Staff only",
   adminsOnly: "Admins only",
+  notWhileImpersonating: "You can't change this account's sign-in details while acting as its user",
   confirmEmailFirst:
     "Please confirm your email address first. You should have received a verification email. If you didn't, you can resend it from Settings, under Account.",
   kindArtistsAlbumsTracksTags: "kind must be artists, albums, tracks or tags",
@@ -315,6 +316,7 @@ export default {
   groupNameTooLong: "Group names can be up to {max} characters",
   cantAddUser: "You can't add {username}",
   groupTooBig: "Groups can have up to {max} people",
+  playlistFull: "Playlists can have up to {max} tracks",
   messageTooLong: "Messages can be up to {max} characters",
   alreadyInGroup: "{username} is already in this group",
   accountNoLongerExists: "This account no longer exists",

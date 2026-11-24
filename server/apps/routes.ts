@@ -1,5 +1,5 @@
 import { checkTurnstile } from "../auth/turnstile";
-import { confirmed, need } from "../guards";
+import { confirmed, need, owner } from "../guards";
 import { bad, ipOf, missing, Router, throttle } from "../http";
 import { clean, now, rid } from "../util";
 import * as repo from "./repo";
@@ -32,7 +32,7 @@ router.get<Apps>("/api/apps", async (c) => {
 });
 
 router.post<AppOk>("/api/apps", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(owner(c));
   const name = clean(c.body.name, 60) || bad("giveApplicationName");
   const cb = callbackUrl(c.body.callbackUrl);
   await throttle(`app-create:${u.id}`, 5, 86_400, "tooManyAppsToday");
@@ -72,7 +72,7 @@ router.get<AppInfo>(
 
 // Desktop sign-in brings the token from auth.getToken; web sign-in brings none, so one is made here, already approved.
 router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
-  const u = need(c);
+  const u = owner(c);
   const apiKey = String(c.body.api_key ?? "");
   const app = (await repo.appByKey(apiKey)) ?? missing("applicationNotFound");
   const cb = callbackUrl(c.body.cb);
@@ -97,7 +97,7 @@ router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
 
 // for ListenBrainz-compatible players (served at /1/); shown once, and listed with the connected applications
 router.post<ListenToken>("/api/apps/listen-token", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(owner(c));
   await throttle(`listen-token:${u.id}`, 10, 86_400, "tooManyTokensToday");
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "listentoken");
   const token = crypto.randomUUID();
@@ -107,7 +107,7 @@ router.post<ListenToken>("/api/apps/listen-token", async (c) => {
 
 // a link to set as a player's Last.fm server, passing calls on to Last.fm and copying scrobbles here
 router.post<ListenToken>("/api/apps/relay-token", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(owner(c));
   await throttle(`listen-token:${u.id}`, 10, 86_400, "tooManyTokensToday");
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "listentoken");
   const token = crypto.randomUUID();

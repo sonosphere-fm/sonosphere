@@ -6,6 +6,9 @@ import { albums, artists, playlists, playlistTracks, tracks, users } from "../db
 import { lovedBy } from "../users/repo";
 import { first, now } from "../util";
 import type { PlaylistCard, PlaylistTrack } from "../../shared/playlists";
+import { fail } from "../http";
+
+const PLAYLIST_MAX = 1000;
 
 export type Playlist = typeof playlists.$inferSelect;
 type PlaylistWithOwner = Playlist & { owner: string };
@@ -72,7 +75,8 @@ export function tracksOn(playlistId: number, viewerId: number | undefined): Prom
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(eq(playlistTracks.playlistId, playlistId))
-    .orderBy(asc(playlistTracks.position), asc(playlistTracks.id));
+    .orderBy(asc(playlistTracks.position), asc(playlistTracks.id))
+    .limit(PLAYLIST_MAX);
 }
 
 export async function createPlaylist(userId: number, title: string, description: string): Promise<number> {
@@ -114,10 +118,13 @@ export async function deletePlaylist(id: number): Promise<void> {
 
 export async function appendTrack(playlistId: number, trackId: number): Promise<void> {
   await transact(async (tx) => {
+    // one add at a time per playlist, so the cap and positions hold
+    await tx.select({ id: playlists.id }).from(playlists).where(eq(playlists.id, playlistId)).for("update");
     const [last] = await tx
-      .select({ p: sql<number>`COALESCE(MAX(${playlistTracks.position}), 0)` })
+      .select({ p: sql<number>`COALESCE(MAX(${playlistTracks.position}), 0)`, n: count() })
       .from(playlistTracks)
       .where(eq(playlistTracks.playlistId, playlistId));
+    if ((last?.n ?? 0) >= PLAYLIST_MAX) fail(400, "playlistFull", { max: PLAYLIST_MAX });
     await tx.insert(playlistTracks).values({ playlistId, trackId, position: (last?.p ?? 0) + 1, addedAt: now() });
   });
 }

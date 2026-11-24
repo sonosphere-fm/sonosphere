@@ -5,9 +5,13 @@ import { range } from "../listening/period";
 import { counts, nowPlaying, recent, setLoved, top } from "../listening/repo";
 import { resolve, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { similarArtists, similarTracks } from "../recommend/service";
+import { confirmed } from "../guards";
+import { fail as refuse, limit } from "../http";
 import { addTags, removeTag, taggerCount, taggingCount, topTags } from "../tags/repo";
+import { namesFrom } from "../tags/service";
+import { limit as trustLimit } from "../trust/service";
 import { findById, findByName, followingCount, lovedCount, type User } from "../users/repo";
-import { now, norm, rid } from "../util";
+import { like, now, norm, rid } from "../util";
 import { latestWiki } from "../wiki/repo";
 import * as repo from "./repo";
 
@@ -95,6 +99,16 @@ async function userOf(name: unknown, fallback?: number): Promise<User> {
 
 // An empty chart for someone who keeps their listening private, or undefined when it may be read.
 const shut = (u: User) => (u.privateListening ? { items: [], total: 0 } : undefined);
+
+const listeningOpen = (u: User, me: number | undefined) => u.id === me || !(u.privateListening || u.banned);
+
+// As in the main search, % and _ are plain characters.
+// A single character matches most of the catalogue, so it only finds exact names.
+function searchFor(v: unknown): string {
+  const q = norm(text(v)) || fail(6, "Invalid parameters - Your request is missing a required parameter");
+  const pattern = like(q);
+  return q.length < 2 ? pattern.slice(1, -1) : pattern;
+}
 
 const enc = (s: string) => encodeURIComponent(s).replace(/%20/g, "+");
 
@@ -196,14 +210,13 @@ async function tagMutation(c: Call, type: string, id: number, remove: boolean): 
   const uid = await session(c);
   if (remove) {
     await removeTag(uid, type, id, text(c.p.tag));
-  } else {
-    const names = String(c.p.tags || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 10);
-    await addTags(uid, type, id, names);
+    return {};
   }
+  const u = await userOf(undefined, uid);
+  if (u.suspended) refuse(403, "accountSuspendedFromPosting");
+  confirmed(u);
+  await trustLimit(u, `tag:${u.id}`, 100, 3600, "tooManyTagEdits");
+  await addTags(u.id, type, id, namesFrom(c.p.tags));
   return {};
 }
 
@@ -238,12 +251,14 @@ const methods: Record<string, Method> = {
     const t = (await repo.findToken(key(c.p.token), c.app.id)) ?? fail(4, "Invalid authentication token supplied");
     if (!t.userId) fail(14, "This token has not been authorized");
     if (t.createdAt < now() - 3600) fail(15, "This token has expired");
-    await repo.deleteToken(key(c.p.token));
+    if (!(await repo.takeToken(key(c.p.token)))) fail(4, "Invalid authentication token supplied");
     return newSession(c, t.userId);
   },
   "auth.getmobilesession": async (c) => {
     signed(c);
-    const u = await findByName(text(c.p.username));
+    const name = text(c.p.username);
+    const u = await findByName(name);
+    await limit(u ? `login-id:${u.id}` : `login-as:${norm(name)}`, 30, 3600);
     const ok = u && !u.banned && !!u.passwordHash && (await Bun.password.verify(text(c.p.password), u.passwordHash));
     if (!ok) fail(4, "Authentication Failed - You do not have permissions to access the service");
     return newSession(c, u.id);
@@ -405,17 +420,18 @@ const methods: Record<string, Method> = {
   },
   "user.gettoptags": async (c) => {
     const u = await userOf(c.p.user);
-    const rows = await repo.userTopTags(u.id, c.pg.limit);
+    const rows = (await tagsOpen(c, u)) ? await repo.userTopTags(u.id, c.pg.limit) : [];
     return { toptags: { tag: rows.map((t) => ({ name: t.name, count: String(t.count), url: tagUrl(c, t.name) })) } };
   },
 
   "artist.getinfo": async (c) => {
+    const me = c.p.sk ? await session(c) : undefined;
     const a = await artistOf(c.p);
     const n = await counts({ artistId: a.id });
     const wiki = await latestWiki("artist", a.id);
+    const listener = c.p.username ? await userOf(c.p.username) : null;
     let mine = {};
-    if (c.p.username) {
-      const listener = await userOf(c.p.username);
+    if (listener && listeningOpen(listener, me)) {
       const theirs = await counts({ artistId: a.id, userId: listener.id });
       mine = { userplaycount: String(theirs.playcount) };
     }
@@ -463,7 +479,7 @@ const methods: Record<string, Method> = {
     return { toptags: { ...(await tagsShape(c, "artist", a.id)), "@attr": { artist: a.name } } };
   },
   "artist.search": async (c) => {
-    const pattern = `%${norm(text(c.p.artist))}%`;
+    const pattern = searchFor(c.p.artist);
     const rows = await repo.searchArtists(pattern, c.pg.limit, c.pg.offset);
     return {
       results: searchResults(c.p.artist, {
@@ -507,7 +523,7 @@ const methods: Record<string, Method> = {
     return { toptags: { ...(await tagsShape(c, "album", al.id)), "@attr": { artist: al.artist, album: al.title } } };
   },
   "album.search": async (c) => {
-    const pattern = `%${norm(text(c.p.album))}%`;
+    const pattern = searchFor(c.p.album);
     const rows = await repo.searchAlbums(pattern, c.pg.limit, c.pg.offset);
     const album = rows.map((a) => ({
       name: a.title,
@@ -524,15 +540,19 @@ const methods: Record<string, Method> = {
   },
 
   "track.getinfo": async (c) => {
+    const me = c.p.sk ? await session(c) : undefined;
     const t = await trackOf(c.p);
     const n = await counts({ trackId: t.id });
     const wiki = await latestWiki("track", t.id);
     const al = t.albumId ? await findItem("album", t.albumId) : null;
-    const uid = c.p.username ? (await userOf(c.p.username)).id : 0;
+    const listener = c.p.username ? await userOf(c.p.username) : null;
     let mine = {};
-    if (uid) {
-      const theirs = await counts({ trackId: t.id, userId: uid });
-      mine = { userplaycount: String(theirs.playcount), userloved: (await hasLoved(uid, t.id)) ? "1" : "0" };
+    if (listener && listeningOpen(listener, me)) {
+      const theirs = await counts({ trackId: t.id, userId: listener.id });
+      mine = {
+        userplaycount: String(theirs.playcount),
+        userloved: (await hasLoved(listener.id, t.id)) ? "1" : "0",
+      };
     }
     return {
       track: {
@@ -560,7 +580,7 @@ const methods: Record<string, Method> = {
     return { toptags: { ...(await tagsShape(c, "track", t.id)), "@attr": { artist: t.artist, track: t.title } } };
   },
   "track.search": async (c) => {
-    const pattern = `%${norm(text(c.p.track))}%`;
+    const pattern = searchFor(c.p.track);
     const artist = c.p.artist ? norm(text(c.p.artist)) : null;
     const rows = await repo.searchTracks(pattern, artist, c.pg.limit, c.pg.offset);
     const track = rows.map((t) => ({

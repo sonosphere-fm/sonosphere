@@ -177,6 +177,7 @@ export default {
   eventNotFound: "找不到活動",
   staffOnly: "僅限管理團隊",
   adminsOnly: "僅限管理員",
+  notWhileImpersonating: "以使用者身分操作時無法變更此帳號的登入資訊",
   confirmEmailFirst:
     "請先確認你的電子郵件地址。你應該已收到一封驗證郵件。如果沒有，可以在「設定」的「帳號」中重新寄送。",
   kindArtistsAlbumsTracksTags: "kind 必須為 artists、albums、tracks 或 tags",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "群組名稱最多 {max} 個字元",
   cantAddUser: "你不能新增 {username}",
   groupTooBig: "群組最多 {max} 人",
+  playlistFull: "播放清單最多 {max} 首曲目",
   messageTooLong: "訊息最多 {max} 個字元",
   alreadyInGroup: "{username} 已在這個群組中",
   accountNoLongerExists: "此帳號已不存在",

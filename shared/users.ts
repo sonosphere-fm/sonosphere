@@ -73,7 +73,7 @@ export type Person = PublicUser & {
   isFollowing: boolean;
   lastTrack: { title: string; artist: string; playedAt: number } | null;
 };
-export type People = { items: Person[] };
+export type People = { items: Person[]; total: number } & Paging;
 export type Neighbours = { items: Neighbour[]; hidden?: true };
 
 export type TaggedItem = { type: string; id: number; name: string | null; artist: string | null };

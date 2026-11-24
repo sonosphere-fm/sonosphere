@@ -1,7 +1,7 @@
 import { requestLocale, tr } from "../i18n";
-import { confirmed, need } from "../guards";
+import { confirmed, need, poster } from "../guards";
 import { bad, missing, oneOf, Router, throttle } from "../http";
-import { requireUser } from "../users/service";
+import { requireVisibleUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
 import { requireOwn, templateTracks, trackToAdd } from "./service";
@@ -17,7 +17,7 @@ import { wantCovers } from "../metadata/wanted";
 export const router = new Router();
 
 router.get<UserPlaylists>("/api/user/playlists", async (c) => {
-  const u = await requireUser(c.q.get("name"));
+  const u = await requireVisibleUser(c.q.get("name"), c.user);
   return { items: await repo.playlistsOf(u.id) };
 });
 
@@ -35,7 +35,7 @@ router.get<PlaylistPage>("/api/playlist/:id", async (c) => {
 });
 
 router.post<PlaylistCreated>("/api/playlists", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(poster(c));
   const title = clean(c.body.title, 100) || bad("givePlaylistTitle");
   await throttle(`playlist:${u.id}`, 30, 86_400, "tooManyPlaylistsToday");
   const description = String(c.body.description || "")
@@ -45,7 +45,7 @@ router.post<PlaylistCreated>("/api/playlists", async (c) => {
 });
 
 router.post<PlaylistCreated>("/api/playlists/template", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(poster(c));
   const template = oneOf(c.body.template, TEMPLATE_IDS) ?? bad("unknownTemplate");
   const ids = await templateTracks(u.id, template);
   if (!ids.length) bad("notEnoughListeningForTemplate");
@@ -57,7 +57,7 @@ router.post<PlaylistCreated>("/api/playlists/template", async (c) => {
 });
 
 router.patch<PlaylistOk>("/api/playlist/:id", async (c) => {
-  const p = await requireOwn(Number(c.params[0]), confirmed(need(c)).id);
+  const p = await requireOwn(Number(c.params[0]), confirmed(poster(c)).id);
   const title = clean(c.body.title ?? p.title, 100) || p.title;
   const description = String(c.body.description ?? p.description)
     .trim()

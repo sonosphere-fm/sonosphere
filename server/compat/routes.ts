@@ -1,5 +1,5 @@
 import { ApiError, call, type Params, type Reply } from "./service";
-import { ipOf, limit } from "../http";
+import { HttpError, ipOf, limit } from "../http";
 import { hits } from "../kv";
 import * as Sentry from "@sentry/bun";
 
@@ -95,6 +95,12 @@ export async function handleCompat(req: Request): Promise<Response> {
     return ok(json, await call(p, url.origin));
   } catch (e) {
     if (e instanceof ApiError) return failed(json, e.code, e.message, FORBIDDEN.includes(e.code) ? 403 : 400);
+    // rules shared with the website, such as its rate limits and who may tag
+    if (e instanceof HttpError) {
+      const r = failed(json, e.status === 429 ? 29 : 6, e.message, e.status);
+      if (e.retryAfter) r.headers.set("Retry-After", String(e.retryAfter));
+      return r;
+    }
     console.error(e);
     Sentry.captureException(e);
     return failed(json, 16, "There was a temporary error processing your request. Please try again", 500);

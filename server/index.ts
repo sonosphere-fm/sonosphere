@@ -29,6 +29,7 @@ import { syncAdmins } from "./site/roles";
 import { pg } from "./db/client";
 import { readiness } from "./readiness";
 import { llmsTxt } from "./developer-docs";
+import { HTTPS } from "./auth/session";
 
 const production = process.env.NODE_ENV === "production";
 
@@ -64,12 +65,42 @@ const DISCORD_INVITE = "https://discord.gg/sonosphere";
 
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };
 
+// Nothing here is meant to be framed by another site: now-playing widgets fetch JSON rather than embedding a page.
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "Content-Security-Policy": "frame-ancestors 'none'",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  ...(HTTPS && { "Strict-Transport-Security": "max-age=31536000; includeSubDomains" }),
+};
+
+type RouteFn = (req: Request, srv: Server<SocketData>) => Response | undefined | Promise<Response | undefined>;
+const withHeaders =
+  (fn: RouteFn): RouteFn =>
+  async (req, srv) => {
+    const res = await fn(req, srv);
+    if (!res) return res;
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+      if (!res.headers.has(name)) res.headers.set(name, value);
+    }
+    return res;
+  };
+// the development page bundle is served by Bun itself and stays as it is
+const secured = <T extends Record<string, unknown>>(routes: T): T =>
+  Object.fromEntries(
+    Object.entries(routes).map(([path, h]) => [path, typeof h === "function" ? withHeaders(h as RouteFn) : h])
+  ) as T;
+
+// Above the largest real upload: a 20,000-row import chunk is a few MB and pictures stop at 8 MB.
+const MAX_REQUEST_BYTES = 32 * 1024 * 1024;
+
 const server = Bun.serve<SocketData>({
   port: Number(process.env.PORT) || 3000,
   hostname: production ? "127.0.0.1" : undefined,
   reusePort: true,
+  maxRequestBodySize: MAX_REQUEST_BYTES,
   development: production ? false : { hmr: true, console: false },
-  routes: {
+  routes: secured({
     "/llms.txt": llmsTxt,
     "/health/ready": () => readiness(() => pg`SELECT 1`),
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv),
@@ -85,7 +116,7 @@ const server = Bun.serve<SocketData>({
     "/1/*": handleListenBrainz,
     "/relay/*": handleRelay,
     ...app,
-  },
+  }),
   websocket: {
     ...websocket,
     open(ws) {
@@ -101,8 +132,12 @@ const server = Bun.serve<SocketData>({
 });
 
 // intervals live on globalThis so hot reload replaces them instead of stacking
-const g = globalThis as { __spinHousekeeping?: ReturnType<typeof setInterval> };
+const g = globalThis as {
+  __spinHousekeeping?: ReturnType<typeof setInterval>;
+  __spinFirstTidy?: ReturnType<typeof setTimeout>;
+};
 clearInterval(g.__spinHousekeeping);
+clearTimeout(g.__spinFirstTidy);
 const tidy = () => {
   syncCorrections().catch((e) => {
     console.error(e);
@@ -124,6 +159,8 @@ const tidy = () => {
   });
 };
 g.__spinHousekeeping = setInterval(tidy, 10 * 60 * 1000);
+// deploys can come more often than the interval, so each boot also runs it once
+g.__spinFirstTidy = setTimeout(tidy, 60_000);
 
 const playing = globalThis as { __spinPlayingExpiry?: ReturnType<typeof setInterval> };
 clearInterval(playing.__spinPlayingExpiry);

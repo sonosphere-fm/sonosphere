@@ -1,7 +1,7 @@
 import { requireItem } from "../catalog/service";
-import { confirmed, need } from "../guards";
+import { confirmed, need, poster } from "../guards";
 import { fail, oneOf, paging, Router, throttle } from "../http";
-import { requireUser } from "../users/service";
+import { requireVisibleUser } from "../users/service";
 import { norm, now } from "../util";
 import * as repo from "./repo";
 import { whereFrom } from "./where";
@@ -21,7 +21,7 @@ export const router = new Router();
 const ANSWERS = ["going", "interested"] as const;
 
 router.get<UserEvents>("/api/user/events", async (c) => {
-  const u = await requireUser(c.q.get("name"));
+  const u = await requireVisibleUser(c.q.get("name"), c.user);
   return { items: await repo.listEvents({ attendee: u.id }, c.user?.id, "desc", 100) };
 });
 
@@ -67,7 +67,7 @@ router.get<EventPlaces>("/api/events/places", async (c) => {
 router.get<EventPage>("/api/event/:id", (c) => eventPage(Number(c.params[0]), c.user));
 
 router.post<EventCreated>("/api/events", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(poster(c));
   await throttle(`event:${u.id}`, 10, 86_400, "tooManyEventsToday");
   return { id: await addEvent(c.body, u) };
 });

@@ -694,11 +694,17 @@ export async function handleListenBrainz(req: Request): Promise<Response> {
     const status = matches.length ? 405 : 404;
     return reply(status, { code: status, error: status === 405 ? "Method not allowed" : "Not found" }, rate);
   }
+  let params: string[];
+  try {
+    params = route.re.exec(path)!.slice(1).map(decodeURIComponent);
+  } catch {
+    return reply(400, { code: 400, error: "Malformed URL" }, rate);
+  }
   let viewer: Promise<User | null> | undefined;
   const c: Ctx = {
     req,
     q: url.searchParams,
-    params: route.re.exec(path)!.slice(1).map(decodeURIComponent),
+    params,
     viewer: () => (viewer ??= tokenUser(req, url.searchParams)),
   };
   try {

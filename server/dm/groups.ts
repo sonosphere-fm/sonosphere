@@ -2,14 +2,14 @@ import { fail, HttpError } from "../http";
 import { tr } from "../i18n";
 import type { Locale } from "../../shared/i18n/core";
 import { push } from "../realtime";
-import { blockedEither, findById, type User } from "../users/repo";
+import { blockedAmong, blockedEither, findById, type User } from "../users/repo";
 import { now } from "../util";
 import { mailMessage } from "../notifications/email";
-import { announceRemoved, canPost, DM, dmCounts, dmLimits, gate, tidy } from "./service";
+import { announceRemoved, canPost, DM, dmCounts, dmLimits, gate, opening, tidy } from "./service";
 import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./groups.repo";
 import { checkReaction, reactionsOf, toggle } from "./reactions";
-import { atomically, connection, sentSinceTx } from "./repo";
+import { atomically, connection, followersAmong, sentSinceTx } from "./repo";
 import type { Group, GroupMessage, Member } from "./groups.repo";
 import type {
   DmDone,
@@ -69,16 +69,6 @@ async function checkAddable(me: User, target: User | null, others: number[]): Pr
   return target;
 }
 
-async function addable(me: User, target: DmUser, others: number[]): Promise<boolean> {
-  try {
-    await checkAddable(me, await findById(target.id), others);
-    return true;
-  } catch (e) {
-    if (e instanceof HttpError) return false;
-    throw e;
-  }
-}
-
 const messageShape = (m: GroupMessage, reactions: DmReaction[] = []): DmGroupMessage => ({
   id: m.id,
   from: m.senderId,
@@ -90,22 +80,32 @@ const messageShape = (m: GroupMessage, reactions: DmReaction[] = []): DmGroupMes
   reactions: m.deletedAt ? [] : reactions,
 });
 
-async function shape(group: Group, member: Member, userId: number): Promise<DmGroup> {
-  const last = await repo.lastMessage(group.id, member.clearedId);
-  return {
-    id: group.id,
-    title: group.title,
-    owner: group.ownerId,
-    members: await repo.members(group.id),
-    last: last && messageShape(last),
-    at: group.lastAt,
-    unread: await repo.unreadIn(group.id, Math.max(member.readId, member.clearedId), userId),
-  };
+async function shapeAll(groups: Group[], userId: number): Promise<DmGroup[]> {
+  if (!groups.length) return [];
+  const ids = groups.map((g) => g.id);
+  const [members, lasts, unread] = await Promise.all([
+    repo.membersOf(ids),
+    repo.lastMessages(ids, userId),
+    repo.unreadByGroup(ids, userId),
+  ]);
+  const lastById = new Map(lasts.map((m) => [m.groupId, m]));
+  return groups.map((group) => {
+    const last = lastById.get(group.id);
+    return {
+      id: group.id,
+      title: group.title,
+      owner: group.ownerId,
+      members: members.filter((m) => m.groupId === group.id).map(({ groupId: _, ...person }) => person),
+      last: last ? messageShape(last) : null,
+      at: group.lastAt,
+      unread: unread.get(group.id) ?? 0,
+    };
+  });
 }
 
 const shapeFor = async (groupId: number, userId: number): Promise<DmGroup> => {
-  const { group, member } = await mine(groupId, userId);
-  return shape(group, member, userId);
+  const { group } = await mine(groupId, userId);
+  return (await shapeAll([group], userId))[0]!;
 };
 
 // Sends the new line to everyone now in the group, and tells anyone who is no longer in it.
@@ -124,17 +124,28 @@ async function announced(me: User, groupId: number, messageId: number, gone: num
 }
 
 export async function list(me: User): Promise<DmGroup[]> {
-  const out: DmGroup[] = [];
-  for (const { group, member } of await repo.listGroups(me.id)) out.push(await shape(group, member, me.id));
-  return out;
+  return shapeAll(
+    (await repo.listGroups(me.id)).map((r) => r.group),
+    me.id
+  );
 }
 
 export async function candidates(me: User, groupId: unknown): Promise<DmGroupCandidates> {
   const inGroup = groupId ? await repo.memberIds((await mine(groupId, me.id)).group.id) : [];
-  const users: DmUser[] = [];
-  for (const u of await repo.contacts(me.id)) {
-    if (!inGroup.includes(u.id) && (await addable(me, u, inGroup))) users.push(u);
-  }
+  const contacts = (await repo.contacts(me.id)).filter((u) => !inGroup.includes(u.id));
+  if (!contacts.length) return { users: [], size: GROUP.MAX_MEMBERS };
+  const ids = contacts.map((u) => u.id);
+  const [blocked, following] = await Promise.all([blockedAmong([me.id, ...inGroup], ids), followersAmong(ids, me.id)]);
+  const addable = (u: (typeof contacts)[number]) => {
+    try {
+      opening(me, u, blocked.has(u.id), following.has(u.id));
+      return true;
+    } catch (e) {
+      if (e instanceof HttpError) return false;
+      throw e;
+    }
+  };
+  const users = contacts.filter(addable).map(({ banned: _, dmPolicy: __, ...person }): DmUser => person);
   return { users, size: GROUP.MAX_MEMBERS };
 }
 
@@ -160,7 +171,7 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
       fail(429, "youveStartedLotGroupsToday");
     }
     const group = await repo.createTx(tx, me.id, title, t);
-    for (const p of people) await repo.addMemberTx(tx, group.id, p.id, t);
+    for (const p of people) await repo.addMemberTx(tx, group.id, p.id, t, GROUP.MAX_MEMBERS);
     const names = people.map((p) => p.username).join(", ");
     const line = `${me.username} started the group with ${names}`;
     return { groupId: group.id, id: await repo.addMessageTx(tx, group.id, me.id, line, "created", t) };
@@ -180,7 +191,7 @@ export async function page(locale: Locale, me: User, groupId: unknown, before: n
   if (me.suspended) why = tr(locale, "errors.suspendedFromPostingNotice");
   else if (me.dmMuted) why = tr(locale, "errors.messagingOffNotice");
   return {
-    group: await shape(group, member, me.id),
+    group: (await shapeAll([group], me.id))[0]!,
     messages: shown.map((m) => messageShape(m, reactions.get(m.id))),
     more: rows.length > 50,
     can: !why,
@@ -241,10 +252,9 @@ export async function addMember(me: User, groupId: unknown, userId: unknown): Pr
   const inGroup = await repo.memberIds(group.id);
   const target = await checkAddable(me, await findById(Number(userId) || 0), inGroup);
   if (inGroup.includes(target.id)) fail(400, "alreadyInGroup", { username: target.username });
-  if (inGroup.length >= GROUP.MAX_MEMBERS) fail(400, "groupTooBig", { max: GROUP.MAX_MEMBERS });
   const id = await atomically(async (tx) => {
     const t = now();
-    await repo.addMemberTx(tx, group.id, target.id, t);
+    await repo.addMemberTx(tx, group.id, target.id, t, GROUP.MAX_MEMBERS);
     return repo.addMessageTx(tx, group.id, me.id, `${me.username} added ${target.username}`, "added", t);
   });
   return announced(me, group.id, id);

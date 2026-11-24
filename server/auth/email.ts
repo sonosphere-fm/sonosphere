@@ -1,7 +1,7 @@
 import { and, eq, gt, inArray, isNull, lt, notLike } from "drizzle-orm";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
 import { db, type Conn } from "../db/client";
-import { emailTokens, sessions, users } from "../db/schema";
+import { apiSessions, apiTokens, emailTokens, oauthAccounts, sessions, users } from "../db/schema";
 import { recordChange } from "../account/history";
 import { deleteAccount } from "../account/repo";
 import { bad, fail } from "../http";
@@ -130,6 +130,8 @@ export async function confirmEmail(token: unknown): Promise<{ user: User; approv
       await tx.update(users).set({ email: t.email, emailVerifiedAt: now() }).where(eq(users.id, t.userId));
       await tx.delete(emailTokens).where(eq(emailTokens.userId, t.userId));
       await tx.delete(sessions).where(eq(sessions.userId, t.userId));
+      await tx.delete(apiSessions).where(eq(apiSessions.userId, t.userId));
+      await tx.delete(apiTokens).where(eq(apiTokens.userId, t.userId));
       await recordChange(t.userId, "email", before.email, t.email, tx);
     }
     return { ...t, next: null, oldEmail: before.email };
@@ -173,6 +175,10 @@ export async function resetPassword(token: unknown, passwordHash: string): Promi
       .where(eq(users.id, user.id));
     await tx.delete(emailTokens).where(eq(emailTokens.userId, user.id));
     await tx.delete(sessions).where(eq(sessions.userId, user.id));
+    await tx.delete(apiSessions).where(eq(apiSessions.userId, user.id));
+    await tx.delete(apiTokens).where(eq(apiTokens.userId, user.id));
+    // whoever signed up before the owner proved the address may have left a way back in
+    if (!user.emailVerifiedAt) await tx.delete(oauthAccounts).where(eq(oauthAccounts.userId, user.id));
     return user;
   });
   await send(mail.passwordChangedMail(userLocale(u), u.email, u.username));
@@ -188,7 +194,7 @@ export async function dropExpiredEmailTokens(): Promise<void> {
 // Imported profiles have placeholder addresses (@x.invalid) that can never be confirmed, so they are kept.
 export async function purgeUnverified(): Promise<void> {
   const due = await db
-    .select({ id: users.id, username: users.username })
+    .select({ id: users.id })
     .from(users)
     .where(
       and(
@@ -199,10 +205,10 @@ export async function purgeUnverified(): Promise<void> {
       )
     )
     .limit(200);
-  const purged: string[] = [];
+  let purged = 0;
   for (const u of due) {
     // the condition re-checks in case they confirmed just now
-    if (await deleteAccount(u.id, isNull(users.emailVerifiedAt))) purged.push(u.username);
+    if (await deleteAccount(u.id, isNull(users.emailVerifiedAt))) purged++;
   }
-  if (purged.length) console.log(`purged ${purged.length} unconfirmed account(s): ${purged.join(", ")}`);
+  if (purged) console.log(`purged ${purged} unconfirmed account(s)`);
 }

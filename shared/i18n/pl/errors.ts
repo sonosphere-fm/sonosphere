@@ -177,6 +177,7 @@ export default {
   eventNotFound: "Nie znaleziono wydarzenia",
   staffOnly: "Tylko dla zespołu",
   adminsOnly: "Tylko dla administratorów",
+  notWhileImpersonating: "Nie możesz zmienić danych logowania tego konta, działając jako użytkownik",
   confirmEmailFirst:
     "Najpierw potwierdź swój adres e-mail. Powinien do ciebie dotrzeć e-mail weryfikacyjny. Jeśli nie dotarł, możesz wysłać go ponownie w Ustawieniach, w sekcji Konto.",
   kindArtistsAlbumsTracksTags: "kind musi mieć wartość artists, albums, tracks lub tags",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "Nazwa grupy może mieć najwyżej {max} znaków",
   cantAddUser: "Nie możesz dodać użytkownika {username}",
   groupTooBig: "Grupa może liczyć najwyżej {max} osób",
+  playlistFull: "Playlista może mieć najwyżej {max} utworów",
   messageTooLong: "Wiadomość może mieć najwyżej {max} znaków",
   alreadyInGroup: "{username} jest już w tej grupie",
   accountNoLongerExists: "To konto już nie istnieje",

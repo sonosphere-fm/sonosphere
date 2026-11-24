@@ -28,8 +28,19 @@ export function sized(url: string, small: boolean): string {
   return url;
 }
 
-// a named https host, never an address, so a redirect can't point the fetch inside the network
-const publicHttps = (u: URL) => u.protocol === "https:" && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(u.hostname);
+// Where server/metadata/sources.ts finds pictures: Spotify, Last.fm, and Wikimedia Commons (which redirects to its
+// upload host). Checked on every hop, so a redirect can't point the fetch inside the network.
+const HOSTS = [
+  "i.scdn.co",
+  "image-cdn-ak.spotifycdn.com",
+  "image-cdn-fa.spotifycdn.com",
+  "lastfm.freetls.fastly.net",
+  "lastfm-img.freetls.fastly.net",
+  "lastfm-img2.akamaized.net",
+  "commons.wikimedia.org",
+  "upload.wikimedia.org",
+];
+const allowed = (u: URL) => u.protocol === "https:" && u.port === "" && HOSTS.includes(u.hostname);
 
 async function readCapped(body: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer> | null> {
   const parts: Uint8Array[] = [];
@@ -46,7 +57,7 @@ async function readCapped(body: ReadableStream<Uint8Array>): Promise<Uint8Array<
 export async function fetchRemote(url: string): Promise<Picture | null> {
   let at = new URL(url);
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    if (!publicHttps(at)) return null;
+    if (!allowed(at)) return null;
     const r = await fetch(at, {
       redirect: "manual",
       headers: { "User-Agent": agent() },

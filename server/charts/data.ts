@@ -4,7 +4,7 @@ import type { Viewer } from "../http";
 import { range } from "../listening/period";
 import * as listening from "../listening/repo";
 import { topTags } from "../tags/repo";
-import { canSeeCharts, requireUser } from "../users/service";
+import { canSeeCharts, requireVisibleUser } from "../users/service";
 import { CHART_PERIODS, parseReleaseFilter, type ChartReply, type ChartRequest } from "../../shared/charts";
 
 export type ChartItem = {
@@ -68,7 +68,7 @@ function censorList(text: string, album: boolean): Map<string, boolean> {
 }
 
 export async function gather(req: ChartRequest, viewer: Viewer): Promise<Gathered> {
-  const user = await requireUser(req.username);
+  const user = await requireVisibleUser(req.username, viewer);
   const albums = req.kind === "albums";
   const needed = req.width * req.height;
   const skipWithoutImage = req.skip || req.rainbow;

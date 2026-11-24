@@ -1,5 +1,6 @@
 import { fail, type Ctx, type Viewer } from "./http";
 import { isAdmin, isStaff } from "./site/roles";
+import { impersonating } from "./auth/session";
 
 export const need = (c: Ctx): Viewer => c.user ?? fail(401, "needLogin");
 
@@ -7,6 +8,12 @@ export const need = (c: Ctx): Viewer => c.user ?? fail(401, "needLogin");
 export const poster = (c: Ctx): Viewer => {
   const u = need(c);
   return u.suspended ? fail(403, "accountSuspendedFromPosting") : u;
+};
+
+// an admin acting as someone can't change how that account signs in or mint credentials for it
+export const owner = (c: Ctx): Viewer => {
+  const u = need(c);
+  return impersonating(u, c.actor) ? fail(403, "notWhileImpersonating") : u;
 };
 
 export const staff = (c: Ctx): Viewer => {

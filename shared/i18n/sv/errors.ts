@@ -179,6 +179,7 @@ export default {
   eventNotFound: "Evenemanget hittades inte",
   staffOnly: "Bara för teamet",
   adminsOnly: "Bara för admins",
+  notWhileImpersonating: "Du kan inte ändra kontots inloggningsuppgifter medan du agerar som användaren",
   confirmEmailFirst:
     "Bekräfta din e-postadress först. Du borde ha fått ett verifieringsmejl. Om inte kan du skicka det igen från Inställningar, under Konto.",
   kindArtistsAlbumsTracksTags: "kind måste vara artists, albums, tracks eller tags",
@@ -316,6 +317,7 @@ export default {
   groupNameTooLong: "Gruppnamn får ha upp till {max} tecken",
   cantAddUser: "Du kan inte lägga till {username}",
   groupTooBig: "Grupper kan ha upp till {max} personer",
+  playlistFull: "Spellistor kan ha upp till {max} låtar",
   messageTooLong: "Meddelanden får ha upp till {max} tecken",
   alreadyInGroup: "{username} är redan med i gruppen",
   accountNoLongerExists: "Det här kontot finns inte längre",

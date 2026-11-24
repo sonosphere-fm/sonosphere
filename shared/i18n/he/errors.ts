@@ -177,6 +177,7 @@ export default {
   eventNotFound: "האירוע לא נמצא",
   staffOnly: "לצוות בלבד",
   adminsOnly: "למנהלים בלבד",
+  notWhileImpersonating: "אי אפשר לשנות את פרטי הכניסה של החשבון בזמן פעולה בשם המשתמש",
   confirmEmailFirst:
     "קודם צריך לאמת את כתובת האימייל. אמור היה להגיע אליך אימייל אימות. אם הוא לא הגיע, אפשר לשלוח אותו שוב מההגדרות, תחת חשבון.",
   kindArtistsAlbumsTracksTags: "kind חייב להיות artists, albums, tracks או tags",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "שם קבוצה יכול להכיל עד {max} תווים",
   cantAddUser: "אי אפשר להוסיף את {username}",
   groupTooBig: "בקבוצה יכולים להיות עד {max} אנשים",
+  playlistFull: "בפלייליסט יכולים להיות עד {max} שירים",
   messageTooLong: "הודעה יכולה להכיל עד {max} תווים",
   alreadyInGroup: "{username} כבר בקבוצה הזו",
   accountNoLongerExists: "החשבון הזה כבר לא קיים",

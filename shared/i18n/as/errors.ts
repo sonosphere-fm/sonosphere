@@ -177,6 +177,7 @@ export default {
   eventNotFound: "অনুষ্ঠান পোৱা নগ'ল",
   staffOnly: "কেৱল কৰ্মচাৰীৰ বাবে",
   adminsOnly: "কেৱল এডমিনৰ বাবে",
+  notWhileImpersonating: "ব্যৱহাৰকাৰী হিচাপে কাম কৰোঁতে এই একাউণ্টৰ ছাইন-ইন তথ্য সলনি কৰিব নোৱাৰি",
   confirmEmailFirst:
     "অনুগ্ৰহ কৰি প্ৰথমে আপোনাৰ ইমেইল ঠিকনা নিশ্চিত কৰক। আপুনি এটা সত্যাপন ইমেইল পাব লাগিছিল। যদি পোৱা নাই, তেন্তে ছেটিংছত একাউণ্টৰ তলৰ পৰা পুনৰ পঠিয়াব পাৰে।",
   kindArtistsAlbumsTracksTags: "kind artists, albums, tracks বা tags হ'ব লাগিব",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "গোটৰ নাম সৰ্বাধিক {max}টা আখৰৰ হ'ব পাৰে",
   cantAddUser: "আপুনি {username}ক যোগ কৰিব নোৱাৰে",
   groupTooBig: "গোটত সৰ্বাধিক {max} জন লোক থাকিব পাৰে",
+  playlistFull: "প্লেলিষ্টত সৰ্বাধিক {max} টা গীত থাকিব পাৰে",
   messageTooLong: "বাৰ্তা সৰ্বাধিক {max}টা আখৰৰ হ'ব পাৰে",
   alreadyInGroup: "{username} ইতিমধ্যে এই গোটত আছে",
   accountNoLongerExists: "এই একাউণ্টটো আৰু নাই",

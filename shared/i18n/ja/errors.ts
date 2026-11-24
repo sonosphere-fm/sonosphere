@@ -179,6 +179,7 @@ export default {
   eventNotFound: "イベントが見つかりません",
   staffOnly: "運営チーム専用です",
   adminsOnly: "管理者専用です",
+  notWhileImpersonating: "ユーザーとして操作中は、このアカウントのログイン情報を変更できません",
   confirmEmailFirst:
     "先にメールアドレスを確認してください。確認メールが届いているはずです。届いていない場合は、設定の「アカウント」から再送できます。",
   kindArtistsAlbumsTracksTags: "kind は artists、albums、tracks、tags のいずれかにしてください",
@@ -317,6 +318,7 @@ export default {
   groupNameTooLong: "グループ名は{max}文字までです",
   cantAddUser: "{username} を追加できません",
   groupTooBig: "グループは{max}人までです",
+  playlistFull: "プレイリストは{max}曲までです",
   messageTooLong: "メッセージは{max}文字までです",
   alreadyInGroup: "{username} はすでにこのグループにいます",
   accountNoLongerExists: "このアカウントはもう存在しません",

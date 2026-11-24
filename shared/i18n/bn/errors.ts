@@ -177,6 +177,7 @@ export default {
   eventNotFound: "ইভেন্ট পাওয়া যায়নি",
   staffOnly: "শুধু কর্মীদের জন্য",
   adminsOnly: "শুধু অ্যাডমিনদের জন্য",
+  notWhileImpersonating: "ব্যবহারকারী হিসেবে কাজ করার সময় এই অ্যাকাউন্টের সাইন-ইন তথ্য বদলানো যাবে না",
   confirmEmailFirst:
     "অনুগ্রহ করে আগে আপনার ইমেল ঠিকানা নিশ্চিত করুন। আপনি একটি যাচাই ইমেল পেয়ে থাকবেন। না পেলে সেটিংসের অ্যাকাউন্ট অংশ থেকে আবার পাঠাতে পারেন।",
   kindArtistsAlbumsTracksTags: "kind অবশ্যই artists, albums, tracks বা tags হতে হবে",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "গ্রুপের নাম সর্বোচ্চ {max} অক্ষরের হতে পারে",
   cantAddUser: "আপনি {username}-কে যোগ করতে পারবেন না",
   groupTooBig: "গ্রুপে সর্বোচ্চ {max} জন থাকতে পারেন",
+  playlistFull: "প্লেলিস্টে সর্বোচ্চ {max}টি ট্র্যাক থাকতে পারে",
   messageTooLong: "বার্তা সর্বোচ্চ {max} অক্ষরের হতে পারে",
   alreadyInGroup: "{username} ইতিমধ্যে এই গ্রুপে আছেন",
   accountNoLongerExists: "এই অ্যাকাউন্টটি আর নেই",

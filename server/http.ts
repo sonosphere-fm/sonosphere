@@ -1,9 +1,10 @@
 import type { users } from "./db/schema";
-import { viewerOf } from "./auth/session";
+import { impersonating, viewerOf } from "./auth/session";
 export { tokenOf } from "./auth/session";
 import { cacheAnonymousAtEdge } from "./edge-cache";
 import { attempt, hits } from "./kv";
 import { isStaff } from "./site/roles";
+import { audit } from "./site/audit";
 import { requestLocale, tr, type ErrorKey } from "./i18n";
 import type { Params } from "../shared/i18n/core";
 
@@ -82,6 +83,17 @@ export class Router {
         if (r.method !== req.method) continue;
         const m = r.re.exec(url.pathname);
         if (!m) continue;
+        // the body and query are left out: they can carry passwords and tokens
+        if (req.method !== "GET" && url.pathname !== "/api/me/stop-impersonating" && impersonating(user, actor)) {
+          await audit(actor!, {
+            action: "user.impersonate.request",
+            targetType: "user",
+            targetId: user!.id,
+            label: user!.username,
+            subjectId: user!.id,
+            note: `${req.method} ${url.pathname}`,
+          });
+        }
         const body = await readBody(req, r.jsonOnly);
         const c: Ctx = {
           req,
@@ -210,6 +222,19 @@ function crossSite(req: Request, url: URL) {
   } catch {
     return true;
   }
+}
+
+/** Stops reading once the body passes `max`, so an oversized or chunked body is never held in full. */
+export async function readCapped(req: Request, max: number): Promise<Uint8Array<ArrayBuffer> | null> {
+  if (Number(req.headers.get("content-length")) > max) return null;
+  const parts: Uint8Array[] = [];
+  let n = 0;
+  for await (const chunk of req.body ?? []) {
+    n += chunk.length;
+    if (n > max) return null;
+    parts.push(chunk);
+  }
+  return new Uint8Array(Bun.concatArrayBuffers(parts));
 }
 
 async function readBody(req: Request, jsonOnly: boolean): Promise<Body> {

@@ -1,11 +1,13 @@
 // A provider email that belongs to an existing account is refused rather than linked, so nobody can take over an
 // account by showing up with the same address; the owner connects the provider from settings instead.
 import { recordChange } from "../../account/history";
-import { need } from "../../guards";
-import { bad, ipOf, limit, Router, type Ctx } from "../../http";
+import { need, owner } from "../../guards";
+import { isStaff } from "../../site/roles";
+import { bad, ipOf, limit, Router, type Ctx, type Viewer } from "../../http";
 import { requestLocale } from "../../i18n";
 import { getJson, setJson, takeJson } from "../../kv";
 import { SITE_URL } from "../../mail";
+import { SECURE } from "../session";
 import { findById } from "../../users/repo";
 import { clean, digest, rid } from "../../util";
 import * as Sentry from "@sentry/bun";
@@ -22,7 +24,6 @@ type Pending = { provider: string; subject: string; name: string; email: string;
 
 const STATE_LIFE = 10 * 60;
 const PENDING_LIFE = 30 * 60;
-const SECURE = SITE_URL.startsWith("https:") ? "; Secure" : "";
 const cookie = (name: string, value: string, maxAge: number) =>
   `${name}=${value}; Path=/api/auth/oauth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE}`;
 
@@ -47,6 +48,9 @@ function go(c: Ctx, to: string): Response {
   for (const v of c.headers.getSetCookie()) h.append("Set-Cookie", v);
   return new Response(null, { status: 302, headers: h });
 }
+// an unconfirmed account may belong to whoever typed the address, so it can't gain a second way in
+const canLink = (u: Viewer) => Boolean(u.emailVerifiedAt) || isStaff(u);
+
 // Errors go back as a code the page turns into words, never as text from the URL.
 function failTo(c: Ctx, intent: State["intent"], code: string): Response {
   return go(c, intent === "link" ? `/settings/account?oauth=${code}` : `/login?oauth=${code}`);
@@ -58,6 +62,8 @@ router.get("/api/auth/oauth/:provider/start", async (c) => {
   if (!p) return failTo(c, intent, "off");
   await limit(`oauth:${ipOf(c.req)}`, 30, 3600);
   if (intent === "link" && !c.user) return go(c, `/login?next=${encodeURIComponent("/settings/account")}`);
+  if (intent === "link") owner(c);
+  if (intent === "link" && !canLink(c.user!)) return failTo(c, "link", "confirm");
   const state = rid(16);
   const verifier = p.pkce ? rid(32) : "";
   const saved: State = { provider: p.id, intent, userId: c.user?.id ?? 0, next: safeNext(c.q.get("next")), verifier };
@@ -105,6 +111,8 @@ router.get("/api/auth/oauth/:provider/callback", async (c) => {
 
   if (st.intent === "link") {
     if (!c.user || c.user.id !== st.userId) return failTo(c, "link", "expired");
+    owner(c);
+    if (!canLink(c.user)) return failTo(c, "link", "confirm");
     if (link && link.userId !== c.user.id) return failTo(c, "link", "taken");
     if (!link) {
       if (await repo.linkOf(c.user.id, p.id)) return failTo(c, "link", "already");
