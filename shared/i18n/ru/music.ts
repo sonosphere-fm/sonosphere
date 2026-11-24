@@ -350,10 +350,8 @@ export default {
   version: "Версия {version}",
   deleted: "удалено",
   noVersions: "Версий пока нет.",
-  openInService: "Открыть в музыкальном сервисе",
   tryAgain: "Попробовать снова",
   findingLinks: "Ищем ссылки на песню…",
   noLinks: "Подходящих ссылок на песню не найдено.",
-  searchBiniLink: "Искать в BiniLink",
   searchYouTube: "Искать на YouTube",
 } satisfies Translation<typeof en>;

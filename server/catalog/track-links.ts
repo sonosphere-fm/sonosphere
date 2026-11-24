@@ -3,6 +3,9 @@ import { fail } from "../http";
 import { getJson, setJson } from "../kv";
 import { norm } from "../util";
 
+const HOUR = 3600_000;
+const DAY = 24 * HOUR;
+
 type Song = { artist: string; title: string; album?: string | null; duration: number };
 
 const remoteJson = (url: string) =>
@@ -62,30 +65,36 @@ export async function resolveTrackLinks(song: Song): Promise<TrackLinks> {
       distance(a.trackTimeMillis) - distance(b.trackTimeMillis)
   )[0];
   if (!best) {
-    await setJson(key, {}, 600_000);
+    await setJson(key, {}, DAY);
     return {};
   }
 
   const links: TrackLinks = {
     appleMusic: `https://music.apple.com/us/album/${best.collectionId}?i=${best.trackId}`,
   };
-  const resolved = await remoteJson(`https://link.binimum.org/api/v1/resolve/apple_music/${best.trackId}`);
+  const resolved = await fetch(`https://link.binimum.org/api/v1/resolve/apple_music/${best.trackId}`, {
+    headers: { Accept: "application/json" },
+    redirect: "error",
+    signal: AbortSignal.timeout(4500),
+  }).catch(() => null);
+  if (!resolved || (!resolved.ok && resolved.status !== 404 && resolved.status !== 422)) {
+    await setJson(key, links, HOUR);
+    return links;
+  }
   if (resolved.ok) {
-    const mapping = (await resolved.json().catch(() => fail(502, "songLinksTemporarilyUnavailable"))) as {
+    const mapping = (await resolved.json().catch(() => null)) as {
       spotify?: unknown;
       tidal?: unknown;
       youtube?: unknown;
-    };
+    } | null;
     if (typeof mapping?.spotify === "string" && /^[a-zA-Z0-9]{22}$/.test(mapping.spotify))
       links.spotify = `https://open.spotify.com/track/${mapping.spotify}`;
     if (typeof mapping?.tidal === "string" && /^\d+$/.test(mapping.tidal))
       links.tidal = `https://tidal.com/track/${mapping.tidal}`;
     if (typeof mapping?.youtube === "string" && /^[a-zA-Z0-9_-]{11}$/.test(mapping.youtube))
       links.youtube = `https://www.youtube.com/watch?v=${mapping.youtube}`;
-  } else if (resolved.status !== 404 && resolved.status !== 422) {
-    fail(502, "songLinksTemporarilyUnavailable");
   }
 
-  await setJson(key, links, 86_400_000);
+  await setJson(key, links, 90 * DAY);
   return links;
 }

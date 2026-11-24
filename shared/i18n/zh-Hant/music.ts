@@ -305,10 +305,8 @@ export default {
   version: "版本 {version}",
   deleted: "已刪除",
   noVersions: "還沒有版本。",
-  openInService: "在音樂服務中開啟",
   tryAgain: "重試",
   findingLinks: "正在尋找歌曲連結…",
   noLinks: "找不到相符的歌曲連結。",
-  searchBiniLink: "搜尋 BiniLink",
   searchYouTube: "搜尋 YouTube",
 } satisfies Translation<typeof en>;

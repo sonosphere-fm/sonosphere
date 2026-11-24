@@ -331,10 +331,8 @@ export default {
   version: "Versiunea {version}",
   deleted: "șters",
   noVersions: "Nicio versiune încă.",
-  openInService: "Deschide într-un serviciu de muzică",
   tryAgain: "Încearcă din nou",
   findingLinks: "Se caută linkuri către piesă…",
   noLinks: "Nu s-au găsit linkuri potrivite.",
-  searchBiniLink: "Caută pe BiniLink",
   searchYouTube: "Caută pe YouTube",
 } satisfies Translation<typeof en>;

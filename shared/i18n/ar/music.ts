@@ -381,10 +381,8 @@ export default {
   version: "الإصدار {version}",
   deleted: "محذوف",
   noVersions: "لا إصدارات بعد.",
-  openInService: "فتح في خدمة موسيقى",
   tryAgain: "حاول مجددًا",
   findingLinks: "جارٍ البحث عن روابط الأغنية…",
   noLinks: "لم يُعثر على روابط مطابقة للأغنية.",
-  searchBiniLink: "ابحث في BiniLink",
   searchYouTube: "ابحث في YouTube",
 } satisfies Translation<typeof en>;

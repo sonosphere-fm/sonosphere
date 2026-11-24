@@ -309,10 +309,8 @@ export default {
   version: "Version {version}",
   deleted: "deleted",
   noVersions: "No versions yet.",
-  openInService: "Open in a music service",
   tryAgain: "Try again",
   findingLinks: "Finding song links…",
   noLinks: "No matching song links found.",
-  searchBiniLink: "Search BiniLink",
   searchYouTube: "Search YouTube",
 };

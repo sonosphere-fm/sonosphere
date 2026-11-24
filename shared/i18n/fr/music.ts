@@ -320,10 +320,8 @@ export default {
   version: "Version {version}",
   deleted: "supprimée",
   noVersions: "Aucune version pour l'instant.",
-  openInService: "Ouvrir dans un service de musique",
   tryAgain: "Réessayer",
   findingLinks: "Recherche des liens…",
   noLinks: "Aucun lien correspondant trouvé.",
-  searchBiniLink: "Rechercher sur BiniLink",
   searchYouTube: "Rechercher sur YouTube",
 } satisfies Translation<typeof en>;
