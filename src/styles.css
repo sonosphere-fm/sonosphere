@@ -2365,6 +2365,43 @@
     background: var(--accent);
     color: var(--on-accent);
   }
+  .astryx-button.dismiss.dismiss {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: none;
+    color: var(--muted);
+    box-shadow: none;
+  }
+  .astryx-button.dismiss.dismiss:hover,
+  .astryx-button.dismiss.dismiss.on {
+    color: var(--ink);
+  }
+  .rec-img .astryx-button.dismiss.dismiss {
+    position: absolute;
+    z-index: 2;
+    top: 10px;
+    inset-inline-end: 10px;
+    background: var(--card);
+    color: var(--ink-2);
+  }
+  .rec:has(.dismiss.on) .rcard-img,
+  .rec:has(.dismiss.on) > p,
+  tr:has(.dismiss.on) > td:not(.c-actions) {
+    opacity: 0.35;
+  }
+  @media (hover: hover) {
+    .rec-img .astryx-button.dismiss.dismiss:not(.on),
+    tr .astryx-button.dismiss.dismiss:not(.on) {
+      opacity: 0;
+    }
+    .rec:hover .astryx-button.dismiss.dismiss,
+    .rec:focus-within .astryx-button.dismiss.dismiss,
+    tr:hover .astryx-button.dismiss.dismiss,
+    tr:focus-within .astryx-button.dismiss.dismiss {
+      opacity: 1;
+    }
+  }
   @media (max-width: 1000px) {
     .recs,
     .recs.four {

@@ -1,5 +1,6 @@
 import postgres from "postgres";
 import { buildMatrix, evaluate, rng, train } from "./als";
+import { dislikeWeight } from "./dislikes";
 
 declare const self: Worker;
 
@@ -51,6 +52,23 @@ async function run(url: string): Promise<TrainResult> {
       }
     }
     const userIds = [...rows.keys()].filter((u) => rows.get(u)!.length >= 2);
+    const userOf = new Map(userIds.map((u, i) => [u, i]));
+
+    // dismissals of artists the user has not played, summed per artist
+    const dismissed = new Map<string, { user: number; item: number; w: number }>();
+    const at = Math.floor(Date.now() / 1000);
+    const dislikes = await db<{ u: number; a: number; kind: string; at: number }[]>`
+      SELECT user_id AS u, artist_id AS a, kind, created_at AS at FROM rec_dislikes`;
+    for (const r of dislikes) {
+      const user = userOf.get(r.u);
+      const item = itemOf.get(r.a);
+      if (user === undefined || item === undefined) continue;
+      if (rows.get(r.u)!.some((p) => p.item === item)) continue;
+      const key = `${user}:${item}`;
+      const d = dismissed.get(key) ?? { user, item, w: 0 };
+      d.w = Math.min(1, d.w + dislikeWeight(r.kind, r.at, at));
+      dismissed.set(key, d);
+    }
 
     // hold back one artist from a sample of users with enough history, to grade the model on
     const rand = rng(userIds.length * 7919 + artistIds.length);
@@ -64,6 +82,7 @@ async function run(url: string): Promise<TrainResult> {
     let n = 0;
     for (const u of userIds) n += rows.get(u)!.length;
     n -= heldBack.size;
+    n += dismissed.size;
     const eu = new Int32Array(n);
     const ei = new Int32Array(n);
     const ep = new Float32Array(n);
@@ -82,6 +101,12 @@ async function run(url: string): Promise<TrainResult> {
         e++;
       });
     });
+    for (const d of dismissed.values()) {
+      eu[e] = d.user;
+      ei[e] = d.item;
+      ep[e] = -d.w;
+      e++;
+    }
 
     let k = 48;
     if (userIds.length < 200) k = 16;

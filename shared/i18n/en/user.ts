@@ -236,6 +236,8 @@ export default {
   typeAlbum: "Album",
   typeTrack: "Track",
   similarJoin: " & ",
+  notInterested: "Not interested",
+  undoNotInterested: "Undo not interested",
   byArtist: "By {artist}",
   byArtistSimilarTo: "By {artist}, similar to {similar}",
   similarTo: "Similar to {similar}",

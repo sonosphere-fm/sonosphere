@@ -366,6 +366,8 @@ export default {
   typeAlbum: "ألبوم",
   typeTrack: "مقطع",
   similarJoin: " و",
+  notInterested: "غير مهتم",
+  undoNotInterested: "تراجع عن «غير مهتم»",
   byArtist: "لـ {artist}",
   byArtistSimilarTo: "لـ {artist}، مشابه لـ {similar}",
   similarTo: "مشابه لـ {similar}",

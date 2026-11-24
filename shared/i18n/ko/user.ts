@@ -238,6 +238,8 @@ export default {
   typeAlbum: "앨범",
   typeTrack: "트랙",
   similarJoin: " & ",
+  notInterested: "관심 없음",
+  undoNotInterested: "'관심 없음' 취소",
   byArtist: "{artist}의 곡",
   byArtistSimilarTo: "{artist}의 곡, {similar}와(과) 비슷함",
   similarTo: "{similar}와(과) 비슷함",

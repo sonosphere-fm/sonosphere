@@ -1,8 +1,11 @@
 import { need } from "../guards";
-import { bad, oneOf, paging, Router } from "../http";
+import { bad, oneOf, paging, Router, throttle } from "../http";
 import { range } from "../listening/period";
 import { counts, nowPlaying, recent, siteTop, topAlbums } from "../listening/repo";
-import { recommendations } from "../recommend/service";
+import { requireItem } from "../catalog/service";
+import { isDislikeKind } from "../recommend/dislikes";
+import { setDislike } from "../recommend/repo";
+import { feedback, recommendations } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
 import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
@@ -84,11 +87,24 @@ router.get<Home>(
 
 router.get<Recommended>("/api/recommended", async (c) => {
   const u = need(c);
+  const fb = await feedback(u.id);
   const [{ artists, tracks }, events] = await Promise.all([
-    recommendations(u.id, u.id, 30, 30),
+    recommendations(u.id, u.id, 30, 30, fb),
     repo.upcomingEvents(now(), u.id, 20),
   ]);
   const tops = await Promise.all(artists.slice(0, 18).map((a) => topAlbums({ artistId: a.id, global: true }, 1)));
-  const albums: TopAlbum[] = tops.flatMap((t) => t.items);
+  const albums: TopAlbum[] = tops.flatMap((t) => t.items).filter((a) => !fb.albums.has(a.id));
   return { artists, tracks, albums, events };
+});
+
+router.post<{ dismissed: boolean }>("/api/recommended/dismiss", async (c) => {
+  const u = need(c);
+  const kind = c.body.kind;
+  if (!isDislikeKind(kind)) return bad("invalidItemType");
+  await throttle(`dismiss:${u.id}`, 300, 3600);
+  const { row } = await requireItem(kind, c.body.id, [kind]);
+  const artistId = "artistId" in row ? row.artistId : row.id;
+  const dismissed = c.body.dismissed !== false;
+  await setDislike(u.id, kind, row.id, artistId, dismissed);
+  return { dismissed };
 });

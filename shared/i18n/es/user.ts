@@ -242,6 +242,8 @@ export default {
   typeAlbum: "Álbum",
   typeTrack: "Canción",
   similarJoin: " y ",
+  notInterested: "No me interesa",
+  undoNotInterested: "Deshacer «No me interesa»",
   byArtist: "De {artist}",
   byArtistSimilarTo: "De {artist}, similar a {similar}",
   similarTo: "Similar a {similar}",

@@ -302,6 +302,8 @@ export default {
   typeAlbum: "Album",
   typeTrack: "Utwór",
   similarJoin: " i ",
+  notInterested: "Nie interesuje mnie",
+  undoNotInterested: "Cofnij „Nie interesuje mnie”",
   byArtist: "Wykonawca: {artist}",
   byArtistSimilarTo: "Wykonawca: {artist}, w stylu {similar}",
   similarTo: "W stylu {similar}",
