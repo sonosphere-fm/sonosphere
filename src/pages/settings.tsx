@@ -14,7 +14,6 @@ import { UsernameSettings } from "../ui/username-settings";
 import { ProfileLinkIcon } from "../ui/profile-link-icon";
 import { PROFILE_LINK_ICONS, type ProfileLinkIcon as ProfileLinkIconName } from "../../shared/profile-links";
 import { ProfileStyleSettings } from "../ui/profile-style-settings";
-import CosmeticsSettings from "../ui/cosmetics-settings";
 import { Username } from "../ui/username";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -191,7 +190,6 @@ function ProfileSettings() {
         </div>
       </Section>
       <BannerSettings />
-      <CosmeticsSettings />
       <Section title="Profile">
         <form className="form" onSubmit={submit}>
           <ProfileStyleSettings value={f} onChange={(style) => setF((f) => ({ ...f, ...style }))} disabled={act.busy} />
