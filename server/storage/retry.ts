@@ -11,15 +11,23 @@ const TRANSIENT_CODES = new Set([
   "EAI_AGAIN",
 ]);
 
+const ATTEMPTS = 4;
+
+/** True for failures the provider expects clients to retry, such as S3 `InternalError` and dropped connections. */
+export function isTransientS3(e: unknown): boolean {
+  const code = e && typeof e === "object" ? (e as { code?: unknown }).code : undefined;
+  return typeof code === "string" && TRANSIENT_CODES.has(code);
+}
+
 /** Retry an idempotent S3 operation on transient failures, preserving the final error. */
 export async function retryS3<T>(op: () => Promise<T>): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
       return await op();
     } catch (e) {
-      const code = e && typeof e === "object" ? (e as { code?: unknown }).code : undefined;
-      if (attempt >= 3 || typeof code !== "string" || !TRANSIENT_CODES.has(code)) throw e;
-      await new Promise((r) => setTimeout(r, 100 * attempt));
+      if (attempt >= ATTEMPTS || !isTransientS3(e)) throw e;
+      // 250ms, 500ms, 1s: provider-side hiccups often outlast a couple of quick retries
+      await new Promise((r) => setTimeout(r, 250 * 2 ** (attempt - 1)));
     }
   }
 }

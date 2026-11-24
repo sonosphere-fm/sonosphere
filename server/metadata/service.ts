@@ -5,6 +5,7 @@ import { saveImage, saveRemoteImage } from "../images/repo";
 import { convert } from "../images/process";
 import { attempt, exclusive, getJson, setAdd, setJson, setTake } from "../kv";
 import { isStaff } from "../site/roles";
+import { isTransientS3 } from "../storage/retry";
 import { norm, now } from "../util";
 import * as Sentry from "@sentry/bun";
 import {
@@ -66,6 +67,8 @@ async function storeCover(
     // 503: today's storage allowance is used up; any other refusal: not a usable picture
     if (e instanceof HttpError && e.status === 503) throw new src.Busy("storage");
     if (e instanceof HttpError) return false;
+    // storage failed even after retries: not an answer about the cover, so search this album again later
+    if (isTransientS3(e)) throw new src.Busy("s3");
     throw e;
   }
 }
