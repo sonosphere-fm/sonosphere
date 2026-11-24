@@ -12,6 +12,7 @@ import { namesFrom } from "../tags/service";
 import { limit as trustLimit } from "../trust/service";
 import { findById, findByName, followingCount, lovedCount, type User } from "../users/repo";
 import { like, now, norm, rid } from "../util";
+import { getJson, setJson } from "../kv";
 import { latestWiki } from "../wiki/repo";
 import { countryName } from "../../shared/countries";
 import * as repo from "./repo";
@@ -49,10 +50,6 @@ function page(p: Params, def = 50, max = 1000): Page {
   const limit = Math.min(max, Math.max(1, Number(p.limit) || def));
   const pg = Math.max(1, Number(p.page) || 1);
   return { limit, page: pg, offset: (pg - 1) * limit };
-}
-
-function chartLimit(p: Params): number {
-  return Math.min(1000, Math.max(1, Number(p.limit) || 50));
 }
 
 function period(p: Params, name: unknown = p.period): [number, number] {
@@ -230,13 +227,11 @@ function searchResults(query: unknown, matches: Reply) {
 }
 
 const WEEK = 7 * 86400;
-// Last.fm's weekly charts begin on 13 February 2005 at 12:00 UTC.
 const FIRST_WEEK = 1108296000;
 
 function lastWeekEnd(at = now()): number {
   const d = new Date(at * 1000);
-  const sinceMonday = (d.getUTCDay() + 6) % 7;
-  const noon = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12) / 1000 - sinceMonday * 86400;
+  const noon = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12) / 1000 - d.getUTCDay() * 86400;
   return noon > at ? noon - WEEK : noon;
 }
 
@@ -265,13 +260,25 @@ function countryOf(p: Params): string {
   return countryName(raw) || fail(6, "country param invalid");
 }
 
-async function tagUser(c: Call): Promise<number> {
-  if (c.p.user) return (await userOf(c.p.user)).id;
-  if (c.p.sk) return session(c);
-  return fail(6, "Invalid parameters - Your request is missing a required parameter");
+const GEO_TTL = 15 * 60_000;
+
+async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = await getJson<T>(key);
+  if (hit) return hit;
+  const fresh = await load();
+  await setJson(key, fresh, GEO_TTL);
+  return fresh;
 }
 
-// The tags one person applied to an artist, album or track.
+const tagsOpen = async (c: Call, u: User) => listeningOpen(u, c.p.sk ? await session(c) : undefined);
+
+async function tagUser(c: Call): Promise<number | undefined> {
+  if (!c.p.user)
+    return c.p.sk ? session(c) : fail(6, "Invalid parameters - Your request is missing a required parameter");
+  const u = await userOf(c.p.user);
+  return (await tagsOpen(c, u)) ? u.id : undefined;
+}
+
 async function itemTags(c: Call, type: string, id: number, attrs: Record<string, string>): Promise<Reply> {
   const uid = await tagUser(c);
   const names = [...(await myTags(uid, type, id))].sort((a, b) => a.localeCompare(b));
@@ -483,8 +490,10 @@ const methods: Record<string, Method> = {
     const type = text(c.p.taggingtype).toLowerCase();
     if (type !== "artist" && type !== "album" && type !== "track")
       fail(6, "Invalid parameters - Your request is missing a required parameter");
-    const total = await repo.personalTagCount(u.id, g.id, type);
+    const open = await tagsOpen(c, u);
+    const total = open ? await repo.personalTagCount(u.id, g.id, type) : 0;
     const attributes = attr({ user: u.username, tag: g.name }, c.pg, total);
+    if (!open) return { taggings: { [`${type}s`]: { [type]: [] }, "@attr": attributes } };
     if (type === "artist") {
       const rows = await repo.personalTagArtists(u.id, g.id, c.pg.limit, c.pg.offset);
       const artist = rows.map((a) => ({
@@ -521,7 +530,7 @@ const methods: Record<string, Method> = {
   "user.getweeklyartistchart": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = weekRange(c.p);
-    const r = shut(u) ?? (await top("artists", { userId: u.id, from, to }, chartLimit(c.p), 0));
+    const r = shut(u) ?? (await top("artists", { userId: u.id, from, to }, c.pg.limit, 0));
     const artist = r.items.map((a, i) => ({
       "@attr": { rank: String(i + 1) },
       name: a.name,
@@ -534,7 +543,7 @@ const methods: Record<string, Method> = {
   "user.getweeklyalbumchart": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = weekRange(c.p);
-    const r = shut(u) ?? (await top("albums", { userId: u.id, from, to }, chartLimit(c.p), 0));
+    const r = shut(u) ?? (await top("albums", { userId: u.id, from, to }, c.pg.limit, 0));
     const album = r.items.map((a, i) => ({
       artist: { "#text": a.artist, mbid: mbidOfArtist(a.artist) },
       "@attr": { rank: String(i + 1) },
@@ -548,7 +557,7 @@ const methods: Record<string, Method> = {
   "user.getweeklytrackchart": async (c) => {
     const u = await userOf(c.p.user);
     const [from, to] = weekRange(c.p);
-    const r = shut(u) ?? (await top("tracks", { userId: u.id, from, to }, chartLimit(c.p), 0));
+    const r = shut(u) ?? (await top("tracks", { userId: u.id, from, to }, c.pg.limit, 0));
     const track = r.items.map((t, i) => ({
       artist: { "#text": t.artist, mbid: mbidOfArtist(t.artist) },
       "@attr": { rank: String(i + 1) },
@@ -561,8 +570,8 @@ const methods: Record<string, Method> = {
     return { weeklytrackchart: { track, "@attr": { user: u.username, from: String(from), to: String(to) } } };
   },
   "user.getweeklychartlist": async (c) => {
-    const user = text(c.p.user);
-    return { weeklychartlist: { chart: weeks(), "@attr": user ? { user } : {} } };
+    const u = await userOf(c.p.user);
+    return { weeklychartlist: { chart: weeks(), "@attr": { user: u.username } } };
   },
 
   "artist.getcorrection": async (c) => {
@@ -801,8 +810,8 @@ const methods: Record<string, Method> = {
     const rows = await repo.chartTopTags(50, 0);
     return {
       toptags: {
-        tag: rows.map((t) => ({ name: t.name, count: t.taggings, reach: t.reach })),
-        "@attr": { offset: 0, num_res: rows.length, total: await repo.tagCount() },
+        tag: rows.map((t) => ({ name: t.name, count: String(t.taggings), reach: String(t.reach) })),
+        "@attr": { offset: "0", num_res: String(rows.length), total: String(await repo.tagCount()) },
       },
     };
   },
@@ -840,14 +849,16 @@ const methods: Record<string, Method> = {
   },
   "geo.gettopartists": async (c) => {
     const country = countryOf(c.p);
-    const r = await repo.geoTopArtists(country, c.pg.limit, c.pg.offset);
-    const artist = r.items.map((a) => ({ ...artistShape(c)(a), streamable: "0" }));
+    const r = await cached(`geo-artists:${country}`, () => repo.geoTopArtists(country));
+    const artist = r.items
+      .slice(c.pg.offset, c.pg.offset + c.pg.limit)
+      .map((a) => ({ ...artistShape(c)(a), streamable: "0" }));
     return { topartists: { artist, "@attr": attr({ country }, c.pg, r.total) } };
   },
   "geo.gettoptracks": async (c) => {
     const country = countryOf(c.p);
-    const r = await repo.geoTopTracks(country, c.pg.limit, c.pg.offset);
-    const track = r.items.map((t, i) => ({
+    const r = await cached(`geo-tracks:${country}`, () => repo.geoTopTracks(country));
+    const track = r.items.slice(c.pg.offset, c.pg.offset + c.pg.limit).map((t, i) => ({
       ...trackShape(c)(t),
       streamable: { "#text": "0", fulltrack: "0" },
       "@attr": { rank: String(c.pg.offset + i) },
@@ -856,12 +867,8 @@ const methods: Record<string, Method> = {
   },
   "library.getartists": async (c) => {
     const u = await userOf(c.p.user);
-    const from = Number(c.p.from);
-    const to = Number(c.p.to);
-    const ranged =
-      c.p.from !== undefined && c.p.to !== undefined && Number.isFinite(from) && Number.isFinite(to) && from < to;
-    const scope = ranged ? { userId: u.id, from, to } : { userId: u.id };
-    const r = shut(u) ?? (await top("artists", scope, c.pg.limit, c.pg.offset));
+    const pg = page(c.p, 50, 2000);
+    const r = shut(u) ?? (await top("artists", { userId: u.id }, pg.limit, pg.offset));
     const counts = await repo.userArtistTagCounts(
       u.id,
       r.items.map((a) => a.id)
@@ -871,7 +878,7 @@ const methods: Record<string, Method> = {
       streamable: "0",
       tagcount: String(counts.get(a.id) ?? 0),
     }));
-    return { artists: { artist, "@attr": attr({ user: u.username }, c.pg, r.total) } };
+    return { artists: { artist, "@attr": attr({ user: u.username }, pg, r.total) } };
   },
   "chart.gettopartists": async (c) => {
     const r = await top("artists", { global: true }, c.pg.limit, c.pg.offset);
@@ -900,5 +907,5 @@ export async function call(p: Params, origin: string): Promise<Reply> {
   const name = String(p.method || "").toLowerCase();
   const method = Object.hasOwn(methods, name) ? methods[name] : undefined;
   if (!method) fail(3, "Invalid Method - No method with that name in this package");
-  return method({ p, origin, app, pg: page(p, 50, name === "library.getartists" ? 2000 : 1000) });
+  return method({ p, origin, app, pg: page(p) });
 }
