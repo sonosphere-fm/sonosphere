@@ -75,6 +75,7 @@ const main = translator(en, {
   pl: () => import("../shared/i18n/pl/index"),
   ru: () => import("../shared/i18n/ru/index"),
   it: () => import("../shared/i18n/it/index"),
+  id: () => import("../shared/i18n/id/index"),
   tr: () => import("../shared/i18n/tr/index"),
   sv: () => import("../shared/i18n/sv/index"),
   uk: () => import("../shared/i18n/uk/index"),

@@ -13,6 +13,7 @@ const admin = translator(base, {
   pl: () => import("../../shared/i18n/pl/catalog-admin"),
   ru: () => import("../../shared/i18n/ru/catalog-admin"),
   it: () => import("../../shared/i18n/it/catalog-admin"),
+  id: () => import("../../shared/i18n/id/catalog-admin"),
   tr: () => import("../../shared/i18n/tr/catalog-admin"),
   sv: () => import("../../shared/i18n/sv/catalog-admin"),
   uk: () => import("../../shared/i18n/uk/catalog-admin"),

@@ -10,6 +10,7 @@ import pt from "../shared/i18n/pt/server";
 import pl from "../shared/i18n/pl/server";
 import ru from "../shared/i18n/ru/server";
 import it from "../shared/i18n/it/server";
+import indonesian from "../shared/i18n/id/server";
 import turkish from "../shared/i18n/tr/server";
 import sv from "../shared/i18n/sv/server";
 import uk from "../shared/i18n/uk/server";
@@ -41,6 +42,7 @@ const CATALOGS: Record<Locale, Catalog<typeof en>> = {
   pl,
   ru,
   it,
+  id: indonesian,
   tr: turkish,
   sv,
   uk,
