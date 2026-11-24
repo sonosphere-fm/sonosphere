@@ -165,7 +165,7 @@ export function Listeners({ items, more }: { items: Listener[]; more?: string })
   return (
     <Section title={t("music.listeners")} more={more} moreLabel={t("music.viewAllListeners")} foot>
       <div className="listeners2">
-        <UserList items={items} />
+        <UserList items={items} avatar={44} />
       </div>
     </Section>
   );

@@ -1159,10 +1159,6 @@
   .strong.inline {
     display: inline;
   }
-  .side .userlist .avatar {
-    width: 40px !important;
-    height: 40px !important;
-  }
   .shouts li {
     align-items: flex-start;
   }
@@ -3269,10 +3265,6 @@
   .listeners2 .userlist li {
     border-bottom: 0;
     padding: 6px 0;
-  }
-  .listeners2 .userlist .avatar {
-    width: 44px !important;
-    height: 44px !important;
   }
   .mpage .main > .section:last-child {
     padding-bottom: 0;

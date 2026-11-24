@@ -221,14 +221,14 @@ export function EventPage() {
                 <aside className="side">
                   <Section title={t("events.goingCount", { count: e.going })}>
                     {e.attendees.going.length ? (
-                      <UserList items={e.attendees.going} />
+                      <UserList items={e.attendees.going} avatar={40} />
                     ) : (
                       <p className="muted">{t("events.nobodyYet")}</p>
                     )}
                   </Section>
                   <Section title={t("events.interestedCount", { count: e.interested })}>
                     {e.attendees.interested.length ? (
-                      <UserList items={e.attendees.interested} />
+                      <UserList items={e.attendees.interested} avatar={40} />
                     ) : (
                       <p className="muted">{t("events.nobodyYet")}</p>
                     )}

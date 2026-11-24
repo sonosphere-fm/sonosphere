@@ -138,7 +138,7 @@ export function SearchPage() {
             )}
             {type === "all" && q.data && q.data.users.length > 0 && (
               <Section title={t("music.listeners")}>
-                <UserList items={q.data.users.slice(0, 5)} />
+                <UserList items={q.data.users.slice(0, 5)} avatar={40} />
               </Section>
             )}
             <Section title={t("music.cantFindIt")}>
