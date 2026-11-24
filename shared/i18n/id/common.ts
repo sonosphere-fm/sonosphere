@@ -251,4 +251,5 @@ export default {
   mdUploadFailed: "Unggah gambar gagal. Coba lagi.",
   mdExternalImage: "Gambar eksternal",
   mdUploadToDisplay: "{alt} (unggah gambar ini untuk menampilkannya)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

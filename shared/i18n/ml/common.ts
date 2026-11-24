@@ -251,4 +251,5 @@ export default {
   mdUploadFailed: "ചിത്രം അപ്‌ലോഡ് പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.",
   mdExternalImage: "പുറത്തുനിന്നുള്ള ചിത്രം",
   mdUploadToDisplay: "{alt} (ഇത് പ്രദർശിപ്പിക്കാൻ ഈ ചിത്രം അപ്‌ലോഡ് ചെയ്യുക)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

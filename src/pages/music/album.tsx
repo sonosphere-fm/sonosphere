@@ -10,7 +10,8 @@ import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton } from "../../player";
-import { UploadImage, RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
+import { ImageGallery } from "./gallery";
+import { RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
 import type { AdminEdit } from "../../admin/page-tools";
 import type { AlbumPage as AlbumData } from "../../../shared/catalog";
 import {
@@ -42,7 +43,7 @@ function albumFacts(a: AlbumData) {
   return facts;
 }
 
-export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
+export function AlbumPage({ tab }: { tab: "overview" | "wiki" | "images" }) {
   const p = useParams();
   const artist = dec(p.artist);
   const album = dec(p.album);
@@ -58,12 +59,15 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
           <MusicHero
             image={a.image ?? a.artistImage}
             cover={!!a.image}
+            imageHref={a.image ? `${base}/+images/${a.image}` : undefined}
+            imageCount={a.imageCount}
             title={a.title}
             over={<Link to={artistUrl(a.artist)}>{a.artist}</Link>}
             tabs={
               <Tabs
                 items={[
                   [base, t("music.overview"), true],
+                  [`${base}/+images`, t("music.images")],
                   [`${base}/+wiki`, t("music.wiki")],
                 ]}
               />
@@ -71,7 +75,6 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             actions={
               <>
                 <PlayButton queue={a.tracks} label={t("music.playAlbum")} />
-                {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
                 <MoreMenu label={t("music.moreActionsFor", { name: a.title })} link={shortMusicUrl("r", a.id)}>
                   {me && <RemoveScrobbles scope="album" id={a.id} name={a.title} count={a.userPlaycount} />}
                   {me?.admin && <AdminItems pick={setAdminEdit} />}
@@ -98,6 +101,8 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             <Pane>
               {tab === "wiki" ? (
                 <WikiPage type="album" id={a.id} title={a.title} />
+              ) : tab === "images" ? (
+                <ImageGallery type="album" id={a.id} name={a.title} base={base} onChanged={q.reload} />
               ) : (
                 <div className="cols">
                   <div className="main">

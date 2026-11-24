@@ -348,4 +348,8 @@ export default {
   timestampInFuture: "Stempel waktu di masa depan",
   timestampTooOld: "Stempel waktu terlalu lama",
   duplicateScrobble: "Scrobble duplikat",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

@@ -346,4 +346,8 @@ export default {
   timestampInFuture: "时间戳在未来",
   timestampTooOld: "时间戳太旧",
   duplicateScrobble: "重复的播放记录",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

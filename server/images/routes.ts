@@ -1,5 +1,5 @@
 import { requireItem } from "../catalog/service";
-import { adminOnly, confirmed, need } from "../guards";
+import { adminOnly, confirmed, need, poster } from "../guards";
 import { bad, fail, ipOf, limit, missing, Router, type Ctx } from "../http";
 import { getJson, setJson } from "../kv";
 import { store } from "../storage";
@@ -7,9 +7,10 @@ import { caps, spendRead } from "../storage/budget";
 import { convert, sniff } from "./process";
 import { stripGifMetadata } from "./metadata";
 import { fetchRemote, sized, type Picture } from "./remote";
+import * as gallery from "./gallery";
 import * as repo from "./repo";
 import type { Ok } from "../../shared/auth";
-import type { ImageSaved } from "../../shared/images";
+import type { GalleryList, ImageSaved } from "../../shared/images";
 
 export const router = new Router();
 
@@ -153,9 +154,35 @@ router.post<ImageSaved>("/api/image", async (c) => {
     return { image };
   }
   const item = await requireItem(type, c.q.get("id"), ["artist", "album"]);
+  if (!(await gallery.hasRoom(item.type, item.row.id))) fail(403, "galleryFull");
   const image = await storeImage(c, u.id);
-  await repo.setCatalogueImage(item.type, item.row.id, image);
+  await gallery.add(item.type, item.row.id, image, u.id);
   return { image };
+});
+
+router.get<GalleryList>("/api/gallery", async (c) => {
+  await limit(`gallery:${ipOf(c.req)}`, 600, 60, "tooManyRequests");
+  const item = await requireItem(c.q.get("type"), c.q.get("id"), ["artist", "album"]);
+  return gallery.list(item.type, item.row.id, item.row.imageId, c.user?.id ?? null);
+});
+
+router.post<GalleryList>("/api/gallery/vote", async (c) => {
+  const u = confirmed(poster(c));
+  await limit(`gallery-vote:${u.id}`, 240, 3600, "tooManyVotes");
+  const entryId = Number(c.body.entryId);
+  if (!Number.isSafeInteger(entryId) || entryId <= 0) bad("imageNotFound");
+  const raw = c.body.value;
+  const value = raw === 1 || raw === -1 || raw === 0 ? raw : bad("invalidVote");
+  const r = await gallery.vote(u.id, entryId, value);
+  return gallery.list(r.kind, r.itemId, r.main, u.id);
+});
+
+router.delete<GalleryList>("/api/gallery/:id", async (c) => {
+  const u = need(c);
+  const entryId = Number(c.params[0]);
+  if (!Number.isSafeInteger(entryId) || entryId <= 0) missing("imageNotFound");
+  const r = await gallery.remove(u, c.actor ?? u, entryId);
+  return gallery.list(r.kind, r.itemId, r.main, u.id);
 });
 
 router.delete<Ok>("/api/image", async (c) => {

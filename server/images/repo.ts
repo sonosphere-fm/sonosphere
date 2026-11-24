@@ -1,6 +1,6 @@
 import { and, eq, lt, notExists, sql } from "drizzle-orm";
 import { db, retrySql } from "../db/client";
-import { albums, artists, changelogPosts, images, users } from "../db/schema";
+import { albums, artists, catalogueImages, changelogPosts, images, users } from "../db/schema";
 import { store } from "../storage";
 import { spendWrites } from "../storage/budget";
 import { first, now, rid } from "../util";
@@ -102,11 +102,6 @@ export async function setUserBanner(userId: number, bannerId: string | null): Pr
   await db.update(users).set({ bannerId }).where(eq(users.id, userId));
 }
 
-export async function setCatalogueImage(type: "artist" | "album", id: number, imageId: string): Promise<void> {
-  if (type === "artist") await db.update(artists).set({ imageId }).where(eq(artists.id, id));
-  else await db.update(albums).set({ imageId }).where(eq(albums.id, id));
-}
-
 /** Records a picture hotlinked from another site; nothing is stored here. */
 export async function saveRemoteImage(url: string, width: number | null, height: number | null): Promise<string> {
   const id = rid(16);
@@ -127,7 +122,8 @@ const unused = and(
   notExists(db.select({ x: sql`1` }).from(users).where(eq(users.imageId, images.id))),
   notExists(db.select({ x: sql`1` }).from(users).where(eq(users.bannerId, images.id))),
   notExists(db.select({ x: sql`1` }).from(artists).where(eq(artists.imageId, images.id))),
-  notExists(db.select({ x: sql`1` }).from(albums).where(eq(albums.imageId, images.id)))
+  notExists(db.select({ x: sql`1` }).from(albums).where(eq(albums.imageId, images.id))),
+  notExists(db.select({ x: sql`1` }).from(catalogueImages).where(eq(catalogueImages.imageId, images.id)))
 );
 
 // pictures younger than an hour are left alone: one just uploaded is not attached yet

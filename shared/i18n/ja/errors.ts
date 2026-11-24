@@ -352,4 +352,8 @@ export default {
   timestampInFuture: "タイムスタンプが未来の日時です",
   timestampTooOld: "タイムスタンプが古すぎます",
   duplicateScrobble: "重複したスクロブルです",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

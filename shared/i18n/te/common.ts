@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "చిత్రం అప్‌లోడ్ విఫలమైంది. మళ్లీ ప్రయత్నించండి.",
   mdExternalImage: "బాహ్య చిత్రం",
   mdUploadToDisplay: "{alt} (దీన్ని చూపించడానికి ఈ చిత్రాన్ని అప్‌లోడ్ చేయండి)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

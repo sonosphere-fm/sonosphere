@@ -347,4 +347,8 @@ export default {
   timestampInFuture: "타임스탬프가 미래 시각이에요",
   timestampTooOld: "타임스탬프가 너무 오래되었어요",
   duplicateScrobble: "중복된 스크로블이에요",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

@@ -251,4 +251,5 @@ export default {
   mdUploadFailed: "Caricamento dell'immagine non riuscito. Riprova.",
   mdExternalImage: "Immagine esterna",
   mdUploadToDisplay: "{alt} (carica questa immagine per visualizzarla)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

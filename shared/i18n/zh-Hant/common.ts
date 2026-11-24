@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "圖片上傳失敗。請重試。",
   mdExternalImage: "外部圖片",
   mdUploadToDisplay: "{alt}（上傳這張圖片才能顯示）",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

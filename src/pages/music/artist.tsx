@@ -28,7 +28,8 @@ import { Shoutbox } from "../../ui/shoutbox";
 import { Tagger, TagChips } from "../../ui/tags";
 import { WikiPage } from "../../ui/wiki";
 import { PlayButton, StationButton } from "../../player";
-import { UploadImage, RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
+import { ImageGallery } from "./gallery";
+import { RemoveScrobbles, AdminItems, AdminDialog } from "./shared";
 import type { AdminEdit } from "../../admin/page-tools";
 import type {
   ArtistAlbums as ArtistAlbumsData,
@@ -51,7 +52,7 @@ import {
   SIDE_LINKS,
 } from "./entity";
 
-type ArtistTab = "overview" | "tracks" | "albums" | "similar" | "wiki" | "listeners" | "shoutbox";
+type ArtistTab = "overview" | "tracks" | "albums" | "similar" | "images" | "wiki" | "listeners" | "shoutbox";
 
 function HeroCards({ a, top }: { a: ArtistData; top: TopTrack | undefined }) {
   return (
@@ -192,6 +193,7 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
           [`${base}/+tracks`, t("music.tracks")],
           [`${base}/+albums`, t("music.albums")],
           [`${base}/+similar`, t("music.similarArtists")],
+          [`${base}/+images`, t("music.images")],
           [`${base}/+wiki`, t("music.wiki")],
           [`${base}/+listeners`, t("music.listeners")],
           [`${base}/+wall`, t("music.wallCount", { count: a.shoutCount })],
@@ -200,13 +202,14 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
           <>
             <MusicHero
               image={a.image}
+              imageHref={a.image ? `${base}/+images/${a.image}` : undefined}
+              imageCount={a.imageCount}
               title={a.name}
               tabs={<Tabs items={tabs} />}
               actions={
                 <>
                   <PlayButton queue={a.topTracks} label={t("music.playArtist")} />
                   <StationButton type="artist" name={a.name} label={t("music.artistRadio")} ghost />
-                  {me && <UploadImage type="artist" id={a.id} onDone={q.reload} />}
                   <MoreMenu label={t("music.moreActionsFor", { name: a.name })} link={shortMusicUrl("a", a.id)}>
                     {me && <RemoveScrobbles scope="artist" id={a.id} name={a.name} count={a.userPlaycount} />}
                     {me?.admin && <AdminItems pick={setAdminEdit} />}
@@ -236,6 +239,9 @@ export function ArtistPage({ tab }: { tab: ArtistTab }) {
                 {tab === "tracks" && <ArtistTracks name={a.name} />}
                 {tab === "albums" && <ArtistAlbums name={a.name} />}
                 {tab === "similar" && <ArtistSimilar name={a.name} />}
+                {tab === "images" && (
+                  <ImageGallery type="artist" id={a.id} name={a.name} base={base} onChanged={q.reload} />
+                )}
                 {tab === "wiki" && <WikiPage type="artist" id={a.id} title={a.name} />}
                 {tab === "listeners" && <ArtistListeners name={a.name} />}
                 {tab === "shoutbox" && <Shoutbox type="artist" id={a.id} />}

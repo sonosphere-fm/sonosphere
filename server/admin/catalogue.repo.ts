@@ -59,6 +59,7 @@ import { auditTx } from "../site/audit";
 import { bad } from "../http";
 import { now } from "../util";
 import { getOrCreateTrackTx } from "../catalog/repo";
+import { moveEntriesTx, syncMainTx } from "../images/gallery";
 
 export type Kind = CatalogueKind;
 export type Actor = { id: number | null; username: string };
@@ -333,6 +334,7 @@ async function mergeTrackTx(tx: Tx, src: number, dst: number): Promise<void> {
 async function mergeAlbumTx(tx: Tx, src: number, dst: number): Promise<void> {
   const [s] = await tx.select().from(albums).where(eq(albums.id, src));
   if (!s) return;
+  await moveEntriesTx(tx, "album", src, dst);
   const at = alias(albumTracks, "at");
   await tx.update(tracks).set({ albumId: dst }).where(eq(tracks.albumId, src));
   const dupListing = tx
@@ -361,6 +363,7 @@ async function mergeAlbumTx(tx: Tx, src: number, dst: number): Promise<void> {
       releaseDate: sql`COALESCE(${albums.releaseDate}, ${s.releaseDate})`,
     })
     .where(eq(albums.id, dst));
+  await syncMainTx(tx, "album", dst);
   await recordMoveTx(tx, "album", src, dst);
   await tx.delete(albums).where(eq(albums.id, src));
 }
@@ -451,6 +454,7 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
   await tx.delete(eventArtists).where(eq(eventArtists.artistId, src));
 
   await moveItemRefsTx(tx, "artist", src, dst);
+  await moveEntriesTx(tx, "artist", src, dst);
   await tx
     .update(artists)
     .set({
@@ -459,6 +463,7 @@ async function mergeArtistTx(tx: Tx, src: number, dst: number): Promise<{ merged
       imageId: sql`COALESCE(${artists.imageId}, ${s.imageId})`,
     })
     .where(eq(artists.id, dst));
+  await syncMainTx(tx, "artist", dst);
   await recordMoveTx(tx, "artist", src, dst);
   await tx.delete(artists).where(eq(artists.id, src));
   return { merged, moved };

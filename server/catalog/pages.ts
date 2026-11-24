@@ -1,4 +1,5 @@
 import { mbidOfAlbum, mbidOfArtist } from "../corrections/service";
+import { count as imageCount } from "../images/gallery";
 import { counts, series, topTracks, type Scope } from "../listening/repo";
 import { similarArtists, similarTracks } from "../recommend/service";
 import { shoutCount } from "../shouts/repo";
@@ -48,6 +49,7 @@ export async function artistPage(a: repo.Artist, viewerId: number | undefined): 
     weekTrack: weekTracks.items[0] ?? null,
     albumCount: await repo.albumCount(a.id, false),
     trackCount: await repo.trackCount(a.id),
+    imageCount: await imageCount("artist", a.id),
     trend: await trend({ artistId: a.id }),
     topListeners: await repo.topListeners("artist", a.id, 8),
     events: await repo.eventsWithArtist(a.id, now() - 86400, viewerId ?? 0, 4),
@@ -87,6 +89,7 @@ export async function albumPage(al: repo.AlbumWithArtist, viewerId: number): Pro
     image: al.imageId,
     releaseDate: al.releaseDate,
     artistImage,
+    imageCount: await imageCount("album", al.id),
     listeners: stats.listeners,
     playcount: stats.playcount,
     userPlaycount: viewerId ? (await counts({ albumId: al.id, userId: viewerId })).playcount : 0,

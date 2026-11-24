@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "ਤਸਵੀਰ ਅੱਪਲੋਡ ਅਸਫਲ ਰਹੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   mdExternalImage: "ਬਾਹਰੀ ਤਸਵੀਰ",
   mdUploadToDisplay: "{alt} (ਦਿਖਾਉਣ ਲਈ ਇਹ ਤਸਵੀਰ ਅੱਪਲੋਡ ਕਰੋ)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

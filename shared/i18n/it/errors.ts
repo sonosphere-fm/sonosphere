@@ -350,4 +350,8 @@ export default {
   timestampInFuture: "Il timestamp è nel futuro",
   timestampTooOld: "Il timestamp è troppo vecchio",
   duplicateScrobble: "Scrobble duplicato",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

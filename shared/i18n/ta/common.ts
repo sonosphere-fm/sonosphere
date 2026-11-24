@@ -251,4 +251,5 @@ export default {
   mdUploadFailed: "படப் பதிவேற்றம் தோல்வியடைந்தது. மீண்டும் முயலுங்கள்.",
   mdExternalImage: "வெளிப் படம்",
   mdUploadToDisplay: "{alt} (இதைக் காட்ட இந்தப் படத்தைப் பதிவேற்றுங்கள்)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;
