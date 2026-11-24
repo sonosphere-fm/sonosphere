@@ -11,7 +11,7 @@ import {
 import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
-import { ProfileLinkIcon } from "../ui/profile-link-icon";
+import { ProfileLinksEditor } from "../ui/profile-links-editor";
 import { ProfileStyleSettings } from "../ui/profile-style-settings";
 import { Username } from "../ui/username";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -255,65 +255,7 @@ function ProfileSettings() {
               supported.
             </p>
           </div>
-          <fieldset className="border-0 p-0 m-0 min-w-0 grid gap-3">
-            <legend className="field-label mb-2">Profile links</legend>
-            {f.links.map((link, index) => (
-              <div key={index} className="grid gap-2 border-b border-site-line pb-3">
-                <div className="grid gap-2 min-w-0">
-                  <label>
-                    Label
-                    <Input
-                      value={link.label}
-                      maxLength={60}
-                      onChange={(e) =>
-                        setF({
-                          ...f,
-                          links: f.links.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)),
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span className="inline-flex items-center gap-2">
-                      URL
-                      <ProfileLinkIcon url={link.url} />
-                    </span>
-                    <Input
-                      type="url"
-                      required
-                      value={link.url}
-                      placeholder="https://"
-                      maxLength={500}
-                      onChange={(e) =>
-                        setF({
-                          ...f,
-                          links: f.links.map((item, i) => (i === index ? { ...item, url: e.target.value } : item)),
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="grid">
-                  <Button
-                    type="button"
-                    kind="btn ghost small"
-                    aria-label={`Remove profile link ${index + 1}`}
-                    onClick={() => setF({ ...f, links: f.links.filter((_, i) => i !== index) })}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              kind="btn ghost small"
-              disabled={f.links.length >= 8}
-              onClick={() => setF({ ...f, links: [...f.links, { label: "", url: "" }] })}
-            >
-              Add link
-            </Button>
-          </fieldset>
+          <ProfileLinksEditor links={f.links} onChange={(links) => setF({ ...f, links })} />
           {act.note}
           <Button kind="btn" loading={act.busy}>
             Save profile
