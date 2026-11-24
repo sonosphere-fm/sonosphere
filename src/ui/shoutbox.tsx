@@ -6,9 +6,8 @@ import { t, tx } from "../i18n";
 import { ago, api, dateTime, qs, useApi, useAuth, userUrl } from "../lib";
 import { Empty, Async, useAction, Avatar } from "./base";
 import { UserLabels } from "./user-labels";
-import type { ItemType } from "../../shared/catalog";
 import type { ReportOk } from "../../shared/reports";
-import type { Shout, ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
+import type { Shout, ShoutDeleted, ShoutList, ShoutPosted, ShoutTarget } from "../../shared/shouts";
 
 const reasons = (): [string, string][] => [
   ["spam", t("messages.reasonSpam")],
@@ -106,7 +105,7 @@ export function Shoutbox({
   limit = 20,
   word = "post",
 }: {
-  type: ItemType;
+  type: ShoutTarget;
   id: number;
   limit?: number;
   word?: "post" | "comment";
@@ -204,7 +203,7 @@ function ShoutThread({
   depth = 0,
 }: {
   shout: Shout;
-  type: ItemType;
+  type: ShoutTarget;
   targetId: number;
   enabled: boolean;
   canModerate: boolean;
