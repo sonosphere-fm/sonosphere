@@ -1,24 +1,24 @@
 import { useState, type FormEvent } from "react";
 import { Button, Input } from "../kit";
 import { Link } from "react-router-dom";
-import { Spinner } from "../icons";
-import { api, num, qs, TITLES, useApi, useAuth, userUrl, useTitle } from "../lib";
+import { api, qs, TITLES, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Art, Async, Section, useAction } from "../ui/base";
 import { Suggest } from "../ui/suggest";
 import { TrackList } from "../ui/lists";
 import { DatePicker, toLocal } from "../datepicker";
+import { t, tx } from "../i18n";
 import type { ScrobbleResponse } from "../../shared/listening";
 import type { SearchResults } from "../../shared/search";
 import type { UserRecent } from "../../shared/users";
 
 const local = () => toLocal(new Date());
 const minsAgo = (m: number) => () => new Date(Date.now() - m * 60000);
-const PRESETS: [string, () => Date][] = [
-  ["Just now", minsAgo(0)],
-  ["5 min ago", minsAgo(5)],
-  ["30 min ago", minsAgo(30)],
-  ["1 hour ago", minsAgo(60)],
-  ["Yesterday", minsAgo(1440)],
+const presets = (): [string, () => Date][] => [
+  [t("player.justNow"), minsAgo(0)],
+  [t("player.minAgo5"), minsAgo(5)],
+  [t("player.minAgo30"), minsAgo(30)],
+  [t("player.hourAgo"), minsAgo(60)],
+  [t("player.yesterday"), minsAgo(1440)],
 ];
 
 const search = (q: string, type: "artists" | "albums" | "tracks") =>
@@ -49,26 +49,26 @@ export function ScrobblePage() {
       const r = await api<ScrobbleResponse>("/scrobble", {
         body: { artist: f.artist, track: f.track, album: f.album, timestamp, source: "manual" },
       });
-      if (!r.accepted) throw new Error(r.details[0]?.reason || "That scrobble was ignored");
+      if (!r.accepted) throw new Error(r.details[0]?.reason || t("player.scrobbleIgnored"));
       setF({ ...f, track: "", when: local() });
       recent.reload();
-      return `Scrobbled “${f.track}” by ${f.artist}.`;
+      return t("player.scrobbledTrack", { track: f.track, artist: f.artist });
     });
   };
 
   return (
     <div className="wrap page">
-      <h1 className="page-title">Scrobble</h1>
+      <h1 className="page-title">{t("player.scrobble")}</h1>
       <div className="cols even">
         <div>
-          <Section title="Scrobble a track manually">
+          <Section title={t("player.scrobbleManually")}>
             <form className="form card" onSubmit={submit}>
               <label>
-                Track
+                {t("player.track")}
                 <Suggest
-                  label="Track"
+                  label={t("player.track")}
                   autoFocus
-                  placeholder="Start typing a song…"
+                  placeholder={t("player.startTyping")}
                   value={f.track}
                   onChange={(v) => setF({ ...f, track: v })}
                   search={findTracks}
@@ -90,9 +90,9 @@ export function ScrobblePage() {
               </label>
               <div className="pair">
                 <label>
-                  Artist
+                  {t("player.artist")}
                   <Suggest
-                    label="Artist"
+                    label={t("player.artist")}
                     value={f.artist}
                     onChange={(v) => setF({ ...f, artist: v })}
                     search={findArtists}
@@ -103,7 +103,7 @@ export function ScrobblePage() {
                         <Art image={a.image} kind="artist" />
                         <span>
                           <strong>{a.name}</strong>
-                          <span>{num(a.listeners)} listeners</span>
+                          <span>{t("player.listeners", { count: a.listeners })}</span>
                         </span>
                       </>
                     )}
@@ -111,10 +111,10 @@ export function ScrobblePage() {
                 </label>
                 <label>
                   <span>
-                    Album <span className="muted opt">optional</span>
+                    {t("player.album")} <span className="muted opt">{t("player.optional")}</span>
                   </span>
                   <Suggest
-                    label="Album"
+                    label={t("player.album")}
                     value={f.album}
                     onChange={(v) => setF({ ...f, album: v })}
                     search={findAlbums}
@@ -133,41 +133,35 @@ export function ScrobblePage() {
                 </label>
               </div>
               <label>
-                Listened at
+                {t("player.listenedAt")}
                 <DatePicker
                   time
-                  label="Listened at"
+                  label={t("player.listenedAt")}
                   value={f.when}
                   onChange={(v) => setF({ ...f, when: v || local() })}
                   max="now"
-                  presets={PRESETS}
+                  presets={presets()}
                 />
               </label>
               {act.note}
               <Button kind="btn" loading={act.busy} disabled={!f.artist.trim() || !f.track.trim()}>
-                Scrobble
+                {t("player.scrobble")}
               </Button>
             </form>
-            <p className="muted small">
-              Pick a match to fill in the rest, or type anything: music that isn't in the catalogue yet is added
-              automatically.
-            </p>
+            <p className="muted small">{t("player.pickMatch")}</p>
           </Section>
-          <Section title="Your latest scrobbles" more={`${userUrl(me!.username)}/library`}>
+          <Section title={t("player.latestScrobbles")} more={`${userUrl(me!.username)}/library`}>
             <Async q={recent}>{(d) => <TrackList items={d.items} time />}</Async>
           </Section>
         </div>
         <div>
-          <Section title="Import your listening history">
+          <Section title={t("player.importYourHistory")}>
             <Button kind="btn" href="/import">
-              Import from Last.fm or a file
+              {t("player.importFromLastfmOrFile")}
             </Button>
           </Section>
-          <Section title="Scrobble from other apps">
-            <p>
-              Sonosphere's API is compatible with applications that support the Last.fm 2.0 protocol. To scrobble from
-              another app, follow the <Link to="/help">scrobbling help</Link>.
-            </p>
+          <Section title={t("player.otherApps")}>
+            <p>{tx("player.otherAppsText", { help: <Link to="/help">{t("player.scrobblingHelp")}</Link> })}</p>
           </Section>
         </div>
       </div>

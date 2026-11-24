@@ -1,6 +1,8 @@
 import { findItem, resolveTrack, type TrackNames, type TrackRef } from "../catalog/repo";
 import { correct } from "../corrections/service";
 import { bad } from "../http";
+import { tr, type ErrorKey } from "../i18n";
+import type { Locale } from "../../shared/i18n/core";
 import { saveRecordingMbids, tracksOfRecordings } from "../listenbrainz/repo";
 import { clean, norm, now } from "../util";
 import * as Sentry from "@sentry/bun";
@@ -72,14 +74,19 @@ export async function resolve(input: ScrobbleInput): Promise<TrackRef | null> {
 }
 
 /** One result per input, in order. */
-export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], source = "web"): Promise<ScrobbleResult[]> {
-  const refused = (reason: string) => ({ accepted: false as const, reason });
+export async function scrobbleMany(
+  userId: number,
+  inputs: ScrobbleInput[],
+  source = "web",
+  locale: Locale = "en"
+): Promise<ScrobbleResult[]> {
+  const refused = (key: ErrorKey) => ({ accepted: false as const, reason: tr(locale, `errors.${key}`) });
   const checked = [];
   const prepared = new Map<string, TrackNames | null>();
   for (const input of inputs) {
     const ts = Math.floor(Number(input.timestamp) || now());
-    if (ts > now() + 3600) checked.push(refused("Timestamp is in the future"));
-    else if (ts < OLDEST) checked.push(refused("Timestamp is too old"));
+    if (ts > now() + 3600) checked.push(refused("timestampInFuture"));
+    else if (ts < OLDEST) checked.push(refused("timestampTooOld"));
     else {
       const key = JSON.stringify([
         clean(input.artist),
@@ -92,7 +99,7 @@ export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], sour
         n = await names(input);
         prepared.set(key, n);
       }
-      checked.push(n ? { ...n, playedAt: ts } : refused("Artist and track are required"));
+      checked.push(n ? { ...n, playedAt: ts } : refused("artistTrackRequired"));
     }
   }
   const filed = await repo.recordScrobbles(
@@ -105,7 +112,7 @@ export async function scrobbleMany(userId: number, inputs: ScrobbleInput[], sour
   return checked.map((c) => {
     if (!("playedAt" in c)) return c;
     const r = filed[i++];
-    if (!r) return refused("Duplicate scrobble");
+    if (!r) return refused("duplicateScrobble");
     return { accepted: true as const, id: r.id, artistId: r.artistId, trackId: r.trackId, albumId: r.albumId };
   });
 }
@@ -275,19 +282,18 @@ export async function blasts(userId: number, offset: number, tzMin: number, view
 
 /** Keeps an album only when one is named. */
 export async function editScrobble(id: number, input: ScrobbleInput): Promise<void> {
-  const ref = (await resolve(input)) ?? bad("Artist and track are required");
+  const ref = (await resolve(input)) ?? bad("artistTrackRequired");
   const albumId = clean(input.album) ? ref.albumId : null;
-  if (!(await repo.refileScrobble(id, { ...ref, albumId })))
-    bad("You already have that track scrobbled at the same time");
+  if (!(await repo.refileScrobble(id, { ...ref, albumId }))) bad("alreadyTrackScrobbledSameTime");
 }
 
 /** Names are used as typed (no community corrections). Returns how many plays changed. */
 export async function editScrobbles(src: repo.Scrobble, scope: EditScope, input: ScrobbleInput): Promise<number> {
-  if (scope === "album" && !src.albumId) bad("This scrobble has no album to edit");
-  const artist = clean(input.artist) || bad("Artist is required");
+  if (scope === "album" && !src.albumId) bad("scrobbleNoAlbumEdit");
+  const artist = clean(input.artist) || bad("artistRequired");
   const track = clean(input.track);
   const album = clean(input.album);
-  if (scope === "track" && !track) bad("Track is required");
+  if (scope === "track" && !track) bad("trackRequired");
   return repo.refileScrobbles(src, { scope, artist, track, album });
 }
 

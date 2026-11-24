@@ -24,7 +24,7 @@ const DAY = 26 * 3600_000;
 export async function spendWrites(n: number): Promise<void> {
   if (caps.dailyWrites === null) return;
   if ((await bump(`storage-a:${today()}`, n, DAY)) > caps.dailyWrites) {
-    fail(503, "Picture uploads are paused for today. Try again tomorrow.");
+    fail(503, "pictureUploadsPausedTodayTry");
   }
 }
 

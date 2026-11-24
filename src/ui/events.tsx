@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { num } from "../lib";
+import { locale, t } from "../i18n";
 import { Empty } from "./base";
 import type { EventSummary } from "../../shared/events";
 import type { EventSummary as ArtistEvent } from "../../shared/catalog";
@@ -9,7 +10,7 @@ const calMonth =
 const calYear = "block font-site text-[10px] font-semibold uppercase text-site-muted mt-[3px]";
 
 export function EventList({ items }: { items: (EventSummary | ArtistEvent)[] }) {
-  if (!items.length) return <Empty>No events found.</Empty>;
+  if (!items.length) return <Empty>{t("events.noEvents")}</Empty>;
   return (
     <ul className="events">
       {items.map((e) => {
@@ -17,7 +18,7 @@ export function EventList({ items }: { items: (EventSummary | ArtistEvent)[] }) 
         return (
           <li key={e.id}>
             <div className="w-[50px] flex-none text-center border-none overflow-hidden bg-site-card leading-none pb-1.5">
-              <span className={calMonth}>{d.toLocaleDateString("en-GB", { month: "short" })}</span>
+              <span className={calMonth}>{d.toLocaleDateString(locale(), { month: "short" })}</span>
               <b className="block font-site-display text-[22px] font-bold">{d.getDate()}</b>
               {d.getFullYear() !== new Date().getFullYear() && <span className={calYear}>{d.getFullYear()}</span>}
             </div>
@@ -32,9 +33,11 @@ export function EventList({ items }: { items: (EventSummary | ArtistEvent)[] }) 
               </span>
             </div>
             <div className="muted small nowrap right">
-              {e.status && <span className="badge">{e.status === "going" ? "Going" : "Interested"}</span>}
+              {e.status && (
+                <span className="badge">{e.status === "going" ? t("events.going") : t("events.interested")}</span>
+              )}
               <br />
-              {num(e.going)} going
+              {t("events.goingSmall", { count: e.going })}
             </div>
           </li>
         );

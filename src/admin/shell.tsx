@@ -3,7 +3,8 @@ import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { Ico } from "../icons";
 import { useAuth, useTitle } from "../lib";
 import { Empty, Pane } from "../ui/base";
-import { COUNT, cx, ROLE, useRole, type Role } from "./common";
+import { COUNT, cx, useRole, type AdminKey, type Role } from "./common";
+import { t } from "./i18n";
 import { Dashboard } from "./dashboard";
 import { Reports } from "./reports";
 import { FlagCount, Messages, Transcript } from "./messages";
@@ -14,17 +15,22 @@ import { Audit } from "./audit";
 import { SiteSettings } from "./settings";
 import { ChangelogEditor, ChangelogPosts } from "./changelog";
 
-const SECTIONS: [string, string, boolean][] = [
-  ["/admin", "Dashboard", false],
-  ["/admin/reports", "Reports", false],
-  ["/admin/messages", "Messages", false],
-  ["/admin/users", "Users", false],
-  ["/admin/content", "Content", false],
-  ["/admin/catalogue", "Catalogue", true],
-  ["/admin/changelog", "Changelog", true],
-  ["/admin/audit", "Audit log", false],
-  ["/admin/settings", "Site settings", true],
+const SECTIONS: [string, AdminKey, boolean][] = [
+  ["/admin", "admin.navDashboard", false],
+  ["/admin/reports", "admin.navReports", false],
+  ["/admin/messages", "admin.navMessages", false],
+  ["/admin/users", "admin.navUsers", false],
+  ["/admin/content", "admin.navContent", false],
+  ["/admin/catalogue", "admin.navCatalogue", true],
+  ["/admin/changelog", "admin.navChangelog", true],
+  ["/admin/audit", "admin.navAudit", false],
+  ["/admin/settings", "admin.navSettings", true],
 ];
+const SIGNED_IN_AS: Record<Role, AdminKey> = {
+  user: "admin.signedInAsUser",
+  moderator: "admin.signedInAsModerator",
+  admin: "admin.signedInAsAdmin",
+};
 
 const LAYOUT = cx(
   "grid grid-cols-[190px_minmax(0,1fr)] gap-9 [align-items:start] mt-[22px]",
@@ -56,26 +62,22 @@ export function AdminPage() {
   // main.tsx only renders the portal for signed-in staff
   const me = useAuth().me!;
   const role = useRole();
-  useTitle("Admin");
-  const adminOnly = (el: ReactNode) => (role === "admin" ? el : <Empty>Only admins can use this section.</Empty>);
-  const transcriptDenied = (
-    <Empty>
-      Only admins can read conversations. Reported messages, with the messages around them, are in the reports queue.
-    </Empty>
-  );
+  useTitle(t("admin.title"));
+  const adminOnly = (el: ReactNode) => (role === "admin" ? el : <Empty>{t("admin.adminsOnly")}</Empty>);
+  const transcriptDenied = <Empty>{t("admin.transcriptDenied")}</Empty>;
   return (
     <div className="wrap page">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="page-title mb-0">Admin</h1>
+        <h1 className="page-title mb-0">{t("admin.title")}</h1>
         <span className={roleTag(role)}>
-          <Ico.Shield /> Signed in as {ROLE[role].toLowerCase()}
+          <Ico.Shield /> {t(SIGNED_IN_AS[role])}
         </span>
       </div>
       <div className={LAYOUT}>
-        <nav className={NAV} aria-label="Admin sections">
+        <nav className={NAV} aria-label={t("admin.sections")}>
           {SECTIONS.filter(([, , a]) => !a || role === "admin").map(([to, label]) => (
             <NavLink key={to} to={to} end={to === "/admin"} className={navLink}>
-              {label}
+              {t(label)}
               {to === "/admin/reports" && me.openReports > 0 && <span className={COUNT}>{me.openReports}</span>}
               {to === "/admin/messages" && (
                 <Suspense fallback={null}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { TrackLinks as Links } from "../../shared/catalog";
+import { t } from "../i18n";
 import { Button, Modal } from "../kit";
 import { api, qs } from "../lib";
 
@@ -34,16 +35,16 @@ export function TrackLinks({ artist, title, onClose }: { artist: string; title: 
 
   const term = `${artist} ${title}`;
   return (
-    <Modal title="Open in a music service" onClose={onClose}>
+    <Modal title={t("music.openInService")} onClose={onClose}>
       {error ? (
         <div role="alert" className="mb-3">
           <p>{error}</p>
           <Button kind="btn ghost small" type="button" onClick={() => setAttempt((n) => n + 1)}>
-            Try again
+            {t("music.tryAgain")}
           </Button>
         </div>
       ) : !result ? (
-        <p role="status">Finding song links…</p>
+        <p role="status">{t("music.findingLinks")}</p>
       ) : (
         <>
           {services.some(([key]) => result[key]) ? (
@@ -60,7 +61,7 @@ export function TrackLinks({ artist, title, onClose }: { artist: string; title: 
               })}
             </ul>
           ) : (
-            <p>No matching song links found.</p>
+            <p>{t("music.noLinks")}</p>
           )}
         </>
       )}
@@ -71,7 +72,7 @@ export function TrackLinks({ artist, title, onClose }: { artist: string; title: 
           target="_blank"
           rel="noopener noreferrer"
         >
-          Search BiniLink
+          {t("music.searchBiniLink")}
         </a>
         {!result?.youtube && (
           <a
@@ -80,7 +81,7 @@ export function TrackLinks({ artist, title, onClose }: { artist: string; title: 
             target="_blank"
             rel="noopener noreferrer"
           >
-            Search YouTube
+            {t("music.searchYouTube")}
           </a>
         )}
       </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { UsernameFont } from "../../shared/username-fonts";
 import { ColorPicker } from "../colorpicker";
 import { Button } from "../kit";
+import { t, type MessageKey } from "../i18n";
 import { imageUrl, useAuth } from "../lib";
 import { imageAccents } from "./image-accent";
 import { Avatar } from "./base";
@@ -12,10 +13,10 @@ import { Username } from "./username";
 type StyleDraft = { usernameFont: UsernameFont; profileAccent: string | null; profileAccentEnd: string | null };
 type Mode = "default" | "solid" | "gradient";
 
-const MODES: [Mode, string][] = [
-  ["default", "Site default"],
-  ["solid", "Solid accent"],
-  ["gradient", "Gradient"],
+const MODES: [Mode, MessageKey][] = [
+  ["default", "settings.siteDefault"],
+  ["solid", "settings.solidAccent"],
+  ["gradient", "settings.gradient"],
 ];
 
 function ColorField({
@@ -40,7 +41,7 @@ function ColorField({
       const colors = await imageAccents(imageUrl(image));
       onChange(colors[second ? 1 : 0]);
     } catch {
-      setError("Could not read the picture. Try again or choose a color manually.");
+      setError(t("settings.pickColorFailed"));
     } finally {
       setBusy(false);
     }
@@ -52,17 +53,17 @@ function ColorField({
       <div className="flex flex-wrap gap-3">
         {me?.image && (
           <Button type="button" kind="link small" disabled={busy} onClick={() => pick(me.image!)}>
-            From avatar
+            {t("settings.fromAvatar")}
           </Button>
         )}
         {me?.banner && (
           <Button type="button" kind="link small" disabled={busy} onClick={() => pick(me.banner!)}>
-            From banner
+            {t("settings.fromBanner")}
           </Button>
         )}
         {busy && (
           <span className="muted small" role="status">
-            Picking color…
+            {t("settings.pickingColor")}
           </span>
         )}
       </div>
@@ -109,20 +110,20 @@ export function ProfileStyleSettings({
         className="profile-theme style-preview"
         data-profile-accent={custom ? "custom" : undefined}
         style={custom ? profileAccentStyle(appearance) : undefined}
-        aria-label="Profile preview"
+        aria-label={t("settings.profilePreview")}
       >
         <Avatar user={me!} size={72} plain />
         <div className="grow">
           <Username className="style-preview-name" user={me!} font={value.usernameFont} />
           <div className="bar">
             <span style={{ width: "72%" }} />
-            <b>120 scrobbles</b>
+            <b>{t("settings.previewScrobbles", { count: 120 })}</b>
           </div>
         </div>
       </div>
       <div className="row style-fields">
         <label>
-          Username font
+          {t("settings.usernameFont")}
           <UsernameFontPicker
             value={value.usernameFont}
             onChange={(font) => onChange({ usernameFont: font })}
@@ -130,11 +131,11 @@ export function ProfileStyleSettings({
           />
         </label>
         <div className="style-field">
-          <span>Color style</span>
-          <div className="theme-pick" role="group" aria-label="Profile color style">
+          <span>{t("settings.colorStyle")}</span>
+          <div className="theme-pick" role="group" aria-label={t("settings.profileColorStyle")}>
             {MODES.map(([key, name]) => (
               <button key={key} type="button" aria-pressed={mode === key} onClick={() => setMode(key)}>
-                {name}
+                {t(name)}
               </button>
             ))}
           </div>
@@ -142,8 +143,8 @@ export function ProfileStyleSettings({
       </div>
       {mode !== "default" && (
         <div className="row style-fields">
-          <ColorField label="Accent" value={start} onChange={setStart} />
-          {mode === "gradient" && <ColorField label="Second color" value={end} onChange={setEnd} second />}
+          <ColorField label={t("settings.accent")} value={start} onChange={setStart} />
+          {mode === "gradient" && <ColorField label={t("settings.secondColor")} value={end} onChange={setEnd} second />}
         </div>
       )}
     </fieldset>

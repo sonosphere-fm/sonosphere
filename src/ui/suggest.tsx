@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Input } from "../kit";
+import { t } from "../i18n";
 
 export function Suggest<T>({
   value,
@@ -39,8 +40,8 @@ export function Suggest<T>({
       setItems(r);
       setHi(-1);
     };
-    const t = setTimeout(() => search(term).then(show, () => {}), 160);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => search(term).then(show, () => {}), 160);
+    return () => clearTimeout(timer);
   }, [value]);
   const pick = (it: T) => {
     picked.current = text(it);
@@ -82,7 +83,7 @@ export function Suggest<T>({
         maxLength={255}
       />
       {open && items.length > 0 && (
-        <ul className="suggest-list" role="listbox" aria-label={`${label} suggestions`}>
+        <ul className="suggest-list" role="listbox" aria-label={t("common.suggestions", { label })}>
           {items.map((it, i) => (
             <li
               key={i}

@@ -2,64 +2,73 @@ import { Fragment, useState, type FormEvent, type ReactNode } from "react";
 import { Arrow, arrowed } from "../icons";
 import { Link } from "react-router-dom";
 import { Button, Input, Select } from "../kit";
-import { ago, api, dateTime, plural, qs, useApi, useTitle } from "../lib";
+import { ago, api, dateTime, qs, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
-import { FILTERBAR, FLAG, LINKISH, LOG_TABLE, NOTE, REASON, ROLE, SCROLL } from "./common";
+import {
+  FILTERBAR,
+  LINKISH,
+  LOG_TABLE,
+  NOTE,
+  SCROLL,
+  flagLabel,
+  reasonLabel,
+  roleLabel,
+  type AdminKey,
+} from "./common";
 import { act, actButton, adminUrl, useConfirm, useFlash, useQuery, useRole } from "./common";
+import { t, tx } from "./i18n";
 import type { AuditRow } from "../../shared/admin";
 import type { AuditList as AuditPage, Ok } from "../../shared/admin-content";
 
-const ACTION: Record<string, string> = {
-  "user.suspend": "Suspended",
-  "user.unsuspend": "Lifted suspension",
-  "user.ban": "Banned",
-  "user.unban": "Unbanned",
-  "user.role": "Changed role",
-  "user.sessions": "Signed out everywhere",
-  "user.verify": "Confirmed email",
-  "user.probation": "Put on probation",
-  "user.release": "Ended probation",
-  "user.delete": "Deleted account",
-  "user.impersonate": "Acted as user",
-  "user.impersonate.stop": "Stopped acting as user",
-  "user.clear-scrobbles": "Cleared scrobbles",
-  "note.add": "Added note",
-  "note.delete": "Deleted note",
-  "report.dismiss": "Dismissed report",
-  "report.remove": "Removed reported content",
-  "report.suspend": "Removed and suspended",
-  "report.mute": "Removed and muted",
-  "shout.delete": "Deleted wall post",
-  "journal.delete": "Deleted journal post",
-  "wiki.delete": "Deleted wiki revision",
-  "wiki.revert": "Reverted wiki",
-  "wiki.lock": "Locked wiki",
-  "wiki.unlock": "Unlocked wiki",
-  "catalogue.merge": "Merged",
-  "catalogue.rename": "Renamed",
-  "catalogue.tracklist": "Edited track list",
-  "catalogue.edit": "Edited details",
-  "catalogue.orphans": "Deleted orphans",
-  "tag.delete": "Deleted tag",
-  "changelog.create": "Posted to changelog",
-  "changelog.update": "Edited changelog post",
-  "changelog.delete": "Deleted changelog post",
-  "settings.update": "Changed settings",
-  "dm.read": "Read conversation",
-  "dm.delete": "Deleted message",
-  "dm.mute": "Turned off messaging",
-  "dm.unmute": "Restored messaging",
-  "dm.resolve": "Resolved spam flag",
+const ACTION: Record<string, AdminKey> = {
+  "user.suspend": "admin.actionUserSuspend",
+  "user.unsuspend": "admin.actionUserUnsuspend",
+  "user.ban": "admin.actionUserBan",
+  "user.unban": "admin.actionUserUnban",
+  "user.role": "admin.actionUserRole",
+  "user.sessions": "admin.actionUserSessions",
+  "user.verify": "admin.actionUserVerify",
+  "user.probation": "admin.actionUserProbation",
+  "user.release": "admin.actionUserRelease",
+  "user.delete": "admin.actionUserDelete",
+  "user.impersonate": "admin.actionUserImpersonate",
+  "user.impersonate.stop": "admin.actionUserImpersonateStop",
+  "user.clear-scrobbles": "admin.actionUserClearScrobbles",
+  "note.add": "admin.actionNoteAdd",
+  "note.delete": "admin.actionNoteDelete",
+  "report.dismiss": "admin.actionReportDismiss",
+  "report.remove": "admin.actionReportRemove",
+  "report.suspend": "admin.actionReportSuspend",
+  "report.mute": "admin.actionReportMute",
+  "shout.delete": "admin.actionShoutDelete",
+  "journal.delete": "admin.actionJournalDelete",
+  "wiki.delete": "admin.actionWikiDelete",
+  "wiki.revert": "admin.actionWikiRevert",
+  "wiki.lock": "admin.actionWikiLock",
+  "wiki.unlock": "admin.actionWikiUnlock",
+  "catalogue.merge": "admin.actionCatalogueMerge",
+  "catalogue.rename": "admin.actionCatalogueRename",
+  "catalogue.tracklist": "admin.actionCatalogueTracklist",
+  "catalogue.edit": "admin.actionCatalogueEdit",
+  "catalogue.orphans": "admin.actionCatalogueOrphans",
+  "tag.delete": "admin.actionTagDelete",
+  "changelog.create": "admin.actionChangelogCreate",
+  "changelog.update": "admin.actionChangelogUpdate",
+  "changelog.delete": "admin.actionChangelogDelete",
+  "settings.update": "admin.actionSettingsUpdate",
+  "dm.read": "admin.actionDmRead",
+  "dm.delete": "admin.actionDmDelete",
+  "dm.mute": "admin.actionDmMute",
+  "dm.unmute": "admin.actionDmUnmute",
+  "dm.resolve": "admin.actionDmResolve",
 };
-const actionLabel = (a: string) => ACTION[a] ?? a;
+const actionLabel = (a: string) => (ACTION[a] ? t(ACTION[a]) : a);
 const actionGroup = (a: string) => a.split(".")[0];
 const count = (v: unknown) => (typeof v === "number" ? v : 0);
 function change(v: unknown) {
   if (typeof v === "object" && v !== null && "from" in v && "to" in v) return v;
   return { from: undefined, to: undefined };
 }
-const ROLE_NAME: Record<string, string> = ROLE;
-const roleName = (r: unknown) => ROLE_NAME[String(r)] ?? String(r);
 function settingsChanges(d: Record<string, unknown>) {
   return Object.entries(d).map(([k, v], i) => {
     const c = change(v);
@@ -73,21 +82,21 @@ function settingsChanges(d: Record<string, unknown>) {
     );
   });
 }
-const FIELD: Record<string, string> = {
-  releaseDate: "release date",
-  releaseType: "type",
-  mbid: "MusicBrainz ID",
-  spotifyId: "Spotify ID",
-  duration: "length",
+const FIELD: Record<string, AdminKey> = {
+  releaseDate: "admin.fieldReleaseDate",
+  releaseType: "admin.fieldReleaseType",
+  mbid: "admin.fieldMbid",
+  spotifyId: "admin.fieldSpotifyId",
+  duration: "admin.fieldDuration",
 };
-const shown = (v: unknown) => (v === null || v === "" ? "none" : String(v));
+const shown = (v: unknown) => (v === null || v === "" ? t("admin.none") : String(v));
 function fieldChanges(fields: unknown) {
   return Object.entries(fields as Record<string, unknown>).map(([k, v], i) => {
     const c = change(v);
     return (
       <Fragment key={k}>
         {i > 0 && "; "}
-        {FIELD[k] ?? k}: {shown(c.from)}
+        {FIELD[k] ? t(FIELD[k]) : k}: {shown(c.from)}
         <Arrow />
         {shown(c.to)}
       </Fragment>
@@ -95,39 +104,48 @@ function fieldChanges(fields: unknown) {
   });
 }
 function reportDetails(d: Record<string, unknown>) {
-  const reason = d.reason ? ` (${REASON[String(d.reason)] ?? d.reason})` : "";
-  const closed = count(d.closed) > 1 ? `, closed ${d.closed}` : "";
-  return `report #${d.report}${reason}${closed}`;
+  const report = String(d.report);
+  const reason = d.reason ? reasonLabel(d.reason) : "";
+  const closed = count(d.closed);
+  if (closed > 1 && reason) return t("admin.auditReportReasonClosed", { report, reason, closed });
+  if (closed > 1) return t("admin.auditReportClosed", { report, closed });
+  if (reason) return t("admin.auditReportReason", { report, reason });
+  return t("admin.auditReport", { report });
 }
 function details(a: AuditRow): ReactNode {
   const d = a.data || {};
   if (a.action === "user.role")
     return (
       <>
-        {roleName(d.from)}
+        {roleLabel(d.from)}
         <Arrow />
-        {roleName(d.to)}
+        {roleLabel(d.to)}
       </>
     );
   if (a.action === "settings.update") return settingsChanges(d);
   if (a.action.startsWith("report.")) return reportDetails(d);
-  if (a.action === "wiki.revert") return `back to version ${d.toVersion}`;
-  if (a.action === "catalogue.merge" && d.merged !== undefined) return `${d.merged} merged, ${d.moved} moved`;
+  if (a.action === "wiki.revert") return t("admin.auditBackToVersion", { version: String(d.toVersion) });
+  if (a.action === "catalogue.merge" && d.merged !== undefined)
+    return t("admin.auditMerged", { merged: String(d.merged), moved: String(d.moved) });
   if (a.action === "catalogue.edit")
-    return (
-      <>
-        {d.reverts !== undefined && "Undo: "}
-        {fieldChanges(d.fields)}
-      </>
-    );
-  if (d.reverts !== undefined) return "Undo of an earlier change";
-  if (a.action === "user.sessions") return plural(count(d.revoked), "session");
-  if (a.action === "user.clear-scrobbles") return plural(count(d.deleted), "scrobble");
+    return d.reverts === undefined
+      ? fieldChanges(d.fields)
+      : tx("admin.auditUndoOf", { changes: fieldChanges(d.fields) });
+  if (d.reverts !== undefined) return t("admin.auditUndoEarlier");
+  if (a.action === "user.sessions") return t("admin.auditSessions", { count: count(d.revoked) });
+  if (a.action === "user.clear-scrobbles") return t("admin.auditScrobbles", { count: count(d.deleted) });
   if (a.action === "user.delete")
-    return `${plural(count(d.scrobbles), "scrobble")}, ${plural(count(d.shouts), "shout")}`;
-  if (a.action === "tag.delete") return plural(count(d.uses), "use");
-  if (a.action === "dm.resolve") return `${FLAG[String(d.kind)] ?? d.kind}${d.detail ? `: ${d.detail}` : ""}`;
-  if (a.action === "dm.delete") return d.closedReports ? `closed ${plural(count(d.closedReports), "report")}` : "";
+    return t("admin.auditDeletedAccount", {
+      scrobbles: t("admin.auditScrobbles", { count: count(d.scrobbles) }),
+      shouts: t("admin.auditShouts", { count: count(d.shouts) }),
+    });
+  if (a.action === "tag.delete") return t("admin.auditUses", { count: count(d.uses) });
+  if (a.action === "dm.resolve") {
+    const flag = flagLabel(d.kind);
+    return d.detail ? t("admin.auditFlagDetail", { flag, detail: String(d.detail) }) : flag;
+  }
+  if (a.action === "dm.delete")
+    return d.closedReports ? t("admin.auditClosedReports", { count: count(d.closedReports) }) : "";
   if (d.text) {
     const text = String(d.text);
     return `“${text.slice(0, 120)}${text.length > 120 ? "…" : ""}”`;
@@ -203,21 +221,16 @@ export function Audit() {
   const admin = useRole() === "admin";
   const [modal, ask] = useConfirm();
   const flash = useFlash();
-  useTitle("Audit log");
+  useTitle(t("admin.navAudit"));
   const askUndo = (a: AuditRow) =>
     ask({
-      title: "Undo this change",
-      action: "Undo",
-      body: (
-        <p>
-          Put {a.label || "this item"} back the way it was before {a.actor}'s change. This is logged too, so it can be
-          undone again.
-        </p>
-      ),
+      title: t("admin.undoTitle"),
+      action: t("admin.undo"),
+      body: <p>{t("admin.undoBody", { item: a.label || t("admin.thisItem"), actor: a.actor })}</p>,
       run: (note) =>
         api<Ok>("/admin/catalogue/revert", { body: { id: a.id, note } }).then(() => {
           q.reload();
-          flash.set({ ok: true, text: "Change undone." });
+          flash.set({ ok: true, text: t("admin.changeUndone") });
         }),
     });
   const filter = (e: FormEvent) => {
@@ -233,10 +246,10 @@ export function Audit() {
     <Async q={q}>
       {(d) => {
         const groups = [...new Set<string>(d.actions.map(actionGroup))];
-        const actorOptions: Option[] = [["", "Any staff member"], ...d.actors.map((a): Option => [a, a])];
-        const actionOptions: Option[] = [["", "Any action"]];
+        const actorOptions: Option[] = [["", t("admin.anyStaff")], ...d.actors.map((a): Option => [a, a])];
+        const actionOptions: Option[] = [["", t("admin.anyAction")]];
         for (const g of groups) {
-          actionOptions.push([g, `All ${g} actions`]);
+          actionOptions.push([g, t("admin.allGroupActions", { group: g })]);
           for (const a of d.actions.filter((a) => a.startsWith(g + ".")))
             actionOptions.push([a, `  ${actionLabel(a)}`]);
         }
@@ -244,51 +257,61 @@ export function Audit() {
           <>
             {modal}
             <form className={FILTERBAR} onSubmit={filter}>
-              <Select label="Staff member" value={actor} onChange={(v) => set({ actor: v })} options={actorOptions} />
-              <Select label="Action" value={action} onChange={(v) => set({ action: v })} options={actionOptions} />
+              <Select
+                label={t("admin.staffMember")}
+                value={actor}
+                onChange={(v) => set({ actor: v })}
+                options={actorOptions}
+              />
+              <Select
+                label={t("admin.action")}
+                value={action}
+                onChange={(v) => set({ action: v })}
+                options={actionOptions}
+              />
               <Input
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
-                placeholder="About user"
-                aria-label="About user"
+                placeholder={t("admin.aboutUser")}
+                aria-label={t("admin.aboutUser")}
               />
               <Input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Search target or note"
-                aria-label="Search"
+                placeholder={t("admin.searchTargetOrNote")}
+                aria-label={t("admin.search")}
               />
-              <Button kind="btn small">Filter</Button>
+              <Button kind="btn small">{t("admin.filter")}</Button>
               {(actor || action || who || term) && (
                 <Button kind="link small" type="button" onClick={clear}>
-                  Clear
+                  {t("admin.clear")}
                 </Button>
               )}
             </form>
             <p className="muted small">
-              {plural(d.total, "entry").replace("entrys", "entries")}
+              {t("admin.entries", { count: d.total })}
               {!actor && (
                 <>
                   {" · "}
                   <button type="button" className={LINKISH} onClick={() => set({ automatic: automatic ? "" : "1" })}>
-                    {automatic ? "Hide automatic entries" : "Show automatic entries"}
+                    {automatic ? t("admin.hideAutomatic") : t("admin.showAutomatic")}
                   </button>
                 </>
               )}
             </p>
             {flash.note}
             {d.items.length === 0 ? (
-              <Empty>No entries match.</Empty>
+              <Empty>{t("admin.noEntriesMatch")}</Empty>
             ) : (
               <div className={SCROLL}>
                 <table className={LOG_TABLE}>
                   <thead>
                     <tr>
-                      <th>When</th>
-                      <th>Staff</th>
-                      <th>Action</th>
-                      <th>Target</th>
-                      <th>Details</th>
+                      <th>{t("admin.colWhen")}</th>
+                      <th>{t("admin.colStaff")}</th>
+                      <th>{t("admin.action")}</th>
+                      <th>{t("admin.colTarget")}</th>
+                      <th>{t("admin.colDetails")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -338,7 +361,7 @@ export function Audit() {
                               <>
                                 {" "}
                                 <Button kind="link small" type="button" onClick={() => askUndo(a)}>
-                                  Undo
+                                  {t("admin.undo")}
                                 </Button>
                               </>
                             )}

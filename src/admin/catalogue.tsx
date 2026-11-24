@@ -1,10 +1,11 @@
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button, Input, Modal, SearchField, Select } from "../kit";
-import { ago, albumUrl, api, artistUrl, num, plural, qs, tagUrl, trackUrl, useApi, useTitle } from "../lib";
+import { ago, albumUrl, api, artistUrl, num, qs, tagUrl, trackUrl, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
 import { CHECK, COMPACT_LIST, FILTERBAR, PICKED_ROW, SCROLL, SEARCH, TABLE } from "./common";
-import { TOOLBAR, WIDE_SEARCH, useQuery, useConfirm, useAction2, useFlash } from "./common";
+import { TOOLBAR, WIDE_SEARCH, useQuery, useConfirm, useAction2, useFlash, type AdminKey } from "./common";
+import { t, tx } from "./i18n";
 import type {
   AdminTagList,
   CatalogueDetails,
@@ -21,7 +22,56 @@ import type {
 } from "../../shared/admin-content";
 import { Ico } from "../icons";
 
-const KIND_LABEL: Record<string, string> = { artist: "Artists", album: "Albums", track: "Tracks" };
+type KindKeys = Record<string, AdminKey>;
+const SEARCH_KIND: KindKeys = {
+  artist: "admin.searchArtists",
+  album: "admin.searchAlbums",
+  track: "admin.searchTracks",
+};
+const KIND_COUNT: KindKeys = { artist: "admin.artistCount", album: "admin.albumCount", track: "admin.trackCount" };
+const RENAME_KIND: KindKeys = { artist: "admin.renameArtist", album: "admin.renameAlbum", track: "admin.renameTrack" };
+const MERGE_KIND: KindKeys = { artist: "admin.mergeArtist", album: "admin.mergeAlbum", track: "admin.mergeTrack" };
+const MERGE_FROM: KindKeys = {
+  artist: "admin.mergeFromArtist",
+  album: "admin.mergeFromAlbum",
+  track: "admin.mergeFromTrack",
+};
+const FIND_KEEP: KindKeys = {
+  artist: "admin.findArtistKeep",
+  album: "admin.findAlbumKeep",
+  track: "admin.findTrackKeep",
+};
+const EDIT_DETAILS: KindKeys = {
+  artist: "admin.editArtistDetails",
+  album: "admin.editAlbumDetails",
+  track: "admin.editTrackDetails",
+};
+const NO_OTHER: KindKeys = { artist: "admin.noOtherArtist", album: "admin.noOtherAlbum", track: "admin.noOtherTrack" };
+const ORPHANS_NOTE: KindKeys = {
+  artist: "admin.orphansNoteArtist",
+  album: "admin.orphansNoteAlbum",
+  track: "admin.orphansNoteTrack",
+};
+const ORPHAN_COUNT: KindKeys = {
+  artist: "admin.orphanedArtists",
+  album: "admin.orphanedAlbums",
+  track: "admin.orphanedTracks",
+};
+const DELETE_KIND: KindKeys = {
+  artist: "admin.deleteArtists",
+  album: "admin.deleteAlbums",
+  track: "admin.deleteTracks",
+};
+const DELETE_SELECTED: KindKeys = {
+  artist: "admin.deleteSelectedArtists",
+  album: "admin.deleteSelectedAlbums",
+  track: "admin.deleteSelectedTracks",
+};
+const nameBy = (name: string, artist: string | null) => (artist ? t("admin.nameByArtist", { name, artist }) : name);
+function boldBy(it: { name: string; artist: string | null }) {
+  if (!it.artist) return <b>{it.name}</b>;
+  return tx("admin.nameByArtist", { name: <b>{it.name}</b>, artist: it.artist });
+}
 
 function itemUrl(kind: string, it: CatalogueItem) {
   if (kind === "artist") return artistUrl(it.name);
@@ -39,24 +89,26 @@ function CatalogueTab({ tab }: { tab: string }) {
 export function Catalogue() {
   const [sp, set] = useQuery();
   const tab = sp.get("tab") || "duplicates";
-  useTitle("Catalogue");
+  useTitle(t("admin.navCatalogue"));
   return (
     <>
       <div className={TOOLBAR}>
         <nav className="tabs sub">
-          {[
-            ["duplicates", "Duplicate artists"],
-            ["browse", "Edit and merge"],
-            ["orphans", "Orphans"],
-            ["tags", "Tags"],
-          ].map(([k, l]) => (
+          {(
+            [
+              ["duplicates", "admin.tabDuplicates"],
+              ["browse", "admin.tabBrowse"],
+              ["orphans", "admin.tabOrphans"],
+              ["tags", "admin.tabTags"],
+            ] as const
+          ).map(([k, l]) => (
             <button
               key={k}
               type="button"
               className={tab === k ? "active" : ""}
               onClick={() => set({ tab: k === "duplicates" ? "" : k, kind: "", q: "" })}
             >
-              {l}
+              {t(l)}
             </button>
           ))}
         </nav>
@@ -77,15 +129,11 @@ function Duplicates() {
   return (
     <>
       {modal}
-      <p className="muted">
-        Artists whose names only differ by case, accents, punctuation, “the” or “&amp;”. Pick the one to keep; the rest
-        are merged into it with their tracks, albums, scrobbles, tags, wiki history and wall posts. Tracks and albums
-        with the same title are combined.
-      </p>
+      <p className="muted">{t("admin.duplicatesIntro")}</p>
       {flash.note}
       <Async q={q}>
         {(d) => {
-          if (d.groups.length === 0) return <Empty>No likely duplicates.</Empty>;
+          if (d.groups.length === 0) return <Empty>{t("admin.noDuplicates")}</Empty>;
           return (
             <div className="grid gap-3">
               {d.groups.map((g, gi) => {
@@ -101,17 +149,19 @@ function Duplicates() {
                     done++;
                   }
                   q.reload();
-                  flash.set({ ok: true, text: `Merged ${plural(done, "artist")} into ${kept.name}.` });
+                  flash.set({ ok: true, text: t("admin.mergedArtistsInto", { count: done, name: kept.name }) });
                 };
                 const askMerge = () =>
                   ask({
-                    title: `Merge into ${kept.name}`,
-                    action: `Merge ${rest.length}`,
+                    title: t("admin.mergeInto", { name: kept.name }),
+                    action: t("admin.mergeCount", { count: rest.length }),
                     danger: true,
                     body: (
                       <p>
-                        Merge {rest.map((a) => `“${a.name}”`).join(", ")} into “{kept.name}”. The merged artists are
-                        deleted. This can't be undone.
+                        {t("admin.mergeArtistsBody", {
+                          names: rest.map((a) => `“${a.name}”`).join(", "),
+                          name: kept.name,
+                        })}
                       </p>
                     ),
                     run: mergeAll,
@@ -132,19 +182,20 @@ function Duplicates() {
                             <span className="grow">
                               <b>{a.name}</b>{" "}
                               <Link className="muted small" to={artistUrl(a.name)}>
-                                view
+                                {t("admin.view")}
                               </Link>
                             </span>
                             <span className="muted small">
-                              {plural(a.scrobbles, "scrobble")} · {plural(a.tracks, "track")} ·{" "}
-                              {plural(a.albums, "album")}
+                              {t("admin.scrobbleCount", { count: a.scrobbles })} ·{" "}
+                              {t("admin.trackCount", { count: a.tracks })} ·{" "}
+                              {t("admin.albumCount", { count: a.albums })}
                             </span>
                           </label>
                         </li>
                       ))}
                     </ul>
                     <Button kind="btn ghost small" type="button" onClick={askMerge}>
-                      Keep “{kept.name}”, merge {rest.length} other{rest.length === 1 ? "" : "s"}
+                      {t("admin.keepMergeOthers", { name: kept.name, count: rest.length })}
                     </Button>
                   </div>
                 );
@@ -197,43 +248,36 @@ function Browse() {
     <>
       <div className={FILTERBAR}>
         <Select
-          label="Kind"
+          label={t("admin.kind")}
           value={kind}
           onChange={(v) => set({ kind: v === "artist" ? "" : v })}
           options={[
-            ["artist", "Artists"],
-            ["album", "Albums"],
-            ["track", "Tracks"],
+            ["artist", t("admin.kindArtists")],
+            ["album", t("admin.kindAlbums")],
+            ["track", t("admin.kindTracks")],
           ]}
         />
         <form className={SEARCH} onSubmit={search}>
-          <SearchField
-            value={text}
-            onChange={setText}
-            placeholder={`Search ${KIND_LABEL[kind].toLowerCase()}`}
-            clearable
-          />
+          <SearchField value={text} onChange={setText} placeholder={t(SEARCH_KIND[kind])} clearable />
         </form>
       </div>
       {flash.note}
       <Async q={q}>
         {(d) => (
           <>
-            <p className="muted small">
-              {num(d.total)} {KIND_LABEL[kind].toLowerCase()}
-            </p>
+            <p className="muted small">{t(KIND_COUNT[kind], { count: d.total })}</p>
             {d.items.length === 0 ? (
-              <Empty>Nothing matches.</Empty>
+              <Empty>{t("admin.nothingMatches")}</Empty>
             ) : (
               <div className={SCROLL}>
                 <table className={TABLE}>
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      {kind !== "artist" && <th>Artist</th>}
-                      {kind !== "track" && <th className="num">Tracks</th>}
-                      {kind === "artist" && <th className="num">Albums</th>}
-                      <th className="num">Scrobbles</th>
+                      <th>{t("admin.colName")}</th>
+                      {kind !== "artist" && <th>{t("admin.colArtist")}</th>}
+                      {kind !== "track" && <th className="num">{t("admin.kindTracks")}</th>}
+                      {kind === "artist" && <th className="num">{t("admin.kindAlbums")}</th>}
+                      <th className="num">{t("admin.colScrobbles")}</th>
                       <th className="num">#</th>
                       <th />
                     </tr>
@@ -253,19 +297,19 @@ function Browse() {
                         <td className="num muted small">{it.id}</td>
                         <td className="nowrap right">
                           <Button kind="link small" type="button" onClick={() => setRename(it)}>
-                            Rename
+                            {t("admin.rename")}
                           </Button>{" "}
                           <Button kind="link small" type="button" onClick={() => setDetails(it)}>
-                            Details
+                            {t("admin.colDetails")}
                           </Button>{" "}
                           <Button kind="link small" type="button" onClick={() => setMerge(it)}>
-                            Merge into…
+                            {t("admin.mergeIntoEllipsis")}
                           </Button>
                           {kind === "album" && (
                             <>
                               {" "}
                               <Button kind="link small" type="button" onClick={() => setEditing(it)}>
-                                Track list
+                                {t("admin.trackList")}
                               </Button>
                             </>
                           )}
@@ -299,27 +343,24 @@ export function RenameDialog({ kind, item, close, done }: RenameProps) {
     e.preventDefault();
     act.run(async () => {
       await api<Ok>("/admin/catalogue/rename", { body: { kind, id: item.id, name } });
-      done(`Renamed “${item.name}” to “${name.trim()}”.`, name.trim());
+      done(t("admin.renamed", { from: item.name, to: name.trim() }), name.trim());
     });
   };
   return (
-    <Modal title={`Rename ${kind}`} onClose={close}>
+    <Modal title={t(RENAME_KIND[kind])} onClose={close}>
       <form className="form" onSubmit={submit}>
-        <p className="muted small">
-          {item.artist ? `${item.name} by ${item.artist}` : item.name}. Every scrobble, tag and page follows the new
-          name. If the name is taken, merge instead.
-        </p>
+        <p className="muted small">{t("admin.renameIntro", { item: nameBy(item.name, item.artist) })}</p>
         <label>
-          New name
-          <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus aria-label="New name" />
+          {t("admin.newName")}
+          <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus aria-label={t("admin.newName")} />
         </label>
         {act.note}
         <div className="row">
           <Button kind="btn" loading={act.busy} disabled={!name.trim() || name.trim() === item.name}>
-            Rename
+            {t("admin.rename")}
           </Button>
           <Button kind="btn ghost" type="button" onClick={close}>
-            Cancel
+            {t("admin.cancel")}
           </Button>
         </div>
       </form>
@@ -343,29 +384,26 @@ function MergeDialog({ kind, item, close, done }: DialogProps & { item: Catalogu
       const r = await api<CatalogueMerged>("/admin/catalogue/merge", {
         body: { kind, source: item.id, target: pick.id },
       });
-      const counts = r.merged !== undefined ? ` (${r.merged} combined, ${r.moved} moved)` : "";
-      done(`Merged “${item.name}” into “${pick.name}”${counts}.`);
+      if (r.merged === undefined) done(t("admin.mergedInto", { from: item.name, to: pick.name }));
+      else done(t("admin.mergedIntoCounts", { from: item.name, to: pick.name, merged: r.merged, moved: r.moved ?? 0 }));
     });
   };
   return (
-    <Modal title={`Merge ${kind}`} onClose={close}>
+    <Modal title={t(MERGE_KIND[kind])} onClose={close}>
       <div className="form">
-        <p className="small">
-          Move everything from <b>{item.name}</b>
-          {item.artist && <> by {item.artist}</>} (#{item.id}) into another {kind}, then delete it.
-        </p>
+        <p className="small">{tx(MERGE_FROM[kind], { item: boldBy(item), id: item.id })}</p>
         {!pick ? (
           <>
             <form className={WIDE_SEARCH} onSubmit={search}>
-              <SearchField value={text} onChange={setText} placeholder={`Find the ${kind} to keep`} autoFocus />
+              <SearchField value={text} onChange={setText} placeholder={t(FIND_KEEP[kind])} autoFocus />
             </form>
-            <Suspense fallback={<p className="muted small">Searching…</p>}>
+            <Suspense fallback={<p className="muted small">{t("admin.searching")}</p>}>
               <MergeResults
                 kind={kind}
                 term={term}
                 fallback={item.artist}
                 skip={[item.id]}
-                pickLabel="Keep this"
+                pickLabel={t("admin.keepThis")}
                 onPick={setPick}
               />
             </Suspense>
@@ -373,17 +411,22 @@ function MergeDialog({ kind, item, close, done }: DialogProps & { item: Catalogu
         ) : (
           <form className="form" onSubmit={submit}>
             <p className="notice">
-              Merge <b>{item.name}</b> (#{item.id}, {num(item.scrobbles)} scrobbles) into <b>{pick.name}</b>
-              {pick.artist && <> by {pick.artist}</>} (#{pick.id}, {num(pick.scrobbles)} scrobbles)? This can't be
-              undone.
+              {tx("admin.mergeConfirm", {
+                source: <b>{item.name}</b>,
+                sourceId: item.id,
+                sourceScrobbles: num(item.scrobbles),
+                target: boldBy(pick),
+                targetId: pick.id,
+                targetScrobbles: num(pick.scrobbles),
+              })}
             </p>
             {act.note}
             <div className="row">
               <Button kind="btn danger" loading={act.busy}>
-                Merge
+                {t("admin.merge")}
               </Button>
               <Button kind="btn ghost" type="button" onClick={() => setPick(null)}>
-                Pick another
+                {t("admin.pickAnother")}
               </Button>
             </div>
           </form>
@@ -395,8 +438,8 @@ function MergeDialog({ kind, item, close, done }: DialogProps & { item: Catalogu
 
 export function DetailsDialog(props: DialogProps) {
   return (
-    <Modal title={`Edit ${props.kind} details`} onClose={props.close}>
-      <Suspense fallback={<p className="muted small">Loading…</p>}>
+    <Modal title={t(EDIT_DETAILS[props.kind])} onClose={props.close}>
+      <Suspense fallback={<p className="muted small">{t("admin.loading")}</p>}>
         <DetailsLoader {...props} />
       </Suspense>
     </Modal>
@@ -408,13 +451,13 @@ function DetailsLoader(props: DialogProps) {
   return <Async q={q}>{(d) => <DetailsForm {...props} initial={d} />}</Async>;
 }
 
-const RELEASE_TYPES: [string, string][] = [
-  ["", "Not set (filled in from MusicBrainz)"],
-  ["album", "Album"],
-  ["single", "Single"],
-  ["ep", "EP"],
-  ["broadcast", "Broadcast"],
-  ["other", "Other"],
+const releaseTypes = (): [string, string][] => [
+  ["", t("admin.releaseTypeUnset")],
+  ["album", t("admin.releaseTypeAlbum")],
+  ["single", t("admin.releaseTypeSingle")],
+  ["ep", t("admin.releaseTypeEp")],
+  ["broadcast", t("admin.releaseTypeBroadcast")],
+  ["other", t("admin.releaseTypeOther")],
 ];
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -443,49 +486,51 @@ function DetailsForm({ kind, item, initial, close, done }: DialogProps & { initi
     );
     act.run(async () => {
       await api<Ok>("/admin/catalogue/details", { body: { kind, id: item.id, ...Object.fromEntries(changed) } });
-      done(`Saved the details of “${item.name}”.`);
+      done(t("admin.savedDetails", { name: item.name }));
     });
   };
   return (
     <form className="form" onSubmit={submit}>
-      <p className="muted small">
-        {item.artist ? `${item.name} by ${item.artist}` : item.name}. Every change is logged and can be undone from the
-        audit log.
-      </p>
+      <p className="muted small">{t("admin.detailsIntro", { item: nameBy(item.name, item.artist) })}</p>
       {kind === "album" && (
         <>
           <label>
-            Release date <span className="muted small">YYYY or YYYY-MM-DD</span>
+            {t("admin.releaseDate")} <span className="muted small">{t("admin.releaseDateHint")}</span>
             <Input value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} autoFocus />
           </label>
-          <Select label="Release type" value={releaseType} onChange={setReleaseType} options={RELEASE_TYPES} />
+          <Select
+            label={t("admin.releaseType")}
+            value={releaseType}
+            onChange={setReleaseType}
+            options={releaseTypes()}
+          />
         </>
       )}
       {kind === "track" && (
         <label>
-          Length <span className="muted small">minutes:seconds</span>
+          {t("admin.length")} <span className="muted small">{t("admin.lengthHint")}</span>
           <Input value={length} onChange={(e) => setLength(e.target.value)} autoFocus />
         </label>
       )}
       {kind !== "track" && (
         <label>
-          MusicBrainz ID
+          {t("admin.fieldMbid")}
           <Input value={mbid} onChange={(e) => setMbid(e.target.value)} />
         </label>
       )}
       {kind === "artist" && (
         <label>
-          Spotify ID
+          {t("admin.fieldSpotifyId")}
           <Input value={spotifyId} onChange={(e) => setSpotifyId(e.target.value)} />
         </label>
       )}
       {act.note}
       <div className="row">
         <Button kind="btn" loading={act.busy}>
-          Save
+          {t("admin.save")}
         </Button>
         <Button kind="btn ghost" type="button" onClick={close}>
-          Cancel
+          {t("admin.cancel")}
         </Button>
       </div>
     </form>
@@ -496,8 +541,8 @@ type TracklistProps = { item: EditTarget; close: () => void; done: (msg: string)
 
 export function TracklistDialog({ item, close, done }: TracklistProps) {
   return (
-    <Modal title="Edit track list" onClose={close}>
-      <Suspense fallback={<p className="muted small">Loading…</p>}>
+    <Modal title={t("admin.editTrackList")} onClose={close}>
+      <Suspense fallback={<p className="muted small">{t("admin.loading")}</p>}>
         <TracklistEditor item={item} close={close} done={done} />
       </Suspense>
     </Modal>
@@ -516,8 +561,8 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
   const [text, setText] = useState(item.artist ?? "");
   const [term, setTerm] = useState(item.artist ?? "");
   const act = useAction2();
-  const ids = list.map((t) => t.id);
-  const changed = ids.join() !== initial.map((t) => t.id).join();
+  const ids = list.map((track) => track.id);
+  const changed = ids.join() !== initial.map((track) => track.id).join();
   const move = (i: number, by: number) => {
     const next = [...list];
     [next[i], next[i + by]] = [next[i + by]!, next[i]!];
@@ -530,7 +575,7 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
     setText("");
     setTerm(item.artist ?? "");
   };
-  const listed = list.some((t) => t.name.toLowerCase() === term.toLowerCase());
+  const listed = list.some((track) => track.name.toLowerCase() === term.toLowerCase());
   const offerNew = term !== "" && term !== item.artist && !listed;
   const search = (e: FormEvent) => {
     e.preventDefault();
@@ -538,32 +583,33 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
   };
   const save = () =>
     act.run(async () => {
-      const tracks = list.map((t) => (t.id > 0 ? t.id : t.name));
+      const tracks = list.map((track) => (track.id > 0 ? track.id : track.name));
       await api<Ok>("/admin/catalogue/tracklist", { body: { id: item.id, tracks } });
-      done(`Saved the track list of “${item.name}” (${plural(list.length, "track")}).`);
+      done(t("admin.savedTrackList", { name: item.name, count: list.length }));
     });
   return (
     <div className="form">
       <p className="muted small">
-        {item.name} by {item.artist}. Once saved, scrobbles stop adding tracks to this album, so removed tracks stay
-        off. To add a song nobody has scrobbled yet, search its title and add it as a new track.
+        {t("admin.trackListIntro", { item: t("admin.nameByArtist", { name: item.name, artist: item.artist ?? "" }) })}
       </p>
       {list.length === 0 ? (
-        <p className="muted small">No tracks.</p>
+        <p className="muted small">{t("admin.noTracks")}</p>
       ) : (
         <ol className="list-none w-full m-0 p-0 max-h-[40vh] overflow-auto">
-          {list.map((t, i) => (
-            <li key={t.id} className={TRACK_ROW}>
+          {list.map((track, i) => (
+            <li key={track.id} className={TRACK_ROW}>
               <span className="muted small w-6 text-right">{i + 1}</span>
               <span className="grow">
-                {t.name}
-                {t.artist !== item.artist && <span className="muted"> by {t.artist}</span>}
-                {t.id < 0 && <span className="muted small"> new</span>}
+                {track.name}
+                {track.artist !== item.artist && (
+                  <span className="muted"> {t("admin.byName", { name: track.artist })}</span>
+                )}
+                {track.id < 0 && <span className="muted small"> {t("admin.new")}</span>}
               </span>
               <Button
                 kind="link small"
                 type="button"
-                aria-label={`Move ${t.name} up`}
+                aria-label={t("admin.moveUp", { name: track.name })}
                 disabled={i === 0}
                 onClick={() => move(i, -1)}
               >
@@ -572,14 +618,14 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
               <Button
                 kind="link small"
                 type="button"
-                aria-label={`Move ${t.name} down`}
+                aria-label={t("admin.moveDown", { name: track.name })}
                 disabled={i === list.length - 1}
                 onClick={() => move(i, 1)}
               >
                 <Ico.SortDown />
               </Button>
-              <Button kind="link small" type="button" onClick={() => setList(list.filter((x) => x.id !== t.id))}>
-                Remove
+              <Button kind="link small" type="button" onClick={() => setList(list.filter((x) => x.id !== track.id))}>
+                {t("admin.remove")}
               </Button>
             </li>
           ))}
@@ -588,22 +634,29 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
       {act.note}
       <div className="row">
         <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>
-          Save
+          {t("admin.save")}
         </Button>
         <Button kind="btn ghost" type="button" onClick={close}>
-          Cancel
+          {t("admin.cancel")}
         </Button>
       </div>
       <form className={WIDE_SEARCH} onSubmit={search}>
-        <SearchField value={text} onChange={setText} placeholder="Find a track to add" />
+        <SearchField value={text} onChange={setText} placeholder={t("admin.findTrackToAdd")} />
       </form>
       {offerNew && (
         <Button kind="btn ghost small" type="button" onClick={addNew}>
-          Add “{term}” as a new track
+          {t("admin.addAsNewTrack", { name: term })}
         </Button>
       )}
-      <Suspense fallback={<p className="muted small">Searching…</p>}>
-        <MergeResults kind="track" term={term} fallback={item.artist} skip={ids} pickLabel="Add" onPick={add} />
+      <Suspense fallback={<p className="muted small">{t("admin.searching")}</p>}>
+        <MergeResults
+          kind="track"
+          term={term}
+          fallback={item.artist}
+          skip={ids}
+          pickLabel={t("admin.add")}
+          onPick={add}
+        />
       </Suspense>
     </div>
   );
@@ -637,16 +690,16 @@ function MergeResults({ kind, term, fallback, skip, pickLabel, onPick }: MergeRe
             />
           );
         }
-        if (items.length === 0) return <p className="muted small">No other {kind} matches.</p>;
+        if (items.length === 0) return <p className="muted small">{t(NO_OTHER[kind])}</p>;
         return (
           <ul className={`${COMPACT_LIST} max-h-[320px] overflow-auto [&>li]:items-center`}>
             {items.map((x) => (
               <li key={x.id}>
                 <span>
                   <b>{x.name}</b>
-                  {x.artist && <span className="muted"> by {x.artist}</span>}{" "}
+                  {x.artist && <span className="muted"> {t("admin.byName", { name: x.artist })}</span>}{" "}
                   <span className="muted small">
-                    #{x.id} · {plural(x.scrobbles, "scrobble")}
+                    #{x.id} · {t("admin.scrobbleCount", { count: x.scrobbles })}
                   </span>
                 </span>
                 <Button kind="btn ghost small" type="button" onClick={() => onPick(x)}>
@@ -661,11 +714,6 @@ function MergeResults({ kind, term, fallback, skip, pickLabel, onPick }: MergeRe
   );
 }
 
-const ORPHAN_EXTRA: Record<string, string> = {
-  artist: ", and they have no tracks, albums or events",
-  album: ", and no track points at them",
-};
-
 function Orphans() {
   const [sp, set] = useQuery();
   const kind = sp.get("kind") || "track";
@@ -675,24 +723,21 @@ function Orphans() {
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const flash = useFlash();
   useEffect(() => setPicked(new Set()), [kind, imported]);
-  const label = KIND_LABEL[kind].toLowerCase();
   const deletePicked = async (note: string) => {
     const r = await api<OrphansDeleted>("/admin/catalogue/orphans/delete", { body: { kind, ids: [...picked], note } });
     setPicked(new Set());
     q.reload();
-    const skipped = r.skipped ? `, skipped ${num(r.skipped)} now in use` : "";
-    flash.set({ ok: true, text: `Deleted ${num(r.deleted)}${skipped}.` });
+    const text = r.skipped
+      ? t("admin.orphansDeletedSkipped", { deleted: num(r.deleted), skipped: num(r.skipped) })
+      : t("admin.orphansDeleted", { deleted: num(r.deleted) });
+    flash.set({ ok: true, text });
   };
   const askDelete = () =>
     ask({
-      title: `Delete ${plural(picked.size, kind)}`,
-      action: "Delete",
+      title: t(DELETE_KIND[kind], { count: picked.size }),
+      action: t("admin.delete"),
       danger: true,
-      body: (
-        <p>
-          Permanently delete the selected {label}. Anything that started being used since this list loaded is skipped.
-        </p>
-      ),
+      body: <p>{t(DELETE_SELECTED[kind])}</p>,
       run: deletePicked,
     });
   const togglePick = (id: number, on: boolean) => {
@@ -706,13 +751,13 @@ function Orphans() {
       {modal}
       <div className={FILTERBAR}>
         <Select
-          label="Kind"
+          label={t("admin.kind")}
           value={kind}
           onChange={(v) => set({ kind: v === "track" ? "" : v })}
           options={[
-            ["track", "Tracks"],
-            ["album", "Albums"],
-            ["artist", "Artists"],
+            ["track", t("admin.kindTracks")],
+            ["album", t("admin.kindAlbums")],
+            ["artist", t("admin.kindArtists")],
           ]}
         />
         <label className={CHECK}>
@@ -721,13 +766,10 @@ function Orphans() {
             checked={imported === "1"}
             onChange={(e) => set({ imported: e.target.checked ? "1" : "" })}
           />{" "}
-          Include imported items with play counts
+          {t("admin.includeImported")}
         </label>
       </div>
-      <p className="muted small">
-        Nobody has scrobbled, loved, tagged, written about or playlisted these{ORPHAN_EXTRA[kind] ?? ""}. Each one is
-        checked again before it's deleted.
-      </p>
+      <p className="muted small">{t(ORPHANS_NOTE[kind])}</p>
       {flash.note}
       <Async q={q}>
         {(d) => {
@@ -736,23 +778,23 @@ function Orphans() {
           return (
             <>
               <div className="bulk-bar">
-                <b>
-                  {num(d.total)} orphaned {label}
-                </b>
-                {d.total > d.items.length && <span className="muted small">(showing the newest {d.items.length})</span>}
+                <b>{t(ORPHAN_COUNT[kind], { count: d.total })}</b>
+                {d.total > d.items.length && (
+                  <span className="muted small">{t("admin.showingNewest", { count: d.items.length })}</span>
+                )}
                 {d.items.length > 0 && (
                   <Button kind="link small" type="button" onClick={toggleAll}>
-                    {all ? "Select none" : "Select all"}
+                    {all ? t("admin.selectNone") : t("admin.selectAll")}
                   </Button>
                 )}
                 {picked.size > 0 && (
                   <Button kind="btn danger small" type="button" onClick={askDelete}>
-                    Delete {picked.size} selected
+                    {t("admin.deleteSelected", { count: picked.size })}
                   </Button>
                 )}
               </div>
               {d.items.length === 0 ? (
-                <Empty>Nothing to clean up.</Empty>
+                <Empty>{t("admin.nothingToClean")}</Empty>
               ) : (
                 <div className={SCROLL}>
                   <table className={TABLE}>
@@ -762,19 +804,19 @@ function Orphans() {
                           <td className="w-7">
                             <Input
                               type="checkbox"
-                              aria-label={`Select ${x.name}`}
+                              aria-label={t("admin.selectItem", { name: x.name })}
                               checked={picked.has(x.id)}
                               onChange={(e) => togglePick(x.id, e.target.checked)}
                             />
                           </td>
                           <td>
                             <b>{x.name}</b>
-                            {x.artist && <span className="muted"> by {x.artist}</span>}
+                            {x.artist && <span className="muted"> {t("admin.byName", { name: x.artist })}</span>}
                           </td>
                           <td className="num muted small">
-                            {x.basePlaycount ? `${num(x.basePlaycount)} imported plays` : ""}
+                            {x.basePlaycount ? t("admin.importedPlays", { count: x.basePlaycount }) : ""}
                           </td>
-                          <td className="nowrap muted small">added {ago(x.createdAt)}</td>
+                          <td className="nowrap muted small">{t("admin.addedAgo", { ago: ago(x.createdAt) })}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -804,14 +846,14 @@ function Tags() {
   };
   const askDelete = (g: { id: number; name: string; uses: number }) =>
     ask({
-      title: `Delete tag “${g.name}”`,
-      action: "Delete tag",
+      title: t("admin.deleteTagTitle", { name: g.name }),
+      action: t("admin.deleteTag"),
       danger: true,
-      body: <p>Removes the tag from {plural(g.uses, "item")}, along with its wiki and wall. This can't be undone.</p>,
+      body: <p>{t("admin.deleteTagBody", { count: g.uses })}</p>,
       run: (note) =>
         api<TagDeleted>("/admin/tags/delete", { body: { id: g.id, note } }).then(() => {
           q.reload();
-          flash.set({ ok: true, text: `Deleted “${g.name}”.` });
+          flash.set({ ok: true, text: t("admin.deletedName", { name: g.name }) });
         }),
     });
   return (
@@ -819,15 +861,15 @@ function Tags() {
       {modal}
       <div className={FILTERBAR}>
         <form className={SEARCH} onSubmit={search}>
-          <SearchField value={text} onChange={setText} placeholder="Search tags" clearable />
+          <SearchField value={text} onChange={setText} placeholder={t("admin.searchTags")} clearable />
         </form>
         <Select
-          label="Sort"
+          label={t("admin.sort")}
           value={sort}
           onChange={(v) => set({ sort: v === "uses" ? "" : v })}
           options={[
-            ["uses", "Most used"],
-            ["name", "A to Z"],
+            ["uses", t("admin.mostUsed")],
+            ["name", t("admin.aToZ")],
           ]}
         />
       </div>
@@ -836,16 +878,16 @@ function Tags() {
         {(d) => (
           <>
             {d.items.length === 0 ? (
-              <Empty>No tags match.</Empty>
+              <Empty>{t("admin.noTagsMatch")}</Empty>
             ) : (
               <div className={SCROLL}>
                 <table className={TABLE}>
                   <thead>
                     <tr>
-                      <th>Tag</th>
-                      <th className="num">Uses</th>
-                      <th className="num">By listeners</th>
-                      <th className="num">Imported</th>
+                      <th>{t("admin.colTag")}</th>
+                      <th className="num">{t("admin.colUses")}</th>
+                      <th className="num">{t("admin.colByListeners")}</th>
+                      <th className="num">{t("admin.colImported")}</th>
                       <th />
                     </tr>
                   </thead>
@@ -862,7 +904,7 @@ function Tags() {
                         <td className="num">{num(g.imported ?? 0)}</td>
                         <td className="right">
                           <Button kind="link small" type="button" onClick={() => askDelete(g)}>
-                            Delete
+                            {t("admin.delete")}
                           </Button>
                         </td>
                       </tr>

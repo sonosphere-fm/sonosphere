@@ -14,6 +14,8 @@ import { LinkProvider } from "@astryxdesign/core/Link";
 import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, usePageTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
+import { LanguageMenu } from "./ui/language-picker";
+import { loadLocale, t } from "./i18n";
 import { Button, RouteLink } from "./kit";
 import "./sentry";
 import { createRoot } from "react-dom/client";
@@ -89,7 +91,7 @@ const PrivacyPolicy = lazy(() => import("./pages/legal").then((m) => ({ default:
 const Guidelines = lazy(() => import("./pages/legal").then((m) => ({ default: m.Guidelines })));
 
 const AccountMenu = lazy(() => import("./ui/account-menu"));
-const AdminPage = lazy(() => import("./admin/index"));
+const AdminPage = lazy(() => import("./admin/index").then(async (m) => (await m.ready, m)));
 
 function HeaderAnnouncement() {
   const { pathname } = useLocation();
@@ -135,13 +137,18 @@ function Header() {
             className={searchInput}
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search for music…"
-            aria-label="Search for music"
+            placeholder={t("common.searchMusicPlaceholder")}
+            aria-label={t("common.searchMusic")}
           />
-          <button type="button" className={`${searchButton} ${searchClose}`} aria-label="Close search" onClick={close}>
+          <button
+            type="button"
+            className={`${searchButton} ${searchClose}`}
+            aria-label={t("common.closeSearch")}
+            onClick={close}
+          >
             <Ico.X />
           </button>
-          <button type="submit" className={`${searchButton} ${searchGo}`} aria-label="Search">
+          <button type="submit" className={`${searchButton} ${searchGo}`} aria-label={t("common.search")}>
             <Ico.Search />
           </button>
         </form>
@@ -151,7 +158,7 @@ function Header() {
   const dmCount = me ? me.dm.unread + me.dm.requests : 0;
   const badge = me ? me.unread + dmCount : 0;
   const menuButton = me && {
-    label: `${me.username} menu`,
+    label: t("common.userMenu", { name: me.username }),
     variant: "ghost" as const,
     className: menuToggle,
     children: (
@@ -167,18 +174,18 @@ function Header() {
   return (
     <header className="site-header bg-site-bar">
       <div className="wrap">
-        <Link to="/" className="logo" aria-label="Sonosphere home">
+        <Link to="/" className="logo" aria-label={t("common.homeLink")}>
           <Logo />
         </Link>
-        <nav className="site-nav" aria-label="Main">
-          <Button kind={navSearch} type="button" aria-label="Search" onClick={() => setOpen(true)}>
+        <nav className="site-nav" aria-label={t("common.mainNav")}>
+          <Button kind={navSearch} type="button" aria-label={t("common.search")} onClick={() => setOpen(true)}>
             <Ico.Search />
           </Button>
           <NavLink to="/" end>
-            Home
+            {t("common.navHome")}
           </NavLink>
-          <NavLink to="/charts">Charts</NavLink>
-          <NavLink to="/events">Events</NavLink>
+          <NavLink to="/charts">{t("common.navCharts")}</NavLink>
+          <NavLink to="/events">{t("common.navEvents")}</NavLink>
           {me && menuButton ? (
             <Suspense
               fallback={
@@ -191,9 +198,9 @@ function Header() {
             </Suspense>
           ) : (
             <>
-              <NavLink to="/login">Log in</NavLink>
+              <NavLink to="/login">{t("common.logIn")}</NavLink>
               <Link to="/join" className="join">
-                Join
+                {t("common.join")}
               </Link>
             </>
           )}
@@ -227,73 +234,73 @@ function Footer() {
   const u = me ? userUrl(me.username) : "";
   const yourMusic: LinkColumn = me
     ? [
-        "Your music",
+        t("common.footerYourMusic"),
         [
-          ["Profile", u],
-          ["Library", `${u}/library`],
-          ["Listening report", `${u}/listening-report`],
-          ["Loved tracks", `${u}/loved`],
-          ["Recommended", "/recommended"],
+          [t("common.profile"), u],
+          [t("common.library"), `${u}/library`],
+          [t("common.listeningReport"), `${u}/listening-report`],
+          [t("common.lovedTracks"), `${u}/loved`],
+          [t("common.recommended"), "/recommended"],
         ],
       ]
     : [
-        "Get started",
+        t("common.footerGetStarted"),
         [
-          ["Join free", "/join"],
-          ["Log in", "/login"],
-          ["Search", "/search"],
+          [t("common.joinFree"), "/join"],
+          [t("common.logIn"), "/login"],
+          [t("common.search"), "/search"],
         ],
       ];
   const account: LinkColumn[] = me
     ? [
         [
-          "Account",
+          t("common.footerAccount"),
           [
-            ["Messages", "/messages"],
-            ["Inbox", "/inbox"],
-            ["Settings", "/settings"],
-            ["Privacy", "/settings/privacy"],
-            ["Your data", "/settings/data"],
+            [t("common.messages"), "/messages"],
+            [t("common.inbox"), "/inbox"],
+            [t("common.settings"), "/settings"],
+            [t("common.privacy"), "/settings/privacy"],
+            [t("common.yourData"), "/settings/data"],
           ],
         ],
       ]
     : [];
   const cols: LinkColumn[] = [
     [
-      "Music",
+      t("common.footerMusic"),
       [
-        ["Charts", "/charts"],
-        ["Top tracks", "/charts?kind=tracks"],
-        ["Top artists", "/charts?kind=artists"],
-        ["Top albums", "/charts?kind=albums"],
-        ["Top tags", "/charts?kind=tags"],
-        ["Events", "/events"],
+        [t("common.charts"), "/charts"],
+        [t("common.topTracks"), "/charts?kind=tracks"],
+        [t("common.topArtists"), "/charts?kind=artists"],
+        [t("common.topAlbums"), "/charts?kind=albums"],
+        [t("common.topTags"), "/charts?kind=tags"],
+        [t("common.events"), "/events"],
       ],
     ],
     yourMusic,
     [
-      "Scrobbling",
+      t("common.footerScrobbling"),
       [
-        ["Scrobbling help", "/help"],
-        ["Scrobble manually", "/scrobble"],
-        ["Connect a player", "/settings/applications"],
-        ["Import history", "/import"],
-        ["Export history", "/settings/data"],
+        [t("common.scrobblingHelp"), "/help"],
+        [t("common.scrobbleManually"), "/scrobble"],
+        [t("common.connectPlayer"), "/settings/applications"],
+        [t("common.importHistory"), "/import"],
+        [t("common.exportHistory"), "/settings/data"],
       ],
     ],
     [
-      "Developers",
+      t("common.footerDevelopers"),
       [
-        ["API documentation", "/developers"],
-        ["Changelog", "/changelog"],
-        ["API keys", "/settings/applications"],
+        [t("common.apiDocs"), "/developers"],
+        [t("common.changelog"), "/changelog"],
+        [t("common.apiKeys"), "/settings/applications"],
       ],
     ],
     [
-      "Community",
+      t("common.footerCommunity"),
       [
-        ["Join our Discord", "/discord"],
-        ["Guidelines", "/guidelines"],
+        [t("common.joinDiscord"), "/discord"],
+        [t("common.guidelines"), "/guidelines"],
       ],
     ],
     ...account,
@@ -301,11 +308,11 @@ function Footer() {
   return (
     <footer className="bg-site-bar text-white pb-8 text-[14px] [border-top:0] [&_:focus-visible]:outline-site-sun">
       <div className={`wrap ${masthead}`}>
-        <Link to="/" className={`logo ${mastheadLogo}`} aria-label="Sonosphere home">
+        <Link to="/" className={`logo ${mastheadLogo}`} aria-label={t("common.homeLink")}>
           <Logo />
         </Link>
         <Link className={cta} to={me ? `${u}/library` : "/join"}>
-          {me ? "Your library" : "Join Sonosphere"} <Ico.Right />
+          {me ? t("common.yourLibrary") : t("common.joinSonosphere")} <Ico.Right />
         </Link>
       </div>
       <div className={`wrap ${footerCols}`}>
@@ -316,7 +323,7 @@ function Footer() {
             </h2>
             <ul className="list-none m-0 p-0 grid gap-0.5 max-[600px]:gap-0">
               {links.map(([label, to]) => (
-                <li key={label}>
+                <li key={to}>
                   <RouteLink className={colLink} href={to}>
                     {label}
                   </RouteLink>
@@ -328,20 +335,23 @@ function Footer() {
       </div>
       <div className="border-t border-t-[#fff5] text-[#8a8a8a] text-[12px]">
         <div className={`wrap ${footerBase}`}>
-          <ThemeToggle />
+          <span className="inline-flex items-center gap-3 max-[720px]:justify-center">
+            <ThemeToggle />
+            <LanguageMenu />
+          </span>
           <span className="text-white">© {new Date().getFullYear()} Sonosphere</span>
           <span className={legalLinks}>
             <Link className={legalLink} to="/terms">
-              Terms
+              {t("common.terms")}
             </Link>
             <Link className={legalLink} to="/privacy">
-              Privacy
+              {t("common.privacy")}
             </Link>
             <Link className={legalLink} to="/guidelines">
-              Guidelines
+              {t("common.guidelines")}
             </Link>
             <a className={legalLink} href="mailto:support@sonosphere.fm">
-              Contact
+              {t("common.contact")}
             </a>
           </span>
         </div>
@@ -461,8 +471,8 @@ function Staff() {
   if (!me?.admin)
     return (
       <div className="wrap page narrow">
-        <h1 className="page-title">Admin</h1>
-        <Empty>This area is for moderators and admins.</Empty>
+        <h1 className="page-title">{t("common.admin")}</h1>
+        <Empty>{t("common.adminOnly")}</Empty>
       </div>
     );
   return <AdminPage />;
@@ -515,8 +525,8 @@ function Pages() {
           "shoutbox",
           "cosmetics",
         ] as const
-      ).map((t) => (
-        <Route key={t} path={`/user/:name/${t}`} element={U(t)} />
+      ).map((tab) => (
+        <Route key={tab} path={`/user/:name/${tab}`} element={U(tab)} />
       ))}
       <Route path="/user/:name/wall" element={U("shoutbox")} />
       <Route path="/user/:name/earworms" element={U("obsessions")} />
@@ -874,15 +884,15 @@ function reloadOnStaleBuild(error: unknown) {
 const g = globalThis as typeof globalThis & { __spinRoot?: ReturnType<typeof createRoot> };
 // The guest shell can paint on its own. Wait for the app layout styles before replacing it.
 const stylesheet = document.querySelector<HTMLLinkElement>("#app-styles");
-function mount() {
+function render() {
   const root = (g.__spinRoot ??= createRoot(document.getElementById("root")!));
   root.render(
     <Sentry.ErrorBoundary
       onError={reloadOnStaleBuild}
       fallback={({ resetError }) => (
         <div style={{ padding: 24 }}>
-          <p>Something went wrong.</p>
-          <button onClick={() => resetError()}>Try again</button>
+          <p>{t("common.somethingWrong")}</p>
+          <button onClick={() => resetError()}>{t("common.tryAgain")}</button>
         </div>
       )}
     >
@@ -890,6 +900,9 @@ function mount() {
     </Sentry.ErrorBoundary>
   );
 }
+
+// A translation that fails to load leaves the page in English rather than blank.
+const mount = () => loadLocale(boot?.user?.locale).then(render, render);
 
 if (stylesheet?.media === "print") {
   stylesheet.addEventListener("load", mount, { once: true });

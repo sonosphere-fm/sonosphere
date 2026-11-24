@@ -4,6 +4,7 @@ import { Button } from "../../kit";
 import { Link } from "react-router-dom";
 import { date, num, qs, tagUrl, useApi, useParam, userUrl } from "../../lib";
 import { Async, Empty, Section, Stat } from "../../ui/base";
+import { locale, t, tx } from "../../i18n";
 import { BarChart } from "../../ui/charts";
 import { Grid, RankList, TrackList } from "../../ui/lists";
 import {
@@ -20,11 +21,12 @@ const hh = (hour: number) => String(hour).padStart(2, "0");
 const most = <T extends { count: number }>(xs: T[]) => [...xs].sort((a, b) => b.count - a.count)[0];
 
 function Delta({ now, before }: { now: number; before: number }) {
-  if (!before) return <span className="muted">no earlier data</span>;
+  if (!before) return <span className="muted">{t("user.noEarlierData")}</span>;
   const pct = Math.round((now / before - 1) * 100);
   return (
     <span>
-      {pct >= 0 ? <Ico.Up /> : <Ico.Down />} {Math.abs(pct)}% <span className="muted">vs previous </span>
+      {pct >= 0 ? <Ico.Up /> : <Ico.Down />} {t("user.percent", { pct: Math.abs(pct) })}{" "}
+      <span className="muted">{t("user.vsPrevious")} </span>
     </span>
   );
 }
@@ -36,13 +38,42 @@ function reportTitle(r: ListeningReport, type: ReportType) {
   return String(new Date(r.start * 1000 + 86400000).getFullYear());
 }
 
+function bucketLabel(type: ReportType, b: ListeningReport["buckets"][number]) {
+  const at = (key: string) => new Date(`${key}T00:00:00Z`);
+  if (type === "week") return at(b.key).toLocaleDateString(locale(), { weekday: "short", timeZone: "UTC" });
+  if (type === "year") return at(`${b.key}-01`).toLocaleDateString(locale(), { month: "short", timeZone: "UTC" });
+  return b.label;
+}
+
+function emptyText(type: ReportType) {
+  if (type === "week") return t("user.noScrobblesWeek");
+  if (type === "month") return t("user.noScrobblesMonth");
+  if (type === "year") return t("user.noScrobblesYear");
+  return t("user.noScrobbles");
+}
+
+function headline(type: ReportType, name: string) {
+  const who = { name: <Username name={name} /> };
+  if (type === "week") return tx("user.weekInMusic", who);
+  if (type === "month") return tx("user.monthInMusic", who);
+  if (type === "year") return tx("user.yearInMusic", who);
+  return tx("user.allTimeReportTitle", who);
+}
+
+function noDiscoveries(type: ReportType) {
+  if (type === "week") return t("user.noDiscoveriesWeek");
+  if (type === "month") return t("user.noDiscoveriesMonth");
+  if (type === "year") return t("user.noDiscoveriesYear");
+  return t("user.noDiscoveriesAll");
+}
+
 function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: string; type: ReportType; offset: number }) {
   const title = reportTitle(r, type);
   if (!r.totals.playcount) {
     return (
       <>
         <h2 className="report-title">{title}</h2>
-        <Empty>{type === "all" ? "No scrobbles yet." : `No scrobbles in this ${type}.`}</Empty>
+        <Empty>{emptyText(type)}</Empty>
       </>
     );
   }
@@ -53,95 +84,103 @@ function ReportBody({ r, name, type, offset }: { r: ListeningReport; name: strin
   const busiestName =
     type === "month"
       ? date(Date.parse(busiest.key) / 1000, { day: "numeric", month: "long", timeZone: "UTC" })
-      : busiest.label;
+      : bucketLabel(type, busiest);
   const peak = most(r.clock);
-  const byBucket = r.buckets.map((b) => ({ label: b.label, value: b.count, tip: b.key }));
+  const byBucket = r.buckets.map((b) => ({ label: bucketLabel(type, b), value: b.count, tip: b.key }));
   const byHour = r.clock.map((c) => ({ label: hh(c.hour), value: c.count, tip: `${hh(c.hour)}:00–${hh(c.hour)}:59` }));
   return (
     <div className="report">
       <h2 className="report-title">
-        <Username name={name} />
-        {type === "all" ? "'s all-time listening report" : `'s ${type} in music`}{" "}
+        {headline(type, name)}{" "}
         <span className="muted">
           · {title}
-          {offset === 0 && type !== "all" ? " (so far)" : ""}
+          {offset === 0 && type !== "all" ? ` ${t("user.soFar")}` : ""}
         </span>
       </h2>
       <div className="stats boxed">
         <Stat
-          label="Scrobbles"
+          label={t("user.statScrobbles")}
           value={num(r.totals.playcount)}
           hint={type !== "all" && <Delta now={r.totals.playcount} before={r.previous.playcount} />}
         />
         <Stat
-          label="Listening time"
-          value={`${hours}h ${mins}m`}
-          hint={`${num(Math.round(r.totals.playcount / days))} scrobbles a day`}
+          label={t("user.listeningTime")}
+          value={t("user.hoursMinutes", { hours, mins })}
+          hint={t("user.scrobblesADay", { count: Math.round(r.totals.playcount / days) })}
         />
         <Stat
-          label="Artists"
+          label={t("user.statArtists")}
           value={num(r.totals.artists)}
           hint={type !== "all" && <Delta now={r.totals.artists} before={r.previous.artists} />}
         />
         <Stat
-          label="Albums"
+          label={t("user.statAlbums")}
           value={num(r.totals.albums)}
           hint={type !== "all" && <Delta now={r.totals.albums} before={r.previous.albums} />}
         />
         <Stat
-          label="Tracks"
+          label={t("user.statTracks")}
           value={num(r.totals.tracks)}
           hint={type !== "all" && <Delta now={r.totals.tracks} before={r.previous.tracks} />}
         />
       </div>
       <div className="cols even">
-        <Section title={type === "year" || type === "all" ? "Scrobbles by month" : "Scrobbles by day"}>
+        <Section title={type === "year" || type === "all" ? t("user.scrobblesByMonth") : t("user.scrobblesByDay")}>
           <BarChart
             data={byBucket}
             every={type === "all" ? Math.max(1, Math.ceil(byBucket.length / 12)) : type === "month" ? 5 : 1}
           />
-          <p className="muted small">
-            Busiest: {busiestName} with {num(busiest.count)} scrobbles
-          </p>
+          <p className="muted small">{t("user.busiestWith", { name: busiestName, count: busiest.count })}</p>
         </Section>
-        <Section title="Listening clock">
+        <Section title={t("user.listeningClock")}>
           <BarChart data={byHour} every={3} />
-          <p className="muted small">Peak hour: {hh(peak.hour)}:00 · times shown in your timezone</p>
+          <p className="muted small">{t("user.peakHour", { hour: `${hh(peak.hour)}:00` })}</p>
         </Section>
       </div>
       <div className="cols three">
-        <Section title="Top artists">
+        <Section title={t("user.topArtists")}>
           <RankList kind="artist" items={r.topArtists} />
         </Section>
-        <Section title="Top albums">
+        <Section title={t("user.topAlbums")}>
           <RankList kind="album" items={r.topAlbums} />
         </Section>
-        <Section title="Top tracks">
+        <Section title={t("user.topTracks")}>
           <TrackList items={r.topTracks} rank={1} count="playcount" />
         </Section>
       </div>
       <div className="cols even">
-        <Section title={`${type === "all" ? "Artists discovered" : "New discoveries"} (${r.newArtists.count})`}>
+        <Section
+          title={
+            type === "all"
+              ? t("user.artistsDiscovered", { count: r.newArtists.count })
+              : t("user.newDiscoveries", { count: r.newArtists.count })
+          }
+        >
           {r.newArtists.items.length ? (
-            <Grid kind="artist" cols={3} items={r.newArtists.items} sub={(a) => `${num(a.playcount)} scrobbles`} />
+            <Grid
+              kind="artist"
+              cols={3}
+              items={r.newArtists.items}
+              sub={(a) => t("user.scrobbleCount", { count: a.playcount })}
+            />
           ) : (
-            <p className="muted">No artists scrobbled for the first time this {type}.</p>
+            <p className="muted">{noDiscoveries(type)}</p>
           )}
         </Section>
-        <Section title="Top tags">
+        <Section title={t("user.topTags")}>
           {r.tags.length ? (
             <ul className="tagbars">
-              {r.tags.map((t) => (
-                <li key={t.name}>
-                  <Link to={tagUrl(t.name)}>{t.name}</Link>
+              {r.tags.map((tag) => (
+                <li key={tag.name}>
+                  <Link to={tagUrl(tag.name)}>{tag.name}</Link>
                   <span>
-                    <i style={{ width: `${(t.weight / r.tags[0].weight) * 100}%` }} />
+                    <i style={{ width: `${(tag.weight / r.tags[0].weight) * 100}%` }} />
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="muted">No tagged artists.</p>
+            <p className="muted">{t("user.noTaggedArtists")}</p>
           )}
         </Section>
       </div>
@@ -182,31 +221,31 @@ export function Report({ name, type }: { name: string; type: ReportTab }) {
       <div className="toolbar">
         <nav className="tabs sub">
           <Link className={type === "week" ? "active" : ""} to={`${base}/week`}>
-            Weekly
+            {t("user.weekly")}
           </Link>
           <Link className={type === "month" ? "active" : ""} to={`${base}/month`}>
-            Monthly
+            {t("user.monthly")}
           </Link>
           <Link className={type === "year" ? "active" : ""} to={`${base}/year`}>
-            Yearly
+            {t("user.yearly")}
           </Link>
           <Link className={type === "all" ? "active" : ""} to={`${base}/all`}>
-            All time
+            {t("common.allTime")}
           </Link>
           <Link className={type === "stats" ? "active" : ""} to={`${base}/stats`}>
-            Stats
+            {t("user.stats")}
           </Link>
           <Link className={type === "blasts" ? "active" : ""} to={`${base}/blasts`}>
-            Blasts from the past
+            {t("user.blastsFromThePast")}
           </Link>
         </nav>
         {type !== "all" && (
           <span className="row">
             <Button kind="btn ghost small" onClick={() => setOffset(String(offset + 1))}>
-              <Ico.Left /> Earlier
+              <Ico.Left /> {t("user.earlier")}
             </Button>
             <Button kind="btn ghost small" disabled={offset === 0} onClick={() => setOffset(String(offset - 1))}>
-              Later <Ico.Right />
+              {t("user.later")} <Ico.Right />
             </Button>
           </span>
         )}

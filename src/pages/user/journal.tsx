@@ -3,9 +3,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button, Input } from "../../kit";
 import { Markdown, MdEditor, plainMd } from "../../md";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ago, api, date, dateTime, invalidateAll, plural, qs, useApi, userUrl } from "../../lib";
+import { ago, api, date, dateTime, invalidateAll, qs, useApi, userUrl } from "../../lib";
+import { t } from "../../i18n";
 import { Async, Avatar, Empty, Pager, Section, useAction } from "../../ui/base";
 import { UserLabels } from "../../ui/user-labels";
+import { Username } from "../../ui/username";
 import { ReportButton, Shoutbox } from "../../ui/shoutbox";
 import type {
   JournalDeleted,
@@ -20,15 +22,15 @@ export function Journal({ name, mine }: { name: string; mine: boolean }) {
   const base = `${userUrl(name)}/journal`;
   const q = useApi<JournalList>(`/user/journal${qs({ name, page })}`);
   const empty = mine
-    ? "You haven't written anything yet. A journal is for longer thoughts: gig write-ups, lists, what you've had on repeat."
-    : `${name} hasn't written any journal posts yet.`;
+    ? t("user.journalEmptyMine")
+    : t("user.journalEmpty", { name });
   return (
     <div className="narrow-col">
       {mine && (
         <div className="toolbar">
-          <h2>Your journal</h2>
+          <h2>{t("user.yourJournal")}</h2>
           <Button kind="btn" href={`${base}/new`}>
-            <Ico.Plus /> Write a post
+            <Ico.Plus /> {t("user.writePost")}
           </Button>
         </div>
       )}
@@ -43,11 +45,11 @@ export function Journal({ name, mine }: { name: string; mine: boolean }) {
                       <Link to={`${base}/${j.id}`}>{j.title}</Link>
                     </h3>
                     <p className="muted small">
-                      {date(j.createdAt)} · {plural(j.comments, "comment")}
+                      {date(j.createdAt)} · {t("user.commentCount", { count: j.comments })}
                     </p>
                     <p className="prose">{plainMd(j.excerpt)}</p>
                     <Link to={`${base}/${j.id}`}>
-                      Read post <Ico.Right />
+                      {t("user.readPost")} <Ico.Right />
                     </Link>
                   </li>
                 ))}
@@ -82,17 +84,17 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
     deleteControls = (
       <>
         <Button kind="btn danger small" type="button" loading={act.busy} onClick={remove}>
-          Delete this post
+          {t("user.deleteThisPost")}
         </Button>
         <Button kind="link small" type="button" onClick={() => setConfirm(false)}>
-          Keep it
+          {t("user.keepIt")}
         </Button>
       </>
     );
   } else {
     deleteControls = (
       <Button kind="btn ghost small" type="button" onClick={() => setConfirm(true)}>
-        Delete
+        {t("user.delete")}
       </Button>
     );
   }
@@ -103,7 +105,7 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
         <article className="narrow-col journal-post">
           <p>
             <Link to={base}>
-              <Ico.Left /> {name}'s journal
+              <Ico.Left /> {t("user.nameJournal", { name })}
             </Link>
           </p>
           <h1 className="page-title">{j.title}</h1>
@@ -113,23 +115,23 @@ export function JournalPost({ name, id, mine }: { name: string; id: number; mine
               <Username user={j.author} />
             </Link>{" "}
             <UserLabels name={j.author.username} /> · <span title={dateTime(j.createdAt)}>{date(j.createdAt)}</span>
-            {j.updatedAt > j.createdAt + 60 && <> · edited {ago(j.updatedAt)}</>}
+            {j.updatedAt > j.createdAt + 60 && <> · {t("user.editedAgo", { ago: ago(j.updatedAt) })}</>}
           </p>
           <Markdown text={j.body} />
           <div className="row">
             {mine ? (
               <>
                 <Button kind="btn ghost small" href={`${base}/${id}/edit`}>
-                  Edit
+                  {t("user.edit")}
                 </Button>
                 {deleteControls}
               </>
             ) : (
-              <ReportButton type="journal" id={id} label="Report this post" />
+              <ReportButton type="journal" id={id} label={t("user.reportThisPost")} />
             )}
           </div>
           {act.note}
-          <Section title={`Comments (${j.comments})`}>
+          <Section title={t("user.commentsTitle", { count: j.comments })}>
             <Shoutbox type="journal" id={id} word="comment" />
           </Section>
         </article>
@@ -149,7 +151,7 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
     if (id && q.data && !f) setF({ title: q.data.title, body: q.data.body });
   }, [q.data]);
 
-  if (id && q.error) return <Empty>That post doesn't exist.</Empty>;
+  if (id && q.error) return <Empty>{t("user.postMissing")}</Empty>;
   if (!f) return null;
 
   const save = (e: FormEvent) => {
@@ -163,9 +165,9 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
 
   return (
     <form className="form narrow-col journal-form" onSubmit={save}>
-      <h2>{id ? "Edit post" : "New journal post"}</h2>
+      <h2>{id ? t("user.editPost") : t("user.newJournalPost")}</h2>
       <label>
-        Title
+        {t("user.title")}
         <Input
           value={f.title}
           onChange={(e) => setF({ ...f, title: e.target.value })}
@@ -175,9 +177,9 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
         />
       </label>
       <div className="field-block">
-        <span className="field-label">Post</span>
+        <span className="field-label">{t("user.post")}</span>
         <MdEditor
-          label="Post"
+          label={t("user.post")}
           rows={16}
           value={f.body}
           onChange={(body) => setF((f) => ({ ...f!, body }))}
@@ -187,13 +189,12 @@ export function JournalEditor({ name, id }: { name: string; id?: number }) {
       {act.note}
       <div className="row">
         <Button kind="btn" loading={act.busy}>
-          {id ? "Save changes" : "Publish"}
+          {id ? t("user.saveChanges") : t("user.publish")}
         </Button>
         <Button kind="btn ghost" href={id ? `${base}/${id}` : base}>
-          Cancel
+          {t("user.cancel")}
         </Button>
       </div>
     </form>
   );
 }
-import { Username } from "../../ui/username";

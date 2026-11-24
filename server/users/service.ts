@@ -2,7 +2,7 @@ import { missing } from "../http";
 import { findByName, type User } from "./repo";
 
 export const requireUser = async (name: string | null): Promise<User> =>
-  (await findByName(name || "")) ?? missing("User");
+  (await findByName(name || "")) ?? missing("userNotFound");
 
 type Who = { id: number } | null;
 export const canSee = (target: User, viewer: Who): boolean =>

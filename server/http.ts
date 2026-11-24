@@ -4,21 +4,25 @@ export { tokenOf } from "./auth/session";
 import { cacheAnonymousAtEdge } from "./edge-cache";
 import { attempt, hits } from "./kv";
 import { isStaff } from "./site/roles";
+import { requestLocale, tr, type ErrorKey } from "./i18n";
+import type { Params } from "../shared/i18n/core";
 
+/** The message is a key in the errors catalog, shown in the language of whoever made the request. */
 export class HttpError extends Error {
   constructor(
     public status: number,
-    message: string,
-    public retryAfter = 0
+    public key: ErrorKey,
+    public retryAfter = 0,
+    public params?: Params
   ) {
-    super(message);
+    super(tr("en", `errors.${key}`, params));
   }
 }
-export const fail = (status: number, msg: string): never => {
-  throw new HttpError(status, msg);
+export const fail = (status: number, key: ErrorKey, params?: Params): never => {
+  throw new HttpError(status, key, 0, params);
 };
-export const bad = (msg: string): never => fail(400, msg);
-export const missing = (what: string): never => fail(404, `${what} not found`);
+export const bad = (key: ErrorKey, params?: Params): never => fail(400, key, params);
+export const missing = (key: ErrorKey): never => fail(404, key);
 
 export type Viewer = typeof users.$inferSelect;
 /** A JSON request body before validation: handlers must check each field they read. */
@@ -71,7 +75,7 @@ export class Router {
     const url = new URL(req.url);
     const headers = new Headers({ "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
     try {
-      if (req.method !== "GET" && crossSite(req, url)) fail(403, "Cross-site request refused");
+      if (req.method !== "GET" && crossSite(req, url)) fail(403, "crossSiteRefused");
       const { user, actor } = await viewerOf(req);
       await budget(req, url, user);
       for (const r of this.routes) {
@@ -98,15 +102,17 @@ export class Router {
         }
         return new Response(json, { headers });
       }
-      return fail(404, "Not found");
+      return fail(404, "notFound");
     } catch (e) {
       // NaN or an out-of-range number reaches Postgres as a bad value: the input was wrong
       const pgCode = (e as { cause?: { code?: string } })?.cause?.code;
-      if (pgCode === "22P02" || pgCode === "22003") e = new HttpError(400, "Invalid number");
+      if (pgCode === "22P02" || pgCode === "22003") e = new HttpError(400, "invalidNumber");
       const status = e instanceof HttpError ? e.status : 500;
       if (status === 500) console.error(e);
       if (e instanceof HttpError && e.retryAfter) headers.set("Retry-After", String(e.retryAfter));
-      const error = e instanceof HttpError ? e.message : "Something went wrong";
+      const locale = requestLocale(req);
+      const error =
+        e instanceof HttpError ? tr(locale, `errors.${e.key}`, e.params) : tr(locale, "errors.somethingWentWrong");
       return new Response(JSON.stringify({ error }), { status, headers });
     }
   };
@@ -119,7 +125,7 @@ export async function limit(
   key: string,
   max: number,
   seconds: number,
-  msg = "Too many attempts. Wait a few minutes and try again."
+  msg: ErrorKey = "tooManyAttempts"
 ): Promise<void> {
   if (!(await attempt(key, max, seconds * 1000))) fail(429, msg);
 }
@@ -129,7 +135,7 @@ export async function throttle(
   key: string,
   max: number,
   seconds: number,
-  msg = "You are going a bit fast. Wait a moment and try again."
+  msg: ErrorKey = "goingABitFast"
 ): Promise<void> {
   const wait = await hits(key, max, seconds);
   if (wait) throw new HttpError(429, msg, wait);
@@ -157,7 +163,7 @@ const PER_ADDRESS = [
   [600, 60],
   [12_000, 3600],
 ] as const;
-const SLOW = "You are going too fast. Wait a little and try again.";
+const SLOW = "goingTooFast";
 
 async function budget(req: Request, url: URL, user: Viewer | null): Promise<void> {
   if (user && isStaff(user)) return;
@@ -210,16 +216,16 @@ async function readBody(req: Request, jsonOnly: boolean): Promise<Body> {
   if (req.method === "GET") return {};
   const isJson = (req.headers.get("content-type") || "").includes("application/json");
   if (!isJson) {
-    if (jsonOnly && req.method === "POST") fail(415, "Send JSON");
+    if (jsonOnly && req.method === "POST") fail(415, "sendJson");
     return {};
   }
   let body: unknown;
   try {
     body = (await req.json()) ?? {};
   } catch {
-    return bad("Invalid JSON body");
+    return bad("invalidJsonBody");
   }
-  if (typeof body !== "object" || Array.isArray(body)) return bad("Invalid JSON body");
+  if (typeof body !== "object" || Array.isArray(body)) return bad("invalidJsonBody");
   return body as Body;
 }
 

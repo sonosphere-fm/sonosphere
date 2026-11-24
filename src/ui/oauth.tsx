@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Arrow } from "../icons";
 import { Button } from "../kit";
+import { t, tx, type MessageKey } from "../i18n";
 import type { OAuthProvider } from "../../shared/auth";
 
 export function oauthStart(id: string, intent: "login" | "link", next?: string) {
@@ -9,23 +10,22 @@ export function oauthStart(id: string, intent: "login" | "link", next?: string) 
   return `/api/auth/oauth/${id}/start?${params}`;
 }
 
-export const OAUTH_ERRORS: Record<string, ReactNode> = {
-  off: "Signing in with that site isn't available right now.",
-  expired: "That sign-in took too long, or was started in another browser. Try again.",
-  cancelled: "Sign-in was cancelled.",
-  failed: "Something went wrong talking to the other site. Try again in a moment.",
-  unverified: "The email address on that account isn't verified. Verify it there first, then try again.",
-  taken: "That account is already connected to a different account here.",
-  already: "You already have an account from that site connected. Disconnect it first.",
-  email: (
-    <>
-      An account here already uses that email address. Log in with your password, then connect it from Settings
-      <Arrow say=", " />
-      Account.
-    </>
-  ),
-  banned: "This account has been banned.",
-};
+const OAUTH_ERRORS = {
+  off: "auth.oauthOff",
+  expired: "auth.oauthExpired",
+  cancelled: "auth.oauthCancelled",
+  failed: "auth.oauthFailed",
+  unverified: "auth.oauthUnverified",
+  taken: "auth.oauthTaken",
+  already: "auth.oauthAlready",
+  banned: "auth.oauthBanned",
+} as const satisfies Record<string, MessageKey>;
+
+export function oauthError(code: string | null): ReactNode {
+  if (code === "email") return tx("auth.oauthEmail", { arrow: <Arrow say=", " /> });
+  if (code && Object.hasOwn(OAUTH_ERRORS, code)) return t(OAUTH_ERRORS[code as keyof typeof OAUTH_ERRORS]);
+  return null;
+}
 
 const ICONS: Record<string, string> = {
   discord:
@@ -71,11 +71,11 @@ export function OAuthButtons({ providers, next }: { providers: OAuthProvider[]; 
       {providers.map((p) => (
         <Button key={p.id} kind={`btn ghost oauth-btn oauth-${p.id}`} href={oauthStart(p.id, "login", next)}>
           <OAuthMark id={p.id} />
-          Continue with {p.label}
+          {t("auth.continueWith", { provider: p.label })}
         </Button>
       ))}
       <p className="oauth-or muted small">
-        <span>or</span>
+        <span>{t("auth.or")}</span>
       </p>
     </div>
   );

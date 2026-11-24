@@ -40,7 +40,7 @@ export function namesFrom(input: unknown): string[] {
     .map((t) => clean(t, 40))
     .filter(Boolean)
     .slice(0, 10);
-  return names.length ? names : bad("Enter at least one tag");
+  return names.length ? names : bad("enterLeastOneTag");
 }
 
 export async function tagsOn(userId: number, type: string, id: number): Promise<ItemTags> {

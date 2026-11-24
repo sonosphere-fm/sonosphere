@@ -5,6 +5,7 @@ import { api, invalidateAll, useApi } from "../lib";
 import { Section, useAction } from "../ui/base";
 import { UserLabelBadge } from "../ui/user-labels";
 import { LABEL_ICONS, type LabelDirectory, type UserLabel } from "../../shared/user-labels";
+import { t, tx } from "./i18n";
 
 export function ManageLabelDefinitions() {
   const q = useApi<LabelDirectory>("/admin/user-labels");
@@ -16,7 +17,7 @@ export function ManageLabelDefinitions() {
     act.run(async () => {
       await fn();
       invalidateAll();
-      return "Tags saved.";
+      return t("admin.tagsSaved");
     });
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -30,19 +31,19 @@ export function ManageLabelDefinitions() {
     });
   };
   return (
-    <Section title="User tags">
+    <Section title={t("admin.userTags")}>
       {q.error && (
         <p className="form-error" role="alert">
           {q.error.message}
         </p>
       )}
-      <p className="muted small">
-        All tags appear on the profile. The first appears beside their name elsewhere. Tags do not grant permissions.
-      </p>
-      <h3 className="user-label-editor-title">{edit === null ? "Create a tag" : "Edit tag everywhere"}</h3>
+      <p className="muted small">{t("admin.tagsHintPermissions")}</p>
+      <h3 className="user-label-editor-title">
+        {edit === null ? t("admin.createATag") : t("admin.editTagEverywhere")}
+      </h3>
       <form className="form" onSubmit={save}>
         <label>
-          Text
+          {t("admin.tagText")}
           <Input
             value={draft.text}
             onChange={(e) => setDraft({ ...draft, text: e.target.value })}
@@ -51,22 +52,22 @@ export function ManageLabelDefinitions() {
           />
         </label>
         <label>
-          Icon
+          {t("admin.tagIconField")}
           <Select
-            label="Tag icon"
+            label={t("admin.tagIcon")}
             value={draft.icon}
             onChange={(icon) => setDraft({ ...draft, icon: icon as UserLabel["icon"] })}
             options={LABEL_ICONS.map((icon) => [icon, icon])}
           />
         </label>
         <label>
-          Color
+          {t("admin.tagColor")}
           <Input type="color" value={draft.color} onChange={(e) => setDraft({ ...draft, color: e.target.value })} />
         </label>
         {draft.text && <UserLabelBadge label={{ id: 0, ...draft }} />}
         <div className="row">
           <Button kind="btn small" loading={act.busy}>
-            {edit === null ? "Create tag" : "Save tag"}
+            {edit === null ? t("admin.createTag") : t("admin.saveTag")}
           </Button>
           {edit !== null && (
             <Button
@@ -77,13 +78,13 @@ export function ManageLabelDefinitions() {
                 setDraft({ text: "", icon: "star", color: "#4263eb" });
               }}
             >
-              Cancel edit
+              {t("admin.cancelEdit")}
             </Button>
           )}
         </div>
       </form>
-      <h3 className="user-label-editor-title">Available tags</h3>
-      {!d.labels.length && <p className="muted">No tags have been created.</p>}
+      <h3 className="user-label-editor-title">{t("admin.availableTags")}</h3>
+      {!d.labels.length && <p className="muted">{t("admin.noTagsCreated")}</p>}
       <ul className="plain">
         {d.labels.map((label) => (
           <li key={label.id} className="row">
@@ -96,17 +97,17 @@ export function ManageLabelDefinitions() {
                 setDraft({ text: label.text, icon: label.icon, color: label.color });
               }}
             >
-              Edit
+              {t("admin.edit")}
             </Button>
             <Button
               kind="link small"
               disabled={act.busy}
               onClick={() => {
-                if (window.confirm(`Delete “${label.text}” from everyone?`))
+                if (window.confirm(t("admin.deleteTagConfirm", { name: label.text })))
                   run(() => api(`/admin/user-labels/${label.id}`, { method: "DELETE" }));
               }}
             >
-              Delete everywhere
+              {t("admin.deleteEverywhere")}
             </Button>
           </li>
         ))}
@@ -126,7 +127,7 @@ export function ManageUserLabels({ name }: { name: string }) {
     act.run(async () => {
       await api(`/admin/users/${encodeURIComponent(name)}/labels`, { method: "PATCH", body: { ids: next } });
       invalidateAll();
-      return "Tags saved.";
+      return t("admin.tagsSaved");
     });
   const move = (index: number, offset: number) => {
     const next = [...ids];
@@ -134,10 +135,10 @@ export function ManageUserLabels({ name }: { name: string }) {
     assign(next);
   };
   return (
-    <Section title="User tags">
-      <p className="muted small">All tags appear on the profile. The first appears beside their name elsewhere.</p>
+    <Section title={t("admin.userTags")}>
+      <p className="muted small">{t("admin.tagsHint")}</p>
       <p className="small">
-        Create and edit tags in <Link to="/admin/settings">Site Settings</Link>.
+        {tx("admin.createTagsIn", { link: <Link to="/admin/settings">{t("admin.siteSettingsLink")}</Link> })}
       </p>
       {q.error && (
         <p className="form-error" role="alert">
@@ -155,7 +156,7 @@ export function ManageUserLabels({ name }: { name: string }) {
                   kind="btn ghost small"
                   disabled={act.busy || index === 0}
                   onClick={() => move(index, -1)}
-                  aria-label={`Move ${label.text} up`}
+                  aria-label={t("admin.moveUp", { name: label.text })}
                 >
                   ↑
                 </Button>
@@ -163,26 +164,26 @@ export function ManageUserLabels({ name }: { name: string }) {
                   kind="btn ghost small"
                   disabled={act.busy || index === ids.length - 1}
                   onClick={() => move(index, 1)}
-                  aria-label={`Move ${label.text} down`}
+                  aria-label={t("admin.moveDown", { name: label.text })}
                 >
                   ↓
                 </Button>
                 <Button kind="link small" disabled={act.busy} onClick={() => assign(ids.filter((n) => n !== id))}>
-                  Remove
+                  {t("admin.remove")}
                 </Button>
               </li>
             )
           );
         })}
       </ul>
-      {!ids.length && <p className="muted">No tags assigned.</p>}
+      {!ids.length && <p className="muted">{t("admin.noTagsAssigned")}</p>}
       <div className="row">
         <Select
-          label="Tag to assign"
+          label={t("admin.tagToAssign")}
           value={pick}
           onChange={setPick}
           options={[
-            ["", "Choose a tag"],
+            ["", t("admin.chooseATag")],
             ...d.labels.filter((l) => !ids.includes(l.id)).map((l) => [String(l.id), l.text] as [string, string]),
           ]}
         />
@@ -194,7 +195,7 @@ export function ManageUserLabels({ name }: { name: string }) {
             setPick("");
           }}
         >
-          Assign tag
+          {t("admin.assignTag")}
         </Button>
       </div>
       {act.note}

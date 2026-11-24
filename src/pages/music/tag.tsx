@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { t } from "../../i18n";
 import { dec, num, qs, tagTitle, tagUrl, useApi, useTitle } from "../../lib";
 import { Async, Section, Stat, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
@@ -16,57 +17,65 @@ export function TagPage({ tab }: { tab: "overview" | "wiki" }) {
   useTitle(tagTitle(name, tab === "wiki"));
   return (
     <Async q={q}>
-      {(t) => (
+      {(tag) => (
         <>
           <Hero
             tabs={
               <Tabs
                 items={[
-                  [base, "Overview", true],
-                  [`${base}/+wiki`, "Wiki"],
+                  [base, t("music.overview"), true],
+                  [`${base}/+wiki`, t("music.wiki")],
                 ]}
               />
             }
-            kicker="Tag"
-            title={t.name}
+            kicker={t("music.tag")}
+            title={tag.name}
             stats={
               <>
-                <Stat label="Times used" value={num(t.taggings)} />
-                <Stat label="Taggers" value={num(t.taggers)} />
-                <Stat label="Artists" value={num(t.artists.length)} />
+                <Stat label={t("music.timesUsed")} value={num(tag.taggings)} />
+                <Stat label={t("music.taggers")} value={num(tag.taggers)} />
+                <Stat label={t("music.artists")} value={num(tag.artists.length)} />
               </>
             }
             actions={
               <>
-                <PlayButton queue={t.tracks} label={`Play ${t.name}`} />
-                <StationButton type="tag" name={t.name} label="Tag radio" ghost />
+                <PlayButton queue={tag.tracks} label={t("music.playName", { name: tag.name })} />
+                <StationButton type="tag" name={tag.name} label={t("music.tagRadio")} ghost />
               </>
             }
           />
           <div className="wrap page">
             <Pane>
               {tab === "wiki" ? (
-                <WikiPage type="tag" id={t.id} title={t.name} />
+                <WikiPage type="tag" id={tag.id} title={tag.name} />
               ) : (
                 <div className="cols">
                   <div className="main">
-                    <WikiSummary wiki={t.wiki} to={`${base}/+wiki`} />
-                    <Section title="Top artists">
-                      <Grid kind="artist" items={t.artists.slice(0, 12)} sub={(a) => `${num(a.listeners)} listeners`} />
+                    <WikiSummary wiki={tag.wiki} to={`${base}/+wiki`} />
+                    <Section title={t("music.topArtists")}>
+                      <Grid
+                        kind="artist"
+                        items={tag.artists.slice(0, 12)}
+                        sub={(a) => t("music.listenerCount", { count: a.listeners })}
+                      />
                     </Section>
-                    <Section title="Top tracks">
-                      <TrackList items={t.tracks.slice(0, 15)} rank={1} count="listeners" />
+                    <Section title={t("music.topTracks")}>
+                      <TrackList items={tag.tracks.slice(0, 15)} rank={1} count="listeners" />
                     </Section>
-                    <Section title="Top albums">
-                      <Grid kind="album" items={t.albums.slice(0, 12)} />
+                    <Section title={t("music.topAlbums")}>
+                      <Grid kind="album" items={tag.albums.slice(0, 12)} />
                     </Section>
-                    <Section title="Wall">
-                      <Shoutbox type="tag" id={t.id} limit={10} />
+                    <Section title={t("music.wall")}>
+                      <Shoutbox type="tag" id={tag.id} limit={10} />
                     </Section>
                   </div>
                   <aside className="side">
-                    <Section title="Related tags">
-                      {t.related.length ? <TagChips tags={t.related} /> : <p className="muted">None yet.</p>}
+                    <Section title={t("music.relatedTags")}>
+                      {tag.related.length ? (
+                        <TagChips tags={tag.related} />
+                      ) : (
+                        <p className="muted">{t("music.noneYet")}</p>
+                      )}
                     </Section>
                   </aside>
                 </div>

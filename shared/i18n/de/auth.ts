@@ -1,0 +1,93 @@
+import type en from "../en/auth";
+import type { Translation } from "../core";
+
+export default {
+  oauthOff: "Die Anmeldung über diese Seite ist gerade nicht verfügbar.",
+  oauthExpired: "Die Anmeldung hat zu lange gedauert oder wurde in einem anderen Browser gestartet. Versuch es erneut.",
+  oauthCancelled: "Die Anmeldung wurde abgebrochen.",
+  oauthFailed: "Bei der Verbindung mit der anderen Seite ist etwas schiefgelaufen. Versuch es gleich noch mal.",
+  oauthUnverified:
+    "Die E-Mail-Adresse dieses Kontos ist nicht bestätigt. Bestätige sie zuerst dort und versuch es dann erneut.",
+  oauthTaken: "Dieses Konto ist hier bereits mit einem anderen Konto verbunden.",
+  oauthAlready: "Du hast bereits ein Konto dieser Seite verbunden. Trenne es zuerst.",
+  oauthEmail:
+    "Ein Konto hier nutzt bereits diese E-Mail-Adresse. Melde dich mit deinem Passwort an und verbinde es dann unter Einstellungen{arrow}Konto.",
+  oauthBanned: "Dieses Konto wurde gesperrt.",
+  continueWith: "Weiter mit {provider}",
+  or: "oder",
+  robotFailed: "Die Roboter-Prüfung konnte nicht geladen werden. Lade die Seite neu und versuch es erneut.",
+  robotRequired: "Bestätige, dass du kein Roboter bist",
+  agreement:
+    "Mit der Erstellung eines Kontos stimmst du den {terms} und der {privacy} zu und bestätigst, dass du mindestens 13 bist.",
+  termsLink: "Nutzungsbedingungen",
+  privacyLink: "Datenschutzerklärung",
+  logIn: "Anmelden",
+  joinSonosphere: "Bei Sonosphere registrieren",
+  usernameOrEmail: "Nutzername oder E-Mail",
+  username: "Nutzername",
+  email: "E-Mail",
+  password: "Passwort",
+  createAccount: "Konto erstellen",
+  forgotPassword: "Passwort vergessen?",
+  newHere: "Neu hier? {link}.",
+  createAnAccount: "Konto erstellen",
+  haveAccount: "Du hast schon ein Konto? {link}.",
+  backToJoin: "Zurück zur Registrierung",
+  oauthSigningUp: "Du registrierst dich mit {provider} als {email}. Wähle einen Nutzernamen, um fertig zu werden.",
+  oauthUsernameHint:
+    "2 bis 15 Zeichen: Buchstaben, Zahlen, - und _, beginnend mit einem Buchstaben. Ein Passwort kannst du später in den Einstellungen festlegen, das brauchen manche Scrobbler-Apps.",
+  resetTitle: "Passwort zurücksetzen",
+  resetSent:
+    "Falls ein Konto {email} nutzt, ist ein Link zum Festlegen eines neuen Passworts unterwegs. Er ist eine Stunde lang gültig.",
+  resetSpam:
+    "Nach ein paar Minuten noch nichts da? Schau in deinen Spam-Ordner oder prüfe, ob du die Adresse deiner Registrierung verwendet hast.",
+  resetIntro: "Gib die E-Mail-Adresse deines Kontos ein und wir schicken dir einen Link für ein neues Passwort.",
+  sendResetLink: "Link senden",
+  backToLogIn: "Zurück zur Anmeldung",
+  newPasswordTitle: "Neues Passwort wählen",
+  newPassword: "Neues Passwort",
+  newPasswordHint: "Mindestens 8 Zeichen. Du wirst überall sonst abgemeldet.",
+  savePassword: "Passwort speichern",
+  resetMissingCode: "Diesem Link fehlt der Code. Öffne den Link aus der E-Mail erneut oder {link}.",
+  askForNewOne: "fordere einen neuen an",
+  verifyMissingCode: "Diesem Link fehlt der Code. Öffne den Link aus der E-Mail erneut.",
+  confirming: "Wird bestätigt...",
+  emailChangeApproved:
+    "E-Mail-Änderung genehmigt. Folge dem Bestätigungslink, den wir an deine neue Adresse geschickt haben, um sie abzuschließen.",
+  emailConfirmed: "Deine E-Mail-Adresse ist bestätigt. Danke!",
+  goHome: "Zu deiner Startseite",
+  sendNewLink: "Du kannst einen neuen Link über {link} senden.",
+  accountSettingsLink: "deine Kontoeinstellungen",
+  confirmEmailTitle: "E-Mail-Adresse bestätigen",
+  welcomeTitle: "Willkommen bei Sonosphere, {name}!",
+  welcomeUsedLastfm: "Hast du schon mal Last.fm benutzt?",
+  welcomeIntro: "Sonosphere hält fest, welche Musik du hörst. Sag uns, womit du startest.",
+  welcomeHaveAccount: "Ja, ich habe ein Konto",
+  welcomeNew: "Nein, ich bin neu hier",
+  welcomeBringTitle: "Nimm deine Scrobbles mit",
+  welcomeBringBody:
+    "Importiere deinen Last.fm-Verlauf, und dein Profil, deine Charts und Empfehlungen füllen sich mit allem, was du dort gehört hast. Dein Last.fm-Konto bleibt, wie es ist.",
+  welcomeImport: "Von Last.fm importieren",
+  welcomeSkip: "Vorerst überspringen",
+  welcomeWhatTitle: "Was ist ein Scrobble?",
+  welcomeWhatBody:
+    "Ein Scrobble ist ein Eintrag für einen gehörten Song: der Titel, der Künstler und wann du ihn gehört hast. Verbinde die Apps, mit denen du Musik hörst, und jeder Song wird automatisch in dein Profil gescrobbelt.",
+  welcomeWhatBody2:
+    "Mit der Zeit entstehen aus deinen Scrobbles Charts deiner Top-Künstler, -Alben und -Titel, und sie prägen deine Empfehlungen und Soundalikes: die Hörer, deren Geschmack deinem am nächsten ist.",
+  welcomeNext: "Weiter",
+  welcomeConnectPlayer: "Player verbinden",
+  welcomeConnectBody:
+    "Verbinde einen Player, damit ab jetzt jeder Song gescrobbelt wird, den du hörst. Spotify, Desktop-Player und Handy-Apps funktionieren alle.",
+  connectTitle: "Anwendung verbinden",
+  connectDone: "{app} ist verbunden.",
+  connectClose: "Du kannst diese Seite schließen und zur Anwendung zurückkehren.",
+  connectWants: "{app} {owner} möchte sich mit deinem Sonosphere-Konto verbinden.",
+  connectWantsAs: "{app} {owner} möchte sich mit deinem Sonosphere-Konto ({me}) verbinden.",
+  connectBy: "von {owner}",
+  connectScope:
+    "Die Anwendung kann in deinem Namen scrobbeln, „Läuft gerade“ aktualisieren, Titel lieben und Tags hinzufügen. Du kannst sie jederzeit unter Einstellungen{arrow}Anwendungen trennen.",
+  connectSentBack: "Nach der Freigabe wirst du zu {destination} zurückgeleitet.",
+  connectAllow: "Ja, Zugriff erlauben",
+  connectCancel: "Nein, abbrechen",
+  connectMissingKey: "Diesem Link fehlt der Parameter {param}.",
+} satisfies Translation<typeof en>;

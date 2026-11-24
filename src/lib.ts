@@ -1,10 +1,11 @@
-import { fullTitle } from "../shared/titles";
+import { fullTitle, titles } from "../shared/titles";
 import { createContext, useContext, useDeferredValue, useEffect, useReducer, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { DmClientMessage, DmEvent } from "../shared/dm";
 import type { Me } from "../shared/auth";
 import type { ListenMessage, ListeningEvent } from "../shared/live";
 export type { Ok, Me } from "../shared/auth";
+import { locale, t } from "./i18n";
 
 type ApiOptions = {
   method?: string;
@@ -19,7 +20,7 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   const hasJson = opts.body !== undefined;
   const res = await fetch("/api" + path, {
     method: opts.method || (hasJson || opts.raw ? "POST" : "GET"),
-    headers: hasJson ? { "Content-Type": "application/json", ...opts.headers } : opts.headers,
+    headers: { "X-Locale": locale(), ...(hasJson && { "Content-Type": "application/json" }), ...opts.headers },
     body: hasJson ? JSON.stringify(opts.body) : opts.raw,
     credentials: "same-origin",
     signal: opts.signal,
@@ -31,13 +32,13 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     if (type !== "application/json" && !type?.endsWith("+json")) throw new Error("Expected JSON");
     data = await res.json();
   } catch {
-    throw Object.assign(new Error("Unexpected response from server"), { status: res.status });
+    throw Object.assign(new Error(t("common.unexpectedResponse")), { status: res.status });
   }
   if (!res.ok) {
     const message =
       data && typeof data === "object" && "error" in data && typeof data.error === "string"
         ? data.error
-        : "Request failed";
+        : t("common.requestFailed");
     throw Object.assign(new Error(message), { status: res.status });
   }
   return data as T;
@@ -178,15 +179,9 @@ export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, refr
 export const useAuth = () => useContext(AuthContext);
 
 export { enc, dec, artistUrl, albumUrl, trackUrl, userUrl, tagUrl } from "../shared/paths";
-export {
-  artistTitle,
-  journalTitle,
-  releaseTitle,
-  searchTitle,
-  tagTitle,
-  TITLES,
-  userTitle,
-} from "../shared/titles";
+export const { artistTitle, journalTitle, releaseTitle, searchTitle, tagTitle, TITLES, userTitle } = titles(
+  (key, params) => t(`common.${key}`, params)
+);
 export const imageUrl = (id: string, size: "large" | "small" = "large") =>
   `/api/image/${id}${size === "small" ? "?s=small" : ""}`;
 
@@ -216,9 +211,9 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export const num = (n: number | undefined | null) => (n ?? 0).toLocaleString("en-US");
-const shortFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
-export const short = (n: number | undefined | null) => shortFmt.format(n ?? 0);
+export const num = (n: number | undefined | null) => (n ?? 0).toLocaleString(locale());
+export const short = (n: number | undefined | null) =>
+  new Intl.NumberFormat(locale(), { notation: "compact", maximumFractionDigits: 1 }).format(n ?? 0);
 export const plural = (n: number, word: string) => `${num(n)} ${word}${n === 1 ? "" : "s"}`;
 export const dur = (sec: number) => {
   if (sec <= 0) return "";
@@ -226,24 +221,25 @@ export const dur = (sec: number) => {
 };
 export function ago(ts: number) {
   const d = Date.now() / 1000 - ts;
-  if (d < 60) return "just now";
-  if (d < 3600) return `${Math.floor(d / 60)} minute${d < 120 ? "" : "s"} ago`;
-  if (d < 86400) return `${Math.floor(d / 3600)} hour${d < 7200 ? "" : "s"} ago`;
-  if (d < 86400 * 7) return `${Math.floor(d / 86400)} day${d < 172800 ? "" : "s"} ago`;
+  if (d < 60) return t("common.justNow");
+  const rtf = new Intl.RelativeTimeFormat(locale());
+  if (d < 3600) return rtf.format(-Math.floor(d / 60), "minute");
+  if (d < 86400) return rtf.format(-Math.floor(d / 3600), "hour");
+  if (d < 86400 * 7) return rtf.format(-Math.floor(d / 86400), "day");
   return dateTime(ts);
 }
 const DATE_OPTS: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
-export const date = (ts: number, opts = DATE_OPTS) => new Date(ts * 1000).toLocaleDateString("en-GB", opts);
+export const date = (ts: number, opts = DATE_OPTS) => new Date(ts * 1000).toLocaleDateString(locale(), opts);
 export const dateTime = (ts: number) =>
-  new Date(ts * 1000).toLocaleString("en-GB", { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" });
+  new Date(ts * 1000).toLocaleString(locale(), { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" });
 
-export const PERIODS: [string, string][] = [
-  ["7day", "Last 7 days"],
-  ["1month", "Last 30 days"],
-  ["3month", "Last 90 days"],
-  ["6month", "Last 180 days"],
-  ["12month", "Last 365 days"],
-  ["overall", "All time"],
+export const periods = (): [string, string][] => [
+  ["7day", t("common.last7Days")],
+  ["1month", t("common.last30Days")],
+  ["3month", t("common.last90Days")],
+  ["6month", t("common.last180Days")],
+  ["12month", t("common.last365Days")],
+  ["overall", t("common.allTime")],
 ];
 
 export function useParam(name: string, def = ""): [string, (v: string) => void] {

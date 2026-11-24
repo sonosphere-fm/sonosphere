@@ -3,6 +3,7 @@ import { Button, Input, Select, Textarea } from "../kit";
 import { api, useApi, useTitle } from "../lib";
 import { Async, Section } from "../ui/base";
 import { cx, useConfirm } from "./common";
+import { t } from "./i18n";
 import type { AdminSettings } from "../../shared/admin-content";
 import { ManageLabelDefinitions } from "./user-labels";
 
@@ -14,7 +15,7 @@ const FORM = cx(
 
 export function SiteSettings() {
   const q = useApi<AdminSettings>("/admin/settings");
-  useTitle("Site settings");
+  useTitle(t("admin.navSettings"));
   const saved = (s: AdminSettings) => {
     q.setData(s);
     window.dispatchEvent(new Event("spin:site"));
@@ -46,24 +47,17 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
     api<AdminSettings>("/admin/settings", { body: { ...f, maxShoutLength: Number(f.maxShoutLength), note } }).then(
       (s) => {
         saved(s);
-        setMsg("Settings saved.");
+        setMsg(t("admin.settingsSaved"));
       }
     );
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setMsg("");
     ask({
-      title: "Save site settings",
-      action: "Save",
+      title: t("admin.saveSiteSettings"),
+      action: t("admin.save"),
       danger: closing,
-      body: closing ? (
-        <p>
-          New people won't be able to sign up until registrations are opened again. Admins named in the server
-          configuration still can.
-        </p>
-      ) : (
-        <p>Changes apply to everyone straight away.</p>
-      ),
+      body: closing ? <p>{t("admin.closingRegistrations")}</p> : <p>{t("admin.changesApplyNow")}</p>,
       run: save,
     });
   };
@@ -72,7 +66,7 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
     <>
       {modal}
       <form className={FORM} onSubmit={submit}>
-        <Section title="Registrations">
+        <Section title={t("admin.registrations")}>
           <label className="check">
             <Input
               type="checkbox"
@@ -80,40 +74,36 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
               onChange={(e) => setF({ ...f, registrationsOpen: e.target.checked })}
             />{" "}
             <span>
-              <b>Open for new sign-ups</b>
+              <b>{t("admin.openForSignups")}</b>
               <br />
-              <span className="muted small">
-                When closed, the sign-up form refuses new accounts. Existing members can still log in.
-              </span>
+              <span className="muted small">{t("admin.openForSignupsHint")}</span>
             </span>
           </label>
         </Section>
-        <Section title="Announcement banner">
+        <Section title={t("admin.announcementBanner")}>
           <label className="field-block">
-            <span className="field-label">Message</span>
+            <span className="field-label">{t("admin.message")}</span>
             <Textarea
               rows={2}
               value={f.announcement}
               onChange={(e) => setF({ ...f, announcement: e.target.value })}
               maxLength={500}
-              placeholder="Leave empty for no banner"
+              placeholder={t("admin.noBannerPlaceholder")}
             />
           </label>
           <label className="field-block">
-            <span className="field-label">Style</span>
+            <span className="field-label">{t("admin.style")}</span>
             <Select
-              label="Style"
+              label={t("admin.style")}
               value={f.announcementTone}
               onChange={(v) => setF({ ...f, announcementTone: v })}
               options={[
-                ["info", "Information"],
-                ["warning", "Warning"],
+                ["info", t("admin.toneInfo")],
+                ["warning", t("admin.toneWarning")],
               ]}
             />
           </label>
-          <p className="muted small">
-            Shown at the top of every page. People can dismiss it; changing the text shows it to them again.
-          </p>
+          <p className="muted small">{t("admin.bannerHint")}</p>
           {announcement && (
             <div className={`site-banner ${f.announcementTone} preview`}>
               <div className="site-banner-in">
@@ -122,19 +112,19 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
             </div>
           )}
         </Section>
-        <Section title="Wall posts">
+        <Section title={t("admin.wallPosts")}>
           <label className="field-block">
-            <span className="field-label">Longest wall post, in characters</span>
+            <span className="field-label">{t("admin.longestWallPostChars")}</span>
             <Input
               type="number"
               min={50}
               max={1000}
               value={f.maxShoutLength}
               onChange={(e) => setF({ ...f, maxShoutLength: e.target.value })}
-              aria-label="Longest wall post"
+              aria-label={t("admin.longestWallPost")}
             />
           </label>
-          <p className="muted small">Between 50 and 1000. Applies to wall posts and journal comments.</p>
+          <p className="muted small">{t("admin.wallPostLengthHint")}</p>
         </Section>
         {msg && (
           <p className="form-ok" role="status">
@@ -142,7 +132,7 @@ function SettingsForm({ initial, saved }: { initial: AdminSettings; saved: (s: A
           </p>
         )}
         <Button kind="btn" disabled={!dirty}>
-          Save settings
+          {t("admin.saveSettings")}
         </Button>
       </form>
     </>

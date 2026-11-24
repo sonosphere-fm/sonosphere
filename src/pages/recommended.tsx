@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router-dom";
+import { t } from "../i18n";
 import { TITLES, useApi, useTitle } from "../lib";
 import { Async, Empty, Section } from "../ui/base";
 import { EventList } from "../ui/events";
@@ -7,9 +8,18 @@ import { PlayButton, StationButton } from "../player";
 import { HomeTabs, ImportPrompt, type HomeTab } from "./music/shared";
 import type { Recommended as RecommendedData } from "../../shared/home";
 
+type RecTab = Exclude<HomeTab, "home">;
+
+const RECOMMENDED_TITLES: Record<RecTab, () => string> = {
+  artists: () => t("music.recommendedArtists"),
+  albums: () => t("music.recommendedAlbums"),
+  tracks: () => t("music.recommendedTracks"),
+  events: () => t("music.recommendedEvents"),
+};
+
 function RecommendedBody({ d, at }: { d: RecommendedData; at: HomeTab }) {
   if (at === "events") {
-    return d.events.length ? <EventList items={d.events} /> : <Empty>No upcoming events right now.</Empty>;
+    return d.events.length ? <EventList items={d.events} /> : <Empty>{t("music.noUpcomingEvents")}</Empty>;
   }
   if (!d.artists.length) {
     return <ImportPrompt />;
@@ -17,12 +27,12 @@ function RecommendedBody({ d, at }: { d: RecommendedData; at: HomeTab }) {
   if (at === "tracks") {
     const aside = (
       <span className="row">
-        <PlayButton queue={d.tracks} label="Play all" />
-        <StationButton type="recommended" label="Recommendations radio" ghost />
+        <PlayButton queue={d.tracks} label={t("music.playAll")} />
+        <StationButton type="recommended" label={t("music.recommendationsRadio")} ghost />
       </span>
     );
     return (
-      <Section title="Tracks to try" aside={aside}>
+      <Section title={t("music.tracksToTry")} aside={aside}>
         <TrackList items={d.tracks} count="listeners" />
       </Section>
     );
@@ -49,13 +59,13 @@ function RecommendedBody({ d, at }: { d: RecommendedData; at: HomeTab }) {
 export function Recommended() {
   const q = useApi<RecommendedData>("/recommended");
   const show = useSearchParams()[0].get("show");
-  const at: HomeTab = show === "tracks" || show === "albums" || show === "events" ? show : "artists";
+  const at: RecTab = show === "tracks" || show === "albums" || show === "events" ? show : "artists";
   useTitle(TITLES.recommended);
   return (
     <>
       <HomeTabs at={at} />
       <div className="wrap page home-page">
-        <h1 className="page-title">Recommended {at}</h1>
+        <h1 className="page-title">{RECOMMENDED_TITLES[at]()}</h1>
         <Async q={q}>{(d) => <RecommendedBody d={d} at={at} />}</Async>
       </div>
     </>

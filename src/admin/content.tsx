@@ -1,10 +1,11 @@
 import { Suspense, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button, Input } from "../kit";
-import { ago, api, num, plural, qs, useApi, useTitle } from "../lib";
+import { ago, api, qs, useApi, useTitle } from "../lib";
 import { Async, Empty, Pager, Section } from "../ui/base";
 import { Badge, CHECK, COMPACT_LIST, COMPACT_TABLE, FILTERBAR, LINKISH, LIST } from "./common";
-import { QUOTE, RED, TOOLBAR, TYPE_LABEL, adminUrl, cx, useQuery, useConfirm } from "./common";
+import { QUOTE, RED, TOOLBAR, TYPE_LABEL, adminUrl, cx, useQuery, useConfirm, type AdminKey } from "./common";
+import { t, tx } from "./i18n";
 import type {
   ContentList,
   JournalItem,
@@ -28,14 +29,25 @@ const PRE = cx(
   "whitespace-pre-wrap wrap-anywhere [font-family:inherit] leading-[inherit] text-[13px]",
   "m-[6px_0_0] p-2 bg-site-panel max-h-[260px] overflow-auto"
 );
-const DELETE_NAME: Record<string, string> = { wiki: "wiki revision", journal: "journal post" };
+const DELETE_TITLE: Record<string, AdminKey> = {
+  shout: "admin.deleteShout",
+  wiki: "admin.deleteWikiRevision",
+  journal: "admin.deleteJournalPost",
+};
+const WIKI_TYPE: Record<string, AdminKey> = {
+  artist: "admin.wikiTypeArtist",
+  album: "admin.wikiTypeAlbum",
+  track: "admin.wikiTypeTrack",
+  tag: "admin.wikiTypeTag",
+};
+const wikiType = (type: string) => (WIKI_TYPE[type] ? t(WIKI_TYPE[type]) : type);
 
 function ReportCount({ n }: { n: number }) {
   if (n <= 0) return null;
   return (
     <>
       {" "}
-      · <b className={RED}>{plural(n, "open report")}</b>
+      · <b className={RED}>{t("admin.openReports", { count: n })}</b>
     </>
   );
 }
@@ -55,18 +67,16 @@ export function Content() {
   const q = useApi<ContentList>(
     `/admin/content${qs({ kind, q: term, user: who, locked: kind === "wikis" ? locked : "", page })}`
   );
-  useTitle("Content");
+  useTitle(t("admin.navContent"));
   const del = (k: string, id: number, what: ReactNode) =>
     ask({
-      title: `Delete ${DELETE_NAME[k] ?? k}`,
-      action: "Delete",
+      title: t(DELETE_TITLE[k]),
+      action: t("admin.delete"),
       danger: true,
       body: (
         <>
           {what}
-          <p>
-            This can't be undone{k === "journal" ? ", and its comments go with it" : ""}. Open reports on it are closed.
-          </p>
+          <p>{k === "journal" ? t("admin.deleteJournalBody") : t("admin.deleteContentBody")}</p>
         </>
       ),
       run: (note) => api<Ok>("/admin/content/delete", { body: { kind: k, id, note } }).then(() => q.reload()),
@@ -93,13 +103,15 @@ export function Content() {
       {modal}
       <div className={TOOLBAR}>
         <nav className="tabs sub">
-          {[
-            ["shouts", "Wall posts"],
-            ["journals", "Journals"],
-            ["wikis", "Wiki revisions"],
-          ].map(([k, l]) => (
+          {(
+            [
+              ["shouts", "admin.tabShouts"],
+              ["journals", "admin.tabJournals"],
+              ["wikis", "admin.tabWikis"],
+            ] as const
+          ).map(([k, l]) => (
             <button key={k} type="button" className={kind === k ? "active" : ""} onClick={() => switchKind(k)}>
-              {l}
+              {t(l)}
             </button>
           ))}
         </nav>
@@ -108,16 +120,16 @@ export function Content() {
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Search text"
-          aria-label="Search text"
+          placeholder={t("admin.searchText")}
+          aria-label={t("admin.searchText")}
         />
         <Input
           value={user}
           onChange={(e) => setUser(e.target.value)}
-          placeholder="Author username"
-          aria-label="Author"
+          placeholder={t("admin.authorUsername")}
+          aria-label={t("admin.author")}
         />
-        <Button kind="btn small">Filter</Button>
+        <Button kind="btn small">{t("admin.filter")}</Button>
         {kind === "wikis" && (
           <label className={CHECK}>
             <Input
@@ -125,20 +137,20 @@ export function Content() {
               checked={locked === "1"}
               onChange={(e) => set({ locked: e.target.checked ? "1" : "" })}
             />{" "}
-            Locked pages only
+            {t("admin.lockedPagesOnly")}
           </label>
         )}
         {(term || who) && (
           <Button kind="link small" type="button" onClick={clear}>
-            Clear
+            {t("admin.clear")}
           </Button>
         )}
       </form>
       <Async q={q}>
         {(d) => (
           <>
-            <p className="muted small">{num(d.total)} found</p>
-            {d.items.length === 0 && <Empty>Nothing matches.</Empty>}
+            <p className="muted small">{t("admin.found", { count: d.total })}</p>
+            {d.items.length === 0 && <Empty>{t("admin.nothingMatches")}</Empty>}
             <ul className={LIST}>
               {allItems(d).map((it) => {
                 if (isShout(it)) {
@@ -147,11 +159,15 @@ export function Content() {
                       <p className={BODY_TEXT}>{it.body}</p>
                       <div className="row between">
                         <span className="muted small">
-                          <Link to={adminUrl(it.author)}>
-                            <Username name={it.author} />
-                          </Link>{" "}
-                          on {it.page ? <Link to={it.page.link}>{it.page.label}</Link> : "a removed page"} ·{" "}
-                          {ago(it.createdAt)}
+                          {tx("admin.postedOn", {
+                            author: (
+                              <Link to={adminUrl(it.author)}>
+                                <Username name={it.author} />
+                              </Link>
+                            ),
+                            page: it.page ? <Link to={it.page.link}>{it.page.label}</Link> : t("admin.aRemovedPage"),
+                          })}{" "}
+                          · {ago(it.createdAt)}
                           <ReportCount n={it.reports} />
                         </span>
                         <Button
@@ -159,7 +175,7 @@ export function Content() {
                           type="button"
                           onClick={() => del("shout", it.id, <blockquote className={QUOTE}>{it.body}</blockquote>)}
                         >
-                          Delete
+                          {t("admin.delete")}
                         </Button>
                       </div>
                     </li>
@@ -179,7 +195,7 @@ export function Content() {
                           <Link to={adminUrl(it.author)}>
                             <Username name={it.author} />
                           </Link>{" "}
-                          · {ago(it.createdAt)} · {plural(it.comments, "comment")}
+                          · {ago(it.createdAt)} · {t("admin.commentCount", { count: it.comments })}
                           <ReportCount n={it.reports} />
                         </span>
                         <Button
@@ -189,13 +205,11 @@ export function Content() {
                             del(
                               "journal",
                               it.id,
-                              <p>
-                                “{it.title}” by {it.author}
-                              </p>
+                              <p>{t("admin.quotedByAuthor", { title: it.title, author: it.author })}</p>
                             )
                           }
                         >
-                          Delete
+                          {t("admin.delete")}
                         </Button>
                       </div>
                     </li>
@@ -205,8 +219,10 @@ export function Content() {
                 const showing = wiki === key;
                 const revisionText = (
                   <p>
-                    Version {it.version} of the wiki for {it.page?.label}.
-                    {it.latest ? " The previous version becomes current." : ""}
+                    {t(it.latest ? "admin.wikiVersionLatest" : "admin.wikiVersion", {
+                      version: it.version,
+                      page: it.page?.label ?? "",
+                    })}
                   </p>
                 );
                 return (
@@ -217,14 +233,13 @@ export function Content() {
                           {it.page.label}
                         </Link>
                       ) : (
-                        "Removed page"
+                        t("admin.removedPage")
                       )}{" "}
-                      <span className={TYPE_LABEL}>{it.itemType}</span>{" "}
+                      <span className={TYPE_LABEL}>{wikiType(it.itemType)}</span>{" "}
                       <span className="muted small">
-                        version {it.version}
-                        {it.latest ? " (current)" : ""}
+                        {t(it.latest ? "admin.versionCurrent" : "admin.versionN", { version: it.version })}
                       </span>
-                      {it.locked && <Badge tone="warn">Locked</Badge>}
+                      {it.locked && <Badge tone="warn">{t("admin.locked")}</Badge>}
                     </p>
                     <p className={`${BODY_TEXT} muted`}>{it.excerpt}</p>
                     <div className="row between">
@@ -234,22 +249,22 @@ export function Content() {
                             <Username name={it.author} />
                           </Link>
                         ) : (
-                          "deleted user"
+                          t("admin.deletedUser")
                         )}{" "}
                         · {ago(it.createdAt)}
                         <ReportCount n={it.reports} />
                       </span>
                       <span className="row">
                         <Button kind="link small" type="button" onClick={() => setWiki(showing ? null : key)}>
-                          {showing ? "Hide history" : "History and lock"}
+                          {showing ? t("admin.hideHistory") : t("admin.historyAndLock")}
                         </Button>
                         <Button kind="link small" type="button" onClick={() => del("wiki", it.id, revisionText)}>
-                          Delete revision
+                          {t("admin.deleteRevision")}
                         </Button>
                       </span>
                     </div>
                     {showing && (
-                      <Suspense fallback={<p className="muted small">Loading history…</p>}>
+                      <Suspense fallback={<p className="muted small">{t("admin.loadingHistory")}</p>}>
                         <WikiPanel type={it.itemType} id={it.itemId} onChange={wikiChanged} />
                       </Suspense>
                     )}
@@ -290,17 +305,17 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
           const toggleLock = () => {
             if (d.lock) {
               ask({
-                title: `Unlock wiki for ${d.page.label}`,
-                action: "Unlock",
-                body: <p>Everyone will be able to edit it again.</p>,
+                title: t("admin.unlockWikiFor", { page: d.page.label }),
+                action: t("admin.unlock"),
+                body: <p>{t("admin.unlockBody")}</p>,
                 run: (note) => setLock(false, note),
               });
             } else {
               ask({
-                title: `Lock wiki for ${d.page.label}`,
-                action: "Lock",
-                note: "Reason",
-                body: <p>Only staff will be able to edit it until it's unlocked.</p>,
+                title: t("admin.lockWikiFor", { page: d.page.label }),
+                action: t("admin.lock"),
+                note: t("admin.reason"),
+                body: <p>{t("admin.lockBody")}</p>,
                 run: (note) => setLock(true, note),
               });
             }
@@ -309,17 +324,17 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
             <>
               <div className="row between">
                 <span className="small">
-                  {d.lock ? (
-                    <>
-                      <b>Locked</b> by {d.lock.by || "staff"} {ago(d.lock.at)}
-                      {d.lock.reason && <>: “{d.lock.reason}”</>}. Only staff can edit.
-                    </>
-                  ) : (
-                    "Anyone who isn't suspended can edit this wiki."
-                  )}
+                  {d.lock
+                    ? tx(d.lock.reason ? "admin.lockedByReason" : "admin.lockedBy", {
+                        locked: <b>{t("admin.locked")}</b>,
+                        by: d.lock.by || t("admin.staff"),
+                        ago: ago(d.lock.at),
+                        reason: d.lock.reason,
+                      })
+                    : t("admin.anyoneCanEdit")}
                 </span>
                 <Button kind="btn ghost small" type="button" onClick={toggleLock}>
-                  {d.lock ? "Unlock" : "Lock"}
+                  {d.lock ? t("admin.unlock") : t("admin.lock")}
                 </Button>
               </div>
               <table className={`${COMPACT_TABLE} mt-[10px] bg-site-card`}>
@@ -327,21 +342,16 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
                   {d.versions.map((v, i) => {
                     const askRevert = () =>
                       ask({
-                        title: `Revert to version ${v.version}`,
-                        action: "Revert",
-                        body: (
-                          <p>
-                            Saves version {v.version} as a new current version. Nothing is lost: the history keeps every
-                            version.
-                          </p>
-                        ),
+                        title: t("admin.revertToVersion", { version: v.version }),
+                        action: t("admin.revert"),
+                        body: <p>{t("admin.revertBody", { version: v.version })}</p>,
                         run: (note) => revert(v.id, note),
                       });
                     return (
                       <tr key={v.id}>
                         <td className="nowrap">
                           v{v.version}
-                          {i === 0 && <span className="muted"> current</span>}
+                          {i === 0 && <span className="muted"> {t("admin.current")}</span>}
                         </td>
                         <td className="w-full">
                           <button
@@ -355,12 +365,12 @@ function WikiPanel({ type, id, onChange }: { type: string; id: number; onChange:
                           {open === v.id && <pre className={PRE}>{v.content}</pre>}
                         </td>
                         <td className="nowrap muted small">
-                          {v.author || "deleted user"} · {ago(v.createdAt)}
+                          {v.author || t("admin.deletedUser")} · {ago(v.createdAt)}
                         </td>
                         <td className="nowrap">
                           {i > 0 && (
                             <Button kind="link small" type="button" onClick={askRevert}>
-                              Revert to this
+                              {t("admin.revertToThis")}
                             </Button>
                           )}
                         </td>
@@ -383,20 +393,20 @@ function Locks({ rev }: { rev: number }) {
     if (rev) q.reload();
   }, [rev]);
   return (
-    <Section title="Locked wikis">
+    <Section title={t("admin.lockedWikis")}>
       <Async q={q}>
         {(d) => {
-          if (d.items.length === 0) return <p className="muted">No wiki is locked.</p>;
+          if (d.items.length === 0) return <p className="muted">{t("admin.noWikiLocked")}</p>;
           return (
             <ul className={COMPACT_LIST}>
               {d.items.map((l) => (
                 <li key={`${l.type}:${l.id}`}>
                   <span>
-                    {l.page ? <Link to={l.page.link}>{l.page.label}</Link> : "Removed page"}{" "}
-                    <span className={TYPE_LABEL}>{l.type}</span>
+                    {l.page ? <Link to={l.page.link}>{l.page.label}</Link> : t("admin.removedPage")}{" "}
+                    <span className={TYPE_LABEL}>{wikiType(l.type)}</span>
                   </span>
                   <span className="muted small">
-                    by {l.by || "staff"} · {ago(l.at)}
+                    {t("admin.byName", { name: l.by || t("admin.staff") })} · {ago(l.at)}
                     {l.reason && <> · “{l.reason}”</>}
                   </span>
                 </li>

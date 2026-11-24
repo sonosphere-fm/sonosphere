@@ -1,3 +1,4 @@
+import type { Locale } from "./i18n/core";
 import type { Role } from "./site";
 import type { ProfileLink } from "./profile-links";
 import type { UserAppearance } from "./username-fonts";
@@ -29,6 +30,7 @@ export type Me = UserAppearance & {
   emailNotify: string;
   emailMuted: string[];
   theme: "light" | "system" | "dark";
+  locale: Locale | "";
   useProfileTheme?: boolean;
   emailVerified: boolean;
   pendingEmail: string | null;

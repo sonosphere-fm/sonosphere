@@ -19,7 +19,7 @@ router.get<WikiHistory>("/api/wiki", async (c) => {
 
 router.post<WikiSaved>("/api/wiki", async (c) => {
   const u = confirmed(poster(c));
-  await limit(u, `wiki:${u.id}`, 30, 3600, "That is a lot of wiki edits. Take a break and come back in a while.");
+  await limit(u, `wiki:${u.id}`, 30, 3600, "tooManyWikiEdits");
   const it = await requireItem(c.body.type, c.body.id, WITH_WIKI);
   return { wiki: await edit(u, it.type, it.row.id, c.body.content) };
 });

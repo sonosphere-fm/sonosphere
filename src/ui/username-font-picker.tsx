@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { USERNAME_FONTS, type UsernameFont } from "../../shared/username-fonts";
 import { Ico } from "../icons";
+import { t } from "../i18n";
 import { Username } from "./username";
 
 export function UsernameFontPicker({
@@ -16,6 +17,8 @@ export function UsernameFontPicker({
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const selected = USERNAME_FONTS.find((font) => font.id === value) ?? USERNAME_FONTS[0];
+  const label = (font: (typeof USERNAME_FONTS)[number]) =>
+    font.id === "default" ? t("settings.siteDefault") : font.label;
   useEffect(() => {
     if (!open) return;
     const close = (event: PointerEvent) => {
@@ -60,17 +63,17 @@ export function UsernameFontPicker({
         ref={trigger}
         type="button"
         className="username-font-trigger"
-        aria-label={`Username font: ${selected.label}`}
+        aria-label={t("settings.usernameFontCurrent", { font: label(selected) })}
         aria-expanded={open && !disabled}
         aria-haspopup="dialog"
         disabled={disabled}
         onClick={() => setOpen(!open)}
       >
-        <Username name={selected.label} font={value} />
+        <Username name={label(selected)} font={value} />
         <Ico.ChevDown />
       </button>
       {open && !disabled && (
-        <div className="username-font-popover" role="dialog" aria-label="Choose username font">
+        <div className="username-font-popover" role="dialog" aria-label={t("settings.chooseUsernameFont")}>
           <div className="username-font-grid">
             {USERNAME_FONTS.map((font) => (
               <button
@@ -84,7 +87,7 @@ export function UsernameFontPicker({
                   trigger.current?.focus();
                 }}
               >
-                <Username name={font.label} font={font.id} />
+                <Username name={label(font)} font={font.id} />
               </button>
             ))}
           </div>

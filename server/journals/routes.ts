@@ -30,13 +30,13 @@ function textOf(b: Body): repo.JournalText {
   const body = String(b.body || "")
     .trim()
     .slice(0, 20000);
-  if (!title) bad("Give the post a title");
-  if (body.length < 10) bad("Posts need at least 10 characters");
+  if (!title) bad("givePostTitle");
+  if (body.length < 10) bad("postsNeedLeast10Characters");
   return { title, body };
 }
 
 const own = async (c: Ctx): Promise<repo.Journal> =>
-  (await repo.findOwnJournal(Number(c.params[0]), need(c).id)) ?? missing("Post");
+  (await repo.findOwnJournal(Number(c.params[0]), need(c).id)) ?? missing("postNotFound");
 
 router.get<JournalList>("/api/user/journal", async (c) => {
   const u = await requireUser(c.q.get("name"));
@@ -49,14 +49,14 @@ router.get<JournalList>("/api/user/journal", async (c) => {
 });
 
 router.get<JournalPost>("/api/journal/:id", async (c) => {
-  const j = (await repo.findJournal(Number(c.params[0]))) ?? missing("Post");
-  const author = (await findById(j.userId)) ?? missing("Post");
+  const j = (await repo.findJournal(Number(c.params[0]))) ?? missing("postNotFound");
+  const author = (await findById(j.userId)) ?? missing("postNotFound");
   return { ...(await summary(j)), body: j.body, author: publicUser(author) };
 });
 
 router.post<JournalSaved>("/api/journal", async (c) => {
   const u = confirmed(poster(c));
-  await limit(u, `journal:${u.id}`, 10, 86_400, "You have written a lot of posts today. Try again tomorrow.");
+  await limit(u, `journal:${u.id}`, 10, 86_400, "tooManyPostsToday");
   return { id: await repo.createJournal(u.id, textOf(c.body)) };
 });
 

@@ -54,8 +54,8 @@ async function trackOf(recordingMsid: unknown, recordingMbid: unknown): Promise<
 function paging(q: URLSearchParams, def: number, max: number) {
   const n = Number(q.get("count") ?? def);
   const o = Number(q.get("offset") ?? 0);
-  if (!Number.isInteger(n) || n < 0) bad("Invalid count");
-  if (!Number.isInteger(o) || o < 0) bad("Invalid offset");
+  if (!Number.isInteger(n) || n < 0) bad("invalidCount");
+  if (!Number.isInteger(o) || o < 0) bad("invalidOffset");
   return { count: Math.min(n, max), offset: o };
 }
 
@@ -63,7 +63,7 @@ const tsParam = (q: URLSearchParams, name: string) => {
   const v = q.get(name);
   if (v === null) return 0;
   const n = Number(v);
-  return Number.isInteger(n) && n >= 0 ? n : bad(`${name} should be a positive integer`);
+  return Number.isInteger(n) && n >= 0 ? n : bad("tsNotPositiveInteger", { name });
 };
 
 async function body(req: Request): Promise<Json> {
@@ -71,9 +71,9 @@ async function body(req: Request): Promise<Json> {
   try {
     v = await req.json();
   } catch {
-    return bad("Cannot parse JSON document");
+    return bad("cannotParseJsonDocument");
   }
-  return isObj(v) ? v : bad("Invalid JSON document submitted");
+  return isObj(v) ? v : bad("invalidJsonDocumentSubmitted");
 }
 
 // --- who is asking ---
@@ -87,14 +87,14 @@ async function tokenUser(req: Request, q: URLSearchParams): Promise<User | null>
   appId ??= await appIdByKey("listenbrainz");
   const id = appId && (await sessionUser(token, appId));
   const u = id ? await users.findById(id) : null;
-  return u && !u.banned ? u : fail(401, "Invalid authorization token.");
+  return u && !u.banned ? u : fail(401, "invalidAuthorizationToken");
 }
 
-const authed = async (c: Ctx) => (await c.viewer()) ?? fail(401, "You need to provide an Authorization header.");
+const authed = async (c: Ctx) => (await c.viewer()) ?? fail(401, "needProvideAuthorizationHeader");
 
 async function named(name: string): Promise<User> {
   const u = await users.findByName(name);
-  return u && !u.banned ? u : fail(404, `Cannot find user: ${name}`);
+  return u && !u.banned ? u : fail(404, "cannotFindUser", { name });
 }
 
 const hidesListens = (u: User, viewer: User | null) => u.id !== viewer?.id && (u.privateListening || u.hideRecent);
@@ -125,7 +125,7 @@ const listen = (l: repo.Listen, username: string) => ({
 
 on("GET", "/validate-token", async (c) => {
   const header = c.req.headers.get("authorization");
-  if (!header && !c.q.get("token")) bad("You need to provide an Authorization token.");
+  if (!header && !c.q.get("token")) bad("needProvideAuthorizationToken");
   try {
     const u = await c.viewer();
     if (u) return { code: 200, message: "Token valid.", valid: true, user_name: u.username };
@@ -142,21 +142,21 @@ const TYPES = ["single", "import", "playing_now"];
 type Submitted = ScrobbleInput & { mbid: string | null; client: string };
 
 function submitted(l: unknown, type: string): Submitted {
-  if (!isObj(l)) return bad("Each listen should be a JSON object.");
+  if (!isObj(l)) return bad("eachListenShouldJsonObject");
   const m = l.track_metadata;
-  if (!isObj(m)) return bad("JSON document must contain track_metadata.");
+  if (!isObj(m)) return bad("missingTrackMetadata");
   const artist = str(m.artist_name);
   const track = str(m.track_name);
-  if (!artist) bad("JSON document does not contain required track_metadata.artist_name.");
-  if (!track) bad("JSON document does not contain required track_metadata.track_name.");
+  if (!artist) bad("missingArtistName");
+  if (!track) bad("missingTrackName");
   let timestamp: number | undefined;
   if (type === "playing_now") {
-    if (l.listened_at !== undefined) bad("JSON document must not contain listened_at while submitting playing_now.");
+    if (l.listened_at !== undefined) bad("playingNowWithListenedAt");
   } else {
     timestamp = Number(l.listened_at);
-    if (!Number.isInteger(timestamp)) bad("JSON document must contain listened_at as an integer.");
-    if (timestamp! < OLDEST) bad("Value for key listened_at is too low. listened_at timestamp should be after 2000.");
-    if (timestamp! > now() + 3600) bad("Value for key listened_at is too high.");
+    if (!Number.isInteger(timestamp)) bad("listenedAtNotInteger");
+    if (timestamp! < OLDEST) bad("listenedAtTooLow");
+    if (timestamp! > now() + 3600) bad("listenedAtTooHigh");
   }
   const info = isObj(m.additional_info) ? m.additional_info : {};
   const ms = Number(info.duration_ms);
@@ -176,11 +176,11 @@ on("POST", "/submit-listens", async (c) => {
   const u = await authed(c);
   const b = await body(c.req);
   const type = String(b.listen_type ?? "");
-  if (!TYPES.includes(type)) bad("JSON document must contain a valid listen_type key (single, import or playing_now).");
-  const payload = Array.isArray(b.payload) ? b.payload : bad("JSON document must contain a payload list.");
-  if (!payload.length) bad("JSON document does not contain any listens.");
-  if (type !== "import" && payload.length !== 1) bad(`JSON document contains more than one listen for ${type}.`);
-  if (payload.length > MAX_LISTENS) bad(`Too many listens: submit at most ${MAX_LISTENS} at a time.`);
+  if (!TYPES.includes(type)) bad("invalidListenType");
+  const payload = Array.isArray(b.payload) ? b.payload : bad("missingPayload");
+  if (!payload.length) bad("noListens");
+  if (type !== "import" && payload.length !== 1) bad("tooManyListensForType", { type });
+  if (payload.length > MAX_LISTENS) bad("tooManyListens", { max: MAX_LISTENS });
   const listens = payload.map((l) => submitted(l, type));
 
   if (type === "playing_now") {
@@ -203,8 +203,8 @@ on("POST", "/delete-listen", async (c) => {
   const u = await authed(c);
   const b = await body(c.req);
   const at = Number(b.listened_at);
-  if (!Number.isInteger(at)) bad("Listen timestamp missing.");
-  const trackId = (await trackOf(b.recording_msid, null)) ?? bad("Recording MSID missing.");
+  if (!Number.isInteger(at)) bad("listenTimestampMissing");
+  const trackId = (await trackOf(b.recording_msid, null)) ?? bad("recordingMsidMissing");
   const id = await repo.scrobbleAt(u.id, trackId, at);
   if (id) await deleteScrobble(u.id, id);
   return { status: "ok" };
@@ -214,7 +214,7 @@ on("GET", "/user/:name/listens", async (c) => {
   const u = await named(c.params[0]!);
   const min = tsParam(c.q, "min_ts");
   const max = tsParam(c.q, "max_ts");
-  if (min && max) bad("You may only specify one of min_ts and max_ts");
+  if (min && max) bad("mayOnlySpecifyOneMin");
   const { count } = paging(c.q, 25, 1000);
   const hidden = hidesListens(u, await c.viewer());
   const rows = hidden ? [] : await repo.listens(u.id, min, max, count);
@@ -249,11 +249,11 @@ on("GET", "/user/:name/playing-now", async (c) => {
 const SERVICE = /^[a-z0-9_-]{1,20}$/;
 const service = (v: unknown) => {
   const s = String(v ?? "lastfm").toLowerCase();
-  return SERVICE.test(s) ? s : bad("Invalid service");
+  return SERVICE.test(s) ? s : bad("invalidService");
 };
 
 on("GET", "/latest-import", async (c) => {
-  const u = await named(c.q.get("user_name") ?? bad("user_name is required"));
+  const u = await named(c.q.get("user_name") ?? bad("userNameRequired"));
   return {
     musicbrainz_id: u.username,
     latest_import: await repo.latestImport(u.id, service(c.q.get("service") ?? undefined)),
@@ -264,7 +264,7 @@ on("POST", "/latest-import", async (c) => {
   const u = await authed(c);
   const b = await body(c.req);
   const ts = Number(b.ts);
-  if (!Number.isInteger(ts) || ts < 0) bad("The ts value should be a positive integer.");
+  if (!Number.isInteger(ts) || ts < 0) bad("tsValueShouldPositiveInteger");
   await repo.setLatestImport(u.id, service(b.service), ts);
   return { status: "ok" };
 });
@@ -272,14 +272,14 @@ on("POST", "/latest-import", async (c) => {
 // --- people ---
 
 on("GET", "/search/users", async (c) => {
-  const term = str(c.q.get("search_term"), 64) || bad("search_term is required");
+  const term = str(c.q.get("search_term"), 64) || bad("searchTermRequired");
   return { users: (await repo.searchUsers(term)).map((u) => ({ user_name: u.username })) };
 });
 
 on("GET", "/user/:name/services", async (c) => {
   const u = await named(c.params[0]!);
   const me = await authed(c);
-  if (me.id !== u.id) fail(403, "You can only see your own services.");
+  if (me.id !== u.id) fail(403, "onlySeeOwnServices");
   const link = await findLink(u.id);
   return { user_name: u.username, services: link && !link.broken ? ["spotify"] : [] };
 });
@@ -296,7 +296,7 @@ on("GET", "/user/:name/similar-to/:other", async (c) => {
   const other = await named(c.params[1]!);
   if (hidesStats(u, await c.viewer())) return null;
   const n = (await neighbours(u.id, 50)).find((n) => n.id === other.id);
-  if (!n) fail(404, "Similar-to user not found");
+  if (!n) fail(404, "similarUserNotFound");
   return { payload: { user_name: other.username, similarity: n!.match } };
 });
 
@@ -312,12 +312,12 @@ on("GET", "/user/:name/following", async (c) => {
 
 on("POST", "/user/:name/follow", async (c) => {
   const me = await authed(c);
-  await limit(`follow:${me.id}`, 100, 3600, "That is a lot of follows. Try again in a while.");
+  await limit(`follow:${me.id}`, 100, 3600, "lotFollowsTryAgainWhile");
   const t = await named(c.params[0]!);
-  if (t.id === me.id) bad("Whoops, cannot follow yourself.");
+  if (t.id === me.id) bad("whoopsCannotFollowYourself");
   confirmed(me);
-  if (await users.blockedEither(me.id, t.id)) fail(403, "You can't follow this user");
-  if (!(await users.follow(me.id, t.id))) bad(`${me.username} is already following user ${t.username}`);
+  if (await users.blockedEither(me.id, t.id)) fail(403, "cantFollowUser");
+  if (!(await users.follow(me.id, t.id))) bad("alreadyFollowing", { follower: me.username, followee: t.username });
   await notify(t.id, "follow", me.id);
   return { status: "ok" };
 });
@@ -352,17 +352,16 @@ async function feedback(loves: repo.Love[], withMeta: boolean) {
 const score = (q: URLSearchParams) => {
   const s = q.get("score");
   if (s === null) return null;
-  return ["1", "0", "-1"].includes(s) ? Number(s) : bad("Score can have a value of 1, 0 or -1.");
+  return ["1", "0", "-1"].includes(s) ? Number(s) : bad("invalidScore");
 };
 
 on("POST", "/feedback/recording-feedback", async (c) => {
   const u = await authed(c);
   const b = await body(c.req);
   const s = Number(b.score);
-  if (![1, 0, -1].includes(s)) bad("Score can have a value of 1, 0 or -1.");
-  if (!b.recording_msid && !b.recording_mbid)
-    bad("JSON document must contain either recording_msid or recording_mbid.");
-  const trackId = (await trackOf(b.recording_msid, b.recording_mbid)) ?? bad("Unknown recording.");
+  if (![1, 0, -1].includes(s)) bad("invalidScore");
+  if (!b.recording_msid && !b.recording_mbid) bad("missingRecordingId");
+  const trackId = (await trackOf(b.recording_msid, b.recording_mbid)) ?? bad("unknownRecording");
   await setLoved(u.id, trackId, s === 1);
   return { status: "ok" };
 });
@@ -379,7 +378,7 @@ on("GET", "/feedback/user/:name/get-feedback", async (c) => {
 
 async function forRecordings(c: Ctx, msids: unknown[], mbids: unknown[]) {
   const u = await named(c.params[0]!);
-  if (msids.length + mbids.length > 100) bad("Too many recordings: ask about at most 100.");
+  if (msids.length + mbids.length > 100) bad("tooManyRecordingsAskAbout");
   const asked: { msid: string | null; mbid: string | null; trackId: number | null }[] = [];
   for (const m of msids) asked.push({ msid: uuid(m), mbid: null, trackId: await trackOf(m, null) });
   for (const m of mbids) asked.push({ msid: null, mbid: uuid(m), trackId: await trackOf(null, m) });
@@ -465,7 +464,7 @@ function period(r: Range): { from: number; to?: number } {
 
 function rangeOf(q: URLSearchParams) {
   const range = (q.get("range") ?? "all_time") as Range;
-  if (!RANGES.includes(range)) bad(`Invalid range: ${range}`);
+  if (!RANGES.includes(range)) bad("invalidRange", { range });
   const p = period(range);
   return { range, ...p, scope: { from: p.from || undefined, to: p.to } satisfies Scope };
 }
@@ -629,8 +628,8 @@ on("GET", "/stats/user/:name/daily-activity", async (c) => {
 });
 
 async function listeners(c: Ctx, table: typeof artists | typeof albums) {
-  const mbid = uuid(c.params[0]) ?? bad("Invalid MBID");
-  const found = (await repo.byMbid(table, mbid)) ?? fail(404, "Entity not found");
+  const mbid = uuid(c.params[0]) ?? bad("invalidMbid");
+  const found = (await repo.byMbid(table, mbid)) ?? fail(404, "entityNotFound");
   const { count } = paging(c.q, 25, 100);
   const { range, from, to = now() + 1 } = rangeOf(c.q);
   const where = table === artists ? eq(scrobbles.artistId, found.id) : eq(scrobbles.albumId, found.id);

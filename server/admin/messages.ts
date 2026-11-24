@@ -32,7 +32,8 @@ async function nameOf(id: number | null): Promise<string | null> {
   return (await findById(id))?.username ?? null;
 }
 
-const threadOr404 = async (id: number): Promise<repo.Thread> => (await repo.findThread(id)) ?? missing("Conversation");
+const threadOr404 = async (id: number): Promise<repo.Thread> =>
+  (await repo.findThread(id)) ?? missing("conversationNotFound");
 
 async function pairLabel(t: { userLo: number; userHi: number }): Promise<string> {
   const lo = (await nameOf(t.userLo)) ?? "(deleted)";
@@ -122,7 +123,7 @@ router.post<Ok>("/api/admin/dm/threads/:id/open", async (c) => {
   const me = adminOnly(c);
   const t = await threadOr404(Number(c.params[0]));
   const why = note(c);
-  if (why.length < 3) bad("Say why you need to read this conversation");
+  if (why.length < 3) bad("sayWhyNeedReadConversation");
   await audit(me, {
     action: "dm.read",
     targetType: "dm_thread",
@@ -136,8 +137,8 @@ router.post<Ok>("/api/admin/dm/threads/:id/open", async (c) => {
 
 router.post<DmMessageDeleted>("/api/admin/dm/messages/:id/delete", async (c) => {
   const me = adminOnly(c);
-  const m = (await repo.findMessage(Number(c.params[0]))) ?? missing("Message");
-  if (m.deletedAt) bad("That message is already deleted");
+  const m = (await repo.findMessage(Number(c.params[0]))) ?? missing("messageNotFound");
+  if (m.deletedAt) bad("messageAlreadyDeleted");
   const label = await pairLabel(m);
   const why = note(c);
   // the text stays out of the log: moderators can read the audit log but not conversations
@@ -158,7 +159,7 @@ router.post<DmMuteResult>("/api/admin/users/:name/dm-mute", async (c) => {
   const t = await targetUser(c.params[0]!);
   const muted = c.body.muted !== false;
   if (muted) await canAct(me, t, "mute");
-  else if (t.id === me.id) bad("You can't change your own messaging");
+  else if (t.id === me.id) bad("cantChangeOwnMessaging");
   await setDmMuted(t.id, muted);
   await audit(me, {
     action: muted ? "dm.mute" : "dm.unmute",
@@ -196,8 +197,8 @@ router.get<DmFlagList>("/api/admin/dm/flags", async (c) => {
 
 router.post<Ok>("/api/admin/dm/flags/:id/resolve", async (c) => {
   const me = staff(c);
-  const f = (await repo.findFlag(Number(c.params[0]))) ?? missing("Flag");
-  if (f.resolvedAt) bad("That flag is already resolved");
+  const f = (await repo.findFlag(Number(c.params[0]))) ?? missing("flagNotFound");
+  if (f.resolvedAt) bad("flagAlreadyResolved");
   await repo.resolveFlag(f.id, me.id);
   await audit(me, {
     action: "dm.resolve",

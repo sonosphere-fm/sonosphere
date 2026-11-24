@@ -103,7 +103,7 @@ async function decideTx(
   }
   if (action !== "dismiss" && t) {
     if (action === "suspend") {
-      if (!author) return bad("The author's account no longer exists");
+      if (!author) return bad("authorsAccountNoLongerExists");
       checkCanAct(me, author, "suspend", configured);
       await tx.update(users).set({ suspended: true }).where(eq(users.id, author.id));
       await auditTx(tx, me, {
@@ -116,8 +116,8 @@ async function decideTx(
       });
     }
     if (action === "mute") {
-      if (r.targetType !== "dm" && r.targetType !== "group") bad("Muting is only for reported messages");
-      if (!author) return bad("The author's account no longer exists");
+      if (r.targetType !== "dm" && r.targetType !== "group") bad("mutingOnlyReportedMessages");
+      if (!author) return bad("authorsAccountNoLongerExists");
       checkCanAct(me, author, "mute", configured);
       await tx.update(users).set({ dmMuted: true }).where(eq(users.id, author.id));
       await auditTx(tx, me, {
@@ -129,8 +129,7 @@ async function decideTx(
         note: why || `From report #${r.id}`,
       });
     }
-    if (r.targetType === "user" && action === "remove")
-      bad("A profile can't be removed: suspend the account or dismiss the report");
+    if (r.targetType === "user" && action === "remove") bad("profileCantBeRemoved");
     const gone = await removeContentTx(tx, r.targetType, r.targetId, me.id);
     if (gone) removed.push(gone);
   }

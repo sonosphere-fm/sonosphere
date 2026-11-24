@@ -14,15 +14,15 @@ const TOKEN_LIFE = 3600;
 function callbackUrl(raw: unknown): string {
   const s = String(raw ?? "").trim();
   if (!s) return "";
-  if (s.length > 500) bad("The callback URL is too long");
+  if (s.length > 500) bad("callbackUrlTooLong");
   let u: URL;
   try {
     u = new URL(s);
   } catch {
-    return bad("The callback URL isn't a valid URL");
+    return bad("callbackUrlIsntValidUrl");
   }
   if (["javascript:", "data:", "vbscript:", "file:", "blob:", "about:"].includes(u.protocol))
-    bad("That kind of callback URL isn't allowed");
+    bad("kindCallbackUrlIsntAllowed");
   return u.href;
 }
 
@@ -33,9 +33,9 @@ router.get<Apps>("/api/apps", async (c) => {
 
 router.post<AppOk>("/api/apps", async (c) => {
   const u = confirmed(need(c));
-  const name = clean(c.body.name, 60) || bad("Give the application a name");
+  const name = clean(c.body.name, 60) || bad("giveApplicationName");
   const cb = callbackUrl(c.body.callbackUrl);
-  await throttle(`app-create:${u.id}`, 5, 86_400, "You can create up to 5 applications a day.");
+  await throttle(`app-create:${u.id}`, 5, 86_400, "tooManyAppsToday");
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "apiapp");
   await repo.createApp({
     userId: u.id,
@@ -67,26 +67,26 @@ router.post<AppOk>("/api/apps/revoke", async (c) => {
 
 router.get<AppInfo>(
   "/api/apps/lookup",
-  async (c) => (await repo.appByKey(c.q.get("api_key") ?? "")) ?? missing("Application")
+  async (c) => (await repo.appByKey(c.q.get("api_key") ?? "")) ?? missing("applicationNotFound")
 );
 
 // Desktop sign-in brings the token from auth.getToken; web sign-in brings none, so one is made here, already approved.
 router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
   const u = need(c);
   const apiKey = String(c.body.api_key ?? "");
-  const app = (await repo.appByKey(apiKey)) ?? missing("Application");
+  const app = (await repo.appByKey(apiKey)) ?? missing("applicationNotFound");
   const cb = callbackUrl(c.body.cb);
   // so a crafted link can't send the token to a site the app didn't register
   if (cb && app.callbackUrl && new URL(cb).origin !== new URL(app.callbackUrl).origin) {
-    bad("This sign-in link sends you to a site the application didn't register");
+    bad("unregisteredRedirect");
   }
   const back = cb || app.callbackUrl;
   let token = typeof c.body.token === "string" ? c.body.token : "";
   if (token) {
-    if (!(await repo.tokenIssued(token, apiKey, now() - TOKEN_LIFE))) missing("Token (it may have expired)");
+    if (!(await repo.tokenIssued(token, apiKey, now() - TOKEN_LIFE))) missing("tokenNotFound");
     await repo.approveToken(token, u.id);
   } else {
-    if (!back) bad("This application didn't say where to send you back to");
+    if (!back) bad("applicationDidntSayWhereSend");
     token = rid(16);
     await repo.createApprovedToken(token, (await repo.appIdByKey(apiKey))!, u.id);
   }
@@ -98,7 +98,7 @@ router.post<AppAuthorized>("/api/apps/authorize", async (c) => {
 // for ListenBrainz-compatible players (served at /1/); shown once, and listed with the connected applications
 router.post<ListenToken>("/api/apps/listen-token", async (c) => {
   const u = confirmed(need(c));
-  await throttle(`listen-token:${u.id}`, 10, 86_400, "You can create up to 10 tokens a day.");
+  await throttle(`listen-token:${u.id}`, 10, 86_400, "tooManyTokensToday");
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "listentoken");
   const token = crypto.randomUUID();
   await createSession(token, (await repo.appIdByKey("listenbrainz"))!, u.id);

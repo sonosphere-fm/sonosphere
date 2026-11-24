@@ -11,6 +11,7 @@ import {
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Ico } from "../icons";
+import { locale, t, tx } from "../i18n";
 import { Button, Input, useConfirm } from "../kit";
 import { useTurnstile } from "./auth";
 import { ago, api, date, invalidateAll, liveSend, mutate, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
@@ -49,14 +50,14 @@ import {
   applyDmEvent,
 } from "../dm";
 
-const clock = (at: number) => new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const clock = (at: number) => new Date(at * 1000).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 const sameDay = (a: number, b: number) => new Date(a * 1000).toDateString() === new Date(b * 1000).toDateString();
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 function dayLabel(at: number) {
   const now = Date.now() / 1000;
-  if (sameDay(at, now)) return "Today";
-  if (sameDay(at, now - 86400)) return "Yesterday";
+  if (sameDay(at, now)) return t("messages.today");
+  if (sameDay(at, now - 86400)) return t("messages.yesterday");
   return date(at);
 }
 
@@ -65,7 +66,7 @@ const setBlocked = (username: string, block: boolean) => api<BlockResult>("/bloc
 function groupName(g: DmGroup, myId: number) {
   if (g.title) return g.title;
   const others = g.members.filter((m) => m.id !== myId).map((m) => m.username);
-  return others.length ? others.join(", ") : "Just you";
+  return others.length ? others.join(", ") : t("messages.justYou");
 }
 
 type View = "inbox" | "requests" | "thread" | "new" | "group" | "new-group";
@@ -79,7 +80,7 @@ export function MessagesPage({ view }: { view: View }) {
   const list = useApi<ListReply>(requests ? REQUESTS : INBOX);
   const counts = me!.dm;
   const open = view !== "inbox" && view !== "requests";
-  useTitle(counts.unread ? `(${counts.unread}) Messages` : "Messages");
+  useTitle(counts.unread ? t("messages.titleUnread", { count: counts.unread }) : t("messages.title"));
 
   let pane;
   if (view === "thread") {
@@ -94,7 +95,7 @@ export function MessagesPage({ view }: { view: View }) {
     pane = (
       <div className="dm-blank muted">
         <Ico.Chat />
-        <p>{requests ? "Choose a request to read it." : "Choose a conversation."}</p>
+        <p>{requests ? t("messages.chooseRequest") : t("messages.chooseConversation")}</p>
       </div>
     );
   }
@@ -108,26 +109,24 @@ export function MessagesPage({ view }: { view: View }) {
   return (
     <div className="wrap page dm-page">
       <div className={`dm${open ? " dm-open" : ""}`}>
-        <aside className="dm-side" aria-label="Conversations">
+        <aside className="dm-side" aria-label={t("messages.conversations")}>
           <div className="dm-title-row">
-            <h1 className="dm-title">Messages</h1>
+            <h1 className="dm-title">{t("messages.title")}</h1>
             <Button kind="btn ghost small" href="/messages/new-group">
-              <Ico.Plus /> New group
+              <Ico.Plus /> {t("messages.newGroup")}
             </Button>
           </div>
           <nav className="tabs dm-tabs">
             <Link to="/messages" className={requests ? "" : "active"}>
-              Inbox{counts.unread > 0 && <b className="dot">{counts.unread}</b>}
+              {t("messages.inbox")}
+              {counts.unread > 0 && <b className="dot">{counts.unread}</b>}
             </Link>
             <Link to="/messages/requests" className={requests ? "active" : ""}>
-              Requests{counts.requests > 0 && <b className="dot">{counts.requests}</b>}
+              {t("messages.requests")}
+              {counts.requests > 0 && <b className="dot">{counts.requests}</b>}
             </Link>
           </nav>
-          {requests && (
-            <p className="muted small dm-hint">
-              Messages from users you don't follow appear here. Read receipts will not be sent until you accept.
-            </p>
-          )}
+          {requests && <p className="muted small dm-hint">{t("messages.requestsHint")}</p>}
           {list.error ? (
             <p className="form-error">{list.error.message}</p>
           ) : (
@@ -136,7 +135,7 @@ export function MessagesPage({ view }: { view: View }) {
                 r.kind === "thread" ? (
                   <ThreadRow
                     key={`t${r.t.id}`}
-                    t={r.t}
+                    thread={r.t}
                     requests={requests}
                     current={view === "thread" && currentId === r.t.id}
                     myId={me!.id}
@@ -151,11 +150,7 @@ export function MessagesPage({ view }: { view: View }) {
                 )
               )}
               {list.data && !rows.length && (
-                <li className="dm-none muted">
-                  {requests
-                    ? "No message requests."
-                    : "No conversations yet. You can start one from someone's profile."}
-                </li>
+                <li className="dm-none muted">{requests ? t("messages.noRequests") : t("messages.noConversations")}</li>
               )}
             </ul>
           )}
@@ -168,28 +163,40 @@ export function MessagesPage({ view }: { view: View }) {
   );
 }
 
-function ThreadRow({ t, requests, current, myId }: { t: Thread; requests: boolean; current: boolean; myId: number }) {
+function ThreadRow({
+  thread,
+  requests,
+  current,
+  myId,
+}: {
+  thread: Thread;
+  requests: boolean;
+  current: boolean;
+  myId: number;
+}) {
   let preview = "";
-  if (t.last) preview = t.last.deleted ? "Message deleted" : `${t.last.from === myId ? "You: " : ""}${t.last.body}`;
+  if (thread.last?.deleted) preview = t("messages.messageDeleted");
+  else if (thread.last)
+    preview = thread.last.from === myId ? t("messages.previewMine", { body: thread.last.body }) : thread.last.body;
   return (
     <li>
       <Link
-        to={`/messages/${t.id}${requests ? "?box=requests" : ""}`}
-        className={`dm-thread${current ? " current" : ""}${t.unread ? " unread" : ""}`}
+        to={`/messages/${thread.id}${requests ? "?box=requests" : ""}`}
+        className={`dm-thread${current ? " current" : ""}${thread.unread ? " unread" : ""}`}
       >
-        <Avatar user={t.user} size={44} plain />
+        <Avatar user={thread.user} size={44} plain />
         <span className="grow">
           <span className="dm-thread-top">
             <b>
-              <Username user={t.user} /> <UserLabels name={t.user.username} />
+              <Username user={thread.user} /> <UserLabels name={thread.user.username} />
             </b>
-            <span className="muted small nowrap">{ago(t.at)}</span>
+            <span className="muted small nowrap">{ago(thread.at)}</span>
           </span>
           <span className="dm-preview">{preview}</span>
         </span>
-        {t.unread > 0 && (
-          <b className="dot" aria-label={`${t.unread} unread`}>
-            {t.unread}
+        {thread.unread > 0 && (
+          <b className="dot" aria-label={t("messages.unread", { count: thread.unread })}>
+            {thread.unread}
           </b>
         )}
       </Link>
@@ -211,8 +218,9 @@ function GroupAvatar({ g, myId, size }: { g: DmGroup; myId: number; size: number
 function GroupRow({ g, current, myId }: { g: DmGroup; current: boolean; myId: number }) {
   let preview = "";
   if (g.last?.event) preview = g.last.body;
-  else if (g.last?.deleted) preview = "Message deleted";
-  else if (g.last) preview = `${g.last.from === myId ? "You" : g.last.name}: ${g.last.body}`;
+  else if (g.last?.deleted) preview = t("messages.messageDeleted");
+  else if (g.last?.from === myId) preview = t("messages.previewMine", { body: g.last.body });
+  else if (g.last) preview = t("messages.preview", { name: g.last.name, body: g.last.body });
   return (
     <li>
       <Link to={`/messages/g/${g.id}`} className={`dm-thread${current ? " current" : ""}${g.unread ? " unread" : ""}`}>
@@ -225,7 +233,7 @@ function GroupRow({ g, current, myId }: { g: DmGroup; current: boolean; myId: nu
           <span className="dm-preview">{preview}</span>
         </span>
         {g.unread > 0 && (
-          <b className="dot" aria-label={`${g.unread} unread`}>
+          <b className="dot" aria-label={t("messages.unread", { count: g.unread })}>
             {g.unread}
           </b>
         )}
@@ -317,17 +325,19 @@ function Composer({
           value={text}
           maxLength={max}
           placeholder={placeholder}
-          aria-label="Message"
+          aria-label={t("messages.message")}
           name="message"
           autoFocus
           onKeyDown={key}
           onChange={(e) => change(e.target.value)}
         />
-        <Button kind="btn" type="submit" aria-label="Send" disabled={!text.trim()}>
+        <Button kind="btn" type="submit" aria-label={t("messages.send")} disabled={!text.trim()}>
           <Ico.Send />
         </Button>
       </div>
-      {text.length > max - 200 && <span className="muted small">{max - text.length} characters left</span>}
+      {text.length > max - 200 && (
+        <span className="muted small">{t("messages.charsLeft", { count: max - text.length })}</span>
+      )}
     </form>
   );
 }
@@ -335,7 +345,7 @@ function Composer({
 function Head({ user, back, children }: { user: Thread["user"]; back: string; children?: ReactNode }) {
   return (
     <header className="dm-head">
-      <Link to={back} className="dm-back" aria-label="Back to conversations">
+      <Link to={back} className="dm-back" aria-label={t("messages.backToConversations")}>
         <Ico.ChevLeft />
       </Link>
       <Link to={userUrl(user.username)} className="dm-who">
@@ -352,12 +362,13 @@ function Head({ user, back, children }: { user: Thread["user"]; back: string; ch
   );
 }
 
-const MoreButton = {
-  label: "More actions for this conversation",
-  variant: "secondary",
-  className: "more-btn",
-  children: <Ico.More />,
-} as const;
+const moreButton = () =>
+  ({
+    label: t("messages.moreActions"),
+    variant: "secondary",
+    className: "more-btn",
+    children: <Ico.More />,
+  }) as const;
 
 type Paged<M> = { messages: M[]; more: boolean };
 
@@ -475,18 +486,18 @@ function Bubble({
   canReact: boolean;
   onReact: (emoji: string) => void;
 }) {
-  if (m.deleted) return <div className="dm-bubble gone">Message deleted</div>;
+  if (m.deleted) return <div className="dm-bubble gone">{t("messages.messageDeleted")}</div>;
   let action = null;
   if (!mine)
     action = (
       <Button kind="link small" type="button" onClick={onReport}>
-        Report
+        {t("messages.report")}
       </Button>
     );
   else if (unsendable)
     action = (
       <Button kind="link small" type="button" onClick={onUnsend}>
-        Unsend
+        {t("messages.unsend")}
       </Button>
     );
   return (
@@ -496,7 +507,7 @@ function Bubble({
       </button>
       <Reactions m={m} myId={myId} who={who} canReact={canReact} onReact={onReact} />
       {open && canReact && (
-        <div className="dm-picker" role="group" aria-label="React">
+        <div className="dm-picker" role="group" aria-label={t("messages.react")}>
           {DM_REACTIONS.map((e) => {
             const on = m.reactions.some((r) => r.emoji === e && r.users.includes(myId));
             return (
@@ -536,7 +547,7 @@ function Older({ more, older, loadOlder }: { more: boolean; older: boolean; load
   return (
     <div className="dm-older">
       <Button kind="link small" type="button" onClick={loadOlder}>
-        {older ? "Loading…" : "Show earlier messages"}
+        {older ? t("messages.loading") : t("messages.showEarlier")}
       </Button>
     </div>
   );
@@ -551,7 +562,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
   const [reporting, setReporting] = useState(0);
   const typingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const d = q.data;
-  const t = d?.thread;
+  const thread = d?.thread;
   const { scroller, older, loadOlder, lastId } = useMessagePane(threadPath(id), d, typing);
   const counted = (r: { counts: DmCounts }) => setMe({ ...me!, dm: r.counts });
 
@@ -566,7 +577,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
 
   useEffect(() => () => clearTimeout(typingTimer.current), []);
 
-  useMarkRead(t?.unread ?? 0, lastId, () => {
+  useMarkRead(thread?.unread ?? 0, lastId, () => {
     mutate<ThreadReply>(threadPath(id), (x) => ({ ...x, thread: { ...x.thread, unread: 0 } }));
     for (const path of [INBOX, REQUESTS]) {
       mutate<ListReply>(path, (x) => ({ ...x, items: x.items.map((i) => (i.id === id ? { ...i, unread: 0 } : i)) }));
@@ -580,12 +591,12 @@ function Conversation({ id, back }: { id: number; back: string }) {
     return (
       <div className="dm-blank muted">
         <p>{q.error.message}</p>
-        <Link to="/messages">Back to messages</Link>
+        <Link to="/messages">{t("messages.backToMessages")}</Link>
       </div>
     );
   }
-  if (!d || !t) return null;
-  const other = t.user;
+  if (!d || !thread) return null;
+  const other = thread.user;
 
   const send = async (body: string) => {
     const r = await api<DmSent>("/dm/send", { body: { thread: id, body } });
@@ -631,32 +642,30 @@ function Conversation({ id, back }: { id: number; back: string }) {
       .then((r) => applyDmEvent({ t: "dm-react", threadId: id, id: m.id, reactions: r.reactions }))
       .catch(() => {});
 
-  const canReact = t.status === "active" && d.can && !d.blocked;
-  const who = (uid: number) => (uid === me!.id ? "You" : other.username);
+  const canReact = thread.status === "active" && d.can && !d.blocked;
+  const who = (uid: number) => (uid === me!.id ? t("messages.you") : other.username);
 
   // A report is filed against one message; staff see the ones around it.
   const lastTheirs = d.messages.findLast((m) => m.from !== me!.id && !m.deleted);
   const lastMine = d.messages.findLast((m) => m.from === me!.id && !m.deleted);
 
   let footer;
-  if (t.incoming) {
+  if (thread.incoming) {
     footer = (
       <div className="dm-request">
         <p>
-          <b>
-            <Username user={other} /> wants to message you.
-          </b>{" "}
-          <span className="muted">They won't know you've seen this unless you accept. Declining is silent.</span>
+          <b>{tx("messages.wantsToMessage", { name: <Username user={other} /> })}</b>{" "}
+          <span className="muted">{t("messages.wontKnow")}</span>
         </p>
         <div className="dm-request-actions">
           <Button kind="btn" type="button" onClick={accept}>
-            Accept
+            {t("messages.accept")}
           </Button>
           <Button kind="btn ghost" type="button" onClick={decline}>
-            Decline
+            {t("messages.decline")}
           </Button>
           <Button kind="btn ghost" type="button" onClick={() => decline().then(block)}>
-            Block
+            {t("messages.block")}
           </Button>
         </div>
       </div>
@@ -665,23 +674,23 @@ function Conversation({ id, back }: { id: number; back: string }) {
     footer = <Blocked name={other.username} onUnblock={unblock} />;
   } else if (!d.can) {
     footer = <p className="dm-closed muted">{d.why}</p>;
-  } else if (t.left === 0) {
-    footer = (
-      <p className="dm-closed muted">
-        Your message request has been sent. You can write again once <Username user={other} /> replies.
-      </p>
-    );
+  } else if (thread.left === 0) {
+    footer = <p className="dm-closed muted">{tx("messages.requestSent", { name: <Username user={other} /> })}</p>;
   } else {
-    const typingPing = t.status === "active" ? { t: "typing" as const, thread: id } : undefined;
+    const typingPing = thread.status === "active" ? { t: "typing" as const, thread: id } : undefined;
     footer = (
       <>
-        {t.left != null && (
+        {thread.left != null && (
           <p className="dm-closed muted small">
-            This is a message request: <Username user={other} /> will see it under Requests. You can send {t.left} more{" "}
-            {t.left === 1 ? "message" : "messages"}, without links, until they reply.
+            {tx("messages.requestLeft", { name: <Username user={other} />, count: thread.left })}
           </p>
         )}
-        <Composer onSend={send} max={d.max} typing={typingPing} placeholder={`Message ${other.username}`} />
+        <Composer
+          onSend={send}
+          max={d.max}
+          typing={typingPing}
+          placeholder={t("messages.messageTo", { name: other.username })}
+        />
       </>
     );
   }
@@ -689,14 +698,17 @@ function Conversation({ id, back }: { id: number; back: string }) {
   return (
     <>
       <Head user={other} back={back}>
-        <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={210} button={MoreButton}>
-          <DropdownMenuItem label="View profile" href={userUrl(other.username)} />
+        <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={210} button={moreButton()}>
+          <DropdownMenuItem label={t("messages.viewProfile")} href={userUrl(other.username)} />
           {lastTheirs && (
-            <DropdownMenuItem label={`Report ${other.username}`} onClick={() => setReporting(lastTheirs.id)} />
+            <DropdownMenuItem
+              label={t("messages.reportUser", { name: other.username })}
+              onClick={() => setReporting(lastTheirs.id)}
+            />
           )}
-          <DropdownMenuItem label="Delete conversation" onClick={remove} />
+          <DropdownMenuItem label={t("messages.deleteConversation")} onClick={remove} />
           <DropdownMenuItem
-            label={d.blocked ? `Unblock ${other.username}` : `Block ${other.username}`}
+            label={t(d.blocked ? "messages.unblockUser" : "messages.blockUser", { name: other.username })}
             onClick={d.blocked ? unblock : block}
           />
         </DropdownMenu>
@@ -704,10 +716,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
       <div className="dm-scroll" ref={scroller}>
         <Older more={d.more} older={older} loadOlder={loadOlder} />
         {!d.more && (
-          <p className="dm-start muted small">
-            This is the start of your conversation with <Username user={other} />. Messages are private between the two
-            of you, but staff may review them when investigating a report or abuse.
-          </p>
+          <p className="dm-start muted small">{tx("messages.startWith", { name: <Username user={other} /> })}</p>
         )}
         <ol className="dm-msgs">
           {d.messages.map((m, i) => {
@@ -730,8 +739,8 @@ function Conversation({ id, back }: { id: number; back: string }) {
                   canReact={canReact}
                   onReact={(e) => react(m, e)}
                 />
-                {lastMine?.id === m.id && t.status === "active" && t.seen >= m.id && (
-                  <div className="dm-meta muted small">Seen</div>
+                {lastMine?.id === m.id && thread.status === "active" && thread.seen >= m.id && (
+                  <div className="dm-meta muted small">{t("messages.seen")}</div>
                 )}
               </li>
             );
@@ -739,7 +748,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
         </ol>
         {typing && (
           <p className="dm-typing muted small" role="status">
-            <Username user={other} /> is typing…
+            {tx("messages.isTyping", { name: <Username user={other} /> })}
           </p>
         )}
       </div>
@@ -757,18 +766,18 @@ function Blocked({ name, onUnblock }: { name: string; onUnblock: () => Promise<u
   };
   return (
     <p className="dm-closed muted">
-      You blocked {name}, so you can't message each other.{" "}
+      {t("messages.blockedLine", { name })}{" "}
       <Button kind="link" type="button" loading={busy} onClick={unblock}>
-        Unblock
+        {t("messages.unblock")}
       </Button>
     </p>
   );
 }
 
 function typingLine(names: string[]) {
-  if (names.length === 1) return `${names[0]} is typing…`;
-  if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
-  return "Several people are typing…";
+  if (names.length === 1) return t("messages.isTyping", { name: names[0] });
+  if (names.length === 2) return t("messages.twoTyping", { a: names[0], b: names[1] });
+  return t("messages.severalTyping");
 }
 
 function GroupConversation({ id }: { id: number }) {
@@ -822,7 +831,7 @@ function GroupConversation({ id }: { id: number }) {
     return (
       <div className="dm-blank muted">
         <p>{q.error.message}</p>
-        <Link to="/messages">Back to messages</Link>
+        <Link to="/messages">{t("messages.backToMessages")}</Link>
       </div>
     );
   }
@@ -846,14 +855,14 @@ function GroupConversation({ id }: { id: number }) {
       .catch(() => {});
 
   const who = (uid: number) => {
-    if (uid === myId) return "You";
-    return g.members.find((u) => u.id === uid)?.username ?? "Someone who left";
+    if (uid === myId) return t("messages.you");
+    return g.members.find((u) => u.id === uid)?.username ?? t("messages.someoneWhoLeft");
   };
 
   return (
     <>
       <header className="dm-head">
-        <Link to="/messages" className="dm-back" aria-label="Back to conversations">
+        <Link to="/messages" className="dm-back" aria-label={t("messages.backToConversations")}>
           <Ico.ChevLeft />
         </Link>
         <button type="button" className="dm-who dm-who-group" onClick={() => setInfo(!info)} aria-expanded={info}>
@@ -862,11 +871,14 @@ function GroupConversation({ id }: { id: number }) {
             <b>
               <Username name={name} />
             </b>
-            <span className="muted small">{g.members.length} people</span>
+            <span className="muted small">{t("messages.people", { count: g.members.length })}</span>
           </span>
         </button>
-        <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={210} button={MoreButton}>
-          <DropdownMenuItem label={info ? "Back to messages" : "Group details"} onClick={() => setInfo(!info)} />
+        <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={210} button={moreButton()}>
+          <DropdownMenuItem
+            label={info ? t("messages.backToMessages") : t("messages.groupDetails")}
+            onClick={() => setInfo(!info)}
+          />
         </DropdownMenu>
       </header>
       {info ? (
@@ -878,8 +890,7 @@ function GroupConversation({ id }: { id: number }) {
           <Older more={d.more} older={older} loadOlder={loadOlder} />
           {!d.more && (
             <p className="dm-start muted small">
-              This is the start of {g.title ? `"${g.title}"` : "this group"}. Messages are seen by everyone in the
-              group, but staff may review them when investigating a report or abuse.
+              {g.title ? t("messages.startOfGroup", { title: g.title }) : t("messages.startOfThisGroup")}
             </p>
           )}
           <ol className="dm-msgs">
@@ -929,7 +940,12 @@ function GroupConversation({ id }: { id: number }) {
       )}
       {!info &&
         (d.can ? (
-          <Composer onSend={send} max={d.max} typing={{ t: "typing", group: id }} placeholder={`Message ${name}`} />
+          <Composer
+            onSend={send}
+            max={d.max}
+            typing={{ t: "typing", group: id }}
+            placeholder={t("messages.messageTo", { name })}
+          />
         ) : (
           <p className="dm-closed muted">{d.why}</p>
         ))}
@@ -955,9 +971,9 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
   };
   const makeOwner = (u: DmUser) =>
     confirm.ask({
-      title: "Change owner",
-      body: `${u.username} will be able to rename the group and add or remove people. You won't be able to anymore.`,
-      action: "Make owner",
+      title: t("messages.changeOwner"),
+      body: t("messages.changeOwnerBody", { name: u.username }),
+      action: t("messages.makeOwner"),
       run: async () => apply(await api<DmGroupSent>(`${path}/owner`, { body: { user: u.id } })),
     });
   const remove = (u: DmUser) =>
@@ -966,12 +982,9 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
     });
   const leave = () =>
     confirm.ask({
-      title: "Leave group",
-      body:
-        owner && g.members.length > 1
-          ? "You won't see new messages unless someone adds you back. The person who has been in the group longest becomes the owner."
-          : "You won't see new messages unless someone adds you back.",
-      action: "Leave",
+      title: t("messages.leaveGroup"),
+      body: owner && g.members.length > 1 ? t("messages.leaveBodyOwner") : t("messages.leaveBody"),
+      action: t("messages.leave"),
       danger: true,
       run: async () => {
         const r = await api<DmDone>(`${path}/leave`, { body: {} });
@@ -984,9 +997,9 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
   return (
     <div className="dm-info">
       <div className="dm-info-head">
-        <h2>Group details</h2>
+        <h2>{t("messages.groupDetails")}</h2>
         <Button kind="link small" type="button" onClick={onDone}>
-          Done
+          {t("messages.done")}
         </Button>
       </div>
       {owner && (
@@ -994,33 +1007,31 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Group name"
-            aria-label="Group name"
+            placeholder={t("messages.groupName")}
+            aria-label={t("messages.groupName")}
           />
           <Button kind="btn small" disabled={title.trim() === g.title}>
-            Save
+            {t("messages.save")}
           </Button>
         </form>
       )}
-      <h3>
-        {g.members.length} of {d.size} people
-      </h3>
+      <h3>{t("messages.membersOf", { count: g.members.length, size: d.size })}</h3>
       <ul className="dm-members">
         {g.members.map((u) => (
           <li key={u.id}>
             <Avatar user={u} size={32} />
             <Link to={userUrl(u.username)} className="grow">
               <Username user={u} /> <UserLabels name={u.username} />
-              {u.id === me!.id && <span className="muted"> (you)</span>}
+              {u.id === me!.id && <span className="muted"> {t("messages.youSuffix")}</span>}
             </Link>
-            {u.id === g.owner && <span className="badge off">Owner</span>}
+            {u.id === g.owner && <span className="badge off">{t("messages.owner")}</span>}
             {owner && u.id !== me!.id && (
               <span className="dm-member-actions">
                 <Button kind="link small" type="button" onClick={() => makeOwner(u)}>
-                  Make owner
+                  {t("messages.makeOwner")}
                 </Button>
                 <Button kind="link small" type="button" onClick={() => remove(u)}>
-                  Remove
+                  {t("messages.remove")}
                 </Button>
               </span>
             )}
@@ -1030,7 +1041,7 @@ function GroupInfo({ d, onDone }: { d: DmGroupPage; onDone: () => void }) {
       {owner && g.members.length < d.size && <AddPeople groupId={g.id} onAdd={apply} />}
       {act.note}
       <Button kind="btn ghost" type="button" onClick={leave}>
-        Leave group
+        {t("messages.leaveGroup")}
       </Button>
       {confirm.dialog}
     </div>
@@ -1048,12 +1059,8 @@ function AddPeople({ groupId, onAdd }: { groupId: number; onAdd: (r: DmGroupSent
   const users = q.data?.users ?? [];
   return (
     <>
-      <h3>Add people</h3>
-      {q.data && !users.length && (
-        <p className="muted small">
-          You can add people you already have a conversation with. There's no one else to add right now.
-        </p>
-      )}
+      <h3>{t("messages.addPeople")}</h3>
+      {q.data && !users.length && <p className="muted small">{t("messages.addPeopleNone")}</p>}
       <ul className="dm-members">
         {users.map((u) => (
           <li key={u.id}>
@@ -1062,7 +1069,7 @@ function AddPeople({ groupId, onAdd }: { groupId: number; onAdd: (r: DmGroupSent
               <Username user={u} /> <UserLabels name={u.username} />
             </span>
             <Button kind="link small" type="button" onClick={() => add(u)}>
-              Add
+              {t("messages.add")}
             </Button>
           </li>
         ))}
@@ -1084,7 +1091,7 @@ function NewGroup() {
     return (
       <div className="dm-blank muted">
         <p>{q.error.message}</p>
-        <Link to="/messages">Back to messages</Link>
+        <Link to="/messages">{t("messages.backToMessages")}</Link>
       </div>
     );
   }
@@ -1115,38 +1122,33 @@ function NewGroup() {
   return (
     <>
       <header className="dm-head">
-        <Link to="/messages" className="dm-back" aria-label="Back to conversations">
+        <Link to="/messages" className="dm-back" aria-label={t("messages.backToConversations")}>
           <Ico.ChevLeft />
         </Link>
         <span className="dm-who">
-          <b>New group</b>
+          <b>{t("messages.newGroup")}</b>
         </span>
       </header>
       <form className="dm-scroll dm-info" onSubmit={create}>
-        <p className="muted small">
-          You can add people you already have a conversation with, up to {d.size} people including you. You'll be the
-          group's owner.
-        </p>
+        <p className="muted small">{t("messages.newGroupIntro", { count: d.size })}</p>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Group name (optional)"
-          aria-label="Group name"
+          placeholder={t("messages.groupNameOptional")}
+          aria-label={t("messages.groupName")}
         />
-        <h3>People</h3>
-        {!d.users.length && (
-          <p className="muted small">There's no one you can add yet. Start a conversation with someone first.</p>
-        )}
+        <h3>{t("messages.peopleHeading")}</h3>
+        {!d.users.length && <p className="muted small">{t("messages.noOneToAdd")}</p>}
         {d.users.length > 8 && (
           <Input
             type="search"
             value={find}
             onChange={(e) => setFind(e.target.value)}
-            placeholder="Search people"
-            aria-label="Search people"
+            placeholder={t("messages.searchPeople")}
+            aria-label={t("messages.searchPeople")}
           />
         )}
-        {needle && !shown.length && <p className="muted small">No one matches "{find.trim()}".</p>}
+        {needle && !shown.length && <p className="muted small">{t("messages.noMatch", { query: find.trim() })}</p>}
         <ul className="dm-members">
           {shown.map((u) => {
             const on = picked.includes(u.id);
@@ -1155,7 +1157,7 @@ function NewGroup() {
                 <label className="check dm-pick">
                   <Input
                     type="checkbox"
-                    aria-label={`Add ${u.username}`}
+                    aria-label={t("messages.addUser", { name: u.username })}
                     checked={on}
                     disabled={!on && room <= 0}
                     onChange={(e) => toggle(u.id, e.target.checked)}
@@ -1171,7 +1173,7 @@ function NewGroup() {
         </ul>
         {act.note}
         <Button kind="btn" loading={act.busy} disabled={picked.length < 2}>
-          Start group
+          {t("messages.startGroup")}
         </Button>
       </form>
     </>
@@ -1187,7 +1189,7 @@ function NewConversation({ name }: { name: string }) {
     return (
       <div className="dm-blank muted">
         <p>{q.error.message}</p>
-        <Link to="/messages">Back to messages</Link>
+        <Link to="/messages">{t("messages.backToMessages")}</Link>
       </div>
     );
   }
@@ -1211,9 +1213,7 @@ function NewConversation({ name }: { name: string }) {
 
   let intro: string = d.why;
   if (d.can) {
-    intro = d.request
-      ? `${username} doesn't follow you, so your message will arrive as a request. You can send up to 3 messages, without links, until they reply.`
-      : `Say hello to ${username}.`;
+    intro = d.request ? t("messages.requestIntro", { name: username }) : t("messages.sayHello", { name: username });
   }
 
   return (
@@ -1225,7 +1225,7 @@ function NewConversation({ name }: { name: string }) {
         (d.human ? (
           <HumanComposer onSend={send} name={username} />
         ) : (
-          <Composer onSend={send} max={2000} placeholder={`Message ${username}`} />
+          <Composer onSend={send} max={2000} placeholder={t("messages.messageTo", { name: username })} />
         ))}
     </>
   );
@@ -1241,7 +1241,7 @@ function HumanComposer({
 }) {
   const robot = useTurnstile("dm");
   const send = async (body: string) => {
-    if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot first.");
+    if (robot.on && !robot.token) throw new Error(t("messages.robotFirst"));
     try {
       await onSend(body, robot.token || undefined);
     } catch (e) {
@@ -1250,6 +1250,6 @@ function HumanComposer({
     }
   };
   const above = robot.view && <div className="dm-human">{robot.view}</div>;
-  return <Composer onSend={send} max={2000} placeholder={`Message ${name}`} above={above} />;
+  return <Composer onSend={send} max={2000} placeholder={t("messages.messageTo", { name })} above={above} />;
 }
 import { Username } from "../ui/username";

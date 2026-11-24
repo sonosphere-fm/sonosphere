@@ -91,7 +91,7 @@ router.post<MeResponse>("/api/admin/users/:name/impersonate", async (c) => {
   const actor = adminOnly(c);
   const target = await targetUser(c.params[0]!);
   await canAct(actor, target, "impersonate");
-  if (target.banned) bad("You can't act as a banned account");
+  if (target.banned) bad("cantActBannedAccount");
   const user = await me(target, actor);
   await audit(actor, userAction("user.impersonate", target, note(c)));
   c.headers.append("Set-Cookie", actAsCookie(target.id));
@@ -186,7 +186,7 @@ router.post<SuspendResult>("/api/admin/users/:name/suspend", async (c) => {
   const t = await targetUser(c.params[0]!);
   const suspended = c.body.suspended !== false;
   if (suspended) await canAct(me, t, "suspend");
-  else if (t.id === me.id) bad("You can't change your own suspension");
+  else if (t.id === me.id) bad("cantChangeOwnSuspension");
   await repo.setSuspended(t.id, suspended);
   await audit(me, userAction(suspended ? "user.suspend" : "user.unsuspend", t, note(c)));
   return { suspended };
@@ -197,7 +197,7 @@ router.post<BanResult>("/api/admin/users/:name/ban", async (c) => {
   const t = await targetUser(c.params[0]!);
   const banned = c.body.banned !== false;
   if (banned) await canAct(me, t, "ban");
-  else if (t.id === me.id) bad("You can't change your own ban");
+  else if (t.id === me.id) bad("cantChangeOwnBan");
   await repo.setBanned(me, t.id, banned, note(c), userAction(banned ? "user.ban" : "user.unban", t, note(c)));
   // live sockets close now, not at the next session sweep
   if (banned) disconnect(t.id);
@@ -208,7 +208,7 @@ router.post<ProbationResult>("/api/admin/users/:name/probation", async (c) => {
   const me = staff(c);
   const t = await targetUser(c.params[0]!);
   const probation = c.body.probation !== false;
-  if (isStaff(t)) bad("Staff are never on probation");
+  if (isStaff(t)) bad("staffNeverProbation");
   await setProbation(t, probation, me);
   await audit(me, userAction(probation ? "user.probation" : "user.release", t, note(c)));
   return { probation };
@@ -217,12 +217,12 @@ router.post<ProbationResult>("/api/admin/users/:name/probation", async (c) => {
 router.post<RoleResult>("/api/admin/users/:name/role", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
-  const role = oneOf(String(c.body.role), ROLES) ?? bad("Unknown role");
+  const role = oneOf(String(c.body.role), ROLES) ?? bad("unknownRole");
   await canAct(me, t, "role");
-  if (t.banned) bad("Lift the ban before giving this account a role");
+  if (t.banned) bad("liftBanBeforeGivingAccount");
   const was = roleOf(t);
   if (was === role) return { role };
-  if (was === "admin" && (await adminCount()) <= 1) bad("That's the last admin; promote someone else first");
+  if (was === "admin" && (await adminCount()) <= 1) bad("thatsLastAdminPromoteSomeone");
   await setRole(t.id, role);
   await audit(me, userAction("user.role", t, note(c), { from: was, to: role }));
   return { role };
@@ -232,7 +232,7 @@ router.post<VerifyResult>("/api/admin/users/:name/verify", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   if (t.emailVerifiedAt) return { verifiedAt: t.emailVerifiedAt };
-  if (placeholder(t)) bad("This account has a placeholder address from an import; it can't be confirmed");
+  if (placeholder(t)) bad("placeholderAddressCantConfirm");
   const at = now();
   await repo.setVerified(t.id, at);
   await audit(me, userAction("user.verify", t, note(c)));
@@ -253,7 +253,7 @@ router.post<Ok>("/api/admin/users/:name/delete", async (c) => {
   const me = adminOnly(c);
   const t = await targetUser(c.params[0]!);
   await canAct(me, t, "delete");
-  if (String(c.body.confirm ?? "") !== t.username) bad(`Type ${t.username} exactly to confirm`);
+  if (String(c.body.confirm ?? "") !== t.username) bad("typeUsernameToConfirm", { username: t.username });
   const stats = await repo.contentCounts(t.id);
   await repo.deleteAccount(me, t, userAction("user.delete", t, note(c), stats));
   disconnect(t.id);
@@ -266,7 +266,7 @@ router.post<NoteAdded>("/api/admin/users/:name/notes", async (c) => {
   const body = String(c.body.body ?? "")
     .trim()
     .slice(0, 2000);
-  if (!body) bad("Write a note first");
+  if (!body) bad("writeNoteFirst");
   const id = await repo.addNote(t.id, me.id, body);
   await audit(me, userAction("note.add", t, body.slice(0, 200)));
   return { id };
@@ -274,8 +274,8 @@ router.post<NoteAdded>("/api/admin/users/:name/notes", async (c) => {
 
 router.delete<Ok>("/api/admin/notes/:id", async (c) => {
   const me = staff(c);
-  const n = (await repo.findNote(Number(c.params[0]))) ?? missing("Note");
-  if (n.authorId !== me.id && !isAdmin(me)) fail(403, "Only the note's author or an admin can delete it");
+  const n = (await repo.findNote(Number(c.params[0]))) ?? missing("noteNotFound");
+  if (n.authorId !== me.id && !isAdmin(me)) fail(403, "onlyNotesAuthorAdminDelete");
   await repo.deleteNote(n.id);
   await audit(me, userAction("note.delete", { id: n.userId, username: n.username }, n.body.slice(0, 200)));
   return { ok: true };

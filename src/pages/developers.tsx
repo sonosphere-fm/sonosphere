@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
+import { type MessageKey, t, tx } from "../i18n";
 import { Arrow } from "../icons";
 import { TITLES, useTitle } from "../lib";
 
-const METHODS: [string, string[]][] = [
-  ["Auth", ["auth.getToken", "auth.getSession", "auth.getMobileSession"]],
+const METHODS: [MessageKey, string[]][] = [
+  ["dev.groupAuth", ["auth.getToken", "auth.getSession", "auth.getMobileSession"]],
   [
-    "Track",
+    "dev.groupTrack",
     [
       "track.scrobble",
       "track.updateNowPlaying",
@@ -20,7 +21,7 @@ const METHODS: [string, string[]][] = [
     ],
   ],
   [
-    "Artist",
+    "dev.groupArtist",
     [
       "artist.getInfo",
       "artist.getTopTracks",
@@ -32,9 +33,9 @@ const METHODS: [string, string[]][] = [
       "artist.removeTag",
     ],
   ],
-  ["Album", ["album.getInfo", "album.getTopTags", "album.search", "album.addTags", "album.removeTag"]],
+  ["dev.groupAlbum", ["album.getInfo", "album.getTopTags", "album.search", "album.addTags", "album.removeTag"]],
   [
-    "User",
+    "dev.groupUser",
     [
       "user.getInfo",
       "user.getRecentTracks",
@@ -46,13 +47,13 @@ const METHODS: [string, string[]][] = [
       "user.getTopTags",
     ],
   ],
-  ["Tag", ["tag.getInfo", "tag.getTopArtists", "tag.getTopTracks", "tag.getTopAlbums"]],
-  ["Chart", ["chart.getTopArtists", "chart.getTopTracks", "chart.getTopTags"]],
+  ["dev.groupTag", ["tag.getInfo", "tag.getTopArtists", "tag.getTopTracks", "tag.getTopAlbums"]],
+  ["dev.groupChart", ["chart.getTopArtists", "chart.getTopTracks", "chart.getTopTags"]],
 ];
-const LB_ENDPOINTS: [string, string[]][] = [
-  ["Auth", ["GET validate-token"]],
+const LB_ENDPOINTS: [MessageKey, string[]][] = [
+  ["dev.groupAuth", ["GET validate-token"]],
   [
-    "Listens",
+    "dev.groupListens",
     [
       "POST submit-listens",
       "POST delete-listen",
@@ -63,7 +64,7 @@ const LB_ENDPOINTS: [string, string[]][] = [
     ],
   ],
   [
-    "Feedback",
+    "dev.groupFeedback",
     [
       "POST feedback/recording-feedback",
       "GET feedback/user/{user}/get-feedback",
@@ -73,7 +74,7 @@ const LB_ENDPOINTS: [string, string[]][] = [
     ],
   ],
   [
-    "Social",
+    "dev.groupSocial",
     [
       "GET user/{user}/followers",
       "GET user/{user}/following",
@@ -86,70 +87,80 @@ const LB_ENDPOINTS: [string, string[]][] = [
     ],
   ],
   [
-    "User stats (GET stats/user/{user}/…)",
+    "dev.groupUserStats",
     ["artists", "releases", "release-groups", "recordings", "listening-activity", "daily-activity"],
   ],
-  ["Site stats (GET stats/sitewide/…)", ["artists", "releases", "release-groups", "recordings"]],
-  ["Listeners", ["GET stats/artist/{mbid}/listeners", "GET stats/release-group/{mbid}/listeners"]],
+  ["dev.groupSiteStats", ["artists", "releases", "release-groups", "recordings"]],
+  ["dev.groupListeners", ["GET stats/artist/{mbid}/listeners", "GET stats/release-group/{mbid}/listeners"]],
 ];
+
+export function ApplicationsLink() {
+  return (
+    <Link to="/settings/applications">
+      {t("common.settings")}
+      <Arrow say=", " />
+      {t("dev.applications")}
+    </Link>
+  );
+}
 
 export function Developers() {
   const origin = window.location.origin;
   useTitle(TITLES.developers);
   return (
     <div className="wrap page docs-page">
-      <h1 className="page-title">Sonosphere API</h1>
+      <h1 className="page-title">{t("dev.apiHeading")}</h1>
       <div className="cols">
         <div className="main prose docs">
-          <p>
-            The API follows the Last.fm 2.0 protocol, so most scrobbler code works by changing the root URL. Just want
-            to scrobble from a player? See the <Link to="/help">scrobbling help</Link>.
-          </p>
-          <h2>Basics</h2>
+          <p>{tx("dev.apiIntro", { help: <Link to="/help">{t("dev.apiHelpLink")}</Link> })}</p>
+          <h2>{t("dev.basics")}</h2>
           <ul>
             <li>
-              <b>Root URL:</b> <code>{origin}/2.0/</code>
+              <b>{t("dev.rootUrl")}</b> <code>{origin}/2.0/</code>
             </li>
-            <li>
-              Send <code>method</code>, <code>api_key</code> and parameters as a query string (reads) or form-encoded
-              POST (writes).
-            </li>
-            <li>
-              Add <code>format=json</code> for JSON. XML is the default.
-            </li>
-            <li>
-              Get a key and shared secret under{" "}
-              <Link to="/settings/applications">
-                Settings
-                <Arrow say=", " />
-                Applications
-              </Link>
-              .
-            </li>
+            <li>{tx("dev.basicsSend", { method: <code>method</code>, apiKey: <code>api_key</code> })}</li>
+            <li>{tx("dev.basicsFormat", { format: <code>format=json</code> })}</li>
+            <li>{tx("dev.basicsKey", { applications: <ApplicationsLink /> })}</li>
           </ul>
-          <h2>Authentication</h2>
+          <h2>{t("dev.authentication")}</h2>
           <ul>
             <li>
-              <b>Web:</b> send the user to <code>/api/auth?api_key=KEY&amp;cb=URL</code>. They return with{" "}
-              <code>?token=TOKEN</code>; exchange it with <code>auth.getSession</code> within an hour. Without{" "}
-              <code>cb</code>, your saved callback is used, and a given <code>cb</code> must be on the same site.
+              {tx("dev.authWeb", {
+                label: <b>{t("dev.authWebLabel")}</b>,
+                url: <code>/api/auth?api_key=KEY&amp;cb=URL</code>,
+                token: <code>?token=TOKEN</code>,
+                getSession: <code>auth.getSession</code>,
+                cb: <code>cb</code>,
+              })}
             </li>
             <li>
-              <b>Desktop:</b> call <code>auth.getToken</code>, send the user to{" "}
-              <code>/api/auth?api_key=KEY&amp;token=TOKEN</code>, then call <code>auth.getSession</code>.
+              {tx("dev.authDesktop", {
+                label: <b>{t("dev.authDesktopLabel")}</b>,
+                getToken: <code>auth.getToken</code>,
+                url: <code>/api/auth?api_key=KEY&amp;token=TOKEN</code>,
+                getSession: <code>auth.getSession</code>,
+              })}
             </li>
             <li>
-              <b>Scripts:</b> POST <code>auth.getMobileSession</code> with <code>username</code> and{" "}
-              <code>password</code>.
+              {tx("dev.authScripts", {
+                label: <b>{t("dev.authScriptsLabel")}</b>,
+                getMobileSession: <code>auth.getMobileSession</code>,
+                username: <code>username</code>,
+                password: <code>password</code>,
+              })}
             </li>
           </ul>
-          <p>Session keys don't expire. All three calls are signed.</p>
-          <h2>Signing</h2>
+          <p>{t("dev.sessionKeys")}</p>
+          <h2>{t("dev.signing")}</h2>
           <p>
-            Sort all parameters except <code>format</code> and <code>callback</code> by name, join them as{" "}
-            <code>name + value</code>, append your secret, and send the MD5 hex digest as <code>api_sig</code>.
+            {tx("dev.signingBody", {
+              format: <code>format</code>,
+              callback: <code>callback</code>,
+              pair: <code>name + value</code>,
+              apiSig: <code>api_sig</code>,
+            })}
           </p>
-          <h2>Examples</h2>
+          <h2>{t("dev.examples")}</h2>
           <pre>{`# scrobble (macOS: md5 -q)
 KEY=your_api_key; SECRET=your_shared_secret; SK=session_key; TS=$(date +%s)
 SIG=$(printf 'api_key%sartistGlass Harbormethodtrack.scrobblesk%stimestamp%strackWhen the Echoes Come%s' \\
@@ -159,46 +170,41 @@ curl -X POST ${origin}/2.0/ -d method=track.scrobble -d api_key=$KEY -d sk=$SK -
 
 # read
 curl "${origin}/2.0/?method=user.getRecentTracks&user=USERNAME&api_key=KEY&format=json"`}</pre>
-          <p>
-            Batch scrobbles use indexed parameters (<code>artist[0]</code>, <code>track[0]</code>, …), up to 50 per
-            call.
-          </p>
-          <h2>Errors</h2>
-          <p>
-            Failures return <code>{`{"error": code, "message": "…"}`}</code>: 3 invalid method, 4 auth failed, 6 invalid
-            parameters, 9 invalid session, 10 invalid API key, 13 invalid signature, 14 unauthorised token.
-          </p>
-          <h2 id="listenbrainz">ListenBrainz API</h2>
-          <p>
-            The ListenBrainz API is served at <code>{origin}/1/</code> with the same paths, request bodies and
-            responses, so ListenBrainz clients and libraries work by changing the root URL to <code>{origin}</code>.
-          </p>
+          <p>{tx("dev.batch", { artist: <code>artist[0]</code>, track: <code>track[0]</code> })}</p>
+          <h2>{t("dev.errors")}</h2>
+          <p>{tx("dev.errorsBody", { shape: <code>{`{"error": code, "message": "…"}`}</code> })}</p>
+          <h2 id="listenbrainz">{t("dev.lbHeading")}</h2>
+          <p>{tx("dev.lbIntro", { root: <code>{origin}/1/</code>, origin: <code>{origin}</code> })}</p>
           <ul>
             <li>
-              <b>Tokens:</b> users create one under{" "}
-              <Link to="/settings/applications">
-                Settings
-                <Arrow say=", " />
-                Applications
-              </Link>
-              . Send it as <code>Authorization: Token TOKEN</code>. Reads don't need one, except to see your own private
-              listening.
+              {tx("dev.lbTokens", {
+                label: <b>{t("dev.lbTokensLabel")}</b>,
+                applications: <ApplicationsLink />,
+                header: <code>Authorization: Token TOKEN</code>,
+              })}
             </li>
             <li>
-              <b>Errors:</b> <code>{`{"code": 400, "error": "…"}`}</code> with the matching HTTP status. Stats with
-              nothing to show return 204.
+              {tx("dev.lbErrors", {
+                label: <b>{t("dev.lbErrorsLabel")}</b>,
+                shape: <code>{`{"code": 400, "error": "…"}`}</code>,
+              })}
             </li>
             <li>
-              <b>Rate limit:</b> 100 requests per 10 seconds per address, reported in the <code>X-RateLimit-*</code>{" "}
-              headers.
+              {tx("dev.lbRateLimit", { label: <b>{t("dev.lbRateLimitLabel")}</b>, header: <code>X-RateLimit-*</code> })}
             </li>
             <li>
-              <b>Recording IDs:</b> <code>recording_msid</code> values are Sonosphere's own and only mean something
-              here. A <code>recording_mbid</code> is known once a client has sent it with a listen.
+              {tx("dev.lbRecordingIds", {
+                label: <b>{t("dev.lbRecordingIdsLabel")}</b>,
+                msid: <code>recording_msid</code>,
+                mbid: <code>recording_mbid</code>,
+              })}
             </li>
             <li>
-              <b>Stats</b> are live and use UTC. All ranges are supported, from <code>this_week</code> to{" "}
-              <code>all_time</code>.
+              {tx("dev.lbStats", {
+                label: <b>{t("dev.lbStatsLabel")}</b>,
+                from: <code>this_week</code>,
+                to: <code>all_time</code>,
+              })}
             </li>
           </ul>
           <pre>{`# submit a listen
@@ -209,11 +215,11 @@ curl -X POST ${origin}/1/submit-listens \\
 
 # read
 curl "${origin}/1/user/USERNAME/listens?count=10"`}</pre>
-          <p>Supported endpoints:</p>
+          <p>{t("dev.lbSupported")}</p>
           <ul>
             {LB_ENDPOINTS.map(([group, list]) => (
               <li key={group}>
-                <b>{group}:</b>{" "}
+                <b>{t("dev.groupLabel", { group: t(group) })}</b>{" "}
                 {list.map((e, i) => (
                   <span key={e}>
                     {i > 0 && ", "}
@@ -223,22 +229,13 @@ curl "${origin}/1/user/USERNAME/listens?count=10"`}</pre>
               </li>
             ))}
           </ul>
-          <p>Playlists, recommendations, radio, metadata lookups and data dumps aren't available.</p>
-          <h2 id="public-now-playing">Public now-playing API</h2>
-          <p>
-            Show a listener's current song on a website. No key, signature or login, and cross-origin requests are
-            allowed.
-          </p>
+          <p>{t("dev.lbUnavailable")}</p>
+          <h2 id="public-now-playing">{t("dev.npHeading")}</h2>
+          <p>{t("dev.npIntro")}</p>
           <ul>
-            <li>
-              <code>GET /api/user/nowplaying?name=USERNAME</code>: one JSON snapshot
-            </li>
-            <li>
-              <code>GET /api/user/nowplaying/stream?name=USERNAME</code>: Server-Sent Events
-            </li>
-            <li>
-              <code>/api/user/nowplaying/ws?name=USERNAME</code>: WebSocket
-            </li>
+            <li>{tx("dev.npSnapshot", { endpoint: <code>GET /api/user/nowplaying?name=USERNAME</code> })}</li>
+            <li>{tx("dev.npSse", { endpoint: <code>GET /api/user/nowplaying/stream?name=USERNAME</code> })}</li>
+            <li>{tx("dev.npWs", { endpoint: <code>/api/user/nowplaying/ws?name=USERNAME</code> })}</li>
           </ul>
           <pre>
             {JSON.stringify(
@@ -261,27 +258,19 @@ curl "${origin}/1/user/USERNAME/listens?count=10"`}</pre>
           </pre>
           <ul>
             <li>
-              <code>nowPlaying</code> is <code>null</code> when nothing is playing. <code>album</code> and{" "}
-              <code>imageUrl</code> can be <code>null</code>.
+              {tx("dev.npNull", {
+                nowPlaying: <code>nowPlaying</code>,
+                null: <code>null</code>,
+                album: <code>album</code>,
+                imageUrl: <code>imageUrl</code>,
+              })}
             </li>
-            <li>
-              <code>duration</code> is in seconds (0 if unknown). <code>startedAt</code> is the Unix time of the latest
-              update, not a playback position.
-            </li>
-            <li>
-              Streams send the current state on connect, then a snapshot on every change. Past events aren't replayed.
-            </li>
-            <li>
-              If listening turns private or the account goes away, streams send <code>unavailable</code> and close.
-              Don't reconnect after that.
-            </li>
-            <li>
-              WebSockets send <code>{`{"t":"ping"}`}</code> every 15 seconds; no reply needed.
-            </li>
-            <li>
-              Errors: 400 bad name, 403 private, 404 unknown user, 429 rate limited (with <code>Retry-After</code>).
-            </li>
-            <li>Spotify listening is checked about once a minute, so changes can take that long to appear.</li>
+            <li>{tx("dev.npDuration", { duration: <code>duration</code>, startedAt: <code>startedAt</code> })}</li>
+            <li>{t("dev.npStreams")}</li>
+            <li>{tx("dev.npUnavailable", { unavailable: <code>unavailable</code> })}</li>
+            <li>{tx("dev.npPing", { ping: <code>{`{"t":"ping"}`}</code> })}</li>
+            <li>{tx("dev.npErrors", { retryAfter: <code>Retry-After</code> })}</li>
+            <li>{t("dev.npSpotify")}</li>
           </ul>
           <pre>{`const url = new URL("${origin}/api/user/nowplaying/stream");
 url.searchParams.set("name", "USERNAME");
@@ -293,19 +282,19 @@ stream.addEventListener("nowplaying", e => {
 stream.addEventListener("unavailable", () => stream.close());`}</pre>
         </div>
         <aside className="side">
-          <h3>Other APIs</h3>
+          <h3>{t("dev.otherApis")}</h3>
           <ul className="plain">
             <li>
-              <a href="#listenbrainz">ListenBrainz-compatible API</a>
+              <a href="#listenbrainz">{t("dev.otherApisLb")}</a>
             </li>
             <li>
-              <a href="#public-now-playing">Now-playing snapshots, SSE and WebSockets</a>
+              <a href="#public-now-playing">{t("dev.otherApisNp")}</a>
             </li>
           </ul>
-          <h3>Methods</h3>
+          <h3>{t("dev.methods")}</h3>
           {METHODS.map(([group, list]) => (
             <div key={group} className="methods">
-              <h4>{group}</h4>
+              <h4>{t(group)}</h4>
               <ul className="plain">
                 {list.map((m) => (
                   <li key={m}>

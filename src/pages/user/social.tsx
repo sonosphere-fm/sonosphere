@@ -3,17 +3,12 @@ import { useState, type CSSProperties, type FormEvent, type ReactNode } from "re
 import { Username } from "../../ui/username";
 import { Button, Input } from "../../kit";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ago, albumUrl, api, artistUrl, date, plural, qs, tagUrl, trackUrl, useApi, useParam } from "../../lib";
+import { ago, albumUrl, api, artistUrl, date, qs, tagUrl, trackUrl, useApi, useParam } from "../../lib";
+import { t, tx } from "../../i18n";
 import { Art, Async, Empty, Pager, Section, useAction } from "../../ui/base";
 import { TrackList, UserList } from "../../ui/lists";
 import type { ObsessionRemoved, Obsessions as ObsessionList } from "../../../shared/obsessions";
-import {
-  type PlaylistCreated,
-  TEMPLATE_IDS,
-  TEMPLATES,
-  type TemplateId,
-  type UserPlaylists,
-} from "../../../shared/playlists";
+import { type PlaylistCreated, TEMPLATE_IDS, type TemplateId, type UserPlaylists } from "../../../shared/playlists";
 import type { TagCount } from "../../../shared/tags";
 import type {
   Neighbours as NeighbourList,
@@ -33,12 +28,12 @@ type Neighbour = NeighbourList["items"][number];
 
 function LastTrack({ u }: { u: Person }) {
   if (!u.lastTrack) return null;
-  const t = u.lastTrack;
+  const last = u.lastTrack;
   return (
     <span className="small">
-      <Link to={trackUrl(t.artist, t.title)}>{t.title}</Link>{" "}
+      <Link to={trackUrl(last.artist, last.title)}>{last.title}</Link>{" "}
       <span className="muted">
-        - {t.artist} · {ago(t.playedAt)}
+        - {last.artist} · {ago(last.playedAt)}
       </span>
     </span>
   );
@@ -58,8 +53,10 @@ export function People({ path, empty }: { path: string; empty: ReactNode }) {
 function Match({ u }: { u: Neighbour }) {
   return (
     <span className="small">
-      <b>{Math.round(u.match * 100)}% match</b>
-      {u.shared.length > 0 && <span className="muted"> · both listen to {u.shared.map((a) => a.name).join(", ")}</span>}
+      <b>{t("user.match", { pct: Math.round(u.match * 100) })}</b>
+      {u.shared.length > 0 && (
+        <span className="muted"> · {t("user.matchShared", { artists: u.shared.map((a) => a.name).join(", ") })}</span>
+      )}
     </span>
   );
 }
@@ -68,16 +65,13 @@ export function Neighbours({ name }: { name: string }) {
   const q = useApi<NeighbourList>(`/user/neighbours${qs({ name })}`);
   return (
     <>
-      <p className="muted">
-        Soundalikes are listeners whose libraries overlap most with <Username name={name} />
-        's, recalculated from everyone's scrobbles.
-      </p>
+      <p className="muted">{tx("user.soundalikesIntro", { name: <Username name={name} /> })}</p>
       <Async q={q}>
         {(d) =>
           d.items.length ? (
             <UserList items={d.items} extra={(u) => <Match u={u} />} />
           ) : (
-            <Empty>Not enough scrobbles to find neighbours yet.</Empty>
+            <Empty>{t("user.noNeighbours")}</Empty>
           )
         }
       </Async>
@@ -94,14 +88,12 @@ export function Loved({ name }: { name: string }) {
       {(d) =>
         d.total ? (
           <>
-            <p className="muted">{plural(d.total, "loved track")}</p>
-            <TrackList items={d.items.map((t) => ({ ...t, playedAt: t.lovedAt }))} time />
+            <p className="muted">{t("user.lovedTrackCount", { count: d.total })}</p>
+            <TrackList items={d.items.map((l) => ({ ...l, playedAt: l.lovedAt }))} time />
             <Pager total={d.total} limit={d.limit} />
           </>
         ) : (
-          <Empty>
-            No loved tracks yet. Hit the <Ico.Heart /> next to any track.
-          </Empty>
+          <Empty>{tx("user.noLovedTracks", { heart: <Ico.Heart /> })}</Empty>
         )
       }
     </Async>
@@ -122,7 +114,7 @@ export function Obsessions({ name, mine }: { name: string; mine: boolean }) {
                   <Art image={o.image} />
                 </Link>
                 <div className="grow">
-                  {i === 0 && <span className="badge">Current</span>}
+                  {i === 0 && <span className="badge">{t("user.current")}</span>}
                   <Link className="strong" to={trackUrl(o.artist, o.title)}>
                     {o.title}
                   </Link>
@@ -134,14 +126,14 @@ export function Obsessions({ name, mine }: { name: string; mine: boolean }) {
                 </div>
                 {mine && (
                   <Button kind="link small" onClick={() => remove(o.id)}>
-                    Remove
+                    {t("user.remove")}
                   </Button>
                 )}
               </li>
             ))}
           </ul>
         ) : (
-          <Empty>{mine ? "No earworms yet - open any track and choose “Set as earworm”." : "No earworms yet."}</Empty>
+          <Empty>{mine ? t("user.noEarwormsMine") : t("user.noEarworms")}</Empty>
         )
       }
     </Async>
@@ -175,23 +167,23 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="New playlist title"
-            aria-label="New playlist title"
+            placeholder={t("user.newPlaylistTitle")}
+            aria-label={t("user.newPlaylistTitle")}
             maxLength={100}
           />
           <Button kind="btn" loading={act.busy} disabled={!title.trim()}>
-            Create playlist
+            {t("user.createPlaylist")}
           </Button>
           {act.note}
         </form>
       )}
       {mine && (
-        <Section title="Start from a template">
+        <Section title={t("user.startFromTemplate")}>
           <div className="templates">
             {TEMPLATE_IDS.map((id) => (
               <button type="button" key={id} disabled={act.busy} onClick={() => fromTemplate(id)}>
-                <strong>{TEMPLATES[id].title}</strong>
-                <span>{TEMPLATES[id].blurb}</span>
+                <strong>{t(`playlists.${id}Title`)}</strong>
+                <span>{t(`playlists.${id}Blurb`)}</span>
               </button>
             ))}
           </div>
@@ -205,17 +197,23 @@ export function Playlists({ name, mine }: { name: string; mine: boolean }) {
                 <Link className="mcard album" key={p.id} to={`/playlist/${p.id}`}>
                   <Art image={p.image} />
                   <strong>{p.title}</strong>
-                  <span>{plural(p.trackCount, "track")}</span>
+                  <span>{t("user.trackCount", { count: p.trackCount })}</span>
                 </Link>
               ))}
             </div>
           ) : (
-            <Empty>No playlists yet.</Empty>
+            <Empty>{t("user.noPlaylists")}</Empty>
           )
         }
       </Async>
     </>
   );
+}
+
+function taggedType(i: TaggedItem) {
+  if (i.type === "artist") return t("user.badgeArtist");
+  if (i.type === "album") return t("user.badgeAlbum");
+  return t("user.badgeTrack");
 }
 
 function taggedUrl(i: TaggedItem) {
@@ -233,17 +231,15 @@ export function UserTags({ name }: { name: string }) {
       return (
         <>
           <div className="toolbar">
-            <h2>
-              Tagged “<Link to={tagUrl(tag)}>{tag}</Link>” by <Username name={name} />
-            </h2>
+            <h2>{tx("user.taggedBy", { tag: <Link to={tagUrl(tag)}>{tag}</Link>, name: <Username name={name} /> })}</h2>
             <Button kind="link" onClick={() => setTag("")}>
-              <Ico.Left /> All tags
+              <Ico.Left /> {t("user.allTags")}
             </Button>
           </div>
           <ul className="plain">
             {d.items.filter(isTagged).map((i) => (
               <li key={i.type + i.id}>
-                <span className="badge">{i.type}</span>{" "}
+                <span className="badge">{taggedType(i)}</span>{" "}
                 <Link className="strong" to={taggedUrl(i)}>
                   {i.name}
                 </Link>
@@ -254,17 +250,12 @@ export function UserTags({ name }: { name: string }) {
         </>
       );
     }
-    if (!d.items.length)
-      return (
-        <Empty>
-          <Username name={name} /> hasn't tagged anything yet.
-        </Empty>
-      );
+    if (!d.items.length) return <Empty>{tx("user.notTagged", { name: <Username name={name} /> })}</Empty>;
     return (
       <div className="chips">
-        {d.items.filter(isTagCount).map((t) => (
-          <Button key={t.name} kind="chip" onClick={() => setTag(t.name)}>
-            {t.name} <b>{t.count}</b>
+        {d.items.filter(isTagCount).map((tc) => (
+          <Button key={tc.name} kind="chip" onClick={() => setTag(tc.name)}>
+            {tc.name} <b>{tc.count}</b>
           </Button>
         ))}
       </div>

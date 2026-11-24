@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { Ico } from "./icons";
+import { t } from "./i18n";
 
 type Hsv = { h: number; s: number; v: number };
 type EyeDropperApi = new () => { open: () => Promise<{ sRGBHex: string }> };
@@ -168,8 +169,11 @@ export function ColorPicker({
         ref={area}
         tabIndex={0}
         role="slider"
-        aria-label="Saturation and brightness"
-        aria-valuetext={`Saturation ${Math.round(hsv.s * 100)}%, brightness ${Math.round(hsv.v * 100)}%`}
+        aria-label={t("common.saturationBrightness")}
+        aria-valuetext={t("common.saturationBrightnessValue", {
+          saturation: Math.round(hsv.s * 100),
+          brightness: Math.round(hsv.v * 100),
+        })}
         style={{ backgroundColor: hue }}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -185,7 +189,7 @@ export function ColorPicker({
         type="range"
         min={0}
         max={359}
-        aria-label="Hue"
+        aria-label={t("common.hue")}
         value={Math.round(hsv.h)}
         style={{ color: hue }}
         onChange={(e) => set({ ...hsv, h: +e.target.value })}
@@ -194,7 +198,7 @@ export function ColorPicker({
         <span className="cp-chip" style={{ background: hex }} aria-hidden />
         <input
           className="cp-hex"
-          aria-label="Hex color"
+          aria-label={t("common.hexColor")}
           spellCheck={false}
           maxLength={7}
           value={draft ?? hex}
@@ -209,7 +213,7 @@ export function ColorPicker({
           }}
         />
         {dropper && (
-          <button type="button" className="dp-nav" aria-label="Pick a color from the screen" onClick={sample}>
+          <button type="button" className="dp-nav" aria-label={t("common.pickScreenColor")} onClick={sample}>
             <Ico.Eyedropper />
           </button>
         )}
@@ -229,7 +233,7 @@ export function ColorPicker({
       </div>
       <div className="dp-foot">
         <button type="button" className="dp-done" onClick={() => close()}>
-          Done
+          {t("common.done")}
         </button>
       </div>
     </div>
@@ -252,7 +256,7 @@ export function ColorPicker({
         className={"dp-trigger native-input" + (open ? " open" : "")}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`${label}: ${value}`}
+        aria-label={t("common.fieldValue", { label, value })}
         onClick={() => (open ? close() : show())}
       >
         <span className="cp-chip" style={{ background: value }} aria-hidden />

@@ -13,7 +13,7 @@ router.post<BlockResult>("/api/block", async (c) => {
   const u = need(c);
   await throttle(`block:${u.id}`, 60, 3600);
   const t = await requireUser(typeof c.body.username === "string" ? c.body.username : null);
-  if (t.id === u.id) bad("You can't block yourself");
+  if (t.id === u.id) bad("cantBlockYourself");
   const blocked = c.body.block !== false;
   if (blocked) await repo.block(u.id, t.id);
   else await repo.unblock(u.id, t.id);

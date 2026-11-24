@@ -1,71 +1,109 @@
+import common from "./i18n/en/common";
+import { format, type Params } from "./i18n/core";
+
+type CommonKey = keyof typeof common;
+type Translate = (key: CommonKey, params?: Params) => string;
+
 const SITE = "Sonosphere";
 
 export const fullTitle = (title: string) => (title.startsWith(SITE) ? title : `${title} | ${SITE}`);
 
-export const TITLES = {
-  home: "Home",
-  guestHome: "Sonosphere - Track what you love",
-  charts: "Music Charts",
-  chartMaker: "Chart Maker",
-  events: "Concerts & Music Events",
-  addEvent: "Add a Music Event",
-  help: "Scrobbling Help",
-  developers: "Developer API Docs",
-  terms: "Terms of Service",
-  changelog: "Changelog",
-  privacy: "Privacy Policy",
-  guidelines: "Community Guidelines",
-  login: "Log In",
-  join: "Join Sonosphere",
-  forgot: "Recover Your Account",
-  reset: "Reset Password",
-  verify: "Verify Your Account",
-  settings: "Settings",
-  inbox: "Inbox",
-  messages: "Messages",
-  moderation: "Moderation",
-  recommended: "Recommendations",
-  scrobble: "Scrobble Music",
-  import: "Import Listening History",
-  connect: "Connect a Music Player",
-  welcome: "Welcome",
-  notFound: "Page Not Found",
-  editJournal: "Edit Journal",
-  profile: "Listener Profile",
-} as const;
+const TITLE_KEYS = {
+  home: "titleHome",
+  guestHome: "titleGuestHome",
+  charts: "titleCharts",
+  chartMaker: "titleChartMaker",
+  events: "titleEvents",
+  addEvent: "titleAddEvent",
+  help: "titleHelp",
+  developers: "titleDevelopers",
+  terms: "titleTerms",
+  changelog: "titleChangelog",
+  privacy: "titlePrivacy",
+  guidelines: "titleGuidelines",
+  login: "titleLogin",
+  join: "titleJoin",
+  forgot: "titleForgot",
+  reset: "titleReset",
+  verify: "titleVerify",
+  settings: "titleSettings",
+  inbox: "titleInbox",
+  messages: "titleMessages",
+  moderation: "titleModeration",
+  recommended: "titleRecommended",
+  scrobble: "titleScrobble",
+  import: "titleImport",
+  connect: "titleConnect",
+  welcome: "titleWelcome",
+  notFound: "titleNotFound",
+  editJournal: "titleEditJournal",
+  profile: "titleProfile",
+} as const satisfies Record<string, CommonKey>;
 
-export const ARTIST_TABS: Record<string, string> = {
-  tracks: "Top Tracks",
-  albums: "Albums",
-  similar: "Similar Artists",
-  wiki: "Biography",
-  listeners: "Listeners",
-  shoutbox: "Shoutbox",
+const ARTIST_TAB_KEYS: Record<string, CommonKey> = {
+  tracks: "artistTabTracks",
+  albums: "artistTabAlbums",
+  similar: "artistTabSimilar",
+  wiki: "artistTabWiki",
+  listeners: "artistTabListeners",
+  shoutbox: "artistTabShoutbox",
 };
 
-export const USER_TABS: Record<string, string> = {
-  library: "Music Library",
-  "listening-report": "Listening Report",
-  journal: "Journal",
-  following: "Following",
-  followers: "Followers",
-  loved: "Loved Tracks",
-  obsessions: "Obsessions",
-  playlists: "Playlists",
-  events: "Events",
-  neighbours: "Neighbours",
-  tags: "Tags",
-  shoutbox: "Shoutbox",
-  cosmetics: "Cosmetics",
+const USER_TAB_KEYS: Record<string, CommonKey> = {
+  library: "userTabLibrary",
+  "listening-report": "userTabReport",
+  journal: "userTabJournal",
+  following: "userTabFollowing",
+  followers: "userTabFollowers",
+  loved: "userTabLoved",
+  obsessions: "userTabObsessions",
+  playlists: "userTabPlaylists",
+  events: "userTabEvents",
+  neighbours: "userTabNeighbours",
+  tags: "userTabTags",
+  shoutbox: "userTabShoutbox",
+  cosmetics: "userTabCosmetics",
 };
 
-const wikiSuffix = (wiki: boolean) => (wiki ? " - Wiki" : "");
+function lazy<K extends string>(keys: Record<K, CommonKey>, tr: Translate) {
+  const out = {} as Record<K, string>;
+  for (const [name, key] of Object.entries(keys) as [K, CommonKey][]) {
+    Object.defineProperty(out, name, { enumerable: true, get: () => tr(key) });
+  }
+  return out;
+}
 
-export const artistTitle = (name: string, tab = "") =>
-  Object.hasOwn(ARTIST_TABS, tab) ? `${name} - ${ARTIST_TABS[tab]}` : `${name} - Music, Albums & Tracks`;
-export const releaseTitle = (title: string, artist: string, wiki = false) => `${title} by ${artist}${wikiSuffix(wiki)}`;
-export const tagTitle = (name: string, wiki = false) => `${name} Music${wikiSuffix(wiki)}`;
-export const searchTitle = (query: string) => (query ? `Search for ${query}` : "Search Music");
-export const userTitle = (username: string, tab = "") =>
-  `${username} - ${Object.hasOwn(USER_TABS, tab) ? USER_TABS[tab] : TITLES.profile}`;
-export const journalTitle = (post: string, username: string) => `${post} - ${username}’s Journal`;
+export function titles(tr: Translate) {
+  const TITLES = lazy(TITLE_KEYS, tr);
+  const ARTIST_TABS = lazy(ARTIST_TAB_KEYS, tr);
+  const USER_TABS = lazy(USER_TAB_KEYS, tr);
+  const withWiki = (title: string, wiki: boolean) => (wiki ? tr("titleWiki", { title }) : title);
+  return {
+    TITLES,
+    ARTIST_TABS,
+    USER_TABS,
+    artistTitle: (name: string, tab = "") =>
+      Object.hasOwn(ARTIST_TABS, tab)
+        ? tr("titleSubpage", { name, tab: ARTIST_TABS[tab]! })
+        : tr("titleArtist", { name }),
+    releaseTitle: (title: string, artist: string, wiki = false) =>
+      withWiki(tr("titleRelease", { title, artist }), wiki),
+    tagTitle: (name: string, wiki = false) => withWiki(tr("titleTag", { name }), wiki),
+    searchTitle: (query: string) => (query ? tr("titleSearchFor", { query }) : tr("titleSearch")),
+    userTitle: (username: string, tab = "") =>
+      tr("titleSubpage", { name: username, tab: Object.hasOwn(USER_TABS, tab) ? USER_TABS[tab]! : TITLES.profile }),
+    journalTitle: (post: string, username: string) => tr("titleJournal", { post, name: username }),
+  };
+}
+
+export const {
+  TITLES,
+  ARTIST_TABS,
+  USER_TABS,
+  artistTitle,
+  releaseTitle,
+  tagTitle,
+  searchTitle,
+  userTitle,
+  journalTitle,
+} = titles((key, params) => format("en", common[key], params));

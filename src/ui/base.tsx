@@ -3,8 +3,9 @@ import { Ico, Spinner } from "../icons";
 import { Suspense, useRef, useState, type ReactNode } from "react";
 import { Pages, Select } from "../kit";
 import { Link, NavLink } from "react-router-dom";
-import { imageUrl, PERIODS, useParam, userUrl, type ApiError } from "../lib";
+import { imageUrl, periods, useParam, userUrl, type ApiError } from "../lib";
 import { ImageWithFallback } from "./image";
+import { t } from "../i18n";
 import { CosmeticAvatar } from "./cosmetics";
 
 export function Art({ image, kind = "album" }: { image?: string | null; kind?: "artist" | "album" | "user" }) {
@@ -36,7 +37,7 @@ export const Empty = ({ children }: { children: ReactNode }) => <div className="
 function ErrorBox({ error }: { error: ApiError }) {
   return (
     <div className="state error">
-      <strong>{error.status === 404 ? "Nothing here." : "Something went wrong."}</strong> {error.message}
+      <strong>{error.status === 404 ? t("common.nothingHere") : t("common.somethingWrong")}</strong> {error.message}
     </div>
   );
 }
@@ -55,7 +56,7 @@ export function Async<T>({
 export function Section({
   title,
   more,
-  moreLabel = "View all",
+  moreLabel = t("common.viewAll"),
   aside,
   foot,
   children,
@@ -109,7 +110,7 @@ export function Tabs({ items }: { items: [string, string, boolean?][] }) {
 }
 export function PeriodPicker({ def = "overall" }: { def?: string }) {
   const [period, setPeriod] = useParam("period", def);
-  return <Select label="Time period" value={period} onChange={setPeriod} options={PERIODS} />;
+  return <Select label={t("common.timePeriod")} value={period} onChange={setPeriod} options={periods()} />;
 }
 export function Pager({ total, limit }: { total: number; limit: number }) {
   const [page, setPage] = useParam("page", "1");

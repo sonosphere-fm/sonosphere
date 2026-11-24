@@ -26,7 +26,7 @@ router.post<AdminSettings>("/api/admin/settings", async (c) => {
   if (b.announcementTone !== undefined) next.announcementTone = b.announcementTone === "warning" ? "warning" : "info";
   if (b.maxShoutLength !== undefined) {
     const n = Math.round(Number(b.maxShoutLength));
-    if (!Number.isFinite(n) || n < 50 || n > 1000) bad("Wall post length must be between 50 and 1000 characters");
+    if (!Number.isFinite(n) || n < 50 || n > 1000) bad("wallPostLengthMustBetween");
     next.maxShoutLength = n;
   }
   const changes: Record<string, { from: unknown; to: unknown }> = {};

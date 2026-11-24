@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePlayer, type PTrack } from "../player";
 import { Section } from "./base";
+import { t } from "../i18n";
 
 type El = HTMLElement & {
   songTitle?: string;
@@ -126,7 +127,7 @@ export function Lyrics({ track }: { track: PTrack }) {
   if (found === false) return null;
   return (
     <div hidden={!found}>
-      <Section title="Lyrics">
+      <Section title={t("player.lyrics")}>
         <div className="lyrics-box h-[440px] bg-site-panel overflow-hidden">{ready && <am-lyrics ref={ref} />}</div>
       </Section>
     </div>

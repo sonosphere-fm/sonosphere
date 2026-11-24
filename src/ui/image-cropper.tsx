@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Modal } from "../kit";
 import { moveCropDrag, type CropDrag, type Point } from "./crop-drag";
+import { locale, t } from "../i18n";
 
 type Source = { url: string; width: number; height: number };
 const center: Point = { x: 0, y: 0 };
@@ -76,13 +77,13 @@ export function ImageCropper({
     image.onload = () => {
       if (!active) return;
       if (image.naturalWidth * image.naturalHeight > 40_000_000) {
-        setError("This image is too large. Choose one under 40 megapixels.");
+        setError(t("common.imageTooLarge"));
       } else setSource({ url, width: image.naturalWidth, height: image.naturalHeight });
     };
     image.onerror = () => {
-      if (active) setError("This picture couldn't be opened. Try a PNG, JPEG or WebP image.");
+      if (active) setError(t("common.pictureOpenFailed"));
     };
-    if (file.size > 8_000_000) setError("Choose an image smaller than 8 MB.");
+    if (file.size > 8_000_000) setError(t("common.imageUnder8"));
     else image.src = url;
     return () => {
       active = false;
@@ -127,7 +128,7 @@ export function ImageCropper({
       canvas.width = edge;
       canvas.height = Math.max(1, Math.round(edge / aspect));
       const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Your browser couldn't prepare the picture.");
+      if (!ctx) throw new Error(t("common.picturePrepareFailed"));
       ctx.translate(edge / 2 + offset.x * edge, canvas.height / 2 + offset.y * edge);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.drawImage(
@@ -138,7 +139,7 @@ export function ImageCropper({
         source.height * scale * edge
       );
       const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't export this picture."))), "image/webp", 0.92)
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(t("common.pictureExportFailed")))), "image/webp", 0.92)
       );
       await onSave(blob);
       onClose();
@@ -152,16 +153,20 @@ export function ImageCropper({
   if (gif)
     return (
       <Modal
-        title={banner ? "Upload your banner" : "Upload your picture"}
+        title={banner ? t("common.uploadBanner") : t("common.uploadPicture")}
         width={720}
         onClose={() => {
           if (!busy) onClose();
         }}
       >
         {source && (
-          <img src={source.url} alt="Animated image preview" className="block w-full max-h-[420px] object-contain" />
+          <img
+            src={source.url}
+            alt={t("common.animatedPreview")}
+            className="block w-full max-h-[420px] object-contain"
+          />
         )}
-        <p className="crop-hint">GIF animation is preserved. GIFs are displayed centered without cropping.</p>
+        <p className="crop-hint">{t("common.gifHint")}</p>
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -169,10 +174,10 @@ export function ImageCropper({
         )}
         <div className="row">
           <Button kind="btn" type="button" loading={busy} disabled={!source} onClick={save}>
-            {banner ? "Save banner" : "Save picture"}
+            {banner ? t("common.saveBanner") : t("common.savePicture")}
           </Button>
           <Button kind="btn ghost" type="button" disabled={busy} onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </Modal>
@@ -180,7 +185,7 @@ export function ImageCropper({
 
   return (
     <Modal
-      title={banner ? "Crop your banner" : "Crop your picture"}
+      title={banner ? t("common.cropBanner") : t("common.cropPicture")}
       width={720}
       onClose={() => {
         if (!busy) onClose();
@@ -193,7 +198,7 @@ export function ImageCropper({
             style={{ aspectRatio: aspect }}
             tabIndex={source && !busy ? 0 : -1}
             role="group"
-            aria-label="Image framing. Drag to reposition or use arrow keys. Hold Shift for larger steps."
+            aria-label={t("common.framingHint")}
             onKeyDown={(e) => {
               if (!source || busy || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
               e.preventDefault();
@@ -243,9 +248,7 @@ export function ImageCropper({
                 }}
               />
             ) : (
-              <span className="crop-loading">
-                {error ? "Choose another picture to continue" : "Opening your picture…"}
-              </span>
+              <span className="crop-loading">{error ? t("common.chooseAnother") : t("common.openingPicture")}</span>
             )}
             <div className="crop-guides" aria-hidden="true">
               <i />
@@ -259,7 +262,8 @@ export function ImageCropper({
         <div className="crop-controls">
           <label className="crop-zoom">
             <span>
-              Zoom <output>{Math.round(zoom * 100)}%</output>
+              {t("common.zoom")}{" "}
+              <output>{zoom.toLocaleString(locale(), { style: "percent", maximumFractionDigits: 0 })}</output>
             </span>
             <input
               type="range"
@@ -280,12 +284,12 @@ export function ImageCropper({
                 setPosition(center);
                 setZoom(1);
               }}
-              aria-label="Rotate picture 90 degrees clockwise"
+              aria-label={t("common.rotateLabel")}
             >
-              ↻ <span>Rotate</span>
+              ↻ <span>{t("common.rotate")}</span>
             </button>
             <button type="button" disabled={!source || busy} onClick={reset}>
-              Reset
+              {t("common.reset")}
             </button>
           </div>
         </div>
@@ -296,10 +300,10 @@ export function ImageCropper({
         )}
         <div className="crop-footer">
           <Button kind="btn ghost" type="button" disabled={busy} onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button kind="btn" type="button" disabled={!source} loading={busy} onClick={save}>
-            {banner ? "Save banner" : "Save picture"}
+            {banner ? t("common.saveBanner") : t("common.savePicture")}
           </Button>
         </div>
       </div>

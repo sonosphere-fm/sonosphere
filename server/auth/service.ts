@@ -8,6 +8,7 @@ import { pendingEmail } from "./email";
 import * as repo from "./repo";
 import { clearActAsCookie, sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
+import { isLocale, type Locale } from "../../shared/i18n/core";
 import { storedProfileLinks } from "../../shared/profile-links";
 import { USERNAME } from "../account/username-policy";
 import { appearanceFor } from "../users/appearance";
@@ -40,6 +41,7 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     emailNotify: u.emailNotify,
     emailMuted: u.emailMuted.split(",").filter(Boolean),
     theme: u.theme === "dark" || u.theme === "system" ? u.theme : "light",
+    locale: isLocale(u.locale) ? u.locale : "",
     useProfileTheme: u.useProfileTheme,
     emailVerified: !!u.emailVerifiedAt,
     pendingEmail: await pendingEmail(u.id),
@@ -73,34 +75,35 @@ export async function endSession(headers: Headers, token = ""): Promise<void> {
 
 export async function checkNewAccount(username: string, email: string): Promise<void> {
   const open = await setting("registrationsOpen");
-  if (!open && !(await configAdmins()).includes(norm(username))) fail(403, "Registrations are closed at the moment");
-  if (!USERNAME.test(username)) bad("Usernames are 2–15 characters: letters, numbers, - and _, starting with a letter");
-  if (!validEmail(email)) bad("Enter a valid email address");
-  if (await repo.usernameTaken(username)) bad("That username is taken");
-  if (await repo.emailTaken(email)) bad("An account with that email already exists");
+  if (!open && !(await configAdmins()).includes(norm(username))) fail(403, "registrationsClosedMoment");
+  if (!USERNAME.test(username)) bad("invalidUsername");
+  if (!validEmail(email)) bad("enterValidEmailAddress");
+  if (await repo.usernameTaken(username)) bad("usernameTaken");
+  if (await repo.emailTaken(email)) bad("accountEmailAlreadyExists");
 }
 // An empty passwordHash makes an account that signs in only through OAuth until a password is set.
 export async function createAccount(
   username: string,
   email: string,
   passwordHash: string,
+  locale: Locale,
   emailVerified = false
 ): Promise<User> {
-  const id = await repo.createUser(username, email, passwordHash, emailVerified);
+  const id = await repo.createUser(username, email, passwordHash, locale, emailVerified);
   // an account named in ADMIN_USERS becomes staff the moment it exists
   await syncAdmins();
-  return (await findById(id)) ?? fail(500, "Something went wrong");
+  return (await findById(id)) ?? fail(500, "somethingWentWrong");
 }
 
-export async function signUp(username: string, email: string, password: string): Promise<User> {
-  if (password.length < MIN_PASSWORD) bad("Passwords need at least 8 characters");
+export async function signUp(username: string, email: string, password: string, locale: Locale): Promise<User> {
+  if (password.length < MIN_PASSWORD) bad("passwordsNeedLeast8Characters");
   await checkNewAccount(username, email);
-  return createAccount(username, email, await hashPassword(password));
+  return createAccount(username, email, await hashPassword(password), locale);
 }
 
 export async function logIn(ident: string, password: string): Promise<User> {
   const u = await repo.findByLogin(norm(ident));
-  if (!u || !(await passwordMatches(u, password))) return fail(401, "Wrong username or password");
-  if (u.banned) return fail(403, "This account has been banned");
+  if (!u || !(await passwordMatches(u, password))) return fail(401, "wrongUsernamePassword");
+  if (u.banned) return fail(403, "accountBanned");
   return u;
 }

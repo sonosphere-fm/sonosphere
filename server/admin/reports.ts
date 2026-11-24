@@ -76,14 +76,14 @@ router.get<StaffReportList>("/api/admin/reports", async (c) => {
 router.post<ReportsClosed>("/api/admin/reports/bulk", async (c) => {
   const me = staff(c);
   const ids = idList(c.body.ids, 200);
-  if (!ids.length) bad("Pick at least one report");
+  if (!ids.length) bad("pickLeastOneReport");
   return { closed: await repo.dismissAll(me, ids, note(c)) };
 });
 
 router.post<ReportResolved>("/api/admin/reports/:id", async (c) => {
   const me = staff(c);
-  const r = (await repo.findReport(Number(c.params[0]))) ?? missing("Report");
-  const action = oneOf(String(c.body.action), DECISIONS) ?? bad("Unknown action");
-  if (r.status !== "open") bad("That report is already resolved");
+  const r = (await repo.findReport(Number(c.params[0]))) ?? missing("reportNotFound");
+  const action = oneOf(String(c.body.action), DECISIONS) ?? bad("unknownAction");
+  if (r.status !== "open") bad("reportAlreadyResolved");
   return { ok: true, closed: await repo.resolve(me, r, action, note(c), await configAdmins()) };
 });

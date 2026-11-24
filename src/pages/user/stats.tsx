@@ -1,16 +1,23 @@
 import { Link } from "react-router-dom";
-import { num, plural, userUrl } from "../../lib";
+import { num, userUrl } from "../../lib";
+import { locale, t, tx } from "../../i18n";
 import { Empty, Section, Stat } from "../../ui/base";
 import { BarChart } from "../../ui/charts";
 import { Username } from "../../ui/username";
 import { type DayCount, type ListeningStats, streaks } from "../../../shared/listening";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const weekdayNames = () =>
+  Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(locale(), { weekday: "short", timeZone: "UTC" })
+  );
+const monthNames = () =>
+  Array.from({ length: 12 }, (_, i) =>
+    new Date(Date.UTC(2024, i, 1)).toLocaleDateString(locale(), { month: "short", timeZone: "UTC" })
+  );
 
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const longDate = (d: string) =>
-  new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });
+  new Date(`${d}T00:00:00Z`).toLocaleDateString(locale(), { day: "numeric", month: "long", timeZone: "UTC" });
 const weekday = (d: string) => (new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7;
 
 // Thresholds split the year's listening days into four equal-sized shades.
@@ -32,7 +39,7 @@ function PixelGrid({ name, year, today, days }: { name: string; year: number; to
   return (
     <div className="pixels-wrap">
       <div className="pixels" style={{ gridTemplateColumns: `2.25rem repeat(${weeks}, minmax(0, 1fr))` }}>
-        {MONTHS.map((m, i) => (
+        {monthNames().map((m, i) => (
           <span
             key={m}
             className="pixels-month"
@@ -41,7 +48,7 @@ function PixelGrid({ name, year, today, days }: { name: string; year: number; to
             {m}
           </span>
         ))}
-        {DAYS.map((d, i) => (
+        {weekdayNames().map((d, i) => (
           <span key={d} className="pixels-day" style={{ gridRow: 2 + i }}>
             {i % 2 ? "" : d}
           </span>
@@ -51,7 +58,9 @@ function PixelGrid({ name, year, today, days }: { name: string; year: number; to
           const count = counts.get(date) ?? 0;
           const place = { gridRow: 2 + ((lead + i) % 7), gridColumn: 2 + Math.floor((lead + i) / 7) };
           if (date > today) return <span key={date} className="pixel future" style={place} />;
-          const tip = `${longDate(date)}: ${count ? plural(count, "scrobble") : "no scrobbles"}`;
+          const tip = count
+            ? t("user.pixelTip", { date: longDate(date), count })
+            : t("user.pixelTipNone", { date: longDate(date) });
           if (!count) return <span key={date} className="pixel" style={place} title={tip} />;
           return (
             <Link
@@ -67,11 +76,11 @@ function PixelGrid({ name, year, today, days }: { name: string; year: number; to
         })}
       </div>
       <div className="pixels-legend muted small">
-        Less
+        {t("user.less")}
         {[0, 1, 2, 3, 4].map((l) => (
           <span key={l} className="pixel" data-level={l || undefined} />
         ))}
-        More
+        {t("user.more")}
       </div>
     </div>
   );
@@ -81,52 +90,56 @@ export function StatsBody({ s, name }: { s: ListeningStats; name: string }) {
   const plays = s.days.reduce((sum, d) => sum + d.count, 0);
   const title = (
     <h2 className="report-title">
-      <Username name={name} />
-      's listening stats <span className="muted">· {s.year}</span>
+      {tx("user.statsTitle", { name: <Username name={name} /> })} <span className="muted">· {s.year}</span>
     </h2>
   );
   if (!plays) {
     return (
       <>
         {title}
-        <Empty>No scrobbles in {s.year}.</Empty>
+        <Empty>{t("user.noScrobblesIn", { year: s.year })}</Empty>
       </>
     );
   }
   const yearStreak = streaks(s.days.map((d) => d.date)).longest;
   const busiest = s.days.reduce((a, b) => (b.count > a.count ? b : a));
-  const byWeekday = DAYS.map((label) => ({ label, value: 0 }));
+  const byWeekday = weekdayNames().map((label) => ({ label, value: 0 }));
   for (const d of s.days) byWeekday[weekday(d.date)].value += d.count;
   const favourite = byWeekday.reduce((a, b) => (b.value > a.value ? b : a));
   return (
     <div className="report">
       {title}
-      <Section title="Scrobbles by day">
+      <Section title={t("user.scrobblesByDay")}>
         <PixelGrid name={name} year={s.year} today={s.today} days={s.days} />
       </Section>
       <div className="stats boxed">
         <Stat
-          label="Days listened"
+          label={t("user.daysListened")}
           value={num(s.days.length)}
-          hint={`${num(Math.round(plays / s.days.length))} scrobbles a listening day`}
+          hint={t("user.scrobblesPerDay", { count: Math.round(plays / s.days.length) })}
         />
-        <Stat label="Busiest day" value={num(busiest.count)} hint={longDate(busiest.date)} />
+        <Stat label={t("user.busiestDay")} value={num(busiest.count)} hint={longDate(busiest.date)} />
         <Stat
-          label={`Longest streak in ${s.year}`}
-          value={plural(yearStreak.days, "day")}
-          hint={yearStreak.end ? `ended ${longDate(yearStreak.end)}` : undefined}
+          label={t("user.longestStreakIn", { year: s.year })}
+          value={t("user.dayCount", { count: yearStreak.days })}
+          hint={yearStreak.end ? t("user.streakEnded", { date: longDate(yearStreak.end) }) : undefined}
         />
         <Stat
-          label="Longest streak ever"
-          value={plural(s.longestStreak.days, "day")}
-          hint={s.currentStreak ? `${plural(s.currentStreak, "day")} running now` : "no streak running"}
+          label={t("user.longestStreakEver")}
+          value={t("user.dayCount", { count: s.longestStreak.days })}
+          hint={s.currentStreak ? t("user.streakRunning", { count: s.currentStreak }) : t("user.noStreak")}
         />
-        <Stat label="Top 10 artists" value={`${Math.round(s.topShare * 100)}%`} hint={`of ${s.year}'s scrobbles`} />
+        <Stat
+          label={t("user.top10Artists")}
+          value={s.topShare.toLocaleString(locale(), { style: "percent", maximumFractionDigits: 0 })}
+          hint={t("user.ofYearScrobbles", { year: s.year })}
+        />
       </div>
-      <Section title="Scrobbles by weekday">
+      <Section title={t("user.scrobblesByWeekday")}>
         <BarChart data={byWeekday} height={140} />
         <p className="muted small">
-          Favourite: {favourite.label} · {num(s.activeDays)} listening days all time
+          {t("user.favouriteWeekday", { day: favourite.label })} ·{" "}
+          {t("user.listeningDaysAllTime", { count: s.activeDays })}
         </p>
       </Section>
     </div>

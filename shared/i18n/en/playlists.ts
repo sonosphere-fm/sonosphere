@@ -1,0 +1,16 @@
+export default {
+  repeatTitle: "On repeat",
+  repeatBlurb: "Your most played tracks of the last 7 days",
+  monthTitle: "Top of the month",
+  monthBlurb: "Your most played tracks of the last 30 days",
+  favouritesTitle: "All-time favourites",
+  favouritesBlurb: "Your 50 most played tracks ever",
+  forgottenTitle: "Forgotten favourites",
+  forgottenBlurb: "Tracks you played a lot but not in the last 3 months",
+  freshTitle: "Fresh finds",
+  freshBlurb: "Tracks you first played in the last 30 days",
+  yearAgoTitle: "A year ago",
+  yearAgoBlurb: "What you played most around this time last year",
+  lovedTitle: "Loved tracks",
+  lovedBlurb: "Your 50 most recently loved tracks",
+};

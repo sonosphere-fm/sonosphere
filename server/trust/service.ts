@@ -1,6 +1,7 @@
 // New accounts start on probation with tighter limits. Nothing about it is shown to them: the limits
 // they hit read exactly like everyone else's. They leave it after MIN_AGE once their score reaches NEEDED.
 import { throttle } from "../http";
+import type { ErrorKey } from "../i18n";
 import { isStaff } from "../site/roles";
 import { now } from "../util";
 import { findById, type User } from "../users/repo";
@@ -53,7 +54,7 @@ export async function onProbation(u: User): Promise<boolean> {
 }
 
 // The same throttle as everyone else's, with a smaller allowance while on probation.
-export async function limit(u: User, key: string, max: number, seconds: number, msg?: string): Promise<void> {
+export async function limit(u: User, key: string, max: number, seconds: number, msg?: ErrorKey): Promise<void> {
   const allowed = (await onProbation(u)) ? Math.max(1, Math.ceil(max / PROBATION.DIVISOR)) : max;
   await throttle(key, allowed, seconds, msg);
 }

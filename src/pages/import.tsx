@@ -4,7 +4,8 @@ import { Spinner } from "../icons";
 import { Button, Input, Select } from "../kit";
 import { importLastfm } from "../lastfm-import";
 import { parseListenBrainzZip } from "../listenbrainz-import";
-import { api, dateTime, num, plural, TITLES, useTitle } from "../lib";
+import { api, dateTime, num, TITLES, useTitle } from "../lib";
+import { t, tx } from "../i18n";
 import { Section, useAction } from "../ui/base";
 
 function parseCsv(text: string): string[][] {
@@ -132,40 +133,42 @@ function useImportJob() {
 }
 
 function importSource(job: ImportJob) {
-  if (job.lastfmUser) return `Last.fm (${job.lastfmUser})`;
-  if (job.kind === "listenbrainz") return "your ListenBrainz export";
-  if (job.kind === "loved") return "your loved tracks";
-  return "your file";
+  if (job.lastfmUser) return t("player.sourceLastfm", { user: job.lastfmUser });
+  if (job.kind === "listenbrainz") return t("player.sourceListenBrainz");
+  if (job.kind === "loved") return t("player.sourceLoved");
+  return t("player.sourceFile");
 }
 
-const jobNoun = (job: ImportJob) => (job.kind === "loved" ? "loved track" : "scrobble");
+const countOf = (loved: boolean, count: number) => t(loved ? "player.lovedCount" : "player.scrobbleCount", { count });
 
 function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => void }) {
   const what = importSource(job);
   const pct = job.total ? Math.min(100, Math.round((job.done / job.total) * 100)) : 0;
   const skipped = job.done - job.accepted;
+  const items = countOf(job.kind === "loved", job.accepted);
 
   if (job.status === "done") {
     return (
       <p className="form-ok">
-        Imported {plural(job.accepted, jobNoun(job))} from {what}
-        {skipped > 0 ? `, skipped ${num(skipped)} duplicates/errors` : ""}.
+        {skipped > 0
+          ? t("player.importDoneSkipped", { items, what, skipped: num(skipped) })
+          : t("player.importDone", { items, what })}
       </p>
     );
   }
   if (job.status === "failed") {
     return (
       <p className="form-error">
-        The import from {what} stopped: {job.error}{" "}
-        {job.accepted > 0 && `${plural(job.accepted, jobNoun(job))} imported before that stay.`}
+        {job.accepted > 0
+          ? t("player.importFailedKept", { what, error: job.error ?? "", items })
+          : t("player.importFailed", { what, error: job.error ?? "" })}
       </p>
     );
   }
   if (job.status === "cancelled") {
     return (
       <p className="muted">
-        The import from {what} was cancelled
-        {job.accepted > 0 ? ` after ${plural(job.accepted, jobNoun(job))}` : ""}.
+        {job.accepted > 0 ? t("player.importCancelledAfter", { what, items }) : t("player.importCancelled", { what })}
       </p>
     );
   }
@@ -173,17 +176,21 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
   if (job.status === "uploading") {
     return (
       <div className="import-progress">
-        <p>An upload is pending. Keep its tab open, or cancel it to start over.</p>
+        <p>{t("player.uploadPending")}</p>
         <Button kind="btn ghost small" type="button" onClick={onCancel}>
-          Cancel import
+          {t("player.cancelImport")}
         </Button>
       </div>
     );
   }
 
-  let heading = `Matching ${what} to the catalogue…`;
-  if (job.status === "queued") heading = `Waiting to start importing ${what}…`;
-  else if (job.phase === "loved") heading = `Importing loved tracks from ${what}…`;
+  let heading = t("player.matching", { what });
+  if (job.status === "queued") heading = t("player.waitingToStart", { what });
+  else if (job.phase === "loved") heading = t("player.importingLoved", { what });
+  const counts = { done: num(job.done), total: num(job.total), added: num(job.accepted) };
+  let done = t("player.progressUnknown", counts);
+  if (job.total) done = t(job.accepted ? "player.progressAboutAdded" : "player.progressAbout", counts);
+  else if (job.accepted) done = t("player.progressUnknownAdded", counts);
 
   return (
     <div className="import-progress" role="status">
@@ -195,12 +202,10 @@ function ImportProgress({ job, onCancel }: { job: ImportJob; onCancel: () => voi
         <span style={{ width: `${job.status === "queued" ? 0 : Math.max(pct, 1)}%` }} />
       </div>
       <p className="muted small">
-        {num(job.done)} of {job.total ? `about ${num(job.total)}` : "?"} done
-        {job.accepted ? `, ${num(job.accepted)} added` : ""}. This carries on in the background: you can close the page
-        and come back.
+        {done} {t("player.carriesOn")}
       </p>
       <Button kind="btn ghost small" type="button" onClick={onCancel}>
-        Cancel import
+        {t("player.cancelImport")}
       </Button>
     </div>
   );
@@ -221,7 +226,7 @@ export function ImportPage() {
   const [fromUser, setFromUser] = useState<string | null>(null);
   const [progress, setProgress] = useState("");
   const [what, setWhat] = useState<"scrobbles" | "loved" | "listenbrainz">("scrobbles");
-  const noun = what === "loved" ? "loved track" : "scrobble";
+  const items = (count: number) => countOf(what === "loved", count);
   const busy = job === undefined || active(job) || !!download || imp.busy;
 
   useEffect(() => () => controller.current?.abort(), []);
@@ -266,7 +271,7 @@ export function ImportPage() {
     imp.run(async () => {
       let parsed: ImportRow[];
       if (zip) {
-        setProgress("Reading ListenBrainz export…");
+        setProgress(t("player.readingListenBrainz"));
         const exportData = await parseListenBrainzZip(await file.arrayBuffer());
         // Feedback goes last: the scrobbles above it save the recording IDs that loves are matched against.
         parsed = [...exportData.listens, ...exportData.feedback];
@@ -278,16 +283,9 @@ export function ImportPage() {
         if (/loved/i.test(file.name) || /"lovedtracks"/.test(body.slice(0, 2000))) setWhat("loved");
         else setWhat("scrobbles");
       }
-      if (!parsed.length)
-        throw new Error(
-          zip
-            ? "No listens found in that ListenBrainz export."
-            : "Nothing found in that file. Expected columns: artist, album, track, timestamp."
-        );
+      if (!parsed.length) throw new Error(zip ? t("player.lbNoListens") : t("player.fileNothingFound"));
       if (parsed.length > IMPORT_MAX) {
-        throw new Error(
-          `That file has ${num(parsed.length)} rows; an import can hold up to ${num(IMPORT_MAX)}. Split it and import it in parts.`
-        );
+        throw new Error(t("player.fileTooBig", { rows: num(parsed.length), max: num(IMPORT_MAX) }));
       }
       setRows(parsed);
     });
@@ -300,7 +298,7 @@ export function ImportPage() {
       const { job: j } = await api<ImportState>("/import", { body: { kind: what, total: all.length } });
       for (let n = 0; n * IMPORT_CHUNK < all.length; n++) {
         const end = (n + 1) * IMPORT_CHUNK;
-        setProgress(`Uploading ${num(Math.min(end, all.length))} of ${num(all.length)}…`);
+        setProgress(t("player.uploadingOf", { done: num(Math.min(end, all.length)), total: num(all.length) }));
         await api(`/import/${j!.id}/chunk`, { body: { n, rows: all.slice(n * IMPORT_CHUNK, end) } });
       }
       const started = await api<ImportState>(`/import/${j!.id}/start`, { body: {} });
@@ -312,7 +310,7 @@ export function ImportPage() {
   return (
     <div className="wrap page">
       <div className="mx-auto max-w-[700px]">
-        <h1 className="page-title">Import listening history</h1>
+        <h1 className="page-title">{t("player.importTitle")}</h1>
         <div className="import-status">
           {job && !download && (
             <ImportProgress
@@ -327,11 +325,11 @@ export function ImportPage() {
           )}
           {cancel.note}
         </div>
-        <Section title="Import from Last.fm">
+        <Section title={t("player.importFromLastfm")}>
           <div className="card form">
             <form className="import-row" onSubmit={fromLastfm}>
               <label>
-                Last.fm username
+                {t("player.lastfmUsername")}
                 <Input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -342,55 +340,56 @@ export function ImportPage() {
                 />
               </label>
               <Select
-                label="What to import"
+                label={t("player.whatToImport")}
                 disabled={busy}
                 value={kind}
                 onChange={(value) => setKind(value === "loved" ? "loved" : "scrobbles")}
                 options={[
-                  ["scrobbles", "Scrobbles"],
-                  ["loved", "Loved tracks"],
+                  ["scrobbles", t("player.scrobbles")],
+                  ["loved", t("player.lovedTracks")],
                 ]}
               />
               <Button kind="btn" disabled={busy || !username.trim()}>
-                Import from Last.fm
+                {t("player.importFromLastfm")}
               </Button>
             </form>
             {download && (
               <div className="import-progress">
-                <p>
-                  Keep this tab open until the upload finishes. Afterwards, Sonosphere can finish in the background.
-                </p>
+                <p>{t("player.keepTabOpen")}</p>
                 <p role="status" className="tabular-nums">
                   {download.total
-                    ? `Downloaded ${num(download.done)} of ${num(download.total)} tracks`
-                    : "Connecting to Last.fm…"}
+                    ? t("player.downloaded", { done: num(download.done), total: num(download.total) })
+                    : t("player.connectingLastfm")}
                 </p>
                 {download.total > 0 && (
                   <progress
                     className="w-full accent-site-accent"
-                    aria-label="Last.fm download progress"
+                    aria-label={t("player.lastfmDownloadProgress")}
                     value={download.done}
                     max={download.total}
                   />
                 )}
                 <Button kind="btn ghost small" type="button" onClick={() => controller.current?.abort()}>
-                  Cancel download
+                  {t("player.cancelDownload")}
                 </Button>
               </div>
             )}
             {lastfm.note}
           </div>
         </Section>
-        <Section title="Import a file">
+        <Section title={t("player.importFile")}>
           <fieldset className="card form" disabled={busy}>
             <p>
-              Import scrobbles or loved tracks from a CSV or JSON file, or a ListenBrainz export ZIP. An export brings
-              in your scrobbles, loved tracks and recording IDs. CSV columns: <code>artist</code>, <code>album</code>,{" "}
-              <code>track</code>, <code>timestamp</code> (Unix seconds or ISO date; only artist and track are required).
+              {tx("player.fileIntro", {
+                artist: <code>artist</code>,
+                album: <code>album</code>,
+                track: <code>track</code>,
+                timestamp: <code>timestamp</code>,
+              })}
             </p>
             <div className="import-row">
               <label>
-                File
+                {t("player.file")}
                 <Input
                   type="file"
                   accept=".csv,.json,.zip,text/csv,application/json,application/zip,application/x-zip-compressed"
@@ -398,24 +397,27 @@ export function ImportPage() {
                 />
               </label>
               <Select
-                label="What the file contains"
+                label={t("player.whatFileContains")}
                 disabled={busy}
                 value={what}
                 onChange={(value) =>
                   setWhat(value === "loved" ? "loved" : value === "listenbrainz" ? "listenbrainz" : "scrobbles")
                 }
                 options={[
-                  ["scrobbles", "Scrobbles"],
-                  ["loved", "Loved tracks"],
-                  ["listenbrainz", "ListenBrainz export"],
+                  ["scrobbles", t("player.scrobbles")],
+                  ["loved", t("player.lovedTracks")],
+                  ["listenbrainz", t("player.listenBrainzExport")],
                 ]}
               />
             </div>
             {rows && (
               <>
                 <p>
-                  <b>{plural(rows.length, noun)}</b> found in {fileName}
-                  {fromUser ? ` (ListenBrainz: ${fromUser})` : ""}. First rows:
+                  {tx(fromUser ? "player.foundFromUser" : "player.found", {
+                    items: <b>{items(rows.length)}</b>,
+                    file: fileName,
+                    user: fromUser ?? "",
+                  })}
                 </p>
                 <table className="chartlist compact">
                   <tbody>
@@ -429,20 +431,18 @@ export function ImportPage() {
                           </span>
                         </td>
                         <td className="c-time">
-                          {r.timestamp ? dateTime(r.timestamp) : r.score || what === "loved" ? "" : "now"}
+                          {r.timestamp ? dateTime(r.timestamp) : r.score || what === "loved" ? "" : t("player.now")}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <Button kind="btn" type="button" loading={imp.busy} onClick={runImport}>
-                  {imp.busy ? progress || "Uploading…" : `Import ${plural(rows.length, noun)}`}
+                  {imp.busy
+                    ? progress || t("player.uploading")
+                    : t("player.importItems", { items: items(rows.length) })}
                 </Button>
-                {imp.busy && (
-                  <p className="muted small">
-                    Keep this page open until the upload finishes; after that it carries on without it.
-                  </p>
-                )}
+                {imp.busy && <p className="muted small">{t("player.keepPageOpen")}</p>}
               </>
             )}
 

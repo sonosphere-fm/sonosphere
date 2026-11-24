@@ -19,15 +19,14 @@ export const wallOpen = (it: Item): boolean => it.type !== "user" || it.row.shou
 export async function post(author: Viewer, it: Item, text: unknown, parentId: number | null = null): Promise<number> {
   const body = String(text || "").trim();
   const max = await setting("maxShoutLength");
-  if (!body) bad("Write something first");
-  if (body.length > max) bad(`Posts can be at most ${max} characters`);
+  if (!body) bad("writeSomethingFirst");
+  if (body.length > max) bad("postTooLong", { max });
   const owner = ownerOf(it);
-  if (owner && owner !== author.id && (await blockedEither(owner, author.id))) fail(403, "You can't post here");
-  if (!wallOpen(it)) fail(403, "This user has turned off their wall");
-  const parent = parentId === null ? null : ((await repo.findShout(parentId)) ?? missing("Post"));
-  if (parent && (parent.targetType !== it.type || parent.targetId !== it.row.id))
-    bad("Reply on the same wall as the post");
-  if (parent && (await blockedEither(parent.authorId, author.id))) fail(403, "You can't reply to this post");
+  if (owner && owner !== author.id && (await blockedEither(owner, author.id))) fail(403, "cantPostHere");
+  if (!wallOpen(it)) fail(403, "userTurnedOffTheirWall");
+  const parent = parentId === null ? null : ((await repo.findShout(parentId)) ?? missing("postNotFound"));
+  if (parent && (parent.targetType !== it.type || parent.targetId !== it.row.id)) bad("replySameWallPost");
+  if (parent && (await blockedEither(parent.authorId, author.id))) fail(403, "cantReplyPost");
   const id = await repo.addShout(author.id, it.type, it.row.id, body, parentId);
   if (it.type === "user") await notify(it.row.id, "shout", author.id, { body: body.slice(0, 140) });
   if (it.type === "journal") {
@@ -62,7 +61,7 @@ export async function remove(by: Viewer, s: repo.ShoutRow): Promise<void> {
     s.authorId === by.id ||
     (s.targetType === "user" && s.targetId === by.id) ||
     (s.targetType === "journal" && (await findItem("journal", s.targetId))?.userId === by.id);
-  if (!mine && !by.isAdmin) fail(403, "You can't delete that post");
+  if (!mine && !by.isAdmin) fail(403, "cantDeletePost");
   await repo.deleteShout(s.id);
   if (mine) return;
   const page = await pageOf(s.targetType, s.targetId);

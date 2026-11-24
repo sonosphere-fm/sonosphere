@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { albumUrl, artistUrl, dec, dur, plural, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
+import { t } from "../../i18n";
+import { albumUrl, artistUrl, dec, dur, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
 import { Async, Section, Tabs, Pane } from "../../ui/base";
 import { Grid, TrackList } from "../../ui/lists";
 import { MoreMenu } from "../../ui/more-menu";
@@ -24,13 +25,22 @@ import {
   SIDE_LINKS,
 } from "./entity";
 
-const AdminTools = lazy(() => import("../../admin/page-tools").then((m) => ({ default: m.AdminTools })));
-const TracklistTool = lazy(() => import("../../admin/page-tools").then((m) => ({ default: m.TracklistTool })));
+const AdminTools = lazy(() =>
+  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.AdminTools }))
+);
+const TracklistTool = lazy(() =>
+  import("../../admin/page-tools").then(async (m) => (await m.ready, { default: m.TracklistTool }))
+);
 
 function albumFacts(a: AlbumData) {
   const facts: [string, ReactNode][] = [];
-  if (a.releaseDate) facts.push(["Release date", releaseDate(a.releaseDate)]);
-  facts.push(["Length", a.tracks.length ? `${plural(a.tracks.length, "track")}, ${dur(a.duration)}` : "Unknown"]);
+  if (a.releaseDate) facts.push([t("music.releaseDate"), releaseDate(a.releaseDate)]);
+  facts.push([
+    t("music.length"),
+    a.tracks.length
+      ? t("music.albumLength", { count: a.tracks.length, duration: dur(a.duration) })
+      : t("music.unknown"),
+  ]);
   return facts;
 }
 
@@ -54,16 +64,16 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             tabs={
               <Tabs
                 items={[
-                  [base, "Overview", true],
-                  [`${base}/+wiki`, "Wiki"],
+                  [base, t("music.overview"), true],
+                  [`${base}/+wiki`, t("music.wiki")],
                 ]}
               />
             }
             actions={
               <>
-                <PlayButton queue={a.tracks} label="Play album" />
+                <PlayButton queue={a.tracks} label={t("music.playAlbum")} />
                 {me && <UploadImage type="album" id={a.id} onDone={q.reload} />}
-                <MoreMenu label={`More actions for ${a.title}`} link={shortMusicUrl("r", a.id)}>
+                <MoreMenu label={t("music.moreActionsFor", { name: a.title })} link={shortMusicUrl("r", a.id)}>
                   {me && <RemoveScrobbles scope="album" id={a.id} name={a.title} count={a.userPlaycount} />}
                 </MoreMenu>
                 {me?.admin && (
@@ -75,8 +85,8 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
             }
             stats={
               <>
-                <HeroStat label="Listeners" value={a.listeners} />
-                <HeroStat label="Scrobbles" value={a.playcount} />
+                <HeroStat label={t("music.listeners")} value={a.listeners} />
+                <HeroStat label={t("music.scrobbles")} value={a.playcount} />
               </>
             }
           />
@@ -92,7 +102,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
                       <Tagger type="album" id={a.id} tags={a.tags} myTags={a.myTags} />
                     </About>
                     <Section
-                      title="Tracklist"
+                      title={t("music.tracklist")}
                       aside={
                         <>
                           {me?.admin && (
@@ -107,14 +117,14 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
                       <TrackList items={a.tracks} numbered showArtist={false} showDuration count="listeners" />
                     </Section>
                     <Listeners items={a.topListeners} />
-                    <Section title="Wall">
+                    <Section title={t("music.wall")}>
                       <Shoutbox type="album" id={a.id} limit={10} />
                     </Section>
                     {a.otherAlbums.length > 0 && (
                       <Section
-                        title={`More by ${a.artist}`}
+                        title={t("music.moreBy", { artist: a.artist })}
                         more={`${artistUrl(a.artist)}/+albums`}
-                        moreLabel="View all albums"
+                        moreLabel={t("music.viewAllAlbums")}
                         foot
                       >
                         <Grid below kind="album" cols={4} items={a.otherAlbums.slice(0, 4)} />
@@ -125,7 +135,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" }) {
                     <ByArtist name={a.artist} image={a.artistImage} />
                     <Trend data={a.trend} />
                     {a.mbid && (
-                      <Section title="Elsewhere">
+                      <Section title={t("music.elsewhere")}>
                         <p className={SIDE_LINKS}>
                           <a href={`https://musicbrainz.org/mbid/${a.mbid}`} target="_blank" rel="noreferrer">
                             MusicBrainz

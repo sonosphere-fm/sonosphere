@@ -50,7 +50,7 @@ const latestChange = (conn: Conn, id: number) =>
   );
 
 export async function usernameStatus(userId: number): Promise<UsernameStatus> {
-  const user = (await first(db.select().from(users).where(eq(users.id, userId)).limit(1))) ?? missing("User");
+  const user = (await first(db.select().from(users).where(eq(users.id, userId)).limit(1))) ?? missing("userNotFound");
   const latest = await latestChange(db, userId);
   return {
     username: user.username,
@@ -70,23 +70,22 @@ export async function changeUsername(
 ) {
   return transact(async (tx) => {
     await lockUsernameClaims(tx);
-    const user = (await first(tx.select().from(users).where(eq(users.id, userId)).for("update"))) ?? missing("User");
+    const user =
+      (await first(tx.select().from(users).where(eq(users.id, userId)).for("update"))) ?? missing("userNotFound");
     const at = now();
     const latest = await latestChange(tx, userId);
     let next: string;
     if (undo) {
-      if (!canUndoUsername(latest, at) || !latest) return bad("This username change can no longer be undone");
+      if (!canUndoUsername(latest, at) || !latest) return bad("usernameChangeNoLongerUndone");
       next = latest.previous;
       await tx.update(usernameHistory).set({ releasedAt: at, undoneAt: at }).where(eq(usernameHistory.id, latest.id));
     } else {
-      if (!adminOverride && user.usernameChangeAfter > at)
-        return fail(429, "You can change your username once every 7 days");
-      if (typeof requested !== "string" || !USERNAME.test(requested))
-        return bad("Usernames are 2–15 characters: letters, numbers, - and _, starting with a letter");
+      if (!adminOverride && user.usernameChangeAfter > at) return fail(429, "changeUsernameOnceEvery7");
+      if (typeof requested !== "string" || !USERNAME.test(requested)) return bad("invalidUsername");
       next = requested;
     }
-    if (norm(next) === user.usernameNorm) return bad("Choose a different username");
-    if (await usernameUnavailable(next, tx, at)) return bad("That username is taken or temporarily reserved");
+    if (norm(next) === user.usernameNorm) return bad("chooseDifferentUsername");
+    if (await usernameUnavailable(next, tx, at)) return bad("usernameTakenTemporarilyReserved");
 
     await tx.insert(usernameHistory).values({
       userId,
@@ -136,7 +135,8 @@ export async function manageUsernames(
 ) {
   return transact(async (tx) => {
     await lockUsernameClaims(tx);
-    const user = (await first(tx.select().from(users).where(eq(users.id, userId)).for("update"))) ?? missing("User");
+    const user =
+      (await first(tx.select().from(users).where(eq(users.id, userId)).for("update"))) ?? missing("userNotFound");
     const at = now();
     let released: string[] = [];
     if (action === "release") {

@@ -539,7 +539,7 @@ export async function setTracklist(
     const trackIds: number[] = [];
     for (const e of entries)
       trackIds.push(typeof e === "number" ? e : await getOrCreateTrackTx(tx, album.artistId!, e));
-    if (new Set(trackIds).size !== trackIds.length) bad("A track is listed twice");
+    if (new Set(trackIds).size !== trackIds.length) bad("trackListedTwice");
     await tx.delete(albumTracks).where(eq(albumTracks.albumId, albumId));
     if (trackIds.length) {
       await tx.insert(albumTracks).values(trackIds.map((trackId, i) => ({ albumId, trackId, position: i + 1 })));

@@ -64,19 +64,18 @@ async function latest(userId: number) {
 
 async function ownJob(userId: number, raw: string | undefined) {
   const id = int(raw);
-  if (id === null) return missing("Import");
+  if (id === null) return missing("importNotFound");
   const [j] = await db
     .select()
     .from(importJobs)
     .where(and(eq(importJobs.id, id), eq(importJobs.userId, userId)));
-  return j ?? missing("Import");
+  return j ?? missing("importNotFound");
 }
 
 async function startJob(userId: number, values: Pick<Job, "kind" | "status" | "total"> & Partial<Job>) {
   const busy = await latest(userId);
-  if (busy && ACTIVE.includes(busy.status))
-    fail(409, "You already have an import going. Wait for it to finish, or cancel it.");
-  await throttle(`import:${userId}`, 10, 86_400, "You can start up to 10 imports a day.");
+  if (busy && ACTIVE.includes(busy.status)) fail(409, "alreadyImportGoingWaitFinish");
+  await throttle(`import:${userId}`, 10, 86_400, "tooManyImportsToday");
   const t = now();
   const [job] = await db
     .insert(importJobs)
@@ -299,11 +298,10 @@ router.post<ImportState>("/api/import", async (c) => {
   const kind: ImportKind =
     c.body.kind === "loved" ? "loved" : c.body.kind === "listenbrainz" ? "listenbrainz" : "scrobbles";
   const lastfmUser = c.body.lastfmUser === undefined ? null : clean(c.body.lastfmUser, 40);
-  if (lastfmUser !== null && !/^[A-Za-z][\w-]{1,30}$/.test(lastfmUser)) bad("That isn't a Last.fm username");
+  if (lastfmUser !== null && !/^[A-Za-z][\w-]{1,30}$/.test(lastfmUser)) bad("isntLastFmUsername");
   const total = int(c.body.total);
-  if (total === null || total < 1) bad("Nothing to import");
-  if (total! > IMPORT_MAX)
-    bad(`An import can hold up to ${IMPORT_MAX.toLocaleString("en")} rows. Split the file and import it in parts.`);
+  if (total === null || total < 1) bad("nothingImport");
+  if (total! > IMPORT_MAX) bad("importTooBig", { count: IMPORT_MAX });
   return { job: shown(await startJob(u.id, { kind, status: "uploading", total: total!, lastfmUser })) };
 });
 
@@ -311,12 +309,12 @@ router.post<{ ok: true }>("/api/import/:id/chunk", async (c) => {
   const j = await ownJob(need(c).id, c.params[0]);
   const n = int(c.body.n);
   const list: unknown[] = Array.isArray(c.body.rows) ? c.body.rows : [];
-  if (j.status !== "uploading") bad("This import isn't taking uploads");
+  if (j.status !== "uploading") bad("importIsntTakingUploads");
   const chunks = Math.ceil(j.total / IMPORT_CHUNK);
-  if (n === null || n < 0 || n >= chunks) bad("Unexpected chunk");
+  if (n === null || n < 0 || n >= chunks) bad("unexpectedChunk");
   // every chunk is full but the last, so a row's place in the file says which chunk it is in
   const want = n === chunks - 1 ? j.total - n! * IMPORT_CHUNK : IMPORT_CHUNK;
-  if (list.length !== want) bad(`Chunk ${n} should hold ${want} rows`);
+  if (list.length !== want) bad("chunkWrongSize", { n: String(n), want });
   // unreadable rows stay as gaps so the counts still line up; they are skipped when filed
   const rows = list.map((r) => readRow(r) ?? { artist: "", track: "", album: "" });
   await db
@@ -331,7 +329,7 @@ router.post<ImportState>("/api/import/:id/start", async (c) => {
   const j = await ownJob(need(c).id, c.params[0]);
   if (j.status !== "uploading") return { job: shown(j) };
   const [have] = await db.select({ c: count() }).from(importChunks).where(eq(importChunks.jobId, j.id));
-  if ((have?.c ?? 0) < Math.ceil(j.total / IMPORT_CHUNK)) bad("Some of the file hasn't been uploaded yet");
+  if ((have?.c ?? 0) < Math.ceil(j.total / IMPORT_CHUNK)) bad("fileNotFullyUploaded");
   const [started] = await db
     .update(importJobs)
     .set({ status: "queued", updatedAt: now() })

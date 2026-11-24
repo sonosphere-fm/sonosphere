@@ -1,5 +1,6 @@
 import { IMPORT_CHUNK, IMPORT_MAX, type ImportState } from "../shared/imports";
-import { api } from "./lib";
+import { api, num } from "./lib";
+import { t } from "./i18n";
 
 type Kind = "scrobbles" | "loved";
 type Row = { artist: string; track: string; album: string; timestamp?: number };
@@ -58,12 +59,11 @@ export async function importLastfm(
       signal: AbortSignal.any([signal, AbortSignal.timeout(20_000)]),
     }).catch(() => {
       signal.throwIfAborted();
-      throw new Error("Couldn't reach Last.fm. Try again in a moment.");
+      throw new Error(t("player.lastfmUnreachable"));
     });
     const body = (await response.json().catch(() => null)) as Reply | null;
     const error = Number(body?.error);
-    if (response.status === 429 || error === 29)
-      throw new Error("Last.fm is rate limiting requests. Wait and try again.");
+    if (response.status === 429 || error === 29) throw new Error(t("player.lastfmRateLimited"));
     // Rotate only for an invalid credential, never to get around a rate limit.
     if (error === 10 && key + 1 < API_KEYS.length) {
       key++;
@@ -78,13 +78,12 @@ export async function importLastfm(
       limit = DOCUMENTED_PAGE_SIZE;
       return read(page);
     }
-    if (error === 6) throw new Error("Last.fm couldn't find that username.");
-    if (error === 17) throw new Error("That Last.fm history is private. Make it visible on Last.fm and try again.");
+    if (error === 6) throw new Error(t("player.lastfmNoUser"));
+    if (error === 17) throw new Error(t("player.lastfmPrivate"));
     const history = kind === "scrobbles" ? body?.recenttracks : body?.lovedtracks;
-    if (!response.ok || error || !history)
-      throw new Error("Last.fm couldn't return this history. Try again in a moment.");
+    if (!response.ok || error || !history) throw new Error(t("player.lastfmFailed"));
     if (Number(history["@attr"]?.page) !== page && Number(history["@attr"]?.total) !== 0)
-      throw new Error("Last.fm returned an unexpected page. Try again.");
+      throw new Error(t("player.lastfmUnexpected"));
     return history;
   };
 
@@ -94,15 +93,14 @@ export async function importLastfm(
   if (Number.isInteger(reportedSize) && reportedSize > 0 && reportedSize < limit) limit = reportedSize;
   const total = Number(first["@attr"]?.total);
   const pages = Number(first["@attr"]?.totalPages);
-  if (total === 0) throw new Error("There is nothing to import from this Last.fm profile.");
+  if (total === 0) throw new Error(t("player.lastfmEmpty"));
   if (!Number.isSafeInteger(total) || total < 0 || !Number.isSafeInteger(pages) || pages < 1)
-    throw new Error("Last.fm didn't report the size of this history. Try again.");
-  if (total > IMPORT_MAX)
-    throw new Error(`This history exceeds the ${IMPORT_MAX.toLocaleString()}-track import limit.`);
+    throw new Error(t("player.lastfmNoSize"));
+  if (total > IMPORT_MAX) throw new Error(t("player.historyTooBig", { max: num(IMPORT_MAX) }));
 
   signal.throwIfAborted();
   const { job } = await api<ImportState>("/import", { body: { kind, total, lastfmUser: user } });
-  if (!job) throw new Error("Sonosphere couldn't start the upload. Try again.");
+  if (!job) throw new Error(t("player.uploadFailed"));
 
   let done = 0;
   let chunk = 0;
@@ -113,11 +111,9 @@ export async function importLastfm(
       signal.throwIfAborted();
       const history = page === 1 ? first : await read(page);
       const pageSize = Number(history["@attr"]?.perPage);
-      if (page > 1 && pageSize && pageSize !== limit)
-        throw new Error("Last.fm changed the page size during the download. Try again.");
+      if (page > 1 && pageSize && pageSize !== limit) throw new Error(t("player.lastfmPageSize"));
       const next = rowsOf(history, to);
-      if (!next.length || done + next.length > total)
-        throw new Error("Last.fm's history changed during the download. Try again.");
+      if (!next.length || done + next.length > total) throw new Error(t("player.lastfmChanged"));
       buffered.push(...next);
       done += next.length;
       progress(done, total);
@@ -128,7 +124,7 @@ export async function importLastfm(
         });
       }
     }
-    if (done !== total || buffered.length) throw new Error("Last.fm's history changed during the download. Try again.");
+    if (done !== total || buffered.length) throw new Error(t("player.lastfmChanged"));
     signal.throwIfAborted();
     return await api<ImportState>(`/import/${job.id}/start`, { body: {} });
   } catch (error) {

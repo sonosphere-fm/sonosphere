@@ -1,5 +1,7 @@
 import { SITE_URL, type Mail } from ".";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
+import { tr } from "../i18n";
+import type { Locale } from "../../shared/i18n/core";
 
 const BLUE = "#2438d6";
 const YELLOW = "#ffcf33";
@@ -22,7 +24,7 @@ function partText(x: Part): string[] {
   return [x.small, ""];
 }
 
-function partHtml(x: Part): string {
+function partHtml(locale: Locale, x: Part): string {
   if ("p" in x) return `<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:${INK}">${esc(x.p)}</p>`;
   if ("item" in x) {
     const quote = x.quote ? `<br><span style="color:${MUTED};font-size:14px">&ldquo;${esc(x.quote)}&rdquo;</span>` : "";
@@ -30,13 +32,13 @@ function partHtml(x: Part): string {
   }
   if ("button" in x) {
     return `<p style="margin:8px 0 24px"><a href="${esc(x.url)}" style="display:inline-block;background:${BLUE};color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:14px 26px">${esc(x.button)}</a></p>
-         <p style="margin:0 0 16px;font-size:13px;line-height:1.5;color:${MUTED}">Or paste this into your browser:<br><a href="${esc(x.url)}" style="color:${BLUE};word-break:break-all">${esc(x.url)}</a></p>`;
+         <p style="margin:0 0 16px;font-size:13px;line-height:1.5;color:${MUTED}">${esc(tr(locale, "mail.pasteLink"))}<br><a href="${esc(x.url)}" style="color:${BLUE};word-break:break-all">${esc(x.url)}</a></p>`;
   }
   return `<p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:${MUTED}">${esc(x.small)}</p>`;
 }
 
 // table layout and inline styles: what mail programs reliably show
-function build(to: string, subject: string, heading: string, parts: Part[], optional = false): Mail {
+function build(locale: Locale, to: string, subject: string, heading: string, parts: Part[], optional = false): Mail {
   const manage = `${SITE_URL}/settings/notifications`;
   const token = crypto.randomUUID().replaceAll("-", "");
   const tracked = `${SITE_URL}/api/mail/${token}`;
@@ -46,12 +48,14 @@ function build(to: string, subject: string, heading: string, parts: Part[], opti
     ...parts.flatMap(partText),
     "-- ",
     `Sonosphere - ${SITE_URL}`,
-    ...(optional ? [`Choose which emails you get: ${manage}`] : []),
+    ...(optional ? [tr(locale, "mail.manageEmailsLine", { url: manage })] : []),
   ].join("\n");
-  const body = parts.map(partHtml).join("\n");
+  const body = parts.map((x) => partHtml(locale, x)).join("\n");
   const siteName = esc(SITE_URL.replace(/^https?:\/\//, ""));
+  const siteLink = `<a href="${esc(SITE_URL)}" style="color:${MUTED}">${siteName}</a>`;
+  const footer = esc(tr(locale, "mail.footer")).replace("{site}", siteLink);
   const manageLink = optional
-    ? ` <a href="${esc(manage)}" style="color:${MUTED}">Choose which emails you get</a>.`
+    ? ` <a href="${esc(manage)}" style="color:${MUTED}">${esc(tr(locale, "mail.manageEmails"))}</a>.`
     : "";
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
 <body style="margin:0;padding:0;background:${PAPER};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
@@ -62,109 +66,101 @@ function build(to: string, subject: string, heading: string, parts: Part[], opti
 <h1 style="margin:0 0 20px;font-size:24px;line-height:1.25;color:${INK}">${esc(heading)}</h1>
 ${body}
 </td></tr>
-<tr><td style="padding:16px 28px;font-size:12px;line-height:1.5;color:${MUTED}">You are getting this because of an account at <a href="${esc(SITE_URL)}" style="color:${MUTED}">${siteName}</a>.${manageLink}</td></tr>
+<tr><td style="padding:16px 28px;font-size:12px;line-height:1.5;color:${MUTED}">${footer}${manageLink}</td></tr>
 </table></td></tr></table></body></html>`;
   return { to, subject, text, html, token };
 }
 
 const link = (path: string, token: string) => `${SITE_URL}${path}?token=${token}`;
 
-export const verifyMail = (to: string, username: string, token: string) =>
-  build(to, "Confirm your email for Sonosphere", `Hi ${username}, confirm your email`, [
-    {
-      p: "Thanks for joining Sonosphere. Confirm this is your email address so you can get back into your account if you ever forget your password.",
-    },
-    { button: "Confirm email", url: link("/verify", token) },
-    {
-      small: `The link works for 3 days; you can ask for a new one from Settings. Accounts that are not confirmed within ${UNVERIFIED_DAYS} days are deleted. If you did not sign up, ignore this message and the account will be removed.`,
-    },
+export const verifyMail = (locale: Locale, to: string, username: string, token: string) =>
+  build(locale, to, tr(locale, "mail.verifySubject"), tr(locale, "mail.verifyHeading", { username }), [
+    { p: tr(locale, "mail.verifyBody") },
+    { button: tr(locale, "mail.verifyButton"), url: link("/verify", token) },
+    { small: tr(locale, "mail.verifyNote", { days: UNVERIFIED_DAYS }) },
   ]);
 
-export const welcomeMail = (to: string, username: string) =>
-  build(to, "Welcome to Sonosphere", `Welcome, ${username}`, [
-    { p: "Your email is confirmed and your account is ready. A few things to try first:" },
-    {
-      p: "Bring your scrobbles with you. Import your listening history from Last.fm or a file and your profile, charts and recommendations fill in from everything you have played.",
-    },
-    { button: "Import your scrobbles", url: `${SITE_URL}/import` },
-    {
-      p: "Then connect a player so every song you play from now on is scrobbled to your profile. Spotify, desktop players and phone apps all work.",
-    },
-    { button: "Connect a player", url: `${SITE_URL}/settings/applications` },
-    { p: "Follow friends and find your soundalikes: people whose taste is closest to yours." },
-    { small: `Your profile: ${SITE_URL}/user/${encodeURIComponent(username)}` },
+export const welcomeMail = (locale: Locale, to: string, username: string) =>
+  build(locale, to, tr(locale, "mail.welcomeSubject"), tr(locale, "mail.welcomeHeading", { username }), [
+    { p: tr(locale, "mail.welcomeIntro") },
+    { p: tr(locale, "mail.welcomeImport") },
+    { button: tr(locale, "mail.welcomeImportButton"), url: `${SITE_URL}/import` },
+    { p: tr(locale, "mail.welcomeConnect") },
+    { button: tr(locale, "mail.welcomeConnectButton"), url: `${SITE_URL}/settings/applications` },
+    { p: tr(locale, "mail.welcomeFollow") },
+    { small: tr(locale, "mail.welcomeProfile", { url: `${SITE_URL}/user/${encodeURIComponent(username)}` }) },
   ]);
 
-export const resetMail = (to: string, username: string, token: string) =>
-  build(to, "Reset your Sonosphere password", "Reset your password", [
-    { p: `Someone (hopefully you) asked to reset the password for ${username} on Sonosphere.` },
-    { button: "Choose a new password", url: link("/reset", token) },
-    {
-      small:
-        "The link works for one hour and only once. If you did not ask for this, ignore this message: your password stays as it is.",
-    },
+export const resetMail = (locale: Locale, to: string, username: string, token: string) =>
+  build(locale, to, tr(locale, "mail.resetSubject"), tr(locale, "mail.resetHeading"), [
+    { p: tr(locale, "mail.resetBody", { username }) },
+    { button: tr(locale, "mail.resetButton"), url: link("/reset", token) },
+    { small: tr(locale, "mail.resetNote") },
   ]);
 
-export const changeMail = (to: string, username: string, token: string) =>
-  build(to, "Confirm your new email for Sonosphere", "Confirm your new email", [
-    { p: `${username} on Sonosphere asked to use this address from now on. Confirm it to make the change.` },
-    { button: "Confirm new email", url: link("/verify", token) },
-    {
-      small:
-        "The link works for 3 days. Until it is used, the account keeps its old address. If this was not you, ignore this message.",
-    },
+export const changeMail = (locale: Locale, to: string, username: string, token: string) =>
+  build(locale, to, tr(locale, "mail.changeSubject"), tr(locale, "mail.changeHeading"), [
+    { p: tr(locale, "mail.changeBody", { username }) },
+    { button: tr(locale, "mail.changeButton"), url: link("/verify", token) },
+    { small: tr(locale, "mail.changeNote") },
   ]);
 
-export const approveEmailChangeMail = (to: string, username: string, next: string, token: string) =>
-  build(to, "Approve your Sonosphere email change", "Approve email change", [
-    {
-      p: `${username} requested an email change to ${next}. Approve it here first; we will then send a verification link to the new address.`,
-    },
-    { button: "Approve email change", url: link("/verify", token) },
-    {
-      small:
-        "This link works for one hour. If you did not request this change, do not approve it and change your password.",
-    },
+export const approveEmailChangeMail = (locale: Locale, to: string, username: string, next: string, token: string) =>
+  build(locale, to, tr(locale, "mail.approveSubject"), tr(locale, "mail.approveHeading"), [
+    { p: tr(locale, "mail.approveBody", { username, email: next }) },
+    { button: tr(locale, "mail.approveButton"), url: link("/verify", token) },
+    { small: tr(locale, "mail.approveNote") },
   ]);
 
-export const emailChangedMail = (to: string, username: string, next: string) =>
-  build(to, "Your Sonosphere email was changed", "Your email was changed", [
-    { p: `The email for ${username} on Sonosphere is now ${next}. Mail about the account will go there from now on.` },
-    {
-      p: "If you did not make this change, someone else may have your password. Reset it from the log-in page, and let the site staff know.",
-    },
+export const emailChangedMail = (locale: Locale, to: string, username: string, next: string) =>
+  build(locale, to, tr(locale, "mail.emailChangedSubject"), tr(locale, "mail.emailChangedHeading"), [
+    { p: tr(locale, "mail.emailChangedBody", { username, email: next }) },
+    { p: tr(locale, "mail.emailChangedWarning") },
   ]);
 
-export const passwordChangedMail = (to: string, username: string) =>
-  build(to, "Your Sonosphere password was changed", "Your password was changed", [
-    { p: `The password for ${username} on Sonosphere was just changed, and every other device was signed out.` },
-    { p: "If this was not you, reset your password right away from the log-in page." },
-    { button: "Reset password", url: `${SITE_URL}/forgot` },
+export const passwordChangedMail = (locale: Locale, to: string, username: string) =>
+  build(locale, to, tr(locale, "mail.passwordChangedSubject"), tr(locale, "mail.passwordChangedHeading"), [
+    { p: tr(locale, "mail.passwordChangedBody", { username }) },
+    { p: tr(locale, "mail.notYouReset") },
+    { button: tr(locale, "mail.resetPasswordButton"), url: `${SITE_URL}/forgot` },
   ]);
 
-export const passwordSetMail = (to: string, username: string) =>
-  build(to, "You set a password on Sonosphere", "You set a password", [
-    {
-      p: `${username} on Sonosphere now has a password. You can log in with it, and use it in scrobbler apps that ask for one. Signing in with your other sites still works too.`,
-    },
-    { p: "If this was not you, reset your password right away from the log-in page." },
-    { button: "Reset password", url: `${SITE_URL}/forgot` },
+export const passwordSetMail = (locale: Locale, to: string, username: string) =>
+  build(locale, to, tr(locale, "mail.passwordSetSubject"), tr(locale, "mail.passwordSetHeading"), [
+    { p: tr(locale, "mail.passwordSetBody", { username }) },
+    { p: tr(locale, "mail.notYouReset") },
+    { button: tr(locale, "mail.resetPasswordButton"), url: `${SITE_URL}/forgot` },
   ]);
 
 export type NoticeLine = { line: string; url: string; quote?: string };
 
-export const noticeMail = (to: string, n: NoticeLine & { button: string }) =>
-  build(to, n.line, n.line, [...(n.quote ? [{ p: `“${n.quote}”` }] : []), { button: n.button, url: n.url }], true);
-
-export const digestMail = (to: string, username: string, weekly: boolean, lines: NoticeLine[], more: number) =>
+export const noticeMail = (locale: Locale, to: string, n: NoticeLine & { button: string }) =>
   build(
+    locale,
     to,
-    `Your ${weekly ? "week" : "day"} on Sonosphere: ${lines.length + more} new`,
-    `Hi ${username}, here's what you missed`,
+    n.line,
+    n.line,
+    [...(n.quote ? [{ p: tr(locale, "mail.quoted", { text: n.quote }) }] : []), { button: n.button, url: n.url }],
+    true
+  );
+
+export const digestMail = (
+  locale: Locale,
+  to: string,
+  username: string,
+  weekly: boolean,
+  lines: NoticeLine[],
+  more: number
+) =>
+  build(
+    locale,
+    to,
+    tr(locale, weekly ? "mail.digestSubjectWeekly" : "mail.digestSubjectDaily", { count: lines.length + more }),
+    tr(locale, "mail.digestHeading", { username }),
     [
       ...lines.map((l) => ({ item: l.line, url: l.url, quote: l.quote })),
-      ...(more ? [{ small: `And ${more} more in your inbox.` }] : []),
-      { button: "Open your inbox", url: `${SITE_URL}/inbox` },
+      ...(more ? [{ small: tr(locale, "mail.digestMore", { count: more }) }] : []),
+      { button: tr(locale, "mail.openInbox"), url: `${SITE_URL}/inbox` },
     ],
     true
   );

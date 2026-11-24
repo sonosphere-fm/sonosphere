@@ -3,6 +3,7 @@ import { Ico } from "./icons";
 import { Button } from "./kit";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, useAuth } from "./lib";
+import { t, tx } from "./i18n";
 import type { SiteInfo } from "../shared/admin";
 import { UNVERIFIED_DAYS, type MeResponse, type Ok } from "../shared/auth";
 
@@ -43,7 +44,7 @@ export function SiteBanner() {
     <div className={`site-banner ${a.tone}`} role="status">
       <div className="wrap site-banner-in">
         <span>{a.text}</span>
-        <Button kind="site-banner-x" type="button" aria-label="Dismiss announcement" onClick={dismiss}>
+        <Button kind="site-banner-x" type="button" aria-label={t("common.dismissAnnouncement")} onClick={dismiss}>
           <Ico.X />
         </Button>
       </div>
@@ -77,15 +78,18 @@ export function ImpersonationBanner() {
     <div className="site-banner impersonation" role="status">
       <div className="wrap site-banner-in">
         <span>
-          Acting as{" "}
-          <strong>
-            <Username user={me} />
-          </strong>{" "}
-          from <Username name={me.impersonating.by} />
-          's account. {error && <span role="alert">{error}</span>}
+          {tx("common.actingAs", {
+            user: (
+              <strong>
+                <Username user={me} />
+              </strong>
+            ),
+            by: <Username name={me.impersonating.by} />,
+          })}{" "}
+          {error && <span role="alert">{error}</span>}
         </span>
         <button type="button" className="banner-link" disabled={busy} onClick={stop}>
-          {busy ? "Returning…" : "Return to your account"}
+          {busy ? t("common.returning") : t("common.returnToAccount")}
         </button>
       </div>
     </div>
@@ -115,36 +119,28 @@ export function VerifyBanner() {
   };
   const left = Math.max(1, Math.ceil((me.registeredAt + UNVERIFIED_DAYS * 86400 - Date.now() / 1000) / 86400));
   const resend = () => {
-    setNote("Sending...");
+    setNote(t("common.sending"));
     api<Ok>("/me/verify", { body: {} }).then(
-      () => setNote(`Sent. Check ${me.email}.`),
+      () => setNote(t("common.sentCheck", { email: me.email })),
       (e) => setNote(e instanceof Error ? e.message : String(e))
     );
   };
   const restrictions = (
-    <>
-      {" "}
-      Certain actions such as posting, sending messages, and following users are restricted until you confirm your email
-      address. Your account will be automatically purged if you do not verify your email address within{" "}
-      <strong>
-        {left} {left === 1 ? "day" : "days"}
-      </strong>
-      .
-    </>
+    <> {tx("common.verifyRestrictions", { days: <strong>{t("common.days", { count: left })}</strong> })}</>
   );
   return (
     <div className="site-banner warning" role="status">
       <div className="wrap site-banner-in">
         <span>
-          Please confirm your email address using the link we sent to <strong>{me.email}</strong>.
+          {tx("common.verifyPrompt", { email: <strong>{me.email}</strong> })}
           {!me.admin && restrictions}{" "}
           {note || (
             <button type="button" className="banner-link" onClick={resend}>
-              Resend verification email
+              {t("common.resendVerification")}
             </button>
           )}
         </span>
-        <Button kind="site-banner-x" type="button" aria-label="Hide for now" onClick={dismiss}>
+        <Button kind="site-banner-x" type="button" aria-label={t("common.hideForNow")} onClick={dismiss}>
           <Ico.X />
         </Button>
       </div>

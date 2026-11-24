@@ -13,7 +13,9 @@ import { api, date, invalidateAll, qs, useApi, useAuth, useParam, useTitle } fro
 import { MdEditor } from "../md";
 import { Async, Empty, Pager, useAction } from "../ui/base";
 import { ChangelogArticle } from "../ui/changelog-post";
+import { locale } from "../i18n";
 import { PEOPLE, PERSON, useConfirm, useFlash } from "./common";
+import { t } from "./i18n";
 
 function RecentCommits() {
   const q = useApi<ChangelogCommits>("/admin/changelog/commits");
@@ -22,7 +24,7 @@ function RecentCommits() {
       <div role="alert">
         <p>{q.error.message}</p>
         <Button kind="btn ghost small" onClick={q.reload}>
-          Try again
+          {t("admin.tryAgain")}
         </Button>
       </div>
     );
@@ -36,14 +38,14 @@ function RecentCommits() {
                 <p className="m-0 font-semibold">{commit.subject}</p>
                 <p className="m-0 mt-1 text-[13px] text-site-muted">
                   {commit.author} ·{" "}
-                  <time dateTime={commit.committedAt}>{new Date(commit.committedAt).toLocaleDateString("en-GB")}</time>
+                  <time dateTime={commit.committedAt}>{new Date(commit.committedAt).toLocaleDateString(locale())}</time>
                 </p>
                 <div className="flex flex-wrap gap-3 items-baseline mt-1 text-[13px] tabular-nums">
                   <code title={commit.hash}>{commit.hash.slice(0, 7)}</code>
-                  <span className="text-site-ok" aria-label={`${commit.additions} lines added`}>
+                  <span className="text-site-ok" aria-label={t("admin.linesAdded", { count: commit.additions })}>
                     +{commit.additions}
                   </span>
-                  <span className="text-site-bad" aria-label={`${commit.deletions} lines removed`}>
+                  <span className="text-site-bad" aria-label={t("admin.linesRemoved", { count: commit.deletions })}>
                     −{commit.deletions}
                   </span>
                 </div>
@@ -51,7 +53,7 @@ function RecentCommits() {
             ))}
           </ol>
         ) : (
-          <Empty>No commits available.</Empty>
+          <Empty>{t("admin.noCommits")}</Empty>
         )
       }
     </Async>
@@ -82,7 +84,7 @@ function Editor({ post }: { post?: ChangelogPost }) {
       <form className="form min-w-0" onSubmit={save}>
         <fieldset disabled={action.busy} className="border-0 p-0 m-0 min-w-0 self-stretch grid gap-5">
           <label>
-            Title
+            {t("admin.postTitle")}
             <Input
               required
               maxLength={120}
@@ -92,16 +94,16 @@ function Editor({ post }: { post?: ChangelogPost }) {
           </label>
           <div className="field-block">
             <div className="flex justify-between items-center gap-3 mb-2">
-              <span className="field-label">Post</span>
+              <span className="field-label">{t("admin.post")}</span>
               <Button type="button" kind="btn ghost small" aria-pressed={preview} onClick={() => setPreview(!preview)}>
-                {preview ? "Write" : "Preview"}
+                {preview ? t("admin.write") : t("admin.preview")}
               </Button>
             </div>
             {preview ? (
               <div className="min-h-[300px] max-w-[68ch] border-t border-site-line">
                 <ChangelogArticle
                   post={{
-                    title: text.title || "Untitled",
+                    title: text.title || t("admin.untitled"),
                     body: text.body,
                     author: post?.author ?? me.username,
                     createdAt: post?.createdAt ?? now,
@@ -112,7 +114,7 @@ function Editor({ post }: { post?: ChangelogPost }) {
               <MdEditor
                 images
                 imageUpload="changelog"
-                label="Post"
+                label={t("admin.post")}
                 rows={18}
                 maxLength={20000}
                 value={text.body}
@@ -123,10 +125,10 @@ function Editor({ post }: { post?: ChangelogPost }) {
           {action.note}
           <div className="row">
             <Button type="submit" kind="btn" loading={action.busy}>
-              {post ? "Save changes" : "Publish"}
+              {post ? t("admin.saveChanges") : t("admin.publish")}
             </Button>
             <Button kind="btn ghost" href="/admin/changelog">
-              Cancel
+              {t("admin.cancel")}
             </Button>
           </div>
         </fieldset>
@@ -136,7 +138,7 @@ function Editor({ post }: { post?: ChangelogPost }) {
           id="recent-commits-heading"
           className="m-0 px-4 py-3 border-b border-site-line text-[20px] font-site-display"
         >
-          Recent commits
+          {t("admin.recentCommits")}
         </h3>
         <div
           tabIndex={0}
@@ -147,7 +149,7 @@ function Editor({ post }: { post?: ChangelogPost }) {
           <Suspense
             fallback={
               <p role="status" className="text-site-muted">
-                Loading commits…
+                {t("admin.loadingCommits")}
               </p>
             }
           >
@@ -161,16 +163,17 @@ function Editor({ post }: { post?: ChangelogPost }) {
 
 export function ChangelogEditor() {
   const { id } = useParams();
-  useTitle(id ? "Edit changelog post" : "New changelog post");
+  const heading = id ? t("admin.editChangelogPost") : t("admin.newChangelogPost");
+  useTitle(heading);
   const q = useApi<ChangelogPost>(id ? `/admin/changelog/${id}` : null);
   return (
     <section>
-      <h2 className="m-0 mb-6 text-[26px] font-site-display">{id ? "Edit changelog post" : "New changelog post"}</h2>
+      <h2 className="m-0 mb-6 text-[26px] font-site-display">{heading}</h2>
       {q.error ? (
         <div role="alert">
           <p>{q.error.message}</p>
           <Button kind="btn ghost" onClick={q.reload}>
-            Try again
+            {t("admin.tryAgain")}
           </Button>
         </div>
       ) : id ? (
@@ -183,30 +186,30 @@ export function ChangelogEditor() {
 }
 
 export function ChangelogPosts() {
-  useTitle("Changelog posts");
+  useTitle(t("admin.changelogPosts"));
   const [page] = useParam("page", "1");
   const q = useApi<Changelog>(`/changelog${qs({ page })}`);
   const [modal, ask] = useConfirm();
   const flash = useFlash();
   const askDelete = (post: ChangelogPost) =>
     ask({
-      title: `Delete “${post.title}”`,
-      action: "Delete post",
+      title: t("admin.deleteNamed", { name: post.title }),
+      action: t("admin.deletePost"),
       danger: true,
-      body: <p>Removes the post from the changelog. This can't be undone.</p>,
+      body: <p>{t("admin.deletePostBody")}</p>,
       run: (note) =>
         api<ChangelogDeleted>(`/admin/changelog/${post.id}/delete`, { body: { note } }).then(() => {
           invalidateAll();
-          flash.set({ ok: true, text: `Deleted “${post.title}”.` });
+          flash.set({ ok: true, text: t("admin.deletedName", { name: post.title }) });
         }),
     });
   return (
     <section>
       {modal}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h2 className="m-0 text-[26px] font-site-display">Changelog posts</h2>
+        <h2 className="m-0 text-[26px] font-site-display">{t("admin.changelogPosts")}</h2>
         <Button kind="btn" href="/admin/changelog/new">
-          New post
+          {t("admin.newPost")}
         </Button>
       </div>
       {flash.note}
@@ -222,21 +225,23 @@ export function ChangelogPosts() {
                         {post.title}
                       </Link>
                       <p className="m-0 text-[13px] text-site-muted">
-                        {date(post.createdAt)} · {post.author}
-                        {post.updatedAt !== post.createdAt && `, edited by ${post.editor}`}
+                        {date(post.createdAt)} ·{" "}
+                        {post.updatedAt === post.createdAt
+                          ? post.author
+                          : t("admin.authorEditedBy", { author: post.author, editor: post.editor })}
                       </p>
                     </div>
                     <Button kind="btn ghost small" href={`/admin/changelog/${post.id}/edit`}>
-                      Edit
+                      {t("admin.edit")}
                     </Button>
                     <Button kind="btn ghost small" onClick={() => askDelete(post)}>
-                      Delete
+                      {t("admin.delete")}
                     </Button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <Empty>No changelog posts yet.</Empty>
+              <Empty>{t("admin.noChangelogPosts")}</Empty>
             )}
             <Pager total={d.total} limit={d.limit} />
           </>

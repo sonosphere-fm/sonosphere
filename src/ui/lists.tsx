@@ -6,6 +6,8 @@ import { ago, albumUrl, api, artistUrl, dateTime, dur, num, tagUrl, trackUrl, us
 import { PlayButton, type PTrack } from "../player";
 import { Art, Empty, Avatar } from "./base";
 import { UserLabels } from "./user-labels";
+import { Username } from "./username";
+import { t, tx } from "../i18n";
 import type { ChartTag } from "../../shared/home";
 import type { Loved, TopAlbum, TopArtist, TopTrack } from "../../shared/listening";
 import type { Recommendation } from "../../shared/recommend";
@@ -42,12 +44,12 @@ export function LoveButton({
     <Button
       kind={(label ? "btn ghost love" : "love") + (on ? " on" : "")}
       aria-pressed={on}
-      aria-label={on ? "Unlove this track" : "Love this track"}
-      title={on ? "Unlove" : "Love"}
+      aria-label={on ? t("user.unloveTrack") : t("user.loveTrack")}
+      title={on ? t("user.unlove") : t("user.love")}
       onClick={toggle}
     >
       <Ico.Heart on={on} />
-      {label && (on ? " Loved" : " Love")}
+      {label && ` ${on ? t("user.loved") : t("user.love")}`}
     </Button>
   );
 }
@@ -104,20 +106,20 @@ export function TrackList<R extends Row>({
     image: r.image,
     duration: r.duration,
   }));
-  if (!rows.length) return <Empty>No tracks to show yet.</Empty>;
+  if (!rows.length) return <Empty>{t("user.noTracks")}</Empty>;
   return (
     <table className={compact ? "chartlist slim" : "chartlist"}>
       <thead className="sr-only">
         <tr>
-          {(rank !== undefined || numbered) && <th scope="col">{numbered ? "Position" : "Rank"}</th>}
-          <th scope="col">Playback</th>
-          <th scope="col">Artwork</th>
-          {!compact && <th scope="col">Love</th>}
-          <th scope="col">Track</th>
-          {showDuration && <th scope="col">Duration</th>}
-          {actions && <th scope="col">Actions</th>}
-          {count && <th scope="col">{count === "listeners" ? "Listeners" : "Scrobbles"}</th>}
-          {time && <th scope="col">Played</th>}
+          {(rank !== undefined || numbered) && <th scope="col">{numbered ? t("user.colPosition") : t("user.colRank")}</th>}
+          <th scope="col">{t("user.colPlayback")}</th>
+          <th scope="col">{t("user.colArtwork")}</th>
+          {!compact && <th scope="col">{t("user.love")}</th>}
+          <th scope="col">{t("user.colTrack")}</th>
+          {showDuration && <th scope="col">{t("user.colDuration")}</th>}
+          {actions && <th scope="col">{t("user.colActions")}</th>}
+          {count && <th scope="col">{count === "listeners" ? t("user.colListeners") : t("user.statScrobbles")}</th>}
+          {time && <th scope="col">{t("user.colPlayed")}</th>}
         </tr>
       </thead>
       <tbody>
@@ -129,11 +131,11 @@ export function TrackList<R extends Row>({
               onSelect && !r._np
                 ? (e) => {
                     if (e.button !== 0) return;
-                    const t = e.target as Element;
+                    const target = e.target as Element;
                     // In-app links navigate on mousedown, before the selection click.
-                    if (t.closest("a")) e.preventDefault();
+                    if (target.closest("a")) e.preventDefault();
                     // Shift-click must not highlight row text while range-selecting; leave controls alone.
-                    else if (e.shiftKey && !t.closest("button, input, label")) e.preventDefault();
+                    else if (e.shiftKey && !target.closest("button, input, label")) e.preventDefault();
                   }
                 : undefined
             }
@@ -201,13 +203,13 @@ export function TrackList<R extends Row>({
             </td>
             {showDuration && <td className="c-dur">{dur(r.duration || 0)}</td>}
             {actions && <td className="c-actions">{actions(r)}</td>}
-            {count && <CountCell value={r[count] || 0} max={max} unit={trackUnit(count, r[count])} plain={compact} />}
+            {count && <CountCell value={r[count] || 0} max={max} unit={unitWord(count, r[count] || 0)} plain={compact} />}
             {time && (
               <td className="c-time">
                 <div className="track-tail">
                   {r._np ? (
                     <span className="np">
-                      Scrobbling now{" "}
+                      {t("user.scrobblingNow")}{" "}
                       <i className="eq">
                         <i />
                         <i />
@@ -232,9 +234,11 @@ export function TrackList<R extends Row>({
   );
 }
 
-function trackUnit(count: "playcount" | "listeners", value: number | undefined) {
-  if (count === "listeners") return "listeners";
-  return value === 1 ? "scrobble" : "scrobbles";
+type RankCount = "playcount" | "listeners" | "count";
+function unitWord(count: RankCount, value: number) {
+  if (count === "listeners") return t("user.listenersWord", { count: value });
+  if (count === "count") return t("user.taggingsWord", { count: value });
+  return t("user.scrobblesWord", { count: value });
 }
 
 function CountCell({ value, max, unit, plain }: { value: number; max: number; unit: string; plain?: boolean }) {
@@ -255,8 +259,6 @@ function CountCell({ value, max, unit, plain }: { value: number; max: number; un
 }
 
 type RankItem = TopArtist | TopAlbum | TopTrack | TagCount | ChartTag;
-type RankCount = "playcount" | "listeners" | "count";
-const RANK_UNIT: Record<RankCount, string> = { listeners: "listeners", count: "taggings", playcount: "scrobbles" };
 function rankValue(r: RankItem, count: RankCount) {
   if (count === "count") return ("count" in r ? r.count : 0) || 0;
   if (count === "playcount") return ("playcount" in r ? r.playcount : 0) || 0;
@@ -281,7 +283,7 @@ export function RankList({
   compact?: boolean;
 }) {
   const max = Math.max(1, ...items.map((i) => rankValue(i, count)));
-  if (!items.length) return <Empty>Nothing to show for this period.</Empty>;
+  if (!items.length) return <Empty>{t("user.nothingForPeriod")}</Empty>;
   return (
     <table className={compact ? "chartlist slim" : "chartlist"}>
       <tbody>
@@ -310,7 +312,7 @@ export function RankList({
                   </Link>
                 )}
               </td>
-              <CountCell value={rankValue(r, count)} max={max} unit={RANK_UNIT[count]} plain={compact} />
+              <CountCell value={rankValue(r, count)} max={max} unit={unitWord(count, rankValue(r, count))} plain={compact} />
             </tr>
           );
         })}
@@ -324,7 +326,7 @@ type CardItem =
   | { id?: number; name: string; image?: string | null; listeners?: number }
   | { id?: number; title: string; artist: string; image?: string | null; listeners?: number };
 const cardName = (it: CardItem) => ("name" in it ? it.name : it.title);
-const listeners = (n: number) => `${num(n)} ${n === 1 ? "listener" : "listeners"}`;
+const listeners = (count: number) => t("user.listenerCount", { count });
 
 function MediaCard({ kind, item, sub, below }: { kind: CardKind; item: CardItem; sub?: ReactNode; below?: boolean }) {
   const name = cardName(item);
@@ -377,7 +379,7 @@ export function Grid<T extends CardItem>({
   flush?: boolean;
   below?: boolean;
 }) {
-  if (!items.length) return <Empty>Nothing to show yet.</Empty>;
+  if (!items.length) return <Empty>{t("user.nothingYet")}</Empty>;
   if (flush) {
     return (
       <div className={tiles}>
@@ -401,9 +403,14 @@ export function Grid<T extends CardItem>({
 }
 
 const REC_KIND = {
-  artist: { title: "Artist", Badge: Ico.Star, color: "bg-[#f08a1c]" },
-  album: { title: "Album", Badge: Ico.Disc, color: "bg-[#2e9d5b]" },
-  track: { title: "Track", Badge: Ico.Music, color: "bg-[#2f7fd6]" },
+  artist: { Badge: Ico.Star, color: "bg-[#f08a1c]" },
+  album: { Badge: Ico.Disc, color: "bg-[#2e9d5b]" },
+  track: { Badge: Ico.Music, color: "bg-[#2f7fd6]" },
+};
+const recTitle = (kind: keyof typeof REC_KIND) => {
+  if (kind === "artist") return t("user.typeArtist");
+  if (kind === "album") return t("user.typeAlbum");
+  return t("user.typeTrack");
 };
 const rec = "rec break-inside-avoid m-0 mb-5 min-[601px]:max-[900px]:mb-4 max-[600px]:mb-2.5";
 const recBadge =
@@ -413,6 +420,15 @@ const recBadge =
 const recWhy =
   "m-0 py-3 pr-12 pl-3 bg-site-panel border border-site-line [border-top:0] text-[13.5px] leading-[1.4] " +
   "text-site-ink-2 [&_a]:text-site-link max-[600px]:py-2 max-[600px]:pr-[30px] max-[600px]:pl-2 max-[600px]:text-[12.5px]";
+function recWhyText(kind: keyof typeof REC_KIND, artist: string, similar: ReactNode[], via?: string) {
+  const by = <Link to={artistUrl(artist)}>{artist}</Link>;
+  if (kind !== "artist") {
+    return similar.length ? tx("user.byArtistSimilarTo", { artist: by, similar }) : tx("user.byArtist", { artist: by });
+  }
+  if (similar.length) return tx("user.similarTo", { similar });
+  return via === "neighbours" ? t("user.popularWithListeners") : t("user.pickedFromListening");
+}
+
 export function RecCard({
   kind,
   item,
@@ -430,10 +446,10 @@ export function RecCard({
   let to = trackUrl(artist, name);
   if (kind === "artist") to = artistUrl(name);
   else if (kind === "album") to = albumUrl(artist, name);
-  const { title, Badge, color } = REC_KIND[kind];
+  const { Badge, color } = REC_KIND[kind];
   const similar = because.map((b, i) => (
     <span key={b}>
-      {i > 0 && " & "}
+      {i > 0 && t("user.similarJoin")}
       <Link to={artistUrl(b)}>{b}</Link>
     </span>
   ));
@@ -452,22 +468,12 @@ export function RecCard({
           </span>
         </Link>
         {kind === "track" && <PlayButton queue={[{ title: name, artist, album, image: item.image, duration }]} />}
-        <span className={`${recBadge} ${color}`} title={title}>
+        <span className={`${recBadge} ${color}`} title={recTitle(kind)}>
           <Badge />
         </span>
       </div>
       <p className={recWhy}>
-        {kind !== "artist" && (
-          <>
-            By <Link to={artistUrl(artist)}>{artist}</Link>
-            {similar.length > 0 && ", similar to "}
-          </>
-        )}
-        {kind === "artist" && similar.length > 0 && "Similar to "}
-        {similar}
-        {kind === "artist" &&
-          !similar.length &&
-          (via === "neighbours" ? "Popular with listeners like you" : "Picked from your listening")}
+        {recWhyText(kind, artist, similar, via)}
       </p>
     </article>
   );
@@ -479,7 +485,7 @@ export function UserList<U extends PublicUser & { playcount?: number }>({
   items: U[];
   extra?: (u: U) => ReactNode;
 }) {
-  if (!items.length) return <Empty>No one here yet.</Empty>;
+  if (!items.length) return <Empty>{t("user.noOneHere")}</Empty>;
   return (
     <ul className="userlist">
       {items.map((u) => (
@@ -497,7 +503,7 @@ export function UserList<U extends PublicUser & { playcount?: number }>({
             )}
             {extra?.(u)}
           </div>
-          {u.playcount !== undefined && <span className="muted small nowrap">{num(u.playcount)} scrobbles</span>}
+          {u.playcount !== undefined && <span className="muted small nowrap">{t("user.scrobbleCount", { count: u.playcount })}</span>}
         </li>
       ))}
     </ul>
@@ -530,14 +536,13 @@ export function FollowButton({
     <Button kind={on ? "btn ghost" : "btn"} onClick={toggle}>
       {on ? (
         <>
-          <Ico.Check /> Following
+          <Ico.Check /> {t("user.following")}
         </>
       ) : (
         <>
-          <Ico.Plus /> Follow
+          <Ico.Plus /> {t("user.follow")}
         </>
       )}
     </Button>
   );
 }
-import { Username } from "./username";

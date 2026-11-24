@@ -3,6 +3,7 @@ import type { ComponentProps } from "react";
 import { useNavigate } from "react-router-dom";
 import { Ico } from "../icons";
 import { api, useAuth, userUrl, type Me, type Ok } from "../lib";
+import { t } from "../i18n";
 
 export default function AccountMenu({
   viewer: me,
@@ -28,31 +29,35 @@ export default function AccountMenu({
       menuMaxHeight={480}
       button={button}
     >
-      <DropdownMenuItem icon={<Ico.User />} label="Profile" href={userUrl(me.username)} />
-      <DropdownMenuItem icon={<Ico.Library />} label="Library" href={`${userUrl(me.username)}/library`} />
+      <DropdownMenuItem icon={<Ico.User />} label={t("common.profile")} href={userUrl(me.username)} />
+      <DropdownMenuItem icon={<Ico.Library />} label={t("common.library")} href={`${userUrl(me.username)}/library`} />
       <DropdownMenuItem
         icon={<Ico.Reports />}
-        label="Listening reports"
+        label={t("common.listeningReports")}
         href={`${userUrl(me.username)}/listening-report/week`}
       />
-      <DropdownMenuItem icon={<Ico.Recommended />} label="Recommended" href="/recommended" />
+      <DropdownMenuItem icon={<Ico.Recommended />} label={t("common.recommended")} href="/recommended" />
       <DropdownMenuItem
         icon={<Ico.Chat />}
-        label={dmCount > 0 ? `Messages (${dmCount})` : "Messages"}
+        label={dmCount > 0 ? t("common.messagesCount", { count: dmCount }) : t("common.messages")}
         href={!me.dm.unread && me.dm.requests ? "/messages/requests" : "/messages"}
       />
-      <DropdownMenuItem icon={<Ico.Inbox />} label={me.unread > 0 ? `Inbox (${me.unread})` : "Inbox"} href="/inbox" />
-      <DropdownMenuItem icon={<Ico.Scrobble />} label="Scrobble" href="/scrobble" />
-      <DropdownMenuItem icon={<Ico.Settings />} label="Settings" href="/settings" />
+      <DropdownMenuItem
+        icon={<Ico.Inbox />}
+        label={me.unread > 0 ? t("common.inboxCount", { count: me.unread }) : t("common.inbox")}
+        href="/inbox"
+      />
+      <DropdownMenuItem icon={<Ico.Scrobble />} label={t("common.scrobble")} href="/scrobble" />
+      <DropdownMenuItem icon={<Ico.Settings />} label={t("common.settings")} href="/settings" />
       {me.admin && (
         <DropdownMenuItem
           icon={<Ico.Shield />}
-          label={me.openReports > 0 ? `Admin (${me.openReports})` : "Admin"}
+          label={me.openReports > 0 ? t("common.adminCount", { count: me.openReports }) : t("common.admin")}
           href={me.openReports > 0 ? "/admin/reports" : "/admin"}
         />
       )}
-      <DropdownMenuItem icon={<Ico.Discord />} label="Join our Discord" href="/discord" />
-      <DropdownMenuItem icon={<Ico.LogOut />} label="Log out" onClick={logout} />
+      <DropdownMenuItem icon={<Ico.Discord />} label={t("common.joinDiscord")} href="/discord" />
+      <DropdownMenuItem icon={<Ico.LogOut />} label={t("common.logOut")} onClick={logout} />
     </DropdownMenu>
   );
 }

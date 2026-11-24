@@ -2,82 +2,83 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Ico } from "../icons";
 import { Button, Input, Select } from "../kit";
-import { ago, api, dateTime, plural, qs, useApi, useAuth, useTitle } from "../lib";
+import { ago, api, dateTime, qs, useApi, useAuth, useTitle } from "../lib";
 import { Async, Empty, Pager } from "../ui/base";
 import { CHECK, NOTE, PICKED_BG, TOOLBAR, TYPE_LABEL } from "./common";
-import { REASON, TYPE, adminUrl, useQuery, useConfirm } from "./common";
+import { REASONS, TYPES, adminUrl, outcomeLabel, reasonLabel, typeLabel, useQuery, useConfirm } from "./common";
+import type { AdminKey } from "./common";
+import { t, tx } from "./i18n";
 import type { ReportResolved, ReportsClosed, StaffReport, StaffReportList } from "../../shared/admin";
 
 type Decision = "dismiss" | "remove" | "suspend" | "mute";
 type Option = [string, string];
 
+const THIS_TYPE: Record<string, AdminKey> = {
+  shout: "admin.thisShout",
+  wiki: "admin.thisWiki",
+  journal: "admin.thisJournal",
+  dm: "admin.thisDm",
+  group: "admin.thisGroup",
+};
+const THIS_TYPE_BY: Record<string, AdminKey> = {
+  shout: "admin.thisShoutBy",
+  wiki: "admin.thisWikiBy",
+  journal: "admin.thisJournalBy",
+  dm: "admin.thisDmBy",
+  group: "admin.thisGroupBy",
+};
+const GONE: Record<string, AdminKey> = { dm: "admin.goneDm", group: "admin.goneGroup" };
+const sentences = (...parts: string[]) => parts.filter(Boolean).join(" ");
+
 function decisionCopy(r: StaffReport, action: Decision) {
   const isUser = r.type === "user";
   const dm = r.type === "dm" || r.type === "group";
-  const what = isUser
-    ? `${r.author}'s profile`
-    : `this ${TYPE[r.type].toLowerCase()}${r.author ? ` by ${r.author}` : ""}`;
-  let gone = " This can't be undone.";
-  if (r.type === "dm") gone = " It disappears for both people at once; staff can still see it in the transcript.";
-  if (r.type === "group") gone = " It disappears for everyone in the group at once.";
-  const others = r.others ? ` The ${plural(r.others, "other open report")} on it will be closed too.` : "";
-  const removeVerb = dm ? "Remove" : "Delete";
+  const author = r.author ?? "";
+  let what = t(THIS_TYPE[r.type]);
+  if (isUser) what = t("admin.whoseProfile", { name: author });
+  else if (r.author) what = t(THIS_TYPE_BY[r.type], { name: r.author });
+  const gone = t(GONE[r.type] ?? "admin.goneDefault");
+  const others = r.others ? t("admin.othersClosed", { count: r.others }) : "";
   switch (action) {
     case "dismiss":
       return {
-        title: "Dismiss report",
-        action: "Dismiss",
-        body: (
-          <p>
-            Leave {what} as it is and close the report.{others}
-          </p>
-        ),
+        title: t("admin.dismissReport"),
+        action: t("admin.dismiss"),
+        body: <p>{sentences(t("admin.dismissBody", { what }), others)}</p>,
       };
     case "remove":
       return {
-        title: dm ? "Remove message" : "Remove content",
-        action: "Remove",
+        title: dm ? t("admin.removeMessage") : t("admin.removeContent"),
+        action: t("admin.remove"),
         danger: true,
-        body: (
-          <p>
-            {removeVerb} {what}.{gone}
-            {others}
-          </p>
-        ),
+        body: <p>{sentences(t(dm ? "admin.removeWhat" : "admin.deleteWhat", { what }), gone, others)}</p>,
       };
     case "suspend": {
-      const text = isUser
-        ? `Suspend ${r.author} from posting.`
-        : `${removeVerb} ${what} and suspend ${r.author} from posting${dm ? " and messaging" : ""}.`;
+      let text = t("admin.suspendFromPosting", { name: author });
+      if (!isUser) text = t(dm ? "admin.removeAndSuspendDm" : "admin.deleteAndSuspend", { what, name: author });
       return {
-        title: isUser ? "Suspend account" : "Remove and suspend",
-        action: isUser ? "Suspend" : "Remove and suspend",
+        title: isUser ? t("admin.suspendAccount") : t("admin.removeAndSuspend"),
+        action: isUser ? t("admin.suspend") : t("admin.removeAndSuspend"),
         danger: true,
-        body: (
-          <p>
-            {text}
-            {others}
-          </p>
-        ),
+        body: <p>{sentences(text, others)}</p>,
       };
     }
     case "mute":
       return {
-        title: "Remove and turn off messaging",
-        action: "Remove and mute",
+        title: t("admin.removeAndMuteTitle"),
+        action: t("admin.removeAndMute"),
         danger: true,
-        body: (
-          <p>
-            Remove {what} and turn off direct messages for {r.author}. They can still read their conversations and use
-            the rest of the site.{others}
-          </p>
-        ),
+        body: <p>{sentences(t("admin.removeAndMuteBody", { what, name: author }), others)}</p>,
       };
   }
 }
 
 const PILL = "text-[12px] font-semibold text-site-accent-dark";
-const AUTHOR_PREFIX: Record<string, string> = { user: "Account ", dm: "Sent by ", group: "Sent by " };
+const AUTHOR_LINE: Record<string, AdminKey> = {
+  user: "admin.authorAccount",
+  dm: "admin.authorSent",
+  group: "admin.authorSent",
+};
 
 export function Reports() {
   const { refresh } = useAuth();
@@ -90,7 +91,7 @@ export function Reports() {
   const q = useApi<StaffReportList>(`/admin/reports${qs({ status, type, reason, page })}`);
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const counts = q.data;
-  useTitle("Reports");
+  useTitle(t("admin.navReports"));
   useEffect(() => setPicked(new Set()), [status, type, reason, page]);
   const done = () => {
     q.reload();
@@ -100,20 +101,16 @@ export function Reports() {
   const decide = (r: StaffReport, action: Decision) => {
     ask({
       ...decisionCopy(r, action),
-      note: "Resolution note",
+      note: t("admin.resolutionNote"),
       run: (note) => api<ReportResolved>(`/admin/reports/${r.id}`, { body: { action, note } }).then(done),
     });
   };
   const dismissPicked = () =>
     ask({
-      title: `Dismiss ${plural(picked.size, "report")}`,
-      action: "Dismiss all",
-      note: "Resolution note",
-      body: (
-        <p>
-          Close the selected reports without changing anything. Other open reports on the same items are closed too.
-        </p>
-      ),
+      title: t("admin.dismissReports", { count: picked.size }),
+      action: t("admin.dismissAll"),
+      note: t("admin.resolutionNote"),
+      body: <p>{t("admin.dismissReportsBody")}</p>,
       run: (note) => api<ReportsClosed>("/admin/reports/bulk", { body: { ids: [...picked], note } }).then(done),
     });
   const togglePick = (id: number, on: boolean) => {
@@ -127,40 +124,45 @@ export function Reports() {
       {modal}
       <div className={TOOLBAR}>
         <nav className="tabs sub">
-          {[
-            ["open", "Open"],
-            ["closed", "Resolved"],
-            ["all", "All"],
-          ].map(([k, l]) => (
+          {(
+            [
+              ["open", "admin.flagsOpen"],
+              ["closed", "admin.flagsResolved"],
+              ["all", "admin.flagsAll"],
+            ] as const
+          ).map(([k, l]) => (
             <button
               key={k}
               type="button"
               className={status === k ? "active" : ""}
               onClick={() => set({ status: k === "open" ? "" : k })}
             >
-              {l}
-              {k === "open" && q.data ? ` (${q.data.open})` : ""}
+              {k === "open" && q.data ? t("admin.labelCount", { label: t(l), count: q.data.open }) : t(l)}
             </button>
           ))}
         </nav>
         {counts && (
           <div className="row">
             <Select
-              label="Type"
+              label={t("admin.type")}
               value={type}
               onChange={(v) => set({ type: v })}
               options={[
-                ["", "All types"],
-                ...Object.keys(TYPE).map((k): Option => [k, `${TYPE[k]} (${counts.byType[k] ?? 0})`]),
+                ["", t("admin.allTypes")],
+                ...TYPES.map(
+                  (k): Option => [k, t("admin.labelCount", { label: typeLabel(k), count: counts.byType[k] ?? 0 })]
+                ),
               ]}
             />
             <Select
-              label="Reason"
+              label={t("admin.reason")}
               value={reason}
               onChange={(v) => set({ reason: v })}
               options={[
-                ["", "All reasons"],
-                ...Object.keys(REASON).map((k): Option => [k, `${REASON[k]} (${counts.byReason[k] ?? 0})`]),
+                ["", t("admin.allReasons")],
+                ...REASONS.map(
+                  (k): Option => [k, t("admin.labelCount", { label: reasonLabel(k), count: counts.byReason[k] ?? 0 })]
+                ),
               ]}
             />
           </div>
@@ -176,23 +178,21 @@ export function Reports() {
                   <label className={CHECK}>
                     <Input
                       type="checkbox"
-                      aria-label="Select all on this page"
+                      aria-label={t("admin.selectAllOnPage")}
                       checked={picked.size > 0 && picked.size === open.length}
                       onChange={(e) => setPicked(new Set(e.target.checked ? open.map((r) => r.id) : []))}
                     />{" "}
-                    Select all
+                    {t("admin.selectAll")}
                   </label>
                   {picked.size > 0 && (
                     <Button kind="btn ghost small" type="button" onClick={dismissPicked}>
-                      Dismiss {picked.size} selected
+                      {t("admin.dismissSelected", { count: picked.size })}
                     </Button>
                   )}
                 </div>
               )}
               {d.items.length === 0 && (
-                <Empty>
-                  {status === "open" ? "Nothing waiting. Reports from listeners show up here." : "No reports match."}
-                </Empty>
+                <Empty>{status === "open" ? t("admin.nothingWaiting") : t("admin.noReportsMatch")}</Empty>
               )}
               <ul className="reports [&>li]:py-[14px] [&>li]:px-3">
                 {d.items.map((r) => {
@@ -201,91 +201,98 @@ export function Reports() {
                   const canMute = r.exists && dm && r.author && !r.authorStaff && !r.authorMuted && !r.authorBanned;
                   const canSuspend = r.exists && r.author && !r.authorStaff && !r.authorSuspended && !r.authorBanned;
                   let authorState = null;
-                  if (r.authorBanned) authorState = <span className="muted"> (banned)</span>;
-                  else if (r.authorSuspended) authorState = <span className="muted"> (suspended)</span>;
+                  if (r.authorBanned) authorState = <span className="muted"> {t("admin.bannedParen")}</span>;
+                  else if (r.authorSuspended) authorState = <span className="muted"> {t("admin.suspendedParen")}</span>;
                   return (
                     <li key={r.id} className={picked.has(r.id) ? PICKED_BG : ""}>
                       <div className="row gap-2">
                         {r.status === "open" && (
                           <Input
                             type="checkbox"
-                            aria-label={`Select report ${r.id}`}
+                            aria-label={t("admin.selectReport", { id: r.id })}
                             checked={picked.has(r.id)}
                             onChange={(e) => togglePick(r.id, e.target.checked)}
                           />
                         )}
-                        <span className="badge">{REASON[r.reason] || r.reason}</span>
-                        <span className={TYPE_LABEL}>{TYPE[r.type]}</span>
+                        <span className="badge">{reasonLabel(r.reason)}</span>
+                        <span className={TYPE_LABEL}>{typeLabel(r.type)}</span>
                         <b>{r.where}</b>
-                        {!r.exists && <span className="muted">· no longer exists</span>}
-                        {r.removed && <span className="muted">· removed from the conversation</span>}
+                        {!r.exists && <span className="muted">· {t("admin.noLongerExists")}</span>}
+                        {r.removed && <span className="muted">· {t("admin.removedFromConversation")}</span>}
                         {r.others > 0 && r.status === "open" && (
-                          <span className={PILL}>+{plural(r.others, "more report")}</span>
+                          <span className={PILL}>{t("admin.moreReports", { count: r.others })}</span>
                         )}
                       </div>
                       <blockquote className={dm ? "adm-dm-snap" : undefined}>
-                        {r.text || <span className="muted">(empty)</span>}
+                        {r.text || <span className="muted">{t("admin.emptyParen")}</span>}
                       </blockquote>
                       <p className="small">
-                        {AUTHOR_PREFIX[r.type] ?? "Written by "}
-                        {r.author ? (
-                          <Link to={adminUrl(r.author)}>
-                            <Username name={r.author} />
-                          </Link>
-                        ) : (
-                          "a deleted user"
-                        )}
+                        {tx(AUTHOR_LINE[r.type] ?? "admin.authorWritten", {
+                          author: r.author ? (
+                            <Link to={adminUrl(r.author)}>
+                              <Username name={r.author} />
+                            </Link>
+                          ) : (
+                            t("admin.aDeletedUser")
+                          ),
+                        })}
                         {authorState}
-                        {r.authorMuted && <span className="muted"> (messaging off)</span>}
-                        {r.authorStaff && <span className="muted"> (staff)</span>}
-                        {" · "}reported by{" "}
-                        {r.reporter ? (
-                          <Link to={adminUrl(r.reporter)}>
-                            <Username name={r.reporter} />
-                          </Link>
-                        ) : (
-                          "a deleted user"
-                        )}{" "}
-                        <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>
+                        {r.authorMuted && <span className="muted"> {t("admin.messagingOffParen")}</span>}
+                        {r.authorStaff && <span className="muted"> {t("admin.staffParen")}</span>}
+                        {" · "}
+                        {tx("admin.reportedBy", {
+                          reporter: r.reporter ? (
+                            <Link to={adminUrl(r.reporter)}>
+                              <Username name={r.reporter} />
+                            </Link>
+                          ) : (
+                            t("admin.aDeletedUser")
+                          ),
+                          ago: <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>,
+                        })}
                         {r.link && (
                           <>
                             {" "}
                             ·{" "}
                             <Link to={dm ? `${r.link}?report=${r.id}` : r.link}>
-                              {dm ? "Open transcript" : "View in context"} <Ico.Right />
+                              {dm ? t("admin.openTranscript") : t("admin.viewInContext")} <Ico.Right />
                             </Link>
                           </>
                         )}
                       </p>
                       {r.detail && (
                         <p className="small">
-                          <b>Reporter's note:</b> {r.detail}
+                          {tx("admin.reportersNote", { label: <b>{t("admin.reportersNoteLabel")}</b>, note: r.detail })}
                         </p>
                       )}
                       {r.status === "open" ? (
                         <div className="row">
                           <Button kind="btn ghost small" type="button" onClick={() => decide(r, "dismiss")}>
-                            Dismiss
+                            {t("admin.dismiss")}
                           </Button>
                           {canRemove && (
                             <Button kind="btn ghost small" type="button" onClick={() => decide(r, "remove")}>
-                              {dm ? "Remove message" : "Remove content"}
+                              {dm ? t("admin.removeMessage") : t("admin.removeContent")}
                             </Button>
                           )}
                           {canMute && (
                             <Button kind="btn ghost small" type="button" onClick={() => decide(r, "mute")}>
-                              Remove and turn off messaging
+                              {t("admin.removeAndMuteTitle")}
                             </Button>
                           )}
                           {canSuspend && (
                             <Button kind="btn danger small" type="button" onClick={() => decide(r, "suspend")}>
-                              {r.type === "user" ? "Suspend account" : "Remove and suspend author"}
+                              {r.type === "user" ? t("admin.suspendAccount") : t("admin.removeAndSuspendAuthor")}
                             </Button>
                           )}
                         </div>
                       ) : (
                         <p className="muted small">
-                          Resolved {ago(r.resolvedAt ?? 0)} by {r.resolver || "a deleted moderator"}: {r.outcome}
+                          {t("admin.resolvedByOutcome", {
+                            ago: ago(r.resolvedAt ?? 0),
+                            name: r.resolver || t("admin.aDeletedModerator"),
+                            outcome: outcomeLabel(r.outcome),
+                          })}
                           {r.note && <span className={NOTE}>“{r.note}”</span>}
                         </p>
                       )}

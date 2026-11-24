@@ -1,3 +1,4 @@
+import { LanguagePicker } from "../ui/language-picker";
 import {
   lazy,
   Suspense,
@@ -15,28 +16,16 @@ import { ProfileLinksEditor } from "../ui/profile-links-editor";
 import { ProfileStyleSettings } from "../ui/profile-style-settings";
 import { Username } from "../ui/username";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import {
-  ago,
-  api,
-  copyText,
-  date,
-  imageUrl,
-  invalidateAll,
-  num,
-  plural,
-  useApi,
-  useAuth,
-  useTitle,
-  type Ok,
-} from "../lib";
+import { ago, api, copyText, date, imageUrl, invalidateAll, useApi, useAuth, useTitle, type Ok } from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
 import type { ApiApp, AppOk, Apps, ListenToken } from "../../shared/apps";
 import { useTurnstile } from "./auth";
-import { OAUTH_ERRORS, OAuthMark, oauthStart } from "../ui/oauth";
+import { oauthError, OAuthMark, oauthStart } from "../ui/oauth";
+import { locale, t, tx, type MessageKey } from "../i18n";
 import type { Logins } from "../../shared/auth";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
-import { EMAIL_KINDS, EMAIL_MODES } from "../../shared/notifications";
+import { EMAIL_KINDS, EMAIL_MODES, type EmailKind } from "../../shared/notifications";
 import type {
   SpotifyConnect,
   SpotifyConnectBody,
@@ -54,27 +43,27 @@ import { changeTheme, type ThemePref } from "../theme";
 // The country picker carries every flag, so it loads separately.
 const CountryInput = lazy(() => import("../ui/country").then((m) => ({ default: m.CountryInput })));
 
-const clock = (at: number) => new Date(at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const clock = (at: number) => new Date(at * 1000).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 
-const TABS = [
-  ["", "Profile"],
-  ["/privacy", "Privacy"],
-  ["/notifications", "Notifications"],
-  ["/account", "Account"],
-  ["/applications", "Applications"],
-  ["/data", "Your data"],
+const TABS: [string, MessageKey][] = [
+  ["", "settings.tabProfile"],
+  ["/privacy", "settings.tabPrivacy"],
+  ["/notifications", "settings.tabNotifications"],
+  ["/account", "settings.tabAccount"],
+  ["/applications", "settings.tabApplications"],
+  ["/data", "settings.tabData"],
 ];
 
 export function Settings() {
   const tab = useParams().tab || "profile";
-  useTitle("Settings");
+  useTitle(t("settings.title"));
   return (
     <div className="wrap page">
-      <h1 className="page-title">Settings</h1>
+      <h1 className="page-title">{t("settings.title")}</h1>
       <nav className="tabs">
         {TABS.map(([p, l]) => (
           <NavLink key={p} to={`/settings${p}`} end>
-            {l}
+            {t(l)}
           </NavLink>
         ))}
       </nav>
@@ -99,7 +88,7 @@ function useSaveProfile() {
     act.run(async () => {
       const r = await api<ProfileSaved>("/me", { method: "PATCH", body });
       setMe(r.user);
-      return "Saved.";
+      return t("settings.saved");
     });
   return { act, save };
 }
@@ -142,7 +131,7 @@ function ProfileSettings() {
       const r = await api<ProfileSaved>("/me", { method: "PATCH", body: f });
       setMe(r.user);
       invalidateAll();
-      return "Profile saved.";
+      return t("settings.profileSaved");
     });
   };
 
@@ -160,12 +149,12 @@ function ProfileSettings() {
           }}
         />
       )}
-      <Section title="Avatar">
+      <Section title={t("settings.avatar")}>
         <div className="avatar-edit">
           <button
             type="button"
             className="avatar avatar-pick"
-            aria-label="Change avatar"
+            aria-label={t("settings.changeAvatar")}
             onClick={() => file.current?.click()}
             disabled={img.busy}
           >
@@ -175,21 +164,21 @@ function ProfileSettings() {
           <div className="avatar-side">
             <div className="avatar-actions">
               <Button kind="btn small" loading={img.busy} onClick={() => file.current?.click()}>
-                {me!.image ? "Change picture" : "Upload picture"}
+                {me!.image ? t("settings.changePicture") : t("settings.uploadPicture")}
               </Button>
               {me!.image && (
                 <button type="button" className="linklike muted" onClick={removeImage}>
-                  Remove
+                  {t("settings.remove")}
                 </button>
               )}
             </div>
-            <p className="muted small">PNG, JPEG, WebP or GIF (max 8 MB).</p>
+            <p className="muted small">{t("settings.avatarFormats")}</p>
             {img.note}
           </div>
         </div>
       </Section>
       <BannerSettings />
-      <Section title="Profile">
+      <Section title={t("settings.profile")}>
         <form className="form" onSubmit={submit}>
           <ProfileStyleSettings value={f} onChange={(style) => setF((f) => ({ ...f, ...style }))} disabled={act.busy} />
           <button
@@ -203,18 +192,23 @@ function ProfileSettings() {
             <span className="profile-theme-check-box" aria-hidden="true">
               {f.useProfileTheme && <Ico.Check />}
             </span>
-            <span>Use my profile colors site-wide</span>
+            <span>{t("settings.useProfileTheme")}</span>
           </button>
           <label>
-            Display name
+            {t("settings.displayName")}
             <Input value={f.realname} onChange={set("realname")} maxLength={60} />
           </label>
           <label>
-            Pronouns
-            <Input value={f.pronouns} onChange={set("pronouns")} placeholder="they/them" maxLength={30} />
+            {t("settings.pronouns")}
+            <Input
+              value={f.pronouns}
+              onChange={set("pronouns")}
+              placeholder={t("settings.pronounsPlaceholder")}
+              maxLength={30}
+            />
           </label>
           <label>
-            Country
+            {t("settings.country")}
             <Suspense fallback={<Input value={f.country} disabled />}>
               <CountryInput
                 value={f.country}
@@ -225,14 +219,14 @@ function ProfileSettings() {
           </label>
           <div className="field-block">
             <div className="flex items-center justify-between gap-3 mb-2">
-              <span className="field-label">About me</span>
+              <span className="field-label">{t("settings.aboutMe")}</span>
               <Button
                 type="button"
                 kind="btn ghost small"
                 aria-pressed={previewAbout}
                 onClick={() => setPreviewAbout(!previewAbout)}
               >
-                {previewAbout ? "Write" : "Preview"}
+                {previewAbout ? t("settings.write") : t("settings.preview")}
               </Button>
             </div>
             {previewAbout ? (
@@ -241,7 +235,7 @@ function ProfileSettings() {
               </div>
             ) : (
               <MdEditor
-                label="About me"
+                label={t("settings.aboutMe")}
                 rows={5}
                 value={f.about}
                 onChange={(about) => setF((f) => ({ ...f, about }))}
@@ -250,15 +244,12 @@ function ProfileSettings() {
                 imageUpload="about"
               />
             )}
-            <p className="muted small">
-              Upload images with the image button (PNG, JPEG, WebP or GIF, max 8 MB). Headings, lists, and links are
-              supported.
-            </p>
+            <p className="muted small">{t("settings.aboutHint")}</p>
           </div>
           <ProfileLinksEditor links={f.links} onChange={(links) => setF({ ...f, links })} />
           {act.note}
           <Button kind="btn" loading={act.busy}>
-            Save profile
+            {t("settings.saveProfile")}
           </Button>
         </form>
       </Section>
@@ -284,11 +275,11 @@ function BannerSettings() {
       await api<Ok>("/image?type=banner", { method: "DELETE" });
       refresh();
       invalidateAll();
-      return "Banner removed.";
+      return t("settings.bannerRemoved");
     });
 
   return (
-    <Section title="Banner">
+    <Section title={t("settings.banner")}>
       {crop && (
         <ImageCropper
           file={crop}
@@ -306,9 +297,9 @@ function BannerSettings() {
           <ImageWithFallback
             className="banner-preview"
             src={imageUrl(me!.banner)}
-            alt="Your profile banner"
-            fallback={<span className="image-placeholder">Loading banner…</span>}
-            errorFallback={<span className="image-placeholder">Image unavailable</span>}
+            alt={t("settings.bannerAlt")}
+            fallback={<span className="image-placeholder">{t("settings.bannerLoading")}</span>}
+            errorFallback={<span className="image-placeholder">{t("settings.imageUnavailable")}</span>}
           />
         )}
         <Input
@@ -321,28 +312,25 @@ function BannerSettings() {
         />
         <div className="avatar-actions">
           <Button kind="btn small" type="button" loading={act.busy} onClick={() => file.current?.click()}>
-            {me!.banner ? "Change banner" : "Upload banner"}
+            {me!.banner ? t("settings.changeBanner") : t("settings.uploadBanner")}
           </Button>
           {me!.banner && (
             <button type="button" className="linklike muted" disabled={act.busy} onClick={remove}>
-              Remove banner
+              {t("settings.removeBanner")}
             </button>
           )}
         </div>
-        <p className="muted small">
-          PNG, JPEG, WebP or GIF (max 8 MB). A wide image works best, around 1200 × 300 pixels. Banners are cropped to
-          fit.
-        </p>
+        <p className="muted small">{t("settings.bannerHint")}</p>
         {act.note}
       </div>
     </Section>
   );
 }
 
-const THEMES: [ThemePref, string][] = [
-  ["light", "Light"],
-  ["system", "Automatic"],
-  ["dark", "Dark"],
+const THEMES: [ThemePref, MessageKey][] = [
+  ["light", "settings.themeLight"],
+  ["system", "settings.themeAutomatic"],
+  ["dark", "settings.themeDark"],
 ];
 
 function Appearance() {
@@ -366,25 +354,40 @@ function Appearance() {
   };
 
   return (
-    <Section title="Appearance">
-      <div className="theme-pick" role="group" aria-label="Theme">
+    <Section title={t("settings.appearance")}>
+      <div className="theme-pick" role="group" aria-label={t("settings.theme")}>
         {THEMES.map(([v, name]) => (
           <button key={v} type="button" aria-pressed={me!.theme === v} onClick={() => pick(v)}>
-            {name}
+            {t(name)}
           </button>
         ))}
       </div>
       {act.note}
+      <LanguagePicker />
     </Section>
   );
 }
 
-const DM_POLICIES: [string, string][] = [
-  ["everyone", "Anyone"],
-  ["requests", "Anyone, but people I don't follow go to Requests"],
-  ["following", "Only people I follow"],
-  ["nobody", "Nobody"],
+const DM_POLICIES: [string, MessageKey][] = [
+  ["everyone", "settings.dmEveryone"],
+  ["requests", "settings.dmRequests"],
+  ["following", "settings.dmFollowing"],
+  ["nobody", "settings.dmNobody"],
 ];
+
+const EMAIL_MODE_LABELS: Record<(typeof EMAIL_MODES)[number][0], MessageKey> = {
+  instant: "settings.emailInstant",
+  daily: "settings.emailDaily",
+  weekly: "settings.emailWeekly",
+  off: "settings.emailOff",
+};
+
+const EMAIL_KIND_LABELS: Record<EmailKind, MessageKey> = {
+  follow: "settings.emailKindFollow",
+  shout: "settings.emailKindShout",
+  comment: "settings.emailKindComment",
+  message: "settings.emailKindMessage",
+};
 
 function CheckOption({
   checked,
@@ -416,40 +419,37 @@ function PrivacySettings() {
   const { act, save } = useSaveProfile();
   return (
     <>
-      <Section title="Privacy">
+      <Section title={t("settings.privacy")}>
         <div className="form">
           <CheckOption
-            title="Hide recent listening"
+            title={t("settings.hideRecent")}
             checked={me!.hideRecent || me!.privateListening}
             disabled={me!.privateListening}
             onChange={(hideRecent) => save({ hideRecent })}
           >
-            Your scrobble history and recent tracks will not be visible to other users. Your charts will still be shown
-            on your profile.
+            {t("settings.hideRecentHint")}
           </CheckOption>
           <CheckOption
-            title="Keep all my listening private"
+            title={t("settings.privateListening")}
             checked={me!.privateListening}
             onChange={(privateListening) => save({ privateListening })}
           >
-            Your charts, library, loved tracks, play counts and listening reports will be hidden from other users. You
-            will also be excluded from other users' soundalikes and top listener lists. Your plays will still count
-            anonymously toward site-wide charts.
+            {t("settings.privateListeningHint")}
           </CheckOption>
           <CheckOption
-            title="Let people write on my wall"
+            title={t("settings.shoutsEnabled")}
             checked={me!.shoutsEnabled}
             onChange={(shoutsEnabled) => save({ shoutsEnabled })}
           >
-            Turn off to close your shoutbox to new shouts.
+            {t("settings.shoutsEnabledHint")}
           </CheckOption>
           <label>
-            Who can send you direct messages?
+            {t("settings.dmPolicy")}
             <Select
-              label="Who can message you"
+              label={t("settings.dmPolicyLabel")}
               value={me!.dmPolicy}
               onChange={(v) => save({ dmPolicy: v })}
-              options={DM_POLICIES}
+              options={DM_POLICIES.map(([v, l]) => [v, t(l)])}
             />
           </label>
           {act.note}
@@ -470,31 +470,32 @@ function NotificationSettings() {
     save({ emailMuted });
   };
   return (
-    <Section title="Email notifications">
+    <Section title={t("settings.emailNotifications")}>
       <div className="form">
         {!me!.emailVerified && (
           <p className="muted small">
-            Emails only go to a confirmed address. Confirm {me!.email} under <Link to="/settings/account">Account</Link>{" "}
-            to start getting them.
+            {tx("settings.emailUnconfirmed", {
+              email: me!.email,
+              account: <Link to="/settings/account">{t("settings.tabAccount")}</Link>,
+            })}
           </p>
         )}
         <label>
-          Send me emails
+          {t("settings.sendMeEmails")}
           <Select
-            label="How often to email you"
+            label={t("settings.emailFrequency")}
             value={me!.emailNotify}
             onChange={(v) => save({ emailNotify: v })}
-            options={EMAIL_MODES.map(([v, l]) => [v, l])}
+            options={EMAIL_MODES.map(([v]) => [v, t(EMAIL_MODE_LABELS[v])])}
           />
         </label>
         {me!.emailNotify !== "instant" && !off && (
           <p className="muted small">
-            One email {me!.emailNotify === "daily" ? "a day" : "a week"} with whatever is still unread, and nothing when
-            there's nothing new.
+            {me!.emailNotify === "daily" ? t("settings.digestDaily") : t("settings.digestWeekly")}
           </p>
         )}
-        <p className="field-label">Email me when</p>
-        {EMAIL_KINDS.map(([k, l]) => (
+        <p className="field-label">{t("settings.emailMeWhen")}</p>
+        {EMAIL_KINDS.map(([k]) => (
           <label key={k} className="check">
             <Input
               type="checkbox"
@@ -502,7 +503,7 @@ function NotificationSettings() {
               disabled={off}
               onChange={(e) => toggle(k, e.target.checked)}
             />{" "}
-            {l}
+            {t(EMAIL_KIND_LABELS[k])}
           </label>
         ))}
         {act.note}
@@ -515,11 +516,8 @@ function BlockedUsers() {
   const q = useApi<Blocks>("/blocks");
   const unblock = (username: string) => api<BlockResult>("/block", { body: { username, block: false } }).then(q.reload);
   return (
-    <Section title="Blocked users">
-      <p className="muted small">
-        People you block can't follow you, write on your wall or comment on your journal, and their shouts are hidden
-        from you everywhere. Block someone from the “…” menu on their profile.
-      </p>
+    <Section title={t("settings.blockedUsers")}>
+      <p className="muted small">{t("settings.blockedHint")}</p>
       <Async q={q}>
         {(d) =>
           d.items.length ? (
@@ -528,13 +526,13 @@ function BlockedUsers() {
               extra={(u) => (
                 <span>
                   <Button kind="link small" type="button" onClick={() => unblock(u.username)}>
-                    Unblock
+                    {t("settings.unblock")}
                   </Button>
                 </span>
               )}
             />
           ) : (
-            <p className="muted">You haven't blocked anyone.</p>
+            <p className="muted">{t("settings.noBlocks")}</p>
           )
         }
       </Async>
@@ -548,7 +546,7 @@ function SignInMethods() {
   const q = useApi<Logins>("/me/logins");
   const act = useAction();
   const [sp, setSp] = useSearchParams();
-  const error = OAUTH_ERRORS[sp.get("oauth") ?? ""];
+  const error = oauthError(sp.get("oauth"));
   const linked = sp.get("linked");
   if (!q.data?.providers.length) return null;
   const connectedCount = q.data.providers.filter((p) => p.connected).length;
@@ -562,13 +560,13 @@ function SignInMethods() {
     });
 
   return (
-    <Section title="Sign-in methods">
+    <Section title={t("settings.signInMethods")}>
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
-      {linked && !error && <p className="form-ok">Connected. You can now log in with it.</p>}
+      {linked && !error && <p className="form-ok">{t("settings.linkedOk")}</p>}
       <ul className="plain">
         {q.data.providers.map((p) => (
           <li key={p.id} className="row between">
@@ -578,27 +576,26 @@ function SignInMethods() {
               </span>
               <b>{p.label}</b>{" "}
               <span className="muted small">
-                {p.connected ? (
-                  <>
-                    {p.connected.name || "connected"}, since {date(p.connected.since)}
-                  </>
-                ) : (
-                  "not connected"
-                )}
+                {p.connected
+                  ? t("settings.loginConnectedSince", {
+                      name: p.connected.name || t("settings.loginConnected"),
+                      date: date(p.connected.since),
+                    })
+                  : t("settings.loginNotConnected")}
               </span>
             </span>
             {p.connected ? (
               <Button
                 kind="btn ghost small"
                 disabled={lastWayIn}
-                title={lastWayIn ? "Set a password first" : undefined}
+                title={lastWayIn ? t("settings.setPasswordFirst") : undefined}
                 onClick={() => disconnect(p.id)}
               >
-                Disconnect
+                {t("settings.disconnect")}
               </Button>
             ) : (
               <Button kind="btn ghost small" href={oauthStart(p.id, "link")}>
-                Connect
+                {t("settings.connect")}
               </Button>
             )}
           </li>
@@ -624,17 +621,17 @@ function AccountSettings() {
   const resendLink = () =>
     resend.run(async () => {
       await api<Ok>("/me/verify", { body: {} });
-      return `Sent a new link to ${me!.email}.`;
+      return t("settings.verifyResent", { email: me!.email });
     });
 
   const submitEmail = (e: FormEvent) => {
     e.preventDefault();
     emailAct.run(async () => {
-      if (email.trim().toLowerCase() === me!.email) return "That is already your email.";
+      if (email.trim().toLowerCase() === me!.email) return t("settings.emailSame");
       const u = (await api<ProfileSaved>("/me", { method: "PATCH", body: { email } })).user;
       setMe(u);
       setEmail(u.email);
-      return `Approve the change from your current inbox first. We will then send a verification link to ${u.pendingEmail ?? email}.`;
+      return t("settings.emailApproveFirst", { email: u.pendingEmail ?? email });
     });
   };
 
@@ -646,18 +643,18 @@ function AccountSettings() {
       setPw({ current: "", next: "" });
       if (!had) {
         await refresh();
-        return "Password set. You can now log in with it, and in scrobbler apps that ask for one.";
+        return t("settings.passwordSet");
       }
-      return "Password changed. Other devices were signed out.";
+      return t("settings.passwordChanged");
     });
   };
 
   const submitDelete = (e: FormEvent) => {
     e.preventDefault();
     c.ask({
-      title: "Delete your account?",
-      body: "Your profile, scrobbles, loved tracks, playlists and shouts will be gone for good. This can't be undone.",
-      action: "Delete my account",
+      title: t("settings.deleteAccountConfirmTitle"),
+      body: t("settings.deleteAccountConfirmBody"),
+      action: t("settings.deleteMyAccount"),
       danger: true,
       run: () =>
         delAct.run(async () => {
@@ -672,43 +669,38 @@ function AccountSettings() {
     <>
       {c.dialog}
       <UsernameSettings />
-      <Section title="Email">
+      <Section title={t("settings.email")}>
         <form className="form" onSubmit={submitEmail}>
           <p className="muted small">
             {me!.emailVerified ? (
-              <>{me!.email} is confirmed.</>
+              t("settings.emailConfirmed", { email: me!.email })
             ) : (
               <>
-                {me!.email} is not confirmed yet.{" "}
+                {t("settings.emailNotConfirmed", { email: me!.email })}{" "}
                 <Button kind="link small" type="button" onClick={resendLink}>
-                  Send the link again
+                  {t("settings.sendLinkAgain")}
                 </Button>
               </>
             )}
-            {me!.pendingEmail && <> Waiting for you to confirm {me!.pendingEmail}.</>}
+            {me!.pendingEmail && <> {t("settings.emailPending", { email: me!.pendingEmail })}</>}
           </p>
           {resend.note}
           <label>
-            Email address
+            {t("settings.emailAddress")}
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </label>
           {emailAct.note}
           <Button kind="btn" loading={emailAct.busy}>
-            Update email
+            {t("settings.updateEmail")}
           </Button>
         </form>
       </Section>
-      <Section title="Password">
+      <Section title={t("settings.password")}>
         <form className="form" onSubmit={submitPassword}>
-          {!me!.hasPassword && (
-            <p className="muted small">
-              You signed up through another site, so your account has no password yet. Set one to log in without it, or
-              to use scrobbler apps that ask for a username and password.
-            </p>
-          )}
+          {!me!.hasPassword && <p className="muted small">{t("settings.noPasswordHint")}</p>}
           {me!.hasPassword && (
             <label>
-              Current password
+              {t("settings.currentPassword")}
               <Input
                 type="password"
                 value={pw.current}
@@ -719,7 +711,7 @@ function AccountSettings() {
             </label>
           )}
           <label>
-            New password
+            {t("settings.newPassword")}
             <Input
               type="password"
               value={pw.next}
@@ -731,18 +723,18 @@ function AccountSettings() {
           </label>
           {pwAct.note}
           <Button kind="btn" loading={pwAct.busy}>
-            {me!.hasPassword ? "Change password" : "Set password"}
+            {me!.hasPassword ? t("settings.changePassword") : t("settings.setPassword")}
           </Button>
         </form>
       </Section>
       <SignInMethods />
-      <Section title="Delete account">
+      <Section title={t("settings.deleteAccount")}>
         <form className="form" onSubmit={submitDelete}>
-          <p>This permanently removes your profile, scrobbles, loved tracks, playlists and shouts.</p>
+          <p>{t("settings.deleteAccountHint")}</p>
           <ConfirmField value={del} onChange={setDel} />
           {delAct.note}
           <Button kind="btn danger" loading={delAct.busy}>
-            Delete my account
+            {t("settings.deleteMyAccount")}
           </Button>
         </form>
       </Section>
@@ -751,15 +743,12 @@ function AccountSettings() {
 }
 
 // What /api/spotify/callback reports back in ?spotify=.
-const SPOTIFY_OUTCOME: Record<string, { ok: boolean; text: string }> = {
-  connected: { ok: true, text: "Spotify is connected. Your recent plays are being imported." },
-  denied: { ok: false, text: "Spotify was not connected: access was declined." },
-  expired: { ok: false, text: "That sign-in link expired. Try connecting again." },
-  forbidden: {
-    ok: false,
-    text: "Spotify refused this account. If you signed in with a different Spotify account from the one that created the app, add it under User Management in the app's settings, then connect again.",
-  },
-  failed: { ok: false, text: "Spotify could not be connected. Check the client ID and try again." },
+const SPOTIFY_OUTCOME: Record<string, { ok: boolean; text: MessageKey }> = {
+  connected: { ok: true, text: "settings.spotifyConnected" },
+  denied: { ok: false, text: "settings.spotifyDenied" },
+  expired: { ok: false, text: "settings.spotifyExpired" },
+  forbidden: { ok: false, text: "settings.spotifyForbidden" },
+  failed: { ok: false, text: "settings.spotifyFailed" },
 };
 const SPOTIFY_DASHBOARD = "https://developer.spotify.com/dashboard";
 
@@ -803,66 +792,71 @@ function SpotifySetup({
 
   return (
     <>
-      <p>
-        Spotify only lets each app be used by a few people, so you connect through your own free Spotify app. It takes
-        about two minutes:
-      </p>
+      <p>{t("settings.spotifyIntro")}</p>
       <ol className="steps">
         <li>
-          Open the{" "}
-          <a href={SPOTIFY_DASHBOARD} target="_blank" rel="noreferrer">
-            Spotify developer dashboard
-          </a>{" "}
-          and log in with your Spotify account. Accept the developer terms if asked.
+          {tx("settings.spotifyStep1", {
+            dashboard: (
+              <a href={SPOTIFY_DASHBOARD} target="_blank" rel="noreferrer">
+                {t("settings.spotifyDashboard")}
+              </a>
+            ),
+          })}
         </li>
+        <li>{tx("settings.spotifyStep2", { create: <b>{t("settings.spotifyCreateApp")}</b> })}</li>
         <li>
-          Click <b>Create app</b>. Any name and description will do, such as "My Sonosphere scrobbler".
-        </li>
-        <li>
-          Under <b>Redirect URIs</b>, paste this address exactly and click <b>Add</b>:
+          {tx("settings.spotifyStep3", {
+            redirect: <b>{t("settings.spotifyRedirectUris")}</b>,
+            add: <b>{t("settings.spotifyAdd")}</b>,
+          })}
           <span className="copy-row">
             <code onClick={selectContents}>{redirectUri}</code>
             <Button kind="btn ghost small" type="button" onClick={copy}>
-              {copied ? "Copied" : "Copy"}
+              {copied ? t("settings.copied") : t("settings.copy")}
             </Button>
           </span>
         </li>
         <li>
-          Under <b>Which API/SDKs are you planning to use?</b>, tick <b>Web API</b> (and <b>Web Playback SDK</b> to play
-          music here), agree to the terms and click <b>Save</b>.
+          {tx("settings.spotifyStep4", {
+            question: <b>{t("settings.spotifyApiQuestion")}</b>,
+            webApi: <b>Web API</b>,
+            playbackSdk: <b>Web Playback SDK</b>,
+            save: <b>{t("settings.spotifySave")}</b>,
+          })}
         </li>
         <li>
-          Open the app's <b>Settings</b>, copy its <b>Client ID</b> and paste it below. You don't need the client
-          secret.
+          {tx("settings.spotifyStep5", {
+            settings: <b>{t("settings.spotifySettings")}</b>,
+            clientId: <b>{t("settings.spotifyClientId")}</b>,
+          })}
         </li>
       </ol>
       <form className="form" onSubmit={submit}>
         <label>
-          Client ID
+          {t("settings.spotifyClientId")}
           <Input
             value={id}
             onChange={(e) => setId(e.target.value)}
             required
             maxLength={64}
-            placeholder="32 letters and numbers"
+            placeholder={t("settings.spotifyClientIdPlaceholder")}
             autoComplete="off"
             spellCheck={false}
           />
         </label>
         <label className="check">
-          <Input type="checkbox" checked={play} onChange={(e) => setPlay(e.target.checked)} /> Also play music here
-          through Spotify instead of videos (needs Spotify Premium)
+          <Input type="checkbox" checked={play} onChange={(e) => setPlay(e.target.checked)} />{" "}
+          {t("settings.spotifyPlayback")}
         </label>
         {note}
         <div className="row">
           <Button kind="btn" loading={busy}>
-            Connect Spotify
+            {t("settings.connectSpotify")}
           </Button>
         </div>
       </form>
       <p className="muted small">
-        Only the Spotify account that created the app can use it straight away. To connect a different one, add it under{" "}
-        <b>User Management</b> in the app's settings first.
+        {tx("settings.spotifyOtherAccount", { userManagement: <b>{t("settings.spotifyUserManagement")}</b> })}
       </p>
     </>
   );
@@ -888,8 +882,8 @@ function SpotifySettings() {
     act.run(async () => {
       const r = await api<SpotifySynced>("/spotify/sync", { method: "POST" });
       q.setData({ ...s, link: r.link });
-      if (r.imported) return `Imported ${plural(r.imported, "play")}.`;
-      return r.link.restingUntil ? "Spotify asked us to wait, so nothing was imported." : "Nothing new to import.";
+      if (r.imported) return t("settings.spotifyImported", { count: r.imported });
+      return r.link.restingUntil ? t("settings.spotifyWaitNothing") : t("settings.spotifyNothingNew");
     });
 
   const disconnect = () =>
@@ -903,31 +897,23 @@ function SpotifySettings() {
   const linked = (s: SpotifyOn, l: SpotifyLink) => (
     <>
       <p>
-        Connected as <b>{l.account.name}</b> <span className="muted small">since {date(l.connectedAt)}</span>
+        {tx("settings.spotifyConnectedAs", { name: <b>{l.account.name}</b> })}{" "}
+        <span className="muted small">{t("settings.since", { date: date(l.connectedAt) })}</span>
       </p>
       {l.broken ? (
         <p className="form-error">{l.broken}</p>
       ) : (
         <>
           <p className="muted small">
-            {l.lastImport ? (
-              <>
-                Last import {ago(l.lastImport)} · {num(l.imported)} plays imported
-              </>
-            ) : (
-              "Importing your recent plays..."
-            )}
-            . New plays are picked up every few minutes.
+            {l.lastImport
+              ? t("settings.spotifyLastImport", { ago: ago(l.lastImport), count: l.imported })
+              : t("settings.spotifyImporting")}
           </p>
           {l.restingUntil && (
-            <p className="muted small">
-              Spotify asked us to slow down, so importing resumes around {clock(l.restingUntil)}.
-            </p>
+            <p className="muted small">{t("settings.spotifyResting", { time: clock(l.restingUntil) })}</p>
           )}
           <p className="muted small">
-            {l.playback
-              ? "The player plays through Spotify when it has the track."
-              : "The player uses videos. To play through Spotify (Premium) instead, choose Change app and tick the playback option."}
+            {l.playback ? t("settings.spotifyPlaybackOn") : t("settings.spotifyPlaybackOff")}
           </p>
         </>
       )}
@@ -947,15 +933,15 @@ function SpotifySettings() {
         {!l.broken && !redo && (
           <>
             <Button kind="btn" loading={act.busy} onClick={() => sync(s)}>
-              Import now
+              {t("settings.importNow")}
             </Button>
             <Button kind="btn ghost" onClick={() => setRedo(true)}>
-              Change app
+              {t("settings.changeApp")}
             </Button>
           </>
         )}
         <Button kind="btn ghost" onClick={disconnect}>
-          Disconnect
+          {t("settings.disconnect")}
         </Button>
       </div>
     </>
@@ -963,22 +949,22 @@ function SpotifySettings() {
 
   let badge = null;
   if (q.data) {
-    if (!q.data.enabled) badge = <span className="badge off">Disabled</span>;
-    else if (q.data.link?.broken) badge = <span className="badge warn">Needs attention</span>;
-    else if (q.data.link) badge = <span className="badge">Connected</span>;
-    else badge = <span className="badge off">Not connected</span>;
+    if (!q.data.enabled) badge = <span className="badge off">{t("settings.badgeDisabled")}</span>;
+    else if (q.data.link?.broken) badge = <span className="badge warn">{t("settings.badgeNeedsAttention")}</span>;
+    else if (q.data.link) badge = <span className="badge">{t("settings.badgeConnected")}</span>;
+    else badge = <span className="badge off">{t("settings.badgeNotConnected")}</span>;
   }
 
   return (
-    <Service name="Spotify" blurb="Import what you play on Spotify" badge={badge} open={!!outcome}>
+    <Service name="Spotify" blurb={t("settings.spotifyBlurb")} badge={badge} open={!!outcome}>
       <Async q={q}>
         {(d) =>
           !d.enabled ? (
-            <p className="muted">Scrobbling from Spotify is disabled.</p>
+            <p className="muted">{t("settings.spotifyDisabled")}</p>
           ) : (
             <div className="spotify">
               {outcome && !(outcome.ok && d.link?.broken) && (
-                <p className={outcome.ok ? "form-ok" : "form-error"}>{outcome.text}</p>
+                <p className={outcome.ok ? "form-ok" : "form-error"}>{t(outcome.text)}</p>
               )}
               {d.link ? (
                 linked(d, d.link)
@@ -1041,9 +1027,9 @@ function AppSettings() {
 
   const askDelete = (a: ApiApp) =>
     c.ask({
-      title: `Delete “${a.name}”?`,
-      body: "Apps using this key will stop working.",
-      action: "Delete",
+      title: t("settings.deleteAppConfirmTitle", { name: a.name }),
+      body: t("settings.deleteAppConfirmBody"),
+      action: t("settings.delete"),
       danger: true,
       run: () => api<AppOk>(`/apps/${a.id}`, { method: "DELETE" }).then(q.reload),
     });
@@ -1051,34 +1037,31 @@ function AppSettings() {
   return (
     <>
       {c.dialog}
-      <Section title="Streaming services">
+      <Section title={t("settings.streamingServices")}>
         <div className="services">
           <SpotifySettings />
         </div>
       </Section>
-      <Section title="Connected applications">
+      <Section title={t("settings.connectedApplications")}>
         <div className="connect-card">
-          <p>
-            Pano Scrobbler and other players with a custom Last.fm or ListenBrainz server option can scrobble here. No
-            API account is needed.
-          </p>
+          <p>{t("settings.customServerIntro")}</p>
           <div className="connect-method">
-            <CopyField label="Last.fm-compatible server URL" value={`${window.location.origin}/2.0/`} />
-            <span className="muted small">Sign in with your Sonosphere username and password.</span>
+            <CopyField label={t("settings.lastfmServerUrl")} value={`${window.location.origin}/2.0/`} />
+            <span className="muted small">{t("settings.lastfmServerHint")}</span>
           </div>
           <div className="connect-method">
-            <CopyField label="ListenBrainz server URL" value={window.location.origin} />
-            <span className="muted small">Paste a token instead of a password.</span>
+            <CopyField label={t("settings.listenbrainzServerUrl")} value={window.location.origin} />
+            <span className="muted small">{t("settings.listenbrainzServerHint")}</span>
           </div>
           <details className="api-app connect-drop" onToggle={(e) => e.currentTarget.open && setTokenOpened(true)}>
             <summary>
               <Ico.Chevron />
-              <b>Create ListenBrainz token</b>
+              <b>{t("settings.createListenToken")}</b>
             </summary>
             {tokenOpened && <NewToken onCreated={q.reload} />}
           </details>
           <Link className="connect-more" to="/help#pano-scrobbler">
-            Setup details <Arrow />
+            {t("settings.setupDetails")} <Arrow />
           </Link>
         </div>
         <Async q={q}>
@@ -1090,26 +1073,26 @@ function AppSettings() {
                     <span className="grow">
                       <b>{s.app}</b>
                       <span className="muted small">
-                        Connected {date(s.createdAt)}, last used {date(s.lastUsedAt)}
+                        {t("settings.sessionDates", { created: date(s.createdAt), used: date(s.lastUsedAt) })}
                       </span>
                     </span>
                     <Button kind="btn ghost small" onClick={() => revoke(s.key)}>
-                      Disconnect
+                      {t("settings.disconnect")}
                     </Button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="muted">No applications can scrobble to your account yet.</p>
+              <p className="muted">{t("settings.noSessions")}</p>
             )
           }
         </Async>
       </Section>
-      <Section title="Your API accounts" more="/developers" moreLabel="API docs">
+      <Section title={t("settings.apiAccounts")} more="/developers" moreLabel={t("settings.apiDocs")}>
         <Async q={q}>
           {(d) => (
             <>
-              {!d.items.length && <p className="muted">Create an API account to get a key and shared secret.</p>}
+              {!d.items.length && <p className="muted">{t("settings.noApiAccounts")}</p>}
               <ul className="plain api-apps">
                 {d.items.map((a) => (
                   <li key={a.id}>
@@ -1121,21 +1104,21 @@ function AppSettings() {
                       </summary>
                       {a.description && <p className="muted small">{a.description}</p>}
                       <dl className="keys">
-                        <dt>API key</dt>
+                        <dt>{t("settings.apiKey")}</dt>
                         <dd>
                           <code>{a.apiKey}</code>
                         </dd>
-                        <dt>Shared secret</dt>
+                        <dt>{t("settings.sharedSecret")}</dt>
                         <dd>
                           <code>{a.secret}</code>
                         </dd>
-                        <dt>Callback URL</dt>
+                        <dt>{t("settings.callbackUrl")}</dt>
                         <dd>
                           <CallbackField app={a} onSaved={q.reload} />
                         </dd>
                       </dl>
                       <Button kind="link small" onClick={() => askDelete(a)}>
-                        Delete API account
+                        {t("settings.deleteApiAccount")}
                       </Button>
                     </details>
                   </li>
@@ -1144,7 +1127,7 @@ function AppSettings() {
                   <details className="api-app" onToggle={(e) => setAdding(e.currentTarget.open)}>
                     <summary>
                       <Ico.Chevron />
-                      <b>New API account</b>
+                      <b>{t("settings.newApiAccount")}</b>
                     </summary>
                     {adding && <NewApp onCreated={q.reload} />}
                   </details>
@@ -1165,7 +1148,7 @@ function NewToken({ onCreated }: { onCreated: () => void }) {
 
   const create = () =>
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
       try {
         setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile: robot.token } })).token);
       } finally {
@@ -1177,8 +1160,8 @@ function NewToken({ onCreated }: { onCreated: () => void }) {
   if (token) {
     return (
       <div className="token-reveal">
-        <CopyField label="Your token" value={token} />
-        <p>Copy it now: it's shown only this once.</p>
+        <CopyField label={t("settings.yourToken")} value={token} />
+        <p>{t("settings.tokenOnce")}</p>
       </div>
     );
   }
@@ -1187,7 +1170,7 @@ function NewToken({ onCreated }: { onCreated: () => void }) {
       {robot.view}
       {act.note}
       <Button kind="btn small" loading={act.busy} onClick={create}>
-        Create ListenBrainz token
+        {t("settings.createListenToken")}
       </Button>
     </div>
   );
@@ -1201,7 +1184,7 @@ function NewApp({ onCreated }: { onCreated: () => void }) {
   const create = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error("Complete the check that you are not a robot");
+      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
       try {
         await api<AppOk>("/apps", { body: { ...f, turnstile: robot.token } });
       } finally {
@@ -1209,22 +1192,22 @@ function NewApp({ onCreated }: { onCreated: () => void }) {
       }
       setF(EMPTY_APP);
       onCreated();
-      return "API account created.";
+      return t("settings.apiAccountCreated");
     });
   };
 
   return (
     <form className="form new-app" onSubmit={create}>
       <label>
-        Application name
+        {t("settings.applicationName")}
         <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required maxLength={60} />
       </label>
       <label>
-        Description (optional)
+        {t("settings.descriptionOptional")}
         <Input value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} maxLength={300} />
       </label>
       <label>
-        Callback URL (optional)
+        {t("settings.callbackUrlOptional")}
         <Input
           value={f.callbackUrl}
           onChange={(e) => setF({ ...f, callbackUrl: e.target.value })}
@@ -1232,13 +1215,11 @@ function NewApp({ onCreated }: { onCreated: () => void }) {
           placeholder="https://example.com/callback"
         />
       </label>
-      <p className="muted small">
-        For web sign-in: where people go back to, with <code>?token=</code>, after they approve your app.
-      </p>
+      <p className="muted small">{tx("settings.callbackHint", { param: <code>?token=</code> })}</p>
       {robot.view}
       {act.note}
       <Button kind="btn" loading={act.busy}>
-        Create API account
+        {t("settings.createApiAccount")}
       </Button>
     </form>
   );
@@ -1258,7 +1239,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
       <span className="copy-value">
         <span onClick={selectContents}>{value}</span>
         <Button kind="btn ghost small" type="button" onClick={copy}>
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("settings.copied") : t("settings.copy")}
         </Button>
       </span>
     </div>
@@ -1275,7 +1256,7 @@ function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
     act.run(async () => {
       await api<AppOk>(`/apps/${app.id}`, { method: "PATCH", body: { callbackUrl: v.trim() } });
       onSaved();
-      return "Saved.";
+      return t("settings.saved");
     });
   };
 
@@ -1285,12 +1266,12 @@ function CallbackField({ app, onSaved }: { app: ApiApp; onSaved: () => void }) {
         value={v}
         onChange={(e) => setV(e.target.value)}
         maxLength={500}
-        placeholder="None"
-        aria-label="Callback URL"
+        placeholder={t("settings.none")}
+        aria-label={t("settings.callbackUrl")}
       />
       {v.trim() !== saved && (
         <Button kind="btn small" loading={act.busy}>
-          Save
+          {t("settings.save")}
         </Button>
       )}
       {act.note}
@@ -1304,7 +1285,7 @@ function ConfirmField({ value, onChange }: { value: string; onChange: (v: string
   if (me!.hasPassword) {
     return (
       <label>
-        Confirm with your password
+        {t("settings.confirmWithPassword")}
         <Input
           type="password"
           value={value}
@@ -1317,9 +1298,7 @@ function ConfirmField({ value, onChange }: { value: string; onChange: (v: string
   }
   return (
     <label>
-      <span>
-        Type your username (<Username user={me!} />) to confirm
-      </span>
+      <span>{tx("settings.confirmWithUsername", { name: <Username user={me!} /> })}</span>
       <Input value={value} onChange={(e) => onChange(e.target.value)} required autoComplete="off" />
     </label>
   );
@@ -1334,17 +1313,19 @@ function DataSettings() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     c.ask({
-      title: me?.impersonating ? `Delete all of ${me.username}'s scrobbles?` : "Delete all of your scrobbles?",
+      title: me?.impersonating
+        ? t("settings.clearConfirmTitleAs", { name: me.username })
+        : t("settings.clearConfirmTitle"),
       body: me?.impersonating
-        ? `${me.username}'s whole listening history will be removed. This can't be undone and is logged in the audit log.`
-        : "Your whole listening history will be removed. This can't be undone.",
-      action: "Delete all scrobbles",
+        ? t("settings.clearConfirmBodyAs", { name: me.username })
+        : t("settings.clearConfirmBody"),
+      action: t("settings.deleteAllScrobbles"),
       danger: true,
       run: () =>
         act.run(async () => {
           const r = await api<ScrobblesCleared>("/me/clear-scrobbles", { body: { password: pw } });
           setPw("");
-          return `Deleted ${plural(r.deleted, "scrobble")}.`;
+          return t("settings.scrobblesDeleted", { count: r.deleted });
         }),
     });
   };
@@ -1352,50 +1333,45 @@ function DataSettings() {
   return (
     <>
       {c.dialog}
-      <Section title="Import listening history">
-        <p>Bring in scrobbles and loved tracks from Last.fm, CSV, or JSON.</p>
+      <Section title={t("settings.importHistory")}>
+        <p>{t("settings.importHint")}</p>
         <Button kind="btn" href="/import">
-          Import listening history
+          {t("settings.importHistory")}
         </Button>
       </Section>
-      <Section title="Export your scrobbles">
-        <p>Download every scrobble with artist, album, track and timestamp.</p>
+      <Section title={t("settings.exportScrobbles")}>
+        <p>{t("settings.exportScrobblesHint")}</p>
         <div className="row">
           <Button kind="btn" href="/api/me/export?format=csv" download>
-            Download CSV
+            {t("settings.downloadCsv")}
           </Button>
           <Button kind="btn ghost" href="/api/me/export?format=json" download>
-            Download JSON
+            {t("settings.downloadJson")}
           </Button>
         </div>
       </Section>
-      <Section title="Export your loved tracks">
-        <p>Download the tracks you’ve loved, with the date you loved each one.</p>
+      <Section title={t("settings.exportLoved")}>
+        <p>{t("settings.exportLovedHint")}</p>
         <div className="row">
           <Button kind="btn" href="/api/me/export?format=csv&what=loved" download>
-            Download CSV
+            {t("settings.downloadCsv")}
           </Button>
           <Button kind="btn ghost" href="/api/me/export?format=json&what=loved" download>
-            Download JSON
+            {t("settings.downloadJson")}
           </Button>
         </div>
       </Section>
-      <Section title="Clear listening history">
+      <Section title={t("settings.clearHistory")}>
         <form className="form" onSubmit={submit}>
-          <p>
-            Removes every scrobble from {me?.impersonating ? `${me.username}'s` : "your"} library. Loved tracks, tags
-            and playlists are kept.
-          </p>
+          <p>{me?.impersonating ? t("settings.clearHintAs", { name: me.username }) : t("settings.clearHint")}</p>
           {me?.impersonating ? (
-            <p className="muted small">
-              You are acting as <Username user={me} />; no password is needed. This deletion is logged in the audit log.
-            </p>
+            <p className="muted small">{tx("settings.clearImpersonating", { name: <Username user={me} /> })}</p>
           ) : (
             <ConfirmField value={pw} onChange={setPw} />
           )}
           {act.note}
           <Button kind="btn danger" loading={act.busy}>
-            Delete all scrobbles
+            {t("settings.deleteAllScrobbles")}
           </Button>
         </form>
       </Section>

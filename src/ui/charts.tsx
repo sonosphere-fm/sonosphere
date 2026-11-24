@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { t, tx } from "../i18n";
 import { date, num } from "../lib";
 import type { TrendPoint } from "../../shared/catalog";
 
@@ -17,7 +18,7 @@ const tooltipPlace = (i: number, count: number) => {
 export function BarChart({
   data,
   height = 160,
-  unit = "scrobbles",
+  unit = t("music.scrobblesUnit"),
   every = 1,
 }: {
   data: { label: string; value: number; tip?: string }[];
@@ -41,7 +42,7 @@ export function BarChart({
             onFocus={() => setHover(i)}
             onBlur={() => setHover(null)}
             tabIndex={0}
-            aria-label={`${d.tip || d.label}: ${num(d.value)} ${unit}`}
+            aria-label={t("music.barValue", { label: d.tip || d.label, value: num(d.value), unit })}
           >
             <div
               className={`${bar} ${hover === i ? "bg-site-accent-dark" : "bg-site-accent"}`}
@@ -49,7 +50,7 @@ export function BarChart({
             />
             {hover === i && (
               <div className={`${tooltip} ${tooltipPlace(i, data.length)}`}>
-                <b>{num(d.value)}</b> {unit}
+                {tx("music.barTooltip", { value: <b>{num(d.value)}</b>, unit })}
                 <br />
                 <span className="text-(--edge) text-[12px]">{d.tip || d.label}</span>
               </div>
@@ -68,8 +69,8 @@ export function BarChart({
   );
 }
 export const weekTrend = (trend: TrendPoint[]) =>
-  trend.map((t) => ({
-    label: date(t.start, { month: "short" }),
-    value: t.count,
-    tip: `Week of ${date(t.start, { day: "numeric", month: "short", year: "numeric" })}`,
+  trend.map((point) => ({
+    label: date(point.start, { month: "short" }),
+    value: point.count,
+    tip: t("music.weekOf", { date: date(point.start, { day: "numeric", month: "short", year: "numeric" }) }),
   }));

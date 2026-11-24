@@ -3,14 +3,16 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import type { MeResponse } from "../../shared/auth";
 import { Ico } from "../icons";
 import { Button, SearchField, Select, Textarea } from "../kit";
-import { ago, api, date, dateTime, num, plural, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
+import { ago, api, date, dateTime, num, qs, useApi, useAuth, userUrl, useTitle } from "../lib";
 import { Async, Avatar, Empty, Pager, Section, Stat } from "../ui/base";
 import {
+  type AdminKey,
   type Role,
-  REASON,
-  TYPE,
-  ROLE,
   adminUrl,
+  outcomeLabel,
+  reasonLabel,
+  roleLabel,
+  typeLabel,
   useQuery,
   useRole,
   useConfirm,
@@ -21,6 +23,7 @@ import { COMPACT_LIST, FACTS, LIST, RED, SCROLL, SEARCH, TABLE, TILES } from "./
 import { TOOLBAR, TYPE_LABEL } from "./common";
 import { USER_HEAD, USER_HEAD_SUB, USER_HEAD_TITLE, WHO, cx, sortButton } from "./common";
 import { AuditList } from "./audit";
+import { t, tx } from "./i18n";
 import { ManageUserLabels } from "./user-labels";
 import type {
   BanResult,
@@ -47,33 +50,33 @@ type AccountReply =
   | ProbationResult;
 const ROLES: Role[] = ["user", "moderator", "admin"];
 
-const USER_FILTERS: [string, string][] = [
-  ["all", "Everyone"],
-  ["reported", "With open reports"],
-  ["suspended", "Suspended"],
-  ["banned", "Banned"],
-  ["unconfirmed", "Email not confirmed"],
-  ["probation", "On probation"],
-  ["staff", "All staff"],
-  ["admins", "Admins"],
-  ["moderators", "Moderators"],
-];
-const POLICY: Record<string, string> = {
-  everyone: "Messages from anyone",
-  requests: "Requests from people they don't follow",
-  following: "Only people they follow",
-  nobody: "No messages",
+const USER_FILTERS = [
+  ["all", "admin.filterEveryone"],
+  ["reported", "admin.filterReported"],
+  ["suspended", "admin.suspended"],
+  ["banned", "admin.banned"],
+  ["unconfirmed", "admin.filterUnconfirmed"],
+  ["probation", "admin.filterProbation"],
+  ["staff", "admin.filterStaff"],
+  ["admins", "admin.filterAdmins"],
+  ["moderators", "admin.filterModerators"],
+] as const;
+const POLICY: Record<string, AdminKey> = {
+  everyone: "admin.policyEveryone",
+  requests: "admin.policyRequests",
+  following: "admin.policyFollowing",
+  nobody: "admin.policyNobody",
 };
-const ROLE_BLURB: Record<Role, string> = {
-  admin: "Admins can manage accounts, roles, the catalogue and site settings.",
-  moderator: "Moderators handle reports, content and posting suspensions.",
-  user: "They lose access to the admin area.",
+const ROLE_BLURB: Record<Role, AdminKey> = {
+  admin: "admin.roleBlurbAdmin",
+  moderator: "admin.roleBlurbModerator",
+  user: "admin.roleBlurbUser",
 };
-
-function roleTitle(r: Role) {
-  if (r === "user") return "a regular user";
-  return `a${r === "admin" ? "n" : ""} ${r}`;
-}
+const MAKE_ROLE: Record<Role, AdminKey> = {
+  admin: "admin.makeAdmin",
+  moderator: "admin.makeModerator",
+  user: "admin.makeUser",
+};
 
 const defaultDir = (key: string) => (key === "username" ? "asc" : "desc");
 
@@ -89,7 +92,7 @@ export function Users() {
   const q = useApi<StaffUserList>(
     `/admin/users${qs({ q: term, filter: filter === "all" ? "" : filter, sort, dir, page })}`
   );
-  useTitle("Users");
+  useTitle(t("admin.navUsers"));
   const search = (e: FormEvent) => {
     e.preventDefault();
     set({ q: text.trim() });
@@ -118,38 +121,39 @@ export function Users() {
           <SearchField
             value={text}
             onChange={setText}
-            placeholder={role === "admin" ? "Username, name or email" : "Username or name"}
-            label="Search users"
+            placeholder={role === "admin" ? t("admin.searchUsersAdmin") : t("admin.searchUsersModerator")}
+            label={t("admin.searchUsers")}
             clearable
           />
         </form>
         <Select
-          label="Show"
+          label={t("admin.show")}
           value={filter}
           onChange={(v) => set({ filter: v === "all" ? "" : v })}
-          options={USER_FILTERS}
+          options={USER_FILTERS.map(([k, l]): [string, string] => [k, t(l)])}
         />
       </div>
       <Async q={q}>
         {(d) => (
           <>
             <p className="muted small">
-              {plural(d.total, "account")}
-              {term && <> matching “{term}”</>}
+              {term
+                ? t("admin.accountsMatching", { count: d.total, term })
+                : t("admin.accountCount", { count: d.total })}
             </p>
             {d.items.length === 0 ? (
-              <Empty>No accounts match.</Empty>
+              <Empty>{t("admin.noAccountsMatch")}</Empty>
             ) : (
               <div className={SCROLL}>
                 <table className={TABLE}>
                   <thead>
                     <tr>
-                      {th("username", "Account")}
-                      <th>Status</th>
-                      {th("scrobbles", "Scrobbles", "num")}
-                      {th("reports", "Open reports", "num")}
-                      {th("registered", "Joined")}
-                      {th("login", "Last login")}
+                      {th("username", t("admin.account"))}
+                      <th>{t("admin.status")}</th>
+                      {th("scrobbles", t("admin.colScrobbles"), "num")}
+                      {th("reports", t("admin.openReportsLabel"), "num")}
+                      {th("registered", t("admin.joined"))}
+                      {th("login", t("admin.lastLogin"))}
                     </tr>
                   </thead>
                   <tbody>
@@ -217,7 +221,7 @@ export function UserDetail() {
       {modal}
       <p className="small">
         <Link to="/admin/users">
-          <Ico.Left /> All users
+          <Ico.Left /> {t("admin.allUsers")}
         </Link>
       </p>
       <Async q={q}>
@@ -226,14 +230,9 @@ export function UserDetail() {
           const staffTarget = u.role !== "user";
           const impersonate = () =>
             ask({
-              title: `Act as ${u.username}`,
-              action: "Act as user",
-              body: (
-                <p>
-                  You will browse as <Username name={u.username} /> until you return to your account. Changes affect
-                  their account. Starting and stopping this session, and clearing their scrobbles, are logged.
-                </p>
-              ),
+              title: t("admin.actAsName", { name: u.username }),
+              action: t("admin.actAsUser"),
+              body: <p>{tx("admin.actAsBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) =>
                 api<MeResponse>(`/admin/users/${encodeURIComponent(u.username)}/impersonate`, { body: { note } }).then(
                   (r) => {
@@ -249,11 +248,11 @@ export function UserDetail() {
               refresh();
             });
           let why = "";
-          if (u.self) why = "This is your account.";
-          else if (u.configAdmin) why = "This admin is set in the server configuration (ADMIN_USERS).";
-          let confirmed = "Not yet";
+          if (u.self) why = t("admin.yourAccount");
+          else if (u.configAdmin) why = t("admin.configAdmin");
+          let confirmed = t("admin.notYet");
           if (u.emailVerifiedAt) confirmed = dateTime(u.emailVerifiedAt);
-          else if (u.placeholder) confirmed = "No, imported profile with a placeholder address";
+          else if (u.placeholder) confirmed = t("admin.placeholderAddress");
           const canSuspend = (!staffTarget || role === "admin") && !u.banned && !u.self;
 
           const addNote = (e: FormEvent) => {
@@ -265,153 +264,116 @@ export function UserDetail() {
           };
           const deleteNote = (id: number) =>
             ask({
-              title: "Delete note",
-              action: "Delete",
+              title: t("admin.deleteNote"),
+              action: t("admin.delete"),
               danger: true,
               note: false,
-              body: <p>Delete this note? This can't be undone.</p>,
+              body: <p>{t("admin.deleteNoteBody")}</p>,
               run: () => api<Ok>(`/admin/notes/${id}`, { method: "DELETE" }).then(() => q.reload()),
             });
           const allowMessaging = () =>
             ask({
-              title: "Turn messaging back on",
-              action: "Allow messaging",
-              body: (
-                <p>
-                  <Username name={u.username} /> will be able to send direct messages again, within the usual limits.
-                </p>
-              ),
+              title: t("admin.turnMessagingBackOn"),
+              action: t("admin.allowMessaging"),
+              body: <p>{tx("admin.allowMessagingBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("dm-mute", { muted: false, note }),
             });
           const muteMessaging = () =>
             ask({
-              title: "Turn off messaging",
-              action: "Turn off",
+              title: t("admin.turnOffMessaging"),
+              action: t("admin.turnOff"),
               danger: true,
-              body: (
-                <p>
-                  <Username name={u.username} /> won't be able to send direct messages. They can still read their
-                  conversations and use the rest of the site.
-                </p>
-              ),
+              body: <p>{tx("admin.muteMessagingBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("dm-mute", { muted: true, note }),
             });
           const liftSuspension = () =>
             ask({
-              title: "Lift suspension",
-              action: "Lift suspension",
-              body: (
-                <p>
-                  <Username name={u.username} /> will be able to post on walls, journals and wiki edits again.
-                </p>
-              ),
+              title: t("admin.liftSuspension"),
+              action: t("admin.liftSuspension"),
+              body: <p>{tx("admin.liftSuspensionBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("suspend", { suspended: false, note }),
             });
           const suspend = () =>
             ask({
-              title: "Suspend from posting",
-              action: "Suspend",
+              title: t("admin.suspendTitle"),
+              action: t("admin.suspend"),
               danger: true,
-              body: (
-                <p>
-                  <Username name={u.username} /> can keep listening and scrobbling but can't post on walls, journals or
-                  wiki edits.
-                </p>
-              ),
+              body: <p>{tx("admin.suspendPostingBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("suspend", { suspended: true, note }),
             });
           const liftBan = () =>
             ask({
-              title: "Lift ban",
-              action: "Unban",
-              body: (
-                <p>
-                  <Username name={u.username} /> will be able to log in again and their profile becomes visible.
-                </p>
-              ),
+              title: t("admin.liftBan"),
+              action: t("admin.unban"),
+              body: <p>{tx("admin.liftBanBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("ban", { banned: false, note }),
             });
           const ban = () =>
             ask({
-              title: `Ban ${u.username}`,
-              action: "Ban account",
+              title: t("admin.banName", { name: u.username }),
+              action: t("admin.banAccount"),
               danger: true,
-              note: "Reason (kept with the ban)",
-              body: (
-                <p>
-                  They are signed out everywhere, can't log in, and their profile is hidden from everyone but staff.
-                  Their scrobbles and posts are kept.
-                </p>
-              ),
+              note: t("admin.banReasonNote"),
+              body: <p>{t("admin.banBody")}</p>,
               run: (note) => post("ban", { banned: true, note }),
             });
           const verify = () =>
             ask({
-              title: "Mark email as confirmed",
-              action: "Confirm email",
-              body: (
-                <p>
-                  <Username name={u.username} /> gets full access (posting, messaging, following) without using the
-                  link, and won't be removed as unconfirmed. Only do this if you know the address is theirs.
-                </p>
-              ),
+              title: t("admin.markEmailConfirmedTitle"),
+              action: t("admin.confirmEmail"),
+              body: <p>{tx("admin.verifyBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("verify", { note }),
             });
           const endProbation = () =>
             ask({
-              title: "End probation",
-              action: "End probation",
-              body: (
-                <p>
-                  <Username name={u.username} /> gets the usual limits from now on.
-                </p>
-              ),
+              title: t("admin.endProbation"),
+              action: t("admin.endProbation"),
+              body: <p>{tx("admin.endProbationBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("probation", { probation: false, note }),
             });
           const holdProbation = () =>
             ask({
-              title: "Put on probation",
-              action: "Put on probation",
-              body: (
-                <p>
-                  <Username name={u.username} /> gets the tighter limits again and stays on probation until staff end
-                  it. They aren't told.
-                </p>
-              ),
+              title: t("admin.putOnProbation"),
+              action: t("admin.putOnProbation"),
+              body: <p>{tx("admin.holdProbationBody", { name: <Username name={u.username} /> })}</p>,
               run: (note) => post("probation", { probation: true, note }),
             });
           const revokeSessions = () =>
             ask({
-              title: "Sign out everywhere",
-              action: "Revoke sessions",
+              title: t("admin.signOutEverywhere"),
+              action: t("admin.revokeSessions"),
               body: (
                 <p>
-                  End <Username name={u.username} />
-                  's {plural(d.counts.sessions, "web session")} and {plural(d.counts.apiSessions, "app session")}. They
-                  can log in again.
+                  {tx("admin.revokeSessionsBody", {
+                    name: <Username name={u.username} />,
+                    web: t("admin.webSessionCount", { count: d.counts.sessions }),
+                    app: t("admin.appSessionCount", { count: d.counts.apiSessions }),
+                  })}
                 </p>
               ),
               run: (note) => post("sessions", { note }).then(() => {}),
             });
           const changeRole = (r: Role) =>
             ask({
-              title: `Make ${u.username} ${roleTitle(r)}`,
-              action: "Change role",
+              title: t(MAKE_ROLE[r], { name: u.username }),
+              action: t("admin.changeRole"),
               danger: r === "admin",
-              body: <p>{ROLE_BLURB[r]}</p>,
+              body: <p>{t(ROLE_BLURB[r])}</p>,
               run: (note) => post("role", { role: r, note }),
             });
           const deleteAccount = () =>
             ask({
-              title: `Delete ${u.username}`,
-              action: "Delete account",
+              title: t("admin.deleteName", { name: u.username }),
+              action: t("admin.deleteAccount"),
               danger: true,
               typed: u.username,
               body: (
                 <p>
-                  Permanently deletes the account with its {plural(d.counts.scrobbles, "scrobble")},{" "}
-                  {plural(d.counts.shouts, "wall post")}, {plural(d.counts.journals, "journal post")}, loved tracks,
-                  playlists and tags. Open reports about them are closed. This can't be undone.
+                  {t("admin.deleteAccountBody", {
+                    scrobbles: t("admin.scrobbleCount", { count: d.counts.scrobbles }),
+                    shouts: t("admin.wallPostCount", { count: d.counts.shouts }),
+                    journals: t("admin.journalPostCount", { count: d.counts.journals }),
+                  })}
                 </p>
               ),
               run: (note) =>
@@ -429,61 +391,59 @@ export function UserDetail() {
                     <Username name={u.username} /> <StatusBadges u={{ ...u, probation: d.trust.probation }} />
                   </h2>
                   <p className={`muted ${USER_HEAD_SUB}`}>
-                    {[u.realname, u.country].filter(Boolean).join(" · ") || "No name or country set"}
+                    {[u.realname, u.country].filter(Boolean).join(" · ") || t("admin.noNameOrCountry")}
                   </p>
                 </div>
                 {!u.banned && (
                   <Button kind="btn ghost small" href={userUrl(u.username)}>
-                    View profile <Ico.Right />
+                    {t("admin.viewProfile")} <Ico.Right />
                   </Button>
                 )}
                 {role === "admin" && !staffTarget && !locked && !u.banned && (
                   <Button kind="btn ghost small" type="button" onClick={impersonate}>
-                    Act as user
+                    {t("admin.actAsUser")}
                   </Button>
                 )}
               </div>
               {u.banned && (
                 <p className="notice">
-                  Banned {u.bannedAt ? ago(u.bannedAt) : ""}
-                  {u.banReason ? `: ${u.banReason}` : ""}. The account can't log in and its profile is hidden from
-                  everyone but staff.
+                  {u.banReason
+                    ? t("admin.bannedNoticeReason", { ago: u.bannedAt ? ago(u.bannedAt) : "", reason: u.banReason })
+                    : t("admin.bannedNotice", { ago: u.bannedAt ? ago(u.bannedAt) : "" })}
                 </p>
               )}
-              {u.suspended && !u.banned && (
-                <p className="notice">Suspended from posting. They can still listen and scrobble.</p>
-              )}
+              {u.suspended && !u.banned && <p className="notice">{t("admin.suspendedNotice")}</p>}
               <div className={TILES}>
                 <Stat
-                  label="Scrobbles"
+                  label={t("admin.colScrobbles")}
                   value={num(d.counts.scrobbles)}
-                  hint={d.lastScrobble ? `last ${ago(d.lastScrobble)}` : "none yet"}
+                  hint={d.lastScrobble ? t("admin.lastAgo", { ago: ago(d.lastScrobble) }) : t("admin.noneYet")}
                 />
-                <Stat label="Wall posts" value={num(d.counts.shouts)} />
-                <Stat label="Journal posts" value={num(d.counts.journals)} />
-                <Stat label="Wiki edits" value={num(d.counts.wikiEdits)} />
+                <Stat label={t("admin.wallPosts")} value={num(d.counts.shouts)} />
+                <Stat label={t("admin.journalPosts")} value={num(d.counts.journals)} />
+                <Stat label={t("admin.wikiEdits")} value={num(d.counts.wikiEdits)} />
                 <Stat
-                  label="Reports against"
+                  label={t("admin.reportsAgainst")}
                   value={num(d.reportsAgainst.filter((r) => r.status === "open").length)}
-                  hint={`${d.reportsAgainst.length} in total`}
+                  hint={t("admin.inTotal", { total: d.reportsAgainst.length })}
                 />
               </div>
               <div className="cols">
                 <div className="main">
                   {role === "admin" && <ManageUserLabels name={u.username} />}
                   {role === "admin" && <ManageUsernames key={u.username} name={u.username} onChange={q.reload} />}
-                  <Section title="Internal notes">
-                    <p className="muted small">Only staff can see these.</p>
+                  <Section title={t("admin.internalNotes")}>
+                    <p className="muted small">{t("admin.onlyStaffSee")}</p>
                     <form className={NOTE_FORM} onSubmit={addNote}>
                       <Textarea
                         rows={2}
                         value={noteText}
                         onChange={(e) => setNoteText(e.target.value)}
-                        placeholder="Add a note for other staff"
+                        placeholder={t("admin.addNotePlaceholder")}
                         maxLength={2000}
                       />
                       <Button kind="btn small" disabled={!noteText.trim()}>
-                        Add note
+                        {t("admin.addNote")}
                       </Button>
                     </form>
                     {flash.note}
@@ -493,9 +453,9 @@ export function UserDetail() {
                           <li key={n.id} className={STAFF_NOTE}>
                             <p className="m-[0_0_4px] whitespace-pre-wrap wrap-anywhere">{n.body}</p>
                             <span className="muted small">
-                              {n.author || "deleted staff"} · {ago(n.createdAt)} ·{" "}
+                              {n.author || t("admin.deletedStaff")} · {ago(n.createdAt)} ·{" "}
                               <Button kind="link small" type="button" onClick={() => deleteNote(n.id)}>
-                                Delete
+                                {t("admin.delete")}
                               </Button>
                             </span>
                           </li>
@@ -503,32 +463,29 @@ export function UserDetail() {
                       </ul>
                     )}
                   </Section>
-                  <Section title="Reports against this account">
-                    <ReportMini
-                      items={d.reportsAgainst}
-                      empty="No one has reported this account or its posts."
-                      show="reporter"
-                    />
+                  <Section title={t("admin.reportsAgainstAccount")}>
+                    <ReportMini items={d.reportsAgainst} empty={t("admin.noReportsAgainst")} show="reporter" />
                   </Section>
-                  <Section title="Reports filed by this account">
-                    <ReportMini items={d.reportsBy} empty="They haven't reported anything." show="author" />
+                  <Section title={t("admin.reportsByAccount")}>
+                    <ReportMini items={d.reportsBy} empty={t("admin.noReportsBy")} show="author" />
                   </Section>
-                  <Section title="Moderation history">
-                    <AuditList items={d.history} empty="No staff actions on this account yet." />
+                  <Section title={t("admin.moderationHistory")}>
+                    <AuditList items={d.history} empty={t("admin.noAccountActions")} />
                   </Section>
                   {role === "admin" && <CosmeticsAdmin key={u.username} name={u.username} />}
                   {d.recentShouts.length > 0 && (
                     <Section
-                      title="Recent wall posts"
+                      title={t("admin.recentWallPosts")}
                       more={`/admin/content?kind=shouts&user=${encodeURIComponent(u.username)}`}
-                      moreLabel="All their posts"
+                      moreLabel={t("admin.allTheirPosts")}
                     >
                       <ul className={LIST}>
                         {d.recentShouts.map((s) => (
                           <li key={s.id}>
                             <p>{s.body}</p>
                             <span className="muted small">
-                              {s.where ? <Link to={s.where.link}>{s.where.label}</Link> : "a page"} · {ago(s.createdAt)}
+                              {s.where ? <Link to={s.where.link}>{s.where.label}</Link> : t("admin.aPage")} ·{" "}
+                              {ago(s.createdAt)}
                             </span>
                           </li>
                         ))}
@@ -537,140 +494,149 @@ export function UserDetail() {
                   )}
                 </div>
                 <aside className="side">
-                  <Section title="Account">
+                  <Section title={t("admin.account")}>
                     <dl className={FACTS}>
                       {u.email !== undefined && (
                         <>
-                          <dt>Email</dt>
+                          <dt>{t("admin.email")}</dt>
                           <dd className="wrap-anywhere">{u.email}</dd>
                         </>
                       )}
-                      <dt>Confirmed</dt>
+                      <dt>{t("admin.confirmed")}</dt>
                       <dd>{confirmed}</dd>
-                      <dt>Joined</dt>
+                      <dt>{t("admin.joined")}</dt>
                       <dd>{dateTime(u.registeredAt)}</dd>
-                      <dt>Last login</dt>
-                      <dd>{d.lastLogin ? dateTime(d.lastLogin) : "No active session"}</dd>
-                      <dt>Sessions</dt>
+                      <dt>{t("admin.lastLogin")}</dt>
+                      <dd>{d.lastLogin ? dateTime(d.lastLogin) : t("admin.noActiveSession")}</dd>
+                      <dt>{t("admin.sessions")}</dt>
                       <dd>
-                        {num(d.counts.sessions)} web, {num(d.counts.apiSessions)} app
+                        {t("admin.sessionsValue", { web: num(d.counts.sessions), app: num(d.counts.apiSessions) })}
                       </dd>
-                      <dt>Social</dt>
+                      <dt>{t("admin.social")}</dt>
                       <dd>
-                        {num(d.counts.followers)} followers, {num(d.counts.following)} following
-                        {d.counts.blockedBy ? `, blocked by ${num(d.counts.blockedBy)}` : ""}
+                        {d.counts.blockedBy
+                          ? t("admin.socialValueBlocked", {
+                              followers: num(d.counts.followers),
+                              following: num(d.counts.following),
+                              blocked: num(d.counts.blockedBy),
+                            })
+                          : t("admin.socialValue", {
+                              followers: num(d.counts.followers),
+                              following: num(d.counts.following),
+                            })}
                       </dd>
-                      <dt>Library</dt>
+                      <dt>{t("admin.library")}</dt>
                       <dd>
-                        {num(d.counts.loved)} loved, {num(d.counts.playlists)} playlists, {num(d.counts.tags)} tags
+                        {t("admin.libraryValue", {
+                          loved: num(d.counts.loved),
+                          playlists: num(d.counts.playlists),
+                          tags: num(d.counts.tags),
+                        })}
                       </dd>
                     </dl>
                   </Section>
-                  <Section title="Probation">
-                    <Probation t={d.trust} />
+                  <Section title={t("admin.probation")}>
+                    <Probation trust={d.trust} />
                     {!d.trust.staff && !u.banned && (
                       <div className={`${ACTIONS} adm-dm-act`}>
                         {d.trust.probation ? (
                           <Button kind="btn ghost" type="button" onClick={endProbation}>
-                            End probation
+                            {t("admin.endProbation")}
                           </Button>
                         ) : (
                           <Button kind="btn ghost" type="button" onClick={holdProbation}>
-                            Put on probation
+                            {t("admin.putOnProbation")}
                           </Button>
                         )}
                       </div>
                     )}
                   </Section>
-                  <Section title="Direct messages">
-                    {d.dm.muted && (
-                      <p className="notice small">
-                        Messaging is turned off. They can read their conversations but can't send.
-                      </p>
-                    )}
+                  <Section title={t("admin.directMessages")}>
+                    {d.dm.muted && <p className="notice small">{t("admin.messagingTurnedOff")}</p>}
                     <dl className={FACTS}>
-                      <dt>Conversations</dt>
+                      <dt>{t("admin.conversations")}</dt>
                       <dd>
                         {num(d.dm.threads)}
                         {role === "admin" && d.dm.threads > 0 && (
                           <>
                             {" "}
-                            · <Link to={`/admin/messages${qs({ user: u.username })}`}>View</Link>
+                            · <Link to={`/admin/messages${qs({ user: u.username })}`}>{t("admin.viewCap")}</Link>
                           </>
                         )}
                       </dd>
-                      <dt>Started</dt>
+                      <dt>{t("admin.started")}</dt>
+                      <dd>{t("admin.startedValue", { day: num(d.dm.startedDay), week: num(d.dm.startedWeek) })}</dd>
+                      <dt>{t("admin.sent")}</dt>
                       <dd>
-                        {num(d.dm.startedDay)} in the last day, {num(d.dm.startedWeek)} in the last week
+                        {t("admin.sentValue", {
+                          messages: t("admin.messageCount", { count: d.dm.sent }),
+                          week: num(d.dm.sentWeek),
+                        })}
                       </dd>
-                      <dt>Sent</dt>
-                      <dd>
-                        {plural(d.dm.sent, "message")}, {num(d.dm.sentWeek)} in the last week
-                      </dd>
-                      <dt>Spam flags</dt>
+                      <dt>{t("admin.spamFlags")}</dt>
                       <dd>
                         {d.dm.openFlags ? (
                           <Link to="/admin/messages?tab=flags">
-                            <b className={RED}>{num(d.dm.openFlags)} open</b>
+                            <b className={RED}>{t("admin.countOpen", { count: d.dm.openFlags })}</b>
                           </Link>
                         ) : (
-                          "None open"
+                          t("admin.noneOpen")
                         )}
                       </dd>
-                      <dt>Reported</dt>
+                      <dt>{t("admin.reported")}</dt>
                       <dd>
                         {d.dm.openReports ? (
                           <Link to="/admin/reports?type=dm">
-                            <b className={RED}>{plural(d.dm.openReports, "message")}</b>
+                            <b className={RED}>{t("admin.messageCount", { count: d.dm.openReports })}</b>
                           </Link>
                         ) : (
-                          "No open reports"
+                          t("admin.noOpenReports")
                         )}
                       </dd>
-                      <dt>Accepts</dt>
-                      <dd>{POLICY[d.dm.policy] ?? d.dm.policy}</dd>
+                      <dt>{t("admin.accepts")}</dt>
+                      <dd>{POLICY[d.dm.policy] ? t(POLICY[d.dm.policy]) : d.dm.policy}</dd>
                     </dl>
                     {!staffTarget && !locked && (
                       <div className={`${ACTIONS} adm-dm-act`}>
                         {d.dm.muted ? (
                           <Button kind="btn ghost" type="button" onClick={allowMessaging}>
-                            Allow messaging again
+                            {t("admin.allowMessagingAgain")}
                           </Button>
                         ) : (
                           <Button kind="btn ghost" type="button" onClick={muteMessaging}>
-                            Turn off messaging
+                            {t("admin.turnOffMessaging")}
                           </Button>
                         )}
                       </div>
                     )}
                   </Section>
-                  <Section title="Actions">
+                  <Section title={t("admin.actions")}>
                     {why && <p className="muted small">{why}</p>}
                     <div className={ACTIONS}>
                       {canSuspend &&
                         (u.suspended ? (
                           <Button kind="btn ghost" type="button" onClick={liftSuspension}>
-                            Lift suspension
+                            {t("admin.liftSuspension")}
                           </Button>
                         ) : (
                           <Button kind="btn ghost" type="button" disabled={staffTarget || locked} onClick={suspend}>
-                            Suspend from posting
+                            {t("admin.suspendTitle")}
                           </Button>
                         ))}
                       {role === "admin" && (
                         <>
                           {u.banned ? (
                             <Button kind="btn ghost" type="button" onClick={liftBan}>
-                              Lift ban
+                              {t("admin.liftBan")}
                             </Button>
                           ) : (
                             <Button kind="btn danger" type="button" disabled={staffTarget || locked} onClick={ban}>
-                              Ban account
+                              {t("admin.banAccount")}
                             </Button>
                           )}
                           {u.unconfirmed && (
                             <Button kind="btn ghost" type="button" onClick={verify}>
-                              Mark email confirmed
+                              {t("admin.markEmailConfirmed")}
                             </Button>
                           )}
                           <Button
@@ -679,7 +645,7 @@ export function UserDetail() {
                             disabled={u.self || !(d.counts.sessions + d.counts.apiSessions)}
                             onClick={revokeSessions}
                           >
-                            Revoke sessions
+                            {t("admin.revokeSessions")}
                           </Button>
                           {!u.banned && !locked && <RolePicker current={u.role} onPick={changeRole} />}
                           <Button
@@ -688,14 +654,12 @@ export function UserDetail() {
                             disabled={staffTarget || locked}
                             onClick={deleteAccount}
                           >
-                            Delete account
+                            {t("admin.deleteAccount")}
                           </Button>
                         </>
                       )}
                       {staffTarget && !locked && role === "admin" && (
-                        <p className="muted small">
-                          Staff can't be suspended, banned or deleted. Change their role to user first.
-                        </p>
+                        <p className="muted small">{t("admin.staffProtected")}</p>
                       )}
                     </div>
                   </Section>
@@ -709,41 +673,38 @@ export function UserDetail() {
   );
 }
 
-function Probation({ t }: { t: StaffTrust }) {
-  if (t.staff) return <p className="muted small">Staff are never on probation.</p>;
-  let state = "Joined before probation started.";
-  if (t.probation) {
-    state =
-      "Tighter limits on messages, new conversations, groups, follows, wall posts, journal posts, tags, wiki edits and reports. They aren't told.";
-  } else if (t.clearedBy) state = `Ended by ${t.clearedBy} ${ago(t.clearedAt ?? 0)}.`;
-  else if (t.checkedAt) state = `Left probation ${ago(t.clearedAt ?? 0)}.`;
-  let exit = "As soon as the score is reached";
-  if (t.held) exit = "Held by staff";
-  else if (t.eligibleAt * 1000 > Date.now()) exit = dateTime(t.eligibleAt);
+function Probation({ trust }: { trust: StaffTrust }) {
+  if (trust.staff) return <p className="muted small">{t("admin.staffNeverProbation")}</p>;
+  let state = t("admin.joinedBeforeProbation");
+  if (trust.probation) state = t("admin.probationLimits");
+  else if (trust.clearedBy)
+    state = t("admin.probationEndedBy", { name: trust.clearedBy, ago: ago(trust.clearedAt ?? 0) });
+  else if (trust.checkedAt) state = t("admin.leftProbation", { ago: ago(trust.clearedAt ?? 0) });
+  let exit = t("admin.exitWhenScored");
+  if (trust.held) exit = t("admin.heldByStaff");
+  else if (trust.eligibleAt * 1000 > Date.now()) exit = dateTime(trust.eligibleAt);
   return (
     <>
       <p className="muted small">{state}</p>
       <dl className={FACTS}>
-        <dt>Score</dt>
-        <dd>
-          {t.score} of {t.needed}
-        </dd>
-        {t.probation && (
+        <dt>{t("admin.score")}</dt>
+        <dd>{t("admin.scoreValue", { score: trust.score, needed: trust.needed })}</dd>
+        {trust.probation && (
           <>
-            <dt>Earliest exit</dt>
+            <dt>{t("admin.earliestExit")}</dt>
             <dd>{exit}</dd>
           </>
         )}
-        {t.checkedAt && (
+        {trust.checkedAt && (
           <>
-            <dt>Last checked</dt>
-            <dd>{ago(t.checkedAt)}</dd>
+            <dt>{t("admin.lastChecked")}</dt>
+            <dd>{ago(trust.checkedAt)}</dd>
           </>
         )}
       </dl>
-      {t.points.length > 0 && (
+      {trust.points.length > 0 && (
         <ul className="list-none m-[10px_0_0] p-0 text-[14px]">
-          {t.points.map((p) => (
+          {trust.points.map((p) => (
             <li key={p.label} className="flex justify-between gap-3 py-[3px]">
               <span>{p.label}</span>
               {p.points > 0 ? <b>+{p.points}</b> : <b className={RED}>{p.points}</b>}
@@ -765,7 +726,11 @@ const roleButton = (on: boolean) => `${ROLE_BUTTON} ${on ? ROLE_ON : ROLE_OFF}`;
 
 function RolePicker({ current, onPick }: { current: Role; onPick: (r: Role) => void }) {
   return (
-    <div className="flex border border-site-line rounded-[4px] overflow-hidden" role="group" aria-label="Role">
+    <div
+      className="flex border border-site-line rounded-[4px] overflow-hidden"
+      role="group"
+      aria-label={t("admin.role")}
+    >
       {ROLES.map((r) => (
         <button
           key={r}
@@ -774,7 +739,7 @@ function RolePicker({ current, onPick }: { current: Role; onPick: (r: Role) => v
           aria-pressed={r === current}
           onClick={() => r !== current && onPick(r)}
         >
-          {ROLE[r]}
+          {roleLabel(r)}
         </button>
       ))}
     </div>
@@ -790,36 +755,44 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
         if (show === "reporter" && r.reporter)
           who = (
             <>
-              by{" "}
-              <Link to={adminUrl(r.reporter)}>
-                <Username name={r.reporter} />
-              </Link>{" "}
+              {tx("admin.byName", {
+                name: (
+                  <Link to={adminUrl(r.reporter)}>
+                    <Username name={r.reporter} />
+                  </Link>
+                ),
+              })}{" "}
               ·{" "}
             </>
           );
         if (show === "author" && r.author)
           who = (
             <>
-              against{" "}
-              <Link to={adminUrl(r.author)}>
-                <Username name={r.author} />
-              </Link>{" "}
+              {tx("admin.againstName", {
+                name: (
+                  <Link to={adminUrl(r.author)}>
+                    <Username name={r.author} />
+                  </Link>
+                ),
+              })}{" "}
               ·{" "}
             </>
           );
         const state =
           r.status === "open" ? (
             <Link to="/admin/reports">
-              <b className={RED}>open</b>
+              <b className={RED}>{t("admin.openLower")}</b>
             </Link>
+          ) : r.resolver ? (
+            t("admin.outcomeBy", { outcome: outcomeLabel(r.outcome), name: r.resolver })
           ) : (
-            `${r.outcome}${r.resolver ? ` by ${r.resolver}` : ""}`
+            outcomeLabel(r.outcome)
           );
         return (
           <li key={r.id}>
             <span>
-              <span className="badge">{REASON[r.reason] || r.reason}</span>{" "}
-              <span className={TYPE_LABEL}>{TYPE[r.type]}</span> {r.where}
+              <span className="badge">{reasonLabel(r.reason)}</span>{" "}
+              <span className={TYPE_LABEL}>{typeLabel(r.type)}</span> {r.where}
             </span>
             <span className="muted small">
               {who}
