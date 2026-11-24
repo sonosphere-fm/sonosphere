@@ -111,7 +111,9 @@ export function TrackList<R extends Row>({
     <table className={compact ? "chartlist slim" : "chartlist"}>
       <thead className="sr-only">
         <tr>
-          {(rank !== undefined || numbered) && <th scope="col">{numbered ? t("user.colPosition") : t("user.colRank")}</th>}
+          {(rank !== undefined || numbered) && (
+            <th scope="col">{numbered ? t("user.colPosition") : t("user.colRank")}</th>
+          )}
           <th scope="col">{t("user.colPlayback")}</th>
           <th scope="col">{t("user.colArtwork")}</th>
           {!compact && <th scope="col">{t("user.love")}</th>}
@@ -203,7 +205,9 @@ export function TrackList<R extends Row>({
             </td>
             {showDuration && <td className="c-dur">{dur(r.duration || 0)}</td>}
             {actions && <td className="c-actions">{actions(r)}</td>}
-            {count && <CountCell value={r[count] || 0} max={max} unit={unitWord(count, r[count] || 0)} plain={compact} />}
+            {count && (
+              <CountCell value={r[count] || 0} max={max} unit={unitWord(count, r[count] || 0)} plain={compact} />
+            )}
             {time && (
               <td className="c-time">
                 <div className="track-tail">
@@ -312,7 +316,12 @@ export function RankList({
                   </Link>
                 )}
               </td>
-              <CountCell value={rankValue(r, count)} max={max} unit={unitWord(count, rankValue(r, count))} plain={compact} />
+              <CountCell
+                value={rankValue(r, count)}
+                max={max}
+                unit={unitWord(count, rankValue(r, count))}
+                plain={compact}
+              />
             </tr>
           );
         })}
@@ -414,12 +423,12 @@ const recTitle = (kind: keyof typeof REC_KIND) => {
 };
 const rec = "rec break-inside-avoid m-0 mb-5 min-[601px]:max-[900px]:mb-4 max-[600px]:mb-2.5";
 const recBadge =
-  "absolute z-2 right-2.5 -bottom-3.5 size-[30px] rounded-[50%] grid place-items-center " +
+  "absolute z-2 end-2.5 -bottom-3.5 size-[30px] rounded-[50%] grid place-items-center " +
   "text-white border-2 border-white [&_svg]:size-[15px] " +
-  "max-[600px]:size-6 max-[600px]:right-1.5 max-[600px]:-bottom-3 max-[600px]:[&_svg]:size-3";
+  "max-[600px]:size-6 max-[600px]:end-1.5 max-[600px]:-bottom-3 max-[600px]:[&_svg]:size-3";
 const recWhy =
-  "m-0 py-3 pr-12 pl-3 bg-site-panel border border-site-line [border-top:0] text-[13.5px] leading-[1.4] " +
-  "text-site-ink-2 [&_a]:text-site-link max-[600px]:py-2 max-[600px]:pr-[30px] max-[600px]:pl-2 max-[600px]:text-[12.5px]";
+  "m-0 py-3 pe-12 ps-3 bg-site-panel border border-site-line [border-top:0] text-[13.5px] leading-[1.4] " +
+  "text-site-ink-2 [&_a]:text-site-link max-[600px]:py-2 max-[600px]:pe-[30px] max-[600px]:ps-2 max-[600px]:text-[12.5px]";
 function recWhyText(kind: keyof typeof REC_KIND, artist: string, similar: ReactNode[], via?: string) {
   const by = <Link to={artistUrl(artist)}>{artist}</Link>;
   if (kind !== "artist") {
@@ -472,9 +481,7 @@ export function RecCard({
           <Badge />
         </span>
       </div>
-      <p className={recWhy}>
-        {recWhyText(kind, artist, similar, via)}
-      </p>
+      <p className={recWhy}>{recWhyText(kind, artist, similar, via)}</p>
     </article>
   );
 }
@@ -505,7 +512,9 @@ export function UserList<U extends PublicUser & { playcount?: number }>({
             )}
             {extra?.(u)}
           </div>
-          {u.playcount !== undefined && <span className="muted small nowrap">{t("user.scrobbleCount", { count: u.playcount })}</span>}
+          {u.playcount !== undefined && (
+            <span className="muted small nowrap">{t("user.scrobbleCount", { count: u.playcount })}</span>
+          )}
         </li>
       ))}
     </ul>

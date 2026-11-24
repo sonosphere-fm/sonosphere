@@ -354,7 +354,7 @@ export function ChartMaker() {
             {!drawn && <p className="text-site-muted">{t("music.chartPlaceholder")}</p>}
           </div>
           {lines.length > 0 && (
-            <ul className="text-site-muted text-[13px] mt-3 pl-5 list-disc">
+            <ul className="text-site-muted text-[13px] mt-3 ps-5 list-disc">
               {lines.map((line) => (
                 <li key={line}>{line}</li>
               ))}

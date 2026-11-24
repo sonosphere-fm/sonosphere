@@ -29,7 +29,7 @@ export function BarChart({
   const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
-    <figure className="m-0 mb-2 relative" onMouseLeave={() => setHover(null)}>
+    <figure dir="ltr" className="m-0 mb-2 relative" onMouseLeave={() => setHover(null)}>
       <div className="text-[11px] text-site-muted [border-bottom:1px_dashed_var(--line)] text-right leading-[1.5]">
         {num(max)}
       </div>

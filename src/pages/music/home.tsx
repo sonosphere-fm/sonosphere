@@ -61,7 +61,7 @@ function HomeFeed({ name }: { name: string }) {
   return (
     <>
       {!hidden && (
-        <div className="welcome relative pr-10 mb-6">
+        <div className="welcome relative pe-10 mb-6">
           <Button kind="bare welcome-x" aria-label={t("music.dismiss")} onClick={dismiss}>
             <Ico.X />
           </Button>

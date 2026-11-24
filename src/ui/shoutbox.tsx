@@ -305,7 +305,7 @@ function ShoutThread({
         </div>
       </div>
       {expanded && (
-        <div className={depth < 3 ? "ml-3 pl-3 border-l border-site-line mt-3" : "mt-3"}>
+        <div className={depth < 3 ? "ms-3 ps-3 border-s border-site-line mt-3" : "mt-3"}>
           <Async q={replies}>
             {(d) => (
               <>

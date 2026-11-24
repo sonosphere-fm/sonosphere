@@ -208,13 +208,13 @@ export const USER_HEAD_SUB = "m-[2px_0_0]";
 export const PEOPLE = "list-none m-0 p-0";
 export const PERSON = cx("flex items-center gap-[10px] py-[7px]", "border-b border-b-site-line last:[border-bottom:0]");
 export const QUOTE = cx(
-  "m-[0_0_10px] py-2 px-3 border-l-[3px] border-l-site-line bg-site-panel",
+  "m-[0_0_10px] py-2 px-3 border-s-[3px] border-s-site-line bg-site-panel",
   "whitespace-pre-wrap wrap-anywhere max-h-[200px] overflow-auto"
 );
 export const PICKED_BG = "bg-[light-dark(#fff7f6,#1f2659)]";
 export const CHECK = "check items-center text-[14px] m-0";
 const BARE_BUTTON = "[background:none] [border:0] p-0 [font:inherit] cursor-pointer";
-export const LINKISH = `${BARE_BUTTON} text-site-link text-left hover:underline`;
+export const LINKISH = `${BARE_BUTTON} text-site-link text-start hover:underline`;
 
 const FIELD_MIN = cx(
   "[&>.field]:min-w-[170px] [&>div:has(>input)]:min-w-[170px]",
@@ -239,10 +239,10 @@ export const COMPACT_LIST = cx(
 export const SCROLL = "overflow-x-auto mb-[14px]";
 const TABLE_BASE = cx(
   "w-full border-collapse text-[14px]",
-  "[&_th]:text-left [&_th]:text-[12px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em]",
+  "[&_th]:text-start [&_th]:text-[12px] [&_th]:font-bold [&_th]:uppercase [&_th]:tracking-[.05em]",
   "[&_th]:text-site-muted [&_th]:p-2 [&_th]:border-b-2 [&_th]:border-b-site-line",
   "[&_th]:whitespace-nowrap [&_td]:border-b [&_td]:border-b-site-line",
-  "[&_.num]:text-right [&_.num]:tabular-nums"
+  "[&_.num]:text-end [&_.num]:tabular-nums"
 );
 export const TABLE = `${TABLE_BASE} [&_td]:p-2 [&_td]:align-middle`;
 export const LOG_TABLE = `${TABLE_BASE} [&_td]:p-2 [&_td]:align-top`;
@@ -250,7 +250,7 @@ export const COMPACT_TABLE = `${TABLE_BASE} [&_td]:p-1.5 [&_td]:align-top`;
 export const PICKED_ROW = "[&_td]:bg-[light-dark(#fff7f6,#1f2659)]";
 const SORT_BUTTON = cx(
   BARE_BUTTON,
-  "[color:inherit] [text-transform:inherit] tracking-[inherit] [&_.ico]:ml-1 [&_.ico]:size-[.85em]"
+  "[color:inherit] [text-transform:inherit] tracking-[inherit] [&_.ico]:ms-1 [&_.ico]:size-[.85em]"
 );
 export const sortButton = (on: boolean) => cx(SORT_BUTTON, on ? "text-site-ink" : "hover:text-site-ink");
 
@@ -265,7 +265,7 @@ const BADGE_TONE: Record<string, string> = {
   bad: INK_TONE,
   warn: WARN_TONE,
 };
-const BADGE = `inline-block align-middle ml-1.5 [td_&:first-child]:ml-0 py-px ${TAG}`;
+const BADGE = `inline-block align-middle ms-1.5 [td_&:first-child]:ms-0 py-px ${TAG}`;
 export function Badge({ tone = "", children }: { tone?: string; children: ReactNode }) {
   return <span className={`${BADGE} ${BADGE_TONE[tone] ?? PLAIN_TONE}`}>{children}</span>;
 }

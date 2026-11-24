@@ -11,7 +11,7 @@ function Legal({ title, children }: { title: string; children: ReactNode }) {
   useTitle(title);
   return (
     <div className="wrap page">
-      <div className="docs legal">
+      <div className="docs legal" dir="ltr" lang="en">
         <h1 className="page-title">{title}</h1>
         <p className="muted">Effective and last updated {UPDATED}</p>
         {children}

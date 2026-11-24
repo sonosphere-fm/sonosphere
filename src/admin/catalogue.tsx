@@ -598,7 +598,7 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
         <ol className="list-none w-full m-0 p-0 max-h-[40vh] overflow-auto">
           {list.map((track, i) => (
             <li key={track.id} className={TRACK_ROW}>
-              <span className="muted small w-6 text-right">{i + 1}</span>
+              <span className="muted small w-6 text-end">{i + 1}</span>
               <span className="grow">
                 {track.name}
                 {track.artist !== item.artist && (
