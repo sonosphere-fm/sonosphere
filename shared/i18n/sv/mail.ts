@@ -16,6 +16,18 @@ export default {
   verifyNote:
     "Länken fungerar i 3 dagar; du kan be om en ny under Inställningar. Konton som inte bekräftas inom {days} dagar tas bort. Om du inte har registrerat dig kan du strunta i det här meddelandet, så tas kontot bort.",
 
+  purgeSubject: {
+    one: "Ditt Sonosphere-konto raderas om {count} dag",
+    other: "Ditt Sonosphere-konto raderas om {count} dagar",
+  },
+  purgeHeading: "Hej {username}, ditt konto kommer snart att raderas",
+  purgeBody: {
+    one: "Du har inte bekräftat din e-postadress än. Om du inte bekräftar den inom {count} dag raderas ditt konto och allt innehåll permanent.",
+    other:
+      "Du har inte bekräftat din e-postadress än. Om du inte bekräftar den inom {count} dagar raderas ditt konto och allt innehåll permanent.",
+  },
+  purgeNote: "Om du inte registrerade dig kan du ignorera det här meddelandet, så tas kontot bort.",
+
   welcomeSubject: "Välkommen till Sonosphere",
   welcomeHeading: "Välkommen, {username}",
   welcomeIntro: "Din e-postadress är bekräftad och kontot är klart. Några saker att testa först:",

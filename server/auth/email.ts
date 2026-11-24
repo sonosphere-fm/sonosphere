@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray, isNull, lt, notLike } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, isNull, lt, lte, notLike, or, sql } from "drizzle-orm";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
 import { db, type Conn } from "../db/client";
 import { apiSessions, apiTokens, emailTokens, oauthAccounts, sessions, users } from "../db/schema";
@@ -191,17 +191,59 @@ export const passwordSet = (u: User) => send(mail.passwordSetMail(userLocale(u),
 export async function dropExpiredEmailTokens(): Promise<void> {
   await db.delete(emailTokens).where(lt(emailTokens.expiresAt, now()));
 }
+const DAY = 86400;
+const WARN_DAYS = [7, 3, 1];
+const FINAL_WARNING = (UNVERIFIED_DAYS - 1) * DAY;
+const unconfirmed = () =>
+  and(isNull(users.emailVerifiedAt), eq(users.isAdmin, false), notLike(users.email, "%.invalid"));
+
+const warningsBy = (at: number, deadline: number) => WARN_DAYS.filter((d) => at >= deadline - d * DAY).length;
+
+export async function warnUnverified(): Promise<void> {
+  const due = await db
+    .select()
+    .from(users)
+    .where(
+      and(
+        unconfirmed(),
+        lt(users.registeredAt, now() - (UNVERIFIED_DAYS - WARN_DAYS[0]!) * DAY),
+        or(isNull(users.purgeWarnedAt), lt(users.purgeWarnedAt, sql`${users.registeredAt} + ${FINAL_WARNING}`))
+      )
+    )
+    .limit(200);
+  for (const u of due) {
+    const deadline = u.registeredAt + UNVERIFIED_DAYS * DAY;
+    const sent = u.purgeWarnedAt ? warningsBy(u.purgeWarnedAt, deadline) : 0;
+    if (warningsBy(now(), deadline) <= sent) continue;
+    const [claimed] = await db
+      .update(users)
+      .set({ purgeWarnedAt: now() })
+      .where(
+        and(
+          eq(users.id, u.id),
+          isNull(users.emailVerifiedAt),
+          u.purgeWarnedAt ? eq(users.purgeWarnedAt, u.purgeWarnedAt) : isNull(users.purgeWarnedAt)
+        )
+      )
+      .returning({ id: users.id });
+    if (!claimed) continue;
+    const days = Math.max(1, Math.ceil((deadline - now()) / DAY));
+    await send(mail.purgeWarningMail(userLocale(u), u.email, u.username, days, await issue(u.id, "verify", u.email)));
+  }
+}
+
 // Imported profiles have placeholder addresses (@x.invalid) that can never be confirmed, so they are kept.
+// Nobody is deleted until a day after their last warning.
 export async function purgeUnverified(): Promise<void> {
   const due = await db
     .select({ id: users.id })
     .from(users)
     .where(
       and(
-        isNull(users.emailVerifiedAt),
-        lt(users.registeredAt, now() - UNVERIFIED_DAYS * 86400),
-        eq(users.isAdmin, false),
-        notLike(users.email, "%.invalid")
+        unconfirmed(),
+        lt(users.registeredAt, now() - UNVERIFIED_DAYS * DAY),
+        gte(users.purgeWarnedAt, sql`${users.registeredAt} + ${FINAL_WARNING}`),
+        lte(users.purgeWarnedAt, now() - DAY)
       )
     )
     .limit(200);

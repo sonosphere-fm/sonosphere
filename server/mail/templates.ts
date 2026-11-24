@@ -80,6 +80,13 @@ export const verifyMail = (locale: Locale, to: string, username: string, token: 
     { small: tr(locale, "mail.verifyNote", { days: UNVERIFIED_DAYS }) },
   ]);
 
+export const purgeWarningMail = (locale: Locale, to: string, username: string, days: number, token: string) =>
+  build(locale, to, tr(locale, "mail.purgeSubject", { count: days }), tr(locale, "mail.purgeHeading", { username }), [
+    { p: tr(locale, "mail.purgeBody", { count: days }) },
+    { button: tr(locale, "mail.verifyButton"), url: link("/verify", token) },
+    { small: tr(locale, "mail.purgeNote") },
+  ]);
+
 export const welcomeMail = (locale: Locale, to: string, username: string) =>
   build(locale, to, tr(locale, "mail.welcomeSubject"), tr(locale, "mail.welcomeHeading", { username }), [
     { p: tr(locale, "mail.welcomeIntro") },

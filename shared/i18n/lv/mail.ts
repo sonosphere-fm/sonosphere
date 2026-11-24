@@ -16,6 +16,20 @@ export default {
   verifyNote:
     "Saite ir derīga 3 dienas; jaunu vari pieprasīt iestatījumos. Konti, kas netiek apstiprināti {days} dienu laikā, tiek dzēsti. Ja tu nereģistrējies, ignorē šo ziņu, un konts tiks noņemts.",
 
+  purgeSubject: {
+    zero: "Tavs Sonosphere konts tiks dzēsts pēc {count} dienām",
+    one: "Tavs Sonosphere konts tiks dzēsts pēc {count} dienas",
+    other: "Tavs Sonosphere konts tiks dzēsts pēc {count} dienām",
+  },
+  purgeHeading: "Sveiki, {username}! Tavs konts drīz tiks dzēsts",
+  purgeBody: {
+    zero: "Tu vēl neesi apstiprinājis savu e-pasta adresi. Ja to neapstiprināsi {count} dienu laikā, tavs konts un viss tā saturs tiks neatgriezeniski dzēsts.",
+    one: "Tu vēl neesi apstiprinājis savu e-pasta adresi. Ja to neapstiprināsi {count} dienas laikā, tavs konts un viss tā saturs tiks neatgriezeniski dzēsts.",
+    other:
+      "Tu vēl neesi apstiprinājis savu e-pasta adresi. Ja to neapstiprināsi {count} dienu laikā, tavs konts un viss tā saturs tiks neatgriezeniski dzēsts.",
+  },
+  purgeNote: "Ja tu nereģistrējies, ignorē šo ziņu, un konts tiks noņemts.",
+
   welcomeSubject: "Laipni lūdzam Sonosphere",
   welcomeHeading: "Laipni lūdzam, {username}!",
   welcomeIntro: "Tavs e-pasts ir apstiprināts, un konts ir gatavs. Dažas lietas, ar ko sākt:",

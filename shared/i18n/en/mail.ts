@@ -13,6 +13,18 @@ export default {
   verifyNote:
     "The link works for 3 days; you can ask for a new one from Settings. Accounts that are not confirmed within {days} days are deleted. If you did not sign up, ignore this message and the account will be removed.",
 
+  purgeSubject: {
+    one: "Your Sonosphere account will be deleted in {count} day",
+    other: "Your Sonosphere account will be deleted in {count} days",
+  },
+  purgeHeading: "Hi {username}, your account is about to be deleted",
+  purgeBody: {
+    one: "You have not confirmed your email yet. If you do not confirm it within {count} day, your account and everything in it will be permanently deleted.",
+    other:
+      "You have not confirmed your email yet. If you do not confirm it within {count} days, your account and everything in it will be permanently deleted.",
+  },
+  purgeNote: "If you did not sign up, ignore this message and the account will be removed.",
+
   welcomeSubject: "Welcome to Sonosphere",
   welcomeHeading: "Welcome, {username}",
   welcomeIntro: "Your email is confirmed and your account is ready. A few things to try first:",

@@ -15,6 +15,11 @@ export default {
   verifyNote:
     "連結 3 天內有效；你可以在「設定」中重新申請。{days} 天內未確認的帳號會被刪除。如果你沒有註冊過，請忽略這封郵件，該帳號將被移除。",
 
+  purgeSubject: { other: "你的 Sonosphere 帳號將在 {count} 天後刪除" },
+  purgeHeading: "{username}，你的帳號即將被刪除",
+  purgeBody: { other: "你尚未確認電子郵件。如果在 {count} 天內不確認，你的帳號及其中的所有內容將被永久刪除。" },
+  purgeNote: "如果你沒有註冊，請忽略此郵件，該帳號將被移除。",
+
   welcomeSubject: "歡迎來到 Sonosphere",
   welcomeHeading: "歡迎，{username}",
   welcomeIntro: "你的電子郵件已確認，帳號已準備就緒。先試試這幾件事：",

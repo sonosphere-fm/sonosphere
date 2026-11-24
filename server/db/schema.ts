@@ -78,6 +78,7 @@ export const users = pgTable("users", {
   dmPolicy: text("dm_policy").default("requests").notNull(),
   dmMuted: boolean("dm_muted").default(false).notNull(),
   emailVerifiedAt: integer("email_verified_at"),
+  purgeWarnedAt: integer("purge_warned_at"),
   // "instant", "daily", "weekly" or "off"
   emailNotify: text("email_notify").default("instant").notNull(),
   // comma separated

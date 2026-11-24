@@ -16,6 +16,20 @@ export default {
   verifyNote:
     "Linkul funcționează 3 zile; poți cere unul nou din Setări. Conturile neconfirmate în {days} zile sunt șterse. Dacă nu tu te-ai înregistrat, ignoră acest mesaj și contul va fi eliminat.",
 
+  purgeSubject: {
+    one: "Contul tău Sonosphere va fi șters peste {count} zi",
+    few: "Contul tău Sonosphere va fi șters peste {count} zile",
+    other: "Contul tău Sonosphere va fi șters peste {count} de zile",
+  },
+  purgeHeading: "Salut {username}, contul tău urmează să fie șters",
+  purgeBody: {
+    one: "Nu ți-ai confirmat încă adresa de email. Dacă nu o confirmi în {count} zi, contul tău și tot ce conține vor fi șterse definitiv.",
+    few: "Nu ți-ai confirmat încă adresa de email. Dacă nu o confirmi în {count} zile, contul tău și tot ce conține vor fi șterse definitiv.",
+    other:
+      "Nu ți-ai confirmat încă adresa de email. Dacă nu o confirmi în {count} de zile, contul tău și tot ce conține vor fi șterse definitiv.",
+  },
+  purgeNote: "Dacă nu te-ai înregistrat, ignoră acest mesaj și contul va fi eliminat.",
+
   welcomeSubject: "Bun venit pe Sonosphere",
   welcomeHeading: "Bun venit, {username}",
   welcomeIntro: "Adresa ta de email este confirmată și contul e gata. Câteva lucruri de încercat mai întâi:",

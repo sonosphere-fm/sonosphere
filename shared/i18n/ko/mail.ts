@@ -16,6 +16,14 @@ export default {
   verifyNote:
     "링크는 3일 동안 유효하며, 설정에서 새 링크를 요청할 수 있어요. {days}일 안에 인증하지 않은 계정은 삭제돼요. 가입한 적이 없다면 이 메일을 무시하세요. 계정은 삭제돼요.",
 
+  purgeSubject: { other: "Sonosphere 계정이 {count}일 후 삭제됩니다" },
+  purgeHeading: "{username}님, 계정이 곧 삭제됩니다",
+  purgeBody: {
+    other:
+      "아직 이메일을 인증하지 않으셨습니다. {count}일 이내에 인증하지 않으면 계정과 계정의 모든 내용이 영구적으로 삭제됩니다.",
+  },
+  purgeNote: "가입한 적이 없다면 이 메시지를 무시하세요. 계정은 삭제됩니다.",
+
   welcomeSubject: "Sonosphere에 오신 걸 환영해요",
   welcomeHeading: "환영해요, {username} 님",
   welcomeIntro: "이메일 인증이 끝났고 계정이 준비되었어요. 먼저 이런 것들을 해 보세요:",

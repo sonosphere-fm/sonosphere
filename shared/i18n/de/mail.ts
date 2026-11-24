@@ -16,6 +16,18 @@ export default {
   verifyNote:
     "Der Link ist 3 Tage gültig; einen neuen kannst du in den Einstellungen anfordern. Konten, die nicht innerhalb von {days} Tagen bestätigt werden, werden gelöscht. Wenn du dich nicht registriert hast, ignoriere diese Nachricht und das Konto wird entfernt.",
 
+  purgeSubject: {
+    one: "Dein Sonosphere-Konto wird in {count} Tag gelöscht",
+    other: "Dein Sonosphere-Konto wird in {count} Tagen gelöscht",
+  },
+  purgeHeading: "Hallo {username}, dein Konto wird bald gelöscht",
+  purgeBody: {
+    one: "Du hast deine E-Mail-Adresse noch nicht bestätigt. Wenn du sie nicht innerhalb von {count} Tag bestätigst, werden dein Konto und alle seine Inhalte endgültig gelöscht.",
+    other:
+      "Du hast deine E-Mail-Adresse noch nicht bestätigt. Wenn du sie nicht innerhalb von {count} Tagen bestätigst, werden dein Konto und alle seine Inhalte endgültig gelöscht.",
+  },
+  purgeNote: "Wenn du dich nicht registriert hast, ignoriere diese Nachricht und das Konto wird entfernt.",
+
   welcomeSubject: "Willkommen bei Sonosphere",
   welcomeHeading: "Willkommen, {username}",
   welcomeIntro: "Deine E-Mail-Adresse ist bestätigt und dein Konto ist bereit. Ein paar Dinge zum Ausprobieren:",

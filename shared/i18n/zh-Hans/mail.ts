@@ -15,6 +15,11 @@ export default {
   verifyNote:
     "链接 3 天内有效；你可以在“设置”中重新申请。{days} 天内未确认的账号会被删除。如果你没有注册过，请忽略这封邮件，该账号将被移除。",
 
+  purgeSubject: { other: "你的 Sonosphere 账号将在 {count} 天后删除" },
+  purgeHeading: "{username}，你的账号即将被删除",
+  purgeBody: { other: "你还没有确认邮箱。如果在 {count} 天内不确认，你的账号及其中的所有内容将被永久删除。" },
+  purgeNote: "如果你没有注册，请忽略此邮件，该账号将被移除。",
+
   welcomeSubject: "欢迎来到 Sonosphere",
   welcomeHeading: "欢迎，{username}",
   welcomeIntro: "你的邮箱已确认，账号已准备就绪。先试试这几件事：",
