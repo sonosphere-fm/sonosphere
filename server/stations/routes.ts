@@ -2,7 +2,7 @@ import { requireArtist, requireTag } from "../catalog/service";
 import { need } from "../guards";
 import { bad, fail, Router, type Ctx } from "../http";
 import { requestLocale, tr } from "../i18n";
-import { canSee, requireUser } from "../users/service";
+import { canSee, requireVisibleUser } from "../users/service";
 import * as service from "./service";
 import type { Station } from "../../shared/stations";
 
@@ -14,7 +14,7 @@ async function station(type: string | null, name: string | null, c: Ctx): Promis
   const viewer = c.user?.id ?? 0;
   const locale = requestLocale(c.req);
   if (type === "library") {
-    const u = name ? await requireUser(name) : need(c);
+    const u = name ? await requireVisibleUser(name, c.user) : need(c);
     if (!canSee(u, c.user)) fail(403, "userKeepsTheirListeningPrivate");
     const title =
       u.id === viewer

@@ -15,7 +15,7 @@ import type {
 import { Async, Pager, Section, Stat, useAction } from "../ui/base";
 import { EventList } from "../ui/events";
 import { Grid, UserList } from "../ui/lists";
-import { Shoutbox } from "../ui/shoutbox";
+import { ReportButton, Shoutbox } from "../ui/shoutbox";
 import { DatePicker } from "../datepicker";
 import { Hero } from "./music/shared";
 import { t, tx } from "../i18n";
@@ -187,10 +187,12 @@ export function EventPage() {
                       t("events.interested")
                     )}
                   </Button>
-                  {e.mine && (
+                  {e.mine ? (
                     <Button kind="btn ghost" onClick={askDelete}>
                       {t("events.deleteEvent")}
                     </Button>
+                  ) : (
+                    <ReportButton type="event" id={e.id} />
                   )}
                 </>
               }

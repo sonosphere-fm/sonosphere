@@ -177,6 +177,7 @@ export default {
   eventNotFound: "الفعالية غير موجودة",
   staffOnly: "لفريق الإدارة فقط",
   adminsOnly: "للمسؤولين فقط",
+  notWhileImpersonating: "لا يمكنك تغيير بيانات تسجيل الدخول لهذا الحساب أثناء التصرف باسم المستخدم",
   confirmEmailFirst:
     "يُرجى تأكيد بريدك الإلكتروني أولًا. من المفترض أن تكون قد تلقيت رسالة تحقق. إن لم تصلك، يمكنك إعادة إرسالها من الإعدادات، ضمن الحساب.",
   kindArtistsAlbumsTracksTags: "يجب أن تكون قيمة kind هي artists أو albums أو tracks أو tags",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "يمكن أن يصل اسم المجموعة إلى {max} حرف",
   cantAddUser: "لا يمكنك إضافة {username}",
   groupTooBig: "يمكن أن تضم المجموعة حتى {max} شخص",
+  playlistFull: "يمكن أن تضم قائمة التشغيل حتى {max} مقطع",
   messageTooLong: "يمكن أن تصل الرسالة إلى {max} حرف",
   alreadyInGroup: "{username} في هذه المجموعة بالفعل",
   accountNoLongerExists: "هذا الحساب لم يعد موجودًا",

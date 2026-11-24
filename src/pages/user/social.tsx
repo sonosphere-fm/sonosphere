@@ -7,6 +7,7 @@ import { ago, albumUrl, api, artistUrl, date, qs, tagUrl, trackUrl, useApi, useP
 import { t, tx } from "../../i18n";
 import { Art, Async, Empty, Pager, Section, useAction } from "../../ui/base";
 import { TrackList, UserList } from "../../ui/lists";
+import { ReportButton } from "../../ui/shoutbox";
 import type { ObsessionRemoved, Obsessions as ObsessionList } from "../../../shared/obsessions";
 import { type PlaylistCreated, TEMPLATE_IDS, type TemplateId, type UserPlaylists } from "../../../shared/playlists";
 import type { TagCount } from "../../../shared/tags";
@@ -39,12 +40,21 @@ function LastTrack({ u }: { u: Person }) {
   );
 }
 
-export function People({ path, empty }: { path: string; empty: ReactNode }) {
-  const q = useApi<PeopleList>(path);
+export function People({ list, name, empty }: { list: "following" | "followers"; name: string; empty: ReactNode }) {
+  const [sp] = useSearchParams();
+  const page = Number(sp.get("page")) || 1;
+  const q = useApi<PeopleList>(`/user/${list}${qs({ name, page })}`);
   return (
     <Async q={q}>
       {(d) =>
-        d.items.length ? <UserList items={d.items} extra={(u) => <LastTrack u={u} />} /> : <Empty>{empty}</Empty>
+        d.total ? (
+          <>
+            <UserList items={d.items} extra={(u) => <LastTrack u={u} />} />
+            <Pager total={d.total} limit={d.limit} />
+          </>
+        ) : (
+          <Empty>{empty}</Empty>
+        )
       }
     </Async>
   );
@@ -124,10 +134,12 @@ export function Obsessions({ name, mine }: { name: string; mine: boolean }) {
                   {o.comment && <p>“{o.comment}”</p>}
                   <span className="muted small">{date(o.createdAt)}</span>
                 </div>
-                {mine && (
+                {mine ? (
                   <Button kind="link small" onClick={() => remove(o.id)}>
                     {t("user.remove")}
                   </Button>
+                ) : (
+                  <ReportButton type="obsession" id={o.id} />
                 )}
               </li>
             ))}

@@ -177,6 +177,7 @@ export default {
   eventNotFound: "इवेंट नहीं मिला",
   staffOnly: "केवल स्टाफ़",
   adminsOnly: "केवल एडमिन",
+  notWhileImpersonating: "उपयोगकर्ता के रूप में काम करते समय आप इस खाते की साइन-इन जानकारी नहीं बदल सकते",
   confirmEmailFirst:
     "कृपया पहले अपना ईमेल पता कन्फ़र्म करें। आपको एक वेरिफ़िकेशन ईमेल मिला होगा। अगर नहीं मिला, तो आप उसे सेटिंग्स में खाता सेक्शन से फिर से भेज सकते हैं।",
   kindArtistsAlbumsTracksTags: "kind में artists, albums, tracks या tags होना चाहिए",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "ग्रुप का नाम {max} अक्षरों तक हो सकता है",
   cantAddUser: "आप {username} को नहीं जोड़ सकते",
   groupTooBig: "ग्रुप में {max} लोग तक हो सकते हैं",
+  playlistFull: "प्लेलिस्ट में {max} ट्रैक तक हो सकते हैं",
   messageTooLong: "संदेश {max} अक्षरों तक हो सकते हैं",
   alreadyInGroup: "{username} पहले से इस ग्रुप में है",
   accountNoLongerExists: "यह खाता अब मौजूद नहीं है",

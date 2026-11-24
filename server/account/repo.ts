@@ -1,6 +1,6 @@
 import { and, eq, inArray, ne, type SQL } from "drizzle-orm";
 import { db } from "../db/client";
-import { emailTokens, journals, modNotes, sessions, shouts, users } from "../db/schema";
+import { apiSessions, apiTokens, emailTokens, journals, modNotes, sessions, shouts, users } from "../db/schema";
 import { digest } from "../util";
 import { bad } from "../http";
 import { handOffGroupsTx } from "../dm/groups.repo";
@@ -44,6 +44,8 @@ export async function setPasswordHash(
     await tx.update(users).set({ passwordHash }).where(eq(users.id, userId));
     await tx.delete(emailTokens).where(eq(emailTokens.userId, userId));
     await tx.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, digest(keepToken))));
+    await tx.delete(apiSessions).where(eq(apiSessions.userId, userId));
+    await tx.delete(apiTokens).where(eq(apiTokens.userId, userId));
   });
 }
 // Personal data goes by cascade; catalogue contributions stay. `onlyIf` is an extra condition the row must still meet.

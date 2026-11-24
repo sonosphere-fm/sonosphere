@@ -247,13 +247,12 @@ export function UserPage({ tab }: { tab: Tab }) {
                 )}
                 {tab === "following" && (
                   <People
-                    path={`/user/following${qs({ name })}`}
+                    list="following"
+                    name={name}
                     empty={tx("user.notFollowingAnyone", { name: <Username user={u} /> })}
                   />
                 )}
-                {tab === "followers" && (
-                  <People path={`/user/followers${qs({ name })}`} empty={t("user.noFollowers")} />
-                )}
+                {tab === "followers" && <People list="followers" name={name} empty={t("user.noFollowers")} />}
                 {tab === "loved" && !locked && <Loved name={u.username} />}
                 {tab === "obsessions" && <Obsessions name={u.username} mine={mine} />}
                 {tab === "playlists" && <Playlists name={u.username} mine={mine} />}

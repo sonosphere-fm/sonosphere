@@ -68,6 +68,21 @@ export async function blockedEither(a: number, b: number): Promise<boolean> {
   return !!(await first(db.select({ one: sql`1` }).from(blocks).where(either).limit(1)));
 }
 
+// Those of `among` who have blocked, or been blocked by, any of `of`.
+export async function blockedAmong(of: number[], among: number[]): Promise<Set<number>> {
+  const rows = await db
+    .select({ blocker: blocks.blockerId, blocked: blocks.blockedId })
+    .from(blocks)
+    .where(
+      or(
+        and(inArray(blocks.blockerId, of), inArray(blocks.blockedId, among)),
+        and(inArray(blocks.blockedId, of), inArray(blocks.blockerId, among))
+      )
+    );
+  const others = new Set(among);
+  return new Set(rows.map((r) => (others.has(r.blocked) ? r.blocked : r.blocker)));
+}
+
 const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
 const found = async (rows: PromiseLike<unknown[]>) => (await rows).length > 0;
 
@@ -105,28 +120,47 @@ export async function unfollow(followerId: number, followeeId: number): Promise<
   await db.delete(follows).where(and(eq(follows.followerId, followerId), eq(follows.followeeId, followeeId)));
 }
 
-export const followingOf = (userId: number): Promise<PublicUser[]> =>
+const followingList = (userId: number) =>
   db
     .select(publicCols)
     .from(follows)
     .innerJoin(users, eq(users.id, follows.followeeId))
     .where(eq(follows.followerId, userId))
-    .orderBy(desc(follows.createdAt));
-export const followersOf = (userId: number): Promise<PublicUser[]> =>
+    .orderBy(desc(follows.createdAt))
+    .$dynamic();
+const followerList = (userId: number) =>
   db
     .select(publicCols)
     .from(follows)
     .innerJoin(users, eq(users.id, follows.followerId))
     .where(eq(follows.followeeId, userId))
-    .orderBy(desc(follows.createdAt));
+    .orderBy(desc(follows.createdAt))
+    .$dynamic();
+export const followingOf = (userId: number): Promise<PublicUser[]> => followingList(userId);
+export const followersOf = (userId: number): Promise<PublicUser[]> => followerList(userId);
+export const followingPage = (userId: number, limit: number, offset: number): Promise<PublicUser[]> =>
+  followingList(userId).limit(limit).offset(offset);
+export const followerPage = (userId: number, limit: number, offset: number): Promise<PublicUser[]> =>
+  followerList(userId).limit(limit).offset(offset);
 
-export const playcount = (userId: number): Promise<number> =>
-  total(
-    db
-      .select({ c: sql<number>`COALESCE(SUM(${userArtists.plays}), 0)` })
-      .from(userArtists)
-      .where(eq(userArtists.userId, userId))
-  );
+export async function playcounts(ids: number[]): Promise<Map<number, number>> {
+  if (!ids.length) return new Map();
+  const rows = await db
+    .select({ id: userArtists.userId, c: sql<number>`COALESCE(SUM(${userArtists.plays}), 0)`.mapWith(Number) })
+    .from(userArtists)
+    .where(inArray(userArtists.userId, ids))
+    .groupBy(userArtists.userId);
+  return new Map(rows.map((r) => [r.id, r.c]));
+}
+
+export async function followedAmong(followerId: number, ids: number[]): Promise<Set<number>> {
+  if (!ids.length) return new Set();
+  const rows = await db
+    .select({ id: follows.followeeId })
+    .from(follows)
+    .where(and(eq(follows.followerId, followerId), inArray(follows.followeeId, ids)));
+  return new Set(rows.map((r) => r.id));
+}
 
 export async function privateAmong(ids: number[]): Promise<Set<number>> {
   if (!ids.length) return new Set();
@@ -137,18 +171,25 @@ export async function privateAmong(ids: number[]): Promise<Set<number>> {
   return new Set(rows.map((r) => r.id));
 }
 
-export const lastTrack = (userId: number): Promise<Person["lastTrack"]> =>
-  first(
-    db
-      .select({ title: tracks.title, artist: artists.name, playedAt: scrobbles.playedAt })
-      .from(scrobbles)
-      .innerJoin(tracks, eq(tracks.id, scrobbles.trackId))
-      .innerJoin(artists, eq(artists.id, scrobbles.artistId))
-      .innerJoin(users, eq(users.id, scrobbles.userId))
-      .where(and(eq(scrobbles.userId, userId), openListener()))
-      .orderBy(desc(scrobbles.playedAt))
-      .limit(1)
-  );
+type LastTrack = NonNullable<Person["lastTrack"]>;
+export async function lastTracks(ids: number[]): Promise<Map<number, LastTrack>> {
+  if (!ids.length) return new Map();
+  const last = db
+    .select({ title: tracks.title, artist: artists.name, playedAt: scrobbles.playedAt })
+    .from(scrobbles)
+    .innerJoin(tracks, eq(tracks.id, scrobbles.trackId))
+    .innerJoin(artists, eq(artists.id, scrobbles.artistId))
+    .where(eq(scrobbles.userId, users.id))
+    .orderBy(desc(scrobbles.playedAt))
+    .limit(1)
+    .as("last");
+  const rows = await db
+    .select({ id: users.id, title: last.title, artist: last.artist, playedAt: last.playedAt })
+    .from(users)
+    .innerJoinLateral(last, sql`true`)
+    .where(and(inArray(users.id, ids), openListener()));
+  return new Map(rows.map(({ id, ...t }) => [id, t]));
+}
 
 export async function firstPlay(userId: number, artistId: number): Promise<number | null> {
   const row = await first(

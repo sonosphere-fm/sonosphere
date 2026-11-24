@@ -177,6 +177,7 @@ export default {
   eventNotFound: "Evenimentul nu a fost găsit",
   staffOnly: "Doar pentru echipă",
   adminsOnly: "Doar pentru administratori",
+  notWhileImpersonating: "Nu poți schimba datele de conectare ale contului în timp ce acționezi ca utilizator",
   confirmEmailFirst:
     "Confirmă mai întâi adresa de email. Ar fi trebuit să primești un email de verificare. Dacă nu l-ai primit, îl poți retrimite din Setări, la Cont.",
   kindArtistsAlbumsTracksTags: "kind trebuie să fie artists, albums, tracks sau tags",
@@ -315,6 +316,7 @@ export default {
   groupNameTooLong: "Numele grupurilor pot avea cel mult {max} caractere",
   cantAddUser: "Nu îl poți adăuga pe {username}",
   groupTooBig: "Grupurile pot avea cel mult {max} persoane",
+  playlistFull: "Playlisturile pot avea cel mult {max} piese",
   messageTooLong: "Mesajele pot avea cel mult {max} caractere",
   alreadyInGroup: "{username} este deja în acest grup",
   accountNoLongerExists: "Acest cont nu mai există",

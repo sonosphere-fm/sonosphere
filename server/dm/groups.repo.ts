@@ -8,6 +8,7 @@ import {
   exists,
   getTableColumns,
   gt,
+  inArray,
   isNotNull,
   isNull,
   lt,
@@ -19,8 +20,10 @@ import {
 import { alias } from "drizzle-orm/pg-core";
 import { db, type Conn, type Tx } from "../db/client";
 import { dmGroupMembers, dmGroupMessages, dmGroups, dmThreads, users } from "../db/schema";
+import { fail } from "../http";
 import { first } from "../util";
 import type { DmUser, ReportedMessage } from "../../shared/dm";
+import type { User } from "../users/repo";
 
 export type Group = typeof dmGroups.$inferSelect;
 export type Member = typeof dmGroupMembers.$inferSelect;
@@ -50,12 +53,12 @@ export async function groupFor(id: number, userId: number): Promise<{ group: Gro
   return row;
 }
 
-export const members = (groupId: number): Promise<DmUser[]> =>
+export const membersOf = (groupIds: number[]): Promise<(DmUser & { groupId: number })[]> =>
   db
-    .select(personColumns)
+    .select({ ...personColumns, groupId: dmGroupMembers.groupId })
     .from(dmGroupMembers)
     .innerJoin(users, eq(users.id, dmGroupMembers.userId))
-    .where(eq(dmGroupMembers.groupId, groupId))
+    .where(inArray(dmGroupMembers.groupId, groupIds))
     .orderBy(asc(dmGroupMembers.joinedAt), asc(users.id));
 
 export async function memberIds(groupId: number): Promise<number[]> {
@@ -76,10 +79,10 @@ export const listGroups = (userId: number): Promise<{ group: Group; member: Memb
     .limit(200);
 
 // The people someone has an accepted conversation with, which is who they may add to a group.
-export function contacts(userId: number): Promise<DmUser[]> {
+export function contacts(userId: number): Promise<(DmUser & Pick<User, "banned" | "dmPolicy">)[]> {
   const other = sql`case when ${dmThreads.userLo} = ${userId} then ${dmThreads.userHi} else ${dmThreads.userLo} end`;
   return db
-    .select(personColumns)
+    .select({ ...personColumns, banned: users.banned, dmPolicy: users.dmPolicy })
     .from(dmThreads)
     .innerJoin(users, eq(users.id, other))
     .where(and(or(eq(dmThreads.userLo, userId), eq(dmThreads.userHi, userId)), eq(dmThreads.status, "active")))
@@ -100,16 +103,18 @@ export async function hasActiveThread(a: number, b: number): Promise<boolean> {
   return !!row;
 }
 
-export const lastMessage = (groupId: number, afterId: number): Promise<GroupMessage | null> =>
-  first(
-    db
-      .select(messageColumns)
-      .from(dmGroupMessages)
-      .innerJoin(users, eq(users.id, dmGroupMessages.senderId))
-      .where(and(eq(dmGroupMessages.groupId, groupId), gt(dmGroupMessages.id, afterId)))
-      .orderBy(desc(dmGroupMessages.id))
-      .limit(1)
-  );
+const mineIn = (userId: number) =>
+  and(eq(dmGroupMembers.groupId, dmGroupMessages.groupId), eq(dmGroupMembers.userId, userId));
+
+// The newest line in each group since `userId` cleared it.
+export const lastMessages = (groupIds: number[], userId: number): Promise<GroupMessage[]> =>
+  db
+    .selectDistinctOn([dmGroupMessages.groupId], messageColumns)
+    .from(dmGroupMessages)
+    .innerJoin(users, eq(users.id, dmGroupMessages.senderId))
+    .innerJoin(dmGroupMembers, mineIn(userId))
+    .where(and(inArray(dmGroupMessages.groupId, groupIds), gt(dmGroupMessages.id, dmGroupMembers.clearedId)))
+    .orderBy(dmGroupMessages.groupId, desc(dmGroupMessages.id));
 
 export const messageById = (id: number): Promise<GroupMessage> =>
   db
@@ -119,22 +124,23 @@ export const messageById = (id: number): Promise<GroupMessage> =>
     .where(eq(dmGroupMessages.id, id))
     .then((rows) => rows[0]);
 
-const unseen = (groupId: number, afterId: number, userId: number) =>
-  and(
-    eq(dmGroupMessages.groupId, groupId),
-    gt(dmGroupMessages.id, afterId),
-    ne(dmGroupMessages.senderId, userId),
-    isNull(dmGroupMessages.deletedAt),
-    isNull(dmGroupMessages.event)
-  );
-
-export const unreadIn = async (groupId: number, afterId: number, userId: number): Promise<number> =>
-  (
-    await db
-      .select({ c: count() })
-      .from(dmGroupMessages)
-      .where(unseen(groupId, afterId, userId))
-  )[0].c;
+export async function unreadByGroup(groupIds: number[], userId: number): Promise<Map<number, number>> {
+  const rows = await db
+    .select({ id: dmGroupMessages.groupId, c: count() })
+    .from(dmGroupMessages)
+    .innerJoin(dmGroupMembers, mineIn(userId))
+    .where(
+      and(
+        inArray(dmGroupMessages.groupId, groupIds),
+        gt(dmGroupMessages.id, sql`greatest(${dmGroupMembers.readId}, ${dmGroupMembers.clearedId})`),
+        ne(dmGroupMessages.senderId, userId),
+        isNull(dmGroupMessages.deletedAt),
+        isNull(dmGroupMessages.event)
+      )
+    )
+    .groupBy(dmGroupMessages.groupId);
+  return new Map(rows.map((r) => [r.id, r.c]));
+}
 
 export async function unreadGroups(userId: number): Promise<number> {
   const g = alias(dmGroupMembers, "g");
@@ -232,7 +238,11 @@ export async function createTx(tx: Tx, ownerId: number, title: string, at: numbe
   return group;
 }
 
-export async function addMemberTx(tx: Tx, groupId: number, userId: number, at: number): Promise<void> {
+// The group row is locked so two adds at once can't both fit under the cap.
+export async function addMemberTx(tx: Tx, groupId: number, userId: number, at: number, cap: number): Promise<void> {
+  await tx.select({ id: dmGroups.id }).from(dmGroups).where(eq(dmGroups.id, groupId)).for("update");
+  const [row] = await tx.select({ n: count() }).from(dmGroupMembers).where(eq(dmGroupMembers.groupId, groupId));
+  if (row!.n >= cap) fail(400, "groupTooBig", { max: cap });
   const top = await topIn(tx, groupId);
   await tx.insert(dmGroupMembers).values({ groupId, userId, joinedAt: at, readId: top, clearedId: top });
 }

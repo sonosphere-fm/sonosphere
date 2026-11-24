@@ -1,3 +1,5 @@
+import { HttpError, ipOf, limit, readCapped } from "./http";
+
 const HOST = "rustrak.edideaur.works";
 const PROJECT = "2";
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -5,8 +7,14 @@ const MAX_BYTES = 4 * 1024 * 1024;
 // Browser error reports post here so visitors only ever talk to our own origin.
 export async function sentryTunnel(req: Request) {
   if (req.method !== "POST") return new Response(null, { status: 405 });
-  const body = new Uint8Array(await req.arrayBuffer());
-  if (body.byteLength > MAX_BYTES) return new Response(null, { status: 413 });
+  try {
+    await limit(`diag:${ipOf(req)}`, 60, 60);
+  } catch (e) {
+    if (e instanceof HttpError) return new Response(null, { status: e.status });
+    throw e;
+  }
+  const body = await readCapped(req, MAX_BYTES);
+  if (!body) return new Response(null, { status: 413 });
   const end = body.indexOf(10);
   const header = new TextDecoder().decode(end === -1 ? body : body.subarray(0, end));
   let dsn: URL;

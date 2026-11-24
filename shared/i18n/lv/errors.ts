@@ -177,6 +177,7 @@ export default {
   eventNotFound: "Pasākums nav atrasts",
   staffOnly: "Tikai komandai",
   adminsOnly: "Tikai administratoriem",
+  notWhileImpersonating: "Darbojoties lietotāja vārdā, nevar mainīt konta pieteikšanās datus",
   confirmEmailFirst:
     "Lūdzu, vispirms apstiprini savu e-pasta adresi. Tev vajadzēja saņemt apstiprinājuma e-pastu. Ja nesaņēmi, vari to nosūtīt vēlreiz sadaļā Iestatījumi, Konts.",
   kindArtistsAlbumsTracksTags: "kind jābūt artists, albums, tracks vai tags",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "Grupas nosaukumā var būt līdz {max} rakstzīmēm",
   cantAddUser: "Tu nevari pievienot {username}",
   groupTooBig: "Grupā var būt līdz {max} cilvēkiem",
+  playlistFull: "Atskaņošanas sarakstā var būt līdz {max} dziesmām",
   messageTooLong: "Ziņā var būt līdz {max} rakstzīmēm",
   alreadyInGroup: "{username} jau ir šajā grupā",
   accountNoLongerExists: "Šis konts vairs nepastāv",

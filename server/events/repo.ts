@@ -1,9 +1,10 @@
 import { and, asc, count, desc, eq, gte, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import { getOrCreateArtistTx } from "../catalog/repo";
 import { db, transact } from "../db/client";
+import { matches } from "../db/dialect";
 import { artists, eventArtists, eventAttendance, events, userArtists, users } from "../db/schema";
 import { publicCols } from "../users/repo";
-import { now } from "../util";
+import { like, now } from "../util";
 import type { Attendance, EventArtist, EventPlace, EventSummary } from "../../shared/events";
 import type { PublicUser } from "../../shared/users";
 
@@ -12,7 +13,6 @@ export type Filter = {
   id?: number;
   before?: number;
   from?: number;
-  /** Lower-case; `%` and `_` act as wildcards, as they always have. */
   text?: string;
   attendee?: number;
   /** Events with one of this user's 50 most played artists on the bill. */
@@ -38,9 +38,9 @@ function matching(f: Filter): SQL | undefined {
   if (f.before !== undefined) c.push(lt(events.startsAt, f.before));
   if (f.from !== undefined) c.push(gte(events.startsAt, f.from));
   if (f.text) {
-    const pattern = `%${f.text}%`;
+    const pattern = like(f.text);
     const cols = [events.city, events.country, events.venue, events.title];
-    const any = or(...cols.map((col) => sql`lower(${col}) LIKE ${pattern}`));
+    const any = or(...cols.map((col) => matches(col, pattern)));
     if (any) c.push(any);
   }
   if (f.attendee !== undefined) {
@@ -181,8 +181,7 @@ export async function setAttendance(eventId: number, userId: number, status: Att
 export async function places(field: "venue" | "city" | "country", q: string): Promise<EventPlace[]> {
   const col = events[field];
   const n = sql<number>`count(*)::int`;
-  const like = `%${q.toLowerCase().replace(/[\\%_]/g, (c) => "\\" + c)}%`;
-  const where = and(sql`${col} <> ''`, field === "country" || !q ? undefined : sql`lower(${col}) LIKE ${like}`);
+  const where = and(sql`${col} <> ''`, field === "country" || !q ? undefined : matches(col, like(q)));
   if (field === "country") {
     return db.select({ name: col, count: n }).from(events).where(where).groupBy(col).orderBy(desc(n));
   }

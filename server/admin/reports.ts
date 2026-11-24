@@ -12,7 +12,7 @@ export const router = new Router({ jsonOnly: true });
 
 const STATUSES = ["open", "closed", "all"] as const;
 const REASONS = ["spam", "abuse", "inappropriate", "impersonation", "other"] as const;
-const TYPES = ["shout", "wiki", "journal", "user", "dm", "group"] as const;
+const TYPES = ["shout", "wiki", "journal", "event", "playlist", "obsession", "user", "dm", "group"] as const;
 const DECISIONS = ["dismiss", "remove", "suspend", "mute"] as const;
 
 router.get<StaffReportList>("/api/admin/reports", async (c) => {

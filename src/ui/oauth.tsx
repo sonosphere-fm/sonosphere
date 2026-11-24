@@ -19,6 +19,7 @@ const OAUTH_ERRORS = {
   taken: "auth.oauthTaken",
   already: "auth.oauthAlready",
   banned: "auth.oauthBanned",
+  confirm: "auth.confirmEmailTitle",
 } as const satisfies Record<string, MessageKey>;
 
 export function oauthError(code: string | null): ReactNode {

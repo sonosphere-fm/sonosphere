@@ -1,7 +1,7 @@
 import { confirmed, need, poster } from "../guards";
 import { bad, missing, paging, Router, throttle, type Body, type Ctx } from "../http";
 import { findById, publicUser } from "../users/repo";
-import { requireUser } from "../users/service";
+import { requireVisibleUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
 import type { JournalDeleted, JournalList, JournalPost, JournalSaved, JournalSummary } from "../../shared/journals";
@@ -39,7 +39,7 @@ const own = async (c: Ctx): Promise<repo.Journal> =>
   (await repo.findOwnJournal(Number(c.params[0]), need(c).id)) ?? missing("postNotFound");
 
 router.get<JournalList>("/api/user/journal", async (c) => {
-  const u = await requireUser(c.q.get("name"));
+  const u = await requireVisibleUser(c.q.get("name"), c.user);
   const pg = paging(c.q, 10, 50);
   const items: JournalList["items"] = [];
   for (const j of await repo.journalsOf(u.id, pg.limit, pg.offset)) {

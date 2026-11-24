@@ -8,6 +8,7 @@ import {
   exists,
   getTableColumns,
   gt,
+  inArray,
   isNull,
   lt,
   max,
@@ -35,20 +36,27 @@ const pair = (a: number, b: number) => and(eq(dmThreads.userLo, Math.min(a, b)),
 const sentBy = (threadId: number, userId: number) =>
   and(eq(dmMessages.threadId, threadId), eq(dmMessages.senderId, userId));
 
+const personColumns = {
+  ...appearanceCols,
+  id: users.id,
+  username: users.username,
+  realname: users.realname,
+  image: users.imageId,
+};
+
 export const person = (id: number): Promise<DmUser | null> =>
-  first(
-    db
-      .select({
-        ...appearanceCols,
-        id: users.id,
-        username: users.username,
-        realname: users.realname,
-        image: users.imageId,
-      })
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1)
-  );
+  first(db.select(personColumns).from(users).where(eq(users.id, id)).limit(1));
+
+export const people = (ids: number[]): Promise<DmUser[]> =>
+  db.select(personColumns).from(users).where(inArray(users.id, ids));
+
+export async function followersAmong(ids: number[], followee: number): Promise<Set<number>> {
+  const rows = await db
+    .select({ id: follows.followerId })
+    .from(follows)
+    .where(and(inArray(follows.followerId, ids), eq(follows.followeeId, followee)));
+  return new Set(rows.map((r) => r.id));
+}
 
 export async function isFollowing(follower: number, followee: number): Promise<boolean> {
   const row = await first(
@@ -177,30 +185,36 @@ export const clearFor = async (threadId: number, side: Side, messageId: number):
   await db.update(dmThreads).set(set).where(eq(dmThreads.id, threadId));
 };
 
-export const lastMessage = (threadId: number, afterId: number): Promise<Message | null> =>
-  first(
-    db
-      .select()
-      .from(dmMessages)
-      .where(and(eq(dmMessages.threadId, threadId), gt(dmMessages.id, afterId)))
-      .orderBy(desc(dmMessages.id))
-      .limit(1)
-  );
+const clearedBy = (userId: number) =>
+  sql`case when ${dmThreads.userLo} = ${userId} then ${dmThreads.loCleared} else ${dmThreads.hiCleared} end`;
+const seenBy = (userId: number) =>
+  sql`case when ${dmThreads.userLo} = ${userId} then greatest(${dmThreads.loRead}, ${dmThreads.loCleared}) else greatest(${dmThreads.hiRead}, ${dmThreads.hiCleared}) end`;
 
-export const unreadIn = async (threadId: number, afterId: number, userId: number): Promise<number> =>
-  (
-    await db
-      .select({ c: count() })
-      .from(dmMessages)
-      .where(
-        and(
-          eq(dmMessages.threadId, threadId),
-          gt(dmMessages.id, afterId),
-          ne(dmMessages.senderId, userId),
-          isNull(dmMessages.deletedAt)
-        )
+// The newest message in each thread since `userId` cleared it.
+export const lastMessages = (threadIds: number[], userId: number): Promise<Message[]> =>
+  db
+    .selectDistinctOn([dmMessages.threadId], getTableColumns(dmMessages))
+    .from(dmMessages)
+    .innerJoin(dmThreads, eq(dmThreads.id, dmMessages.threadId))
+    .where(and(inArray(dmMessages.threadId, threadIds), gt(dmMessages.id, clearedBy(userId))))
+    .orderBy(dmMessages.threadId, desc(dmMessages.id));
+
+export async function unreadByThread(threadIds: number[], userId: number): Promise<Map<number, number>> {
+  const rows = await db
+    .select({ id: dmMessages.threadId, c: count() })
+    .from(dmMessages)
+    .innerJoin(dmThreads, eq(dmThreads.id, dmMessages.threadId))
+    .where(
+      and(
+        inArray(dmMessages.threadId, threadIds),
+        gt(dmMessages.id, seenBy(userId)),
+        ne(dmMessages.senderId, userId),
+        isNull(dmMessages.deletedAt)
       )
-  )[0]?.c ?? 0;
+    )
+    .groupBy(dmMessages.threadId);
+  return new Map(rows.map((r) => [r.id, r.c]));
+}
 
 export const sentIn = async (threadId: number, userId: number): Promise<number> =>
   (await db.select({ c: count() }).from(dmMessages).where(sentBy(threadId, userId)))[0]?.c ?? 0;

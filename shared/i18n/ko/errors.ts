@@ -177,6 +177,7 @@ export default {
   eventNotFound: "이벤트를 찾을 수 없어요",
   staffOnly: "운영팀 전용",
   adminsOnly: "관리자 전용",
+  notWhileImpersonating: "대신 접속 중에는 이 계정의 로그인 정보를 변경할 수 없습니다",
   confirmEmailFirst:
     "먼저 이메일 주소를 인증해 주세요. 인증 메일을 받으셨을 거예요. 받지 못했다면 설정의 계정 항목에서 다시 보낼 수 있어요.",
   kindArtistsAlbumsTracksTags: "kind는 artists, albums, tracks, tags 중 하나여야 해요",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "그룹 이름은 최대 {max}자예요",
   cantAddUser: "{username} 님을 추가할 수 없어요",
   groupTooBig: "그룹은 최대 {max}명까지 가능해요",
+  playlistFull: "플레이리스트는 최대 {max}곡까지 가능해요",
   messageTooLong: "메시지는 최대 {max}자예요",
   alreadyInGroup: "{username} 님은 이미 이 그룹에 있어요",
   accountNoLongerExists: "더 이상 존재하지 않는 계정이에요",

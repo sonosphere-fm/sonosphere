@@ -1,6 +1,7 @@
-import { and, count, countDistinct, desc, eq, gt, like, lt, sql } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, gt, lt, sql } from "drizzle-orm";
 import { trackImage } from "../catalog/art";
 import { db } from "../db/client";
+import { matches } from "../db/dialect";
 import {
   albumTracks,
   albums,
@@ -70,8 +71,13 @@ export const findToken = (token: string, appId: number): Promise<{ userId: numbe
       .limit(1)
   );
 
-export async function deleteToken(token: string): Promise<void> {
-  await db.delete(apiTokens).where(eq(apiTokens.token, digest(token)));
+// Only one caller can take a token, so it can't become two sessions.
+export async function takeToken(token: string): Promise<boolean> {
+  const rows = await db
+    .delete(apiTokens)
+    .where(eq(apiTokens.token, digest(token)))
+    .returning({ token: apiTokens.token });
+  return rows.length > 0;
 }
 
 type LovedRow = { title: string; duration: number; artist: string; image: string | null; at: number };
@@ -122,7 +128,7 @@ export function userTopTags(userId: number, limit: number): Promise<{ name: stri
     .limit(limit);
 }
 
-// Search patterns are used as given: % and _ in them are wildcards.
+// Patterns come from like() in server/util.ts.
 type ArtistHit = { name: string; image: string | null; listeners: number };
 export function searchArtists(pattern: string, limit: number, offset: number): Promise<ArtistHit[]> {
   const listeners =
@@ -132,14 +138,14 @@ export function searchArtists(pattern: string, limit: number, offset: number): P
   return db
     .select({ name: artists.name, image: artists.imageId, listeners })
     .from(artists)
-    .where(like(artists.nameNorm, pattern))
+    .where(matches(artists.nameNorm, pattern))
     .orderBy(desc(listeners))
     .limit(limit)
     .offset(offset);
 }
 
 export const countArtists = (pattern: string): Promise<number> =>
-  total(db.select({ c: count() }).from(artists).where(like(artists.nameNorm, pattern)));
+  total(db.select({ c: count() }).from(artists).where(matches(artists.nameNorm, pattern)));
 
 type AlbumHit = { title: string; image: string | null; artist: string };
 export const searchAlbums = (pattern: string, limit: number, offset: number): Promise<AlbumHit[]> =>
@@ -147,12 +153,12 @@ export const searchAlbums = (pattern: string, limit: number, offset: number): Pr
     .select({ title: albums.title, image: albums.imageId, artist: artists.name })
     .from(albums)
     .innerJoin(artists, eq(artists.id, albums.artistId))
-    .where(like(albums.titleNorm, pattern))
+    .where(matches(albums.titleNorm, pattern))
     .limit(limit)
     .offset(offset);
 
 export const countAlbums = (pattern: string): Promise<number> =>
-  total(db.select({ c: count() }).from(albums).where(like(albums.titleNorm, pattern)));
+  total(db.select({ c: count() }).from(albums).where(matches(albums.titleNorm, pattern)));
 
 type TrackHit = { title: string; duration: number; artist: string; image: string | null; listeners: number };
 export function searchTracks(
@@ -171,7 +177,7 @@ export function searchTracks(
     .from(tracks)
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .leftJoin(albums, eq(albums.id, tracks.albumId))
-    .where(and(like(tracks.titleNorm, pattern), byArtist))
+    .where(and(matches(tracks.titleNorm, pattern), byArtist))
     .orderBy(desc(listeners))
     .limit(limit)
     .offset(offset);

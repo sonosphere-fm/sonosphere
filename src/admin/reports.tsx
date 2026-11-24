@@ -17,6 +17,9 @@ const THIS_TYPE: Record<string, AdminKey> = {
   shout: "admin.thisShout",
   wiki: "admin.thisWiki",
   journal: "admin.thisJournal",
+  event: "admin.thisEvent",
+  playlist: "admin.thisPlaylist",
+  obsession: "admin.thisObsession",
   dm: "admin.thisDm",
   group: "admin.thisGroup",
 };
@@ -24,6 +27,9 @@ const THIS_TYPE_BY: Record<string, AdminKey> = {
   shout: "admin.thisShoutBy",
   wiki: "admin.thisWikiBy",
   journal: "admin.thisJournalBy",
+  event: "admin.thisEventBy",
+  playlist: "admin.thisPlaylistBy",
+  obsession: "admin.thisObsessionBy",
   dm: "admin.thisDmBy",
   group: "admin.thisGroupBy",
 };

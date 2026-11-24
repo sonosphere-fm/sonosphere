@@ -33,10 +33,11 @@ app_answers() {
   return 1
 }
 
-# Starts the new image next to the live one first, so a release that can't boot never replaces it.
+# Starts the new image next to the live one first, so a release that can't boot never replaces it. Its migrations
+# are only tried and rolled back; the replacement applies them.
 preflight() {
   docker rm -f spin-preflight > /dev/null 2>&1
-  docker run -d --name spin-preflight --network host --env-file $A/spin.env -e PORT=3100 \
+  docker run -d --name spin-preflight --network host --env-file $A/spin.env -e PORT=3100 -e MIGRATIONS=check \
     -v $A/data:/data "sonosphere:$1" > /dev/null || return 1
   app_answers 3100
   ok=$?

@@ -1,6 +1,19 @@
 import { and, eq } from "drizzle-orm";
 import { db, type Conn, type Tx } from "../db/client";
-import { albums, artists, events, journals, reports, shouts, tags, tracks, users, wikis } from "../db/schema";
+import {
+  albums,
+  artists,
+  events,
+  journals,
+  obsessions,
+  playlists,
+  reports,
+  shouts,
+  tags,
+  tracks,
+  users,
+  wikis,
+} from "../db/schema";
 import { reportedMessageTx, softDeleteTx, type Removed } from "../dm/repo";
 import {
   reportedMessageTx as reportedGroupMessageTx,
@@ -56,6 +69,10 @@ async function pageOfTx(conn: Conn, type: string, id: number): Promise<PageRef |
   if (type === "event") {
     const [e] = await conn.select({ title: events.title }).from(events).where(eq(events.id, id));
     return e ? { label: e.title, link: `/event/${id}` } : null;
+  }
+  if (type === "playlist") {
+    const [p] = await conn.select({ title: playlists.title }).from(playlists).where(eq(playlists.id, id));
+    return p ? { label: `“${p.title}”`, link: `/playlist/${id}` } : null;
   }
   if (type === "journal") {
     const [j] = await conn
@@ -126,6 +143,45 @@ export async function reportTargetTx(conn: Conn, type: string, id: number): Prom
       link: page?.link ?? null,
     };
   }
+  if (type === "event") {
+    const [e] = await conn.select().from(events).where(eq(events.id, id));
+    if (!e) return null;
+    return {
+      authorId: e.creatorId,
+      author: await name(e.creatorId),
+      text: `${e.title}\n\n${e.description}`,
+      where: "Event",
+      link: `/event/${id}`,
+    };
+  }
+  if (type === "playlist") {
+    const [p] = await conn.select().from(playlists).where(eq(playlists.id, id));
+    if (!p) return null;
+    return {
+      authorId: p.userId,
+      author: await name(p.userId),
+      text: `${p.title}\n\n${p.description}`,
+      where: "Playlist",
+      link: `/playlist/${id}`,
+    };
+  }
+  if (type === "obsession") {
+    const [o] = await conn
+      .select({ userId: obsessions.userId, comment: obsessions.comment, title: tracks.title, artist: artists.name })
+      .from(obsessions)
+      .innerJoin(tracks, eq(tracks.id, obsessions.trackId))
+      .innerJoin(artists, eq(artists.id, tracks.artistId))
+      .where(eq(obsessions.id, id));
+    if (!o) return null;
+    const author = await name(o.userId);
+    return {
+      authorId: o.userId,
+      author,
+      text: `${o.title} by ${o.artist}\n\n${o.comment}`,
+      where: "Earworm",
+      link: author ? `/user/${encodeURIComponent(author)}/earworms` : null,
+    };
+  }
   if (type === "dm" || type === "group") {
     const m = type === "dm" ? await reportedMessageTx(conn, id) : await reportedGroupMessageTx(conn, id);
     if (!m) return null;
@@ -158,6 +214,11 @@ export async function reportTargetTx(conn: Conn, type: string, id: number): Prom
 
 export const reportTarget = (type: string, id: number): Promise<ReportTarget | null> => reportTargetTx(db, type, id);
 
+async function dropEventTx(tx: Tx, id: number): Promise<void> {
+  await tx.delete(shouts).where(and(eq(shouts.targetType, "event"), eq(shouts.targetId, id)));
+  await tx.delete(events).where(eq(events.id, id));
+}
+
 // For a direct message it hides rather than deletes, and returns who to tell: pass that to
 // `announceRemoved` from server/dm/service.ts after commit.
 export async function removeContentTx(
@@ -169,6 +230,9 @@ export async function removeContentTx(
   if (type === "shout") await tx.update(shouts).set({ body: "", deleted: true }).where(eq(shouts.id, id));
   else if (type === "wiki") await tx.delete(wikis).where(eq(wikis.id, id));
   else if (type === "journal") await dropJournalTx(tx, id);
+  else if (type === "event") await dropEventTx(tx, id);
+  else if (type === "playlist") await tx.delete(playlists).where(eq(playlists.id, id));
+  else if (type === "obsession") await tx.delete(obsessions).where(eq(obsessions.id, id));
   else if (type === "dm") return softDeleteTx(tx, id, by, now());
   else if (type === "group") return softDeleteGroupTx(tx, id, by, now());
   return null;

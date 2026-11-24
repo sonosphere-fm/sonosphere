@@ -1,7 +1,7 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
-import { applyMigrations } from "./migrate";
+import { applyMigrations, checkMigrations } from "./migrate";
 
 export const databaseUrl = process.env.DATABASE_URL || "postgres://localhost/sonosphere";
 
@@ -14,7 +14,8 @@ export const pg = (g.__spinPg ??= postgres(databaseUrl, {
   onnotice: () => {},
   types: { asNumber },
 }));
-await applyMigrations(databaseUrl);
+if (process.env.MIGRATIONS === "check") await checkMigrations(databaseUrl);
+else await applyMigrations(databaseUrl);
 
 export const db = drizzle(pg, { schema });
 type Db = typeof db;

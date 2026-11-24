@@ -38,11 +38,12 @@ async function findVideos(artist: string, track: string): Promise<string[]> {
 
 // Several ids, best first, because the player falls through any that refuse to be embedded. Found videos are
 // cached for good, an empty result for a day, and a failed lookup not at all.
-export async function videosFor(artist: string, track: string): Promise<string[]> {
+export async function videosFor(artist: string, track: string, beforeFetch: () => Promise<void>): Promise<string[]> {
   const key = `${norm(artist)}\u001f${norm(track)}`;
   const hit = await repo.cached(key);
   if (hit?.videoId) return hit.videoId.split(",");
   if (hit && now() - hit.fetchedAt < DAY) return [];
+  await beforeFetch();
   let ids: string[];
   try {
     ids = await findVideos(artist, track);

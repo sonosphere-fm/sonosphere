@@ -4,6 +4,7 @@ import { sessions, users } from "../db/schema";
 import { digest, now } from "../util";
 import { isAdmin, isStaff } from "../site/roles";
 import { findById, type User } from "../users/repo";
+import { SITE_URL } from "../mail";
 
 export const tokenOf = (req: Request) => /(?:^|;\s*)sid=([a-f0-9]+)/.exec(req.headers.get("cookie") || "")?.[1] || "";
 const actAsOf = (req: Request) =>
@@ -22,11 +23,17 @@ export async function sessionUser(token: string) {
   return row?.user ?? null;
 }
 
+// local development runs over plain http, where a Secure cookie would never be sent back
+export const HTTPS = SITE_URL.startsWith("https:");
+export const SECURE = HTTPS ? "; Secure" : "";
+
 export const SESSION_LIFE = 60 * 60 * 24 * 365;
 export const sessionCookie = (token: string, maxAge = SESSION_LIFE) =>
-  `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
-export const actAsCookie = (id: number) => `act_as=${id}; Path=/; HttpOnly; SameSite=Lax`;
-export const clearActAsCookie = () => "act_as=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";
+  `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE}`;
+export const actAsCookie = (id: number) => `act_as=${id}; Path=/; HttpOnly; SameSite=Lax${SECURE}`;
+export const clearActAsCookie = () => `act_as=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${SECURE}`;
+
+export const impersonating = (user: User | null, actor: User | null) => !!user && !!actor && user.id !== actor.id;
 
 export async function viewerOf(req: Request): Promise<{ user: User | null; actor: User | null }> {
   const actor = await sessionUser(tokenOf(req));

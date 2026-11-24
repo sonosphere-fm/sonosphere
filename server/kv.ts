@@ -53,23 +53,25 @@ redis.call('ZADD', KEYS[1], now, ARGV[4])
 redis.call('PEXPIRE', KEYS[1], win)
 return 1`;
 
-/** False once there have been `max` attempts within the last `ms`. */
+function attemptLocal(key: string, max: number, ms: number, t: number) {
+  const recent = (memWindows.get(key) ?? []).filter((x) => x > t - ms);
+  memWindows.set(key, recent);
+  if (recent.length >= max) return false;
+  recent.push(t);
+  return true;
+}
+
+/** False once there have been `max` attempts within the last `ms`. Falls back to memory when Valkey is down. */
 export async function attempt(key: string, max: number, ms: number): Promise<boolean> {
   const t = Date.now();
-  if (!client) {
-    const recent = (memWindows.get(key) ?? []).filter((x) => x > t - ms);
-    memWindows.set(key, recent);
-    if (recent.length >= max) return false;
-    recent.push(t);
-    return true;
-  }
+  if (!client) return attemptLocal(key, max, ms, t);
   if (ready) await ready;
   try {
     const args = [WINDOW, "1", PREFIX + "rl:" + key, String(t), String(ms), String(max), `${t}:${Math.random()}`];
     return Number(await client.send("EVAL", args)) === 1;
   } catch (e) {
     warn(e);
-    return true;
+    return attemptLocal(key, max, ms, t);
   }
 }
 
@@ -194,15 +196,23 @@ export async function setTake(key: string, n: number): Promise<string[]> {
 }
 
 const RELEASE = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end`;
+const RENEW = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('PEXPIRE', KEYS[1], ARGV[2]) else return 0 end`;
 
-async function claim(name: string, ttlMs: number): Promise<(() => Promise<void>) | null> {
+type Lock = { release: () => Promise<void>; renew: () => Promise<void> };
+
+async function claim(name: string, ttlMs: number): Promise<Lock | null> {
   const key = "lock:" + name;
   const token = crypto.randomUUID();
   if (!client) {
     if (memGet(key) !== null) return null;
     memory.set(key, { v: token, until: Date.now() + ttlMs });
-    return async () => {
-      if (memGet(key) === token) memory.delete(key);
+    return {
+      release: async () => {
+        if (memGet(key) === token) memory.delete(key);
+      },
+      renew: async () => {
+        if (memGet(key) === token) memory.set(key, { v: token, until: Date.now() + ttlMs });
+      },
     };
   }
   if (ready) await ready;
@@ -213,12 +223,16 @@ async function claim(name: string, ttlMs: number): Promise<(() => Promise<void>)
     warn(e);
     return null;
   }
-  return async () => {
+  const run = async (args: string[]) => {
     try {
-      await client.send("EVAL", [RELEASE, "1", PREFIX + key, token]);
+      await client.send("EVAL", args);
     } catch (e) {
       warn(e);
     }
+  };
+  return {
+    release: () => run([RELEASE, "1", PREFIX + key, token]),
+    renew: () => run([RENEW, "1", PREFIX + key, token, String(Math.ceil(ttlMs))]),
   };
 }
 
@@ -227,18 +241,20 @@ let closing = false;
 
 /**
  * Runs a job in one process at a time; returns null without running it if another process holds `name`.
- * `ttlMs` must outlast the job: a process that dies holding the lock frees it when the time runs out.
+ * The lock is renewed while the job runs, so `ttlMs` only bounds how long a dead process keeps it.
  */
 export async function exclusive<T>(name: string, ttlMs: number, job: () => Promise<T>): Promise<T | null> {
   if (closing) return null;
-  const release = await claim(name, ttlMs);
-  if (!release) return null;
-  held.add(release);
+  const lock = await claim(name, ttlMs);
+  if (!lock) return null;
+  held.add(lock.release);
+  const renewing = setInterval(lock.renew, ttlMs / 3);
   try {
     return await job();
   } finally {
-    held.delete(release);
-    await release();
+    clearInterval(renewing);
+    held.delete(lock.release);
+    await lock.release();
   }
 }
 

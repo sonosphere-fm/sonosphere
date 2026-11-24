@@ -1,5 +1,5 @@
-import { and, asc, count, desc, eq, inArray, lt } from "drizzle-orm";
-import { db } from "../db/client";
+import { and, asc, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { db, transact, type Conn } from "../db/client";
 import { importChunks, importJobs } from "../db/schema";
 import { need } from "../guards";
 import { bad, fail, int, missing, Router, throttle } from "../http";
@@ -52,8 +52,8 @@ const advance = (id: number, set: Partial<Job>) =>
     .set({ ...set, updatedAt: now() })
     .where(and(eq(importJobs.id, id), inArray(importJobs.status, ["queued", "running"])));
 
-async function latest(userId: number) {
-  const rows = await db
+async function latest(userId: number, conn: Conn = db) {
+  const rows = await conn
     .select()
     .from(importJobs)
     .where(eq(importJobs.userId, userId))
@@ -73,15 +73,19 @@ async function ownJob(userId: number, raw: string | undefined) {
 }
 
 async function startJob(userId: number, values: Pick<Job, "kind" | "status" | "total"> & Partial<Job>) {
-  const busy = await latest(userId);
-  if (busy && ACTIVE.includes(busy.status)) fail(409, "alreadyImportGoingWaitFinish");
   await throttle(`import:${userId}`, 10, 86_400, "tooManyImportsToday");
-  const t = now();
-  const [job] = await db
-    .insert(importJobs)
-    .values({ userId, ...values, createdAt: t, updatedAt: t })
-    .returning();
-  return job!;
+  return transact(async (tx) => {
+    // two uploads at once must not both see no import running
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(727002, ${userId})`);
+    const busy = await latest(userId, tx);
+    if (busy && ACTIVE.includes(busy.status)) fail(409, "alreadyImportGoingWaitFinish");
+    const t = now();
+    const [job] = await tx
+      .insert(importJobs)
+      .values({ userId, ...values, createdAt: t, updatedAt: t })
+      .returning();
+    return job!;
+  });
 }
 
 function readRow(v: unknown): Row | null {

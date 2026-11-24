@@ -177,6 +177,7 @@ export default {
   eventNotFound: "Acara tidak ditemukan",
   staffOnly: "Khusus staf",
   adminsOnly: "Khusus admin",
+  notWhileImpersonating: "Kamu tidak bisa mengubah detail masuk akun ini saat bertindak sebagai penggunanya",
   confirmEmailFirst:
     "Konfirmasikan alamat emailmu dulu. Kamu seharusnya menerima email verifikasi. Jika tidak, kamu dapat mengirim ulang dari Pengaturan, di bawah Akun.",
   kindArtistsAlbumsTracksTags: "kind harus artists, albums, tracks atau tags",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "Nama grup dapat hingga {max} karakter",
   cantAddUser: "Kamu tidak dapat menambah {username}",
   groupTooBig: "Grup dapat memiliki hingga {max} orang",
+  playlistFull: "Playlist dapat memiliki hingga {max} lagu",
   messageTooLong: "Pesan dapat hingga {max} karakter",
   alreadyInGroup: "{username} sudah ada di grup ini",
   accountNoLongerExists: "Akun ini tidak lagi ada",

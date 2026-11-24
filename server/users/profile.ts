@@ -72,15 +72,19 @@ export async function profile(u: repo.User, viewer: Viewer | null): Promise<Prof
 
 // Private listeners appear without their play count.
 export async function people(list: PublicUser[], viewerId: number | undefined): Promise<Person[]> {
-  const shut = await repo.privateAmong(list.map((p) => p.id).filter((id) => id !== viewerId));
-  return Promise.all(
-    list.map(async (p) => ({
-      ...p,
-      ...(shut.has(p.id) ? {} : { playcount: await repo.playcount(p.id) }),
-      isFollowing: !!viewerId && (await repo.isFollowing(viewerId, p.id)),
-      lastTrack: await repo.lastTrack(p.id),
-    }))
-  );
+  const ids = list.map((p) => p.id);
+  const [shut, plays, followed, last] = await Promise.all([
+    repo.privateAmong(ids.filter((id) => id !== viewerId)),
+    repo.playcounts(ids),
+    viewerId ? repo.followedAmong(viewerId, ids) : new Set<number>(),
+    repo.lastTracks(ids),
+  ]);
+  return list.map((p) => ({
+    ...p,
+    ...(shut.has(p.id) ? {} : { playcount: plays.get(p.id) ?? 0 }),
+    isFollowing: followed.has(p.id),
+    lastTrack: last.get(p.id) ?? null,
+  }));
 }
 
 // Weeks run Monday to Sunday; the epoch fell on a Thursday.

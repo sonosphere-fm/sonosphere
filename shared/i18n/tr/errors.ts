@@ -178,6 +178,7 @@ export default {
   eventNotFound: "Etkinlik bulunamadı",
   staffOnly: "Yalnızca ekip",
   adminsOnly: "Yalnızca yöneticiler",
+  notWhileImpersonating: "Kullanıcı olarak işlem yaparken bu hesabın giriş bilgilerini değiştiremezsin",
   confirmEmailFirst:
     "Lütfen önce e-posta adresini onayla. Sana bir doğrulama e-postası gelmiş olmalı. Gelmediyse Ayarlar'daki Hesap bölümünden yeniden gönderebilirsin.",
   kindArtistsAlbumsTracksTags: "kind; artists, albums, tracks veya tags olmalı",
@@ -315,6 +316,7 @@ export default {
   groupNameTooLong: "Grup adları en fazla {max} karakter olabilir",
   cantAddUser: "Bu kullanıcıyı ekleyemezsin: {username}",
   groupTooBig: "Gruplarda en fazla {max} kişi olabilir",
+  playlistFull: "Çalma listelerinde en fazla {max} parça olabilir",
   messageTooLong: "Mesajlar en fazla {max} karakter olabilir",
   alreadyInGroup: "{username} zaten bu grupta",
   accountNoLongerExists: "Bu hesap artık yok",

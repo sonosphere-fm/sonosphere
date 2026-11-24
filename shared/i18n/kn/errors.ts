@@ -177,6 +177,7 @@ export default {
   eventNotFound: "ಈವೆಂಟ್ ಸಿಗಲಿಲ್ಲ",
   staffOnly: "ಸಿಬ್ಬಂದಿಗೆ ಮಾತ್ರ",
   adminsOnly: "ನಿರ್ವಾಹಕರಿಗೆ ಮಾತ್ರ",
+  notWhileImpersonating: "ಬಳಕೆದಾರರಾಗಿ ಕಾರ್ಯನಿರ್ವಹಿಸುವಾಗ ಈ ಖಾತೆಯ ಸೈನ್-ಇನ್ ವಿವರಗಳನ್ನು ಬದಲಾಯಿಸಲಾಗುವುದಿಲ್ಲ",
   confirmEmailFirst:
     "ದಯವಿಟ್ಟು ಮೊದಲು ನಿಮ್ಮ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ದೃಢೀಕರಿಸಿ. ನಿಮಗೆ ಪರಿಶೀಲನಾ ಇಮೇಲ್ ಬಂದಿರಬೇಕು. ಬರದಿದ್ದರೆ, ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಖಾತೆ ವಿಭಾಗದಿಂದ ಅದನ್ನು ಮತ್ತೆ ಕಳುಹಿಸಬಹುದು.",
   kindArtistsAlbumsTracksTags: "kind ಎಂಬುದು artists, albums, tracks ಅಥವಾ tags ಆಗಿರಬೇಕು",
@@ -314,6 +315,7 @@ export default {
   groupNameTooLong: "ಗುಂಪಿನ ಹೆಸರುಗಳು {max} ಅಕ್ಷರಗಳವರೆಗೆ ಇರಬಹುದು",
   cantAddUser: "ನೀವು {username} ಅವರನ್ನು ಸೇರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ",
   groupTooBig: "ಗುಂಪುಗಳಲ್ಲಿ {max} ಜನರವರೆಗೆ ಇರಬಹುದು",
+  playlistFull: "ಪ್ಲೇಲಿಸ್ಟ್‌ಗಳಲ್ಲಿ {max} ಟ್ರ್ಯಾಕ್‌ಗಳವರೆಗೆ ಇರಬಹುದು",
   messageTooLong: "ಸಂದೇಶಗಳು {max} ಅಕ್ಷರಗಳವರೆಗೆ ಇರಬಹುದು",
   alreadyInGroup: "{username} ಈಗಾಗಲೇ ಈ ಗುಂಪಿನಲ್ಲಿದ್ದಾರೆ",
   accountNoLongerExists: "ಈ ಖಾತೆ ಇನ್ನು ಅಸ್ತಿತ್ವದಲ್ಲಿಲ್ಲ",

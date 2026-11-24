@@ -177,6 +177,7 @@ export default {
   eventNotFound: "ఈవెంట్ కనుగొనబడలేదు",
   staffOnly: "సిబ్బందికి మాత్రమే",
   adminsOnly: "అడ్మిన్‌లకు మాత్రమే",
+  notWhileImpersonating: "యూజర్‌గా వ్యవహరిస్తున్నప్పుడు ఈ ఖాతా సైన్-ఇన్ వివరాలను మార్చలేరు",
   confirmEmailFirst:
     "దయచేసి ముందుగా మీ ఈమెయిల్ చిరునామాను నిర్ధారించండి. మీకు ధృవీకరణ ఈమెయిల్ వచ్చి ఉండాలి. రాకపోతే, సెట్టింగ్‌లలోని ఖాతా విభాగం నుండి దాన్ని మళ్లీ పంపవచ్చు.",
   kindArtistsAlbumsTracksTags: "kind artists, albums, tracks లేదా tags అయి ఉండాలి",
@@ -313,6 +314,7 @@ export default {
   groupNameTooLong: "గ్రూప్ పేర్లు {max} అక్షరాల వరకు ఉండవచ్చు",
   cantAddUser: "మీరు {username}ని జోడించలేరు",
   groupTooBig: "గ్రూప్‌లలో {max} మంది వరకు ఉండవచ్చు",
+  playlistFull: "ప్లేలిస్ట్‌లలో {max} ట్రాక్‌ల వరకు ఉండవచ్చు",
   messageTooLong: "సందేశాలు {max} అక్షరాల వరకు ఉండవచ్చు",
   alreadyInGroup: "{username} ఇప్పటికే ఈ గ్రూప్‌లో ఉన్నారు",
   accountNoLongerExists: "ఈ ఖాతా ఇకపై ఉనికిలో లేదు",

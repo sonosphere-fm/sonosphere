@@ -74,18 +74,22 @@ export function canPost(from: User): void {
   if (from.dmMuted) fail(403, "messagingTurnedOffAccount");
 }
 
-// Returns how a new thread would begin, or throws.
-export async function gate(from: User, to: User): Promise<"active" | "request"> {
+type Recipient = Pick<User, "id" | "banned" | "dmPolicy">;
+
+// Returns how a new thread would begin, or throws. `known` is whether `to` follows `from`.
+export function opening(from: User, to: Recipient, blocked: boolean, known: boolean): "active" | "request" {
   if (from.id === to.id) fail(400, "cantMessageYourself");
   canPost(from);
   // one answer for every kind of refusal, so the sender can't tell whether they were blocked
-  if (to.banned || (await blockedEither(from.id, to.id))) fail(403, "cantMessageUser");
+  if (to.banned || blocked) fail(403, "cantMessageUser");
   if (from.isAdmin) return "active";
   const policy = policyOf(to);
-  const known = await repo.isFollowing(to.id, from.id);
   if (policy === "nobody" || (policy === "following" && !known)) fail(403, "cantMessageUser");
   return policy === "everyone" || known ? "active" : "request";
 }
+
+export const gate = async (from: User, to: User): Promise<"active" | "request"> =>
+  opening(from, to, await blockedEither(from.id, to.id), await repo.isFollowing(to.id, from.id));
 
 type Allowed = { can: boolean; why: string; blocked: boolean; opens: "active" | "request" };
 
@@ -161,33 +165,41 @@ const messageShape = (m: Message, reactions: DmReaction[] = []): DmMessage => ({
 });
 
 // Null when the other account is gone.
-async function shapeOrNull(t: Thread, userId: number): Promise<DmThread | null> {
-  const lo = t.userLo === userId;
-  const cleared = lo ? t.loCleared : t.hiCleared;
-  const read = lo ? t.loRead : t.hiRead;
-  const theirRead = lo ? t.hiRead : t.loRead;
-  const mine = t.requesterId === userId;
-  const pending = t.status !== "active";
-  const user = await repo.person(otherId(t, userId));
-  if (!user) return null;
-  const last = await repo.lastMessage(t.id, cleared);
-  const left = pending && mine ? Math.max(0, DM.REQUEST_CAP - (await repo.sentIn(t.id, userId))) : null;
-  return {
-    id: t.id,
-    user,
-    // a declined request looks, to the person who sent it, exactly like one still waiting
-    status: pending ? "request" : "active",
-    incoming: pending && !mine,
-    last: last ? messageShape(last) : null,
-    at: t.lastAt,
-    unread: await repo.unreadIn(t.id, Math.max(read, cleared), userId),
-    seen: pending ? 0 : theirRead,
-    left,
-  };
+async function shapeAll(threads: Thread[], userId: number): Promise<DmThread[]> {
+  if (!threads.length) return [];
+  const ids = threads.map((t) => t.id);
+  const [people, lasts, unread] = await Promise.all([
+    repo.people(threads.map((t) => otherId(t, userId))),
+    repo.lastMessages(ids, userId),
+    repo.unreadByThread(ids, userId),
+  ]);
+  const personById = new Map(people.map((p) => [p.id, p]));
+  const lastById = new Map(lasts.map((m) => [m.threadId, m]));
+  const out: DmThread[] = [];
+  for (const t of threads) {
+    const user = personById.get(otherId(t, userId));
+    if (!user) continue;
+    const mine = t.requesterId === userId;
+    const pending = t.status !== "active";
+    const last = lastById.get(t.id);
+    out.push({
+      id: t.id,
+      user,
+      // a declined request looks, to the person who sent it, exactly like one still waiting
+      status: pending ? "request" : "active",
+      incoming: pending && !mine,
+      last: last ? messageShape(last) : null,
+      at: t.lastAt,
+      unread: unread.get(t.id) ?? 0,
+      seen: pending ? 0 : t.userLo === userId ? t.hiRead : t.loRead,
+      left: pending && mine ? Math.max(0, DM.REQUEST_CAP - (await repo.sentIn(t.id, userId))) : null,
+    });
+  }
+  return out;
 }
 
 const threadShape = async (t: Thread, userId: number): Promise<DmThread> =>
-  (await shapeOrNull(t, userId)) ?? notFound();
+  (await shapeAll([t], userId))[0] ?? notFound();
 
 export async function dmCounts(userId: number): Promise<DmCounts> {
   const counts = await repo.unreadCounts(userId);
@@ -275,11 +287,7 @@ export async function announceRemoved(removed: readonly (repo.Removed | GroupRem
 }
 
 export async function list(me: User, box: "inbox" | "requests"): Promise<Omit<DmList, "groups">> {
-  const items: DmThread[] = [];
-  for (const t of await repo.listThreads(me.id, box)) {
-    const s = await shapeOrNull(t, me.id);
-    if (s) items.push(s);
-  }
+  const items = await shapeAll(await repo.listThreads(me.id, box), me.id);
   return { items, counts: await dmCounts(me.id), policy: policyOf(me) };
 }
 
