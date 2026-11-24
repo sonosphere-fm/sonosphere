@@ -2,7 +2,15 @@ import { api } from "./lib";
 import type { ImageSaved } from "../shared/images";
 import type { SpotifyPlayerToken } from "../shared/spotify";
 
-type SdkTrack = { id: string | null; uri: string; linked_from?: { uri: string | null } };
+export type SdkTrack = {
+  id: string | null;
+  uri: string;
+  type: "track" | "episode" | "ad";
+  name: string;
+  artists: { name: string }[];
+  album: { name: string; images: { url: string }[] };
+  linked_from?: { uri: string | null };
+};
 export type SdkState = {
   paused: boolean;
   position: number;
@@ -78,7 +86,7 @@ const norm = (s: string) =>
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 // the art is shown from our own address, never Spotify's
-const artId = (url: string) =>
+export const artId = (url: string) =>
   api<ImageSaved>("/image/art", { body: { url } }).then(
     (r) => r.image,
     () => null
