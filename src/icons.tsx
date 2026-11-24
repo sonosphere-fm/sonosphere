@@ -32,6 +32,7 @@ import {
   Sparkle,
   Star,
   ThumbsDown,
+  ThumbsUp,
   Trash,
   Tray,
   TrendDown,
@@ -98,6 +99,7 @@ export const Ico = {
   SortDown: mk(ArrowDown),
   Heart: ({ on }: { on?: boolean }) => <Heart className="ico" aria-hidden weight={on ? "fill" : "bold"} />,
   ThumbsDown: ({ on }: { on?: boolean }) => <ThumbsDown className="ico" aria-hidden weight={on ? "fill" : "bold"} />,
+  ThumbsUp: ({ on }: { on?: boolean }) => <ThumbsUp className="ico" aria-hidden weight={on ? "fill" : "bold"} />,
 };
 
 const srOnly = "absolute w-px h-px overflow-hidden [clip:rect(0_0_0_0)] [clip-path:inset(50%)] whitespace-nowrap";

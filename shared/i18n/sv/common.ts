@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "Bilduppladdningen misslyckades. Försök igen.",
   mdExternalImage: "Extern bild",
   mdUploadToDisplay: "{alt} (ladda upp bilden för att visa den)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

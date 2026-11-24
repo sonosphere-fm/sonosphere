@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "ছবি আপলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
   mdExternalImage: "বাইরের ছবি",
   mdUploadToDisplay: "{alt} (দেখাতে ছবিটি আপলোড করুন)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

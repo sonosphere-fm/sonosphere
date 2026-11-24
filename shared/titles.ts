@@ -43,6 +43,7 @@ const TITLE_KEYS = {
 const ARTIST_TAB_KEYS: Record<string, CommonKey> = {
   tracks: "artistTabTracks",
   albums: "artistTabAlbums",
+  images: "artistTabImages",
   similar: "artistTabSimilar",
   wiki: "artistTabWiki",
   listeners: "artistTabListeners",

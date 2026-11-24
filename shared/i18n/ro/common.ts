@@ -251,4 +251,5 @@ export default {
   mdUploadFailed: "Încărcarea imaginii a eșuat. Încearcă din nou.",
   mdExternalImage: "Imagine externă",
   mdUploadToDisplay: "{alt} (încarcă imaginea pentru a o afișa)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

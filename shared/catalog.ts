@@ -74,6 +74,7 @@ export type ArtistPage = {
   weekTrack: TopTrack | null;
   albumCount: number;
   trackCount: number;
+  imageCount: number;
   trend: TrendPoint[];
   topListeners: Listener[];
   events: EventSummary[];
@@ -106,6 +107,7 @@ export type AlbumPage = {
   image: string | null;
   releaseDate: string | null;
   artistImage: string | null;
+  imageCount: number;
   listeners: number;
   playcount: number;
   userPlaycount: number;

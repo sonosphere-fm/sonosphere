@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, notInArray, or,
 import { db, transact, transactRetry } from "../db/client";
 import { albums, albumTracks, artists, spotifyArtistPics, tracks } from "../db/schema";
 import { getOrCreateAlbumTx, getOrCreateArtistTx, getOrCreateTrackTx } from "../catalog/repo";
+import { offer } from "../images/gallery";
 import { first, norm, now } from "../util";
 
 type Kind = "artist" | "album" | "track";
@@ -26,13 +27,13 @@ export const addTrack = (artistId: number, title: string, seconds: number) =>
 
 export async function setArtist(
   id: number,
-  set: { mbid?: string; spotifyId?: string; imageId?: string; metaAt?: number; wdAt?: number }
+  set: { mbid?: string; spotifyId?: string; metaAt?: number; wdAt?: number }
 ) {
   if (Object.keys(set).length) await db.update(artists).set(set).where(eq(artists.id, id));
 }
 export async function setAlbum(
   id: number,
-  set: { mbid?: string; releaseDate?: string; imageId?: string; coverAt?: number | null; metaAt?: number }
+  set: { mbid?: string; releaseDate?: string; coverAt?: number | null; metaAt?: number }
 ) {
   if (!Object.keys(set).length) return;
   await db
@@ -63,7 +64,7 @@ export async function borrowBaseCover(id: number) {
       .where(and(eq(albums.artistId, al.artistId), eq(albums.titleNorm, base), isNotNull(albums.imageId)))
       .limit(1)
   );
-  if (found?.imageId) await setAlbum(id, { imageId: found.imageId });
+  if (found?.imageId) await offer("album", id, found.imageId);
 }
 export const trackRow = (id: number) => first(db.select().from(tracks).where(eq(tracks.id, id)).limit(1));
 export const albumByMbid = (artistId: number, mbid: string) =>

@@ -347,4 +347,8 @@ export default {
   timestampInFuture: "টাইমস্ট্যাম্পটি ভবিষ্যতের",
   timestampTooOld: "টাইমস্ট্যাম্পটি খুব পুরোনো",
   duplicateScrobble: "ডুপ্লিকেট স্ক্রবল",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

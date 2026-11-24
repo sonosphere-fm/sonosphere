@@ -4,6 +4,7 @@ import { db, transact, type Tx } from "../db/client";
 import {
   albums,
   artists,
+  catalogueImages,
   eventArtists,
   eventAttendance,
   events,
@@ -24,7 +25,7 @@ import {
 import { getOrCreateTagTx } from "../tags/repo";
 import { convert } from "../images/process";
 import { saveImage } from "../images/repo";
-import { first } from "../util";
+import { first, now } from "../util";
 
 export const imported = async (): Promise<boolean> => {
   const row = await first(db.select({ key: meta.key }).from(meta).where(eq(meta.key, "import")).limit(1));
@@ -128,9 +129,22 @@ function writer(tx: Tx) {
       }
     },
     async setImage(table: Pictured, id: number, imageId: string) {
-      if (table === "users") await tx.update(users).set({ imageId }).where(eq(users.id, id));
-      else if (table === "albums") await tx.update(albums).set({ imageId }).where(eq(albums.id, id));
+      if (table === "users") {
+        await tx.update(users).set({ imageId }).where(eq(users.id, id));
+        return;
+      }
+      if (table === "albums") await tx.update(albums).set({ imageId }).where(eq(albums.id, id));
       else await tx.update(artists).set({ imageId }).where(eq(artists.id, id));
+      await tx
+        .insert(catalogueImages)
+        .values({
+          itemType: table === "albums" ? "album" : "artist",
+          itemId: id,
+          imageId,
+          uploaderId: null,
+          createdAt: now(),
+        })
+        .onConflictDoNothing();
     },
 
     userId: async (usernameNorm: string) =>

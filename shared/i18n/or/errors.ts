@@ -347,4 +347,8 @@ export default {
   timestampInFuture: "ଟାଇମଷ୍ଟାମ୍ପ ଭବିଷ୍ୟତରେ ଅଛି",
   timestampTooOld: "ଟାଇମଷ୍ଟାମ୍ପ ବହୁତ ପୁରୁଣା",
   duplicateScrobble: "ଡୁପ୍ଲିକେଟ୍ ସ୍କ୍ରୋବଲ୍",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

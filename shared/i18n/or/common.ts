@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "ଛବି ଅପଲୋଡ୍ ବିଫଳ ହେଲା। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
   mdExternalImage: "ବାହ୍ୟ ଛବି",
   mdUploadToDisplay: "{alt} (ଦେଖାଇବାକୁ ଏହି ଛବି ଅପଲୋଡ୍ କରନ୍ତୁ)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

@@ -347,4 +347,8 @@ export default {
   timestampInFuture: "الطابع الزمني في المستقبل",
   timestampTooOld: "الطابع الزمني قديم جدًا",
   duplicateScrobble: "سكروبل مكرر",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

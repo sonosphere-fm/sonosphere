@@ -241,6 +241,46 @@ export const albums = pgTable(
   (table) => [unique().on(table.artistId, table.titleNorm)]
 );
 
+// Community-supplied pictures for an artist or album. `artists.image_id` / `albums.image_id` cache the winner.
+export const catalogueImages = pgTable(
+  "catalogue_images",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+    itemType: text("item_type").notNull(),
+    itemId: integer("item_id").notNull(),
+    imageId: text("image_id")
+      .notNull()
+      .references(() => images.id, { onDelete: "cascade" }),
+    uploaderId: integer("uploader_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: integer("created_at").notNull(),
+    artistRef: kindRef("item_type", "item_id", "artist", () => artists.id),
+    albumRef: kindRef("item_type", "item_id", "album", () => albums.id),
+  },
+  (table) => [
+    uniqueIndex("catalogue_images_unique").on(table.itemType, table.itemId, table.imageId),
+    index("catalogue_images_item").on(table.itemType, table.itemId, table.createdAt),
+    ...kindIndexes("catalogue_images", { artist: table.artistRef, album: table.albumRef }),
+  ]
+);
+
+export const catalogueImageVotes = pgTable(
+  "catalogue_image_votes",
+  {
+    entryId: integer("entry_id")
+      .notNull()
+      .references(() => catalogueImages.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    value: integer().notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.entryId, table.userId], name: "catalogue_image_votes_entry_user_pk" }),
+    index("catalogue_image_votes_user").on(table.userId),
+  ]
+);
+
 // a name an album was merged away under, so scrobbles naming it land on the album it went into
 export const albumFolds = pgTable(
   "album_folds",

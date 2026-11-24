@@ -348,4 +348,8 @@ export default {
   timestampInFuture: "Znacznik czasu jest z przyszłości",
   timestampTooOld: "Znacznik czasu jest za stary",
   duplicateScrobble: "Zduplikowany scrobble",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

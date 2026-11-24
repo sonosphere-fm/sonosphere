@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "Bild-Upload fehlgeschlagen. Versuch es erneut.",
   mdExternalImage: "Externes Bild",
   mdUploadToDisplay: "{alt} (lade dieses Bild hoch, um es anzuzeigen)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

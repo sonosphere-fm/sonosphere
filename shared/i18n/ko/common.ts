@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "이미지 업로드에 실패했어요. 다시 시도해 주세요.",
   mdExternalImage: "외부 이미지",
   mdUploadToDisplay: "{alt} (이미지를 업로드해야 표시돼요)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

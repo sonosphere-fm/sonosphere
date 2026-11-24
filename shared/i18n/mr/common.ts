@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "चित्र अपलोड अयशस्वी झाले. पुन्हा प्रयत्न करा.",
   mdExternalImage: "बाह्य चित्र",
   mdUploadToDisplay: "{alt} (हे चित्र दाखवण्यासाठी ते अपलोड करा)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

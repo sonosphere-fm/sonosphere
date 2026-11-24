@@ -349,4 +349,8 @@ export default {
   timestampInFuture: "Timestamp-ul este în viitor",
   timestampTooOld: "Timestamp-ul este prea vechi",
   duplicateScrobble: "Scrobble duplicat",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

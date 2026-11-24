@@ -348,4 +348,8 @@ export default {
   timestampInFuture: "ടൈംസ്റ്റാമ്പ് ഭാവിയിലാണ്",
   timestampTooOld: "ടൈംസ്റ്റാമ്പ് വളരെ പഴയതാണ്",
   duplicateScrobble: "ഡ്യൂപ്ലിക്കേറ്റ് സ്ക്രോബിൾ",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

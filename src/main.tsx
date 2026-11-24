@@ -487,11 +487,15 @@ function Pages() {
       <Route path="/music/:artist/+tracks" element={<ArtistPage tab="tracks" />} />
       <Route path="/music/:artist/+albums" element={<ArtistPage tab="albums" />} />
       <Route path="/music/:artist/+similar" element={<ArtistPage tab="similar" />} />
+      <Route path="/music/:artist/+images" element={<ArtistPage tab="images" />} />
+      <Route path="/music/:artist/+images/:image" element={<ArtistPage tab="images" />} />
       <Route path="/music/:artist/+wiki" element={<ArtistPage tab="wiki" />} />
       <Route path="/music/:artist/+listeners" element={<ArtistPage tab="listeners" />} />
       <Route path="/music/:artist/+shoutbox" element={<ArtistPage tab="shoutbox" />} />
       <Route path="/music/:artist/+wall" element={<ArtistPage tab="shoutbox" />} />
       <Route path="/music/:artist/:album" element={<AlbumPage tab="overview" />} />
+      <Route path="/music/:artist/:album/+images" element={<AlbumPage tab="images" />} />
+      <Route path="/music/:artist/:album/+images/:image" element={<AlbumPage tab="images" />} />
       <Route path="/music/:artist/:album/+wiki" element={<AlbumPage tab="wiki" />} />
       <Route path="/music/:artist/_/:track" element={<TrackPage tab="overview" />} />
       <Route path="/music/:artist/_/:track/+wiki" element={<TrackPage tab="wiki" />} />

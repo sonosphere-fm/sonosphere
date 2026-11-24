@@ -67,6 +67,7 @@ const artistTabs: Record<string, string> = {
   "+tracks": "tracks",
   "+albums": "albums",
   "+similar": "similar",
+  "+images": "images",
   "+wiki": "wiki",
   "+listeners": "listeners",
   "+shoutbox": "shoutbox",
@@ -161,7 +162,8 @@ async function lookup(url: URL): Promise<Page> {
       };
     }
     const artistTab = own(artistTabs, tab) ? artistTabs[tab] : undefined;
-    if (!second || (artistTab && !third)) {
+    const artistPhoto = artistTab === "images" && !!third && !fourth;
+    if (!second || (artistTab && !third) || artistPhoto) {
       const a = await requireArtist(name(first));
       const bio = tab === "+wiki";
       return {
@@ -169,19 +171,22 @@ async function lookup(url: URL): Promise<Page> {
         description: artistTab
           ? `Explore ${ARTIST_TABS[artistTab]!.toLowerCase()} for ${a.name} on Sonosphere.`
           : `Explore ${a.name}’s top tracks, albums, similar artists, and listening stats on Sonosphere.`,
-        path: artistUrl(a.name) + (artistTab && !bio ? (tab === "+wall" ? "/+shoutbox" : `/${tab}`) : ""),
+        path: artistPhoto
+          ? `${artistUrl(a.name)}/+images/${third}`
+          : artistUrl(a.name) + (artistTab && !bio ? (tab === "+wall" ? "/+shoutbox" : `/${tab}`) : ""),
         index: !artistTab,
         image: a.imageId,
         artwork: `Image of ${a.name}`,
         schema: musicGroup(a.name),
       };
     }
-    if (!fourth && (!third || extra === "+wiki")) {
+    const albumPhoto = extra === "+images" && !!fourth;
+    if ((!fourth && (!third || extra === "+wiki" || extra === "+images")) || (albumPhoto && !rest.length)) {
       const a = await requireAlbum(name(first), name(second));
       return {
-        title: releaseTitle(a.title, a.artist, !!third),
+        title: releaseTitle(a.title, a.artist, extra === "+wiki"),
         description: `Explore ${a.title} by ${a.artist}, including its tracklist, listening stats, and community tags.`,
-        path: albumUrl(a.artist, a.title),
+        path: albumPhoto ? `${albumUrl(a.artist, a.title)}/+images/${fourth}` : albumUrl(a.artist, a.title),
         index: !third,
         image: a.imageId ?? (await findItem("artist", a.artistId))?.imageId,
         artwork: a.imageId ? `Cover art for ${a.title}` : `Image of ${a.artist}`,

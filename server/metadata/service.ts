@@ -1,5 +1,6 @@
 import { correct, mbidOfAlbum, mbidOfArtist } from "../corrections/service";
 import { HttpError, type Viewer } from "../http";
+import { offer } from "../images/gallery";
 import { saveImage, saveRemoteImage } from "../images/repo";
 import { convert } from "../images/process";
 import { attempt, exclusive, getJson, setAdd, setJson, setTake } from "../kv";
@@ -59,7 +60,7 @@ async function storeCover(
   if (!bytes) return false;
   try {
     const id = await saveImage(await convert(bytes), null);
-    await repo.setAlbum(albumId, { imageId: id });
+    await offer("album", albumId, id);
     return true;
   } catch (e) {
     // 503: today's storage allowance is used up; any other refusal: not a usable picture
@@ -136,12 +137,12 @@ async function findCover(
   }
   const lf = await lastfm();
   if (lf?.picture) {
-    await repo.setAlbum(albumId, { imageId: await showPicture(lf.picture) });
+    await offer("album", albumId, await showPicture(lf.picture));
     return;
   }
   const s = await spotify();
   if (s?.picture) {
-    await repo.setAlbum(albumId, { imageId: await showPicture(s.picture) });
+    await offer("album", albumId, await showPicture(s.picture));
     return;
   }
   await repo.borrowBaseCover(albumId);
@@ -183,7 +184,7 @@ async function fillArtist(id: number): Promise<void> {
 async function fromCatalogueCopy(a: { id: number; name: string; spotifyId: string | null }, mbid: string | null) {
   const spotifyId = a.spotifyId || (mbid && src.mbLocal() ? await src.mbSpotifyId(mbid) : null);
   const p = await repo.catalogueCopyPicture(spotifyId, a.name);
-  if (p) await repo.setArtist(a.id, { imageId: await showPicture(p) });
+  if (p) await offer("artist", a.id, await showPicture(p));
   return !!p;
 }
 
@@ -202,8 +203,8 @@ async function artistPhoto(
       }
     );
     if (found !== undefined) {
-      const image = found ? { imageId: await showPicture(found) } : {};
-      await repo.setArtist(a.id, { wdAt: now(), ...image });
+      if (found) await offer("artist", a.id, await showPicture(found));
+      await repo.setArtist(a.id, { wdAt: now() });
     }
     if (found) return;
   }
@@ -212,8 +213,8 @@ async function artistPhoto(
     return src.spArtist(a.name, spotifyId);
   });
   if (!s) return;
-  const image = s.picture ? { imageId: await showPicture(s.picture) } : {};
-  await repo.setArtist(a.id, { spotifyId: s.id, ...image });
+  if (s.picture) await offer("artist", a.id, await showPicture(s.picture));
+  await repo.setArtist(a.id, { spotifyId: s.id });
 }
 
 async function fillAlbum(id: number, artist: string, hint?: src.MbAlbum | null): Promise<void> {
@@ -270,8 +271,10 @@ async function fillTrack(id: number, artist: string): Promise<void> {
 async function lastfmAlbum(artistId: number, artist: string, al: NonNullable<src.LfTrack["album"]>): Promise<number> {
   const id = await repo.addAlbum(artistId, al.title, null);
   const row = await repo.albumRow(id);
-  if (row && !row.imageId && al.picture)
-    await repo.setAlbum(id, { imageId: await showPicture(al.picture), coverAt: now() });
+  if (row && !row.imageId && al.picture) {
+    await offer("album", id, await showPicture(al.picture));
+    await repo.setAlbum(id, { coverAt: now() });
+  }
   if (await repo.claim("album", id, now() - MONTH)) await fillAlbum(id, artist);
   return id;
 }
@@ -372,7 +375,7 @@ export async function artistOrImport(
     if (!canonical) return null;
     const id = await repo.addArtist(canonical);
     await repo.setArtist(id, { ...(mb ? { mbid: mb.mbid } : {}), ...(sp ? { spotifyId: sp.id } : {}), metaAt: now() });
-    if (sp?.picture) await repo.setArtist(id, { imageId: await showPicture(sp.picture) });
+    if (sp?.picture) await offer("artist", id, await showPicture(sp.picture));
     // the photo and albums before the page shows, so it isn't empty; covers follow in the background
     await fillArtist(id).catch(quiet(`artist ${id}`));
     if (norm(canonical) !== key) await alias("artist", key, [canonical]);
@@ -642,7 +645,7 @@ async function wikidataBackfill() {
       const photos = await src.wikiPhotos(rows.map((r) => r.mbid!));
       for (const r of rows) {
         const p = photos.get(r.mbid!);
-        if (p) await repo.setArtist(r.id, { imageId: await showPicture(p) });
+        if (p) await offer("artist", r.id, await showPicture(p));
       }
       await repo.wikidataAnswered(rows.map((r) => r.id));
     });

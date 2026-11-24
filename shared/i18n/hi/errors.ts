@@ -348,4 +348,8 @@ export default {
   timestampInFuture: "Timestamp भविष्य का है",
   timestampTooOld: "Timestamp बहुत पुराना है",
   duplicateScrobble: "डुप्लिकेट स्क्रॉबल",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

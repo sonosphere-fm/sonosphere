@@ -349,4 +349,8 @@ export default {
   timestampInFuture: "நேரமுத்திரை எதிர்காலத்தில் உள்ளது",
   timestampTooOld: "நேரமுத்திரை மிகப் பழையது",
   duplicateScrobble: "நகல் ஸ்க்ராபிள்",
+  galleryFull: "This artist or album already has the most pictures it can keep.",
+  invalidVote: "Invalid vote",
+  notYourImage: "You can only remove pictures you uploaded",
+  tooManyVotes: "Too many votes. Wait a while and try again.",
 } satisfies Translation<typeof en>;

@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "העלאת התמונה נכשלה. אפשר לנסות שוב.",
   mdExternalImage: "תמונה חיצונית",
   mdUploadToDisplay: "{alt} (יש להעלות את התמונה כדי להציג אותה)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

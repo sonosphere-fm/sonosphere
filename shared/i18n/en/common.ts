@@ -43,6 +43,7 @@ export default {
   titleProfile: "Listener Profile",
   artistTabTracks: "Top Tracks",
   artistTabAlbums: "Albums",
+  artistTabImages: "Images",
   artistTabSimilar: "Similar Artists",
   artistTabWiki: "Biography",
   artistTabListeners: "Listeners",

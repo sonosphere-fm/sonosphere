@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "ছবি আপল'ড বিফল হ'ল। পুনৰ চেষ্টা কৰক।",
   mdExternalImage: "বাহিৰৰ ছবি",
   mdUploadToDisplay: "{alt} (দেখুৱাবলৈ এই ছবিখন আপল'ড কৰক)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;

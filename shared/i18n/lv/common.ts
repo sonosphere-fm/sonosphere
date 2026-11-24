@@ -250,4 +250,5 @@ export default {
   mdUploadFailed: "Attēla augšupielāde neizdevās. Mēģini vēlreiz.",
   mdExternalImage: "Ārējs attēls",
   mdUploadToDisplay: "{alt} (augšupielādē šo attēlu, lai to parādītu)",
+  artistTabImages: "Images",
 } satisfies Translation<typeof en>;
