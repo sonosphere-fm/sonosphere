@@ -1,0 +1,132 @@
+import type en from "../en/dev";
+import type { Translation } from "../core";
+
+export default {
+  applications: "Aplikasi",
+  account: "Akun",
+  apiDocumentation: "Dokumentasi API",
+  developers: "Pengembang",
+  onThisPage: "Di halaman ini",
+
+  apiHeading: "API Sonosphere",
+  apiIntro:
+    "API mengikuti protokol Last.fm 2.0, jadi sebagian besar kode scrobbler bekerja dengan mengubah URL akar. Hanya ingin scrobble dari pemutar? Lihat {help}.",
+  apiHelpLink: "bantuan scrobbling",
+  basics: "Dasar",
+  rootUrl: "URL akar:",
+  basicsSend: "Kirim {method}, {apiKey} dan parameter sebagai query string (baca) atau POST form-encoded (tulis).",
+  basicsFormat: "Tambahkan {format} untuk JSON. XML adalah bawaan.",
+  basicsKey: "Dapatkan kunci dan rahasia bersama di bawah {applications}.",
+  authentication: "Otentikasi",
+  authWeb:
+    "{label} kirim pengguna ke {url}. Mereka kembali dengan {token}; tukar dengan {getSession} dalam satu jam. Tanpa {cb}, callback yang disimpan digunakan, dan {cb} yang diberikan harus di situs yang sama.",
+  authWebLabel: "Web:",
+  authDesktop: "{label} panggil {getToken}, kirim pengguna ke {url}, lalu panggil {getSession}.",
+  authDesktopLabel: "Desktop:",
+  authScripts: "{label} POST {getMobileSession} dengan {username} dan {password}.",
+  authScriptsLabel: "Skrip:",
+  sessionKeys: "Kunci sesi tidak kedaluwarsa. Ketiga panggilan ditandatangani.",
+  signing: "Penandatanganan",
+  signingBody:
+    "Urutkan semua parameter kecuali {format} dan {callback} berdasarkan nama, gabungkan sebagai {pair}, tambahkan rahasia, dan kirim digest MD5 heks sebagai {apiSig}.",
+  examples: "Contoh",
+  batch: "Scrobble batch menggunakan parameter terindeks ({artist}, {track}, …), hingga 50 per panggilan.",
+  errors: "Kesalahan",
+  errorsBody:
+    "Kegagalan mengembalikan {shape}: 3 metode tidak valid, 4 otentikasi gagal, 6 parameter tidak valid, 9 sesi tidak valid, 10 kunci API tidak valid, 13 tanda tangan tidak valid, 14 tidak diizinkan.",
+  lbHeading: "API ListenBrainz",
+  lbIntro:
+    "API ListenBrainz disajikan di {root} dengan jalur, badan permintaan dan respons yang sama, jadi klien dan pustaka ListenBrainz bekerja dengan mengubah URL akar menjadi {origin}.",
+  lbTokens:
+    "{label} pengguna membuat satu di bawah {applications}. Kirim sebagai {header}. Baca tidak memerlukan, kecuali untuk melihat mendengarkan privatmu sendiri.",
+  lbTokensLabel: "Token:",
+  lbErrors: "{label} {shape} dengan status HTTP yang sesuai. Statistik tanpa yang ditampilkan mengembalikan 204.",
+  lbErrorsLabel: "Kesalahan:",
+  lbRateLimit: "{label} 100 permintaan per 10 detik per alamat, dilaporkan di header {header}.",
+  lbRateLimitLabel: "Batas permintaan:",
+  lbRecordingIds:
+    "{label} nilai {msid} adalah milik Sonosphere sendiri dan hanya berarti di sini. {mbid} diketahui setelah klien mengirimnya dengan listen.",
+  lbRecordingIdsLabel: "ID rekaman:",
+  lbStats: "{label} langsung dan menggunakan UTC. Semua rentang didukung, dari {from} hingga {to}.",
+  lbStatsLabel: "Statistik",
+  lbSupported: "Endpoint yang didukung:",
+  lbUnavailable: "Daftar putar, rekomendasi, radio, pencarian metadata dan dump data tidak tersedia.",
+  npHeading: "API now-playing publik",
+  npIntro:
+    "Tampilkan lagu pendengar saat ini di situs web. Tanpa kunci, tanda tangan atau login, dan permintaan lintas asal diizinkan.",
+  npSnapshot: "{endpoint}: satu snapshot JSON",
+  npSse: "{endpoint}: Server-Sent Events",
+  npWs: "{endpoint}: WebSocket",
+  npNull: "{nowPlaying} adalah {null} saat tidak ada yang diputar. {album} dan {imageUrl} dapat {null}.",
+  npDuration:
+    "{duration} dalam detik (0 jika tidak diketahui). {startedAt} adalah waktu Unix pembaruan terbaru, bukan posisi pemutaran.",
+  npStreams:
+    "Stream mengirim status saat ini saat terhubung, lalu snapshot pada setiap perubahan. Peristiwa lampau tidak diputar ulang.",
+  npUnavailable:
+    "Jika mendengarkan menjadi privat atau akun hilang, stream mengirim {unavailable} dan menutup. Jangan sambungkan ulang setelah itu.",
+  npPing: "WebSocket mengirim {ping} setiap 15 detik; tidak perlu balasan.",
+  npErrors: "Kesalahan: 400 nama buruk, 403 privat, 404 pengguna tidak dikenal, 429 dibatasi (dengan {retryAfter}).",
+  npSpotify:
+    "Mendengarkan Spotify diperiksa sekitar sekali per menit, jadi perubahan dapat memakan waktu sebanyak itu untuk muncul.",
+  otherApis: "API lain",
+  otherApisLb: "API kompatibel ListenBrainz",
+  otherApisNp: "Snapshot, SSE dan WebSocket now-playing",
+  methods: "Metode",
+  groupLabel: "{group}:",
+  groupAuth: "Otentikasi",
+  groupTrack: "Lagu",
+  groupArtist: "Artis",
+  groupAlbum: "Album",
+  groupUser: "Pengguna",
+  groupTag: "Tag",
+  groupChart: "Tangga",
+  groupListens: "Listen",
+  groupFeedback: "Umpan balik",
+  groupSocial: "Sosial",
+  groupUserStats: "Statistik pengguna (GET stats/user/{user}/…)",
+  groupSiteStats: "Statistik situs (GET stats/sitewide/…)",
+  groupListeners: "Pendengar",
+
+  helpHeading: "Bantuan scrobbling",
+  helpIntro: "Sonosphere mencatat musik yang kamu putar. Pilih yang sesuai dengan cara kamu mendengarkan.",
+  helpSpotifyOpen: "Buka {applications}.",
+  helpSpotifyFollow: "Ikuti langkah Spotify di sana untuk menghubungkan akunmu.",
+  helpSpotifyPlay:
+    "Putar musik. Lagu baru muncul dalam sekitar satu menit, dan tidak ada yang perlu tetap terbuka di perangkatmu.",
+  helpPanoServer: "Di Pano, pilih opsi server Last.fm-compatible (GNU FM) kustom.",
+  helpPanoFields: "Isi tiga kolom:",
+  helpPanoApiUrl: "URL API:",
+  helpPanoUsername: "{label} nama pengguna Sonospheremu",
+  helpPanoUsernameLabel: "Nama pengguna:",
+  helpPanoPassword: "{label} kata sandi Sonospheremu",
+  helpPanoPasswordLabel: "Kata sandi:",
+  helpPanoLogIn: "Masuk. Pano muncul di bawah {applications}, tempat kamu dapat memutuskannya kapan saja.",
+  helpPanoNote:
+    "Mendaftar melalui layanan lain? Atur kata sandi di {account} dulu. Kamu tidak memerlukan akun API: Pano menggunakan kunci dan rahasia bawaannya {secret}.",
+  helpListenBrainz: "Aplikasi ListenBrainz",
+  helpLbIntro:
+    "Pemutar dan scrobbler yang mendukung ListenBrainz (multi-scrobbler, Navidrome, plugin Jellyfin, Pano dan lainnya) dapat mengirim putaran ke sini.",
+  helpLbOpen: "Buka {applications} dan pilih {button}. Salin token: hanya ditampilkan sekali.",
+  helpLbCreateToken: "Buat token ListenBrainz",
+  helpLbServer:
+    "Di aplikasi, atur server ListenBrainz atau URL API ke {origin} dan tempel token. Jika aplikasi meminta alamat API lengkap, gunakan {full}.",
+  helpLbPlay: "Putar musik. Token muncul di bawah {applications}, tempat kamu dapat memutuskannya kapan saja.",
+  helpOtherApps: "Scrobbler lain",
+  helpOtherIntro:
+    "Pemutar apa pun yang mendukung protokol Last.fm 2.0 dan memungkinkan mengubah servernya dapat scrobble di sini.",
+  helpOtherServerUrl: "URL server:",
+  helpOtherKey: "{label} jika aplikasi memintanya, buat akun API di bawah {applications}.",
+  helpOtherKeyLabel: "Kunci API dan rahasia:",
+  helpOwnScrobbler: "Membangun scrobbler atau widget sendiri? Lihat {docs}.",
+  helpManual: "Scrobble manual dan impor",
+  helpManualAdd: "Tambah putaran secara manual di {scrobble}.",
+  helpScrobblePage: "halaman scrobble",
+  helpManualImport: "Bawa riwayatmu menggunakan {import}.",
+  helpImportLink: "Impor riwayat mendengarkan",
+
+  changelogHeading: "Catatan perubahan",
+  changelogManage: "Kelola pos",
+  changelogNew: "Pos baru",
+  changelogEdit: "Sunting",
+  changelogEmpty: "Belum ada pos catatan perubahan.",
+} satisfies Translation<typeof en>;
