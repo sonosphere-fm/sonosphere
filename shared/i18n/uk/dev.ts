@@ -1,0 +1,132 @@
+import type en from "../en/dev";
+import type { Translation } from "../core";
+
+export default {
+  applications: "Застосунки",
+  account: "Обліковий запис",
+  apiDocumentation: "Документація API",
+  developers: "Розробникам",
+  onThisPage: "На цій сторінці",
+
+  apiHeading: "API Sonosphere",
+  apiIntro:
+    "API відповідає протоколу Last.fm 2.0, тож більшість коду для скроблінгу запрацює після зміни кореневого URL. Хочеш просто скроблити з плеєра? Дивись {help}.",
+  apiHelpLink: "довідку зі скроблів",
+  basics: "Основи",
+  rootUrl: "Кореневий URL:",
+  basicsSend:
+    "Надсилай {method}, {apiKey} і параметри як рядок запиту (читання) або POST у форматі form-encoded (запис).",
+  basicsFormat: "Додай {format}, щоб отримати JSON. За замовчуванням XML.",
+  basicsKey: "Ключ і спільний секрет можна отримати в розділі {applications}.",
+  authentication: "Автентифікація",
+  authWeb:
+    "{label} надішли користувача на {url}. Він повернеться з {token}; обміняй його через {getSession} протягом години. Без {cb} використовується збережений callback, а переданий {cb} має бути на тому самому сайті.",
+  authWebLabel: "Веб:",
+  authDesktop: "{label} виклич {getToken}, надішли користувача на {url}, потім виклич {getSession}.",
+  authDesktopLabel: "Десктоп:",
+  authScripts: "{label} POST {getMobileSession} з {username} і {password}.",
+  authScriptsLabel: "Скрипти:",
+  sessionKeys: "Ключі сесій не спливають. Усі три виклики підписуються.",
+  signing: "Підпис",
+  signingBody:
+    "Відсортуй усі параметри, крім {format} і {callback}, за назвою, з’єднай їх як {pair}, додай свій секрет і надішли шістнадцятковий MD5-дайджест як {apiSig}.",
+  examples: "Приклади",
+  batch: "Пакетні скробли використовують індексовані параметри ({artist}, {track}, …), до 50 за виклик.",
+  errors: "Помилки",
+  errorsBody:
+    "У разі збою повертається {shape}: 3 недійсний метод, 4 помилка автентифікації, 6 недійсні параметри, 9 недійсна сесія, 10 недійсний ключ API, 13 недійсний підпис, 14 неавторизований токен.",
+  lbHeading: "API ListenBrainz",
+  lbIntro:
+    "API ListenBrainz доступний за адресою {root} з тими самими шляхами, тілами запитів і відповідями, тож клієнти й бібліотеки ListenBrainz запрацюють після зміни кореневого URL на {origin}.",
+  lbTokens:
+    "{label} користувачі створюють їх у розділі {applications}. Надсилай як {header}. Для читання токен не потрібен, окрім перегляду власних приватних прослуховувань.",
+  lbTokensLabel: "Токени:",
+  lbErrors: "{label} {shape} з відповідним HTTP-статусом. Статистика без даних повертає 204.",
+  lbErrorsLabel: "Помилки:",
+  lbRateLimit: "{label} 100 запитів за 10 секунд з однієї адреси, указано в заголовках {header}.",
+  lbRateLimitLabel: "Ліміт запитів:",
+  lbRecordingIds:
+    "{label} значення {msid} належать Sonosphere і мають сенс лише тут. {mbid} стає відомим, щойно клієнт надішле його разом із прослуховуванням.",
+  lbRecordingIdsLabel: "Ідентифікатори записів:",
+  lbStats: "{label} оновлюється наживо й використовує UTC. Підтримуються всі діапазони, від {from} до {to}.",
+  lbStatsLabel: "Статистика",
+  lbSupported: "Підтримувані ендпоінти:",
+  lbUnavailable: "Плейлисти, рекомендації, радіо, пошук метаданих і дампи даних недоступні.",
+  npHeading: "Публічний API «зараз грає»",
+  npIntro: "Показуй поточну пісню слухача на вебсайті. Без ключа, підпису чи входу, крос-доменні запити дозволено.",
+  npSnapshot: "{endpoint}: один JSON-знімок",
+  npSse: "{endpoint}: Server-Sent Events",
+  npWs: "{endpoint}: WebSocket",
+  npNull: "{nowPlaying} дорівнює {null}, коли нічого не грає. {album} і {imageUrl} можуть бути {null}.",
+  npDuration:
+    "{duration} у секундах (0, якщо невідомо). {startedAt} є Unix-часом останнього оновлення, а не позицією відтворення.",
+  npStreams:
+    "Потоки надсилають поточний стан під час підключення, а потім знімок після кожної зміни. Минулі події не повторюються.",
+  npUnavailable:
+    "Якщо прослуховування стають приватними або обліковий запис зникає, потоки надсилають {unavailable} і закриваються. Після цього не перепідключайся.",
+  npPing: "WebSocket надсилає {ping} кожні 15 секунд; відповідати не потрібно.",
+  npErrors:
+    "Помилки: 400 неправильне ім’я, 403 приватно, 404 невідомий користувач, 429 перевищено ліміт (з {retryAfter}).",
+  npSpotify:
+    "Прослуховування в Spotify перевіряються приблизно раз на хвилину, тож зміни можуть з’являтися із такою затримкою.",
+  otherApis: "Інші API",
+  otherApisLb: "API, сумісний із ListenBrainz",
+  otherApisNp: "Знімки «зараз грає», SSE і WebSocket",
+  methods: "Методи",
+  groupLabel: "{group}:",
+  groupAuth: "Автентифікація",
+  groupTrack: "Трек",
+  groupArtist: "Виконавець",
+  groupAlbum: "Альбом",
+  groupUser: "Користувач",
+  groupTag: "Тег",
+  groupChart: "Чарт",
+  groupListens: "Прослуховування",
+  groupFeedback: "Відгуки",
+  groupSocial: "Соціальне",
+  groupUserStats: "Статистика користувача (GET stats/user/{user}/…)",
+  groupSiteStats: "Статистика сайту (GET stats/sitewide/…)",
+  groupListeners: "Слухачі",
+
+  helpHeading: "Довідка зі скроблів",
+  helpIntro: "Sonosphere записує музику, яку ти слухаєш. Вибери варіант, що пасує до того, як ти слухаєш.",
+  helpSpotifyOpen: "Відкрий {applications}.",
+  helpSpotifyFollow: "Виконай там кроки для Spotify, щоб підключити свій обліковий запис.",
+  helpSpotifyPlay:
+    "Слухай музику. Нові пісні з’являються приблизно за хвилину, і на пристрої нічого не потрібно тримати відкритим.",
+  helpPanoServer: "У Pano вибери опцію власного сервера, сумісного з Last.fm (GNU FM).",
+  helpPanoFields: "Заповни три поля:",
+  helpPanoApiUrl: "API URL:",
+  helpPanoUsername: "{label} твоє ім’я користувача Sonosphere",
+  helpPanoUsernameLabel: "Ім’я користувача:",
+  helpPanoPassword: "{label} твій пароль Sonosphere",
+  helpPanoPasswordLabel: "Пароль:",
+  helpPanoLogIn: "Увійди. Pano з’явиться в розділі {applications}, де його можна будь-коли відключити.",
+  helpPanoNote:
+    "Реєструвався через інший сервіс? Спершу встанови пароль у розділі {account}. Обліковий запис API не потрібен: Pano використовує вбудовані ключ і секрет {secret}.",
+  helpListenBrainz: "Застосунки ListenBrainz",
+  helpLbIntro:
+    "Плеєри й скроблери з підтримкою ListenBrainz (multi-scrobbler, Navidrome, плагіни Jellyfin, Pano та інші) можуть надсилати прослуховування сюди.",
+  helpLbOpen: "Відкрий {applications} і вибери {button}. Скопіюй токен: він показується лише один раз.",
+  helpLbCreateToken: "Створити токен ListenBrainz",
+  helpLbServer:
+    "У застосунку вкажи {origin} як сервер або API URL ListenBrainz і встав токен. Якщо застосунок просить повну адресу API, використай {full}.",
+  helpLbPlay: "Слухай музику. Токен з’явиться в розділі {applications}, де його можна будь-коли відключити.",
+  helpOtherApps: "Інші скроблери",
+  helpOtherIntro: "Скроблити сюди може будь-який плеєр, що підтримує протокол Last.fm 2.0 і дозволяє змінити сервер.",
+  helpOtherServerUrl: "URL сервера:",
+  helpOtherKey: "{label} якщо застосунок їх просить, створи обліковий запис API в розділі {applications}.",
+  helpOtherKeyLabel: "Ключ API і секрет:",
+  helpOwnScrobbler: "Створюєш власний скроблер чи віджет? Дивись {docs}.",
+  helpManual: "Ручні скробли та імпорт",
+  helpManualAdd: "Додавай прослуховування вручну на {scrobble}.",
+  helpScrobblePage: "сторінці скроблінгу",
+  helpManualImport: "Перенеси свою історію через {import}.",
+  helpImportLink: "Імпорт історії прослуховувань",
+
+  changelogHeading: "Список змін",
+  changelogManage: "Керувати записами",
+  changelogNew: "Новий запис",
+  changelogEdit: "Редагувати",
+  changelogEmpty: "Записів у списку змін ще немає.",
+} satisfies Translation<typeof en>;

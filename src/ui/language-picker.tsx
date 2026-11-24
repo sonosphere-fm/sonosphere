@@ -14,6 +14,9 @@ import RU from "country-flag-icons/react/3x2/RU";
 import IT from "country-flag-icons/react/3x2/IT";
 import TR from "country-flag-icons/react/3x2/TR";
 import SE from "country-flag-icons/react/3x2/SE";
+import UA from "country-flag-icons/react/3x2/UA";
+import IL from "country-flag-icons/react/3x2/IL";
+import SA from "country-flag-icons/react/3x2/SA";
 import CN from "country-flag-icons/react/3x2/CN";
 import TW from "country-flag-icons/react/3x2/TW";
 import { Globe } from "@phosphor-icons/react";
@@ -40,6 +43,9 @@ const FLAGS: Record<Locale, ComponentType<{ className?: string }>> = {
   it: IT,
   tr: TR,
   sv: SE,
+  uk: UA,
+  he: IL,
+  ar: SA,
   "zh-Hans": CN,
   "zh-Hant": TW,
 };

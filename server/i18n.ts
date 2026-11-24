@@ -12,6 +12,9 @@ import ru from "../shared/i18n/ru/server";
 import it from "../shared/i18n/it/server";
 import turkish from "../shared/i18n/tr/server";
 import sv from "../shared/i18n/sv/server";
+import uk from "../shared/i18n/uk/server";
+import he from "../shared/i18n/he/server";
+import ar from "../shared/i18n/ar/server";
 import zhHans from "../shared/i18n/zh-Hans/server";
 import zhHant from "../shared/i18n/zh-Hant/server";
 import {
@@ -40,6 +43,9 @@ const CATALOGS: Record<Locale, Catalog<typeof en>> = {
   it,
   tr: turkish,
   sv,
+  uk,
+  he,
+  ar,
   "zh-Hans": zhHans,
   "zh-Hant": zhHant,
 };

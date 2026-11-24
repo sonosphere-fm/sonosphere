@@ -1156,6 +1156,9 @@
     margin: 0 -13px;
     padding-inline: 10px 13px;
   }
+  [dir="rtl"] .flip-rtl {
+    transform: scaleX(-1);
+  }
   .strong.inline {
     display: inline;
   }
