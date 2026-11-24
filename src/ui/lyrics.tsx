@@ -41,7 +41,9 @@ const SHADOW_CSS = `
     margin: 0 !important;
     overflow: hidden !important;
   }
-  .lyrics-container { padding-top: 16px !important; padding-bottom: 24px !important; }
+  :host { font-weight: 600; letter-spacing: -0.01em; }
+  .lyrics-container { padding: 20px 0 24px !important; }
+  .lyrics-line { padding-inline: 8px !important; }
   :host(:not([data-reading])) .lyrics-container { padding-bottom: 320px !important; }
   :host([data-reading]) .lyrics-header + .lyrics-gap { display: none !important; }
 `;
@@ -86,7 +88,7 @@ export function Lyrics({ track }: { track: PTrack }) {
       query: `${track.title} ${track.artist}`,
       songDurationMs: track.duration ? track.duration * 1000 : undefined,
       highlightColor: "var(--ink)",
-      fontFamily: "inherit",
+      fontFamily: "var(--display)",
     });
     let tries = 0;
     const timer = setInterval(() => {
@@ -128,7 +130,9 @@ export function Lyrics({ track }: { track: PTrack }) {
   return (
     <div hidden={!found}>
       <Section title={t("player.lyrics")}>
-        <div className="lyrics-box h-[440px] bg-site-panel overflow-hidden">{ready && <am-lyrics ref={ref} />}</div>
+        <div className="lyrics-box h-[440px] border-y border-site-line overflow-hidden">
+          {ready && <am-lyrics ref={ref} />}
+        </div>
       </Section>
     </div>
   );

@@ -6184,14 +6184,20 @@
     inset-inline-start: -28px;
   }
   .lyrics-box am-lyrics {
-    --am-lyrics-highlight-surface: color-mix(in srgb, var(--ink) 6%, transparent);
-    --am-lyrics-compact-font-size: 20px;
-    --am-lyrics-compact-line-spacing: 12px;
-    --lyplus-font-size-base: 22px;
-    --am-lyrics-line-spacing: 14px;
-    --am-lyrics-wide-font-size: 24px;
-    --am-lyrics-wide-line-spacing: 16px;
+    --am-lyrics-highlight-surface: var(--fill);
+    --am-lyrics-highlight-radius: 0;
+    --am-lyrics-line-height: 1.25;
+    --am-lyrics-compact-font-size: 19px;
+    --am-lyrics-compact-line-spacing: 10px;
+    --lyplus-font-size-base: 21px;
+    --am-lyrics-line-spacing: 12px;
+    --am-lyrics-wide-font-size: 22px;
+    --am-lyrics-wide-line-spacing: 12px;
     --am-lyrics-glow-radius: 0px;
+    --am-lyrics-inactive-scale: 1;
+  }
+  .lyrics-box am-lyrics[data-reading] {
+    --lyplus-text-secondary: var(--ink);
   }
 
   .import-progress {
