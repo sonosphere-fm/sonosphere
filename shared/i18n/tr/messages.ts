@@ -96,7 +96,6 @@ export default {
   requestIntro:
     "{name} seni takip etmiyor, bu yüzden mesajın istek olarak ulaşacak. Yanıt verene kadar bağlantısız en fazla 3 mesaj gönderebilirsin.",
   sayHello: "Merhaba de: {name}",
-  robotFirst: "Önce robot olmadığını doğrula.",
   someone: "Biri",
   notifyComment: "{actor} şu yazına yorum yaptı: {title}",
   notifyCommentReply: "{actor} şu yazıdaki yorumuna yanıt verdi: {title}",

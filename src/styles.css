@@ -5560,9 +5560,6 @@
   .dm-composer .form-error {
     margin: 0 0 8px;
   }
-  .dm-human {
-    margin-bottom: 8px;
-  }
   .dm-composer-row {
     display: flex;
     gap: 8px;
@@ -5925,20 +5922,11 @@
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
   }
-  .connect-drop {
-    align-self: stretch;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
   .new-token {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-    padding: 4px 0 16px;
-  }
-  .connect-drop .token-reveal {
-    margin-bottom: 16px;
   }
   .token-reveal {
     display: flex;

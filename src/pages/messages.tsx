@@ -249,13 +249,11 @@ function Composer({
   max,
   typing,
   placeholder,
-  above,
 }: {
   onSend: (body: string) => Promise<void>;
   max: number;
   typing?: DmClientMessage;
   placeholder: string;
-  above?: ReactNode;
 }) {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -316,7 +314,6 @@ function Composer({
           {error}
         </p>
       )}
-      {above}
       <div className="dm-composer-row">
         <textarea
           ref={box}
@@ -1240,16 +1237,12 @@ function HumanComposer({
   name: string;
 }) {
   const robot = useTurnstile("dm");
-  const send = async (body: string) => {
-    if (robot.on && !robot.token) throw new Error(t("messages.robotFirst"));
-    try {
-      await onSend(body, robot.token || undefined);
-    } catch (e) {
-      robot.reset();
-      throw e;
-    }
-  };
-  const above = robot.view && <div className="dm-human">{robot.view}</div>;
-  return <Composer onSend={send} max={2000} placeholder={t("messages.messageTo", { name })} above={above} />;
+  const send = async (body: string) => onSend(body, (await robot.check()) || undefined);
+  return (
+    <>
+      {robot.view}
+      <Composer onSend={send} max={2000} placeholder={t("messages.messageTo", { name })} />
+    </>
+  );
 }
 import { Username } from "../ui/username";

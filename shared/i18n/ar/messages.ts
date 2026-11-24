@@ -115,7 +115,6 @@ export default {
   startGroup: "بدء المجموعة",
   requestIntro: "{name} لا يتابعك، لذا ستصل رسالتك كطلب. يمكنك إرسال حتى 3 رسائل، دون روابط، حتى يرد.",
   sayHello: "قل مرحبًا لـ {name}.",
-  robotFirst: "أكمل التحقق من أنك لست روبوتًا أولًا.",
   someone: "شخص ما",
   notifyComment: "علّق {actor} على {title}",
   notifyCommentReply: "ردّ {actor} على تعليقك على {title}",

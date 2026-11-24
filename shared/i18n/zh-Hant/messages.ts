@@ -87,7 +87,6 @@ export default {
   requestIntro:
     "{name} 沒有追蹤你，所以你的訊息會以請求的形式送達。在對方回覆之前，你最多可以傳送 3 則不含連結的訊息。",
   sayHello: "和 {name} 打個招呼吧。",
-  robotFirst: "請先完成人機驗證。",
   someone: "某人",
   notifyComment: "{actor} 回應了{title}",
   notifyCommentReply: "{actor} 回覆了你在{title}上的回應",

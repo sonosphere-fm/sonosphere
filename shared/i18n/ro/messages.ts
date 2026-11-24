@@ -104,7 +104,6 @@ export default {
   requestIntro:
     "{name} nu te urmărește, așa că mesajul tău va ajunge ca cerere. Poți trimite până la 3 mesaje, fără linkuri, până îți răspunde.",
   sayHello: "Salută-l pe {name}.",
-  robotFirst: "Completează mai întâi verificarea că nu ești robot.",
   someone: "Cineva",
   notifyComment: "{actor} a comentat la {title}",
   notifyCommentReply: "{actor} a răspuns la comentariul tău de la {title}",
