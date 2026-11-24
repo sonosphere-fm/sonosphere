@@ -19,6 +19,7 @@ import {
   users,
 } from "../db/schema";
 import { digest, first, now } from "../util";
+import { countryName } from "../../shared/countries";
 
 const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
 
@@ -326,15 +327,22 @@ export type GeoTrack = {
   listeners: number;
 };
 
-// Plays by listeners whose profile country is the requested one.
-export async function geoTopArtists(
-  country: string,
-  limit: number,
-  offset: number
-): Promise<{ items: GeoArtist[]; total: number }> {
+const GEO_DEPTH = 1000;
+
+async function listenersIn(country: string) {
+  const saved = await db.selectDistinct({ c: users.country }).from(users);
+  const spellings = saved.map((r) => r.c).filter((c) => c === country || countryName(c) === country);
+  return and(
+    inArray(users.country, spellings.length ? spellings : [country]),
+    eq(users.privateListening, false),
+    eq(users.banned, false)
+  );
+}
+
+export async function geoTopArtists(country: string): Promise<{ items: GeoArtist[]; total: number }> {
   const listeners = countDistinct(userArtists.userId).as("listeners");
   const playcount = sql<number>`SUM(${userArtists.plays})`.as("playcount");
-  const w = eq(users.country, country);
+  const w = await listenersIn(country);
   const items = await db
     .select({ id: artists.id, name: artists.name, image: artists.imageId, listeners, playcount })
     .from(userArtists)
@@ -343,8 +351,7 @@ export async function geoTopArtists(
     .where(w)
     .groupBy(artists.id)
     .orderBy(desc(listeners), desc(playcount), artists.name)
-    .limit(limit)
-    .offset(offset);
+    .limit(GEO_DEPTH);
   const all = await total(
     db
       .select({ c: countDistinct(userArtists.artistId) })
@@ -352,17 +359,13 @@ export async function geoTopArtists(
       .innerJoin(users, eq(users.id, userArtists.userId))
       .where(w)
   );
-  return { items, total: all };
+  return { items, total: Math.min(all, GEO_DEPTH) };
 }
 
-export async function geoTopTracks(
-  country: string,
-  limit: number,
-  offset: number
-): Promise<{ items: GeoTrack[]; total: number }> {
+export async function geoTopTracks(country: string): Promise<{ items: GeoTrack[]; total: number }> {
   const listeners = countDistinct(userTracks.userId).as("listeners");
   const playcount = sql<number>`SUM(${userTracks.plays})`.as("playcount");
-  const w = eq(users.country, country);
+  const w = await listenersIn(country);
   const items = await db
     .select({
       id: tracks.id,
@@ -381,8 +384,7 @@ export async function geoTopTracks(
     .where(w)
     .groupBy(tracks.id, artists.id, albums.id)
     .orderBy(desc(listeners), desc(playcount), tracks.title)
-    .limit(limit)
-    .offset(offset);
+    .limit(GEO_DEPTH);
   const all = await total(
     db
       .select({ c: countDistinct(userTracks.trackId) })
@@ -390,7 +392,7 @@ export async function geoTopTracks(
       .innerJoin(users, eq(users.id, userTracks.userId))
       .where(w)
   );
-  return { items, total: all };
+  return { items, total: Math.min(all, GEO_DEPTH) };
 }
 
 // Desktop sign-in tokens are valid for an hour; app sessions expire after a year idle.
