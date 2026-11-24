@@ -334,6 +334,7 @@ export async function coverArt(
     await pause("caa", Number(res.headers.get("retry-after")) || 60);
     throw new Busy("caa");
   }
+  if (res.status >= 500) return null;
   if (!res.ok) throw new Error(`Cover Art Archive answered ${res.status}`);
   if (Number(res.headers.get("content-length")) > 15_000_000) return null;
   const bytes = new Uint8Array(await res.arrayBuffer());

@@ -48,7 +48,12 @@ export type ProfileLinkIcon = keyof typeof SITES | "link";
 export type ProfileLink = { label: string; url: string };
 
 export function profileLinkIcon(url: string): ProfileLinkIcon {
-  const host = URL.parse(url)?.hostname.toLowerCase() ?? "";
+  let host = "";
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return "link";
+  }
   for (const [icon, domains] of Object.entries(SITES)) {
     if (domains.some((d) => host === d || host.endsWith(`.${d}`))) return icon as ProfileLinkIcon;
   }
