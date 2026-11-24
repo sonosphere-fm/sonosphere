@@ -31,6 +31,9 @@ if (!Sentry.getClient()) {
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
     beforeSend(event, hint) {
+      // Never report errors from non-production environments.
+      const env = import.meta.env?.VITE_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development";
+      if (env !== "production") return null;
       const resource = failedBuildLink(hint.originalException);
       const stale = event.exception?.values?.some((e) => isStaleBuild(e.value));
       if ((resource || stale) && recoverAsset()) return null;
