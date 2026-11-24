@@ -140,7 +140,11 @@ async function findCover(
     return;
   }
   const s = await spotify();
-  if (s?.picture) await repo.setAlbum(albumId, { imageId: await showPicture(s.picture) });
+  if (s?.picture) {
+    await repo.setAlbum(albumId, { imageId: await showPicture(s.picture) });
+    return;
+  }
+  await repo.borrowBaseCover(albumId);
 }
 const COVERS_PAUSED = "meta-pause:covers";
 

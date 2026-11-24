@@ -46,6 +46,25 @@ export async function setTrack(id: number, set: { duration?: number; albumId?: n
 
 export const artistRow = (id: number) => first(db.select().from(artists).where(eq(artists.id, id)).limit(1));
 export const albumRow = (id: number) => first(db.select().from(albums).where(eq(albums.id, id)).limit(1));
+
+const EDITION =
+  /\s*(?:\(|\[|-\s)[^)\]]*(?:deluxe|edition|expanded|remaster|anniversary|bonus|special|version|explicit|extended|collector)[^)\]]*[)\]]?\s*$/;
+
+/** "Believe (Deluxe Edition)" without a cover of its own shows the cover of "Believe". */
+export async function borrowBaseCover(id: number) {
+  const al = await albumRow(id);
+  if (!al || al.imageId) return;
+  const base = al.titleNorm.replace(EDITION, "");
+  if (!base || base === al.titleNorm) return;
+  const found = await first(
+    db
+      .select({ imageId: albums.imageId })
+      .from(albums)
+      .where(and(eq(albums.artistId, al.artistId), eq(albums.titleNorm, base), isNotNull(albums.imageId)))
+      .limit(1)
+  );
+  if (found?.imageId) await setAlbum(id, { imageId: found.imageId });
+}
 export const trackRow = (id: number) => first(db.select().from(tracks).where(eq(tracks.id, id)).limit(1));
 export const albumByMbid = (artistId: number, mbid: string) =>
   first(
