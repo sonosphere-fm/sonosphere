@@ -481,16 +481,18 @@ export function RecCard({
 export function UserList<U extends PublicUser & { playcount?: number }>({
   items,
   extra,
+  avatar = 56,
 }: {
   items: U[];
   extra?: (u: U) => ReactNode;
+  avatar?: number;
 }) {
   if (!items.length) return <Empty>{t("user.noOneHere")}</Empty>;
   return (
     <ul className="userlist">
       {items.map((u) => (
         <li key={u.username}>
-          <Avatar user={u} size={56} />
+          <Avatar user={u} size={avatar} />
           <div className="grow">
             <span>
               <Link className="strong" to={userUrl(u.username)}>
