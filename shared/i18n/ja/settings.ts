@@ -235,6 +235,13 @@ export default {
   listenbrainzServerHint: "パスワードの代わりにトークンを貼り付けてください。",
   createListenToken: "ListenBrainzトークンを作成",
   setupDetails: "設定方法の詳細",
+  relayTitle: "スクロブル中継",
+  relayIntro:
+    "すでにLast.fmにスクロブルしていますか?このリンクをプレーヤーのLast.fmサーバーURLに設定し、引き続きLast.fmアカウントでサインインしてください。すべてのスクロブルはLast.fmに送られ、ここにもコピーされます。",
+  relayPrivacy:
+    "Last.fmのサインイン情報はそのままLast.fmに渡され、保存されることはありません。リンクはパスワードと同じように非公開にしてください。",
+  createRelayLink: "中継リンクを作成",
+  yourRelayLink: "あなたの中継リンク",
   sessionDates: "{created}に接続、最終使用: {used}",
   noSessions: "あなたのアカウントにスクロブルできるアプリケーションはまだありません。",
   apiAccounts: "あなたのAPIアカウント",

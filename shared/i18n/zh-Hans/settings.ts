@@ -227,6 +227,12 @@ export default {
   listenbrainzServerHint: "用令牌代替密码粘贴进去。",
   createListenToken: "创建 ListenBrainz 令牌",
   setupDetails: "设置详情",
+  relayTitle: "Scrobble 中继",
+  relayIntro:
+    "已经在向 Last.fm 记录收听?把此链接设为播放器的 Last.fm 服务器地址,并继续用 Last.fm 账号登录。每条记录仍会发送到 Last.fm,同时也会复制到这里。",
+  relayPrivacy: "你的 Last.fm 登录信息会直接传给 Last.fm,绝不会被保存。请像密码一样保管此链接。",
+  createRelayLink: "创建中继链接",
+  yourRelayLink: "你的中继链接",
   sessionDates: "关联于 {created}，最后使用于 {used}",
   noSessions: "还没有应用可以向你的账号记录播放。",
   apiAccounts: "你的 API 账号",

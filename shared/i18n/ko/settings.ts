@@ -235,6 +235,13 @@ export default {
   listenbrainzServerHint: "비밀번호 대신 토큰을 붙여 넣으세요.",
   createListenToken: "ListenBrainz 토큰 만들기",
   setupDetails: "설정 방법",
+  relayTitle: "스크로블 릴레이",
+  relayIntro:
+    "이미 Last.fm에 스크로블하고 있나요? 이 링크를 플레이어의 Last.fm 서버 URL로 사용하고 계속 Last.fm 계정으로 로그인하세요. 모든 스크로블은 그대로 Last.fm에 전송되고 여기에도 복사됩니다.",
+  relayPrivacy:
+    "Last.fm 로그인 정보는 Last.fm으로 바로 전달되며 저장되지 않습니다. 링크는 비밀번호처럼 비공개로 유지하세요.",
+  createRelayLink: "릴레이 링크 만들기",
+  yourRelayLink: "내 릴레이 링크",
   sessionDates: "{created}에 연결, 마지막 사용 {used}",
   noSessions: "아직 내 계정으로 스크로블할 수 있는 애플리케이션이 없어요.",
   apiAccounts: "내 API 계정",

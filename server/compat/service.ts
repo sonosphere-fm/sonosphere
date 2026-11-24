@@ -3,7 +3,7 @@ import { findAlbum, findArtist, findItem, findTag, findTrack, hasLoved } from ".
 import { mbidOfAlbum, mbidOfArtist } from "../corrections/service";
 import { range } from "../listening/period";
 import { counts, nowPlaying, recent, setLoved, top } from "../listening/repo";
-import { resolve, scrobbleMany, setNowPlaying } from "../listening/service";
+import { resolve, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { similarArtists, similarTracks } from "../recommend/service";
 import { addTags, removeTag, taggerCount, taggingCount, topTags } from "../tags/repo";
 import { findById, findByName, followingCount, lovedCount, type User } from "../users/repo";
@@ -211,6 +211,21 @@ function searchResults(query: unknown, matches: Reply) {
   return { ...matches, "@attr": { for: query || "" } };
 }
 
+// One scrobble as artist/track/..., or a batch as artist[0]/track[0]/... up to 50.
+export function scrobbleInputs(p: Params): ScrobbleInput[] {
+  const idx =
+    p.artist !== undefined
+      ? [""]
+      : Array.from({ length: 50 }, (_, i) => `[${i}]`).filter((i) => p["artist" + i] !== undefined);
+  return idx.map((i) => ({
+    artist: p["artist" + i],
+    track: p["track" + i],
+    album: p["album" + i],
+    timestamp: p["timestamp" + i],
+    duration: p["duration" + i],
+  }));
+}
+
 const methods: Record<string, Method> = {
   "auth.gettoken": async (c) => {
     signed(c);
@@ -236,19 +251,8 @@ const methods: Record<string, Method> = {
 
   "track.scrobble": async (c) => {
     const uid = await session(c);
-    const p = c.p;
-    const idx =
-      p.artist !== undefined
-        ? [""]
-        : Array.from({ length: 50 }, (_, i) => `[${i}]`).filter((i) => p["artist" + i] !== undefined);
-    if (!idx.length) fail(6, "Invalid parameters - Your request is missing a required parameter");
-    const inputs = idx.map((i) => ({
-      artist: p["artist" + i],
-      track: p["track" + i],
-      album: p["album" + i],
-      timestamp: p["timestamp" + i],
-      duration: p["duration" + i],
-    }));
+    const inputs = scrobbleInputs(c.p);
+    if (!inputs.length) fail(6, "Invalid parameters - Your request is missing a required parameter");
     const results = await scrobbleMany(uid, inputs, "api:" + c.app.name.slice(0, 16));
     const out = inputs.map((input, n) => {
       const r = results[n];

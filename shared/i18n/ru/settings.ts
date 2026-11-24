@@ -251,6 +251,13 @@ export default {
   listenbrainzServerHint: "Вставь токен вместо пароля.",
   createListenToken: "Создать токен ListenBrainz",
   setupDetails: "Данные для настройки",
+  relayTitle: "Ретранслятор скробблов",
+  relayIntro:
+    "Уже скробблите в Last.fm? Укажите эту ссылку как адрес сервера Last.fm в плеере и продолжайте входить через аккаунт Last.fm. Каждый скроббл по-прежнему уходит в Last.fm и копируется сюда.",
+  relayPrivacy:
+    "Вход в Last.fm передаётся напрямую в Last.fm и никогда не сохраняется. Храните ссылку в секрете, как пароль.",
+  createRelayLink: "Создать ссылку ретранслятора",
+  yourRelayLink: "Ваша ссылка ретранслятора",
   sessionDates: "Подключено {created}, последнее использование {used}",
   noSessions: "Пока ни одно приложение не может скробблить в твой аккаунт.",
   apiAccounts: "Твои аккаунты API",

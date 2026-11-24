@@ -241,6 +241,12 @@ export default {
   listenbrainzServerHint: "Şifre yerine bir token yapıştır.",
   createListenToken: "ListenBrainz token'ı oluştur",
   setupDetails: "Kurulum ayrıntıları",
+  relayTitle: "Scrobble aktarıcı",
+  relayIntro:
+    "Zaten Last.fm'e scrobble mı yapıyorsun? Bu bağlantıyı oynatıcında Last.fm sunucu adresi olarak kullan ve Last.fm hesabınla giriş yapmaya devam et. Her scrobble yine Last.fm'e gider ve buraya da kopyalanır.",
+  relayPrivacy: "Last.fm girişin doğrudan Last.fm'e iletilir ve asla saklanmaz. Bağlantıyı bir parola gibi gizli tut.",
+  createRelayLink: "Aktarma bağlantısı oluştur",
+  yourRelayLink: "Aktarma bağlantın",
   sessionDates: "Bağlandı: {created}, son kullanım: {used}",
   noSessions: "Henüz hiçbir uygulama hesabına scrobble edemiyor.",
   apiAccounts: "API hesapların",

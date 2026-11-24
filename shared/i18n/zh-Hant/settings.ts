@@ -229,6 +229,12 @@ export default {
   listenbrainzServerHint: "以權杖取代密碼貼上。",
   createListenToken: "建立 ListenBrainz 權杖",
   setupDetails: "設定詳情",
+  relayTitle: "Scrobble 中繼",
+  relayIntro:
+    "已經在向 Last.fm 記錄收聽?把此連結設為播放器的 Last.fm 伺服器網址,並繼續用 Last.fm 帳號登入。每筆記錄仍會傳送到 Last.fm,同時也會複製到這裡。",
+  relayPrivacy: "你的 Last.fm 登入資訊會直接傳給 Last.fm,絕不會被儲存。請像密碼一樣保管此連結。",
+  createRelayLink: "建立中繼連結",
+  yourRelayLink: "你的中繼連結",
   sessionDates: "連結於 {created}，最後使用於 {used}",
   noSessions: "還沒有應用程式可以為你的帳號記錄播放。",
   apiAccounts: "你的 API 帳號",

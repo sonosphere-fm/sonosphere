@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/bun";
 import { api } from "./api";
 import { appRoutes } from "./app";
 import { handleListenBrainz } from "./listenbrainz/routes";
+import { handleRelay } from "./compat/relay";
 import { handleCompat } from "./compat/routes";
 import { sentryTunnel } from "./sentry-tunnel";
 import { dropStaleTokens } from "./compat/repo";
@@ -80,6 +81,7 @@ const server = Bun.serve<SocketData>({
     "/2.0": handleCompat,
     "/2.0/": handleCompat,
     "/1/*": handleListenBrainz,
+    "/relay/*": handleRelay,
     ...app,
   },
   websocket: {
