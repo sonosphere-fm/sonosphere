@@ -138,6 +138,16 @@ export async function count(kind: GalleryKind, itemId: number): Promise<number> 
   return row?.n ?? 0;
 }
 
+/** Whether a gallery entry exists, for pages that hang their own content (shouts) off one. */
+export async function entryExists(entryId: number): Promise<boolean> {
+  const [row] = await db
+    .select({ id: catalogueImages.id })
+    .from(catalogueImages)
+    .where(eq(catalogueImages.id, entryId))
+    .limit(1);
+  return !!row;
+}
+
 /** Adds a candidate. A first picture becomes main; later uploads wait for votes. */
 export async function add(
   kind: GalleryKind,
@@ -278,6 +288,14 @@ export async function moveEntriesTx(tx: Tx, kind: GalleryKind, src: number, dst:
     DELETE FROM "catalogue_image_votes" v
     USING "catalogue_images" s, "catalogue_images" d
     WHERE v."entry_id" = s."id"
+      AND s."item_type" = ${kind} AND s."item_id" = ${src}
+      AND d."item_type" = ${kind} AND d."item_id" = ${dst} AND d."image_id" = s."image_id"
+  `);
+  await tx.execute(sql`
+    UPDATE "shouts" sh
+    SET "target_id" = d."id"
+    FROM "catalogue_images" s, "catalogue_images" d
+    WHERE sh."target_type" = 'image' AND sh."target_id" = s."id"
       AND s."item_type" = ${kind} AND s."item_id" = ${src}
       AND d."item_type" = ${kind} AND d."item_id" = ${dst} AND d."image_id" = s."image_id"
   `);

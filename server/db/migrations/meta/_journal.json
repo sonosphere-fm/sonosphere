@@ -309,6 +309,13 @@
       "when": 1795551804169,
       "tag": "0043_plain_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795557105244,
+      "tag": "0044_normal_vance_astro",
+      "breakpoints": true
     }
   ]
 }

@@ -557,6 +557,7 @@ export const shouts = pgTable(
     userRef: kindRef("target_type", "target_id", "user", (): AnyPgColumn => users.id),
     eventRef: kindRef("target_type", "target_id", "event", (): AnyPgColumn => events.id),
     journalRef: kindRef("target_type", "target_id", "journal", (): AnyPgColumn => journals.id),
+    imageRef: kindRef("target_type", "target_id", "image", () => catalogueImages.id),
   },
   (table) => [
     index("shouts_target").on(table.targetType, table.targetId, table.createdAt),
@@ -569,6 +570,7 @@ export const shouts = pgTable(
       user: table.userRef,
       event: table.eventRef,
       journal: table.journalRef,
+      image: table.imageRef,
     }),
   ]
 );

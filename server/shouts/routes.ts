@@ -1,16 +1,27 @@
 import { requireItem } from "../catalog/service";
 import { confirmed, need, poster } from "../guards";
 import { bad, missing, paging, Router } from "../http";
+import { entryExists } from "../images/gallery";
 import type { ShoutDeleted, ShoutList, ShoutPosted } from "../../shared/shouts";
 import * as repo from "./repo";
-import { ownerOf, post, remove, wallOpen } from "./service";
+import { ownerOf, post, remove, wallOpen, type ShoutTarget } from "./service";
 import { limit } from "../trust/service";
 import { blockedEither } from "../users/repo";
 
 export const router = new Router();
 
+/** Pictures are not catalogue items, but they have a shoutbox of their own. */
+async function requireShoutTarget(type: unknown, id: unknown): Promise<ShoutTarget> {
+  if (type === "image") {
+    const n = Number(id);
+    if (!Number.isSafeInteger(n) || n <= 0) return missing("imageNotFound");
+    return (await entryExists(n)) ? { type: "image", row: { id: n } } : missing("imageNotFound");
+  }
+  return requireItem(type, id);
+}
+
 router.get<ShoutList>("/api/shouts", async (c) => {
-  const it = await requireItem(c.q.get("type"), c.q.get("id"));
+  const it = await requireShoutTarget(c.q.get("type"), c.q.get("id"));
   const pg = paging(c.q, 20, 50);
   const viewerId = c.user?.id ?? 0;
   const rawParent = c.q.get("parentId");
@@ -33,7 +44,7 @@ router.post<ShoutPosted>("/api/shouts", async (c) => {
   const u = confirmed(poster(c));
   await limit(u, `shout:${u.id}`, 10, 300, "slowDownPosting");
   await limit(u, `shout-h:${u.id}`, 60, 3600, "tooManyPostsThisHour");
-  const it = await requireItem(c.body.type, c.body.id);
+  const it = await requireShoutTarget(c.body.type, c.body.id);
   const parentId = c.body.parentId === undefined ? null : Number(c.body.parentId);
   if (parentId !== null && (!Number.isSafeInteger(parentId) || parentId <= 0)) return bad("chooseValidPostReply");
   return { id: await post(u, it, c.body.body, parentId) };

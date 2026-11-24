@@ -2,8 +2,9 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { t } from "../../i18n";
 import { api, date, imageUrl, qs, useApi, useAuth, userUrl } from "../../lib";
-import { Async, Empty, useAction } from "../../ui/base";
+import { Async, Empty, Section, useAction } from "../../ui/base";
 import { ImageWithFallback } from "../../ui/image";
+import { Shoutbox } from "../../ui/shoutbox";
 import { useConfirm } from "../../kit";
 import { Ico } from "../../icons";
 import { UploadImage } from "./shared";
@@ -295,6 +296,9 @@ function GalleryPhoto({
           </p>
         </aside>
       </div>
+      <Section title={t("music.wall")}>
+        <Shoutbox key={item.id} type="image" id={item.id} limit={10} word="comment" />
+      </Section>
       {createPortal(dialog, document.body)}
     </section>
   );

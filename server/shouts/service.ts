@@ -8,15 +8,23 @@ import { setting } from "../site/settings";
 import { blockedEither } from "../users/repo";
 import * as repo from "./repo";
 
-export function ownerOf(it: Item): number | null {
+/** Catalogue items plus pictures, which carry their own shoutbox. */
+export type ShoutTarget = Item | { type: "image"; row: { id: number } };
+
+export function ownerOf(it: ShoutTarget): number | null {
   if (it.type === "user") return it.row.id;
   if (it.type === "journal") return it.row.userId;
   return null;
 }
 
-export const wallOpen = (it: Item): boolean => it.type !== "user" || it.row.shoutsEnabled;
+export const wallOpen = (it: ShoutTarget): boolean => it.type !== "user" || it.row.shoutsEnabled;
 
-export async function post(author: Viewer, it: Item, text: unknown, parentId: number | null = null): Promise<number> {
+export async function post(
+  author: Viewer,
+  it: ShoutTarget,
+  text: unknown,
+  parentId: number | null = null
+): Promise<number> {
   const body = String(text || "").trim();
   const max = await setting("maxShoutLength");
   if (!body) bad("writeSomethingFirst");

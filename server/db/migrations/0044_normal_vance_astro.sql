@@ -1,0 +1,3 @@
+ALTER TABLE "shouts" ADD COLUMN "image_ref" integer GENERATED ALWAYS AS (CASE WHEN target_type = 'image' THEN target_id END) STORED;--> statement-breakpoint
+ALTER TABLE "shouts" ADD CONSTRAINT "shouts_image_ref_catalogue_images_id_fk" FOREIGN KEY ("image_ref") REFERENCES "public"."catalogue_images"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "shouts_image_ref" ON "shouts" USING btree ("image_ref") WHERE "shouts"."image_ref" IS NOT NULL;
