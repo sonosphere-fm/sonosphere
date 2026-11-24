@@ -1,174 +1,24 @@
 import { t } from "../i18n";
-import { CHART, PERIODS, periodLabel, TitleSetting, type PeriodInfo, type PeriodKey } from "./constants";
+import { parseReleaseFilter, type ChartRequest } from "../../shared/charts";
 
-export type ChartItem = {
-  index: number;
-  artistName: string;
-  albumName?: string;
-  coverUrl: string | null;
-  userPlaycount: number;
-  fallbackImageUrl?: string | null;
-  nsfw?: boolean;
-  censored?: boolean;
-  metadata?: { releaseDate: string | null; coverUrl: string | null };
-};
+export function settingsLines(req: ChartRequest): string[] {
+  const lines: string[] = [];
+  const artists = req.kind === "artists";
+  const { year, decade } = artists ? { year: null, decade: null } : parseReleaseFilter(req.releaseFilter);
+  const artist = artists ? "" : req.artist.trim();
 
-export type MakerOptions = {
-  artistChart: boolean;
-  width: number;
-  height: number;
-  timePeriod: PeriodKey;
-  titles: boolean;
-  plays: boolean;
-  skip: boolean;
-  rainbow: boolean;
-  sfw: boolean;
-  hideSingles: boolean;
-  releaseFilter: string;
-  filteredGenres: string[];
-  filteredArtist: string;
-};
-
-export type TimeSettings = PeriodInfo & { period: PeriodKey };
-
-/** Port of ChartSettings + ChartOptions from FMBot.Core/Charts. */
-export class ChartSettings {
-  albums: ChartItem[] = [];
-  artists: ChartItem[] = [];
-  artistChart = false;
-  imagesNeeded = 0;
-  timeSettings: TimeSettings = { period: "weekly", ...PERIODS.weekly };
-  timespanString = "";
-  timespanUrlString = "";
-  titleSetting = TitleSetting.Titles;
-  skipWithoutImage = false;
-  skipNsfw = false;
-  customOptionsEnabled = false;
-  rainbowSortingEnabled = false;
-  releaseYearFilter: number | null = null;
-  releaseDecadeFilter: number | null = null;
-  filterSingles = false;
-  containsNsfw = false;
-  censoredItems = 0;
-  fileDescription = "";
-  filteredArtist: string | null = null;
-  filteredGenres: string[] = [];
-  userPlaycount = 0;
-
-  private _height = 0;
-  private _width = 0;
-
-  get width() {
-    return this._width;
+  if (year) lines.push(t("music.chartLineYear", { year }));
+  if (decade) lines.push(t("music.chartLineDecade", { decade }));
+  if (req.hideSingles && !artists) lines.push(t("music.chartLineHidingSingles"));
+  if (req.skip || req.rainbow) {
+    lines.push(artists ? t("music.chartLineSkipArtistsNoImage") : t("music.chartLineSkipAlbumsNoImage"));
   }
-
-  set width(value: number) {
-    this._width = value;
-    this.imagesNeeded = this._width * this._height;
+  if (req.sfw) lines.push(artists ? t("music.chartLineSkipArtistsNsfw") : t("music.chartLineSkipAlbumsNsfw"));
+  if (req.titles === "none") {
+    lines.push(artists ? t("music.chartLineArtistTitlesOff") : t("music.chartLineAlbumTitlesOff"));
   }
-
-  get height() {
-    return this._height;
-  }
-
-  set height(value: number) {
-    this._height = value;
-    this.imagesNeeded = this._width * this._height;
-  }
-
-  get hasGenreFilter() {
-    return this.filteredGenres.length > 0;
-  }
-
-  /** Port of ChartRenderer.GetDimensions. */
-  applySize(option: string): boolean {
-    const match = /^([1-9][0-9]{0,2})x([1-9][0-9]{0,2})$/i.exec(option || "");
-    if (!match) {
-      if (this.width === 0) this.width = CHART.DEFAULT_CHART_SIZE;
-      if (this.height === 0) this.height = CHART.DEFAULT_CHART_SIZE;
-      return false;
-    }
-    const parse = (value: string) => {
-      const parsed = Number.parseInt(value, 10);
-      return Number.isFinite(parsed) ? parsed : CHART.DEFAULT_CHART_SIZE;
-    };
-    this.width = parse(match[1]);
-    this.height = parse(match[2]);
-    return true;
-  }
-
-  /** Port of ChartOptions.ParseReleaseFilter. */
-  static parseReleaseFilter(releaseFilter: string): { year: number | null; decade: number | null } {
-    const value = (releaseFilter || "").trim();
-    if (!value) return { year: null, decade: null };
-
-    if (/s$/i.test(value)) {
-      const decade = Number.parseInt(value.replace(/s+$/i, ""), 10);
-      if (Number.isFinite(decade) && decade >= 1900 && decade % 10 === 0) return { year: null, decade };
-    }
-
-    const year = Number.parseInt(value, 10);
-    if (Number.isFinite(year) && year >= 1900 && year <= 2100) return { year, decade: null };
-    return { year: null, decade: null };
-  }
-
-  /** Port of ChartOptions.FromEditOptions. */
-  static fromOptions(options: MakerOptions): ChartSettings {
-    const settings = new ChartSettings();
-    settings.artistChart = options.artistChart;
-    settings.filteredArtist = options.filteredArtist || null;
-    settings.filteredGenres = options.filteredGenres;
-    settings.applySize(`${options.width}x${options.height}`);
-
-    settings.titleSetting = !options.titles
-      ? TitleSetting.TitlesDisabled
-      : options.plays
-        ? TitleSetting.TitlesWithPlays
-        : TitleSetting.Titles;
-    settings.skipWithoutImage = options.skip || options.rainbow;
-    settings.skipNsfw = options.sfw;
-    settings.rainbowSortingEnabled = options.rainbow;
-    settings.filterSingles = options.hideSingles && !settings.artistChart;
-
-    const { year, decade } = ChartSettings.parseReleaseFilter(options.releaseFilter);
-    settings.releaseYearFilter = year;
-    settings.releaseDecadeFilter = decade;
-
-    const hasFilters = Boolean(year || decade || settings.filteredArtist);
-    const periodKey = hasFilters ? "all" : options.timePeriod;
-    const period = PERIODS[periodKey] || PERIODS.weekly;
-    settings.timeSettings = { period: periodKey, ...period };
-    settings.timespanString = periodLabel(settings.timeSettings.period);
-    settings.timespanUrlString = period.urlParameter;
-    settings.customOptionsEnabled =
-      settings.titleSetting !== TitleSetting.Titles ||
-      settings.skipWithoutImage ||
-      settings.skipNsfw ||
-      settings.rainbowSortingEnabled ||
-      settings.filterSingles ||
-      settings.filteredGenres.length > 0;
-
-    return settings;
-  }
-
-  /** Port of ChartOptions.SettingsLines. */
-  settingsLines(): string[] {
-    const lines: string[] = [];
-    const artists = this.artistChart;
-
-    if (this.releaseYearFilter) lines.push(t("music.chartLineYear", { year: this.releaseYearFilter }));
-    if (this.releaseDecadeFilter) lines.push(t("music.chartLineDecade", { decade: this.releaseDecadeFilter }));
-    if (this.filterSingles) lines.push(t("music.chartLineHidingSingles"));
-    if (this.skipWithoutImage) {
-      lines.push(artists ? t("music.chartLineSkipArtistsNoImage") : t("music.chartLineSkipAlbumsNoImage"));
-    }
-    if (this.skipNsfw) lines.push(artists ? t("music.chartLineSkipArtistsNsfw") : t("music.chartLineSkipAlbumsNsfw"));
-    if (this.titleSetting === TitleSetting.TitlesDisabled) {
-      lines.push(artists ? t("music.chartLineArtistTitlesOff") : t("music.chartLineAlbumTitlesOff"));
-    }
-    if (this.filteredArtist && !artists) lines.push(t("music.chartLineOnlyBy", { artist: this.filteredArtist }));
-    if (this.hasGenreFilter) lines.push(t("music.chartLineGenres", { genres: this.filteredGenres.join(", ") }));
-    if (this.rainbowSortingEnabled) lines.push(t("music.chartLineRainbow"));
-    return lines;
-  }
+  if (artist) lines.push(t("music.chartLineOnlyBy", { artist }));
+  if (req.genres.length) lines.push(t("music.chartLineGenres", { genres: req.genres.join(", ") }));
+  if (req.rainbow) lines.push(t("music.chartLineRainbow"));
+  return lines;
 }

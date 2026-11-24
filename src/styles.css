@@ -8088,28 +8088,120 @@ html[data-profile-shell="custom"] :focus-visible {
   outline-offset: 2px;
 }
 
-/* Chart maker: compact form on the left, flexible artwork preview on the right. */
 @layer components {
-  .chart-maker {
-    grid-template-columns: 360px minmax(0, 1fr);
+  .chart-maker label {
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
   }
-  .chart-maker > .side {
-    background: var(--panel);
+  .chart-maker label.check {
+    display: flex;
+    font-weight: 400;
+  }
+  .cm-bar {
+    display: grid;
+    grid-template-columns: minmax(160px, 1.4fr) repeat(2, minmax(120px, 1fr)) 84px 84px minmax(120px, 1fr) auto;
+    align-items: end;
+    gap: 12px;
     padding: 20px;
+    background: var(--panel);
+    margin-bottom: 32px;
   }
-  .chart-maker .section-head {
-    margin-bottom: 16px;
+  .cm-bar .astryx-selector,
+  .cm-bar .native-input,
+  .cm-bar .astryx-button {
+    box-sizing: border-box;
+    min-height: 40px;
+    height: 40px;
+  }
+  .cm-bar .astryx-selector {
+    width: 100%;
+  }
+  .cm-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 40px;
+    align-items: start;
+  }
+  .cm-stage {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+  .cm-canvas {
+    overflow: auto;
+  }
+  .cm-canvas canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  .cm-grid {
+    display: grid;
+    gap: 4px;
+    max-width: 720px;
+  }
+  .cm-grid span {
+    aspect-ratio: 1;
+    background: var(--panel);
+  }
+  .cm-meta {
+    display: grid;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .cm-meta ul {
+    padding-inline-start: 20px;
+    list-style: disc;
+  }
+  .cm-side {
+    display: grid;
+    gap: 24px;
+  }
+  .cm-side .section {
+    margin: 0;
+  }
+  .cm-side .section-head {
+    margin-bottom: 12px;
+  }
+  .chart-fold summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--ink);
+    font-size: 17px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+  }
+  .chart-fold summary::-webkit-details-marker {
+    display: none;
+  }
+  .chart-fold[open] summary {
+    margin-bottom: 12px;
+  }
+  .chart-fold[open] summary .ico {
+    rotate: 180deg;
   }
   @media (max-width: 1100px) {
-    .chart-maker {
-      grid-template-columns: 340px minmax(0, 1fr);
-      gap: 28px;
+    .cm-bar {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
   @media (max-width: 900px) {
-    .chart-maker {
+    .cm-body {
       grid-template-columns: minmax(0, 1fr);
-      gap: 8px;
+    }
+  }
+  @media (max-width: 560px) {
+    .cm-bar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .cm-bar .cm-user {
+      grid-column: 1 / -1;
     }
   }
 }

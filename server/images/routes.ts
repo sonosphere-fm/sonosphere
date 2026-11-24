@@ -112,13 +112,19 @@ async function load(id: string, small: boolean): Promise<Picture | null> {
   return stored(repo.fileOf(img.key, small ? "small" : "large"));
 }
 
+export async function picture(id: string, small: boolean): Promise<Picture | null> {
+  const key = small ? `${id}-s` : id;
+  const hit = recall(key);
+  if (hit) return hit;
+  const pic = await load(id, small);
+  return pic && remember(key, pic);
+}
+
 router.get("/api/image/:id", async (c) => {
   await limit(`image:${ipOf(c.req)}`, 1500, 60, "tooManyRequests");
   const id = c.params[0] ?? "";
   if (!/^[0-9a-f]{32}$/.test(id)) missing("imageNotFound");
-  const small = c.q.get("s") === "small";
-  const key = small ? `${id}-s` : id;
-  const pic = recall(key) ?? remember(key, (await load(id, small)) ?? missing("imageNotFound"));
+  const pic = (await picture(id, c.q.get("s") === "small")) ?? missing("imageNotFound");
   return new Response(pic.data, { headers: { "Content-Type": pic.mime, ...IMMUTABLE } });
 });
 
