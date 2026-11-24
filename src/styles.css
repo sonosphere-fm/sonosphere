@@ -200,7 +200,7 @@
   .narrow {
     max-width: 560px;
   }
-  .narrow-col {
+  .narrow-col:not(:has(> .state)) {
     max-width: 640px;
   }
   .page-title {
@@ -1325,17 +1325,39 @@
   .pixels-legend .pixel:last-of-type {
     margin-inline-end: 4px;
   }
-  .obsession {
-    display: flex;
-    gap: 12px;
+  .obsessions .obsession {
+    gap: 16px;
     align-items: flex-start;
+    padding: 16px 0;
   }
   .obsession > a {
-    width: 84px;
+    width: 72px;
     flex: none;
   }
-  .obsession p {
-    margin: 4px 0;
+  .obsession.current > a {
+    width: 128px;
+  }
+  .obsession .grow {
+    display: grid;
+    justify-items: start;
+    gap: 2px;
+    min-width: 0;
+  }
+  .obsession .grow > .badge {
+    margin-bottom: 6px;
+  }
+  .obsession .strong {
+    font-size: 17px;
+  }
+  .obsession.current .strong {
+    font-size: 22px;
+  }
+  .obsession .grow > p {
+    max-width: 62ch;
+    margin: 8px 0 4px;
+    color: var(--ink);
+    font-size: 17px;
+    white-space: normal;
   }
   .methods ul li {
     padding: 3px 0;

@@ -109,7 +109,7 @@ export function Obsessions({ name, mine }: { name: string; mine: boolean }) {
         d.items.length ? (
           <ul className="obsessions">
             {d.items.map((o, i) => (
-              <li key={o.id} className="obsession">
+              <li key={o.id} className={i === 0 ? "obsession current" : "obsession"}>
                 <Link to={trackUrl(o.artist, o.title)}>
                   <Art image={o.image} />
                 </Link>
