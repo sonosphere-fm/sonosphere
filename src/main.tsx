@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Theme } from "@astryxdesign/core/theme";
 import { LinkProvider } from "@astryxdesign/core/Link";
+import { Button as AButton } from "@astryxdesign/core/Button";
 import { sonosphereTheme } from "./themes/sonosphere/sonosphere.js";
 import { applyTheme, usePageTheme } from "./theme";
 import { ThemeToggle } from "./ui/theme-toggle";
@@ -187,13 +188,7 @@ function Header() {
           <NavLink to="/charts">{t("common.navCharts")}</NavLink>
           <NavLink to="/events">{t("common.navEvents")}</NavLink>
           {me && menuButton ? (
-            <Suspense
-              fallback={
-                <span className={menuToggle} aria-hidden="true">
-                  {menuButton.children}
-                </span>
-              }
-            >
+            <Suspense fallback={<AButton {...menuButton} type="button" />}>
               <AccountMenu viewer={me} button={menuButton} />
             </Suspense>
           ) : (
