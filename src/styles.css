@@ -7250,9 +7250,9 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 @layer components {
   .profile-theme-check {
-    display: inline-flex;
+    display: flex;
+    width: fit-content;
     align-items: center;
-    align-self: flex-start;
     gap: 10px;
     min-height: 40px;
     padding: 0;
