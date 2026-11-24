@@ -35,6 +35,7 @@ import { UserLabels } from "../../ui/user-labels";
 import { Username } from "../../ui/username";
 import { CosmeticAvatar } from "../../ui/cosmetics";
 import { ProfileCosmetics } from "../../ui/profile-cosmetics";
+import CosmeticsSettings from "../../ui/cosmetics-settings";
 import { ProfileShellTheme, profileAccentStyle } from "../../ui/profile-accent";
 import type { BlockResult } from "../../../shared/blocks";
 import type { UserEvents as UserEventList } from "../../../shared/events";
@@ -60,6 +61,7 @@ type Tab =
   | "neighbours"
   | "tags"
   | "shoutbox"
+  | "cosmetics"
   | "journal"
   | "journal-new"
   | "journal-post"
@@ -119,6 +121,9 @@ function ProfileActions({ u, mine, onChange }: { u: Profile; mine: boolean; onCh
       <>
         <Button kind="btn ghost" href="/settings">
           Edit profile
+        </Button>
+        <Button kind="btn ghost" href={`${userUrl(u.username)}/cosmetics`}>
+          Cosmetics
         </Button>
         <Button kind="btn ghost" href="/scrobble">
           Scrobble manually
@@ -270,6 +275,14 @@ export function UserPage({ tab }: { tab: Tab }) {
                 {tab === "neighbours" && !locked && <Neighbours name={u.username} />}
                 {tab === "tags" && <UserTags name={u.username} />}
                 {tab === "shoutbox" && <Shoutbox type="user" id={u.id} />}
+                {tab === "cosmetics" &&
+                  (mine ? (
+                    <CosmeticsSettings />
+                  ) : (
+                    <Empty>
+                      Only <Username user={u} /> can change their cosmetics.
+                    </Empty>
+                  ))}
               </Pane>
             </div>
           </div>

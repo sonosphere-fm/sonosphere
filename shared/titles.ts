@@ -56,6 +56,7 @@ export const USER_TABS: Record<string, string> = {
   neighbours: "Neighbours",
   tags: "Tags",
   shoutbox: "Shoutbox",
+  cosmetics: "Cosmetics",
 };
 
 const wikiSuffix = (wiki: boolean) => (wiki ? " - Wiki" : "");

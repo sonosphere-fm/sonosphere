@@ -513,6 +513,7 @@ function Pages() {
           "neighbours",
           "tags",
           "shoutbox",
+          "cosmetics",
         ] as const
       ).map((t) => (
         <Route key={t} path={`/user/:name/${t}`} element={U(t)} />
