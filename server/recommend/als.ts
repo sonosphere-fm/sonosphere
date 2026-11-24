@@ -1,6 +1,9 @@
 // Implicit-feedback ALS (Hu, Koren & Volinsky 2008): the dot product of a user and an artist vector reads as
 // "how much would they like it", including artists only connected through a chain of other listeners.
 
+// A dismissal is stored as a negative value: preference 0, held as firmly as DISMISSED_PLAYS plays per unit of
+// weight, so the user's vector is pushed away from that artist instead of merely not toward it.
+
 // compressed rows in both directions: row u holds items uIdx[uPtr[u]..uPtr[u+1]), plays in uVal
 type Matrix = {
   users: number;
@@ -18,7 +21,7 @@ type Model = { k: number; x: Float32Array; y: Float32Array };
 
 type Options = { k: number; iterations: number; lambda: number; alpha: number; seed: number };
 
-/** Users and items are 0-based indexes. */
+/** Users and items are 0-based indexes; a negative `plays` is a dismissal of that weight. */
 export function buildMatrix(users: number, items: number, u: Int32Array, i: Int32Array, plays: Float32Array): Matrix {
   const n = u.length;
   const index = (rows: number, row: Int32Array, col: Int32Array) => {
@@ -52,7 +55,9 @@ export function rng(seed: number) {
   };
 }
 
-const confidence = (plays: number, alpha: number) => 1 + alpha * Math.log1p(plays);
+const DISMISSED_PLAYS = 20;
+const confidence = (plays: number, alpha: number) =>
+  1 + alpha * (plays < 0 ? -plays * Math.log1p(DISMISSED_PLAYS) : Math.log1p(plays));
 
 /** Solves A·x = b in place for a symmetric positive-definite k×k A (Cholesky). Writes x into `out`. */
 function solve(a: Float64Array, b: Float64Array, k: number, out: Float32Array, at: number) {
@@ -109,10 +114,11 @@ function halfStep(
     for (let e = ptr[r]!; e < ptr[r + 1]!; e++) {
       const f = idx[e]! * k;
       const c = confidence(val[e]!, o.alpha);
+      const want = val[e]! > 0 ? c : 0;
       for (let p = 0; p < k; p++) {
         const v = fixed[f + p]!;
         const cv = (c - 1) * v;
-        b[p]! += c * v;
+        b[p]! += want * v;
         for (let q = 0; q <= p; q++) a[p * k + q]! += cv * fixed[f + q]!;
       }
     }
@@ -153,7 +159,11 @@ function dot(ma: Float32Array, a: number, mb: Float32Array, b: number, k: number
 export function evaluate(m: Matrix, model: Model, held: { user: number; item: number }[], n: number) {
   if (!held.length) return { model: 0, popular: 0, users: 0 };
   const pop = new Float64Array(m.items);
-  for (let i = 0; i < m.items; i++) pop[i] = m.iPtr[i + 1]! - m.iPtr[i]!;
+  for (let i = 0; i < m.items; i++) {
+    for (let e = m.iPtr[i]!; e < m.iPtr[i + 1]!; e++) {
+      if (m.iVal[e]! > 0) pop[i]!++;
+    }
+  }
   const scores = new Float64Array(m.items);
   const seen = new Uint8Array(m.items);
   const rank = (score: Float64Array, target: number) => {

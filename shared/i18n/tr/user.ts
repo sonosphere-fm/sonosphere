@@ -249,6 +249,8 @@ export default {
   typeAlbum: "Albüm",
   typeTrack: "Parça",
   similarJoin: " ve ",
+  notInterested: "İlgilenmiyorum",
+  undoNotInterested: "“İlgilenmiyorum”u geri al",
   byArtist: "Sanatçı: {artist}",
   byArtistSimilarTo: "Sanatçı: {artist}, benzeri: {similar}",
   similarTo: "Benzeri: {similar}",

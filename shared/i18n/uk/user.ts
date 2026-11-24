@@ -296,6 +296,8 @@ export default {
   typeAlbum: "Альбом",
   typeTrack: "Трек",
   similarJoin: " і ",
+  notInterested: "Не цікавить",
+  undoNotInterested: "Скасувати «Не цікавить»",
   byArtist: "Від {artist}",
   byArtistSimilarTo: "Від {artist}, схоже на {similar}",
   similarTo: "Схоже на {similar}",

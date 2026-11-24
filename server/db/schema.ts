@@ -376,6 +376,25 @@ export const lovedTracks = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.trackId], name: "loved_tracks_user_id_track_id_pk" })]
 );
 
+// "not interested" on a recommended artist, album or track; artist_id is the item's artist
+export const recDislikes = pgTable(
+  "rec_dislikes",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text().notNull(),
+    itemId: integer("item_id").notNull(),
+    artistId: integer("artist_id")
+      .notNull()
+      .references(() => artists.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.kind, table.itemId], name: "rec_dislikes_user_id_kind_item_id_pk" }),
+  ]
+);
+
 export const tags = pgTable("tags", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   name: text().notNull(),

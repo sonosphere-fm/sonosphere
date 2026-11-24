@@ -10,7 +10,7 @@ import { Username } from "./username";
 import { t, tx } from "../i18n";
 import type { ChartTag } from "../../shared/home";
 import type { Loved, TopAlbum, TopArtist, TopTrack } from "../../shared/listening";
-import type { Recommendation } from "../../shared/recommend";
+import type { DislikeKind, Recommendation } from "../../shared/recommend";
 import type { TagCount } from "../../shared/tags";
 import type { FollowResult, PublicUser } from "../../shared/users";
 
@@ -438,6 +438,31 @@ function recWhyText(kind: keyof typeof REC_KIND, artist: string, similar: ReactN
   return via === "neighbours" ? t("user.popularWithListeners") : t("user.pickedFromListening");
 }
 
+export function Dismiss({ kind, id }: { kind: DislikeKind; id: number }) {
+  const [on, setOn] = useState(false);
+  const toggle = async () => {
+    setOn(!on);
+    try {
+      await api("/recommended/dismiss", { body: { kind, id, dismissed: !on } });
+    } catch {
+      setOn(on);
+    }
+  };
+  const label = on ? t("user.undoNotInterested") : t("user.notInterested");
+  return (
+    <Button
+      kind={on ? "dismiss on" : "dismiss"}
+      type="button"
+      aria-label={label}
+      aria-pressed={on}
+      title={label}
+      onClick={toggle}
+    >
+      <Ico.ThumbsDown on={on} />
+    </Button>
+  );
+}
+
 export function RecCard({
   kind,
   item,
@@ -477,6 +502,7 @@ export function RecCard({
           </span>
         </Link>
         {kind === "track" && <PlayButton queue={[{ title: name, artist, album, image: item.image, duration }]} />}
+        <Dismiss kind={kind} id={item.id} />
         <span className={`${recBadge} ${color}`} title={recTitle(kind)}>
           <Badge />
         </span>

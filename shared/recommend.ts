@@ -14,3 +14,5 @@ export type Recommendation = {
   tags: string[];
   via: "similar" | "neighbours" | "taste";
 };
+
+export type DislikeKind = "artist" | "album" | "track";

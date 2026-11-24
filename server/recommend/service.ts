@@ -4,6 +4,7 @@ import { topTracks } from "../listening/repo";
 import { topTags } from "../tags/repo";
 import { getJson, setJson } from "../kv";
 import { now } from "../util";
+import { dislikeWeight } from "./dislikes";
 import { scoresFor } from "./model";
 import * as repo from "./repo";
 import { wantBare, wantCovers } from "../metadata/wanted";
@@ -88,36 +89,78 @@ function scaled(m: Map<number, number>): Map<number, number> {
 const popularity = (listeners: number) => 1 / (1 + 0.15 * Math.log1p(listeners));
 
 type Ranked = { recommendations: Recommendation[]; seeds: Seed[] };
+
+// "not interested": the item never comes back, and its artist is held back by the summed weight of everything
+// dismissed by them (an artist dismissed outright, or enough of their songs, is gone altogether)
+export type Feedback = {
+  stamp: string;
+  tracks: Set<number>;
+  albums: Set<number>;
+  gone: Set<number>;
+  weight: Map<number, number>;
+};
+
+export async function feedback(userId: number): Promise<Feedback> {
+  const rows = await repo.dislikes(userId);
+  const at = now();
+  const weight = new Map<number, number>();
+  const gone = new Set<number>();
+  const tracks = new Set<number>();
+  const albums = new Set<number>();
+  let latest = 0;
+  for (const r of rows) {
+    weight.set(r.artist, (weight.get(r.artist) ?? 0) + dislikeWeight(r.kind, r.at, at));
+    if (r.kind === "artist") gone.add(r.artist);
+    else if (r.kind === "album") albums.add(r.id);
+    else tracks.add(r.id);
+    latest = Math.max(latest, r.at);
+  }
+  for (const [id, w] of weight) {
+    if (w >= 1) gone.add(id);
+  }
+  return { stamp: `${rows.length}.${latest}`, tracks, albums, gone, weight };
+}
+
+const heldBack = (fb: Feedback, artistId: number) => Math.max(0, 1 - (fb.weight.get(artistId) ?? 0));
+
+// artists close to a dismissed one lose up to this share, scaled by how close and how firmly dismissed
+const SPREAD = 0.5;
 type Via = Recommendation["via"];
 
 // cheap enough to redo every few minutes, too slow to redo on every page view
 const RANKED_FOR = 10 * 60_000;
 
-async function rankArtists(userId: number, limit: number): Promise<Ranked> {
-  const key = `recs:${userId}:${limit}`;
+async function rankArtists(userId: number, limit: number, fb: Feedback): Promise<Ranked> {
+  const key = `recs:${userId}:${limit}:${fb.stamp}`;
   const cached = await getJson<Ranked>(key);
   if (cached) return cached;
-  const ranked = await rankFresh(userId, limit);
+  const ranked = await rankFresh(userId, limit, fb);
   await setJson(key, ranked, RANKED_FOR);
   return ranked;
 }
 
-async function rankFresh(userId: number, limit: number): Promise<Ranked> {
+async function rankFresh(userId: number, limit: number, fb: Feedback): Promise<Ranked> {
   const [mine, recent] = await Promise.all([
     repo.library(userId),
     repo.recentWeights(userId, now() - 180 * DAY, 45 * DAY, 5000),
   ]);
   if (!mine.length) return { recommendations: [], seeds: [] };
   const known = new Map(mine.map((r) => [r.id, r.c]));
-  const fresh = (id: number) => (known.get(id) ?? 0) < KNOWN;
+  const fresh = (id: number) => (known.get(id) ?? 0) < KNOWN && !fb.gone.has(id);
   const seeds = seedsFor(mine, recent);
   const seedById = new Map(seeds.map((s) => [s.id, s]));
-  const [similar, nbRows, nbCount, learned] = await Promise.all([
+  const [similar, nbRows, nbCount, learned, nearDisliked] = await Promise.all([
     repo.similarFor(seeds.map((s) => s.id)),
     repo.neighbourArtists(userId, 30, 100),
     repo.neighbourCount(userId),
     scoresFor(userId),
+    repo.similarFor([...fb.weight.keys()]),
   ]);
+  const hold = new Map<number, number>();
+  for (const m of nearDisliked) {
+    const firm = Math.min(1, fb.weight.get(m.from) ?? 0);
+    hold.set(m.id, (hold.get(m.id) ?? 1) * (1 - SPREAD * firm * m.score));
+  }
 
   // artists like yours
   const item = new Map<number, number>();
@@ -175,7 +218,9 @@ async function rankFresh(userId: number, limit: number): Promise<Ranked> {
   const pool = [...blend.entries()].sort((a, b) => b[1].score - a[1].score || a[0] - b[0]).slice(0, POOL);
   const cards = new Map((await repo.artistCards(pool.map(([id]) => id))).map((c) => [c.id, c]));
   const rel = new Map(
-    pool.filter(([id]) => cards.has(id)).map(([id, e]) => [id, e.score * popularity(cards.get(id)!.listeners)])
+    pool
+      .filter(([id]) => cards.has(id))
+      .map(([id, e]) => [id, e.score * popularity(cards.get(id)!.listeners) * heldBack(fb, id) * (hold.get(id) ?? 1)])
   );
   const relScaled = scaled(rel);
 
@@ -219,7 +264,7 @@ async function rankFresh(userId: number, limit: number): Promise<Ranked> {
 }
 
 export async function recommendedArtists(userId: number, limit = 24): Promise<Recommendation[]> {
-  return wantBare("artist", (await rankArtists(userId, limit)).recommendations, (r) => r.id);
+  return wantBare("artist", (await rankArtists(userId, limit, await feedback(userId))).recommendations, (r) => r.id);
 }
 
 /**
@@ -230,14 +275,17 @@ export async function recommendations(
   userId: number,
   viewerId: number,
   artistLimit = 30,
-  trackLimit = 30
+  trackLimit = 30,
+  fb?: Feedback
 ): Promise<{ artists: Recommendation[]; tracks: TopTrack[] }> {
-  const { recommendations: artists, seeds } = await rankArtists(userId, artistLimit);
+  fb ??= await feedback(userId);
+  const { recommendations: artists, seeds } = await rankArtists(userId, artistLimit, fb);
   if (!artists.length && !seeds.length) return { artists: [], tracks: [] };
   const score = new Map<number, number>();
   const artistOf = new Map<number, number>();
   const add = (id: number, artist: number, s: number) => {
-    score.set(id, (score.get(id) ?? 0) + s);
+    if (fb.tracks.has(id) || fb.gone.has(artist)) return;
+    score.set(id, (score.get(id) ?? 0) + s * heldBack(fb, artist));
     artistOf.set(id, artist);
   };
   const rankWeight = [1, 0.75, 0.55];

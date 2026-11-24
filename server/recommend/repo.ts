@@ -7,6 +7,7 @@ import {
   artists,
   lovedTracks,
   meta,
+  recDislikes,
   scrobbles,
   similarArtists,
   taggings,
@@ -301,6 +302,22 @@ export async function library(userId: number) {
     .innerJoin(artists, eq(artists.id, userArtists.artistId))
     .where(eq(userArtists.userId, userId))
     .orderBy(desc(userArtists.plays));
+}
+
+export async function dislikes(userId: number) {
+  return db
+    .select({ kind: recDislikes.kind, id: recDislikes.itemId, artist: recDislikes.artistId, at: recDislikes.createdAt })
+    .from(recDislikes)
+    .where(eq(recDislikes.userId, userId));
+}
+
+export async function setDislike(userId: number, kind: string, itemId: number, artistId: number, on: boolean) {
+  const key = and(eq(recDislikes.userId, userId), eq(recDislikes.kind, kind), eq(recDislikes.itemId, itemId));
+  if (!on) {
+    await db.delete(recDislikes).where(key);
+    return;
+  }
+  await db.insert(recDislikes).values({ userId, kind, itemId, artistId, createdAt: now() }).onConflictDoNothing();
 }
 
 export async function similarFor(artistIds: number[]) {

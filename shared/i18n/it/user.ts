@@ -249,6 +249,8 @@ export default {
   typeAlbum: "Album",
   typeTrack: "Brano",
   similarJoin: " e ",
+  notInterested: "Non mi interessa",
+  undoNotInterested: "Annulla «Non mi interessa»",
   byArtist: "Di {artist}",
   byArtistSimilarTo: "Di {artist}, simile a {similar}",
   similarTo: "Simile a {similar}",

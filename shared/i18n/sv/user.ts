@@ -252,6 +252,8 @@ export default {
   typeAlbum: "Album",
   typeTrack: "Låt",
   similarJoin: " och ",
+  notInterested: "Inte intresserad",
+  undoNotInterested: "Ångra ”Inte intresserad”",
   byArtist: "Av {artist}",
   byArtistSimilarTo: "Av {artist}, liknar {similar}",
   similarTo: "Liknar {similar}",

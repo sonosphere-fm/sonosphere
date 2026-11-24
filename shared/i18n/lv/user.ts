@@ -273,6 +273,8 @@ export default {
   typeAlbum: "Albums",
   typeTrack: "Dziesma",
   similarJoin: " un ",
+  notInterested: "Neinteresē",
+  undoNotInterested: "Atsaukt “Neinteresē”",
   byArtist: "Izpildītājs: {artist}",
   byArtistSimilarTo: "Izpildītājs: {artist}, līdzīgs {similar}",
   similarTo: "Līdzīgs {similar}",

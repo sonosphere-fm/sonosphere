@@ -301,6 +301,8 @@ export default {
   typeAlbum: "Альбом",
   typeTrack: "Трек",
   similarJoin: " и ",
+  notInterested: "Не интересно",
+  undoNotInterested: "Отменить «Не интересно»",
   byArtist: "Исполнитель: {artist}",
   byArtistSimilarTo: "Исполнитель: {artist}, похоже на {similar}",
   similarTo: "Похоже на {similar}",

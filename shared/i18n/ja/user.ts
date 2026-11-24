@@ -239,6 +239,8 @@ export default {
   typeAlbum: "アルバム",
   typeTrack: "トラック",
   similarJoin: "、",
+  notInterested: "興味なし",
+  undoNotInterested: "「興味なし」を取り消す",
   byArtist: "{artist}の作品",
   byArtistSimilarTo: "{artist}の作品、{similar}に似ています",
   similarTo: "{similar}に似ています",

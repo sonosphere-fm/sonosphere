@@ -3,7 +3,7 @@ import { t } from "../i18n";
 import { TITLES, useApi, useTitle } from "../lib";
 import { Async, Empty, Section } from "../ui/base";
 import { EventList } from "../ui/events";
-import { RecCard, TrackList } from "../ui/lists";
+import { Dismiss, RecCard, TrackList } from "../ui/lists";
 import { PlayButton, StationButton } from "../player";
 import { HomeTabs, ImportPrompt, type HomeTab } from "./music/shared";
 import type { Recommended as RecommendedData } from "../../shared/home";
@@ -33,7 +33,7 @@ function RecommendedBody({ d, at }: { d: RecommendedData; at: HomeTab }) {
     );
     return (
       <Section title={t("music.tracksToTry")} aside={aside}>
-        <TrackList items={d.tracks} count="listeners" />
+        <TrackList items={d.tracks} count="listeners" actions={(r) => r.id && <Dismiss kind="track" id={r.id} />} />
       </Section>
     );
   }

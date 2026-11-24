@@ -253,6 +253,8 @@ export default {
   typeAlbum: "אלבום",
   typeTrack: "שיר",
   similarJoin: " ו־",
+  notInterested: "לא מעניין אותי",
+  undoNotInterested: "ביטול „לא מעניין אותי”",
   byArtist: "מאת {artist}",
   byArtistSimilarTo: "מאת {artist}, בדומה ל־{similar}",
   similarTo: "בדומה ל־{similar}",

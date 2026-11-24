@@ -273,6 +273,8 @@ export default {
   typeAlbum: "Album",
   typeTrack: "Piesă",
   similarJoin: " și ",
+  notInterested: "Nu mă interesează",
+  undoNotInterested: "Anulează „Nu mă interesează”",
   byArtist: "De {artist}",
   byArtistSimilarTo: "De {artist}, similar cu {similar}",
   similarTo: "Similar cu {similar}",

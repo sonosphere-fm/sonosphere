@@ -234,6 +234,8 @@ export default {
   typeAlbum: "專輯",
   typeTrack: "曲目",
   similarJoin: "、",
+  notInterested: "不感興趣",
+  undoNotInterested: "取消「不感興趣」",
   byArtist: "{artist} 的作品",
   byArtistSimilarTo: "{artist} 的作品，與 {similar} 相似",
   similarTo: "與 {similar} 相似",
