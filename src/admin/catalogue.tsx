@@ -1,4 +1,5 @@
-import { Suspense, useEffect, useState, type FormEvent } from "react";
+import { DotsSixVertical } from "@phosphor-icons/react";
+import { Suspense, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button, Input, Modal, SearchField, Select } from "../kit";
 import { ago, albumUrl, api, artistUrl, num, qs, tagUrl, trackUrl, useApi, useTitle } from "../lib";
@@ -549,24 +550,35 @@ export function TracklistDialog({ item, close, done }: TracklistProps) {
   );
 }
 
-const TRACK_ROW = "flex items-center gap-2 py-1 border-b border-site-line";
+const TRACK_ROW = "flex items-center gap-2 min-h-11 pe-1 border-b border-site-line bg-site-bg";
+const GRIP =
+  "grid place-items-center px-0.5 py-1.5 bg-transparent border-0 text-site-muted cursor-grab active:cursor-grabbing touch-none";
 
 function TracklistEditor({ item, close, done }: TracklistProps) {
   const q = useApi<Tracklist>(`/admin/catalogue/tracklist${qs({ id: item.id })}`);
   return <Async q={q}>{(d) => <TracklistForm item={item} initial={d.tracks} close={close} done={done} />}</Async>;
 }
 
+function moved<T>(list: T[], from: number, to: number) {
+  const next = [...list];
+  next.splice(to, 0, ...next.splice(from, 1));
+  return next;
+}
+
 function TracklistForm({ item, initial, close, done }: TracklistProps & { initial: TracklistTrack[] }) {
   const [list, setList] = useState(initial);
+  const [grabbed, setGrabbed] = useState<number | null>(null);
   const [text, setText] = useState(item.artist ?? "");
   const [term, setTerm] = useState(item.artist ?? "");
   const act = useAction2();
   const ids = list.map((track) => track.id);
   const changed = ids.join() !== initial.map((track) => track.id).join();
-  const move = (i: number, by: number) => {
-    const next = [...list];
-    [next[i], next[i + by]] = [next[i + by]!, next[i]!];
-    setList(next);
+  const nudge = (index: number) => (e: KeyboardEvent) => {
+    const to = e.key === "ArrowUp" ? index - 1 : e.key === "ArrowDown" ? index + 1 : -1;
+    if (to < 0 || to >= list.length) return;
+    e.preventDefault();
+    setList(moved(list, index, to));
+    requestAnimationFrame(() => document.getElementById(`track-grip-${to}`)?.focus());
   };
   const add = (it: CatalogueItem) => setList([...list, { id: it.id, name: it.name, artist: it.artist ?? "" }]);
   // new tracks get a temporary negative id until saving creates them
@@ -595,11 +607,35 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
       {list.length === 0 ? (
         <p className="muted small">{t("admin.noTracks")}</p>
       ) : (
-        <ol className="list-none w-full m-0 p-0 max-h-[40vh] overflow-auto">
+        <ol className="list-none w-full m-0 p-0 max-h-[40vh] overflow-auto border-t border-site-line">
           {list.map((track, i) => (
-            <li key={track.id} className={TRACK_ROW}>
-              <span className="muted small w-6 text-end">{i + 1}</span>
-              <span className="grow">
+            <li
+              key={track.id}
+              draggable={grabbed !== null}
+              onDragStart={(e) => e.dataTransfer.setData("text/plain", String(i))}
+              onDragOver={(e) => {
+                if (grabbed === null) return;
+                e.preventDefault();
+                if (grabbed === i) return;
+                setList(moved(list, grabbed, i));
+                setGrabbed(i);
+              }}
+              onDragEnd={() => setGrabbed(null)}
+              className={`${TRACK_ROW}${grabbed === i ? " opacity-50" : ""}`}
+            >
+              <button
+                id={`track-grip-${i}`}
+                type="button"
+                className={GRIP}
+                aria-label={t("admin.reorderTrack", { name: track.name })}
+                onPointerDown={() => setGrabbed(i)}
+                onPointerUp={() => setGrabbed(null)}
+                onKeyDown={nudge(i)}
+              >
+                <DotsSixVertical aria-hidden weight="bold" size={18} />
+              </button>
+              <span className="muted small w-6 text-end tabular-nums">{i + 1}</span>
+              <span className="grow min-w-0 truncate">
                 {track.name}
                 {track.artist !== item.artist && (
                   <span className="muted"> {t("admin.byName", { name: track.artist })}</span>
@@ -607,39 +643,17 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
                 {track.id < 0 && <span className="muted small"> {t("admin.new")}</span>}
               </span>
               <Button
-                kind="link small"
+                kind="btn ghost small"
                 type="button"
-                aria-label={t("admin.moveUp", { name: track.name })}
-                disabled={i === 0}
-                onClick={() => move(i, -1)}
+                aria-label={t("admin.removeTrack", { name: track.name })}
+                onClick={() => setList(list.filter((x) => x.id !== track.id))}
               >
-                <Ico.SortUp />
-              </Button>
-              <Button
-                kind="link small"
-                type="button"
-                aria-label={t("admin.moveDown", { name: track.name })}
-                disabled={i === list.length - 1}
-                onClick={() => move(i, 1)}
-              >
-                <Ico.SortDown />
-              </Button>
-              <Button kind="link small" type="button" onClick={() => setList(list.filter((x) => x.id !== track.id))}>
-                {t("admin.remove")}
+                <Ico.X />
               </Button>
             </li>
           ))}
         </ol>
       )}
-      {act.note}
-      <div className="row">
-        <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>
-          {t("admin.save")}
-        </Button>
-        <Button kind="btn ghost" type="button" onClick={close}>
-          {t("admin.cancel")}
-        </Button>
-      </div>
       <form className={WIDE_SEARCH} onSubmit={search}>
         <SearchField value={text} onChange={setText} placeholder={t("admin.findTrackToAdd")} />
       </form>
@@ -658,6 +672,15 @@ function TracklistForm({ item, initial, close, done }: TracklistProps & { initia
           onPick={add}
         />
       </Suspense>
+      {act.note}
+      <div className="row">
+        <Button kind="btn" type="button" loading={act.busy} disabled={!changed} onClick={save}>
+          {t("admin.save")}
+        </Button>
+        <Button kind="btn ghost" type="button" onClick={close}>
+          {t("admin.cancel")}
+        </Button>
+      </div>
     </div>
   );
 }
