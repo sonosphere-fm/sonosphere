@@ -136,9 +136,8 @@ export default {
   somethingWrong: "काहीतरी चुकले.",
   tryAgain: "पुन्हा प्रयत्न करा",
   nothingHere: "येथे काहीही नाही.",
-  pageNotFound: "पृष्ठ सापडले नाही.",
-  notFoundHint: "{charts} पहा किंवा काहीतरी शोधा.",
-  notFoundCharts: "चार्ट",
+  pageNotFound: "पृष्ठ सापडले नाही",
+  notFoundBody: "लिंक तुटलेली असू शकते, किंवा पेज हलवले गेले असू शकते.",
 
   dismissAnnouncement: "घोषणा बंद करा",
   actingAs: "{by} यांच्या खात्यातून {user} म्हणून कार्य करत आहात.",

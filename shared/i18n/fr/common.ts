@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Un problème est survenu.",
   tryAgain: "Réessayer",
   nothingHere: "Rien ici.",
-  pageNotFound: "Page introuvable.",
-  notFoundHint: "Essaie les {charts} ou lance une recherche.",
-  notFoundCharts: "classements",
+  pageNotFound: "Page introuvable",
+  notFoundBody: "Le lien est peut-être cassé, ou la page a été déplacée.",
 
   dismissAnnouncement: "Masquer l'annonce",
   actingAs: "Tu agis en tant que {user} depuis le compte de {by}.",

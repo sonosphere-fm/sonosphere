@@ -136,9 +136,8 @@ export default {
   somethingWrong: "問題が発生しました。",
   tryAgain: "再試行",
   nothingHere: "何もありません。",
-  pageNotFound: "ページが見つかりません。",
-  notFoundHint: "{charts}を見るか、何か検索してみてください。",
-  notFoundCharts: "チャート",
+  pageNotFound: "ページが見つかりません",
+  notFoundBody: "リンクが壊れているか、ページが移動した可能性があります。",
 
   dismissAnnouncement: "お知らせを閉じる",
   actingAs: "{by}のアカウントから{user}として操作しています。",

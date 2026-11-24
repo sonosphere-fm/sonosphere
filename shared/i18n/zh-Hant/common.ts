@@ -136,9 +136,8 @@ export default {
   somethingWrong: "發生錯誤。",
   tryAgain: "重試",
   nothingHere: "這裡什麼都沒有。",
-  pageNotFound: "找不到頁面。",
-  notFoundHint: "去看看{charts}，或是搜尋點什麼。",
-  notFoundCharts: "排行榜",
+  pageNotFound: "找不到頁面",
+  notFoundBody: "連結可能已失效，或是頁面已被移動。",
 
   dismissAnnouncement: "關閉公告",
   actingAs: "正在以 {user} 的身分操作，來自 {by} 的帳號。",

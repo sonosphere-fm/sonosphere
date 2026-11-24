@@ -136,9 +136,8 @@ export default {
   somethingWrong: "出错了。",
   tryAgain: "重试",
   nothingHere: "这里什么都没有。",
-  pageNotFound: "页面未找到。",
-  notFoundHint: "去看看{charts}，或者搜索点什么。",
-  notFoundCharts: "排行榜",
+  pageNotFound: "页面未找到",
+  notFoundBody: "链接可能已失效，或者页面已被移动。",
 
   dismissAnnouncement: "关闭公告",
   actingAs: "正在以 {user} 的身份操作，来自 {by} 的账号。",

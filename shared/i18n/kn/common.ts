@@ -136,9 +136,8 @@ export default {
   somethingWrong: "ಏನೋ ತಪ್ಪಾಗಿದೆ.",
   tryAgain: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
   nothingHere: "ಇಲ್ಲಿ ಏನೂ ಇಲ್ಲ.",
-  pageNotFound: "ಪುಟ ಸಿಗಲಿಲ್ಲ.",
-  notFoundHint: "{charts} ನೋಡಿ ಅಥವಾ ಏನನ್ನಾದರೂ ಹುಡುಕಿ.",
-  notFoundCharts: "ಚಾರ್ಟ್‌ಗಳನ್ನು",
+  pageNotFound: "ಪುಟ ಸಿಗಲಿಲ್ಲ",
+  notFoundBody: "ಲಿಂಕ್ ಮುರಿದಿರಬಹುದು, ಅಥವಾ ಪುಟವನ್ನು ಸ್ಥಳಾಂತರಿಸಿರಬಹುದು.",
 
   dismissAnnouncement: "ಪ್ರಕಟಣೆ ಮುಚ್ಚಿ",
   actingAs: "{by} ಅವರ ಖಾತೆಯಿಂದ {user} ಆಗಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿದ್ದೀರಿ.",

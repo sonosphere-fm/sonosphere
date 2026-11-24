@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Något gick fel.",
   tryAgain: "Försök igen",
   nothingHere: "Inget här.",
-  pageNotFound: "Sidan hittades inte.",
-  notFoundHint: "Testa {charts} eller sök efter något.",
-  notFoundCharts: "topplistorna",
+  pageNotFound: "Sidan hittades inte",
+  notFoundBody: "Länken kan vara trasig, eller så har sidan flyttats.",
 
   dismissAnnouncement: "Stäng meddelandet",
   actingAs: "Agerar som {user} från {by}s konto.",

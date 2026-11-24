@@ -8524,3 +8524,46 @@ html[data-profile-shell="custom"] :focus-visible {
     }
   }
 }
+
+@layer components {
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: 520px;
+    padding-top: 72px;
+    padding-bottom: 96px;
+    text-align: center;
+  }
+  .not-found-code {
+    font-size: 120px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    color: var(--link);
+  }
+  .not-found h1 {
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .not-found form {
+    width: 100%;
+    margin-top: 10px;
+  }
+  .not-found-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  @media (max-width: 560px) {
+    .not-found {
+      padding-top: 40px;
+    }
+    .not-found-code {
+      font-size: 88px;
+    }
+  }
+}

@@ -136,9 +136,8 @@ export default {
   somethingWrong: "ஏதோ தவறு நடந்தது.",
   tryAgain: "மீண்டும் முயலுங்கள்",
   nothingHere: "இங்கு எதுவும் இல்லை.",
-  pageNotFound: "பக்கம் கிடைக்கவில்லை.",
-  notFoundHint: "{charts} பாருங்கள் அல்லது எதையாவது தேடுங்கள்.",
-  notFoundCharts: "தரவரிசைகளைப்",
+  pageNotFound: "பக்கம் கிடைக்கவில்லை",
+  notFoundBody: "இணைப்பு உடைந்திருக்கலாம், அல்லது பக்கம் நகர்த்தப்பட்டிருக்கலாம்.",
 
   dismissAnnouncement: "அறிவிப்பை மூடு",
   actingAs: "{by} அவர்களின் கணக்கிலிருந்து {user} ஆகச் செயல்படுகிறீர்கள்.",

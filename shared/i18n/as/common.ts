@@ -136,9 +136,8 @@ export default {
   somethingWrong: "কিবা ভুল হ'ল।",
   tryAgain: "পুনৰ চেষ্টা কৰক",
   nothingHere: "ইয়াত একো নাই।",
-  pageNotFound: "পৃষ্ঠা পোৱা নগ'ল।",
-  notFoundHint: "{charts} চাওক বা কিবা সন্ধান কৰক।",
-  notFoundCharts: "চাৰ্ট",
+  pageNotFound: "পৃষ্ঠা পোৱা নগ'ল",
+  notFoundBody: "লিংকটো ভঙা হ'ব পাৰে, বা পৃষ্ঠাটো আঁতৰোৱা হ'ব পাৰে।",
 
   dismissAnnouncement: "ঘোষণা আঁতৰাওক",
   actingAs: "{by}ৰ একাউণ্টৰ পৰা {user} হিচাপে কাম কৰি আছে।",

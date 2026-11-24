@@ -136,9 +136,8 @@ export default {
   somethingWrong: "کچھ غلط ہو گیا۔",
   tryAgain: "دوبارہ کوشش کریں",
   nothingHere: "یہاں کچھ نہیں ہے۔",
-  pageNotFound: "صفحہ نہیں ملا۔",
-  notFoundHint: "{charts} دیکھیں یا کچھ تلاش کریں۔",
-  notFoundCharts: "چارٹس",
+  pageNotFound: "صفحہ نہیں ملا",
+  notFoundBody: "ہو سکتا ہے لنک خراب ہو، یا صفحہ منتقل ہو گیا ہو۔",
 
   dismissAnnouncement: "اعلان بند کریں",
   actingAs: "{by} کے اکاؤنٹ سے {user} کے طور پر کام کر رہے ہیں۔",

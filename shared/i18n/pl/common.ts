@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Coś poszło nie tak.",
   tryAgain: "Spróbuj ponownie",
   nothingHere: "Nic tu nie ma.",
-  pageNotFound: "Nie znaleziono strony.",
-  notFoundHint: "Zajrzyj na {charts} albo coś wyszukaj.",
-  notFoundCharts: "listy przebojów",
+  pageNotFound: "Nie znaleziono strony",
+  notFoundBody: "Link może być uszkodzony albo strona została przeniesiona.",
 
   dismissAnnouncement: "Zamknij ogłoszenie",
   actingAs: "Działasz jako {user} z konta {by}.",

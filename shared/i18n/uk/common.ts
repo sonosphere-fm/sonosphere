@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Щось пішло не так.",
   tryAgain: "Спробувати ще раз",
   nothingHere: "Тут нічого немає.",
-  pageNotFound: "Сторінку не знайдено.",
-  notFoundHint: "Переглянь {charts} або пошукай щось.",
-  notFoundCharts: "чарти",
+  pageNotFound: "Сторінку не знайдено",
+  notFoundBody: "Можливо, посилання зламане або сторінку перенесено.",
 
   dismissAnnouncement: "Закрити оголошення",
   actingAs: "Ти дієш як {user} з облікового запису {by}.",

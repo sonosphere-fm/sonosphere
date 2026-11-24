@@ -136,9 +136,8 @@ export default {
   somethingWrong: "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ।",
   tryAgain: "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
   nothingHere: "ਇੱਥੇ ਕੁਝ ਨਹੀਂ ਹੈ।",
-  pageNotFound: "ਪੰਨਾ ਨਹੀਂ ਮਿਲਿਆ।",
-  notFoundHint: "{charts} ਦੇਖੋ ਜਾਂ ਕੁਝ ਖੋਜੋ।",
-  notFoundCharts: "ਚਾਰਟ",
+  pageNotFound: "ਪੰਨਾ ਨਹੀਂ ਮਿਲਿਆ",
+  notFoundBody: "ਲਿੰਕ ਟੁੱਟਿਆ ਹੋ ਸਕਦਾ ਹੈ, ਜਾਂ ਪੰਨਾ ਹਟਾਇਆ ਗਿਆ ਹੋ ਸਕਦਾ ਹੈ।",
 
   dismissAnnouncement: "ਘੋਸ਼ਣਾ ਹਟਾਓ",
   actingAs: "{by} ਦੇ ਖਾਤੇ ਤੋਂ {user} ਵਜੋਂ ਕੰਮ ਕਰ ਰਹੇ ਹੋ।",

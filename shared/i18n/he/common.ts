@@ -136,9 +136,8 @@ export default {
   somethingWrong: "משהו השתבש.",
   tryAgain: "לנסות שוב",
   nothingHere: "אין כאן כלום.",
-  pageNotFound: "הדף לא נמצא.",
-  notFoundHint: "אפשר לנסות את ה{charts} או לחפש משהו.",
-  notFoundCharts: "מצעדים",
+  pageNotFound: "הדף לא נמצא",
+  notFoundBody: "ייתכן שהקישור שבור, או שהדף הועבר.",
 
   dismissAnnouncement: "סגירת ההודעה",
   actingAs: "פועלים בתור {user} מהחשבון של {by}.",

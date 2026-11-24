@@ -136,9 +136,8 @@ export default {
   somethingWrong: "문제가 발생했어요.",
   tryAgain: "다시 시도",
   nothingHere: "아무것도 없어요.",
-  pageNotFound: "페이지를 찾을 수 없어요.",
-  notFoundHint: "{charts}를 둘러보거나 검색해 보세요.",
-  notFoundCharts: "차트",
+  pageNotFound: "페이지를 찾을 수 없어요",
+  notFoundBody: "링크가 잘못되었거나 페이지가 이동되었을 수 있어요.",
 
   dismissAnnouncement: "공지 닫기",
   actingAs: "{by} 님의 계정에서 {user} 님으로 활동 중이에요.",

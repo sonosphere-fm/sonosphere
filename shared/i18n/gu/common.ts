@@ -136,9 +136,8 @@ export default {
   somethingWrong: "કંઈક ખોટું થયું.",
   tryAgain: "ફરી પ્રયાસ કરો",
   nothingHere: "અહીં કંઈ નથી.",
-  pageNotFound: "પેજ મળ્યું નથી.",
-  notFoundHint: "{charts} જુઓ અથવા કંઈક શોધો.",
-  notFoundCharts: "ચાર્ટ",
+  pageNotFound: "પેજ મળ્યું નથી",
+  notFoundBody: "લિંક તૂટેલી હોઈ શકે, અથવા પેજ ખસેડાયું હોઈ શકે.",
 
   dismissAnnouncement: "જાહેરાત બંધ કરો",
   actingAs: "{by} ના એકાઉન્ટમાંથી {user} તરીકે કાર્ય કરી રહ્યા છો.",
