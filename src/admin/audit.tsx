@@ -196,9 +196,10 @@ export function Audit() {
   const who = sp.get("user") || "";
   const term = sp.get("q") || "";
   const page = sp.get("page") || "";
+  const automatic = sp.get("automatic") || "";
   const [user, setUser] = useState(who);
   const [text, setText] = useState(term);
-  const q = useApi<AuditPage>(`/admin/audit${qs({ actor, action, user: who, q: term, page })}`);
+  const q = useApi<AuditPage>(`/admin/audit${qs({ actor, action, user: who, q: term, automatic, page })}`);
   const admin = useRole() === "admin";
   const [modal, ask] = useConfirm();
   const flash = useFlash();
@@ -226,7 +227,7 @@ export function Audit() {
   const clear = () => {
     setUser("");
     setText("");
-    set({ actor: "", action: "", user: "", q: "" });
+    set({ actor: "", action: "", user: "", q: "", automatic: "" });
   };
   return (
     <Async q={q}>
@@ -264,7 +265,17 @@ export function Audit() {
                 </Button>
               )}
             </form>
-            <p className="muted small">{plural(d.total, "entry").replace("entrys", "entries")}</p>
+            <p className="muted small">
+              {plural(d.total, "entry").replace("entrys", "entries")}
+              {!actor && (
+                <>
+                  {" · "}
+                  <button type="button" className={LINKISH} onClick={() => set({ automatic: automatic ? "" : "1" })}>
+                    {automatic ? "Hide automatic entries" : "Show automatic entries"}
+                  </button>
+                </>
+              )}
+            </p>
             {flash.note}
             {d.items.length === 0 ? (
               <Empty>No entries match.</Empty>

@@ -15,6 +15,7 @@ router.get<AuditList>("/api/admin/audit", async (c) => {
     action: text("action"),
     subject: text("user"),
     term: text("q"),
+    automatic: c.q.get("automatic") === "1",
   };
   return {
     items: await repo.entries(filter, pg),

@@ -11,6 +11,8 @@ export type SiteInfo = {
   announcement: { id: number; text: string; tone: "info" | "warning" } | null;
 };
 
+export const AUTOMATIC_ACTOR = "Automatic";
+
 export type AuditRow = {
   id: number;
   actor: string;
