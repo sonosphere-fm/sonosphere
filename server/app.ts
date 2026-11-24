@@ -1,3 +1,4 @@
+import { docMarkdown } from "./developer-docs";
 import { readdir } from "node:fs/promises";
 import { viewerOf } from "./auth/session";
 import { me } from "./auth/service";
@@ -42,6 +43,10 @@ export async function appRoutes() {
   // The authenticated shell embeds the viewer and must stay private.
   const shell = async (req: Request) => {
     const url = new URL(req.url);
+    const doc = url.pathname.replace(/\/+$/, "").toLowerCase();
+    if ((doc === "/developers" || doc === "/help") && req.headers.get("accept")?.includes("text/markdown")) {
+      return docMarkdown(req, doc);
+    }
     const match = /^\/user\/([^/]+)/.exec(url.pathname);
     if (match) {
       let name = "";
