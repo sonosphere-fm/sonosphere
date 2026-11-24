@@ -47,6 +47,7 @@ const clock = (at: number) => new Date(at * 1000).toLocaleTimeString(locale(), {
 
 const TABS: [string, MessageKey][] = [
   ["", "settings.tabProfile"],
+  ["/appearance", "settings.appearance"],
   ["/privacy", "settings.tabPrivacy"],
   ["/notifications", "settings.tabNotifications"],
   ["/account", "settings.tabAccount"],
@@ -70,6 +71,7 @@ export function Settings() {
       <div className="narrow-col">
         <Pane>
           {tab === "profile" && <ProfileSettings />}
+          {tab === "appearance" && <AppearanceSettings />}
           {tab === "privacy" && <PrivacySettings />}
           {tab === "notifications" && <NotificationSettings />}
           {tab === "account" && <AccountSettings />}
@@ -109,7 +111,6 @@ function ProfileSettings() {
     usernameFont: me!.usernameFont ?? "default",
     profileAccent: me!.profileAccent ?? null,
     profileAccentEnd: me!.profileAccentEnd ?? null,
-    useProfileTheme: me!.useProfileTheme ?? false,
   });
   const set = (k: "realname" | "pronouns") => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
@@ -181,19 +182,6 @@ function ProfileSettings() {
       <Section title={t("settings.profile")}>
         <form className="form" onSubmit={submit}>
           <ProfileStyleSettings value={f} onChange={(style) => setF((f) => ({ ...f, ...style }))} disabled={act.busy} />
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={f.useProfileTheme}
-            disabled={act.busy}
-            className="profile-theme-check"
-            onClick={() => setF((f) => ({ ...f, useProfileTheme: !f.useProfileTheme }))}
-          >
-            <span className="profile-theme-check-box" aria-hidden="true">
-              {f.useProfileTheme && <Ico.Check />}
-            </span>
-            <span>{t("settings.useProfileTheme")}</span>
-          </button>
           <label>
             {t("settings.displayName")}
             <Input value={f.realname} onChange={set("realname")} maxLength={60} />
@@ -253,7 +241,6 @@ function ProfileSettings() {
           </Button>
         </form>
       </Section>
-      <Appearance />
     </>
   );
 }
@@ -333,9 +320,11 @@ const THEMES: [ThemePref, MessageKey][] = [
   ["dark", "settings.themeDark"],
 ];
 
-function Appearance() {
+function AppearanceSettings() {
   const { me, setMe } = useAuth();
   const act = useAction();
+  const profileTheme = useSaveProfile();
+  const useProfileTheme = me!.useProfileTheme ?? false;
 
   // Applied optimistically; rolled back if saving fails.
   const pick = (theme: ThemePref) => {
@@ -363,6 +352,20 @@ function Appearance() {
         ))}
       </div>
       {act.note}
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={useProfileTheme}
+        disabled={profileTheme.act.busy}
+        className="profile-theme-check"
+        onClick={() => profileTheme.save({ useProfileTheme: !useProfileTheme })}
+      >
+        <span className="profile-theme-check-box" aria-hidden="true">
+          {useProfileTheme && <Ico.Check />}
+        </span>
+        <span>{t("settings.useProfileTheme")}</span>
+      </button>
+      {profileTheme.act.note}
       <LanguagePicker />
     </Section>
   );
