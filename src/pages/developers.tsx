@@ -113,6 +113,9 @@ export function Developers() {
       <div className="cols">
         <div className="main prose docs">
           <p>{tx("dev.apiIntro", { help: <Link to="/help">{t("dev.apiHelpLink")}</Link> })}</p>
+          <p>
+            <a href="/llms.txt">llms.txt</a>
+          </p>
           <h2>{t("dev.basics")}</h2>
           <ul>
             <li>
