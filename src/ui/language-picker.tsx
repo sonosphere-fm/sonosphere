@@ -13,6 +13,8 @@ import PL from "country-flag-icons/react/3x2/PL";
 import RU from "country-flag-icons/react/3x2/RU";
 import IT from "country-flag-icons/react/3x2/IT";
 import ID from "country-flag-icons/react/3x2/ID";
+import IN from "country-flag-icons/react/3x2/IN";
+import PK from "country-flag-icons/react/3x2/PK";
 import TR from "country-flag-icons/react/3x2/TR";
 import SE from "country-flag-icons/react/3x2/SE";
 import UA from "country-flag-icons/react/3x2/UA";
@@ -43,6 +45,18 @@ const FLAGS: Record<Locale, ComponentType<{ className?: string }>> = {
   ru: RU,
   it: IT,
   id: ID,
+  hi: IN,
+  bn: IN,
+  mr: IN,
+  te: IN,
+  ta: IN,
+  gu: IN,
+  ur: PK,
+  kn: IN,
+  ml: IN,
+  pa: IN,
+  or: IN,
+  as: IN,
   tr: TR,
   sv: SE,
   uk: UA,
