@@ -136,9 +136,8 @@ export default {
   somethingWrong: "कुछ गड़बड़ हो गई।",
   tryAgain: "फिर से कोशिश करें",
   nothingHere: "यहाँ कुछ नहीं है।",
-  pageNotFound: "पेज नहीं मिला।",
-  notFoundHint: "{charts} देखें या कुछ खोजें।",
-  notFoundCharts: "चार्ट",
+  pageNotFound: "पेज नहीं मिला",
+  notFoundBody: "लिंक टूटा हो सकता है, या पेज कहीं और चला गया हो सकता है।",
 
   dismissAnnouncement: "घोषणा हटाएँ",
   actingAs: "आप {by} के खाते से {user} के रूप में काम कर रहे हैं।",

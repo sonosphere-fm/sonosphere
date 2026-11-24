@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Kaut kas nogāja greizi.",
   tryAgain: "Mēģināt vēlreiz",
   nothingHere: "Šeit nekā nav.",
-  pageNotFound: "Lapa nav atrasta.",
-  notFoundHint: "Apskati {charts} vai pameklē kaut ko.",
-  notFoundCharts: "topus",
+  pageNotFound: "Lapa nav atrasta",
+  notFoundBody: "Saite var būt bojāta, vai lapa ir pārvietota.",
 
   dismissAnnouncement: "Aizvērt paziņojumu",
   actingAs: "Tu darbojies kā {user} no {by} konta.",

@@ -136,9 +136,8 @@ export default {
   somethingWrong: "ఏదో తప్పు జరిగింది.",
   tryAgain: "మళ్లీ ప్రయత్నించండి",
   nothingHere: "ఇక్కడ ఏమీ లేదు.",
-  pageNotFound: "పేజీ కనుగొనబడలేదు.",
-  notFoundHint: "{charts} చూడండి లేదా ఏదైనా శోధించండి.",
-  notFoundCharts: "చార్ట్‌లు",
+  pageNotFound: "పేజీ కనుగొనబడలేదు",
+  notFoundBody: "లింక్ పాడై ఉండవచ్చు, లేదా పేజీ వేరే చోటికి మారి ఉండవచ్చు.",
 
   dismissAnnouncement: "ప్రకటనను తీసివేయండి",
   actingAs: "{by} ఖాతా నుండి {user}గా వ్యవహరిస్తున్నారు.",

@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Ada yang salah.",
   tryAgain: "Coba lagi",
   nothingHere: "Tidak ada apa-apa di sini.",
-  pageNotFound: "Halaman tidak ditemukan.",
-  notFoundHint: "Coba {charts} atau cari sesuatu.",
-  notFoundCharts: "tangga",
+  pageNotFound: "Halaman tidak ditemukan",
+  notFoundBody: "Tautannya mungkin rusak, atau halamannya sudah dipindahkan.",
 
   dismissAnnouncement: "Tutup pengumuman",
   actingAs: "Bertindak sebagai {user} dari akun {by}.",

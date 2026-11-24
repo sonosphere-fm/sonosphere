@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Qualcosa è andato storto.",
   tryAgain: "Riprova",
   nothingHere: "Non c'è niente qui.",
-  pageNotFound: "Pagina non trovata.",
-  notFoundHint: "Prova le {charts} o cerca qualcosa.",
-  notFoundCharts: "classifiche",
+  pageNotFound: "Pagina non trovata",
+  notFoundBody: "Il link potrebbe essere rotto, oppure la pagina è stata spostata.",
 
   dismissAnnouncement: "Chiudi annuncio",
   actingAs: "Stai agendo come {user} dall'account di {by}.",

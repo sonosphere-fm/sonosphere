@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Что-то пошло не так.",
   tryAgain: "Попробовать снова",
   nothingHere: "Здесь пусто.",
-  pageNotFound: "Страница не найдена.",
-  notFoundHint: "Загляни в {charts} или попробуй что-нибудь найти.",
-  notFoundCharts: "чарты",
+  pageNotFound: "Страница не найдена",
+  notFoundBody: "Возможно, ссылка битая или страница переехала.",
 
   dismissAnnouncement: "Скрыть объявление",
   actingAs: "Ты действуешь как {user} из аккаунта {by}.",

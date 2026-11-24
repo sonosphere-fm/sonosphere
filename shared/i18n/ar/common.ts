@@ -136,9 +136,8 @@ export default {
   somethingWrong: "حدث خطأ ما.",
   tryAgain: "حاول مجددًا",
   nothingHere: "لا شيء هنا.",
-  pageNotFound: "الصفحة غير موجودة.",
-  notFoundHint: "جرّب {charts} أو ابحث عن شيء ما.",
-  notFoundCharts: "قوائم الأفضل",
+  pageNotFound: "الصفحة غير موجودة",
+  notFoundBody: "ربما يكون الرابط معطلًا، أو ربما نُقلت الصفحة.",
 
   dismissAnnouncement: "إخفاء الإعلان",
   actingAs: "تتصرف بصفتك {user} من حساب {by}.",

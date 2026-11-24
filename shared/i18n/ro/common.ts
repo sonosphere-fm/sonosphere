@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Ceva n-a mers bine.",
   tryAgain: "Încearcă din nou",
   nothingHere: "Nimic aici.",
-  pageNotFound: "Pagina nu a fost găsită.",
-  notFoundHint: "Încearcă {charts} sau caută ceva.",
-  notFoundCharts: "topurile",
+  pageNotFound: "Pagina nu a fost găsită",
+  notFoundBody: "Linkul poate fi stricat sau pagina a fost mutată.",
 
   dismissAnnouncement: "Închide anunțul",
   actingAs: "Acționezi ca {user} din contul lui {by}.",

@@ -136,9 +136,8 @@ export default {
   somethingWrong: "কিছু ভুল হয়েছে।",
   tryAgain: "আবার চেষ্টা করুন",
   nothingHere: "এখানে কিছু নেই।",
-  pageNotFound: "পেজ পাওয়া যায়নি।",
-  notFoundHint: "{charts} দেখুন অথবা কিছু খুঁজুন।",
-  notFoundCharts: "চার্ট",
+  pageNotFound: "পেজ পাওয়া যায়নি",
+  notFoundBody: "লিংকটি ভাঙা হতে পারে, অথবা পৃষ্ঠাটি সরানো হয়ে থাকতে পারে।",
 
   dismissAnnouncement: "ঘোষণাটি সরান",
   actingAs: "{by}-এর অ্যাকাউন্ট থেকে {user} হিসেবে কাজ করছেন।",

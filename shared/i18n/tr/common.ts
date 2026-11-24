@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Bir şeyler ters gitti.",
   tryAgain: "Tekrar dene",
   nothingHere: "Burada bir şey yok.",
-  pageNotFound: "Sayfa bulunamadı.",
-  notFoundHint: "{charts} sayfasına göz at ya da bir şey ara.",
-  notFoundCharts: "listeler",
+  pageNotFound: "Sayfa bulunamadı",
+  notFoundBody: "Bağlantı bozuk olabilir ya da sayfa taşınmış olabilir.",
 
   dismissAnnouncement: "Duyuruyu kapat",
   actingAs: "{user} olarak işlem yapıyorsun (asıl hesap: {by}).",

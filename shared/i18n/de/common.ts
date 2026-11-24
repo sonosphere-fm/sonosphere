@@ -136,9 +136,8 @@ export default {
   somethingWrong: "Etwas ist schiefgelaufen.",
   tryAgain: "Erneut versuchen",
   nothingHere: "Hier ist nichts.",
-  pageNotFound: "Seite nicht gefunden.",
-  notFoundHint: "Schau dir die {charts} an oder suche nach etwas.",
-  notFoundCharts: "Charts",
+  pageNotFound: "Seite nicht gefunden",
+  notFoundBody: "Der Link ist vielleicht kaputt, oder die Seite ist umgezogen.",
 
   dismissAnnouncement: "Ankündigung schließen",
   actingAs: "Du handelst als {user} über das Konto von {by}.",

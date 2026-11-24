@@ -136,9 +136,8 @@ export default {
   somethingWrong: "എന്തോ പിശക് സംഭവിച്ചു.",
   tryAgain: "വീണ്ടും ശ്രമിക്കുക",
   nothingHere: "ഇവിടെ ഒന്നുമില്ല.",
-  pageNotFound: "പേജ് കണ്ടെത്തിയില്ല.",
-  notFoundHint: "{charts} നോക്കുക, അല്ലെങ്കിൽ എന്തെങ്കിലും തിരയുക.",
-  notFoundCharts: "ചാർട്ടുകൾ",
+  pageNotFound: "പേജ് കണ്ടെത്തിയില്ല",
+  notFoundBody: "ലിങ്ക് തകരാറിലായിരിക്കാം, അല്ലെങ്കിൽ പേജ് മാറ്റിയിരിക്കാം.",
 
   dismissAnnouncement: "അറിയിപ്പ് ഒഴിവാക്കുക",
   actingAs: "{by}-ന്റെ അക്കൗണ്ടിൽ നിന്ന് {user} ആയി പ്രവർത്തിക്കുന്നു.",
