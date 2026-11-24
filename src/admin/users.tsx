@@ -516,6 +516,7 @@ export function UserDetail() {
                   <Section title="Moderation history">
                     <AuditList items={d.history} empty="No staff actions on this account yet." />
                   </Section>
+                  {role === "admin" && <CosmeticsAdmin key={u.username} name={u.username} />}
                   {d.recentShouts.length > 0 && (
                     <Section
                       title="Recent wall posts"
@@ -831,4 +832,5 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
   );
 }
 import { ManageUsernames } from "./usernames";
+import { CosmeticsAdmin } from "./cosmetics";
 import { Username } from "../ui/username";
