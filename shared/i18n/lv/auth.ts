@@ -56,25 +56,6 @@ export default {
   sendNewLink: "Jaunu saiti vari nosūtīt no {link}.",
   accountSettingsLink: "sava konta iestatījumiem",
   confirmEmailTitle: "Apstiprini savu e-pastu",
-  welcomeTitle: "Laipni lūdzam Sonosphere, {name}!",
-  welcomeUsedLastfm: "Vai esi iepriekš izmantojis Last.fm?",
-  welcomeIntro: "Sonosphere seko līdzi mūzikai, ko klausies. Pastāsti, no kā sāc.",
-  welcomeHaveAccount: "Jā, man ir konts",
-  welcomeNew: "Nē, esmu jauns",
-  welcomeBringTitle: "Paņem savus skrobļus līdzi",
-  welcomeBringBody:
-    "Importē savu Last.fm vēsturi, un tavs profils, topi un ieteikumi aizpildīsies no visa, ko tur esi klausījies. Tavs Last.fm konts paliek, kā bija.",
-  welcomeImport: "Importēt no Last.fm",
-  welcomeSkip: "Pagaidām izlaist",
-  welcomeWhatTitle: "Kas ir skroblis?",
-  welcomeWhatBody:
-    "Skroblis ir ieraksts par vienu atskaņotu dziesmu: dziesma, izpildītājs un laiks, kad klausījies. Savieno lietotnes, kurās klausies mūziku, un katra dziesma tiks automātiski skroblēta tavā profilā.",
-  welcomeWhatBody2:
-    "Laika gaitā tavi skrobļi veido tavu populārāko izpildītāju, albumu un dziesmu topus, kā arī ietekmē tavus ieteikumus un līdzīgas gaumes klausītājus: tos, kuru gaume ir vistuvākā tavai.",
-  welcomeNext: "Tālāk",
-  welcomeConnectPlayer: "Pievienot atskaņotāju",
-  welcomeConnectBody:
-    "Pievieno atskaņotāju, lai turpmāk katra atskaņotā dziesma tiktu skroblēta. Der Spotify, datora atskaņotāji un telefona lietotnes.",
   connectTitle: "Savienot lietotni",
   connectDone: "{app} ir savienota.",
   connectClose: "Vari aizvērt šo lapu un atgriezties lietotnē.",

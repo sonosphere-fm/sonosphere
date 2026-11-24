@@ -53,25 +53,6 @@ export default {
   sendNewLink: "אפשר לשלוח קישור חדש מ{link}.",
   accountSettingsLink: "הגדרות החשבון שלך",
   confirmEmailTitle: "אישור האימייל",
-  welcomeTitle: "ברוכים הבאים ל־Sonosphere, {name}!",
-  welcomeUsedLastfm: "השתמשת ב־Last.fm בעבר?",
-  welcomeIntro: "Sonosphere עוקב אחרי המוזיקה שאתם שומעים. ספרו לנו מאיפה מתחילים.",
-  welcomeHaveAccount: "כן, יש לי חשבון",
-  welcomeNew: "לא, אני חדש בזה",
-  welcomeBringTitle: "להביא איתך את הסקרובלים",
-  welcomeBringBody:
-    "מייבאים את היסטוריית ה־Last.fm, והפרופיל, המצעדים וההמלצות מתמלאים מכל מה שניגנת שם. חשבון ה־Last.fm שלך נשאר כמו שהוא.",
-  welcomeImport: "ייבוא מ־Last.fm",
-  welcomeSkip: "דילוג בינתיים",
-  welcomeWhatTitle: "מה זה סקרובל?",
-  welcomeWhatBody:
-    "סקרובל הוא רישום של שיר אחד שניגנת: השיר, האמן ומתי הקשבת. מחברים את האפליקציות שבהן מאזינים, וכל שיר מסוקרבל לפרופיל שלך מעצמו.",
-  welcomeWhatBody2:
-    "עם הזמן הסקרובלים בונים מצעדים של האמנים, האלבומים והשירים המובילים שלך, ומעצבים את ההמלצות ואת בעלי הטעם הדומה: המאזינים שהטעם שלהם הכי קרוב לשלך.",
-  welcomeNext: "הבא",
-  welcomeConnectPlayer: "חיבור נגן",
-  welcomeConnectBody:
-    "מחברים נגן כדי שכל שיר שתנגנו מעכשיו יסוקרבל. Spotify, נגנים למחשב ואפליקציות לטלפון, כולם עובדים.",
   connectTitle: "חיבור אפליקציה",
   connectDone: "{app} מחובר.",
   connectClose: "אפשר לסגור את הדף הזה ולחזור לאפליקציה.",

@@ -54,25 +54,6 @@ export default {
   sendNewLink: "{link}에서 새 링크를 보낼 수 있어요.",
   accountSettingsLink: "계정 설정",
   confirmEmailTitle: "이메일 확인",
-  welcomeTitle: "Sonosphere에 오신 걸 환영해요, {name} 님!",
-  welcomeUsedLastfm: "Last.fm을 써 본 적 있나요?",
-  welcomeIntro: "Sonosphere는 내가 듣는 음악을 기록해 줘요. 어디서부터 시작할지 알려 주세요.",
-  welcomeHaveAccount: "네, 계정이 있어요",
-  welcomeNew: "아니요, 처음이에요",
-  welcomeBringTitle: "스크로블을 그대로 가져오세요",
-  welcomeBringBody:
-    "Last.fm 기록을 가져오면 그동안 들은 모든 곡으로 프로필, 차트, 추천이 채워져요. Last.fm 계정은 그대로 유지돼요.",
-  welcomeImport: "Last.fm에서 가져오기",
-  welcomeSkip: "나중에 하기",
-  welcomeWhatTitle: "스크로블이 뭔가요?",
-  welcomeWhatBody:
-    "스크로블은 내가 재생한 곡 하나의 기록이에요. 트랙, 아티스트, 들은 시각이 담겨요. 음악을 듣는 앱을 연결하면 모든 곡이 자동으로 프로필에 스크로블돼요.",
-  welcomeWhatBody2:
-    "스크로블이 쌓이면 자주 듣는 아티스트, 앨범, 트랙 차트가 만들어지고, 추천과 취향 메이트(취향이 가장 비슷한 리스너)에도 반영돼요.",
-  welcomeNext: "다음",
-  welcomeConnectPlayer: "플레이어 연결",
-  welcomeConnectBody:
-    "플레이어를 연결하면 앞으로 재생하는 모든 곡이 스크로블돼요. Spotify, 데스크톱 플레이어, 휴대폰 앱 모두 지원해요.",
   connectTitle: "애플리케이션 연결",
   connectDone: "{app}이(가) 연결됐어요.",
   connectClose: "이 페이지를 닫고 애플리케이션으로 돌아가도 돼요.",

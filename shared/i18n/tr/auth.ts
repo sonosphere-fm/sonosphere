@@ -58,25 +58,6 @@ export default {
   sendNewLink: "Yeni bir bağlantıyı buradan gönderebilirsin: {link}.",
   accountSettingsLink: "hesap ayarların",
   confirmEmailTitle: "E-postanı onayla",
-  welcomeTitle: "Sonosphere'e hoş geldin, {name}!",
-  welcomeUsedLastfm: "Daha önce Last.fm kullandın mı?",
-  welcomeIntro: "Sonosphere dinlediğin müziğin kaydını tutar. Nereden başladığını bize söyle.",
-  welcomeHaveAccount: "Evet, hesabım var",
-  welcomeNew: "Hayır, bu işte yeniyim",
-  welcomeBringTitle: "Scrobble'larını yanında getir",
-  welcomeBringBody:
-    "Last.fm geçmişini içe aktar; profilin, listelerin ve önerilerin orada dinlediğin her şeyle dolsun. Last.fm hesabın olduğu gibi kalır.",
-  welcomeImport: "Last.fm'den içe aktar",
-  welcomeSkip: "Şimdilik geç",
-  welcomeWhatTitle: "Scrobble nedir?",
-  welcomeWhatBody:
-    "Scrobble, dinlediğin bir şarkının kaydıdır: parça, sanatçı ve ne zaman dinlediğin. Müzik dinlediğin uygulamaları bağla, her şarkı kendiliğinden profiline scrobble edilsin.",
-  welcomeWhatBody2:
-    "Zamanla scrobble'ların en çok dinlediğin sanatçı, albüm ve parçaların listelerini oluşturur; önerilerini ve ruh ikizlerini, yani zevki seninkine en yakın dinleyicileri belirler.",
-  welcomeNext: "İleri",
-  welcomeConnectPlayer: "Bir oynatıcı bağla",
-  welcomeConnectBody:
-    "Bundan sonra çaldığın her şarkının scrobble edilmesi için bir oynatıcı bağla. Spotify, masaüstü oynatıcılar ve telefon uygulamaları çalışır.",
   connectTitle: "Bir uygulama bağla",
   connectDone: "{app} bağlandı.",
   connectClose: "Bu sayfayı kapatıp uygulamaya dönebilirsin.",

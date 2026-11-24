@@ -9,6 +9,7 @@
 @import "./themes/sonosphere/sonosphere.css";
 @import "@astryxdesign/core/tailwind-theme.css";
 @import "./pages/music/home-hero.css";
+@import "./pages/onboarding.css";
 
 /* site tokens as Tailwind utilities (bg-site-card, text-site-muted, font-site-display); unprefixed names belong to Astryx */
 @theme inline {
@@ -6111,6 +6112,7 @@
     justify-self: start;
   }
   .import-prompt {
+    margin-bottom: 40px;
     padding: 32px 28px;
     background: var(--panel);
   }
@@ -6122,22 +6124,6 @@
     margin: 0 0 20px;
     max-width: 62ch;
     color: var(--ink-2);
-  }
-  .onboard {
-    padding: 32px 28px;
-    background: var(--panel);
-  }
-  .onboard h2 {
-    margin: 0 0 8px;
-    font-size: 24px;
-  }
-  .onboard p {
-    margin: 0 0 16px;
-    max-width: 62ch;
-    color: var(--ink-2);
-  }
-  .onboard .row {
-    margin-top: 24px;
   }
   .import-status:not(:empty) {
     margin-bottom: 28px;

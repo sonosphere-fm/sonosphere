@@ -57,25 +57,6 @@ export default {
   sendNewLink: "Nowy link możesz wysłać w {link}.",
   accountSettingsLink: "ustawieniach konta",
   confirmEmailTitle: "Potwierdź e-mail",
-  welcomeTitle: "Witaj w Sonosphere, {name}!",
-  welcomeUsedLastfm: "Czy korzystasz już z Last.fm?",
-  welcomeIntro: "Sonosphere zapisuje muzykę, której słuchasz. Powiedz nam, od czego zaczynasz.",
-  welcomeHaveAccount: "Tak, mam konto",
-  welcomeNew: "Nie, dopiero zaczynam",
-  welcomeBringTitle: "Zabierz swoje scrobble ze sobą",
-  welcomeBringBody:
-    "Zaimportuj historię z Last.fm, a Twój profil, listy i rekomendacje wypełnią się wszystkim, czego tam słuchasz. Twoje konto Last.fm zostaje bez zmian.",
-  welcomeImport: "Importuj z Last.fm",
-  welcomeSkip: "Na razie pomiń",
-  welcomeWhatTitle: "Czym jest scrobble?",
-  welcomeWhatBody:
-    "Scrobble to zapis jednego odtworzonego utworu: tytuł, wykonawca i czas słuchania. Połącz aplikacje, w których słuchasz muzyki, a każdy utwór sam trafi na Twój profil.",
-  welcomeWhatBody2:
-    "Z czasem Twoje scrobble tworzą listy ulubionych wykonawców, albumów i utworów oraz kształtują rekomendacje i bratnie dusze: słuchaczy o guście najbliższym Twojemu.",
-  welcomeNext: "Dalej",
-  welcomeConnectPlayer: "Podłącz odtwarzacz",
-  welcomeConnectBody:
-    "Podłącz odtwarzacz, a każdy utwór, którego posłuchasz, będzie scrobblowany. Działa Spotify, odtwarzacze na komputer i aplikacje na telefon.",
   connectTitle: "Połącz aplikację",
   connectDone: "Aplikacja {app} jest połączona.",
   connectClose: "Możesz zamknąć tę stronę i wrócić do aplikacji.",

@@ -88,7 +88,7 @@ function rawTime(r: Obj) {
   return r.timestamp ?? r.date ?? r.played_at ?? r.playedAt ?? r.uts ?? r.endTime;
 }
 
-function parseImport(name: string, body: string): ImportRow[] {
+export function parseImport(name: string, body: string): ImportRow[] {
   let rows: Obj[];
   if (name.toLowerCase().endsWith(".json") || /^\s*[[{]/.test(body)) {
     rows = flatten(JSON.parse(body))
@@ -112,10 +112,10 @@ function parseImport(name: string, body: string): ImportRow[] {
     .filter((r) => r.artist && r.track);
 }
 
-const active = (j: ImportJob | null | undefined) => !!j && ["uploading", "queued", "running"].includes(j.status);
+export const active = (j: ImportJob | null | undefined) => !!j && ["uploading", "queued", "running"].includes(j.status);
 
 // Polls every two seconds while an import is running on the server.
-function useImportJob() {
+export function useImportJob() {
   const [job, setJob] = useState<ImportJob | null | undefined>(undefined);
   const load = () =>
     api<ImportState>("/import")

@@ -56,25 +56,6 @@ export default {
   sendNewLink: "Du kan skicka en ny länk från {link}.",
   accountSettingsLink: "dina kontoinställningar",
   confirmEmailTitle: "Bekräfta din e-postadress",
-  welcomeTitle: "Välkommen till Sonosphere, {name}!",
-  welcomeUsedLastfm: "Har du använt Last.fm förut?",
-  welcomeIntro: "Sonosphere håller koll på musiken du lyssnar på. Berätta var du börjar.",
-  welcomeHaveAccount: "Ja, jag har ett konto",
-  welcomeNew: "Nej, jag är ny",
-  welcomeBringTitle: "Ta med dig dina scrobblingar",
-  welcomeBringBody:
-    "Importera din Last.fm-historik så fylls din profil, dina topplistor och rekommendationer på med allt du spelat där. Ditt Last.fm-konto förblir som det är.",
-  welcomeImport: "Importera från Last.fm",
-  welcomeSkip: "Hoppa över tills vidare",
-  welcomeWhatTitle: "Vad är en scrobbling?",
-  welcomeWhatBody:
-    "En scrobbling är en notering av en låt du spelat: låten, artisten och när du lyssnade. Koppla apparna du lyssnar med så scrobblas varje låt till din profil av sig själv.",
-  welcomeWhatBody2:
-    "Med tiden bygger dina scrobblingar topplistor över dina mest spelade artister, album och låtar, och de formar dina rekommendationer och musiktvillingar: lyssnarna vars smak ligger närmast din.",
-  welcomeNext: "Nästa",
-  welcomeConnectPlayer: "Koppla en spelare",
-  welcomeConnectBody:
-    "Koppla en spelare så scrobblas varje låt du spelar från och med nu. Spotify, datorspelare och mobilappar fungerar.",
   connectTitle: "Koppla en applikation",
   connectDone: "{app} är kopplad.",
   connectClose: "Du kan stänga den här sidan och gå tillbaka till applikationen.",

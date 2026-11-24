@@ -58,25 +58,6 @@ export default {
   sendNewLink: "Poți trimite un link nou din {link}.",
   accountSettingsLink: "setările contului",
   confirmEmailTitle: "Confirmă-ți emailul",
-  welcomeTitle: "Bun venit pe Sonosphere, {name}!",
-  welcomeUsedLastfm: "Ai mai folosit Last.fm?",
-  welcomeIntro: "Sonosphere ține evidența muzicii pe care o asculți. Spune-ne de unde pornești.",
-  welcomeHaveAccount: "Da, am un cont",
-  welcomeNew: "Nu, sunt nou",
-  welcomeBringTitle: "Adu-ți scrobble-urile cu tine",
-  welcomeBringBody:
-    "Importă-ți istoricul de pe Last.fm, iar profilul, topurile și recomandările se vor completa din tot ce ai ascultat acolo. Contul tău Last.fm rămâne neschimbat.",
-  welcomeImport: "Importă de pe Last.fm",
-  welcomeSkip: "Sari peste deocamdată",
-  welcomeWhatTitle: "Ce este un scrobble?",
-  welcomeWhatBody:
-    "Un scrobble este înregistrarea unei piese pe care ai ascultat-o: piesa, artistul și momentul în care ai ascultat-o. Conectează aplicațiile în care asculți muzică și fiecare piesă va primi automat scrobble pe profilul tău.",
-  welcomeWhatBody2:
-    "În timp, scrobble-urile tale construiesc topuri cu artiștii, albumele și piesele tale preferate și îți modelează recomandările și „sufletele pereche”: ascultătorii cu gusturile cele mai apropiate de ale tale.",
-  welcomeNext: "Mai departe",
-  welcomeConnectPlayer: "Conectează un player",
-  welcomeConnectBody:
-    "Conectează un player ca fiecare piesă pe care o asculți de acum înainte să primească scrobble. Merg Spotify, playerele desktop și aplicațiile de telefon.",
   connectTitle: "Conectează o aplicație",
   connectDone: "{app} este conectată.",
   connectClose: "Poți închide această pagină și te poți întoarce la aplicație.",
