@@ -67,7 +67,7 @@ https://plausible.sonosphere.fm, http://plausible.sonosphere.fm {
 	tls internal
 	import cloudflare
 	encode zstd gzip
-	reverse_proxy 127.0.0.1:8000 {
+	reverse_proxy 10.0.2.2:8000 {
 		header_up X-Forwarded-For {client_ip}
 	}
 }

@@ -1,7 +1,8 @@
 # Production on the VPS. Checked out at /opt/spin/src; secrets and data stay in /opt/spin.
 # Folders rather than single files are mounted from the checkout, since git replaces files on checkout.
-# The app and Caddy use the host network so they see real visitor addresses and can reach the
-# MusicBrainz mirror's SSH tunnel on 127.0.0.1:5480.
+# Runs on rootless Docker as the `spin` user, whose traffic can only leave through WARP. Its "host" network is
+# a namespace of its own: the app and Caddy share it, cloudflared reaches Caddy on port 80 through rootlesskit,
+# and the real host's loopback (the MusicBrainz tunnel on 5480, Plausible on 8000) is 10.0.2.2.
 name: spin
 
 services:
@@ -81,7 +82,7 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/user/1001/docker.sock:/var/run/docker.sock
       - /opt/spin:/opt/spin
       - /opt/spin-backup:/opt/spin-backup
 

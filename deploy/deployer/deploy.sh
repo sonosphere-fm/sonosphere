@@ -90,7 +90,7 @@ deploy() {
   cat $LOG
   notify 5763719 "Deployed $what in $(( $(date +%s) - started ))s"
   # A container can't replace itself, so a throwaway one does it.
-  $COMPOSE build -q deployer && docker run -d --rm -v /var/run/docker.sock:/var/run/docker.sock -v $A:$A \
+  $COMPOSE build -q deployer && docker run -d --rm -v /run/user/1001/docker.sock:/var/run/docker.sock -v $A:$A \
     sonosphere-deployer $COMPOSE up -d deployer > /dev/null
 }
 
