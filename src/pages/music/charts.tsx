@@ -140,15 +140,15 @@ function ChartsOverview() {
   return (
     <div className="wrap page">
       <h1 className="page-title">{t("music.charts")}</h1>
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <nav className="tabs">
+      <div className="flex items-end justify-between gap-3 flex-wrap max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-0">
+        <nav className="tabs max-[700px]:self-stretch">
           {chartPeriods().map(([k, l]) => (
             <Button key={k} kind={k === period ? "active" : ""} onClick={() => setPeriod(k)}>
               {l}
             </Button>
           ))}
         </nav>
-        <Button kind="btn ghost small" href="/charts/maker">
+        <Button kind="btn ghost small max-[700px]:mb-6" href="/charts/maker">
           {t("music.chartCreator")}
         </Button>
       </div>
