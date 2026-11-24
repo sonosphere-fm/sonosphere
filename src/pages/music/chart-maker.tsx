@@ -249,7 +249,7 @@ export function ChartMaker() {
               options={titleOptions()}
             />
           </label>
-          <Button type="submit" loading={busy} disabled={busy}>
+          <Button kind="btn" type="submit" loading={busy} disabled={busy}>
             {t("music.chartMake")}
           </Button>
         </div>
