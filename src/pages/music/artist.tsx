@@ -258,7 +258,7 @@ function ArtistTopTracks({ name, base, initial }: { name: string; base: string; 
   const aside = (
     <>
       <PlayButton queue={items} />
-      <span className="ml-auto">
+      <span className="ms-auto">
         <Select label={t("music.timePeriod")} value={period} onChange={setPeriod} options={periods()} />
       </span>
     </>

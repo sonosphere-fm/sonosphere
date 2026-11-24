@@ -201,7 +201,7 @@ export function Users() {
 }
 
 const NOTE_FORM = "flex gap-[10px] items-start mb-2 max-[860px]:flex-col max-[860px]:items-stretch";
-const STAFF_NOTE = cx("py-[10px] px-3 mb-2 bg-[light-dark(#fffbea,#2a2718)]", "border-l-[3px] border-l-site-sun");
+const STAFF_NOTE = cx("py-[10px] px-3 mb-2 bg-[light-dark(#fffbea,#2a2718)]", "border-s-[3px] border-s-site-sun");
 const ACTIONS = "flex flex-col items-stretch gap-2 *:w-full";
 
 export function UserDetail() {

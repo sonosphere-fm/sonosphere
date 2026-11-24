@@ -217,13 +217,13 @@ const searchInput =
   "placeholder:text-site-muted";
 const searchButton = "flex-none grid place-items-center h-[38px] border-none cursor-pointer [&_svg]:size-[18px]";
 const searchClose =
-  "order-3 w-10 ml-1.5 bg-transparent text-white opacity-80 hover:opacity-100 focus-visible:opacity-100";
+  "order-3 w-10 ms-1.5 bg-transparent text-white opacity-80 hover:opacity-100 focus-visible:opacity-100";
 const searchGo = "order-2 w-11 bg-site-sun text-site-on-sun hover:bg-site-sun-dark focus-visible:bg-site-sun-dark";
 
 const navSearch =
   "inline-flex items-center justify-center size-10 p-0 text-white text-[19px] rounded-[50%] hover:bg-site-bar-hover";
 const menuToggle =
-  "menu-toggle flex items-center gap-2 size-[38px] min-w-0 p-0 ml-1.5 rounded-[50%] border-none bg-transparent " +
+  "menu-toggle flex items-center gap-2 size-[38px] min-w-0 p-0 ms-1.5 rounded-[50%] border-none bg-transparent " +
   "text-white hover:bg-site-bar-hover aria-expanded:bg-site-bar-hover " +
   "focus-visible:outline-none focus-visible:bg-[rgba(255,255,255,.12)]";
 

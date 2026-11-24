@@ -91,7 +91,7 @@ export function FeatureCard({ label, to, image, title, sub }: FeatureCardProps) 
 export const releaseDate = (d: string) => (d.length > 4 ? date(Date.parse(d + "T12:00:00") / 1000) : d);
 
 export const SIDE_LINKS =
-  "flex gap-3.5 mt-3 mb-0 text-[14px] [&>a+a]:pl-3.5 [&>a+a]:border-l [&>a+a]:border-l-site-line";
+  "flex gap-3.5 mt-3 mb-0 text-[14px] [&>a+a]:ps-3.5 [&>a+a]:border-s [&>a+a]:border-s-site-line";
 
 const ABOUT = "section grid grid-cols-[minmax(0,1fr)_220px] gap-x-8 gap-y-4 max-[700px]:grid-cols-[minmax(0,1fr)]";
 
