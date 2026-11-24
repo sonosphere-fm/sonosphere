@@ -78,9 +78,9 @@ function describe(reply: Extract<ChartReply, { status: "Ok" }>): string {
     .join("");
 }
 
-function pngUrl(base64: string): string {
+function jpegUrl(base64: string): string {
   const bytes = Uint8Array.from(atob(base64), (ch) => ch.charCodeAt(0));
-  return URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+  return URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" }));
 }
 
 function gridSize(value: string) {
@@ -168,8 +168,8 @@ export function ChartMaker() {
       if (reply.status !== "Ok") return fail(shortage(reply, req));
       setLines(settingsLines(req));
       setChart({
-        url: pngUrl(reply.image),
-        name: `${req.kind === "artists" ? "artist" : "album"}-chart-${width}w-${height}h-${req.period}-${req.username}.png`,
+        url: jpegUrl(reply.image),
+        name: `${req.kind === "artists" ? "artist" : "album"}-chart-${width}w-${height}h-${req.period}-${req.username}.jpg`,
         width: reply.width,
         height: reply.height,
         count: reply.drawn,

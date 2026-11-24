@@ -270,7 +270,7 @@ function addFadeTitle(
   ctx.shadowOffsetY = 0;
 }
 
-export async function render(job: RenderJob): Promise<{ png: Buffer; drawn: number }> {
+export async function render(job: RenderJob): Promise<{ jpeg: Buffer; drawn: number }> {
   const size = job.cellSize;
   const scale = size / BASE_CELL_SIZE;
   const drawn: Drawn[] = job.cells.map((cell) => {
@@ -297,12 +297,12 @@ export async function render(job: RenderJob): Promise<{ png: Buffer; drawn: numb
   for (let i = 0; i < count; i++) {
     ctx.drawImage(ordered[i]!.canvas, (i % job.width) * size, Math.floor(i / job.width) * size);
   }
-  return { png: await output.encode("png"), drawn: count };
+  return { jpeg: await output.encode("jpeg", 90), drawn: count };
 }
 
 if (import.meta.main) {
   registerFonts(process.argv[2]!);
   const job: RenderJob = JSON.parse(await Bun.stdin.text());
-  const { png, drawn } = await render(job);
-  process.stdout.write(JSON.stringify({ drawn, png: png.toString("base64") }));
+  const { jpeg, drawn } = await render(job);
+  process.stdout.write(JSON.stringify({ drawn, jpeg: jpeg.toString("base64") }));
 }

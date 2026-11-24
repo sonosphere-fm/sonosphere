@@ -114,7 +114,7 @@ async function cells(items: ChartItem[], req: ChartRequest, size: number, locale
 }
 
 // Decoding pictures and drawing runs in its own process, with no environment and a hard time limit.
-async function draw(job: RenderJob): Promise<{ drawn: number; png: string }> {
+async function draw(job: RenderJob): Promise<{ drawn: number; jpeg: string }> {
   const child = Bun.spawn([process.execPath, SCRIPT, FONTS], {
     stdin: new TextEncoder().encode(JSON.stringify(job)),
     stdout: "pipe",
@@ -151,7 +151,7 @@ router.post<ChartReply>("/api/charts", async (c) => {
       if (found.status !== "Ok") return found;
       const size = cellSize(req.width, req.height);
       const words = await music(locale);
-      const { drawn, png } = await draw({
+      const { drawn, jpeg } = await draw({
         width: req.width,
         height: req.height,
         cellSize: size,
@@ -165,7 +165,7 @@ router.post<ChartReply>("/api/charts", async (c) => {
       });
       return {
         status: "Ok",
-        image: png,
+        image: jpeg,
         width: size * req.width,
         height: size * req.height,
         drawn,
