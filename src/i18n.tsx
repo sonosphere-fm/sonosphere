@@ -6,6 +6,7 @@ import {
   lookup,
   matchLocale,
   pick,
+  RTL,
   type Catalog,
   type Key,
   type Locale,
@@ -76,6 +77,9 @@ const main = translator(en, {
   it: () => import("../shared/i18n/it/index"),
   tr: () => import("../shared/i18n/tr/index"),
   sv: () => import("../shared/i18n/sv/index"),
+  uk: () => import("../shared/i18n/uk/index"),
+  he: () => import("../shared/i18n/he/index"),
+  ar: () => import("../shared/i18n/ar/index"),
   "zh-Hans": () => import("../shared/i18n/zh-Hans/index"),
   "zh-Hant": () => import("../shared/i18n/zh-Hant/index"),
 });
@@ -86,5 +90,6 @@ export type MessageKey = Key<typeof en>;
 export async function loadLocale(account?: Locale | "") {
   current = account || chosenLocale() || matchLocale(navigator.languages);
   document.documentElement.lang = current;
+  document.documentElement.dir = RTL.has(current) ? "rtl" : "ltr";
   await main.load();
 }

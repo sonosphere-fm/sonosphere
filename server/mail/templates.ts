@@ -1,7 +1,7 @@
 import { SITE_URL, type Mail } from ".";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
 import { tr } from "../i18n";
-import type { Locale } from "../../shared/i18n/core";
+import { RTL, type Locale } from "../../shared/i18n/core";
 
 const BLUE = "#2438d6";
 const YELLOW = "#ffcf33";
@@ -57,7 +57,7 @@ function build(locale: Locale, to: string, subject: string, heading: string, par
   const manageLink = optional
     ? ` <a href="${esc(manage)}" style="color:${MUTED}">${esc(tr(locale, "mail.manageEmails"))}</a>.`
     : "";
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
+  const html = `<!doctype html><html lang="${locale}" dir="${RTL.has(locale) ? "rtl" : "ltr"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
 <body style="margin:0;padding:0;background:${PAPER};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER}"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">

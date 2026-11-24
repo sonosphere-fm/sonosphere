@@ -15,6 +15,9 @@ const admin = translator(base, {
   it: () => import("../../shared/i18n/it/catalog-admin"),
   tr: () => import("../../shared/i18n/tr/catalog-admin"),
   sv: () => import("../../shared/i18n/sv/catalog-admin"),
+  uk: () => import("../../shared/i18n/uk/catalog-admin"),
+  he: () => import("../../shared/i18n/he/catalog-admin"),
+  ar: () => import("../../shared/i18n/ar/catalog-admin"),
   "zh-Hans": () => import("../../shared/i18n/zh-Hans/catalog-admin"),
   "zh-Hant": () => import("../../shared/i18n/zh-Hant/catalog-admin"),
 });
