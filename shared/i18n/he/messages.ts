@@ -91,7 +91,6 @@ export default {
   startGroup: "פתיחת קבוצה",
   requestIntro: "{name} לא עוקב אחריך, ולכן ההודעה תגיע כבקשה. אפשר לשלוח עד 3 הודעות, בלי קישורים, עד שתגיע תשובה.",
   sayHello: "להגיד שלום ל־{name}.",
-  robotFirst: "קודם יש להשלים את הבדיקה שאינך רובוט.",
   someone: "מישהו",
   notifyComment: "{actor} הגיב/ה על {title}",
   notifyCommentReply: "{actor} השיב/ה לתגובה שלך על {title}",

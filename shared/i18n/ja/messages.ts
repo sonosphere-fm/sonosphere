@@ -94,7 +94,6 @@ export default {
   requestIntro:
     "{name}はあなたをフォローしていないため、メッセージはリクエストとして届きます。返信があるまで、リンクなしのメッセージを3件まで送れます。",
   sayHello: "{name}にあいさつしましょう。",
-  robotFirst: "先にロボットでないことの確認を完了してください。",
   someone: "誰か",
   notifyComment: "{actor}が{title}にコメントしました",
   notifyCommentReply: "{actor}が{title}でのあなたのコメントに返信しました",

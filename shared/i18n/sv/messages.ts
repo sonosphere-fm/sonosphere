@@ -96,7 +96,6 @@ export default {
   requestIntro:
     "{name} följer inte dig, så ditt meddelande kommer fram som en förfrågan. Du kan skicka upp till 3 meddelanden, utan länkar, tills hen svarar.",
   sayHello: "Säg hej till {name}.",
-  robotFirst: "Bekräfta först att du inte är en robot.",
   someone: "Någon",
   notifyComment: "{actor} kommenterade {title}",
   notifyCommentReply: "{actor} svarade på din kommentar på {title}",

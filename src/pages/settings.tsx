@@ -33,7 +33,7 @@ import type {
   SpotifyStatus,
   SpotifySynced,
 } from "../../shared/spotify";
-import { Arrow, Ico } from "../icons";
+import { Arrow, Ico, Spinner } from "../icons";
 import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
 import { ImageCropper } from "../ui/image-cropper";
@@ -1021,7 +1021,6 @@ function AppSettings() {
   const q = useApi<Apps>("/apps");
   const c = useConfirm();
   const [adding, setAdding] = useState(false);
-  const [tokenOpened, setTokenOpened] = useState(false);
 
   const revoke = (key: string) => api<AppOk>("/apps/revoke", { body: { key } }).then(q.reload);
 
@@ -1053,13 +1052,9 @@ function AppSettings() {
             <CopyField label={t("settings.listenbrainzServerUrl")} value={window.location.origin} />
             <span className="muted small">{t("settings.listenbrainzServerHint")}</span>
           </div>
-          <details className="api-app connect-drop" onToggle={(e) => e.currentTarget.open && setTokenOpened(true)}>
-            <summary>
-              <Ico.Chevron />
-              <b>{t("settings.createListenToken")}</b>
-            </summary>
-            {tokenOpened && <NewToken onCreated={q.reload} />}
-          </details>
+          <Suspense fallback={<Spinner />}>
+            <NewToken onCreated={q.reload} />
+          </Suspense>
           <Link className="connect-more" to="/help#pano-scrobbler">
             {t("settings.setupDetails")} <Arrow />
           </Link>
@@ -1129,7 +1124,11 @@ function AppSettings() {
                       <Ico.Chevron />
                       <b>{t("settings.newApiAccount")}</b>
                     </summary>
-                    {adding && <NewApp onCreated={q.reload} />}
+                    {adding && (
+                      <Suspense fallback={<Spinner />}>
+                        <NewApp onCreated={q.reload} />
+                      </Suspense>
+                    )}
                   </details>
                 </li>
               </ul>
@@ -1148,12 +1147,8 @@ function NewToken({ onCreated }: { onCreated: () => void }) {
 
   const create = () =>
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
-      try {
-        setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile: robot.token } })).token);
-      } finally {
-        robot.reset();
-      }
+      const turnstile = await robot.check();
+      setToken((await api<ListenToken>("/apps/listen-token", { body: { turnstile } })).token);
       onCreated();
     });
 
@@ -1184,12 +1179,8 @@ function NewApp({ onCreated }: { onCreated: () => void }) {
   const create = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
-      try {
-        await api<AppOk>("/apps", { body: { ...f, turnstile: robot.token } });
-      } finally {
-        robot.reset();
-      }
+      const turnstile = await robot.check();
+      await api<AppOk>("/apps", { body: { ...f, turnstile } });
       setF(EMPTY_APP);
       onCreated();
       return t("settings.apiAccountCreated");

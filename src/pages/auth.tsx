@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Button, Input } from "../kit";
+import { Button, Input, Modal } from "../kit";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { api, qs, TITLES, useApi, useAuth, useTitle } from "../lib";
 import { useAction } from "../ui/base";
@@ -34,65 +34,79 @@ const loadTurnstile = () =>
     document.head.append(s);
   }));
 
-// Each token works once, so callers reset after a refused submit.
 export function useTurnstile(action: string) {
   const { data } = useApi<AuthConfig>("/auth/config");
   const key = data?.turnstile ?? null;
+  const [pending, setPending] = useState<{ ok: (token: string) => void; no: (e: Error) => void } | null>(null);
+
+  const check = () => (key ? new Promise<string>((ok, no) => setPending({ ok, no })) : Promise.resolve(""));
+
+  const solved = (token: string) => {
+    setPending(null);
+    pending?.ok(token);
+  };
+  const dismissed = () => {
+    setPending(null);
+    pending?.no(new Error(t("auth.robotRequired")));
+  };
+
+  const view =
+    key && pending ? <HumanCheck sitekey={key} action={action} onToken={solved} onClose={dismissed} /> : null;
+
+  return { check, view };
+}
+
+function HumanCheck({
+  sitekey,
+  action,
+  onToken,
+  onClose,
+}: {
+  sitekey: string;
+  action: string;
+  onToken: (token: string) => void;
+  onClose: () => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
-  const widget = useRef<{ t: Turnstile; id: string } | null>(null);
-  const [token, setToken] = useState("");
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!key || !box.current) return;
     let gone = false;
+    let widget: { t: Turnstile; id: string } | null = null;
     loadTurnstile().then(
       (turnstile) => {
         if (gone || !box.current) return;
         const theme = document.documentElement.dataset.theme;
         const id = turnstile.render(box.current, {
-          sitekey: key,
+          sitekey,
           action,
           size: "flexible",
           theme: theme === "dark" || theme === "light" ? theme : "auto",
-          callback: (v: string) => {
-            setToken(v);
-            setFailed(false);
-          },
-          "expired-callback": () => setToken(""),
-          "error-callback": () => {
-            setToken("");
-            setFailed(true);
-          },
+          callback: onToken,
+          "error-callback": () => setFailed(true),
         });
-        widget.current = { t: turnstile, id };
+        widget = { t: turnstile, id };
       },
       () => setFailed(true)
     );
     return () => {
       gone = true;
-      if (widget.current) widget.current.t.remove(widget.current.id);
-      widget.current = null;
+      if (widget) widget.t.remove(widget.id);
     };
-  }, [key, action]);
+  }, []);
 
-  const reset = () => {
-    setToken("");
-    if (widget.current) widget.current.t.reset(widget.current.id);
-  };
-
-  const view = key ? (
-    <div className="turnstile">
-      <div ref={box} />
-      {failed && (
-        <p className="form-error" role="alert">
-          {t("auth.robotFailed")}
-        </p>
-      )}
-    </div>
-  ) : null;
-
-  return { on: !!key, token, reset, view };
+  return (
+    <Modal title={t("auth.robotRequired")} onClose={onClose} width={380}>
+      <div className="turnstile human-check">
+        <div ref={box} />
+        {failed && (
+          <p className="form-error" role="alert">
+            {t("auth.robotFailed")}
+          </p>
+        )}
+      </div>
+    </Modal>
+  );
 }
 
 function Agreement() {
@@ -133,15 +147,10 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
-      try {
-        const r = await api<Session>(`/auth/${login ? "login" : "signup"}`, { body: { ...f, turnstile: robot.token } });
-        setMe(r.user);
-        nav(login || next !== "/" ? next : "/welcome");
-      } catch (err) {
-        robot.reset();
-        throw err;
-      }
+      const turnstile = await robot.check();
+      const r = await api<Session>(`/auth/${login ? "login" : "signup"}`, { body: { ...f, turnstile } });
+      setMe(r.user);
+      nav(login || next !== "/" ? next : "/welcome");
     });
   };
 
@@ -286,14 +295,9 @@ export function ForgotPage() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      if (robot.on && !robot.token) throw new Error(t("auth.robotRequired"));
-      try {
-        await api<Ok>("/auth/forgot", { body: { email, turnstile: robot.token } });
-        setSent(email);
-      } catch (err) {
-        robot.reset();
-        throw err;
-      }
+      const turnstile = await robot.check();
+      await api<Ok>("/auth/forgot", { body: { email, turnstile } });
+      setSent(email);
     });
   };
 

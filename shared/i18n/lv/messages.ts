@@ -100,7 +100,6 @@ export default {
   requestIntro:
     "{name} tev neseko, tāpēc tava ziņa pienāks kā pieprasījums. Līdz atbildei vari nosūtīt līdz 3 ziņām bez saitēm.",
   sayHello: "Sasveicinies ar {name}.",
-  robotFirst: "Vispirms apstiprini, ka neesi robots.",
   someone: "Kāds",
   notifyComment: "{actor} komentēja {title}",
   notifyCommentReply: "{actor} atbildēja uz tavu komentāru pie {title}",

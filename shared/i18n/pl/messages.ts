@@ -107,7 +107,6 @@ export default {
   requestIntro:
     "{name} Cię nie obserwuje, więc Twoja wiadomość trafi jako prośba. Do czasu odpowiedzi możesz wysłać maksymalnie 3 wiadomości, bez linków.",
   sayHello: "Przywitaj się z {name}.",
-  robotFirst: "Najpierw potwierdź, że nie jesteś robotem.",
   someone: "Ktoś",
   notifyComment: "Nowy komentarz od {actor} pod {title}",
   notifyCommentReply: "Odpowiedź od {actor} na Twój komentarz pod {title}",

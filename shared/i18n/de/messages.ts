@@ -97,7 +97,6 @@ export default {
   requestIntro:
     "{name} folgt dir nicht, daher kommt deine Nachricht als Anfrage an. Bis zu einer Antwort kannst du bis zu 3 Nachrichten ohne Links senden.",
   sayHello: "Sag {name} Hallo.",
-  robotFirst: "Bestätige zuerst, dass du kein Roboter bist.",
   someone: "Jemand",
   notifyComment: "{actor} hat {title} kommentiert",
   notifyCommentReply: "{actor} hat auf deinen Kommentar zu {title} geantwortet",

@@ -96,7 +96,6 @@ export default {
   requestIntro:
     "{name} no te sigue, así que tu mensaje le llegará como solicitud. Puedes enviar hasta 3 mensajes, sin enlaces, hasta que responda.",
   sayHello: "Saluda a {name}.",
-  robotFirst: "Primero completa la verificación de que no eres un robot.",
   someone: "Alguien",
   notifyComment: "{actor} comentó en {title}",
   notifyCommentReply: "{actor} respondió a tu comentario en {title}",

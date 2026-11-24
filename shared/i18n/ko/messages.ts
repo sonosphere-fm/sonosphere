@@ -92,7 +92,6 @@ export default {
   requestIntro:
     "{name} 님이 나를 팔로우하지 않아서 메시지가 요청으로 전달돼요. 상대방이 답장할 때까지 링크 없이 최대 3개까지 보낼 수 있어요.",
   sayHello: "{name} 님에게 인사해 보세요.",
-  robotFirst: "먼저 로봇이 아님을 확인해 주세요.",
   someone: "누군가",
   notifyComment: "{actor} 님이 {title}에 댓글을 남겼어요",
   notifyCommentReply: "{actor} 님이 {title}에 남긴 내 댓글에 답글을 달았어요",
