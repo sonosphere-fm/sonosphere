@@ -15,7 +15,7 @@ import { emailTaken } from "../repo";
 import { checkNewAccount, createAccount, me, startSession, USERNAME } from "../service";
 import { PROVIDERS, providerById, providerLabel, type Provider } from "./providers";
 import * as repo from "./repo";
-import type { Logins, OAuthCreated, OAuthPending, Ok } from "../../../shared/auth";
+import { safeNext, type Logins, type OAuthCreated, type OAuthPending, type Ok } from "../../../shared/auth";
 
 export const router = new Router();
 
@@ -30,13 +30,6 @@ const cookie = (name: string, value: string, maxAge: number) =>
 function cookieOf(c: Ctx, name: string): string {
   const match = new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]+)`).exec(c.req.headers.get("cookie") || "");
   return match?.[1] || "";
-}
-
-// Only same-site paths, so the redirect can't be pointed at another host.
-function safeNext(n: unknown): string {
-  if (typeof n !== "string") return "/";
-  if (!n.startsWith("/") || n.startsWith("//") || n.startsWith("/\\")) return "/";
-  return n.slice(0, 300);
 }
 
 const redirectUri = (p: Provider) => `${SITE_URL}/api/auth/oauth/${p.id}/callback`;

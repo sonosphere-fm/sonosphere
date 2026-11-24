@@ -51,3 +51,12 @@ export type OAuthPending = { provider: string; username: string; email: string }
 export type OAuthCreated = { user: Me; next: string };
 export type Ok = { ok: true };
 export const UNVERIFIED_DAYS = 14;
+
+const BASE = "https://x.invalid";
+
+export function safeNext(n: unknown): string {
+  if (typeof n !== "string" || n.length > 300 || !n.startsWith("/")) return "/";
+  if (/[\\\u0000-\u001f\u007f]/.test(n)) return "/";
+  const url = new URL(n, BASE);
+  return url.origin === BASE ? url.pathname + url.search + url.hash : "/";
+}

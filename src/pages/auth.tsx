@@ -3,11 +3,16 @@ import { Button, Input, Modal } from "../kit";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { api, qs, TITLES, useApi, useAuth, useTitle } from "../lib";
 import { useAction } from "../ui/base";
-import type { AuthConfig, OAuthCreated, OAuthPending, Ok, Session } from "../../shared/auth";
+import {
+  safeNext,
+  type AuthConfig,
+  type OAuthCreated,
+  type OAuthPending,
+  type Ok,
+  type Session,
+} from "../../shared/auth";
 import { oauthError as oauthErrorText, OAuthButtons } from "../ui/oauth";
 import { t, tx } from "../i18n";
-
-const safeNext = (n: string | null) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/");
 
 type Turnstile = {
   render: (el: HTMLElement, o: Record<string, unknown>) => string;
