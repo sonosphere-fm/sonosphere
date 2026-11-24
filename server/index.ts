@@ -189,12 +189,14 @@ syncCorrections().catch((e) => {
 process.once("SIGTERM", () => {
   const forced = setTimeout(() => process.exit(0), 10_000);
   const freed = Promise.race([releaseAll().catch(() => {}), new Promise((r) => setTimeout(r, 2000))]);
+  const drained = setTimeout(() => server.stop(true), 2000);
   server
     .stop()
     .then(() => freed)
     .then(
       () => {
         clearTimeout(forced);
+        clearTimeout(drained);
         process.exit(0);
       },
       () => process.exit(0)

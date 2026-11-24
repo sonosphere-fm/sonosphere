@@ -1,5 +1,5 @@
 #!/bin/sh
-# Polls GitHub's main every minute and deploys new commits. Needs /opt/spin/github.token (read-only, the repo is
+# Polls GitHub's main every 10 seconds and deploys new commits. Needs /opt/spin/github.token (read-only, the repo is
 # private). Posts progress to the Discord webhook in /opt/spin/discord.webhook if there is one.
 A=/opt/spin
 SRC=$A/src
@@ -55,14 +55,24 @@ timed() {
   return "$phase_status"
 }
 
+backup_db() {
+  timed "Backup image build" $COMPOSE build -q backup || return $?
+  timed "Database backup" $COMPOSE exec -T backup sh /deploy/backup.sh deploy
+}
+
 ship() {
   set -e
   # Supply only the public commit metadata needed by the server, not the whole repository.
   git -C "$SRC" log -30 --first-parent --diff-merges=first-parent --numstat \
     --format='%x00%H%x00%cI%x00%an%x00%s%x00' HEAD -- > "$SRC/server/changelog/history.gitlog" || return $?
-  timed "App image build" docker build --build-arg "GIT_SHA=$1" -t "sonosphere:$1" "$SRC" || return $?
-  timed "Backup image build" $COMPOSE build -q backup || return $?
-  timed "Database backup" $COMPOSE exec -T backup sh /deploy/backup.sh deploy || return $?
+  backup_db > /tmp/backup.log 2>&1 &
+  backup=$!
+  timed "App image build" docker build --build-arg "GIT_SHA=$1" -t "sonosphere:$1" "$SRC" || { wait $backup; return 1; }
+  if ! wait $backup; then
+    cat /tmp/backup.log
+    return 1
+  fi
+  cat /tmp/backup.log
   timed "Preflight" preflight "$1" || return $?
   docker tag "sonosphere:$1" sonosphere:live || return $?
   timed "Service replacement" $COMPOSE up -d --wait postgres valkey app caddy backup || return $?
@@ -101,5 +111,5 @@ while true; do
     echo "$head" > $A/deployed
     deploy "$head"
   fi
-  sleep 60
+  sleep 10
 done
