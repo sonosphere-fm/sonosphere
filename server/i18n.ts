@@ -1,4 +1,5 @@
 import en from "../shared/i18n/en/server";
+import { featureCatalog } from "../shared/i18n/features";
 import es from "../shared/i18n/es/server";
 import de from "../shared/i18n/de/server";
 import ro from "../shared/i18n/ro/server";
@@ -64,10 +65,15 @@ const CATALOGS: Record<Locale, Catalog<typeof en>> = {
   "zh-Hant": zhHant,
 };
 
-export type ServerKey = Key<typeof en>;
-export type ErrorKey = keyof typeof en.errors & string;
+type FactorError = "invalidTwoFactorCode" | "twoFactorExpired" | "twoFactorAlreadyEnabled";
+export type ServerKey = Key<typeof en> | `errors.${FactorError}`;
+export type ErrorKey = (keyof typeof en.errors & string) | FactorError;
 
 export function tr(locale: Locale, key: ServerKey, params?: Params): string {
+  const factor = key.slice(7);
+  if (["invalidTwoFactorCode", "twoFactorExpired", "twoFactorAlreadyEnabled"].includes(factor)) {
+    return format(locale, featureCatalog(locale)[factor as FactorError], params);
+  }
   return format(locale, lookup(CATALOGS[locale], key) ?? lookup(en, key) ?? key, params);
 }
 

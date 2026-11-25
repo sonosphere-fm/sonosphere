@@ -1,4 +1,5 @@
 import { Arrow, Ico } from "../../icons";
+import { FeedLinks } from "../../ui/feed-links";
 import { useState } from "react";
 import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Button } from "../../kit";
@@ -205,6 +206,7 @@ export function UserPage({ tab }: { tab: Tab }) {
               actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}
             />
             <div className="wrap page">
+              <FeedLinks name={u.username} hidden={u.hidden || u.locked} locked={u.locked} />
               {u.blocked && (
                 <p className="notice">
                   {tx("user.blockedNotice", { name: <Username user={u} /> })}{" "}

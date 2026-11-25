@@ -18,6 +18,9 @@ import {
 } from "./service";
 import { checkTurnstile, turnstileSiteKey } from "./turnstile";
 import { oauthProviders } from "./oauth/routes";
+import { finishLogin } from "./totp";
+import type { LoginResult } from "../../shared/totp";
+import { safeNext } from "../../shared/auth";
 import type { AuthConfig, MeResponse, Ok, Session } from "../../shared/auth";
 
 export const router = new Router();
@@ -43,15 +46,14 @@ router.post<Session>("/api/auth/signup", async (c) => {
   return { user: await me(u) };
 });
 
-router.post<Session>("/api/auth/login", async (c) => {
+router.post<LoginResult>("/api/auth/login", async (c) => {
   await limit(`login:${ipOf(c.req)}`, 10, 300);
   const ident = String(c.body.username || "");
   const account = await findByLogin(norm(ident));
   await limit(loginKey(ipOf(c.req), ident, account), 30, 3600);
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "login");
   const u = await logIn(ident, String(c.body.password || ""), ipOf(c.req));
-  await startSession(c.headers, u.id);
-  return { user: await me(u) };
+  return finishLogin(c, u, safeNext(c.body.next));
 });
 
 router.post<Ok>("/api/auth/forgot", async (c) => {
@@ -73,13 +75,12 @@ router.post<Ok>("/api/auth/forgot", async (c) => {
   return { ok: true };
 });
 
-router.post<Session>("/api/auth/reset", async (c) => {
+router.post<LoginResult>("/api/auth/reset", async (c) => {
   await limit(`reset:${ipOf(c.req)}`, 10, 3600);
   const password = String(c.body.password || "");
   if (password.length < MIN_PASSWORD) bad("passwordsNeedLeast8Characters");
   const u = await resetPassword(c.body.token, await hashPassword(password));
-  await startSession(c.headers, u.id);
-  return { user: await me(u) };
+  return finishLogin(c, u);
 });
 
 router.post<Ok & { approvalPending: boolean }>("/api/auth/verify", async (c) => {
