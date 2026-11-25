@@ -762,10 +762,12 @@ function LookAhead() {
 for (const path of apisFor(location.pathname + location.search)) prefetch(path);
 
 // Keyed on the path so a page that is still loading shows a spinner instead of the previous page.
+// Messages loads its own panes, so moving around inside it keeps the page.
 function Routed() {
   const { pathname } = useLocation();
+  const key = pathname.startsWith("/messages") ? "/messages" : pathname;
   return (
-    <Suspense key={pathname} fallback={<Spinner page />}>
+    <Suspense key={key} fallback={<Spinner page />}>
       <Pages />
     </Suspense>
   );
