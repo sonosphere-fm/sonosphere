@@ -1,4 +1,5 @@
 import { rm } from "node:fs/promises";
+import { relative as relativePath, resolve } from "node:path";
 import { execSync } from "node:child_process";
 import tailwind from "bun-plugin-tailwind";
 import { guestHomeShell } from "./home-shell";
@@ -36,7 +37,7 @@ if (!result.success) {
   process.exit(1);
 }
 
-const relative = (path: string) => path.slice(path.indexOf(`/${out}/`) + out.length + 2);
+const relative = (path: string) => relativePath(resolve(out), path).replaceAll("\\", "/");
 
 // Bun inlines every font subset into the stylesheet, which blocks the first paint; as files, a browser fetches only
 // the subsets the page's text needs
