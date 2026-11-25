@@ -32,7 +32,7 @@ export async function changeTheme(theme: ThemePref, update?: () => void) {
   await document.startViewTransition(() => flushSync(change)).updateCallbackDone;
 }
 
-export function startingTheme(): ThemePref {
+function startingTheme(): ThemePref {
   const s = document.documentElement.getAttribute("data-scheme");
   return s === "dark" || s === "system" ? s : "light";
 }

@@ -7,7 +7,7 @@ import { bad, ipOf, limit, Router, type Ctx, type Viewer } from "../../http";
 import { requestLocale } from "../../i18n";
 import { getJson, setJson, takeJson } from "../../kv";
 import { SITE_URL } from "../../mail";
-import { SECURE } from "../session";
+import { hexCookie, SECURE } from "../session";
 import { findById } from "../../users/repo";
 import { clean, digest, rid } from "../../util";
 import * as Sentry from "@sentry/bun";
@@ -26,11 +26,6 @@ const STATE_LIFE = 10 * 60;
 const PENDING_LIFE = 30 * 60;
 const cookie = (name: string, value: string, maxAge: number) =>
   `${name}=${value}; Path=/api/auth/oauth; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE}`;
-
-function cookieOf(c: Ctx, name: string): string {
-  const match = new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]+)`).exec(c.req.headers.get("cookie") || "");
-  return match?.[1] || "";
-}
 
 const redirectUri = (p: Provider) => `${SITE_URL}/api/auth/oauth/${p.id}/callback`;
 const b64url = (b: ArrayBuffer) => Buffer.from(b).toString("base64url");
@@ -82,7 +77,7 @@ router.get("/api/auth/oauth/:provider/start", async (c) => {
 router.get("/api/auth/oauth/:provider/callback", async (c) => {
   // the state has to come back to the browser that set off, once, within ten minutes
   const sent = c.q.get("state") || "";
-  const mine = cookieOf(c, "oauth_state");
+  const mine = hexCookie(c.req, "oauth_state");
   c.headers.append("Set-Cookie", cookie("oauth_state", "", 0));
   const st = sent && sent === mine ? await takeJson<State>(`oauth:state:${digest(sent)}`) : null;
   if (!st || st.provider !== c.params[0]) return failTo(c, c.user ? "link" : "login", "expired");
@@ -155,7 +150,7 @@ async function exchange(p: Provider, code: string, verifier: string): Promise<st
 }
 
 async function pendingOf(c: Ctx): Promise<Pending | null> {
-  const t = cookieOf(c, "oauth_ticket");
+  const t = hexCookie(c.req, "oauth_ticket");
   return t ? getJson<Pending>(`oauth:pending:${digest(t)}`) : null;
 }
 
@@ -176,7 +171,7 @@ router.get<OAuthPending>("/api/auth/oauth/pending", async (c) => {
 
 router.post<OAuthCreated>("/api/auth/oauth/complete", async (c) => {
   await limit(`signup:${ipOf(c.req)}`, 5, 3600, "tooManySignups");
-  const t = cookieOf(c, "oauth_ticket");
+  const t = hexCookie(c.req, "oauth_ticket");
   const key = `oauth:pending:${digest(t)}`;
   const pd = (t && (await getJson<Pending>(key))) || bad("signUpExpiredStartAgain");
   const username = clean(c.body.username, 15);
@@ -205,7 +200,7 @@ router.get<Logins>("/api/me/logins", async (c) => {
 });
 
 router.post<Ok>("/api/me/logins/unlink", async (c) => {
-  const u = need(c);
+  const u = owner(c);
   const provider = String(c.body.provider || "");
   const links = await repo.linksOf(u.id);
   if (!links.some((l) => l.provider === provider)) bad("isntConnected");

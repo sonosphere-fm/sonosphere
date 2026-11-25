@@ -213,7 +213,7 @@ const trustedHosts = new Set(
     .map(hostOf)
 );
 
-function crossSite(req: Request, url: URL) {
+export function crossSite(req: Request, url: URL) {
   const origin = req.headers.get("origin");
   if (!origin) return false;
   try {

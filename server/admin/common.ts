@@ -1,7 +1,6 @@
 import { bad, fail, paging as pageInput, type Ctx } from "../http";
 import type { ErrorKey } from "../i18n";
 import { configAdmins, isAdmin, isStaff } from "../site/roles";
-import { requireUser } from "../users/service";
 import type { User } from "../users/repo";
 
 export const note = (c: Ctx): string =>
@@ -11,7 +10,6 @@ export const note = (c: Ctx): string =>
 export const paging = (q: URLSearchParams, def = 25) => pageInput(q, def, 100);
 export const idList = (v: unknown, max: number): number[] =>
   (Array.isArray(v) ? v : []).map(Number).filter(Number.isFinite).slice(0, max);
-export const targetUser = (name: string): Promise<User> => requireUser(name);
 
 type AccountAction = "suspend" | "ban" | "role" | "delete" | "sessions" | "mute" | "impersonate";
 const OWN_ACCOUNT: Record<AccountAction, ErrorKey> = {

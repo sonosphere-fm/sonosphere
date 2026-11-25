@@ -10,7 +10,7 @@ import { mailMessage } from "../notifications/email";
 import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./repo";
 import { checkReaction, reactionsOf, toggle } from "./reactions";
-import { softDeleteTx as softDeleteGroupTx, unreadGroups, memberIds, type GroupRemoved } from "./groups.repo";
+import { unreadGroups, memberIds, sentSinceTx as groupSentSinceTx, type GroupRemoved } from "./groups.repo";
 import type { Flag, Message, Thread, Tx } from "./repo";
 import type {
   DmAccepted,
@@ -113,6 +113,14 @@ async function allowed(locale: Locale, from: User, to: User | null): Promise<All
   }
 }
 
+// direct and group messages share one allowance
+export const sentSinceTx = async (tx: Tx, userId: number, since: number): Promise<number> =>
+  (await repo.sentSinceTx(tx, userId, since)) + (await groupSentSinceTx(tx, userId, since));
+
+export function checkUnsend(m: { createdAt: number; deletedAt: number | null }): void {
+  if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "messagesOnlyUnsent15Minutes");
+}
+
 export async function dmLimits(from: User) {
   if (await onProbation(from)) {
     return {
@@ -132,10 +140,10 @@ async function throttle(tx: Tx, from: User, body: string, startsThread: boolean,
     flags.push({ userId: from.id, kind, detail, sample: body });
   };
   const lim = await dmLimits(from);
-  if ((await repo.sentSinceTx(tx, from.id, t - 60)) >= lim.perMinute) {
+  if ((await sentSinceTx(tx, from.id, t - 60)) >= lim.perMinute) {
     fail(429, "youreSendingMessagesTooQuickly");
   }
-  if ((await repo.sentSinceTx(tx, from.id, t - 86400)) >= lim.perDay) {
+  if ((await sentSinceTx(tx, from.id, t - 86400)) >= lim.perDay) {
     flag("volume", `${lim.perDay} messages in a day`);
     fail(429, "youveReachedTodaysMessageLimit");
   }
@@ -155,7 +163,8 @@ async function throttle(tx: Tx, from: User, body: string, startsThread: boolean,
   }
 }
 
-const messageShape = (m: Message, reactions: DmReaction[] = []): DmMessage => ({
+type Shaped = Pick<Message, "id" | "senderId" | "body" | "createdAt" | "deletedAt">;
+export const messageShape = (m: Shaped, reactions: DmReaction[] = []): DmMessage => ({
   id: m.id,
   from: m.senderId,
   body: m.deletedAt ? "" : m.body,
@@ -263,10 +272,6 @@ async function removeMessage(messageId: number, byUserId: number): Promise<void>
   const removed = await repo.softDeleteTx(repo.connection, messageId, byUserId, now());
   if (removed) await announceRemoved([removed]);
 }
-
-// Pass the result to announceRemoved once the transaction commits.
-export const removeGroupMessageTx = (tx: Tx, messageId: number, byUserId: number): Promise<GroupRemoved | null> =>
-  softDeleteGroupTx(tx, messageId, byUserId, now());
 
 export const removeMessageTx = (tx: Tx, messageId: number, byUserId: number): Promise<repo.Removed | null> =>
   repo.softDeleteTx(tx, messageId, byUserId, now());
@@ -380,7 +385,7 @@ export async function clear(me: User, threadId: unknown): Promise<DmDone> {
 export async function unsend(me: User, messageId: unknown): Promise<DmUnsent> {
   const m = (await repo.ownMessage(Number(messageId) || 0, me.id)) ?? fail(404, "messageNotFound");
   await myThread(m.threadId, me.id);
-  if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "messagesOnlyUnsent15Minutes");
+  checkUnsend(m);
   await removeMessage(m.id, me.id);
   return { ok: true };
 }

@@ -1,9 +1,8 @@
-import { norm, now } from "../util";
+import { isObject, norm, now } from "../util";
 import * as repo from "./repo";
 
 const TIMEOUT_MS = 8000;
 const DAY = 86400;
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
 
 // Without YOUTUBE_API_KEY the public results page is scraped instead of using the search API.
 async function findVideos(artist: string, track: string): Promise<string[]> {
@@ -16,11 +15,11 @@ async function findVideos(artist: string, track: string): Promise<string[]> {
     const r = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!r.ok) throw new Error(`YouTube API ${r.status}`);
     const data: unknown = await r.json();
-    if (!isRecord(data)) throw new Error("YouTube API sent no result");
+    if (!isObject(data)) throw new Error("YouTube API sent no result");
     const items: unknown = data.items || [];
     if (!Array.isArray(items)) throw new Error("YouTube API sent no list");
     return items
-      .map((i: unknown) => (isRecord(i) && isRecord(i.id) ? i.id.videoId : null))
+      .map((i: unknown) => (isObject(i) && isObject(i.id) ? i.id.videoId : null))
       .filter((id): id is string => typeof id === "string" && id !== "");
   }
   const r = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, {

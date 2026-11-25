@@ -12,7 +12,9 @@ import { namesFrom } from "../tags/service";
 import { limit as trustLimit } from "../trust/service";
 import { findById, findByName, followingCount, lovedCount, type User } from "../users/repo";
 import { like, now, norm, rid } from "../util";
-import { getJson, setJson } from "../kv";
+import { canSeeCharts } from "../users/service";
+import { bump, getJson, setJson } from "../kv";
+import { loginKey, passwordMatches } from "../auth/service";
 import { latestWiki } from "../wiki/repo";
 import { countryName } from "../../shared/countries";
 import * as repo from "./repo";
@@ -34,7 +36,7 @@ function fail(code: number, message: string): never {
 export type Params = Record<string, unknown>;
 export type Reply = Record<string, unknown>;
 type Page = { limit: number; page: number; offset: number };
-type Call = { p: Params; origin: string; app: repo.App; pg: Page };
+type Call = { p: Params; origin: string; ip: string; app: repo.App; pg: Page };
 type Method = (c: Call) => Promise<Reply>;
 
 function text(v: unknown): string {
@@ -100,10 +102,10 @@ async function userOf(name: unknown, fallback?: number): Promise<User> {
 }
 
 // An empty chart for someone who keeps their listening private, or undefined when it may be read.
-const shut = (u: User) => (u.privateListening ? { items: [], total: 0 } : undefined);
+const shut = (u: User) => (canSeeCharts(u, null) ? undefined : { items: [], total: 0 });
 const forUser = (u: User, r: [number, number]) => (u.hideRecent ? coarse(r) : r);
 
-const listeningOpen = (u: User, me: number | undefined) => u.id === me || !(u.privateListening || u.banned);
+const listeningOpen = (u: User, me: number | undefined) => u.id === me || (!u.banned && canSeeCharts(u, null));
 
 // As in the main search, % and _ are plain characters.
 // A single character matches most of the catalogue, so it only finds exact names.
@@ -320,9 +322,14 @@ const methods: Record<string, Method> = {
     signed(c);
     const name = text(c.p.username);
     const u = await findByName(name);
-    await limit(u ? `login-id:${u.id}` : `login-as:${norm(name)}`, 30, 3600);
-    const ok = u && !u.banned && !!u.passwordHash && (await Bun.password.verify(text(c.p.password), u.passwordHash));
-    if (!ok) fail(4, "Authentication Failed - You do not have permissions to access the service");
+    await limit(loginKey(c.ip, name, u), 30, 3600);
+    // no captcha here, so failures also cap per account
+    const misses = `login-miss:${u?.id}`;
+    if (u && (await bump(misses, 0, 3600_000)) >= 100) fail(29, "Rate limit exceeded");
+    if (!u || u.banned || !(await passwordMatches(u, text(c.p.password)))) {
+      if (u) await bump(misses, 1, 3600_000);
+      return fail(4, "Authentication Failed - You do not have permissions to access the service");
+    }
     return newSession(c, u.id);
   },
 
@@ -901,12 +908,12 @@ const methods: Record<string, Method> = {
   },
 };
 
-export async function call(p: Params, origin: string): Promise<Reply> {
+export async function call(p: Params, origin: string, ip: string): Promise<Reply> {
   const app =
     (await repo.appByKey(key(p.api_key))) ??
     fail(10, "Invalid API key - You must be granted a valid key by this service");
   const name = String(p.method || "").toLowerCase();
   const method = Object.hasOwn(methods, name) ? methods[name] : undefined;
   if (!method) fail(3, "Invalid Method - No method with that name in this package");
-  return method({ p, origin, app, pg: page(p) });
+  return method({ p, origin, ip, app, pg: page(p) });
 }

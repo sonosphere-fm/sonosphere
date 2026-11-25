@@ -9,7 +9,7 @@ import { pickMain, type MainCandidate } from "./main";
 import type { GalleryImage, GalleryKind, GalleryList, GalleryVote } from "../../shared/images";
 
 /** Candidates kept per artist or album. */
-export const MAX_IMAGES = 12;
+const MAX_IMAGES = 12;
 
 const candidateScore = sql<number>`COALESCE(SUM(${catalogueImageVotes.value}), 0)::int`;
 

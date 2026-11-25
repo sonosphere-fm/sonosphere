@@ -156,7 +156,7 @@ router.post<Ok>("/api/me/password", async (c) => {
 });
 
 router.post<Ok>("/api/me/delete", async (c) => {
-  const u = need(c);
+  const u = owner(c);
   if (!(await confirmedBy(u, String(c.body.password || ""))))
     bad(u.passwordHash ? "passwordIncorrect" : "notYourUsername");
   await repo.deleteAccount(u.id);

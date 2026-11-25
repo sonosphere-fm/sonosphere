@@ -11,6 +11,7 @@ import type { Me } from "../../shared/auth";
 import { isLocale, type Locale } from "../../shared/i18n/core";
 import { storedProfileLinks } from "../../shared/profile-links";
 import { USERNAME } from "../account/username-policy";
+import { usernameUnavailable } from "../account/usernames";
 import { appearanceFor } from "../users/appearance";
 export { USERNAME } from "../account/username-policy";
 
@@ -54,6 +55,9 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
 export const MIN_PASSWORD = 8;
 export const hashPassword = (password: string): Promise<string> =>
   Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
+// per account and address, so a stranger elsewhere can't lock the owner out
+export const loginKey = (ip: string, ident: string, account: User | null) =>
+  `login-id:${account ? account.id : `as:${norm(ident)}`}:${ip}`;
 export const passwordMatches = async (u: User, password: string): Promise<boolean> =>
   !!u.passwordHash && !!password && Bun.password.verify(password, u.passwordHash);
 
@@ -79,7 +83,7 @@ export async function checkNewAccount(username: string, email: string): Promise<
   if (!open && !(await configAdmins()).includes(norm(username))) fail(403, "registrationsClosedMoment");
   if (!USERNAME.test(username)) bad("invalidUsername");
   if (!validEmail(email)) bad("enterValidEmailAddress");
-  if (await repo.usernameTaken(username)) bad("usernameTaken");
+  if (await usernameUnavailable(username)) bad("usernameTaken");
   if (await repo.emailTaken(email)) bad("accountEmailAlreadyExists");
 }
 // An empty passwordHash makes an account that signs in only through OAuth until a password is set.

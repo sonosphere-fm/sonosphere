@@ -92,7 +92,7 @@ export async function handleCompat(req: Request): Promise<Response> {
     }
   }
   try {
-    return ok(json, await call(p, url.origin));
+    return ok(json, await call(p, url.origin, ip));
   } catch (e) {
     if (e instanceof ApiError) return failed(json, e.code, e.message, FORBIDDEN.includes(e.code) ? 403 : 400);
     // rules shared with the website, such as its rate limits and who may tag

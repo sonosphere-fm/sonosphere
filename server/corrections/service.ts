@@ -1,5 +1,5 @@
 import { exclusive } from "../kv";
-import { clean, norm, now } from "../util";
+import { clean, isObject, norm, now } from "../util";
 import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
 import * as store from "./store";
@@ -26,7 +26,6 @@ let tables: Tables = {
 };
 let versions: Record<string, string> = {};
 
-const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const str = (v: unknown) => (typeof v === "string" ? clean(v) : "");
 const isMbid = (v: unknown): v is string =>
   typeof v === "string" && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);

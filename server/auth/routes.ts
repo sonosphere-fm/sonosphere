@@ -5,7 +5,17 @@ import { disconnect } from "../realtime";
 import { clean, norm } from "../util";
 import { findByLogin } from "./repo";
 import { confirmEmail, requestReset, resetPassword, sendVerification } from "./email";
-import { endSession, hashPassword, logIn, me, MIN_PASSWORD, signUp, startSession, validEmail } from "./service";
+import {
+  endSession,
+  hashPassword,
+  logIn,
+  loginKey,
+  me,
+  MIN_PASSWORD,
+  signUp,
+  startSession,
+  validEmail,
+} from "./service";
 import { checkTurnstile, turnstileSiteKey } from "./turnstile";
 import { oauthProviders } from "./oauth/routes";
 import type { AuthConfig, MeResponse, Ok, Session } from "../../shared/auth";
@@ -36,9 +46,8 @@ router.post<Session>("/api/auth/signup", async (c) => {
 router.post<Session>("/api/auth/login", async (c) => {
   await limit(`login:${ipOf(c.req)}`, 10, 300);
   const ident = String(c.body.username || "");
-  // one bucket per account however it's spelled; unknown names get one too, so a refusal reveals nothing
   const account = await findByLogin(norm(ident));
-  await limit(account ? `login-id:${account.id}` : `login-as:${norm(ident)}`, 30, 3600);
+  await limit(loginKey(ipOf(c.req), ident, account), 30, 3600);
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "login");
   const u = await logIn(ident, String(c.body.password || ""));
   await startSession(c.headers, u.id);

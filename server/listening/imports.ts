@@ -6,7 +6,7 @@ import { bad, fail, int, missing, Router, throttle } from "../http";
 import { exclusive } from "../kv";
 import { setLatestImport } from "../listenbrainz/repo";
 import { lastfmCall } from "../metadata/sources";
-import { clean, now } from "../util";
+import { clean, now, UUID } from "../util";
 import * as Sentry from "@sentry/bun";
 import { importListenBrainz, importLoved, scrobbleMany } from "./service";
 import {
@@ -20,7 +20,6 @@ import {
 
 const SLICE = 1000;
 const ACTIVE = ["uploading", "queued", "running"];
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 type Row = ImportRow;
 type Job = typeof importJobs.$inferSelect;

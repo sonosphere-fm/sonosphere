@@ -13,9 +13,6 @@ export async function createSession(token: string, userId: number): Promise<void
 export async function deleteSession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, digest(token)));
 }
-export async function deleteSessionsOf(userId: number, keep = ""): Promise<void> {
-  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, keep && digest(keep))));
-}
 
 export const findByLogin = (ident: string): Promise<User | null> =>
   first(
@@ -25,10 +22,6 @@ export const findByLogin = (ident: string): Promise<User | null> =>
       .where(or(eq(users.usernameNorm, ident), eq(users.email, ident)))
       .limit(1)
   );
-
-export async function usernameTaken(username: string): Promise<boolean> {
-  return usernameUnavailable(username);
-}
 
 export async function emailTaken(email: string, exceptId = 0): Promise<boolean> {
   const row = await first(

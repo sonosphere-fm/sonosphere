@@ -1,7 +1,7 @@
 // lotus (github.com/katelyynn/lotus, GPL-3.0): downloaded, never bundled
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { now } from "../util";
+import { isObject, now } from "../util";
 
 const RAW = "https://raw.githubusercontent.com/katelyynn";
 const FILES = {
@@ -18,7 +18,6 @@ export const SOURCES = Object.keys(FILES) as Source[];
 export type Raw = Record<Source, unknown> & { at: number };
 
 const CACHE = `${process.env.DATA_DIR || "data"}/corrections.json`;
-const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
 export function readSaved(): Raw | null {
   let saved: unknown;

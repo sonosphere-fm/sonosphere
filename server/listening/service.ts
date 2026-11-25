@@ -30,7 +30,7 @@ export type ScrobbleInput = {
   duration?: unknown;
 };
 
-const OLDEST = 946684800;
+export const OLDEST = 946684800;
 
 const UPLOAD = /^(.+?)\s+[-–—]\s+(.+)$/;
 const uploads = new Map<string, { artist: string; track: string } | null>();

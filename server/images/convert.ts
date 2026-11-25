@@ -1,7 +1,7 @@
 const Image = Bun.Image;
 Image.backend = "bun"; // Bun's bundled decoders, never system codecs
 
-export const MAX_PIXELS = 40_000_000;
+const MAX_PIXELS = 40_000_000;
 export const SIZES = { large: 1200, small: 300 } as const;
 
 const OPTIONS = { maxPixels: MAX_PIXELS, autoOrient: true };

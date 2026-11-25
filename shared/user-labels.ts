@@ -10,6 +10,6 @@ export const LABEL_ICONS = [
   "translate",
   "sparkle",
 ] as const;
-export type LabelIcon = (typeof LABEL_ICONS)[number];
+type LabelIcon = (typeof LABEL_ICONS)[number];
 export type UserLabel = { id: number; text: string; icon: LabelIcon; color: string };
 export type LabelDirectory = { labels: UserLabel[]; users: Record<string, number[]> };

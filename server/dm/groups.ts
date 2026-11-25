@@ -5,11 +5,23 @@ import { push } from "../realtime";
 import { blockedAmong, blockedEither, findById, type User } from "../users/repo";
 import { now } from "../util";
 import { mailMessage } from "../notifications/email";
-import { announceRemoved, canPost, DM, dmCounts, dmLimits, gate, opening, tidy } from "./service";
+import {
+  announceRemoved,
+  canPost,
+  checkUnsend,
+  DM,
+  dmCounts,
+  dmLimits,
+  gate,
+  messageShape as directShape,
+  opening,
+  sentSinceTx,
+  tidy,
+} from "./service";
 import { onProbation, PROBATION } from "../trust/service";
 import * as repo from "./groups.repo";
 import { checkReaction, reactionsOf, toggle } from "./reactions";
-import { atomically, connection, followersAmong, sentSinceTx } from "./repo";
+import { atomically, connection, followersAmong } from "./repo";
 import type { Group, GroupMessage, Member } from "./groups.repo";
 import type {
   DmDone,
@@ -70,14 +82,9 @@ async function checkAddable(me: User, target: User | null, others: number[]): Pr
 }
 
 const messageShape = (m: GroupMessage, reactions: DmReaction[] = []): DmGroupMessage => ({
-  id: m.id,
-  from: m.senderId,
+  ...directShape(m, reactions),
   name: m.name,
-  body: m.deletedAt ? "" : m.body,
   event: m.event,
-  at: m.createdAt,
-  deleted: !!m.deletedAt,
-  reactions: m.deletedAt ? [] : reactions,
 });
 
 async function shapeAll(groups: Group[], userId: number): Promise<DmGroup[]> {
@@ -226,10 +233,8 @@ export async function send(me: User, groupId: unknown, rawBody: unknown): Promis
   const lim = await dmLimits(me);
   const id = await atomically(async (tx) => {
     const t = now();
-    const sent = async (since: number) =>
-      (await sentSinceTx(tx, me.id, since)) + (await repo.sentSinceTx(tx, me.id, since));
-    if ((await sent(t - 60)) >= lim.perMinute) fail(429, "youreSendingMessagesTooQuickly");
-    if ((await sent(t - 86400)) >= lim.perDay) fail(429, "youveReachedTodaysMessageLimit");
+    if ((await sentSinceTx(tx, me.id, t - 60)) >= lim.perMinute) fail(429, "youreSendingMessagesTooQuickly");
+    if ((await sentSinceTx(tx, me.id, t - 86400)) >= lim.perDay) fail(429, "youveReachedTodaysMessageLimit");
     return repo.addMessageTx(tx, group.id, me.id, body, null, t);
   });
   const to = await audience(group.id, me.id);
@@ -329,7 +334,7 @@ export async function leave(me: User, groupId: unknown): Promise<DmDone> {
 export async function unsend(me: User, messageId: unknown): Promise<DmUnsent> {
   const m = (await repo.ownMessage(Number(messageId) || 0, me.id)) ?? fail(404, "messageNotFound");
   await mine(m.groupId, me.id);
-  if (!m.deletedAt && now() - m.createdAt > DM.UNSEND_WINDOW) fail(403, "messagesOnlyUnsent15Minutes");
+  checkUnsend(m);
   await announceRemoved([await repo.softDeleteTx(connection, m.id, me.id, now())]);
   return { ok: true };
 }

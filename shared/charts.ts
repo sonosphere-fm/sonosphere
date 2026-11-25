@@ -1,5 +1,4 @@
 export const CHART_MAX_SIDE = 15;
-export const CHART_MAX_IMAGES = 225;
 
 export const CHART_PERIODS = {
   weekly: "7day",
@@ -31,12 +30,7 @@ export type ChartRequest = {
   censorAlbums: string;
 };
 
-export type ChartShortage =
-  | "Hidden"
-  | "NotEnough"
-  | "NotEnoughReleaseYear"
-  | "NotEnoughReleaseDecade"
-  | "NotEnoughNonSingles";
+type ChartShortage = "Hidden" | "NotEnough" | "NotEnoughReleaseYear" | "NotEnoughReleaseDecade" | "NotEnoughNonSingles";
 
 export type ChartReply =
   | {
