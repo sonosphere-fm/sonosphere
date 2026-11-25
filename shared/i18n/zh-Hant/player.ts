@@ -14,6 +14,7 @@ export default {
   scrobbled: "已記錄",
   openInSpotify: "在 Spotify 中開啟",
   watchOnYouTube: "在 YouTube 上觀看",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "在 YouTube 上搜尋",
   seek: "進度",
   timeOf: "{position} / {length}",

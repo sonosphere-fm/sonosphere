@@ -14,6 +14,7 @@ export default {
   scrobbled: "스크로블됨",
   openInSpotify: "Spotify에서 열기",
   watchOnYouTube: "YouTube에서 보기",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTube에서 검색",
   seek: "재생 위치",
   timeOf: "{position} / {length}",

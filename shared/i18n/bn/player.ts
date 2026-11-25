@@ -14,6 +14,7 @@ export default {
   scrobbled: "স্ক্রবল হয়েছে",
   openInSpotify: "Spotify-তে খুলুন",
   watchOnYouTube: "YouTube-এ দেখুন",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTube-এ খুঁজুন",
   seek: "সিক",
   timeOf: "{length}-এর মধ্যে {position}",

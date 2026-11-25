@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isPrivateAddress, parseServerUrl, pickSongs } from "./url";
+import { isPrivateAddress, parseServerUrl } from "./url";
 
 describe("parseServerUrl", () => {
   test("keeps a plain server address", () => {
@@ -71,28 +71,5 @@ describe("isPrivateAddress", () => {
     "example.com",
   ])("allows %s", (address) => {
     expect(isPrivateAddress(address)).toBe(false);
-  });
-});
-
-describe("pickSongs", () => {
-  test("keeps the closest audio matches and drops everything else", () => {
-    const songs = [
-      { id: "1", title: "Other", artist: "Someone" },
-      { id: "2", title: "Song (Remastered)", artist: "The Artist" },
-      { id: "3", title: "Song", artist: "Artist feat. X" },
-      { id: "4", title: "Song", artist: "The Artist", isVideo: true },
-      { id: "5", title: "Song", artist: "The Artist", type: "podcast" },
-      { id: "6", title: "Song", artist: "The Artist" },
-      { id: "2", title: "Song (Remastered)", artist: "The Artist" },
-    ];
-    expect(pickSongs(songs, "The Artist", "Song")).toEqual(["2", "6", "3"]);
-  });
-
-  test("returns nothing when the search found other music", () => {
-    expect(pickSongs([{ id: "1", title: "Other", artist: "Someone" }], "The Artist", "Song")).toEqual([]);
-  });
-
-  test("accepts a single song object", () => {
-    expect(pickSongs({ id: "7", title: "Song", artist: "The Artist" }, "The Artist", "Song")).toEqual(["7"]);
   });
 });

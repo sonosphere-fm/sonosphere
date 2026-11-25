@@ -14,6 +14,7 @@ export default {
   scrobbled: "Scrobblad",
   openInSpotify: "Öppna i Spotify",
   watchOnYouTube: "Titta på YouTube",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "Sök på YouTube",
   seek: "Spola",
   timeOf: "{position} av {length}",

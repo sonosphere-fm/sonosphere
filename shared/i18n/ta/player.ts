@@ -14,6 +14,7 @@ export default {
   scrobbled: "ஸ்க்ராபிள் செய்யப்பட்டது",
   openInSpotify: "Spotify இல் திற",
   watchOnYouTube: "YouTube இல் பார்",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTube இல் தேடு",
   seek: "நகர்த்து",
   timeOf: "{length} இல் {position}",

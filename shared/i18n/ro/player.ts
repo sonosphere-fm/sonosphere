@@ -14,6 +14,7 @@ export default {
   scrobbled: "Scrobble făcut",
   openInSpotify: "Deschide în Spotify",
   watchOnYouTube: "Urmărește pe YouTube",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "Caută pe YouTube",
   seek: "Derulează",
   timeOf: "{position} din {length}",

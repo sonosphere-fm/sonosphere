@@ -46,7 +46,7 @@ mock.module("../seal", () => ({
 }));
 
 process.env.SUBSONIC_ALLOW_PRIVATE = "1";
-const { connect, disconnect, status, stream, verify } = await import("./service");
+const { auth, connect, disconnect, source, status, stream, streamById, verify } = await import("./service");
 
 const PASSWORD = "hunter2";
 const audio = Uint8Array.from({ length: 1000 }, (_, i) => i % 256);
@@ -84,8 +84,8 @@ const server = Bun.serve({
           status: "ok",
           searchResult3: {
             song: [
-              { id: "bad", title: "Song Two", artist: "The Band" },
-              { id: "good", title: "Song Two", artist: "The Band" },
+              { id: "bad", title: "Song Two", artist: "The Band", albumId: "al2" },
+              { id: "good", title: "Song Two", artist: "The Band", albumId: "al3" },
             ],
           },
         });
@@ -93,15 +93,15 @@ const server = Bun.serve({
       if (query.includes("Boom")) {
         return response({
           status: "ok",
-          searchResult3: { song: [{ id: "boom", title: "Song Boom", artist: "The Band" }] },
+          searchResult3: { song: [{ id: "boom", title: "Song Boom", artist: "The Band", albumId: "al4" }] },
         });
       }
       return response({
         status: "ok",
         searchResult3: {
           song: [
-            { id: "other", title: "Something Else", artist: "Nobody" },
-            { id: "one", title: "Song One", artist: "The Band" },
+            { id: "other", title: "Something Else", artist: "Nobody", albumId: "al0" },
+            { id: "one", title: "Song One", artist: "The Band", albumId: "al1" },
           ],
         },
       });
@@ -136,7 +136,7 @@ const base = `http://127.0.0.1:${server.port}`;
 
 beforeAll(async () => {
   const info = await verify(base, "listener", PASSWORD);
-  expect(info).toEqual({ name: "navidrome", version: "0.54.0", openSubsonic: true });
+  expect(info).toEqual({ name: "navidrome", version: "0.54.0", openSubsonic: true, token: true });
 });
 
 afterAll(() => {
@@ -235,5 +235,41 @@ describe("stream", () => {
       expect(value).not.toContain(PASSWORD);
       expect(value).not.toContain("listener");
     }
+  });
+});
+
+describe("browser auth", () => {
+  test("hands out token auth and the album's web address", async () => {
+    rejectToken = false;
+    await connect(1, { url: base, username: "listener", password: PASSWORD });
+    const a = await auth(1);
+    expect(a).toMatchObject({ base, username: "listener", name: "navidrome", direct: true });
+    expect(a.token).toBe(
+      createHash("md5")
+        .update(PASSWORD + a.salt)
+        .digest("hex")
+    );
+    // the same query the browser builds
+    const reply = await fetch(
+      `${a.base}/rest/search3.view?u=${encodeURIComponent(a.username)}&v=1.16.1&c=Sonosphere&f=json&t=${a.token}&s=${a.salt}&query=The+Band+Song+One`
+    ).then((r) => r.json());
+    expect(reply["subsonic-response"].status).toBe("ok");
+    const s = await source(1, "The Band", "Song One");
+    expect(s.proxy).toBe("/api/subsonic/stream?id=one");
+    expect(s.albumUrl).toBe(`${base}/app/#/album/al1/show`);
+  });
+
+  test("says direct is not worth trying when the server refuses tokens", async () => {
+    rejectToken = true;
+    await connect(1, { url: base, username: "listener", password: PASSWORD });
+    expect(await auth(1)).toMatchObject({ direct: false });
+    rejectToken = false;
+  });
+
+  test("streams a resolved song by id", async () => {
+    const reply = await streamById(1, "one", "bytes=0-9");
+    expect(reply.status).toBe(206);
+    expect(reply.headers.get("content-range")).toBe("bytes 0-9/1000");
+    expect((await reply.arrayBuffer()).byteLength).toBe(10);
   });
 });

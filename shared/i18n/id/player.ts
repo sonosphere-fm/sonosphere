@@ -14,6 +14,7 @@ export default {
   scrobbled: "Di-scrobble",
   openInSpotify: "Buka di Spotify",
   watchOnYouTube: "Tonton di YouTube",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "Cari di YouTube",
   seek: "Cari",
   timeOf: "{position} dari {length}",
