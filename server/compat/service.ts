@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { findAlbum, findArtist, findItem, findTag, findTrack, hasLoved } from "../catalog/repo";
 import { correct, mbidOfAlbum, mbidOfArtist } from "../corrections/service";
-import { range } from "../listening/period";
+import { coarse, range } from "../listening/period";
 import { counts, nowPlaying, recent, setLoved, top } from "../listening/repo";
 import { resolve, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { similarArtists, similarTracks } from "../recommend/service";
@@ -101,6 +101,7 @@ async function userOf(name: unknown, fallback?: number): Promise<User> {
 
 // An empty chart for someone who keeps their listening private, or undefined when it may be read.
 const shut = (u: User) => (u.privateListening ? { items: [], total: 0 } : undefined);
+const forUser = (u: User, r: [number, number]) => (u.hideRecent ? coarse(r) : r);
 
 const listeningOpen = (u: User, me: number | undefined) => u.id === me || !(u.privateListening || u.banned);
 
@@ -426,7 +427,7 @@ const methods: Record<string, Method> = {
   },
   "user.gettopartists": async (c) => {
     const u = await userOf(c.p.user);
-    const [from, to] = period(c.p);
+    const [from, to] = forUser(u, period(c.p));
     const r = shut(u) ?? (await top("artists", { userId: u.id, from, to }, c.pg.limit, c.pg.offset));
     return {
       topartists: {
@@ -437,7 +438,7 @@ const methods: Record<string, Method> = {
   },
   "user.gettopalbums": async (c) => {
     const u = await userOf(c.p.user);
-    const [from, to] = period(c.p);
+    const [from, to] = forUser(u, period(c.p));
     const r = shut(u) ?? (await top("albums", { userId: u.id, from, to }, c.pg.limit, c.pg.offset));
     return {
       topalbums: {
@@ -448,7 +449,7 @@ const methods: Record<string, Method> = {
   },
   "user.gettoptracks": async (c) => {
     const u = await userOf(c.p.user);
-    const [from, to] = period(c.p);
+    const [from, to] = forUser(u, period(c.p));
     const r = shut(u) ?? (await top("tracks", { userId: u.id, from, to }, c.pg.limit, c.pg.offset));
     return {
       toptracks: {
@@ -529,7 +530,7 @@ const methods: Record<string, Method> = {
   },
   "user.getweeklyartistchart": async (c) => {
     const u = await userOf(c.p.user);
-    const [from, to] = weekRange(c.p);
+    const [from, to] = forUser(u, weekRange(c.p));
     const r = shut(u) ?? (await top("artists", { userId: u.id, from, to }, c.pg.limit, 0));
     const artist = r.items.map((a, i) => ({
       "@attr": { rank: String(i + 1) },
@@ -542,7 +543,7 @@ const methods: Record<string, Method> = {
   },
   "user.getweeklyalbumchart": async (c) => {
     const u = await userOf(c.p.user);
-    const [from, to] = weekRange(c.p);
+    const [from, to] = forUser(u, weekRange(c.p));
     const r = shut(u) ?? (await top("albums", { userId: u.id, from, to }, c.pg.limit, 0));
     const album = r.items.map((a, i) => ({
       artist: { "#text": a.artist, mbid: mbidOfArtist(a.artist) },
@@ -556,7 +557,7 @@ const methods: Record<string, Method> = {
   },
   "user.getweeklytrackchart": async (c) => {
     const u = await userOf(c.p.user);
-    const [from, to] = weekRange(c.p);
+    const [from, to] = forUser(u, weekRange(c.p));
     const r = shut(u) ?? (await top("tracks", { userId: u.id, from, to }, c.pg.limit, 0));
     const track = r.items.map((t, i) => ({
       artist: { "#text": t.artist, mbid: mbidOfArtist(t.artist) },
