@@ -250,4 +250,9 @@ export default {
   noOneHere: "ابھی یہاں کوئی نہیں۔",
   following: "فالو کر رہے ہیں",
   follow: "فالو کریں",
+  milestones: "سنگ میل",
+  firstScrobble: "پہلا اسکروبل",
+  scrobbleNumber: "اسکروبل #{n}",
+  nextMilestone: "اگلا: اسکروبل #{n}، {left} باقی",
+  yearCard: "سالانہ کارڈ",
 } satisfies Translation<typeof en>;

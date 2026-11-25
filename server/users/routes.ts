@@ -3,13 +3,13 @@ import { confirmed, need } from "../guards";
 import { bad, fail, oneOf, paging, Router } from "../http";
 import { coarse, range } from "../listening/period";
 import * as listening from "../listening/repo";
-import { blasts, report, stats } from "../listening/service";
+import { blasts, milestones, report, stats } from "../listening/service";
 import { notify } from "../notifications/repo";
 import { neighbours } from "../recommend/service";
 import { artistLibrary, people, profile } from "./profile";
 import * as repo from "./repo";
 import { canSee, canSeeCharts, requireUser, requireVisibleUser } from "./service";
-import { type Blasts, type ListeningStats, type Report, reportType } from "../../shared/listening";
+import { type Blasts, type ListeningStats, type Milestones, type Report, reportType } from "../../shared/listening";
 import type {
   FollowResult,
   Neighbours,
@@ -113,6 +113,12 @@ router.get<Blasts>("/api/user/blasts", async (c) => {
   if (!canSee(u, c.user)) return fail(403, PRIVATE);
   const offset = Math.max(0, Math.min(52, Number(c.q.get("offset")) || 0));
   return blasts(u.id, offset, Number(c.q.get("tz")) || 0, c.user?.id);
+});
+
+router.get<Milestones>("/api/user/milestones", async (c) => {
+  const u = await requireVisibleUser(c.q.get("name"), c.user);
+  if (!canSee(u, c.user)) return fail(403, PRIVATE);
+  return milestones(u.id, c.user?.id);
 });
 
 router.get<UserTags>("/api/user/tags", async (c) => {

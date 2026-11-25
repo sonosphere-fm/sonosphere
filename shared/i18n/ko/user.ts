@@ -248,4 +248,9 @@ export default {
   noOneHere: "아직 아무도 없어요.",
   following: "팔로잉",
   follow: "팔로우",
+  milestones: "마일스톤",
+  firstScrobble: "첫 스크로블",
+  scrobbleNumber: "{n}번째 스크로블",
+  nextMilestone: "다음: {n}번째 스크로블, {left} 남음",
+  yearCard: "연간 카드",
 } satisfies Translation<typeof en>;

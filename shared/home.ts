@@ -9,6 +9,7 @@ export type Charts<T extends TopArtist | TopAlbum | TopTrack | ChartTag = TopArt
   { items: T[]; total: number } & Paging;
 
 export type FriendActivity = { user: PublicUser; track: NowPlaying | RecentTrack; nowPlaying: boolean };
+export type Friends = { items: FriendActivity[] };
 export type FriendLove = {
   id: number;
   title: string;

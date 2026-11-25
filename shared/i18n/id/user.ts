@@ -253,4 +253,9 @@ export default {
   noOneHere: "Belum ada siapa pun di sini.",
   following: "Mengikuti",
   follow: "Ikuti",
+  milestones: "Pencapaian",
+  firstScrobble: "Scrobble pertama",
+  scrobbleNumber: "Scrobble ke-{n}",
+  nextMilestone: "Berikutnya: scrobble ke-{n}, kurang {left}",
+  yearCard: "Kartu tahunan",
 } satisfies Translation<typeof en>;

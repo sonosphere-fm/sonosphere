@@ -15,6 +15,8 @@ import {
   daysBetween,
   type EditScope,
   type ListeningStats,
+  MILESTONES,
+  type Milestones,
   type Report,
   type ReportType,
   type ScrobbleResult,
@@ -244,6 +246,23 @@ export async function stats(userId: number, offset: number, tzMin: number, viewe
     longestStreak: longest,
     currentStreak: latest && daysBetween(latest, today) <= 1 ? last : 0,
     topShare: plays ? top.reduce((sum, a) => sum + a.playcount, 0) / plays : 0,
+  };
+}
+
+export async function milestones(userId: number, viewerId = 0): Promise<Milestones> {
+  const scope = { userId, viewerId };
+  const first = await repo.recent(scope, 1, 0, true);
+  const reached = MILESTONES.filter((n) => n <= first.total);
+  const items = await Promise.all(
+    reached.map(async (n) => {
+      const track = n === 1 ? first.items[0] : (await repo.recent(scope, 1, n - 1, true)).items[0];
+      return track && { n, track };
+    })
+  );
+  return {
+    total: first.total,
+    items: items.filter((m) => m !== undefined).reverse(),
+    next: MILESTONES.find((n) => n > first.total) ?? null,
   };
 }
 

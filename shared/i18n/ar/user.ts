@@ -376,4 +376,9 @@ export default {
   noOneHere: "لا أحد هنا بعد.",
   following: "تتابعه",
   follow: "متابعة",
+  milestones: "إنجازات",
+  firstScrobble: "أول سكروبل",
+  scrobbleNumber: "السكروبل رقم {n}",
+  nextMilestone: "التالي: السكروبل رقم {n}، بقي {left}",
+  yearCard: "بطاقة العام",
 } satisfies Translation<typeof en>;

@@ -92,6 +92,10 @@ export type ListeningStats = {
   topShare: number;
 };
 export type Streak = { days: number; end: string | null };
+export type Milestone = { n: number; track: RecentTrack };
+export type Milestones = { total: number; items: Milestone[]; next: number | null };
+
+export const MILESTONES = [1, 1000, 5000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000];
 
 const dayNumber = (date: string) => Date.parse(date) / 86400000;
 

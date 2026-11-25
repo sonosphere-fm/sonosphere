@@ -563,7 +563,7 @@ export async function counts(s: Scope): Promise<Counts> {
   return r;
 }
 
-async function recentRows(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
+async function recentRows(s: Scope, limit = 50, offset = 0, oldest = false): Promise<TopList<RecentTrack>> {
   const w = within(s);
   const items = await db
     .select({
@@ -585,7 +585,9 @@ async function recentRows(s: Scope, limit = 50, offset = 0): Promise<TopList<Rec
     .leftJoin(albums, eq(albums.id, sql`COALESCE(${scrobbles.albumId}, ${tracks.albumId})`))
     .innerJoin(users, eq(users.id, scrobbles.userId))
     .where(w)
-    .orderBy(desc(scrobbles.playedAt), desc(scrobbles.id))
+    .orderBy(
+      ...(oldest ? [asc(scrobbles.playedAt), asc(scrobbles.id)] : [desc(scrobbles.playedAt), desc(scrobbles.id)])
+    )
     .limit(limit)
     .offset(offset);
   const mine = s.userId && !s.artistId && !s.albumId && !s.trackId && !s.artistIds && allTime(s);
@@ -1084,8 +1086,8 @@ export async function topTracks(s: Scope, limit = 50, offset = 0): Promise<TopLi
   return r;
 }
 
-export async function recent(s: Scope, limit = 50, offset = 0): Promise<TopList<RecentTrack>> {
-  const r = await recentRows(s, limit, offset);
+export async function recent(s: Scope, limit = 50, offset = 0, oldest = false): Promise<TopList<RecentTrack>> {
+  const r = await recentRows(s, limit, offset, oldest);
   wantCovers(r.items, (r) => r.trackId);
   return r;
 }

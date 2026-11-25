@@ -283,4 +283,9 @@ export default {
   noOneHere: "Nimeni aici încă.",
   following: "Urmărești",
   follow: "Urmărește",
+  milestones: "Repere",
+  firstScrobble: "Primul scrobble",
+  scrobbleNumber: "Scrobble nr. {n}",
+  nextMilestone: "Urmează: scrobble nr. {n}, mai sunt {left}",
+  yearCard: "Cardul anului",
 } satisfies Translation<typeof en>;

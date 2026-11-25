@@ -33,13 +33,13 @@ const RAINBOW_SATURATION_THRESHOLD = 0.15;
 type Rgb = { r: number; g: number; b: number };
 type Ctx = SKRSContext2D;
 
-function registerFonts(dir: string) {
+export function registerFonts(dir: string) {
   for (const file of readdirSync(dir)) {
     if (file.endsWith("-wght-normal.woff2")) GlobalFonts.registerFromPath(join(dir, file), FAMILY);
   }
 }
 
-function decode(base64: string | null): Image | null {
+export function decode(base64: string | null): Image | null {
   if (!base64) return null;
   try {
     const image = new Image();
@@ -50,7 +50,7 @@ function decode(base64: string | null): Image | null {
   }
 }
 
-function setFont(ctx: Ctx, size: number, weight = 400) {
+export function setFont(ctx: Ctx, size: number, weight = 400) {
   ctx.font = `${weight} ${Math.max(1, size * FONT_SCALE).toFixed(2)}px "${FAMILY}", sans-serif`;
 }
 
@@ -63,7 +63,7 @@ function measure(ctx: Ctx, text: string) {
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
-function fitText(ctx: Ctx, text: string, maxWidth: number): string {
+export function fitText(ctx: Ctx, text: string, maxWidth: number): string {
   if (ctx.measureText(text).width <= maxWidth) return text;
   const graphemes = [...segmenter.segment(text)].map((entry) => entry.segment);
   let low = 0;
@@ -89,7 +89,7 @@ function placeholder(ctx: Ctx, size: number, text: string, censored: boolean) {
 }
 
 /** Contain for albums, cover for artists, centred either way. */
-function drawFitted(ctx: Ctx, image: Image, size: number, cover: boolean) {
+export function drawFitted(ctx: Ctx, image: Image, size: number, cover: boolean) {
   const { width, height } = image;
   const ratio = width / height;
   if (cover) {

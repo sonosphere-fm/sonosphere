@@ -249,4 +249,9 @@ export default {
   noOneHere: "まだ誰もいません。",
   following: "フォロー中",
   follow: "フォロー",
+  milestones: "マイルストーン",
+  firstScrobble: "最初のスクロブル",
+  scrobbleNumber: "{n}回目のスクロブル",
+  nextMilestone: "次は{n}回目のスクロブル、あと{left}",
+  yearCard: "年間カード",
 } satisfies Translation<typeof en>;

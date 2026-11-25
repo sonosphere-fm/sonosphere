@@ -8,7 +8,7 @@ import { setDislike } from "../recommend/repo";
 import { feedback, recommendations } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
-import type { Charts, FriendActivity, Home, Recommended } from "../../shared/home";
+import type { Charts, FriendActivity, Friends, Home, Recommended } from "../../shared/home";
 import type { TopAlbum } from "../../shared/listening";
 import { wantCovers } from "../metadata/wanted";
 
@@ -43,6 +43,8 @@ async function friendActivity(viewerId: number): Promise<FriendActivity[]> {
     return Number(b.nowPlaying) - Number(a.nowPlaying) || playedAt(b) - playedAt(a);
   });
 }
+
+router.get<Friends>("/api/home/friends", async (c) => ({ items: await friendActivity(need(c).id) }));
 
 router.get<Home>(
   "/api/home",

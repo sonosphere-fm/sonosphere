@@ -1,10 +1,12 @@
+import { Suspense } from "react";
 import { Link } from "react-router-dom";
-import { num, userUrl } from "../../lib";
+import { artistUrl, date, num, qs, trackUrl, useApi, userUrl } from "../../lib";
 import { locale, t, tx } from "../../i18n";
-import { Empty, Section, Stat } from "../../ui/base";
+import { Button } from "../../kit";
+import { Art, Empty, Section, Stat } from "../../ui/base";
 import { BarChart } from "../../ui/charts";
 import { Username } from "../../ui/username";
-import { type DayCount, type ListeningStats, streaks } from "../../../shared/listening";
+import { type DayCount, type ListeningStats, type Milestones, streaks } from "../../../shared/listening";
 
 const weekdayNames = () =>
   Array.from({ length: 7 }, (_, i) =>
@@ -86,6 +88,39 @@ function PixelGrid({ name, year, today, days }: { name: string; year: number; to
   );
 }
 
+function MilestoneList({ name }: { name: string }) {
+  const { data } = useApi<Milestones>(`/user/milestones${qs({ name })}`);
+  if (!data?.items.length) return null;
+  return (
+    <Section title={t("user.milestones")}>
+      <ul className="feed milestones">
+        {data.items.map(({ n, track }) => (
+          <li key={n}>
+            <Art image={track.image} />
+            <div className="grow">
+              <span className="strong">
+                {n === 1 ? t("user.firstScrobble") : t("user.scrobbleNumber", { n: num(n) })}
+              </span>
+              <span className="muted">
+                {tx("music.trackByArtist", {
+                  track: <Link to={trackUrl(track.artist, track.title)}>{track.title}</Link>,
+                  artist: <Link to={artistUrl(track.artist)}>{track.artist}</Link>,
+                })}
+              </span>
+            </div>
+            <span className="muted small">{date(track.playedAt)}</span>
+          </li>
+        ))}
+      </ul>
+      {data.next && (
+        <p className="muted small">
+          {t("user.nextMilestone", { n: num(data.next), left: num(data.next - data.total) })}
+        </p>
+      )}
+    </Section>
+  );
+}
+
 export function StatsBody({ s, name }: { s: ListeningStats; name: string }) {
   const plays = s.days.reduce((sum, d) => sum + d.count, 0);
   const title = (
@@ -106,9 +141,15 @@ export function StatsBody({ s, name }: { s: ListeningStats; name: string }) {
   const byWeekday = weekdayNames().map((label) => ({ label, value: 0 }));
   for (const d of s.days) byWeekday[weekday(d.date)].value += d.count;
   const favourite = byWeekday.reduce((a, b) => (b.value > a.value ? b : a));
+  const card = `/api/user/year-card${qs({ name, year: s.year, tz: -new Date().getTimezoneOffset() })}`;
   return (
     <div className="report">
-      {title}
+      <div className="report-head">
+        {title}
+        <Button kind="btn ghost small" href={card} download>
+          {t("user.yearCard")}
+        </Button>
+      </div>
       <Section title={t("user.scrobblesByDay")}>
         <PixelGrid name={name} year={s.year} today={s.today} days={s.days} />
       </Section>
@@ -142,6 +183,9 @@ export function StatsBody({ s, name }: { s: ListeningStats; name: string }) {
           {t("user.listeningDaysAllTime", { count: s.activeDays })}
         </p>
       </Section>
+      <Suspense fallback={null}>
+        <MilestoneList name={name} />
+      </Suspense>
     </div>
   );
 }
