@@ -14,6 +14,7 @@ import {
 } from "../../shared/charts";
 import { counts, series, topArtists, topTracks } from "../listening/repo";
 import { canSee, requireVisibleUser } from "../users/service";
+import { FOREVER } from "../listening/period";
 import { gather, type ChartItem } from "./data";
 import type { RenderCell, RenderJob } from "./render";
 import type { CardJob } from "./year-card";
@@ -59,12 +60,23 @@ function side(value: unknown): number {
   return value as number;
 }
 
+function moment(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > FOREVER) bad("invalidNumber");
+  return value as number;
+}
+
 function parse(body: Body): ChartRequest {
   const period = String(body.period);
+  const from = moment(body.from);
+  const to = moment(body.to);
+  if (from !== null && to !== null && from >= to) bad("invalidNumber");
   return {
     username: text(body.username, 64).trim(),
     kind: KINDS.find((k) => k === body.kind) ?? "albums",
     period: (period in CHART_PERIODS ? period : "weekly") as ChartPeriod,
+    from,
+    to,
     width: side(body.width),
     height: side(body.height),
     titles: TITLES.find((t) => t === body.titles) ?? "titles",

@@ -17,5 +17,7 @@ export const titleOptions = (): [string, string][] => [
   ["none", t("music.chartTitlesNone")],
 ];
 
-export const periodOptions = (): [string, string][] =>
-  (Object.keys(CHART_PERIODS) as ChartPeriod[]).map((key) => [key, periodLabel(key)]);
+export const periodOptions = (): [string, string][] => [
+  ...(Object.keys(CHART_PERIODS) as ChartPeriod[]).map((key): [string, string] => [key, periodLabel(key)]),
+  ["custom", t("music.chartCustomDates")],
+];

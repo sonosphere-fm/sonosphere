@@ -8375,6 +8375,9 @@ html[data-profile-shell="custom"] :focus-visible {
   .cm-bar .astryx-selector {
     width: 100%;
   }
+  .cm-bar .cm-dates {
+    grid-column: 1 / -1;
+  }
   .cm-body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 300px;

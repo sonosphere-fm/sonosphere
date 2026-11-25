@@ -1,10 +1,11 @@
 import { discography, findArtist, findItem } from "../catalog/repo";
 import { requireArtist } from "../catalog/service";
 import type { Viewer } from "../http";
-import { range } from "../listening/period";
+import { coarse, FOREVER, range } from "../listening/period";
 import * as listening from "../listening/repo";
 import { topTags } from "../tags/repo";
-import { canSeeCharts, requireVisibleUser } from "../users/service";
+import type { User } from "../users/repo";
+import { canSee, canSeeCharts, requireVisibleUser } from "../users/service";
 import { CHART_PERIODS, parseReleaseFilter, type ChartReply, type ChartRequest } from "../../shared/charts";
 
 export type ChartItem = {
@@ -67,6 +68,14 @@ function censorList(text: string, album: boolean): Map<string, boolean> {
   );
 }
 
+// The release and artist filters always look across all time.
+function chartRange(req: ChartRequest, user: User, viewer: Viewer, allTime: boolean): [number, number] {
+  if (allTime) return [0, FOREVER];
+  if (req.from === null && req.to === null) return range(new URLSearchParams({ period: CHART_PERIODS[req.period] }));
+  const picked: [number, number] = [req.from ?? 0, req.to ?? FOREVER];
+  return canSee(user, viewer) ? picked : coarse(picked);
+}
+
 export async function gather(req: ChartRequest, viewer: Viewer): Promise<Gathered> {
   const user = await requireVisibleUser(req.username, viewer);
   const albums = req.kind === "albums";
@@ -83,9 +92,7 @@ export async function gather(req: ChartRequest, viewer: Viewer): Promise<Gathere
   const singles = albums && req.hideSingles;
   const genres = req.genres.map(normGenre).filter(Boolean);
   const count = year || decade || artistFilter || singles || genres.length ? 1000 : 250;
-  const period = year || decade || artistFilter ? "all" : req.period;
-
-  const [from, to] = range(new URLSearchParams({ period: CHART_PERIODS[period] }));
+  const [from, to] = chartRange(req, user, viewer, !!(year || decade || artistFilter));
   const scope: listening.Scope = { userId: user.id, from, to, viewerId: viewer.id };
   if (artistFilter) scope.artistId = (await requireArtist(artistFilter)).id;
 

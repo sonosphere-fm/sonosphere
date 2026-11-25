@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "छमाही",
   chartYearly: "वार्षिक",
   chartOverall: "कुल",
+  chartCustomDates: "चुनी हुई तारीखें",
   chartTitlesNames: "नाम",
   chartTitlesPlays: "नाम + प्ले की संख्या",
   chartTitlesNone: "कोई शीर्षक नहीं",

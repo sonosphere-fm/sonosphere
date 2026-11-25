@@ -1,8 +1,9 @@
 import { Lockup, Mark } from "./brand";
 import { Ico, Spinner } from "../icons";
 import { Suspense, useRef, useState, type ReactNode } from "react";
-import { Pages, Select } from "../kit";
-import { Link, NavLink } from "react-router-dom";
+import { Button, Pages, Select } from "../kit";
+import { Link, NavLink, useSearchParams } from "react-router-dom";
+import { DatePicker } from "../datepicker";
 import { imageUrl, periods, useParam, userUrl, type ApiError } from "../lib";
 import { ImageWithFallback } from "./image";
 import { t } from "../i18n";
@@ -111,9 +112,79 @@ export function Tabs({ items }: { items: [string, string, boolean?][] }) {
     </nav>
   );
 }
-export function PeriodPicker({ def = "overall" }: { def?: string }) {
+function PeriodPicker({ def }: { def: string }) {
   const [period, setPeriod] = useParam("period", def);
   return <Select label={t("common.timePeriod")} value={period} onChange={setPeriod} options={periods()} />;
+}
+
+export function dayStart(day: string | null, end = false) {
+  if (!day) return undefined;
+  return Math.floor(new Date(day + "T00:00:00").getTime() / 1000) + (end ? 86400 : 0);
+}
+
+/** The picked period, or the picked days as Unix seconds, the last day included. */
+export function useRange(def = "overall") {
+  const [sp] = useSearchParams();
+  return { period: sp.get("period") || def, from: dayStart(sp.get("from")), to: dayStart(sp.get("to"), true) };
+}
+
+/** A fixed period, or any span of days from the calendar. */
+export function DateRange({ def = "overall" }: { def?: string }) {
+  const [sp, setSp] = useSearchParams();
+  const from = sp.get("from") || "";
+  const to = sp.get("to") || "";
+
+  const set = (k: string, v: string) =>
+    setSp((prev) => {
+      const n = new URLSearchParams(prev);
+      if (v) n.set(k, v);
+      else n.delete(k);
+      n.delete("page");
+      return n;
+    });
+
+  const clear = () =>
+    setSp((prev) => {
+      const n = new URLSearchParams(prev);
+      n.delete("from");
+      n.delete("to");
+      return n;
+    });
+
+  return (
+    <span className="daterange">
+      <label>
+        {t("user.from")}{" "}
+        <DatePicker
+          compact
+          label={t("user.from")}
+          placeholder={t("user.anyDate")}
+          value={from}
+          onChange={(v) => set("from", v)}
+          max={to || "now"}
+        />
+      </label>
+      <label>
+        {t("user.toLower")}{" "}
+        <DatePicker
+          compact
+          label={t("user.to")}
+          placeholder={t("user.anyDate")}
+          value={to}
+          onChange={(v) => set("to", v)}
+          min={from || undefined}
+          max="now"
+        />
+      </label>
+      {from || to ? (
+        <Button kind="link" onClick={clear}>
+          {t("user.clear")}
+        </Button>
+      ) : (
+        <PeriodPicker def={def} />
+      )}
+    </span>
+  );
 }
 export function Pager({ total, limit }: { total: number; limit: number }) {
   const [page, setPage] = useParam("page", "1");

@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Півроку",
   chartYearly: "Рік",
   chartOverall: "Весь час",
+  chartCustomDates: "Власні дати",
   chartTitlesNames: "Назви",
   chartTitlesPlays: "Назви + кількість прослуховувань",
   chartTitlesNone: "Без назв",

@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "అర్ధ సంవత్సరం",
   chartYearly: "సంవత్సరానికి",
   chartOverall: "మొత్తం",
+  chartCustomDates: "ఎంచుకున్న తేదీలు",
   chartTitlesNames: "పేర్లు",
   chartTitlesPlays: "పేర్లు + ప్లే సంఖ్యలు",
   chartTitlesNone: "శీర్షికలు వద్దు",

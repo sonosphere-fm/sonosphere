@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Полгода",
   chartYearly: "Год",
   chartOverall: "Всё время",
+  chartCustomDates: "Свои даты",
   chartTitlesNames: "Названия",
   chartTitlesPlays: "Названия + прослушивания",
   chartTitlesNone: "Без подписей",

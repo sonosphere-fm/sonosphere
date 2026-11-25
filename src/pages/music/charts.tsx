@@ -15,7 +15,7 @@ import {
   useParam,
   useTitle,
 } from "../../lib";
-import { Art, Async, Empty, Pager, PeriodPicker, Section } from "../../ui/base";
+import { Art, Async, DateRange, Empty, Pager, Section, useRange } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { RankList, TrackList } from "../../ui/lists";
 import { TagChips } from "../../ui/tags";
@@ -236,10 +236,10 @@ function TagTable({ tags, from }: { tags: ChartTag[]; from: number }) {
 function ChartList() {
   const [kind, setKind] = useParam("kind", "");
   const [sp] = useSearchParams();
-  const period = sp.get("period") || "overall";
+  const range = useRange();
   const page = Number(sp.get("page")) || 1;
   const from = (page - 1) * 50 + 1;
-  const q = useApi<ChartsData>(`/charts${qs({ kind, period: kind === "tags" ? undefined : period, page, limit: 50 })}`);
+  const q = useApi<ChartsData>(`/charts${qs({ kind, ...(kind === "tags" ? {} : range), page, limit: 50 })}`);
   return (
     <div className="wrap page">
       <h1 className="page-title">{t("music.charts")}</h1>
@@ -251,7 +251,7 @@ function ChartList() {
             </Button>
           ))}
         </nav>
-        {kind !== "tags" && <PeriodPicker def="overall" />}
+        {kind !== "tags" && <DateRange />}
       </div>
       {/* Every item is of the `kind` asked for; the filters only tell TypeScript which one. */}
       <Async q={q}>

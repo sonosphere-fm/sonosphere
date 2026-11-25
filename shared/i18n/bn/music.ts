@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "ষাণ্মাসিক",
   chartYearly: "বার্ষিক",
   chartOverall: "সামগ্রিক",
+  chartCustomDates: "নিজের বাছাই করা তারিখ",
   chartTitlesNames: "নাম",
   chartTitlesPlays: "নাম + প্লে সংখ্যা",
   chartTitlesNone: "কোনো শিরোনাম নয়",

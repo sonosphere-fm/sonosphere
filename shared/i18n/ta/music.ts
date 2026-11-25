@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "அரையாண்டு",
   chartYearly: "ஆண்டு",
   chartOverall: "ஒட்டுமொத்தம்",
+  chartCustomDates: "தேர்ந்தெடுத்த தேதிகள்",
   chartTitlesNames: "பெயர்கள்",
   chartTitlesPlays: "பெயர்கள் + இயக்க எண்ணிக்கை",
   chartTitlesNone: "தலைப்புகள் இல்லை",

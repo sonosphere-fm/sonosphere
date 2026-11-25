@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "반기",
   chartYearly: "연간",
   chartOverall: "전체",
+  chartCustomDates: "날짜 지정",
   chartTitlesNames: "이름",
   chartTitlesPlays: "이름 + 재생 횟수",
   chartTitlesNone: "제목 없음",

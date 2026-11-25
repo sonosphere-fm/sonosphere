@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Altı aylık",
   chartYearly: "Yıllık",
   chartOverall: "Tüm zamanlar",
+  chartCustomDates: "Özel tarihler",
   chartTitlesNames: "Adlar",
   chartTitlesPlays: "Adlar + dinlenme sayıları",
   chartTitlesNone: "Başlık yok",

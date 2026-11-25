@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Semestriel",
   chartYearly: "Annuel",
   chartOverall: "Global",
+  chartCustomDates: "Dates personnalisées",
   chartTitlesNames: "Noms",
   chartTitlesPlays: "Noms + écoutes",
   chartTitlesNone: "Sans titres",
