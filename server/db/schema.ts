@@ -1285,3 +1285,12 @@ export const importChunks = pgTable(
   },
   (table) => [primaryKey({ columns: [table.jobId, table.n], name: "import_chunks_pk" })]
 );
+
+// A row means the listener asked for plays to be logged from their Discord status.
+export const discordPresence = pgTable("discord_presence", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  lastPlayAt: integer("last_play_at"),
+  createdAt: integer("created_at").notNull(),
+});

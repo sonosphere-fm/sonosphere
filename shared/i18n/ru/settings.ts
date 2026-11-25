@@ -243,6 +243,20 @@ export default {
   spotifyBlurb: "Импортируй то, что слушаешь в Spotify",
   spotifyDisabled: "Скробблинг из Spotify отключён.",
 
+  discordBlurb: "Записывать прослушивания из статуса Discord",
+  discordDisabled: "Запись прослушиваний из Discord сейчас недоступна.",
+  discordIntro:
+    "Наш бот в Discord может записывать, что вы слушаете, по вашему статусу в Discord, в любом приложении, которое показывает там «Слушает», например YouTube Music через PreMiD. Это работает, пока открыто приложение Discord для компьютера.",
+  discordLinkFirst: "Сначала привяжите аккаунт Discord.",
+  linkDiscord: "Привязать Discord",
+  discordJoinFirst: "Вступите в Discord Sonosphere, чтобы бот видел ваш статус.",
+  joinDiscord: "Вступить в Discord",
+  checkAgain: "Проверить снова",
+  discordToggle: "Записывать прослушивания из моего статуса Discord",
+  discordToggleHint:
+    "Читается только ваш музыкальный статус. Прослушивание, которое уже пришло другим путём, например из подключённого аккаунта Spotify, не записывается дважды.",
+  discordLastPlay: "Последнее прослушивание записано {ago}.",
+  discordNoPlays: "Пока ничего не записано. Включите что-нибудь, пока ваш статус виден.",
   deleteAppConfirmTitle: "Удалить «{name}»?",
   deleteAppConfirmBody: "Приложения с этим ключом перестанут работать.",
   streamingServices: "Стриминговые сервисы",

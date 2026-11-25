@@ -231,6 +231,20 @@ export default {
   spotifyBlurb: "Spotify இல் நீங்கள் கேட்பதை இறக்குமதி செய்யுங்கள்",
   spotifyDisabled: "Spotify இலிருந்து ஸ்க்ராபிள் செய்வது முடக்கப்பட்டுள்ளது.",
 
+  discordBlurb: "உங்கள் Discord நிலையிலிருந்து இயக்கங்களைப் பதிவுசெய்யுங்கள்",
+  discordDisabled: "Discord-இலிருந்து இயக்கங்களைப் பதிவுசெய்வது இப்போது கிடைக்கவில்லை.",
+  discordIntro:
+    "எங்கள் Discord பாட், அங்கு “கேட்கிறார்” எனக் காட்டும் எந்த ஆப்பிலும், எ.கா. PreMiD வழியாக YouTube Music, உங்கள் Discord நிலையிலிருந்து நீங்கள் கேட்பதைப் பதிவுசெய்யும். Discord டெஸ்க்டாப் ஆப் திறந்திருக்கும் வரை இது வேலை செய்யும்.",
+  discordLinkFirst: "முதலில் உங்கள் Discord கணக்கை இணைக்கவும்.",
+  linkDiscord: "Discord-ஐ இணை",
+  discordJoinFirst: "பாட் உங்கள் நிலையைப் பார்க்க Sonosphere Discord-இல் சேருங்கள்.",
+  joinDiscord: "Discord-இல் சேர்",
+  checkAgain: "மீண்டும் சரிபார்",
+  discordToggle: "என் Discord நிலையிலிருந்து இயக்கங்களைப் பதிவுசெய்",
+  discordToggleHint:
+    "உங்கள் இசை நிலை மட்டுமே படிக்கப்படும். இணைக்கப்பட்ட Spotify கணக்கு போன்ற வேறு வழியில் ஏற்கனவே வந்த இயக்கம் இருமுறை பதிவாகாது.",
+  discordLastPlay: "கடைசி இயக்கம் பதிவானது {ago}.",
+  discordNoPlays: "இன்னும் இயக்கங்கள் எதுவும் பதிவாகவில்லை. நிலை தெரியும்போது ஏதாவது இயக்குங்கள்.",
   deleteAppConfirmTitle: "“{name}” ஐ நீக்கவா?",
   deleteAppConfirmBody: "இந்தச் சாவியைப் பயன்படுத்தும் ஆப்கள் வேலை செய்வதை நிறுத்தும்.",
   streamingServices: "ஸ்ட்ரீமிங் சேவைகள்",

@@ -226,6 +226,20 @@ export default {
   spotifyBlurb: "तुम्ही Spotify वर जे वाजवता ते इम्पोर्ट करा",
   spotifyDisabled: "Spotify वरून स्क्रॉबलिंग अक्षम आहे.",
 
+  discordBlurb: "तुमच्या Discord स्टेटसवरून प्ले नोंदवा",
+  discordDisabled: "Discord वरून प्ले नोंदवणे सध्या उपलब्ध नाही.",
+  discordIntro:
+    "आमचा Discord बॉट तुमच्या Discord स्टेटसवरून तुम्ही काय ऐकत आहात ते नोंदवू शकतो, तिथे “ऐकत आहे” दाखवणाऱ्या कोणत्याही ॲपमध्ये, जसे PreMiD द्वारे YouTube Music. Discord चे डेस्कटॉप ॲप उघडे असेपर्यंत हे काम करते.",
+  discordLinkFirst: "आधी तुमचे Discord खाते लिंक करा.",
+  linkDiscord: "Discord लिंक करा",
+  discordJoinFirst: "बॉटला तुमचे स्टेटस दिसावे म्हणून Sonosphere च्या Discord मध्ये सामील व्हा.",
+  joinDiscord: "Discord मध्ये सामील व्हा",
+  checkAgain: "पुन्हा तपासा",
+  discordToggle: "माझ्या Discord स्टेटसवरून प्ले नोंदवा",
+  discordToggleHint:
+    "फक्त तुमचे संगीत स्टेटस वाचले जाते. आधीच दुसऱ्या मार्गाने आलेला प्ले, जसे जोडलेल्या Spotify खात्यातून, दोनदा नोंदवला जात नाही.",
+  discordLastPlay: "शेवटचा प्ले नोंदवला {ago}.",
+  discordNoPlays: "अजून कोणतेही प्ले नोंदवलेले नाहीत. स्टेटस दिसत असताना काहीतरी वाजवा.",
   deleteAppConfirmTitle: "“{name}” हटवायचे?",
   deleteAppConfirmBody: "ही की वापरणारे अॅप्स काम करणे थांबवतील.",
   streamingServices: "स्ट्रीमिंग सेवा",

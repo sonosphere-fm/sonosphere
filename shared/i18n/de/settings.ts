@@ -233,6 +233,20 @@ export default {
   spotifyBlurb: "Importiere, was du auf Spotify hörst",
   spotifyDisabled: "Scrobbeln von Spotify ist deaktiviert.",
 
+  discordBlurb: "Wiedergaben aus deinem Discord-Status erfassen",
+  discordDisabled: "Das Erfassen von Wiedergaben über Discord ist gerade nicht verfügbar.",
+  discordIntro:
+    "Unser Discord-Bot kann erfassen, was du hörst, und zwar aus deinem Discord-Status, in jeder App, die dort „Hört“ anzeigt, etwa YouTube Music über PreMiD. Das funktioniert, solange die Discord-Desktop-App geöffnet ist.",
+  discordLinkFirst: "Verknüpfe zuerst dein Discord-Konto.",
+  linkDiscord: "Discord verknüpfen",
+  discordJoinFirst: "Tritt dem Sonosphere-Discord bei, damit der Bot deinen Status sehen kann.",
+  joinDiscord: "Dem Discord beitreten",
+  checkAgain: "Erneut prüfen",
+  discordToggle: "Wiedergaben aus meinem Discord-Status erfassen",
+  discordToggleHint:
+    "Nur dein Musikstatus wird gelesen. Eine Wiedergabe, die schon auf anderem Weg ankam, etwa über ein verbundenes Spotify-Konto, wird nicht doppelt erfasst.",
+  discordLastPlay: "Letzte Wiedergabe erfasst {ago}.",
+  discordNoPlays: "Noch keine Wiedergaben erfasst. Spiel etwas ab, während dein Status sichtbar ist.",
   deleteAppConfirmTitle: "„{name}“ löschen?",
   deleteAppConfirmBody: "Apps, die diesen Schlüssel nutzen, funktionieren dann nicht mehr.",
   streamingServices: "Streamingdienste",

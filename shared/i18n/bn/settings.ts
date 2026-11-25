@@ -226,6 +226,20 @@ export default {
   spotifyBlurb: "Spotify-তে যা বাজান তা ইমপোর্ট করুন",
   spotifyDisabled: "Spotify থেকে স্ক্রবলিং নিষ্ক্রিয় করা আছে।",
 
+  discordBlurb: "তোমার Discord স্ট্যাটাস থেকে প্লে লগ করো",
+  discordDisabled: "এই মুহূর্তে Discord থেকে প্লে লগ করা যাচ্ছে না।",
+  discordIntro:
+    "আমাদের Discord বট তোমার Discord স্ট্যাটাস থেকে তুমি কী শুনছ তা লগ করতে পারে, যে কোনো অ্যাপে যা সেখানে “শুনছে” দেখায়, যেমন PreMiD দিয়ে YouTube Music। Discord-এর ডেস্কটপ অ্যাপ খোলা থাকা পর্যন্ত এটি কাজ করে।",
+  discordLinkFirst: "আগে তোমার Discord অ্যাকাউন্ট লিংক করো।",
+  linkDiscord: "Discord লিংক করো",
+  discordJoinFirst: "Sonosphere-এর Discord-এ যোগ দাও যাতে বট তোমার স্ট্যাটাস দেখতে পায়।",
+  joinDiscord: "Discord-এ যোগ দাও",
+  checkAgain: "আবার দেখো",
+  discordToggle: "আমার Discord স্ট্যাটাস থেকে প্লে লগ করো",
+  discordToggleHint:
+    "শুধু তোমার মিউজিক স্ট্যাটাস পড়া হয়। যে প্লে আগেই অন্য উপায়ে এসেছে, যেমন সংযুক্ত Spotify অ্যাকাউন্ট থেকে, তা দুবার লগ হয় না।",
+  discordLastPlay: "শেষ প্লে লগ হয়েছে {ago}।",
+  discordNoPlays: "এখনও কোনো প্লে লগ হয়নি। স্ট্যাটাস দেখানো অবস্থায় কিছু চালাও।",
   deleteAppConfirmTitle: "“{name}” মুছবেন?",
   deleteAppConfirmBody: "এই কি ব্যবহারকারী অ্যাপগুলো কাজ করা বন্ধ করে দেবে।",
   streamingServices: "স্ট্রিমিং পরিষেবা",

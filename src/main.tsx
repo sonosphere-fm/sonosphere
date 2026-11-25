@@ -51,6 +51,7 @@ import {
   type Me,
 } from "./lib";
 import type { MeResponse } from "../shared/auth";
+import { DISCORD_INVITE } from "../shared/discord";
 import { reportStart, reportType } from "../shared/listening";
 import { applyDmEvent } from "./dm";
 import { PlayerProvider } from "./player";
@@ -295,7 +296,7 @@ function Footer() {
     [
       t("common.footerCommunity"),
       [
-        [t("common.joinDiscord"), "/discord"],
+        [t("common.joinDiscord"), DISCORD_INVITE],
         [t("common.guidelines"), "/guidelines"],
       ],
     ],

@@ -230,6 +230,20 @@ export default {
   spotifyBlurb: "Importera det du spelar på Spotify",
   spotifyDisabled: "Scrobbling från Spotify är inaktiverad.",
 
+  discordBlurb: "Logga spelningar från din Discord-status",
+  discordDisabled: "Att logga spelningar från Discord är inte tillgängligt just nu.",
+  discordIntro:
+    "Vår Discord-bot kan logga vad du spelar utifrån din Discord-status, i alla appar som visar ”Lyssnar på” där, till exempel YouTube Music via PreMiD. Det fungerar så länge Discords skrivbordsapp är öppen.",
+  discordLinkFirst: "Länka ditt Discord-konto först.",
+  linkDiscord: "Länka Discord",
+  discordJoinFirst: "Gå med i Sonospheres Discord så att boten kan se din status.",
+  joinDiscord: "Gå med i Discord",
+  checkAgain: "Kontrollera igen",
+  discordToggle: "Logga spelningar från min Discord-status",
+  discordToggleHint:
+    "Bara din musikstatus läses. En spelning som redan kommit in på annat sätt, till exempel från ett anslutet Spotify-konto, loggas inte två gånger.",
+  discordLastPlay: "Senaste spelning loggad {ago}.",
+  discordNoPlays: "Inga spelningar loggade än. Spela något medan din status syns.",
   deleteAppConfirmTitle: "Radera ”{name}”?",
   deleteAppConfirmBody: "Appar som använder den här nyckeln slutar fungera.",
   streamingServices: "Streamingtjänster",

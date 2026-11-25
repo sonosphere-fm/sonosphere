@@ -226,6 +226,20 @@ export default {
   spotifyBlurb: "আপুনি Spotifyত যি বজায় তাক আমদানি কৰক",
   spotifyDisabled: "Spotifyৰ পৰা স্ক্ৰবলিং অক্ষম কৰা হৈছে।",
 
+  discordBlurb: "আপোনাৰ Discord ষ্টেটাছৰ পৰা প্লে লগ কৰক",
+  discordDisabled: "এই মুহূৰ্তত Discordৰ পৰা প্লে লগ কৰা উপলব্ধ নহয়।",
+  discordIntro:
+    "আমাৰ Discord বটে আপোনাৰ Discord ষ্টেটাছৰ পৰা আপুনি কি শুনিছে লগ কৰিব পাৰে, তাত “শুনি আছে” দেখুওৱা যিকোনো এপত, যেনে PreMiDৰ জৰিয়তে YouTube Music। Discordৰ ডেস্কটপ এপ খোলা থকালৈকে ই কাম কৰে।",
+  discordLinkFirst: "প্ৰথমে আপোনাৰ Discord একাউণ্ট লিংক কৰক।",
+  linkDiscord: "Discord লিংক কৰক",
+  discordJoinFirst: "বটে আপোনাৰ ষ্টেটাছ চাব পৰাকৈ Sonosphereৰ Discordত যোগদান কৰক।",
+  joinDiscord: "Discordত যোগদান কৰক",
+  checkAgain: "পুনৰ পৰীক্ষা কৰক",
+  discordToggle: "মোৰ Discord ষ্টেটাছৰ পৰা প্লে লগ কৰক",
+  discordToggleHint:
+    "কেৱল আপোনাৰ সংগীতৰ ষ্টেটাছ পঢ়া হয়। আন উপায়েৰে ইতিমধ্যে অহা প্লে, যেনে সংযুক্ত Spotify একাউণ্টৰ পৰা, দুবাৰ লগ নহয়।",
+  discordLastPlay: "শেষ প্লে লগ হৈছে {ago}।",
+  discordNoPlays: "এতিয়ালৈকে কোনো প্লে লগ হোৱা নাই। ষ্টেটাছ দেখুওৱাকৈ কিবা বজাওক।",
   deleteAppConfirmTitle: "“{name}” মচিব নেকি?",
   deleteAppConfirmBody: "এই কি ব্যৱহাৰ কৰা এপবোৰে কাম কৰা বন্ধ কৰিব।",
   streamingServices: "ষ্ট্ৰীমিং সেৱা",

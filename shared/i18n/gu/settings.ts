@@ -227,6 +227,20 @@ export default {
   spotifyBlurb: "તમે Spotify પર જે વગાડો છો તે ઇમ્પોર્ટ કરો",
   spotifyDisabled: "Spotify પરથી સ્ક્રોબલિંગ અક્ષમ છે.",
 
+  discordBlurb: "તમારા Discord સ્ટેટસમાંથી પ્લે નોંધો",
+  discordDisabled: "Discordમાંથી પ્લે નોંધવું હાલમાં ઉપલબ્ધ નથી.",
+  discordIntro:
+    "અમારો Discord બૉટ તમારા Discord સ્ટેટસમાંથી તમે શું સાંભળો છો તે નોંધી શકે છે, ત્યાં “સાંભળી રહ્યા છે” બતાવતી કોઈપણ ઍપમાં, જેમ કે PreMiD દ્વારા YouTube Music. Discordની ડેસ્કટૉપ ઍપ ખુલ્લી હોય ત્યાં સુધી આ કામ કરે છે.",
+  discordLinkFirst: "પહેલાં તમારું Discord એકાઉન્ટ લિંક કરો.",
+  linkDiscord: "Discord લિંક કરો",
+  discordJoinFirst: "બૉટ તમારું સ્ટેટસ જોઈ શકે તે માટે Sonosphereના Discordમાં જોડાઓ.",
+  joinDiscord: "Discordમાં જોડાઓ",
+  checkAgain: "ફરી તપાસો",
+  discordToggle: "મારા Discord સ્ટેટસમાંથી પ્લે નોંધો",
+  discordToggleHint:
+    "ફક્ત તમારું સંગીત સ્ટેટસ વાંચવામાં આવે છે. બીજી રીતે પહેલેથી આવેલો પ્લે, જેમ કે જોડાયેલા Spotify એકાઉન્ટમાંથી, બે વાર નોંધાતો નથી.",
+  discordLastPlay: "છેલ્લો પ્લે નોંધાયો {ago}.",
+  discordNoPlays: "હજી કોઈ પ્લે નોંધાયો નથી. સ્ટેટસ દેખાતું હોય ત્યારે કંઈક વગાડો.",
   deleteAppConfirmTitle: "“{name}” કાઢી નાખીએ?",
   deleteAppConfirmBody: "આ કી વાપરતી ઍપ્સ કામ કરવાનું બંધ કરશે.",
   streamingServices: "સ્ટ્રીમિંગ સેવાઓ",

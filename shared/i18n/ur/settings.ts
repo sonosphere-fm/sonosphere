@@ -230,6 +230,20 @@ export default {
   spotifyBlurb: "Spotify پر جو آپ چلاتے ہیں اسے امپورٹ کریں",
   spotifyDisabled: "Spotify سے اسکروبلنگ غیر فعال ہے۔",
 
+  discordBlurb: "اپنے Discord اسٹیٹس سے پلے ریکارڈ کریں",
+  discordDisabled: "ابھی Discord سے پلے ریکارڈ کرنا دستیاب نہیں۔",
+  discordIntro:
+    "ہمارا Discord بوٹ آپ کے Discord اسٹیٹس سے ریکارڈ کر سکتا ہے کہ آپ کیا سن رہے ہیں، کسی بھی ایپ میں جو وہاں «سن رہے ہیں» دکھاتی ہو، جیسے PreMiD کے ذریعے YouTube Music۔ یہ تب تک کام کرتا ہے جب تک Discord کی ڈیسک ٹاپ ایپ کھلی ہو۔",
+  discordLinkFirst: "پہلے اپنا Discord اکاؤنٹ لنک کریں۔",
+  linkDiscord: "Discord لنک کریں",
+  discordJoinFirst: "Sonosphere کے Discord میں شامل ہوں تاکہ بوٹ آپ کا اسٹیٹس دیکھ سکے۔",
+  joinDiscord: "Discord میں شامل ہوں",
+  checkAgain: "دوبارہ چیک کریں",
+  discordToggle: "میرے Discord اسٹیٹس سے پلے ریکارڈ کریں",
+  discordToggleHint:
+    "صرف آپ کا میوزک اسٹیٹس پڑھا جاتا ہے۔ جو پلے پہلے ہی کسی اور طریقے سے آ چکا ہو، جیسے منسلک Spotify اکاؤنٹ سے، وہ دو بار ریکارڈ نہیں ہوتا۔",
+  discordLastPlay: "آخری پلے ریکارڈ ہوا {ago}۔",
+  discordNoPlays: "ابھی تک کوئی پلے ریکارڈ نہیں ہوا۔ اسٹیٹس دکھاتے ہوئے کچھ چلائیں۔",
   deleteAppConfirmTitle: "“{name}” حذف کریں؟",
   deleteAppConfirmBody: "اس کلید کو استعمال کرنے والی ایپس کام کرنا بند کر دیں گی۔",
   streamingServices: "اسٹریمنگ سروسز",

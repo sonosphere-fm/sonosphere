@@ -235,6 +235,20 @@ export default {
   spotifyBlurb: "Importe ce que tu écoutes sur Spotify",
   spotifyDisabled: "Le scrobbling depuis Spotify est désactivé.",
 
+  discordBlurb: "Enregistre les écoutes depuis ton statut Discord",
+  discordDisabled: "L'enregistrement des écoutes depuis Discord n'est pas disponible pour le moment.",
+  discordIntro:
+    "Notre bot Discord peut enregistrer ce que tu écoutes à partir de ton statut Discord, dans toute app qui y affiche « Écoute », comme YouTube Music via PreMiD. Cela fonctionne tant que l'app de bureau Discord est ouverte.",
+  discordLinkFirst: "Associe d'abord ton compte Discord.",
+  linkDiscord: "Associer Discord",
+  discordJoinFirst: "Rejoins le Discord de Sonosphere pour que le bot puisse voir ton statut.",
+  joinDiscord: "Rejoindre le Discord",
+  checkAgain: "Vérifier à nouveau",
+  discordToggle: "Enregistrer les écoutes depuis mon statut Discord",
+  discordToggleHint:
+    "Seul ton statut musical est lu. Une écoute déjà reçue par un autre moyen, comme un compte Spotify connecté, n'est pas enregistrée deux fois.",
+  discordLastPlay: "Dernière écoute enregistrée {ago}.",
+  discordNoPlays: "Aucune écoute enregistrée pour l'instant. Lance un morceau avec ton statut visible.",
   deleteAppConfirmTitle: "Supprimer « {name} » ?",
   deleteAppConfirmBody: "Les applis qui utilisent cette clé cesseront de fonctionner.",
   streamingServices: "Services de streaming",

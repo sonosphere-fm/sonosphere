@@ -227,6 +227,20 @@ export default {
   spotifyBlurb: "Spotify에서 들은 음악 가져오기",
   spotifyDisabled: "Spotify 스크로블이 비활성화되어 있어요.",
 
+  discordBlurb: "Discord 상태에서 재생 기록",
+  discordDisabled: "지금은 Discord에서 재생을 기록할 수 없습니다.",
+  discordIntro:
+    'Sonosphere Discord 봇이 Discord 상태에 "듣는 중"을 표시하는 앱(PreMiD를 통한 YouTube Music 등)에서 듣는 곡을 기록할 수 있습니다. Discord 데스크톱 앱이 열려 있는 동안 작동합니다.',
+  discordLinkFirst: "먼저 Discord 계정을 연결하세요.",
+  linkDiscord: "Discord 연결",
+  discordJoinFirst: "봇이 상태를 볼 수 있도록 Sonosphere Discord에 참여하세요.",
+  joinDiscord: "Discord 참여",
+  checkAgain: "다시 확인",
+  discordToggle: "내 Discord 상태에서 재생 기록",
+  discordToggleHint:
+    "음악 상태만 읽습니다. 연결된 Spotify 계정처럼 다른 경로로 이미 들어온 재생은 두 번 기록되지 않습니다.",
+  discordLastPlay: "마지막 기록: {ago}",
+  discordNoPlays: "아직 기록된 재생이 없습니다. 상태가 보이는 상태에서 무언가를 재생해 보세요.",
   deleteAppConfirmTitle: "“{name}”을(를) 삭제할까요?",
   deleteAppConfirmBody: "이 키를 쓰는 앱은 작동을 멈춰요.",
   streamingServices: "스트리밍 서비스",

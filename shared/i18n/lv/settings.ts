@@ -237,6 +237,20 @@ export default {
   spotifyBlurb: "Importē to, ko klausies Spotify",
   spotifyDisabled: "Skroblēšana no Spotify ir atspējota.",
 
+  discordBlurb: "Reģistrē atskaņojumus no sava Discord statusa",
+  discordDisabled: "Atskaņojumu reģistrēšana no Discord pašlaik nav pieejama.",
+  discordIntro:
+    "Mūsu Discord bots var reģistrēt, ko tu klausies, no tava Discord statusa jebkurā lietotnē, kas tur rāda “Klausās”, piemēram, YouTube Music ar PreMiD. Tas darbojas, kamēr ir atvērta Discord darbvirsmas lietotne.",
+  discordLinkFirst: "Vispirms piesaisti savu Discord kontu.",
+  linkDiscord: "Piesaistīt Discord",
+  discordJoinFirst: "Pievienojies Sonosphere Discord serverim, lai bots redzētu tavu statusu.",
+  joinDiscord: "Pievienoties Discord",
+  checkAgain: "Pārbaudīt vēlreiz",
+  discordToggle: "Reģistrēt atskaņojumus no mana Discord statusa",
+  discordToggleHint:
+    "Tiek nolasīts tikai tavs mūzikas statuss. Atskaņojums, kas jau saņemts citā veidā, piemēram, no pievienota Spotify konta, netiek reģistrēts divreiz.",
+  discordLastPlay: "Pēdējais atskaņojums reģistrēts {ago}.",
+  discordNoPlays: "Vēl nav reģistrētu atskaņojumu. Atskaņo kaut ko, kamēr tavs statuss ir redzams.",
   deleteAppConfirmTitle: "Dzēst „{name}”?",
   deleteAppConfirmBody: "Lietotnes, kas izmanto šo atslēgu, pārstās darboties.",
   streamingServices: "Straumēšanas pakalpojumi",

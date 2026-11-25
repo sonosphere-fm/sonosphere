@@ -232,6 +232,20 @@ export default {
   spotifyBlurb: "Spotify'da dinlediklerini içe aktar",
   spotifyDisabled: "Spotify'dan scrobble devre dışı.",
 
+  discordBlurb: "Discord durumundan dinlemeleri kaydet",
+  discordDisabled: "Discord'dan dinleme kaydı şu anda kullanılamıyor.",
+  discordIntro:
+    "Discord botumuz, orada “Dinliyor” gösteren her uygulamada, örneğin PreMiD üzerinden YouTube Music'te, Discord durumundan ne dinlediğini kaydedebilir. Discord masaüstü uygulaması açıkken çalışır.",
+  discordLinkFirst: "Önce Discord hesabını bağla.",
+  linkDiscord: "Discord'u bağla",
+  discordJoinFirst: "Botun durumunu görebilmesi için Sonosphere Discord'una katıl.",
+  joinDiscord: "Discord'a katıl",
+  checkAgain: "Tekrar kontrol et",
+  discordToggle: "Discord durumumdan dinlemeleri kaydet",
+  discordToggleHint:
+    "Yalnızca müzik durumun okunur. Bağlı bir Spotify hesabı gibi başka bir yoldan zaten gelen bir dinleme iki kez kaydedilmez.",
+  discordLastPlay: "Son dinleme {ago} kaydedildi.",
+  discordNoPlays: "Henüz kaydedilmiş dinleme yok. Durumun görünürken bir şey çal.",
   deleteAppConfirmTitle: "“{name}” silinsin mi?",
   deleteAppConfirmBody: "Bu anahtarı kullanan uygulamalar çalışmayı bırakır.",
   streamingServices: "Yayın hizmetleri",

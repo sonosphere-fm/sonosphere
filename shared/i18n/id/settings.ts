@@ -230,6 +230,20 @@ export default {
   spotifyBlurb: "Impor apa yang kamu putar di Spotify",
   spotifyDisabled: "Scrobbling dari Spotify dinonaktifkan.",
 
+  discordBlurb: "Catat putaran dari status Discord kamu",
+  discordDisabled: "Pencatatan putaran dari Discord sedang tidak tersedia.",
+  discordIntro:
+    "Bot Discord kami bisa mencatat apa yang kamu putar dari status Discord kamu, di aplikasi apa pun yang menampilkan “Mendengarkan” di sana, seperti YouTube Music lewat PreMiD. Ini berfungsi selama aplikasi desktop Discord terbuka.",
+  discordLinkFirst: "Tautkan akun Discord kamu dulu.",
+  linkDiscord: "Tautkan Discord",
+  discordJoinFirst: "Gabung ke Discord Sonosphere agar bot bisa melihat status kamu.",
+  joinDiscord: "Gabung ke Discord",
+  checkAgain: "Periksa lagi",
+  discordToggle: "Catat putaran dari status Discord saya",
+  discordToggleHint:
+    "Hanya status musik kamu yang dibaca. Putaran yang sudah masuk lewat cara lain, misalnya dari akun Spotify yang terhubung, tidak dicatat dua kali.",
+  discordLastPlay: "Putaran terakhir dicatat {ago}.",
+  discordNoPlays: "Belum ada putaran yang dicatat. Putar sesuatu dengan status kamu terlihat.",
   deleteAppConfirmTitle: "Hapus “{name}”?",
   deleteAppConfirmBody: "Aplikasi yang menggunakan kunci ini akan berhenti bekerja.",
   streamingServices: "Layanan streaming",

@@ -237,6 +237,20 @@ export default {
   spotifyBlurb: "Importă ce asculți pe Spotify",
   spotifyDisabled: "Scrobble-ul de pe Spotify este dezactivat.",
 
+  discordBlurb: "Înregistrează redările din statusul tău de Discord",
+  discordDisabled: "Înregistrarea redărilor din Discord nu este disponibilă acum.",
+  discordIntro:
+    "Botul nostru de Discord poate înregistra ce asculți din statusul tău de Discord, în orice aplicație care afișează acolo „Ascultă”, cum ar fi YouTube Music prin PreMiD. Funcționează cât timp aplicația desktop Discord este deschisă.",
+  discordLinkFirst: "Conectează mai întâi contul tău de Discord.",
+  linkDiscord: "Conectează Discord",
+  discordJoinFirst: "Intră pe Discordul Sonosphere ca botul să îți poată vedea statusul.",
+  joinDiscord: "Intră pe Discord",
+  checkAgain: "Verifică din nou",
+  discordToggle: "Înregistrează redările din statusul meu de Discord",
+  discordToggleHint:
+    "Este citit doar statusul tău muzical. O redare care a sosit deja pe altă cale, de exemplu dintr-un cont Spotify conectat, nu este înregistrată de două ori.",
+  discordLastPlay: "Ultima redare înregistrată {ago}.",
+  discordNoPlays: "Nicio redare înregistrată încă. Pornește ceva cu statusul vizibil.",
   deleteAppConfirmTitle: "Ștergi „{name}”?",
   deleteAppConfirmBody: "Aplicațiile care folosesc această cheie nu vor mai funcționa.",
   streamingServices: "Servicii de streaming",
