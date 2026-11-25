@@ -1,0 +1,65 @@
+name: Auto-translate i18n
+
+on:
+  push:
+    paths:
+      - "shared/i18n/en/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - run: bun run scripts/translate.ts
+        env:
+          TOKEN: ${{ secrets.DEEPL_TOKEN }}
+
+      # Normalise formatting to match the repo style.
+      - run: ./node_modules/.bin/biome format --write shared/i18n
+
+      # Guard: translated files must still satisfy Translation<typeof en>.
+      - run: bun run typecheck
+
+      - id: git
+        run: |
+          git config user.name "sonosphere-bot"
+          git config user.email "sonosphere-bot@users.noreply.github.com"
+          if git status --porcelain shared/i18n | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.git.outputs.changed == 'true'
+        run: |
+          git checkout -B auto-translate
+          git add shared/i18n
+          git commit -m "chore(i18n): auto-translate missing strings"
+          git push -f origin auto-translate
+
+      - if: steps.git.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto-translate
+          delete-branch: true
+          title: "chore(i18n): auto-translate missing strings"
+          body: |
+            Auto-translated missing i18n strings via the DeepL worker.
+
+            Please review before merging — machine translation may miss nuance,
+            especially placeholders (`{name}`, `{count}`) and tone.
+
+          labels: i18n
