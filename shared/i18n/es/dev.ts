@@ -21,11 +21,11 @@ export default {
   authentication: "Autenticación",
   authWeb:
     "{label} envía al usuario a {url}. Vuelve con {token}; cámbialo con {getSession} antes de una hora. Sin {cb} se usa tu callback guardado, y un {cb} indicado debe estar en el mismo sitio.",
-  authWebLabel: "Web:",
+  authWebLabel: "Página web:",
   authDesktop: "{label} llama a {getToken}, envía al usuario a {url} y luego llama a {getSession}.",
   authDesktopLabel: "Escritorio:",
   authScripts: "{label} haz POST a {getMobileSession} con {username} y {password}.",
-  authScriptsLabel: "Scripts:",
+  authScriptsLabel: "Guiones:",
   sessionKeys: "Las claves de sesión no caducan. Las tres llamadas van firmadas.",
   signing: "Firma",
   signingBody:
@@ -40,7 +40,7 @@ export default {
     "La API de ListenBrainz se sirve en {root} con las mismas rutas, cuerpos de solicitud y respuestas, así que los clientes y bibliotecas de ListenBrainz funcionan cambiando la URL raíz a {origin}.",
   lbTokens:
     "{label} los usuarios crean uno en {applications}. Envíalo como {header}. Las lecturas no lo necesitan, salvo para ver tu propia escucha privada.",
-  lbTokensLabel: "Tokens:",
+  lbTokensLabel: "Fichas:",
   lbErrors: "{label} {shape} con el código HTTP correspondiente. Las estadísticas sin datos devuelven 204.",
   lbErrorsLabel: "Errores:",
   lbRateLimit: "{label} 100 solicitudes cada 10 segundos por dirección, indicado en las cabeceras {header}.",
@@ -57,7 +57,7 @@ export default {
   npIntro:
     "Muestra en una web la canción que alguien está escuchando. Sin clave, firma ni inicio de sesión, y se permiten solicitudes de otros orígenes.",
   npSnapshot: "{endpoint}: una instantánea JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Eventos enviados por el servidor",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} es {null} cuando no suena nada. {album} y {imageUrl} pueden ser {null}.",
   npDuration:
@@ -85,7 +85,7 @@ export default {
   groupChart: "Listas",
   groupListens: "Escuchas",
   groupFeedback: "Valoraciones",
-  groupSocial: "Social",
+  groupSocial: "Redes sociales",
   groupUserStats: "Estadísticas de usuario (GET stats/user/{user}/…)",
   groupSiteStats: "Estadísticas del sitio (GET stats/sitewide/…)",
   groupListeners: "Oyentes",

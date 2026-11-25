@@ -215,7 +215,7 @@ export default {
   minute: "Хвилина",
   amOrPm: "AM чи PM",
   am: "AM",
-  pm: "PM",
+  pm: "ПМ",
   now: "Зараз",
 
   saturationBrightness: "Насиченість і яскравість",
@@ -250,5 +250,5 @@ export default {
   mdUploadFailed: "Не вдалося завантажити зображення. Спробуй ще раз.",
   mdExternalImage: "Зовнішнє зображення",
   mdUploadToDisplay: "{alt} (завантаж це зображення, щоб його показати)",
-  artistTabImages: "Images",
+  artistTabImages: "Зображення",
 } satisfies Translation<typeof en>;

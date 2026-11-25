@@ -8,7 +8,7 @@ export default {
   developers: "Geliştiriciler",
   onThisPage: "Bu sayfada",
 
-  apiHeading: "Sonosphere API",
+  apiHeading: "Sonosphere API'si",
   apiIntro:
     "API, Last.fm 2.0 protokolünü izler; bu yüzden çoğu scrobbler kodu yalnızca kök URL değiştirilerek çalışır. Sadece bir oynatıcıdan scrobble etmek mi istiyorsun? {help} sayfasına bak.",
   apiHelpLink: "scrobble yardımı",
@@ -34,7 +34,7 @@ export default {
   errors: "Hatalar",
   errorsBody:
     "Başarısız istekler {shape} döndürür: 3 geçersiz yöntem, 4 kimlik doğrulama başarısız, 6 geçersiz parametreler, 9 geçersiz oturum, 10 geçersiz API anahtarı, 13 geçersiz imza, 14 yetkisiz token.",
-  lbHeading: "ListenBrainz API",
+  lbHeading: "ListenBrainz API'si",
   lbIntro:
     "ListenBrainz API, {root} altında aynı yollar, istek gövdeleri ve yanıtlarla sunulur; bu yüzden ListenBrainz istemcileri ve kütüphaneleri kök URL {origin} olarak değiştirilince çalışır.",
   lbTokens:
@@ -55,7 +55,7 @@ export default {
   npIntro:
     "Bir dinleyicinin o an çaldığı şarkıyı bir web sitesinde göster. Anahtar, imza veya giriş gerekmez; çapraz kaynak isteklerine izin verilir.",
   npSnapshot: "{endpoint}: tek bir JSON anlık görüntüsü",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Sunucu Tarafından Gönderilen Olaylar",
   npWs: "{endpoint}: WebSocket",
   npNull: "Hiçbir şey çalmıyorsa {nowPlaying} değeri {null} olur. {album} ve {imageUrl} {null} olabilir.",
   npDuration:

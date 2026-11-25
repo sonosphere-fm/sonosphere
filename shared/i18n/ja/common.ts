@@ -249,5 +249,5 @@ export default {
   mdUploadFailed: "画像のアップロードに失敗しました。もう一度お試しください。",
   mdExternalImage: "外部画像",
   mdUploadToDisplay: "{alt}（表示するにはこの画像をアップロードしてください）",
-  artistTabImages: "Images",
+  artistTabImages: "画像",
 } satisfies Translation<typeof en>;

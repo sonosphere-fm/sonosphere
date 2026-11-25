@@ -20,11 +20,11 @@ export default {
   authentication: "Autenticação",
   authWeb:
     "{label} envie o usuário para {url}. Ele volta com {token}; troque-o com {getSession} em até uma hora. Sem {cb}, é usado o callback salvo, e um {cb} informado precisa estar no mesmo site.",
-  authWebLabel: "Web:",
+  authWebLabel: "Site:",
   authDesktop: "{label} chame {getToken}, envie o usuário para {url} e depois chame {getSession}.",
-  authDesktopLabel: "Desktop:",
+  authDesktopLabel: "Área de trabalho:",
   authScripts: "{label} faça POST em {getMobileSession} com {username} e {password}.",
-  authScriptsLabel: "Scripts:",
+  authScriptsLabel: "Roteiros:",
   sessionKeys: "As chaves de sessão não expiram. As três chamadas são assinadas.",
   signing: "Assinatura",
   signingBody:
@@ -39,7 +39,7 @@ export default {
     "A API do ListenBrainz é servida em {root} com os mesmos caminhos, corpos de requisição e respostas, então clientes e bibliotecas do ListenBrainz funcionam trocando a URL raiz para {origin}.",
   lbTokens:
     "{label} os usuários criam um em {applications}. Envie-o como {header}. Leituras não precisam de token, exceto para ver suas próprias reproduções privadas.",
-  lbTokensLabel: "Tokens:",
+  lbTokensLabel: "Fichas:",
   lbErrors: "{label} {shape} com o status HTTP correspondente. Estatísticas sem nada para mostrar retornam 204.",
   lbErrorsLabel: "Erros:",
   lbRateLimit: "{label} 100 requisições a cada 10 segundos por endereço, informadas nos cabeçalhos {header}.",
@@ -55,7 +55,7 @@ export default {
   npIntro:
     "Mostre a música atual de um ouvinte em um site. Sem chave, assinatura ou login, e requisições cross-origin são permitidas.",
   npSnapshot: "{endpoint}: um snapshot em JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Eventos Enviados pelo Servidor",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} é {null} quando nada está tocando. {album} e {imageUrl} podem ser {null}.",
   npDuration:
@@ -82,7 +82,7 @@ export default {
   groupTag: "Tag",
   groupChart: "Parada",
   groupListens: "Reproduções",
-  groupFeedback: "Feedback",
+  groupFeedback: "Comentários",
   groupSocial: "Social",
   groupUserStats: "Estatísticas do usuário (GET stats/user/{user}/…)",
   groupSiteStats: "Estatísticas do site (GET stats/sitewide/…)",

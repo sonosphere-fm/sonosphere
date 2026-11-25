@@ -25,7 +25,7 @@ export default {
   joinSonosphere: "Приєднатися до Sonosphere",
   usernameOrEmail: "Ім’я користувача або email",
   username: "Ім’я користувача",
-  email: "Email",
+  email: "Електронна пошта",
   password: "Пароль",
   createAccount: "Створити обліковий запис",
   forgotPassword: "Забув пароль?",

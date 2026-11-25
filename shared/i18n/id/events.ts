@@ -23,7 +23,7 @@ export default {
   going: "Pergi",
   interested: "Tertarik",
   imGoing: "Aku pergi",
-  lineup: "Line-up",
+  lineup: "Susunan Pemain",
   details: "Detail",
   moreOnMusicBrainz: "Selengkapnya di MusicBrainz",
   tickets: "Tiket dan informasi",

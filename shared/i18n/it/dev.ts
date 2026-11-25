@@ -21,7 +21,7 @@ export default {
   authentication: "Autenticazione",
   authWeb:
     "{label} manda l'utente a {url}. Tornerà con {token}; scambialo con {getSession} entro un'ora. Senza {cb} viene usato il callback salvato, e un {cb} fornito deve essere sullo stesso sito.",
-  authWebLabel: "Web:",
+  authWebLabel: "Sito web:",
   authDesktop: "{label} chiama {getToken}, manda l'utente a {url}, poi chiama {getSession}.",
   authDesktopLabel: "Desktop:",
   authScripts: "{label} fai POST di {getMobileSession} con {username} e {password}.",
@@ -56,7 +56,7 @@ export default {
   npIntro:
     "Mostra il brano attuale di un ascoltatore su un sito web. Nessuna chiave, firma o accesso, e le richieste cross-origin sono consentite.",
   npSnapshot: "{endpoint}: una singola istantanea JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Eventi inviati dal server",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} è {null} quando non c'è niente in riproduzione. {album} e {imageUrl} possono essere {null}.",
   npDuration:
@@ -75,7 +75,7 @@ export default {
   otherApisNp: "Istantanee «in ascolto», SSE e WebSocket",
   methods: "Metodi",
   groupLabel: "{group}:",
-  groupAuth: "Auth",
+  groupAuth: "Autore",
   groupTrack: "Brano",
   groupArtist: "Artista",
   groupAlbum: "Album",
@@ -83,7 +83,7 @@ export default {
   groupTag: "Tag",
   groupChart: "Classifica",
   groupListens: "Ascolti",
-  groupFeedback: "Feedback",
+  groupFeedback: "Commenti",
   groupSocial: "Social",
   groupUserStats: "Statistiche utente (GET stats/user/{user}/…)",
   groupSiteStats: "Statistiche del sito (GET stats/sitewide/…)",

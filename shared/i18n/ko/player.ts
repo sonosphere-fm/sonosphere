@@ -129,8 +129,8 @@ export default {
   save: "저장",
   lyrics: "가사",
   sourceYouTube: "YouTube",
-  sourceMusic: "Music server",
-  sourceSpotify: "Spotify",
-  playbackSource: "Playback source",
-  setUpSource: "Set up",
+  sourceMusic: "음악 서버",
+  sourceSpotify: "스포티파이",
+  playbackSource: "재생 소스",
+  setUpSource: "설정",
 } satisfies Translation<typeof en>;

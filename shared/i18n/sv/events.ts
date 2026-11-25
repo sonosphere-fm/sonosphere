@@ -23,7 +23,7 @@ export default {
   going: "Ska gå",
   interested: "Intresserad",
   imGoing: "Jag ska gå",
-  lineup: "Line-up",
+  lineup: "Spelaruppställning",
   details: "Detaljer",
   moreOnMusicBrainz: "Mer på MusicBrainz",
   tickets: "Biljetter och information",

@@ -20,7 +20,7 @@ export default {
   authentication: "Otentikasi",
   authWeb:
     "{label} kirim pengguna ke {url}. Mereka kembali dengan {token}; tukar dengan {getSession} dalam satu jam. Tanpa {cb}, callback yang disimpan digunakan, dan {cb} yang diberikan harus di situs yang sama.",
-  authWebLabel: "Web:",
+  authWebLabel: "Situs web:",
   authDesktop: "{label} panggil {getToken}, kirim pengguna ke {url}, lalu panggil {getSession}.",
   authDesktopLabel: "Desktop:",
   authScripts: "{label} POST {getMobileSession} dengan {username} dan {password}.",
@@ -55,7 +55,7 @@ export default {
   npIntro:
     "Tampilkan lagu pendengar saat ini di situs web. Tanpa kunci, tanda tangan atau login, dan permintaan lintas asal diizinkan.",
   npSnapshot: "{endpoint}: satu snapshot JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Peristiwa yang Dikirim Server",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} adalah {null} saat tidak ada yang diputar. {album} dan {imageUrl} dapat {null}.",
   npDuration:

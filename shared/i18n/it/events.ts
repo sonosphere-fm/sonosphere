@@ -24,7 +24,7 @@ export default {
   going: "Partecipanti",
   interested: "Interessati",
   imGoing: "Ci vado",
-  lineup: "Line-up",
+  lineup: "Formazione",
   details: "Dettagli",
   moreOnMusicBrainz: "Altro su MusicBrainz",
   tickets: "Biglietti e informazioni",

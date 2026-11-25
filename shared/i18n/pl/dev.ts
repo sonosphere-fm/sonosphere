@@ -23,7 +23,7 @@ export default {
     "{label} przekieruj użytkownika na {url}. Wróci z {token}; wymień go przez {getSession} w ciągu godziny. Bez {cb} używany jest zapisany callback, a podany {cb} musi być w tej samej witrynie.",
   authWebLabel: "WWW:",
   authDesktop: "{label} wywołaj {getToken}, przekieruj użytkownika na {url}, a potem wywołaj {getSession}.",
-  authDesktopLabel: "Desktop:",
+  authDesktopLabel: "Komputer stacjonarny:",
   authScripts: "{label} wyślij POST {getMobileSession} z {username} i {password}.",
   authScriptsLabel: "Skrypty:",
   sessionKeys: "Klucze sesji nie wygasają. Wszystkie trzy wywołania są podpisywane.",
@@ -56,7 +56,7 @@ export default {
   npIntro:
     "Pokaż aktualny utwór słuchacza na stronie WWW. Bez klucza, podpisu i logowania, a żądania cross-origin są dozwolone.",
   npSnapshot: "{endpoint}: jeden snapshot JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Zdarzenia wysyłane przez serwer",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} ma wartość {null}, gdy nic nie gra. {album} i {imageUrl} mogą mieć wartość {null}.",
   npDuration:
@@ -79,7 +79,7 @@ export default {
   groupArtist: "Wykonawca",
   groupAlbum: "Album",
   groupUser: "Użytkownik",
-  groupTag: "Tag",
+  groupTag: "Etykieta",
   groupChart: "Listy",
   groupListens: "Odsłuchania",
   groupFeedback: "Opinie",

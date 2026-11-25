@@ -213,8 +213,8 @@ export default {
   hour: "שעה",
   minute: "דקה",
   amOrPm: "AM או PM",
-  am: "AM",
-  pm: "PM",
+  am: "בבוקר",
+  pm: "ראש הממשלה",
   now: "עכשיו",
 
   saturationBrightness: "רוויה ובהירות",
@@ -249,5 +249,5 @@ export default {
   mdUploadFailed: "העלאת התמונה נכשלה. אפשר לנסות שוב.",
   mdExternalImage: "תמונה חיצונית",
   mdUploadToDisplay: "{alt} (יש להעלות את התמונה כדי להציג אותה)",
-  artistTabImages: "Images",
+  artistTabImages: "תמונות",
 } satisfies Translation<typeof en>;

@@ -67,7 +67,7 @@ export default {
   titleSubpage: "{name} - {tab}",
   titleRelease: "{artist} - {title}",
   titleTag: "Muzyka {name}",
-  titleWiki: "{title} - Wiki",
+  titleWiki: "{title} – Wiki",
   titleSearchFor: "Szukaj: {query}",
   titleSearch: "Szukaj muzyki",
   titleJournal: "{post} - dziennik {name}",
@@ -129,7 +129,7 @@ export default {
   contact: "Kontakt",
   scrobble: "Scrobbluj",
   admin: "Admin",
-  adminCount: "Admin ({count})",
+  adminCount: "Administrator ({count})",
   adminOnly: "Ta sekcja jest dla moderatorów i adminów.",
   logOut: "Wyloguj się",
 
@@ -254,5 +254,5 @@ export default {
   mdUploadFailed: "Nie udało się przesłać obrazu. Spróbuj ponownie.",
   mdExternalImage: "Obraz zewnętrzny",
   mdUploadToDisplay: "{alt} (prześlij ten obraz, aby go wyświetlić)",
-  artistTabImages: "Images",
+  artistTabImages: "Zdjęcia",
 } satisfies Translation<typeof en>;

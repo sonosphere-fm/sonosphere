@@ -214,7 +214,7 @@ export default {
   minute: "Минута",
   amOrPm: "AM или PM",
   am: "AM",
-  pm: "PM",
+  pm: "премьер-министр",
   now: "Сейчас",
 
   saturationBrightness: "Насыщенность и яркость",
@@ -249,5 +249,5 @@ export default {
   mdUploadFailed: "Не удалось загрузить изображение. Попробуй снова.",
   mdExternalImage: "Внешнее изображение",
   mdUploadToDisplay: "{alt} (загрузи это изображение, чтобы его показать)",
-  artistTabImages: "Images",
+  artistTabImages: "Изображения",
 } satisfies Translation<typeof en>;

@@ -24,7 +24,7 @@ export default {
   joinSonosphere: "Alătură-te Sonosphere",
   usernameOrEmail: "Nume de utilizator sau email",
   username: "Nume de utilizator",
-  email: "Email",
+  email: "E-mail",
   password: "Parolă",
   createAccount: "Creează cont",
   forgotPassword: "Ți-ai uitat parola?",

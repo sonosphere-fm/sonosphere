@@ -40,7 +40,7 @@ export default {
     "ListenBrainz-API:et finns på {root} med samma sökvägar, förfrågningar och svar, så ListenBrainz-klienter och bibliotek fungerar genom att byta rot-URL till {origin}.",
   lbTokens:
     "{label} användare skapar en under {applications}. Skicka den som {header}. Läsningar behöver ingen, utom för att se ditt eget privata lyssnande.",
-  lbTokensLabel: "Tokens:",
+  lbTokensLabel: "Token:",
   lbErrors: "{label} {shape} med matchande HTTP-status. Statistik utan något att visa returnerar 204.",
   lbErrorsLabel: "Fel:",
   lbRateLimit: "{label} 100 förfrågningar per 10 sekunder per adress, redovisat i {header}-headrarna.",
@@ -75,7 +75,7 @@ export default {
   groupLabel: "{group}:",
   groupAuth: "Autentisering",
   groupTrack: "Låt",
-  groupArtist: "Artist",
+  groupArtist: "Konstnär",
   groupAlbum: "Album",
   groupUser: "Användare",
   groupTag: "Tagg",

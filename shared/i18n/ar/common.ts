@@ -263,5 +263,5 @@ export default {
   mdUploadFailed: "فشل رفع الصورة. حاول مجددًا.",
   mdExternalImage: "صورة خارجية",
   mdUploadToDisplay: "{alt} (ارفع هذه الصورة لعرضها)",
-  artistTabImages: "Images",
+  artistTabImages: "الصور",
 } satisfies Translation<typeof en>;

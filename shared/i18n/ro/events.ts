@@ -24,7 +24,7 @@ export default {
   going: "Merg",
   interested: "Interesat",
   imGoing: "Merg și eu",
-  lineup: "Line-up",
+  lineup: "Formație",
   details: "Detalii",
   moreOnMusicBrainz: "Mai multe pe MusicBrainz",
   tickets: "Bilete și informații",

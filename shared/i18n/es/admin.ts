@@ -2,7 +2,7 @@ import type en from "../en/admin";
 import type { Translation } from "../core";
 
 export default {
-  reasonSpam: "Spam",
+  reasonSpam: "Correo basura",
   reasonAbuse: "Acoso",
   reasonInappropriate: "Inapropiado",
   reasonImpersonation: "Suplantación",
@@ -749,8 +749,8 @@ export default {
   confirmed: "Confirmado",
   noActiveSession: "Ninguna sesión activa",
   sessions: "Sesiones",
-  sessionsValue: "{web} web, {app} app",
-  social: "Social",
+  sessionsValue: "{web} web, {app} aplicación",
+  social: "Redes sociales",
   socialValue: "{followers} seguidores, {following} seguidos",
   socialValueBlocked: "{followers} seguidores, {following} seguidos, bloqueado por {blocked}",
   library: "Biblioteca",

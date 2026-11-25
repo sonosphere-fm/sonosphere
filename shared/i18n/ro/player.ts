@@ -2,7 +2,7 @@ import type en from "../en/player";
 import type { Translation } from "../core";
 
 export default {
-  player: "Player",
+  player: "Jucător",
   closePlayer: "Închide playerul",
   previousTrack: "Piesa anterioară",
   nextTrack: "Piesa următoare",
@@ -14,7 +14,7 @@ export default {
   scrobbled: "Scrobble făcut",
   openInSpotify: "Deschide în Spotify",
   watchOnYouTube: "Urmărește pe YouTube",
-  openInMusicServer: "Open album on your music server",
+  openInMusicServer: "Deschide albumul de pe serverul tău de muzică",
   searchOnYouTube: "Caută pe YouTube",
   seek: "Derulează",
   timeOf: "{position} din {length}",
@@ -150,8 +150,8 @@ export default {
   save: "Salvează",
   lyrics: "Versuri",
   sourceYouTube: "YouTube",
-  sourceMusic: "Music server",
+  sourceMusic: "Server de muzică",
   sourceSpotify: "Spotify",
-  playbackSource: "Playback source",
-  setUpSource: "Set up",
+  playbackSource: "Sursa de redare",
+  setUpSource: "Configurare",
 } satisfies Translation<typeof en>;

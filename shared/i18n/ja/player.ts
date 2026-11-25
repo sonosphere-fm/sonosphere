@@ -129,8 +129,8 @@ export default {
   save: "保存",
   lyrics: "歌詞",
   sourceYouTube: "YouTube",
-  sourceMusic: "Music server",
+  sourceMusic: "ミュージックサーバー",
   sourceSpotify: "Spotify",
-  playbackSource: "Playback source",
-  setUpSource: "Set up",
+  playbackSource: "再生ソース",
+  setUpSource: "設定",
 } satisfies Translation<typeof en>;

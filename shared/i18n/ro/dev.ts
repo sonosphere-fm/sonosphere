@@ -20,7 +20,7 @@ export default {
   authentication: "Autentificare",
   authWeb:
     "{label} trimite utilizatorul la {url}. Se întoarce cu {token}; schimbă-l cu {getSession} în decurs de o oră. Fără {cb} se folosește callbackul salvat, iar un {cb} dat trebuie să fie pe același site.",
-  authWebLabel: "Web:",
+  authWebLabel: "Site web:",
   authDesktop: "{label} apelează {getToken}, trimite utilizatorul la {url}, apoi apelează {getSession}.",
   authDesktopLabel: "Desktop:",
   authScripts: "{label} POST {getMobileSession} cu {username} și {password}.",
@@ -56,7 +56,7 @@ export default {
   npIntro:
     "Afișează pe un site piesa pe care o ascultă cineva acum. Fără cheie, semnătură sau autentificare, iar cererile cross-origin sunt permise.",
   npSnapshot: "{endpoint}: un singur snapshot JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Evenimente trimise de server",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} este {null} când nu se ascultă nimic. {album} și {imageUrl} pot fi {null}.",
   npDuration:
@@ -83,7 +83,7 @@ export default {
   groupTag: "Etichetă",
   groupChart: "Top",
   groupListens: "Ascultări",
-  groupFeedback: "Feedback",
+  groupFeedback: "Comentarii",
   groupSocial: "Social",
   groupUserStats: "Statistici utilizator (GET stats/user/{user}/…)",
   groupSiteStats: "Statistici site (GET stats/sitewide/…)",

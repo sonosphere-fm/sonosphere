@@ -23,7 +23,7 @@ export default {
   joinSonosphere: "Unisciti a Sonosphere",
   usernameOrEmail: "Nome utente o email",
   username: "Nome utente",
-  email: "Email",
+  email: "E-mail",
   password: "Password",
   createAccount: "Crea account",
   forgotPassword: "Hai dimenticato la password?",

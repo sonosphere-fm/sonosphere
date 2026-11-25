@@ -92,7 +92,7 @@ export default {
   footerMusic: "Musica",
   footerScrobbling: "Scrobbling",
   footerDevelopers: "Sviluppatori",
-  footerCommunity: "Community",
+  footerCommunity: "Comunità",
   profile: "Profilo",
   library: "Libreria",
   listeningReport: "Report di ascolto",
@@ -128,8 +128,8 @@ export default {
   terms: "Termini",
   contact: "Contatti",
   scrobble: "Scrobbla",
-  admin: "Admin",
-  adminCount: "Admin ({count})",
+  admin: "Amministratore",
+  adminCount: "Amministratore ({count})",
   adminOnly: "Quest'area è riservata a moderatori e amministratori.",
   logOut: "Esci",
 
@@ -250,5 +250,5 @@ export default {
   mdUploadFailed: "Caricamento dell'immagine non riuscito. Riprova.",
   mdExternalImage: "Immagine esterna",
   mdUploadToDisplay: "{alt} (carica questa immagine per visualizzarla)",
-  artistTabImages: "Images",
+  artistTabImages: "Immagini",
 } satisfies Translation<typeof en>;

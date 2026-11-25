@@ -56,7 +56,7 @@ export default {
   npIntro:
     "Parādi klausītāja pašreizējo dziesmu tīmekļa vietnē. Bez atslēgas, paraksta vai pieteikšanās, un starpdomēnu pieprasījumi ir atļauti.",
   npSnapshot: "{endpoint}: viens JSON momentuzņēmums",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: Servera nosūtītie notikumi",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} ir {null}, ja nekas neskan. {album} un {imageUrl} var būt {null}.",
   npDuration:

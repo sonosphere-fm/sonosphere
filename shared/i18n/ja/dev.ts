@@ -21,7 +21,7 @@ export default {
   authentication: "認証",
   authWeb:
     "{label} ユーザーを{url}に送ります。ユーザーは{token}付きで戻ってくるので、1時間以内に{getSession}で交換してください。{cb}を省略すると保存済みのコールバックが使われ、{cb}を指定する場合は同じサイト上である必要があります。",
-  authWebLabel: "Web:",
+  authWebLabel: "Web：",
   authDesktop: "{label} {getToken}を呼び出し、ユーザーを{url}に送ってから{getSession}を呼び出します。",
   authDesktopLabel: "デスクトップ:",
   authScripts: "{label} {username}と{password}を付けて{getMobileSession}にPOSTします。",
@@ -57,7 +57,7 @@ export default {
   npIntro:
     "リスナーが今聴いている曲をWebサイトに表示できます。キー、署名、ログインは不要で、クロスオリジンリクエストも許可されています。",
   npSnapshot: "{endpoint}: JSONスナップショット1件",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: サーバー送信イベント",
   npWs: "{endpoint}: WebSocket",
   npNull: "何も再生していないとき、{nowPlaying}は{null}です。{album}と{imageUrl}は{null}になることがあります。",
   npDuration:
@@ -95,7 +95,7 @@ export default {
   helpSpotifyPlay: "音楽を再生します。新しい曲は1分ほどで表示され、端末で何かを開いたままにしておく必要もありません。",
   helpPanoServer: "Panoで、カスタムのLast.fm互換（GNU FM）サーバーのオプションを選びます。",
   helpPanoFields: "3つの項目を入力します:",
-  helpPanoApiUrl: "API URL:",
+  helpPanoApiUrl: "API URL：",
   helpPanoUsername: "{label} Sonosphereのユーザー名",
   helpPanoUsernameLabel: "ユーザー名:",
   helpPanoPassword: "{label} Sonosphereのパスワード",

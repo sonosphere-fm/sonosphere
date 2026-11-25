@@ -67,7 +67,7 @@ export default {
   titleSubpage: "{name} - {tab}",
   titleRelease: "{title}, {artist}",
   titleTag: "{name} mūzika",
-  titleWiki: "{title} - Wiki",
+  titleWiki: "{title} - Vikipēdija",
   titleSearchFor: "Meklēt {query}",
   titleSearch: "Meklēt mūziku",
   titleJournal: "{post} - {name} žurnāls",
@@ -249,5 +249,5 @@ export default {
   mdUploadFailed: "Attēla augšupielāde neizdevās. Mēģini vēlreiz.",
   mdExternalImage: "Ārējs attēls",
   mdUploadToDisplay: "{alt} (augšupielādē šo attēlu, lai to parādītu)",
-  artistTabImages: "Images",
+  artistTabImages: "Attēli",
 } satisfies Translation<typeof en>;

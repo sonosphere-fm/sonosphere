@@ -55,7 +55,7 @@ export default {
   npHeading: "Публичный API «сейчас играет»",
   npIntro: "Показывай текущую песню слушателя на сайте. Без ключа, подписи и входа, кросс-доменные запросы разрешены.",
   npSnapshot: "{endpoint}: один снимок в JSON",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: События, отправляемые сервером",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} равен {null}, когда ничего не играет. {album} и {imageUrl} могут быть {null}.",
   npDuration:
@@ -95,7 +95,7 @@ export default {
     "Включай музыку. Новые песни появляются примерно в течение минуты, и на устройстве ничего не нужно держать открытым.",
   helpPanoServer: "В Pano выбери вариант со своим сервером, совместимым с Last.fm (GNU FM).",
   helpPanoFields: "Заполни три поля:",
-  helpPanoApiUrl: "API URL:",
+  helpPanoApiUrl: "URL API:",
   helpPanoUsername: "{label} твоё имя пользователя Sonosphere",
   helpPanoUsernameLabel: "Имя пользователя:",
   helpPanoPassword: "{label} твой пароль Sonosphere",

@@ -10,7 +10,7 @@ export default {
   tabLoved: "Favoritas",
   tabJournal: "Diario",
   tabEarworms: "Pegadizas",
-  tabPlaylists: "Playlists",
+  tabPlaylists: "Listas de reproducción",
   tabEvents: "Eventos",
   tabSoundalikes: "Almas gemelas",
   tabTags: "Etiquetas",

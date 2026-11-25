@@ -363,6 +363,6 @@ export default {
     "That address is on a private network. Local music servers must be allowed by the site owner.",
   musicServerCredentialsRequired: "Enter the server's username and password.",
   musicServerNotConnected: "The music server is not connected",
-  musicServerNoMatch: "No matching track on that music server.",
-  pickMusicServerKind: "Pick a music server type.",
+  musicServerNoMatch: "해당 음악 서버에는 일치하는 트랙이 없습니다.",
+  pickMusicServerKind: "음악 서버 유형을 선택하세요.",
 } satisfies Translation<typeof en>;

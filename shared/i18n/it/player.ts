@@ -2,7 +2,7 @@ import type en from "../en/player";
 import type { Translation } from "../core";
 
 export default {
-  player: "Player",
+  player: "Giocatore",
   closePlayer: "Chiudi player",
   previousTrack: "Brano precedente",
   nextTrack: "Brano successivo",
@@ -14,7 +14,7 @@ export default {
   scrobbled: "Scrobblato",
   openInSpotify: "Apri in Spotify",
   watchOnYouTube: "Guarda su YouTube",
-  openInMusicServer: "Open album on your music server",
+  openInMusicServer: "Apri l'album sul tuo server musicale",
   searchOnYouTube: "Cerca su YouTube",
   seek: "Posizione",
   timeOf: "{position} di {length}",
@@ -132,8 +132,8 @@ export default {
   save: "Salva",
   lyrics: "Testo",
   sourceYouTube: "YouTube",
-  sourceMusic: "Music server",
+  sourceMusic: "Server musicale",
   sourceSpotify: "Spotify",
-  playbackSource: "Playback source",
-  setUpSource: "Set up",
+  playbackSource: "Fonte di riproduzione",
+  setUpSource: "Configurazione",
 } satisfies Translation<typeof en>;

@@ -2,7 +2,7 @@ import type en from "../en/admin";
 import type { Translation } from "../core";
 
 export default {
-  reasonSpam: "Spam",
+  reasonSpam: "İstenmeyen posta",
   reasonAbuse: "Taciz",
   reasonInappropriate: "Uygunsuz",
   reasonImpersonation: "Kimliğe bürünme",
@@ -96,8 +96,8 @@ export default {
   actionDmResolve: "Spam işaretini çözdü",
   fieldReleaseDate: "çıkış tarihi",
   fieldReleaseType: "tür",
-  fieldMbid: "MusicBrainz ID",
-  fieldSpotifyId: "Spotify ID",
+  fieldMbid: "MusicBrainz Kimliği",
+  fieldSpotifyId: "Spotify Kimliği",
   fieldDuration: "süre",
   none: "yok",
   auditReport: "şikayet #{report}",
@@ -228,7 +228,7 @@ export default {
   searching: "Aranıyor…",
   releaseTypeUnset: "Belirtilmedi (MusicBrainz'den doldurulur)",
   releaseTypeAlbum: "Albüm",
-  releaseTypeSingle: "Single",
+  releaseTypeSingle: "Tekli",
   releaseTypeEp: "EP",
   releaseTypeBroadcast: "Yayın",
   releaseTypeOther: "Diğer",

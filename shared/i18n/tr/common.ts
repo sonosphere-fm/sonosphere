@@ -250,5 +250,5 @@ export default {
   mdUploadFailed: "Resim yüklenemedi. Tekrar dene.",
   mdExternalImage: "Harici resim",
   mdUploadToDisplay: "{alt} (görüntülemek için bu resmi yükle)",
-  artistTabImages: "Images",
+  artistTabImages: "Görseller",
 } satisfies Translation<typeof en>;

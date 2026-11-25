@@ -14,7 +14,7 @@ export default {
   scrobbled: "Skroblēts",
   openInSpotify: "Atvērt Spotify",
   watchOnYouTube: "Skatīties YouTube",
-  openInMusicServer: "Open album on your music server",
+  openInMusicServer: "Atveriet albumu savā mūzikas serverī",
   searchOnYouTube: "Meklēt YouTube",
   seek: "Pārtīt",
   timeOf: "{position} no {length}",
@@ -152,5 +152,5 @@ export default {
   sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
-  setUpSource: "Set up",
+  setUpSource: "Iestatīšana",
 } satisfies Translation<typeof en>;

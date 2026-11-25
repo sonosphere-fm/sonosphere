@@ -54,7 +54,7 @@ export default {
   npHeading: "واجهة «يُشغَّل الآن» العامة",
   npIntro: "اعرض الأغنية الحالية لمستمع على موقع ويب. بلا مفتاح أو توقيع أو تسجيل دخول، والطلبات من مصادر أخرى مسموحة.",
   npSnapshot: "{endpoint}: لقطة JSON واحدة",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: الأحداث المرسلة من الخادم",
   npWs: "{endpoint}: WebSocket",
   npNull: "تكون {nowPlaying} بقيمة {null} عندما لا يُشغَّل شيء. يمكن أن تكون {album} و{imageUrl} بقيمة {null}.",
   npDuration: "{duration} بالثواني (0 إن كانت غير معروفة). {startedAt} هو وقت Unix لآخر تحديث، وليس موضع التشغيل.",

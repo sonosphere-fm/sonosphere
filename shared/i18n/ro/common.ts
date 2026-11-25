@@ -128,8 +128,8 @@ export default {
   terms: "Termeni",
   contact: "Contact",
   scrobble: "Scrobble",
-  admin: "Admin",
-  adminCount: "Admin ({count})",
+  admin: "Administrator",
+  adminCount: "Administrator ({count})",
   adminOnly: "Această zonă este pentru moderatori și administratori.",
   logOut: "Deconectare",
 
@@ -250,5 +250,5 @@ export default {
   mdUploadFailed: "Încărcarea imaginii a eșuat. Încearcă din nou.",
   mdExternalImage: "Imagine externă",
   mdUploadToDisplay: "{alt} (încarcă imaginea pentru a o afișa)",
-  artistTabImages: "Images",
+  artistTabImages: "Imagini",
 } satisfies Translation<typeof en>;

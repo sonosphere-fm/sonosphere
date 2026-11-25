@@ -54,7 +54,7 @@ export default {
   npHeading: "API ציבורי של מתנגן עכשיו",
   npIntro: "הצגת השיר הנוכחי של מאזין באתר. בלי מפתח, חתימה או התחברות, ובקשות cross-origin מותרות.",
   npSnapshot: "{endpoint}: תמונת מצב JSON אחת",
-  npSse: "{endpoint}: Server-Sent Events",
+  npSse: "{endpoint}: אירועים הנשלחים מהשרת",
   npWs: "{endpoint}: WebSocket",
   npNull: "{nowPlaying} הוא {null} כששום דבר לא מתנגן. {album} ו־{imageUrl} יכולים להיות {null}.",
   npDuration: "{duration} בשניות (0 אם לא ידוע). {startedAt} הוא זמן ה־Unix של העדכון האחרון, לא מיקום בניגון.",
