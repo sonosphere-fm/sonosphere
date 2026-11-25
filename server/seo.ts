@@ -265,7 +265,7 @@ async function lookup(url: URL): Promise<Page> {
     )
       return missing;
     const user = await findByName(decodeURIComponent(first));
-    if (!user) return missing;
+    if (!user || user.banned) return missing;
     if (user.suspended || !canSee(user, null))
       return { title: TITLES.profile, description: "View this listener’s profile on Sonosphere." };
     const base = userUrl(user.username);

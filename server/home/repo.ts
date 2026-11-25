@@ -147,7 +147,7 @@ export function friendLoves(userId: number, limit: number): Promise<FriendLove[]
     .innerJoin(tracks, eq(tracks.id, lovedTracks.trackId))
     .innerJoin(artists, eq(artists.id, tracks.artistId))
     .leftJoin(albums, eq(albums.id, tracks.albumId))
-    .where(eq(users.privateListening, false))
+    .where(and(eq(users.privateListening, false), eq(users.banned, false)))
     .orderBy(desc(lovedTracks.createdAt))
     .limit(limit);
 }

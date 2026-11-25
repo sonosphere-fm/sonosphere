@@ -96,7 +96,7 @@ async function userOf(name: unknown, fallback?: number): Promise<User> {
   let u: User | null = null;
   if (name) u = await findByName(text(name));
   else if (fallback) u = await findById(fallback);
-  return u ?? fail(6, "User not found");
+  return u && !u.banned ? u : fail(6, "User not found");
 }
 
 // An empty chart for someone who keeps their listening private, or undefined when it may be read.

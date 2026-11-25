@@ -147,7 +147,7 @@ router.post<ImageSaved>("/api/image/art", async (c) => {
 });
 
 router.post<ImageSaved>("/api/image", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(poster(c));
   const type = c.q.get("type");
   if (type === "about" || type === "changelog") {
     if (type === "changelog") adminOnly(c);
