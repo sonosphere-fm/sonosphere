@@ -122,6 +122,8 @@ await Bun.write(
     )
 );
 await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff }));
+await Bun.write(`${out}/sw.js`, Bun.file("src/sw.js"));
+await Bun.write(`${out}/manifest.webmanifest`, Bun.file("src/manifest.webmanifest"));
 await Bun.write(`${out}/assets/social-card.png`, Bun.file("brand/social-card.png"));
 for (const [to, from] of Object.entries(ICONS)) await Bun.write(`${out}/icons${to}`, Bun.file(from));
 

@@ -34,6 +34,7 @@ import { pg } from "./db/client";
 import { readiness } from "./readiness";
 import { docsRoutes } from "./developer-docs";
 import { HTTPS } from "./auth/session";
+import { pwaRoutes } from "./pwa";
 
 const production = process.env.NODE_ENV === "production";
 
@@ -105,6 +106,7 @@ const server = Bun.serve<SocketData>({
   maxRequestBodySize: MAX_REQUEST_BYTES,
   development: production ? false : { hmr: true, console: false },
   routes: secured({
+    ...pwaRoutes,
     ...docsRoutes,
     "/health/ready": () => readiness(() => pg`SELECT 1`),
     "/api/ws": (req: Request, srv: Server<SocketData>) => upgrade(req, srv),
