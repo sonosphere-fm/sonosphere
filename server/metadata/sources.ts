@@ -442,12 +442,12 @@ const LASTFM_KEYS = [
 ];
 const keyRest = (i: number) => `lastfm-key-rest:${i}`;
 
-// error 10 invalid key, 26 suspended: an hour; 29 rate limited: a minute; 11, 16, server errors, no answer: 15s
+// error 10 invalid key, 26 suspended: an hour; 29 rate limited: a minute; 11, 16, server errors, no or unreadable answer: 15s
 function restSeconds(res: Response | null, body: Json | null): number {
   const code = num(body?.error);
   if (code === 10 || code === 26) return 3600;
   if (code === 29 || res?.status === 429) return 60;
-  if (!res || code === 11 || code === 16 || res.status >= 500 || (!body && !res.ok)) return 15;
+  if (!res || !body || code === 11 || code === 16 || res.status >= 500) return 15;
   return 0;
 }
 
