@@ -4,6 +4,7 @@ import tailwind from "bun-plugin-tailwind";
 import { guestHomeShell } from "./home-shell";
 import { STAFF_BUNDLE_MARK } from "../src/admin/index";
 import "./changelog";
+import { ICONS } from "../server/icons";
 
 let gitSha = process.env.SENTRY_RELEASE || process.env.GIT_SHA || "unknown";
 try {
@@ -121,6 +122,7 @@ await Bun.write(
 );
 await Bun.write(`${out}/staff.json`, JSON.stringify({ scripts: staff }));
 await Bun.write(`${out}/assets/social-card.png`, Bun.file("brand/social-card.png"));
+for (const [to, from] of Object.entries(ICONS)) await Bun.write(`${out}/icons${to}`, Bun.file(from));
 
 const size = (names: string[]) => {
   const bytes = names.reduce((n, f) => n + Bun.file(`${out}/${f}`).size, 0);

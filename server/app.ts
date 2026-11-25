@@ -6,6 +6,7 @@ import { cacheAnonymousAtEdge } from "./edge-cache";
 import { isStaff } from "./site/roles";
 import { pageSeo, seoContent, seoHead } from "./seo";
 import { crawlerRoutes } from "./sitemap";
+import { ICONS } from "./icons";
 import { findByName } from "./users/repo";
 import { TITLES } from "../shared/titles";
 import { usernameRedirect } from "../shared/username-redirect";
@@ -117,5 +118,12 @@ export async function appRoutes() {
     });
   };
 
-  return { ...crawlerRoutes, "/page-metadata": metadata, "/assets/*": asset, "/*": shell };
+  const icons = Object.fromEntries(
+    Object.keys(ICONS).map((path) => {
+      const file = Bun.file(`${DIST}/icons${path}`);
+      return [path, () => new Response(file, { headers: { "Cache-Control": "public, max-age=604800" } })];
+    })
+  );
+
+  return { ...crawlerRoutes, ...icons, "/page-metadata": metadata, "/assets/*": asset, "/*": shell };
 }
