@@ -96,6 +96,8 @@ export default {
   heroTitle: "Tieni traccia della musica che ami.",
   heroBody:
     "Sonosphere scrobbla tutto ciò che ascolti, lo trasforma nelle tue classifiche personali e trova la musica e le persone in sintonia con i tuoi gusti.",
+  heroLastfm:
+    "Arrivi da Last.fm? Importa tutta la tua cronologia in pochi clic. Sonosphere è pienamente compatibile con l'API di Last.fm, quindi i tuoi scrobbler funzionano anche qui.",
   joinFree: "Iscriviti gratis",
   logIn: "Accedi",
   heroChartTitle: "I brani top del momento",

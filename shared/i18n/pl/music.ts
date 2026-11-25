@@ -108,6 +108,8 @@ export default {
   heroTitle: "Śledź to, co kochasz.",
   heroBody:
     "Sonosphere scrobbluje wszystko, czego słuchasz, tworzy z tego Twoje własne listy i znajduje muzykę oraz ludzi pasujących do Twojego gustu.",
+  heroLastfm:
+    "Przychodzisz z Last.fm? Zaimportuj całą swoją historię w kilka kliknięć. Sonosphere jest w pełni zgodny z API Last.fm, więc Twoje scrobblery działają też tutaj.",
   joinFree: "Dołącz za darmo",
   logIn: "Zaloguj się",
   heroChartTitle: "Najpopularniejsze utwory teraz",

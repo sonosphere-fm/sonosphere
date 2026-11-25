@@ -89,6 +89,8 @@ export default {
   elsewhere: "外部リンク",
   heroTitle: "好きな音楽を記録しよう。",
   heroBody: "Sonosphereは再生した曲をすべてスクロブルしてあなただけのチャートを作り、好みに合う音楽や人を見つけます。",
+  heroLastfm:
+    "Last.fmから移行しますか？数クリックで再生履歴をすべてインポートできます。SonosphereはLast.fm APIと完全互換なので、今使っているスクロブラーもそのまま使えます。",
   joinFree: "無料で登録",
   logIn: "ログイン",
   heroChartTitle: "今のトップトラック",

@@ -94,6 +94,8 @@ export default {
   heroTitle: "Registra la música que te encanta.",
   heroBody:
     "Sonosphere scrobblea todo lo que escuchas, lo convierte en tus propias listas y encuentra la música y las personas que encajan con tus gustos.",
+  heroLastfm:
+    "¿Vienes de Last.fm? Importa todo tu historial en unos pocos clics. Sonosphere es totalmente compatible con la API de Last.fm, así que tus scrobblers también funcionan aquí.",
   joinFree: "Únete gratis",
   logIn: "Iniciar sesión",
   heroChartTitle: "Canciones top ahora mismo",

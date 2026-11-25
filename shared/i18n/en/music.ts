@@ -88,6 +88,8 @@ export default {
   heroTitle: "Track what you love.",
   heroBody:
     "Sonosphere scrobbles everything you play, turns it into your own charts, and finds the music and people that match your taste.",
+  heroLastfm:
+    "Coming from Last.fm? Import your whole history in a few clicks. Sonosphere is fully compatible with the Last.fm API, so your scrobblers work here too.",
   joinFree: "Join free",
   logIn: "Log in",
   heroChartTitle: "Top tracks right now",
