@@ -79,7 +79,7 @@ router.delete<EventOk>("/api/event/:id", async (c) => {
 });
 
 router.post<AttendResult>("/api/event/:id/attend", async (c) => {
-  const u = confirmed(need(c));
+  const u = confirmed(poster(c));
   const e = (await requireItem("event", c.params[0], ["event"])).row;
   const status = oneOf(c.body.status, ANSWERS);
   await repo.setAttendance(e.id, u.id, status);

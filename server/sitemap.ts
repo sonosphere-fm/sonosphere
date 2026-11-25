@@ -5,7 +5,12 @@ import { albums, artists, events, journals, playlists, tags, tracks, users } fro
 import { absolute, escape, landing } from "./seo";
 
 const size = 5000;
-const publicUser = and(eq(users.hideRecent, false), eq(users.privateListening, false), eq(users.suspended, false));
+const publicUser = and(
+  eq(users.hideRecent, false),
+  eq(users.privateListening, false),
+  eq(users.suspended, false),
+  eq(users.banned, false)
+);
 const sources = {
   artists: {
     table: artists,

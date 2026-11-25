@@ -1,6 +1,6 @@
-import { and, asc, eq, isNull, lt } from "drizzle-orm";
+import { and, asc, eq, isNull, lt, notExists, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { spotifyAuth, spotifyLinks } from "../db/schema";
+import { spotifyAuth, spotifyLinks, users } from "../db/schema";
 
 export type Link = typeof spotifyLinks.$inferSelect;
 type NewLink = typeof spotifyLinks.$inferInsert;
@@ -29,23 +29,35 @@ export async function dropLink(userId: number): Promise<boolean> {
   return gone.length > 0;
 }
 
+// banned accounts keep their link but are not polled
+const working = () =>
+  and(
+    isNull(spotifyLinks.broken),
+    notExists(
+      db
+        .select({ one: sql`1` })
+        .from(users)
+        .where(and(eq(users.id, spotifyLinks.userId), eq(users.banned, true)))
+    )
+  );
+
 /** Working links whose recent plays are due by `at`, longest-waiting first. */
 export const dueLinks = (at: number, limit: number): Promise<Link[]> =>
   db
     .select()
     .from(spotifyLinks)
-    .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.recentAt, at)))
+    .where(and(working(), lt(spotifyLinks.recentAt, at)))
     .orderBy(asc(spotifyLinks.recentAt))
     .limit(limit);
 
-export const workingLinks = (): Promise<Link[]> => db.select().from(spotifyLinks).where(isNull(spotifyLinks.broken));
+export const workingLinks = (): Promise<Link[]> => db.select().from(spotifyLinks).where(working());
 
 /** Working links whose "now playing" check is due by `at`. */
 export const playingDue = (at: number, limit: number): Promise<Link[]> =>
   db
     .select()
     .from(spotifyLinks)
-    .where(and(isNull(spotifyLinks.broken), lt(spotifyLinks.playingAt, at)))
+    .where(and(working(), lt(spotifyLinks.playingAt, at)))
     .orderBy(asc(spotifyLinks.playingAt))
     .limit(limit);
 

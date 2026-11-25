@@ -1,7 +1,7 @@
 import { confirmed, need, poster } from "../guards";
 import { bad, missing, paging, Router, throttle, type Body, type Ctx } from "../http";
 import { findById, publicUser } from "../users/repo";
-import { requireVisibleUser } from "../users/service";
+import { hiddenFrom, requireVisibleUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
 import type { JournalDeleted, JournalList, JournalPost, JournalSaved, JournalSummary } from "../../shared/journals";
@@ -51,6 +51,7 @@ router.get<JournalList>("/api/user/journal", async (c) => {
 router.get<JournalPost>("/api/journal/:id", async (c) => {
   const j = (await repo.findJournal(Number(c.params[0]))) ?? missing("postNotFound");
   const author = (await findById(j.userId)) ?? missing("postNotFound");
+  if (hiddenFrom(author, c.user)) missing("postNotFound");
   return { ...(await summary(j)), body: j.body, author: publicUser(author) };
 });
 

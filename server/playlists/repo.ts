@@ -11,7 +11,7 @@ import { fail } from "../http";
 const PLAYLIST_MAX = 1000;
 
 export type Playlist = typeof playlists.$inferSelect;
-type PlaylistWithOwner = Playlist & { owner: string };
+type PlaylistWithOwner = Playlist & { owner: string; banned: boolean };
 
 export function playlistsOf(userId: number): Promise<PlaylistCard[]> {
   const p = alias(playlists, "p");
@@ -42,7 +42,7 @@ export function playlistsOf(userId: number): Promise<PlaylistCard[]> {
 export const findPlaylist = (id: number): Promise<PlaylistWithOwner | null> =>
   first(
     db
-      .select({ ...getTableColumns(playlists), owner: users.username })
+      .select({ ...getTableColumns(playlists), owner: users.username, banned: users.banned })
       .from(playlists)
       .innerJoin(users, eq(users.id, playlists.userId))
       .where(eq(playlists.id, id))

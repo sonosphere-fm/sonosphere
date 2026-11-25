@@ -25,7 +25,8 @@ import { appearanceCols, userAppearance } from "./appearance";
 
 export type User = typeof users.$inferSelect;
 
-export const openListener = () => and(eq(users.hideRecent, false), eq(users.privateListening, false));
+export const openListener = () =>
+  and(eq(users.hideRecent, false), eq(users.privateListening, false), eq(users.banned, false));
 export const publicCols = {
   ...appearanceCols,
   id: users.id,

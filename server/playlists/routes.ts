@@ -1,7 +1,7 @@
 import { requestLocale, tr } from "../i18n";
 import { confirmed, need, poster } from "../guards";
 import { bad, missing, oneOf, Router, throttle } from "../http";
-import { requireVisibleUser } from "../users/service";
+import { hiddenFrom, requireVisibleUser } from "../users/service";
 import { clean } from "../util";
 import * as repo from "./repo";
 import { requireOwn, templateTracks, trackToAdd } from "./service";
@@ -23,6 +23,7 @@ router.get<UserPlaylists>("/api/user/playlists", async (c) => {
 
 router.get<PlaylistPage>("/api/playlist/:id", async (c) => {
   const p = (await repo.findPlaylist(Number(c.params[0]))) ?? missing("playlistNotFound");
+  if (hiddenFrom(p, c.user)) missing("playlistNotFound");
   return {
     id: p.id,
     title: p.title,
@@ -73,7 +74,7 @@ router.delete<PlaylistOk>("/api/playlist/:id", async (c) => {
 });
 
 router.post<PlaylistOk>("/api/playlist/:id/tracks", async (c) => {
-  const p = await requireOwn(Number(c.params[0]), confirmed(need(c)).id);
+  const p = await requireOwn(Number(c.params[0]), confirmed(poster(c)).id);
   await repo.appendTrack(p.id, await trackToAdd(c.body));
   return { ok: true };
 });

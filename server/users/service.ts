@@ -8,8 +8,10 @@ export const requireUser = async (name: string | null): Promise<User> =>
 // Banned accounts are hidden from everyone but staff.
 export async function requireVisibleUser(name: string | null, viewer: Viewer | null): Promise<User> {
   const u = await requireUser(name);
-  return u.banned && !isStaff(viewer) ? missing("userNotFound") : u;
+  return hiddenFrom(u, viewer) ? missing("userNotFound") : u;
 }
+
+export const hiddenFrom = (u: Pick<User, "banned">, viewer: Viewer | null): boolean => u.banned && !isStaff(viewer);
 
 type Who = { id: number } | null;
 export const canSee = (target: User, viewer: Who): boolean =>
