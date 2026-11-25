@@ -18,3 +18,19 @@ export function musicStreamUrl(auth: MusicAuth, id: string): string {
 export function musicAlbumUrl(auth: MusicAuth, albumId: string | null): string {
   return auth.kind === "subsonic" ? albumWebUrl(auth.base, auth.name, albumId) : jellyfinAlbumUrl(auth.base, albumId);
 }
+
+export function musicCoverUrl(auth: MusicAuth, id: string): string {
+  if (auth.kind === "subsonic") {
+    const query = new URLSearchParams({
+      u: auth.username,
+      v: "1.16.1",
+      c: "Sonosphere",
+      f: "json",
+      t: auth.token,
+      s: auth.salt,
+      id,
+    });
+    return `${auth.base}/rest/getCoverArt.view?${query}`;
+  }
+  return `${auth.base}/Items/${encodeURIComponent(id)}/Images/Primary?api_key=${encodeURIComponent(auth.token)}`;
+}

@@ -25,7 +25,7 @@ import type { SpotifyStatus } from "../shared/spotify";
 import type { MusicAuth, MusicSource, MusicStatus } from "../shared/music";
 import type { VideoLookup } from "../shared/video";
 import { artId, isTrack, openSpotify, type SdkState, type SdkTrack, type SpotifyOut } from "./spotify";
-import { musicAlbumUrl, musicDirectAllowed, musicMatches, musicStreamUrl } from "./music";
+import { musicAlbumUrl, musicCoverUrl, musicDirectAllowed, musicMatches, musicStreamUrl } from "./music";
 
 export type PTrack = { title: string; artist: string; album?: string | null; image?: string | null; duration?: number };
 /** "saved": restored after a reload, waiting for a press of play (browsers don't let pages autoplay). */
@@ -42,7 +42,7 @@ type State = {
   videoId: string | null;
   spotify: { id: string; art: string | null } | null;
   source: PlaybackSource | null;
-  music: { direct: boolean; albumUrl: string } | null;
+  music: { direct: boolean; albumUrl: string; cover: string | null } | null;
   position: number;
   length: number;
   scrobbled: boolean;
@@ -72,6 +72,8 @@ type Saved = {
   length: number;
   source?: PlaybackSource | null;
   art?: string | null;
+  videoId?: string | null;
+  music?: { direct: boolean; albumUrl: string; cover?: string | null } | null;
 };
 /** Spotify's cover from before the reload, shown while the status is "saved". */
 let savedArt: string | null = null;
@@ -88,6 +90,15 @@ function loadSaved(): State {
       station: v.station,
       status: "saved",
       source: isPlaybackSource(v.source) ? v.source : null,
+      videoId: typeof v.videoId === "string" ? v.videoId : null,
+      music:
+        v.music && typeof v.music.albumUrl === "string"
+          ? {
+              direct: !!v.music.direct,
+              albumUrl: v.music.albumUrl,
+              cover: typeof v.music.cover === "string" ? v.music.cover : null,
+            }
+          : null,
       position: Number(v.position) || 0,
       length: Number(v.length) || 0,
     };
@@ -108,6 +119,8 @@ function save(s: State) {
       length: s.length,
       source: s.source,
       art: s.spotify?.art ?? (s.status === "saved" ? savedArt : null),
+      videoId: s.videoId,
+      music: s.music,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(v));
   } catch {}
@@ -453,7 +466,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       });
     });
 
-  const markMusic = (track: PTrack, direct: boolean, albumUrl: string) => {
+  const markMusic = (track: PTrack, direct: boolean, albumUrl: string, cover: string | null = null) => {
     const player = audio.current;
     const length = (player && Number.isFinite(player.duration) ? player.duration : 0) || track.duration || 0;
     setState((s) => ({
@@ -464,7 +477,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       status: "ready",
       playing: !(player?.paused ?? false),
       length,
-      music: { direct, albumUrl },
+      music: { direct, albumUrl, cover },
     }));
     if (meRef.current) {
       const body = {
@@ -479,6 +492,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const start = (queue: PTrack[], index: number, at = 0) => {
     const t = queue[index];
+    const preferredSource = ref.current.source;
     const token = ++run.current.token;
     const stale = () => run.current.token !== token;
     from.current = at;
@@ -555,7 +569,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         else if (!matches.length) return false;
         else if (await loadMusicAudio(musicStreamUrl(auth, matches[0]!.id), from.current)) {
           if (stale()) return false;
-          markMusic(t, true, musicAlbumUrl(auth, matches[0]!.albumId));
+          markMusic(
+            t,
+            true,
+            musicAlbumUrl(auth, matches[0]!.albumId),
+            musicCoverUrl(auth, matches[0]!.albumId || matches[0]!.id)
+          );
           return true;
         } else directOff.current = true;
         if (stale()) return false;
@@ -566,7 +585,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (!source || stale()) return false;
       if (!(await loadMusicAudio(source.proxy, from.current))) return false;
       if (stale()) return false;
-      markMusic(t, false, source.albumUrl);
+      markMusic(t, false, source.albumUrl, null);
       return true;
     };
 
@@ -575,15 +594,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       music: playMusic,
       spotify: playSpotify,
     };
-    const order = meRef.current
+    const baseOrder = meRef.current
       ? sourceOrder(sourceRef.current, availableRef.current)
       : (["youtube"] as PlaybackSource[]);
+    const order = (preferredSource && isPlaybackSource(preferredSource) ? [preferredSource, ...baseOrder] : baseOrder)
+      .filter((s, i, a) => a.indexOf(s) === i)
+      .filter((s) => !meRef.current || availableRef.current[s] !== false);
+    const tryOrder = order.length ? order : (["youtube"] as PlaybackSource[]);
     let trying = false;
     fallBack.current = async () => {
       if (trying) return;
       trying = true;
       try {
-        for (let source = order.shift(); source; source = order.shift()) {
+        for (let source = tryOrder.shift(); source; source = tryOrder.shift()) {
           if (await players[source]().catch(() => false)) return;
           if (stale()) return;
         }
@@ -706,7 +729,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // saved on every change of track, and every few seconds of progress
   useEffect(() => {
     save(ref.current);
-  }, [state.queue, state.index, state.station, Math.floor(state.position / 5)]);
+  }, [state.queue, state.index, state.station, state.videoId, state.music, Math.floor(state.position / 5)]);
 
   const seek = (sec: number) => {
     const s = ref.current;
@@ -783,7 +806,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         if (run.current.token !== token) return true;
         if (!(await loadMusicAudio(source.proxy, at))) return false;
         if (run.current.token !== token) return true;
-        markMusic(track, false, source.albumUrl);
+        markMusic(track, false, source.albumUrl, null);
         return true;
       })
       .then((ok) => {
@@ -811,8 +834,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const hasNext = state.index < state.queue.length - 1;
   const showCover =
     (state.status === "ready" && (state.spotify || state.source === "music")) || state.status === "saved";
-  const cover = state.spotify?.art || (state.status === "saved" ? savedArt : null) || track?.image;
-  const coverSrc = cover ? imageUrl(cover) : null;
+  const cover =
+    state.spotify?.art ||
+    (state.status === "saved" ? savedArt : null) ||
+    (state.source === "youtube" && state.videoId
+      ? `https://img.youtube.com/vi/${state.videoId}/hqdefault.jpg`
+      : null) ||
+    state.music?.cover ||
+    track?.image;
+  const coverSrc = cover ? (/^https?:\/\//.test(cover) ? cover : imageUrl(cover)) : null;
   return (
     <Ctx.Provider value={value}>
       {children}
