@@ -188,21 +188,20 @@ export default {
     "Spotify a refuzat acest cont. Dacă te-ai autentificat cu alt cont Spotify decât cel care a creat aplicația, adaugă-l la User Management în setările aplicației, apoi conectează-te din nou.",
   spotifyFailed: "Spotify nu a putut fi conectat. Verifică Client ID-ul și încearcă din nou.",
   spotifyIntro:
-    "Spotify permite ca fiecare aplicație să fie folosită doar de câteva persoane, așa că te conectezi prin propria ta aplicație Spotify gratuită. Durează cam două minute:",
-  spotifyStep1:
-    "Deschide {dashboard} și autentifică-te cu contul tău Spotify. Acceptă termenii pentru dezvoltatori, dacă ți se cere.",
+    "Spotify pornește fiecare aplicație în modul de dezvoltare, în care o pot folosi doar câteva conturi adăugate de proprietar. Această limită este ridicată doar pentru firme consacrate ({quotaModes}), așa că o singură aplicație Sonosphere comună nu poate deservi pe toată lumea. În schimb, îți creezi propria aplicație gratuită în aproximativ două minute:",
+  spotifyQuotaModes: "modurile de cotă Spotify",
+  spotifyStep1: "Autentifică-te în {dashboard} și acceptă termenii pentru dezvoltatori dacă ți se cere.",
   spotifyDashboard: "panoul pentru dezvoltatori Spotify",
-  spotifyStep2: "Apasă {create}. Orice nume și descriere merg, de exemplu „Scrobblerul meu Sonosphere”.",
+  spotifyStep2: "Dă clic pe {create} și introdu orice nume și descriere.",
   spotifyCreateApp: "Create app",
-  spotifyStep3: "La {redirect}, lipește exact această adresă și apasă {add}:",
+  spotifyStep3: "La {redirect}, lipește această adresă și dă clic pe {add}:",
   spotifyRedirectUris: "Redirect URIs",
   spotifyAdd: "Add",
   spotifyStep4:
     "La {question}, bifează {webApi} (și {playbackSdk} ca să asculți muzică aici), acceptă termenii și apasă {save}.",
   spotifyApiQuestion: "Which API/SDKs are you planning to use?",
   spotifySave: "Save",
-  spotifyStep5:
-    "Deschide {settings} ale aplicației, copiază {clientId} și lipește-l mai jos. Nu ai nevoie de client secret.",
+  spotifyStep5: "În {settings} aplicației, copiază {clientId} și lipește-l mai jos.",
   spotifySettings: "Settings",
   spotifyClientId: "Client ID",
   spotifyClientIdPlaceholder: "32 de litere și cifre",
