@@ -6,7 +6,8 @@ import { isAdmin, roleOf } from "../site/roles";
 import { audit } from "../site/audit";
 import { findById, findByName } from "../users/repo";
 import { like, norm, now } from "../util";
-import { canAct, note, paging, targetUser } from "./common";
+import { canAct, note, paging } from "./common";
+import { requireUser } from "../users/service";
 import * as repo from "./messages.repo";
 import { setDmMuted } from "./users.repo";
 import type {
@@ -156,7 +157,7 @@ router.post<DmMessageDeleted>("/api/admin/dm/messages/:id/delete", async (c) => 
 
 router.post<DmMuteResult>("/api/admin/users/:name/dm-mute", async (c) => {
   const me = staff(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   const muted = c.body.muted !== false;
   if (muted) await canAct(me, t, "mute");
   else if (t.id === me.id) bad("cantChangeOwnMessaging");

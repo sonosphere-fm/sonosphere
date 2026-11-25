@@ -4,7 +4,8 @@ import { adminCount, configAdmins, isAdmin, isStaff, roleOf, setRole } from "../
 import { audit } from "../site/audit";
 import { like, norm, now } from "../util";
 import { disconnect } from "../realtime";
-import { canAct, note, paging, targetUser } from "./common";
+import { canAct, note, paging } from "./common";
+import { requireUser } from "../users/service";
 import { pageOf } from "../moderation/repo";
 import * as repo from "./users.repo";
 import { setProbation, standing } from "../trust/service";
@@ -30,27 +31,27 @@ export const router = new Router({ jsonOnly: true });
 
 router.get<AdminUsernameStatus>("/api/admin/users/:name/username", async (c) => {
   adminOnly(c);
-  const target = await targetUser(c.params[0]!);
+  const target = await requireUser(c.params[0]!);
   return { ...(await usernameStatus(target.id)), held: await heldUsernames(target.id) };
 });
 
 router.post<{ username: string }>("/api/admin/users/:name/username", async (c) => {
   const actor = adminOnly(c);
-  const target = await targetUser(c.params[0]!);
+  const target = await requireUser(c.params[0]!);
   const updated = await changeUsername(target.id, actor, c.body.username, false, true, note(c));
   return { username: updated.username };
 });
 
 router.post<Ok>("/api/admin/users/:name/username/release", async (c) => {
   const actor = adminOnly(c);
-  const target = await targetUser(c.params[0]!);
+  const target = await requireUser(c.params[0]!);
   await manageUsernames(target.id, actor, "release", note(c));
   return { ok: true };
 });
 
 router.post<Ok>("/api/admin/users/:name/username/cooldown", async (c) => {
   const actor = adminOnly(c);
-  const target = await targetUser(c.params[0]!);
+  const target = await requireUser(c.params[0]!);
   await manageUsernames(target.id, actor, "cooldown", note(c));
   return { ok: true };
 });
@@ -89,7 +90,7 @@ const userAction = (
 
 router.post<MeResponse>("/api/admin/users/:name/impersonate", async (c) => {
   const actor = adminOnly(c);
-  const target = await targetUser(c.params[0]!);
+  const target = await requireUser(c.params[0]!);
   await canAct(actor, target, "impersonate");
   if (target.banned) bad("cantActBannedAccount");
   const user = await me(target, actor);
@@ -134,7 +135,7 @@ router.get<StaffUserList>("/api/admin/users", async (c) => {
 
 router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
   const me = staff(c);
-  const u = await targetUser(c.params[0]!);
+  const u = await requireUser(c.params[0]!);
   const id = u.id;
   const shouts = await repo.recentShouts(id, 5);
   const recentShouts = await Promise.all(
@@ -183,7 +184,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
 
 router.post<SuspendResult>("/api/admin/users/:name/suspend", async (c) => {
   const me = staff(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   const suspended = c.body.suspended !== false;
   if (suspended) await canAct(me, t, "suspend");
   else if (t.id === me.id) bad("cantChangeOwnSuspension");
@@ -194,7 +195,7 @@ router.post<SuspendResult>("/api/admin/users/:name/suspend", async (c) => {
 
 router.post<BanResult>("/api/admin/users/:name/ban", async (c) => {
   const me = adminOnly(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   const banned = c.body.banned !== false;
   if (banned) await canAct(me, t, "ban");
   else if (t.id === me.id) bad("cantChangeOwnBan");
@@ -206,7 +207,7 @@ router.post<BanResult>("/api/admin/users/:name/ban", async (c) => {
 
 router.post<ProbationResult>("/api/admin/users/:name/probation", async (c) => {
   const me = staff(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   const probation = c.body.probation !== false;
   if (isStaff(t)) bad("staffNeverProbation");
   await setProbation(t, probation, me);
@@ -216,7 +217,7 @@ router.post<ProbationResult>("/api/admin/users/:name/probation", async (c) => {
 
 router.post<RoleResult>("/api/admin/users/:name/role", async (c) => {
   const me = adminOnly(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   const role = oneOf(String(c.body.role), ROLES) ?? bad("unknownRole");
   await canAct(me, t, "role");
   if (t.banned) bad("liftBanBeforeGivingAccount");
@@ -230,7 +231,7 @@ router.post<RoleResult>("/api/admin/users/:name/role", async (c) => {
 
 router.post<VerifyResult>("/api/admin/users/:name/verify", async (c) => {
   const me = adminOnly(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   if (t.emailVerifiedAt) return { verifiedAt: t.emailVerifiedAt };
   if (placeholder(t)) bad("placeholderAddressCantConfirm");
   const at = now();
@@ -241,7 +242,7 @@ router.post<VerifyResult>("/api/admin/users/:name/verify", async (c) => {
 
 router.post<SessionsResult>("/api/admin/users/:name/sessions", async (c) => {
   const me = adminOnly(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   await canAct(me, t, "sessions");
   const revoked = await repo.revokeSessions(t.id);
   await audit(me, userAction("user.sessions", t, note(c), { revoked }));
@@ -251,7 +252,7 @@ router.post<SessionsResult>("/api/admin/users/:name/sessions", async (c) => {
 
 router.post<Ok>("/api/admin/users/:name/delete", async (c) => {
   const me = adminOnly(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   await canAct(me, t, "delete");
   if (String(c.body.confirm ?? "") !== t.username) bad("typeUsernameToConfirm", { username: t.username });
   const stats = await repo.contentCounts(t.id);
@@ -262,7 +263,7 @@ router.post<Ok>("/api/admin/users/:name/delete", async (c) => {
 
 router.post<NoteAdded>("/api/admin/users/:name/notes", async (c) => {
   const me = staff(c);
-  const t = await targetUser(c.params[0]!);
+  const t = await requireUser(c.params[0]!);
   const body = String(c.body.body ?? "")
     .trim()
     .slice(0, 2000);

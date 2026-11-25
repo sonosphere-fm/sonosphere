@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { attempt, exclusive, getJson, setJson, takeJson } from "../kv";
-import { now, rid } from "../util";
+import { asObject, now, rid } from "../util";
 import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
 import { clearNowPlaying } from "../listening/repo";
@@ -66,7 +66,6 @@ async function nextPoll(link: repo.Link, every: number, idleEvery: number, idleA
 const markActive = (userId: number) => setJson(activeKey(userId), now(), 3600_000);
 
 type Json = Record<string, unknown>;
-const obj = (v: unknown): Json | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : null);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 const numOr = (v: unknown, d = 0) => (typeof v === "number" && Number.isFinite(v) ? v : d);
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -116,7 +115,7 @@ async function tokenRequest(clientId: string, params: Record<string, string>): P
     body: new URLSearchParams({ client_id: clientId, ...params }),
     signal: AbortSignal.timeout(15_000),
   });
-  const data = obj(await res.json().catch(() => null));
+  const data = asObject(await res.json().catch(() => null));
   const error = str(data?.error);
   if (res.status === 400 && error === "invalid_grant")
     throw new Revoked("Spotify access was withdrawn. Connect again to resume.");
@@ -166,7 +165,7 @@ export async function finishConnect(viewerId: number | null, q: URLSearchParams)
     });
     // the Spotify account is not on the app's user list
     if (res.status === 403) return "forbidden";
-    const me = obj(await res.json().catch(() => null));
+    const me = asObject(await res.json().catch(() => null));
     if (!res.ok || !me || !str(me.id)) return "failed";
     await repo.saveLink({
       userId: pending.userId,
@@ -249,8 +248,8 @@ async function request(link: repo.Link, path: string): Promise<Response> {
     await spent(link.clientId, group);
     return res;
   }
-  const body = obj(await res.json().catch(() => null));
-  const reason = str(obj(body?.error)?.reason) || str(body?.reason);
+  const body = asObject(await res.json().catch(() => null));
+  const reason = str(asObject(body?.error)?.reason) || str(body?.reason);
   const asked = Number(res.headers.get("retry-after")) || 0;
   await refused(link.clientId, group, asked, reason);
   await slowDown(link.clientId, group, asked, reason, path);
@@ -269,17 +268,22 @@ async function spotifyGet(link: repo.Link, path: string): Promise<Json | null> {
   // Spotify's own 5xx is as transient as a slowdown: skip this poll and try again on the next
   if (res.status >= 500) throw new Slowed();
   if (!res.ok) throw new Error(`Spotify ${path} answered ${res.status}`);
-  return obj(await res.json().catch(() => null));
+  return asObject(await res.json().catch(() => null));
 }
 
 function trackInput(track: unknown): ScrobbleInput | null {
-  const t = obj(track);
+  const t = asObject(track);
   // podcast episodes are not scrobbled
   if (!t || (t.type !== undefined && t.type !== "track")) return null;
-  const artist = str(obj(list(t.artists)[0])?.name);
+  const artist = str(asObject(list(t.artists)[0])?.name);
   const name = str(t.name);
   if (!artist || !name) return null;
-  return { artist, track: name, album: str(obj(t.album)?.name), duration: Math.round(numOr(t.duration_ms) / 1000) };
+  return {
+    artist,
+    track: name,
+    album: str(asObject(t.album)?.name),
+    duration: Math.round(numOr(t.duration_ms) / 1000),
+  };
 }
 
 /** Returns how many plays were added. */
@@ -291,7 +295,7 @@ async function importRecent(link: repo.Link): Promise<number> {
     const reply = await spotifyGet(link, `/me/player/recently-played?limit=50${after}`);
     const plays: { at: number; input: ScrobbleInput }[] = [];
     for (const item of list(reply?.items)) {
-      const it = obj(item);
+      const it = asObject(item);
       const input = trackInput(it?.track);
       const at = Date.parse(str(it?.played_at));
       if (!input || !Number.isFinite(at) || at <= link.cursor) continue;
@@ -397,7 +401,7 @@ export async function catalogueGet(path: string, spare = false): Promise<Json | 
       if (res.status === 401 || res.status === 403) continue;
       if (res.status === 404 || res.status === 400) return null;
       if (!res.ok) throw new Error(`Spotify ${path.split("?")[0]} answered ${res.status}`);
-      return obj(await res.json().catch(() => null));
+      return asObject(await res.json().catch(() => null));
     } catch (e) {
       if (e instanceof Slowed || e instanceof Revoked) continue;
       throw e;

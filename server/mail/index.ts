@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 import { db } from "../db/client";
 import { mailLog, outbox } from "../db/schema";
 import { bump, exclusive } from "../kv";
-import { now } from "../util";
+import { now, rid } from "../util";
 import * as Sentry from "@sentry/bun";
 
 const env = process.env;
@@ -57,8 +57,6 @@ const day = () => new Date().toISOString().slice(0, 10);
 
 // Composed here rather than by nodemailer, whose composer stamps X-Mailer, its name in part boundaries and its own Message-ID style.
 const DOMAIN = (/@([^>\s]+)>?\s*$/.exec(FROM)?.[1] || new URL(SITE_URL).hostname).toLowerCase();
-const hex = (n: number) =>
-  Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => b.toString(16).padStart(2, "0")).join("");
 const b64 = (s: string) => Buffer.from(s, "utf8").toString("base64").replace(/.{76}/g, "$&\r\n");
 const word = (s: string) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s, "utf8").toString("base64")}?=`);
 const addressOf = (s: string) => /<([^>]+)>/.exec(s)?.[1] ?? s.trim();
@@ -68,7 +66,7 @@ const named = (s: string) => {
 };
 
 function compose(m: Message): string {
-  const boundary = hex(14);
+  const boundary = rid(14);
   const part = (type: string, body: string) =>
     [`--${boundary}`, `Content-Type: ${type}; charset=utf-8`, "Content-Transfer-Encoding: base64", "", b64(body)].join(
       "\r\n"
@@ -78,7 +76,7 @@ function compose(m: Message): string {
     `To: ${m.to}`,
     `Subject: ${word(m.subject)}`,
     `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
-    `Message-ID: <${hex(16)}@${DOMAIN}>`,
+    `Message-ID: <${rid(16)}@${DOMAIN}>`,
     "MIME-Version: 1.0",
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     "",

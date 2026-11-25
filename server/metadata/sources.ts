@@ -1,11 +1,11 @@
 import { attempt, getJson, setJson } from "../kv";
+import { asObject } from "../util";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { catalogueGet, NoCapacity } from "../spotify/service";
 import * as mbdb from "./mbdb";
 import { spotifyCatalogue } from "../spotify/catalogue";
 
 type Json = Record<string, unknown>;
-const obj = (v: unknown): Json | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : null);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 // MusicBrainz spells with typographic hyphens and quotes ("Don’t", "Anti‐Hero"), scrobbles don't
 const tidy = (v: unknown) =>
@@ -18,7 +18,7 @@ const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0
 const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const objs = (v: unknown): Json[] =>
   list(v)
-    .map(obj)
+    .map(asObject)
     .filter((x): x is Json => !!x);
 
 const loose = (s: string) =>
@@ -84,7 +84,7 @@ async function mb(path: string, params: Record<string, string>): Promise<Json | 
   if (!res) throw new Busy("mb");
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`MusicBrainz ${path} answered ${res.status}`);
-  return obj(await res.json().catch(() => null));
+  return asObject(await res.json().catch(() => null));
 }
 
 const phrase = (s: string) => `"${s.replace(/[\\"]/g, (m) => `\\${m}`)}"`;
@@ -105,7 +105,7 @@ async function apiArtist(name: string): Promise<MbArtist | null> {
 async function apiSpotifyId(mbid: string): Promise<string | null> {
   const r = await mb(`/artist/${mbid}`, { inc: "url-rels" });
   for (const rel of objs(r?.relations)) {
-    const m = /open\.spotify\.com\/artist\/([A-Za-z0-9]{22})/.exec(str(obj(rel.url)?.resource));
+    const m = /open\.spotify\.com\/artist\/([A-Za-z0-9]{22})/.exec(str(asObject(rel.url)?.resource));
     if (m) return m[1]!;
   }
   return null;
@@ -163,7 +163,7 @@ async function apiTrack(artist: string, title: string): Promise<MbTrack | null> 
   let best: { rec: Json; g: Json; date: string; rank: number } | null = null;
   for (const rec of studio) {
     for (const rel of objs(rec.releases)) {
-      const g = obj(rel["release-group"]);
+      const g = asObject(rel["release-group"]);
       if (!g || str(rel.status) !== "Official" || !plain(g)) continue;
       const type = str(g["primary-type"]);
       const rank = type === "Album" ? 0 : type === "EP" ? 1 : 2;
@@ -204,7 +204,7 @@ async function apiTrackList(rgid: string): Promise<ListedTrack[]> {
   for (const m of objs(pick.media)) {
     if (/dvd|blu-ray|video/i.test(str(m.format))) continue;
     for (const t of objs(m.tracks)) {
-      const recording = obj(t.recording);
+      const recording = asObject(t.recording);
       const title = tidy(t.title) || tidy(recording?.title);
       const ms = num(t.length) || num(recording?.length);
       if (title) out.push({ title, seconds: Math.round(ms / 1000) });
@@ -303,10 +303,10 @@ export async function wikiPhotos(mbids: string[]): Promise<Map<string, Picture>>
     }
     throw e;
   }
-  const rows = objs(obj(obj(payload)?.results)?.bindings);
+  const rows = objs(asObject(asObject(payload)?.results)?.bindings);
   for (const r of rows) {
-    const mbid = str(obj(r.mbid)?.value);
-    const img = str(obj(r.image)?.value);
+    const mbid = str(asObject(r.mbid)?.value);
+    const img = str(asObject(r.image)?.value);
     const file = /\/Special:FilePath\/(.+)$/.exec(img)?.[1];
     if (!mbid || !file) continue;
     out.set(mbid, {
@@ -380,7 +380,7 @@ export async function spArtist(name: string, id?: string | null): Promise<SpArti
     a = await sp(`/artists/${encodeURIComponent(id)}`);
   } else {
     const r = await search("artist", `artist:"${quoted(name)}"`);
-    a = objs(obj(r?.artists)?.items).find((x) => same(str(x.name), name)) ?? null;
+    a = objs(asObject(r?.artists)?.items).find((x) => same(str(x.name), name)) ?? null;
   }
   return a && str(a.id) ? { id: str(a.id), name: tidy(a.name), picture: picture(a.images) } : null;
 }
@@ -396,7 +396,7 @@ const spAlbumOf = (a: Json): SpAlbum => ({
 
 export async function spAlbum(artist: string, title: string): Promise<SpAlbum | null> {
   const r = await search("album", `album:"${quoted(title)}" artist:"${quoted(artist)}"`);
-  const items = objs(obj(r?.albums)?.items);
+  const items = objs(asObject(r?.albums)?.items);
   const hit = items.find((a) => same(str(a.name), title) && objs(a.artists).some((x) => same(str(x.name), artist)));
   return hit ? spAlbumOf(hit) : null;
 }
@@ -411,12 +411,12 @@ export async function spTrackList(albumId: string): Promise<ListedTrack[]> {
 type SpTrack = { title: string; artist: string; seconds: number; album: SpAlbum | null };
 export async function spTrack(artist: string, title: string): Promise<SpTrack | null> {
   const r = await search("track", `track:"${quoted(title)}" artist:"${quoted(artist)}"`);
-  const items = objs(obj(r?.tracks)?.items);
+  const items = objs(asObject(r?.tracks)?.items);
   const hits = items.filter((t) => same(str(t.name), title) && objs(t.artists).some((x) => same(str(x.name), artist)));
   // the album version over singles and compilations where there is one
-  const hit = hits.find((t) => str(obj(t.album)?.album_type) === "album") ?? hits[0];
+  const hit = hits.find((t) => str(asObject(t.album)?.album_type) === "album") ?? hits[0];
   if (!hit) return null;
-  const al = obj(hit.album);
+  const al = asObject(hit.album);
   return {
     title: tidy(hit.name),
     artist: firstArtist(hit.artists),
@@ -466,7 +466,7 @@ export async function lastfmCall(
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {}
-    const body = res ? obj(await res.json().catch(() => null)) : null;
+    const body = res ? asObject(await res.json().catch(() => null)) : null;
     const rest = restSeconds(res, body);
     if (rest) {
       await setJson(keyRest(i), 1, rest * 1000);
@@ -510,7 +510,7 @@ const lfMbid = (v: unknown) => (/^[0-9a-f-]{36}$/.test(str(v)) ? str(v) : null);
 
 type LfArtist = { name: string; mbid: string | null };
 export async function lfArtist(name: string): Promise<LfArtist | null> {
-  const a = obj((await lastfm("artist.getinfo", { artist: name }))?.artist);
+  const a = asObject((await lastfm("artist.getinfo", { artist: name }))?.artist);
   return a && same(str(a.name), name) ? { name: tidy(a.name), mbid: lfMbid(a.mbid) } : null;
 }
 
@@ -522,11 +522,11 @@ export type LfAlbum = {
   tracks: ListedTrack[];
 };
 export async function lfAlbum(artist: string, title: string): Promise<LfAlbum | null> {
-  const a = obj((await lastfm("album.getinfo", { artist, album: title }))?.album);
+  const a = asObject((await lastfm("album.getinfo", { artist, album: title }))?.album);
   if (!a || !same(str(a.name), title) || !same(str(a.artist), artist)) return null;
   // a one-track album comes as an object rather than a list
-  const raw = obj(a.tracks)?.track;
-  const single = obj(raw);
+  const raw = asObject(a.tracks)?.track;
+  const single = asObject(raw);
   const rawTracks = Array.isArray(raw) ? objs(raw) : single ? [single] : [];
   const tracks = rawTracks
     .map((t) => ({ title: tidy(t.name), seconds: Math.round(Number(t.duration) || 0) }))
@@ -541,13 +541,13 @@ export type LfTrack = {
   album: { title: string; mbid: string | null; picture: Picture | null } | null;
 };
 export async function lfTrack(artist: string, title: string): Promise<LfTrack | null> {
-  const t = obj((await lastfm("track.getinfo", { artist, track: title }))?.track);
-  if (!t || !same(str(t.name), title) || !same(str(obj(t.artist)?.name), artist)) return null;
-  const al = obj(t.album);
+  const t = asObject((await lastfm("track.getinfo", { artist, track: title }))?.track);
+  if (!t || !same(str(t.name), title) || !same(str(asObject(t.artist)?.name), artist)) return null;
+  const al = asObject(t.album);
   const alTitle = tidy(al?.title);
   return {
     title: tidy(t.name),
-    artist: tidy(obj(t.artist)?.name),
+    artist: tidy(asObject(t.artist)?.name),
     seconds: Math.round((Number(t.duration) || 0) / 1000),
     album: al && alTitle ? { title: alTitle, mbid: lfMbid(al.mbid), picture: lfPicture(al.image) } : null,
   };

@@ -10,4 +10,7 @@ export const clean = (s: unknown, max = 255) =>
 export const rid = (bytes = 16) => Buffer.from(crypto.getRandomValues(new Uint8Array(bytes))).toString("hex");
 /** For a LIKE pattern with ESCAPE '\'. */
 export const like = (s: string) => `%${s.replace(/[\\%_]/g, (m) => "\\" + m)}%`;
+export const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+export const asObject = (v: unknown): Record<string, unknown> | null => (isObject(v) ? v : null);
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export const first = async <T>(rows: PromiseLike<T[]>): Promise<T | null> => (await rows)[0] ?? null;

@@ -43,10 +43,11 @@ async function take(token: unknown, kinds: Kind[], conn: Conn = db) {
   if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) return null;
   const [row] = await conn
     .delete(emailTokens)
-    .where(eq(emailTokens.hash, digest(token)))
+    .where(
+      and(eq(emailTokens.hash, digest(token)), inArray(emailTokens.kind, kinds), gte(emailTokens.expiresAt, now()))
+    )
     .returning();
-  if (!row || row.expiresAt < now() || !kinds.includes(row.kind as Kind)) return null;
-  return row as typeof row & { kind: Kind };
+  return row ? (row as typeof row & { kind: Kind }) : null;
 }
 
 export async function pendingEmail(userId: number): Promise<string | null> {
@@ -81,9 +82,7 @@ export async function startEmailChange(u: User, email: string): Promise<void> {
       bad("credentialsChangedRefreshTryAgain");
     await tx
       .delete(emailTokens)
-      .where(
-        and(eq(emailTokens.userId, u.id), inArray(emailTokens.kind, ["change", "change-confirm", "change-approve"]))
-      );
+      .where(and(eq(emailTokens.userId, u.id), inArray(emailTokens.kind, ["change-confirm", "change-approve"])));
     await tx.insert(emailTokens).values({
       hash: digest(token),
       userId: u.id,

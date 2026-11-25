@@ -49,7 +49,7 @@ router.post<AppOk>("/api/apps", async (c) => {
 });
 
 router.patch<AppOk>("/api/apps/:id", async (c) => {
-  await repo.setCallback(Number(c.params[0]), need(c).id, callbackUrl(c.body.callbackUrl));
+  await repo.setCallback(Number(c.params[0]), owner(c).id, callbackUrl(c.body.callbackUrl));
   return { ok: true };
 });
 

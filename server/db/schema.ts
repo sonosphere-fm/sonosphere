@@ -91,7 +91,6 @@ export const users = pgTable("users", {
   digestAt: integer("digest_at"),
 });
 
-// kind: "verify", "change" (a new address, replaces users.email once confirmed) or "reset"
 export const userLabels = pgTable("user_labels", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   text: text().notNull(),

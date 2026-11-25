@@ -56,7 +56,7 @@ export type Dashboard = {
   mail30: { sent: number; opened: number; clicked: number };
 };
 
-export type StaffUserRow = UserAppearance & {
+type StaffUserRow = UserAppearance & {
   id: number;
   username: string;
   realname: string;
@@ -243,7 +243,7 @@ export type DmTranscript =
     };
 export type DmMessageDeleted = { ok: true; closedReports: number };
 export type DmMuteResult = { muted: boolean };
-export type DmFlag = {
+type DmFlag = {
   id: number;
   kind: string;
   detail: string;

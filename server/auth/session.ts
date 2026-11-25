@@ -6,9 +6,14 @@ import { isAdmin, isStaff } from "../site/roles";
 import { findById, type User } from "../users/repo";
 import { SITE_URL } from "../mail";
 
-export const tokenOf = (req: Request) => /(?:^|;\s*)sid=([a-f0-9]+)/.exec(req.headers.get("cookie") || "")?.[1] || "";
-const actAsOf = (req: Request) =>
-  Number(/(?:^|;\s*)act_as=(\d+)(?:;|$)/.exec(req.headers.get("cookie") || "")?.[1]) || null;
+const cookieOf = (req: Request, name: string) =>
+  new RegExp(`(?:^|;\\s*)${name}=([^;]*)`).exec(req.headers.get("cookie") || "")?.[1] ?? "";
+export const hexCookie = (req: Request, name: string) => {
+  const v = cookieOf(req, name);
+  return /^[a-f0-9]+$/.test(v) ? v : "";
+};
+export const tokenOf = (req: Request) => hexCookie(req, "sid");
+const actAsOf = (req: Request) => Number(cookieOf(req, "act_as")) || null;
 
 export async function sessionUser(token: string) {
   if (!token) return null;

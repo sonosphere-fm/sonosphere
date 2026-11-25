@@ -9,13 +9,14 @@ import { bump } from "../kv";
 import { appIdByKey } from "../apps/repo";
 import { sessionUser } from "../compat/repo";
 import { siteTop, top, counts, nowPlaying, deleteScrobble, setLoved, type Scope } from "../listening/repo";
-import { scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
+import { OLDEST, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
+import { canSee, canSeeCharts } from "../users/service";
 import { notify } from "../notifications/repo";
 import { neighbours } from "../recommend/service";
 import { currentId } from "../site/short";
 import { findLink } from "../spotify/repo";
 import * as users from "../users/repo";
-import { clean, now } from "../util";
+import { clean, isObject, now, UUID } from "../util";
 import * as repo from "./repo";
 import type { TopAlbum, TopArtist, TopList, TopTrack } from "../../shared/listening";
 
@@ -28,9 +29,7 @@ const routes: { method: string; re: RegExp; run: Handler }[] = [];
 const on = (method: string, path: string, run: Handler) =>
   routes.push({ method, re: new RegExp(`^/1${path.replace(/:\w+/g, "([^/]+)")}/?$`), run });
 
-const isObj = (v: unknown): v is Json => !!v && typeof v === "object" && !Array.isArray(v);
 const str = (v: unknown, max = 255) => (typeof v === "string" ? clean(v, max) : "");
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const uuid = (v: unknown) => {
   const s = typeof v === "string" ? v.trim().toLowerCase() : "";
   return UUID.test(s) ? s : null;
@@ -73,7 +72,7 @@ async function body(req: Request): Promise<Json> {
   } catch {
     return bad("cannotParseJsonDocument");
   }
-  return isObj(v) ? v : bad("invalidJsonDocumentSubmitted");
+  return isObject(v) ? v : bad("invalidJsonDocumentSubmitted");
 }
 
 // --- who is asking ---
@@ -96,9 +95,6 @@ async function named(name: string): Promise<User> {
   const u = await users.findByName(name);
   return u && !u.banned ? u : fail(404, "cannotFindUser", { name });
 }
-
-const hidesListens = (u: User, viewer: User | null) => u.id !== viewer?.id && (u.privateListening || u.hideRecent);
-const hidesStats = (u: User, viewer: User | null) => u.id !== viewer?.id && u.privateListening;
 
 // --- listens ---
 
@@ -135,16 +131,15 @@ on("GET", "/validate-token", async (c) => {
   return { code: 200, message: "Token invalid.", valid: false };
 });
 
-const OLDEST = 946684800;
 const MAX_LISTENS = 1000;
 const TYPES = ["single", "import", "playing_now"];
 
 type Submitted = ScrobbleInput & { mbid: string | null; client: string };
 
 function submitted(l: unknown, type: string): Submitted {
-  if (!isObj(l)) return bad("eachListenShouldJsonObject");
+  if (!isObject(l)) return bad("eachListenShouldJsonObject");
   const m = l.track_metadata;
-  if (!isObj(m)) return bad("missingTrackMetadata");
+  if (!isObject(m)) return bad("missingTrackMetadata");
   const artist = str(m.artist_name);
   const track = str(m.track_name);
   if (!artist) bad("missingArtistName");
@@ -158,7 +153,7 @@ function submitted(l: unknown, type: string): Submitted {
     if (timestamp! < OLDEST) bad("listenedAtTooLow");
     if (timestamp! > now() + 3600) bad("listenedAtTooHigh");
   }
-  const info = isObj(m.additional_info) ? m.additional_info : {};
+  const info = isObject(m.additional_info) ? m.additional_info : {};
   const ms = Number(info.duration_ms);
   const secs = Number(info.duration);
   return {
@@ -216,7 +211,7 @@ on("GET", "/user/:name/listens", async (c) => {
   const max = tsParam(c.q, "max_ts");
   if (min && max) bad("mayOnlySpecifyOneMin");
   const { count } = paging(c.q, 25, 1000);
-  const hidden = hidesListens(u, await c.viewer());
+  const hidden = !canSee(u, await c.viewer());
   const rows = hidden ? [] : await repo.listens(u.id, min, max, count);
   const span = hidden ? { oldest: 0, latest: 0 } : await repo.listenSpan(u.id);
   return {
@@ -232,13 +227,13 @@ on("GET", "/user/:name/listens", async (c) => {
 
 on("GET", "/user/:name/listen-count", async (c) => {
   const u = await named(c.params[0]!);
-  const count = hidesListens(u, await c.viewer()) ? 0 : (await counts({ userId: u.id })).playcount;
+  const count = canSee(u, await c.viewer()) ? (await counts({ userId: u.id })).playcount : 0;
   return { payload: { count } };
 });
 
 on("GET", "/user/:name/playing-now", async (c) => {
   const u = await named(c.params[0]!);
-  const np = hidesListens(u, await c.viewer()) ? null : await nowPlaying(u.id);
+  const np = canSee(u, await c.viewer()) ? await nowPlaying(u.id) : null;
   const meta = np && (await repo.trackListen(np.trackId));
   const listens = meta ? [{ playing_now: true, track_metadata: trackMetadata(meta) }] : [];
   return { payload: { count: listens.length, listens, playing_now: true, user_id: u.username } };
@@ -286,7 +281,7 @@ on("GET", "/user/:name/services", async (c) => {
 
 on("GET", "/user/:name/similar-users", async (c) => {
   const u = await named(c.params[0]!);
-  if (hidesStats(u, await c.viewer())) return null;
+  if (!canSeeCharts(u, await c.viewer())) return null;
   const list = await neighbours(u.id, 50);
   return { payload: list.map((n) => ({ user_name: n.username, similarity: n.match })) };
 });
@@ -294,7 +289,7 @@ on("GET", "/user/:name/similar-users", async (c) => {
 on("GET", "/user/:name/similar-to/:other", async (c) => {
   const u = await named(c.params[0]!);
   const other = await named(c.params[1]!);
-  if (hidesStats(u, await c.viewer())) return null;
+  if (!canSeeCharts(u, await c.viewer())) return null;
   const n = (await neighbours(u.id, 50)).find((n) => n.id === other.id);
   if (!n) fail(404, "similarUserNotFound");
   return { payload: { user_name: other.username, similarity: n!.match } };
@@ -370,7 +365,7 @@ on("GET", "/feedback/user/:name/get-feedback", async (c) => {
   const u = await named(c.params[0]!);
   const { count, offset } = paging(c.q, 100, 100);
   const s = score(c.q);
-  const shown = !hidesStats(u, await c.viewer()) && s !== 0 && s !== -1;
+  const shown = canSeeCharts(u, await c.viewer()) && s !== 0 && s !== -1;
   const page = shown ? await repo.lovesOf(u.id, count, offset) : { items: [], total: 0 };
   const items = await feedback(page.items, c.q.get("metadata") === "true");
   return { feedback: items, count: items.length, total_count: page.total, offset };
@@ -383,7 +378,7 @@ async function forRecordings(c: Ctx, msids: unknown[], mbids: unknown[]) {
   for (const m of msids) asked.push({ msid: uuid(m), mbid: null, trackId: await trackOf(m, null) });
   for (const m of mbids) asked.push({ msid: null, mbid: uuid(m), trackId: await trackOf(null, m) });
   const known = asked.flatMap((a) => (a.trackId ? [a.trackId] : []));
-  const loved = hidesStats(u, await c.viewer()) ? [] : await repo.lovesAmong(u.id, known);
+  const loved = canSeeCharts(u, await c.viewer()) ? await repo.lovesAmong(u.id, known) : [];
   const at = new Map(loved.map((l) => [l.trackId, l.at]));
   const feedback = asked.map((a) => ({
     created: (a.trackId && at.get(a.trackId)) || null,
@@ -545,7 +540,7 @@ async function stats(c: Ctx, kind: StatKind, u: User | null) {
 for (const kind of Object.keys(KINDS) as StatKind[]) {
   on("GET", `/stats/user/:name/${kind}`, async (c) => {
     const u = await named(c.params[0]!);
-    return hidesStats(u, await c.viewer()) ? null : stats(c, kind, u);
+    return canSeeCharts(u, await c.viewer()) ? stats(c, kind, u) : null;
   });
   on("GET", `/stats/sitewide/${kind}`, (c) => stats(c, kind, null));
 }
@@ -584,7 +579,7 @@ function label(bucket: repo.Bucket, ts: number) {
 
 on("GET", "/stats/user/:name/listening-activity", async (c) => {
   const u = await named(c.params[0]!);
-  if (hidesStats(u, await c.viewer())) return null;
+  if (!canSeeCharts(u, await c.viewer())) return null;
   const { range, from: since, to = now() + 1 } = rangeOf(c.q);
   const bucket = bucketOf(range);
   const from = since || (await repo.listenSpan(u.id)).oldest;
@@ -611,7 +606,7 @@ on("GET", "/stats/user/:name/listening-activity", async (c) => {
 
 on("GET", "/stats/user/:name/daily-activity", async (c) => {
   const u = await named(c.params[0]!);
-  if (hidesStats(u, await c.viewer())) return null;
+  if (!canSeeCharts(u, await c.viewer())) return null;
   const { range, from, to = now() + 1 } = rangeOf(c.q);
   const rows = [...(await repo.hourly(u.id, from, to))];
   if (!rows.length) return null;

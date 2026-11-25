@@ -11,7 +11,7 @@ export type Span =
   | { to: string; label: Span }
   | { href: string; label: Span }
   | { arrow: true };
-export type Nested = { text: Span; list: Item[] };
+type Nested = { text: Span; list: Item[] };
 export type Item = Span | Nested;
 export type Block =
   | { h2: Span; id?: string }

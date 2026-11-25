@@ -14,7 +14,7 @@ export async function checkTurnstile(token: unknown, ip: string, action: string)
   if (typeof token !== "string" || !token || token.length > 2048) fail(400, "completeCheckNotRobot");
   const form = new URLSearchParams({ secret: SECRET!, response: token as string });
   if (ip !== "local") form.set("remoteip", ip);
-  let out: { success?: boolean; action?: string; hostname?: string; "error-codes"?: string[] };
+  let out: { success?: boolean; action?: string };
   try {
     const r = await fetch(VERIFY, { method: "POST", body: form, signal: AbortSignal.timeout(8000) });
     out = (await r.json()) as typeof out;

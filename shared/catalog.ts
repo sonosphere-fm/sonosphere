@@ -85,7 +85,7 @@ export type ArtistAlbums = Paged<ArtistAlbumWithPlays>;
 export type ArtistSimilar = { items: (SimilarArtist & { tags: string[] })[] };
 export type ArtistListeners = { items: Listener[] };
 
-export type AlbumTrack = {
+type AlbumTrack = {
   position: number;
   id: number;
   title: string;

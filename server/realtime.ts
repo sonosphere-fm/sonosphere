@@ -1,6 +1,6 @@
 import type { Server, ServerWebSocket } from "bun";
 import { sessionUser, viewerOf } from "./auth/session";
-import { ipOf, tokenOf } from "./http";
+import { crossSite, ipOf, tokenOf } from "./http";
 import { hits, publish, subscribe } from "./kv";
 import { findById, findByName } from "./users/repo";
 import { canSee } from "./users/service";
@@ -24,26 +24,16 @@ type Sock = ServerWebSocket<SocketData>;
 const sockets = new Map<number, Set<Sock>>();
 const MAX_PER_USER = 6;
 /** Handlers must check every field other than `t`. */
-export type ClientMessage = { t: string; [key: string]: unknown };
+type ClientMessage = { t: string; [key: string]: unknown };
 let onClient: (userId: number, msg: ClientMessage) => void = () => {};
 export const onClientMessage = (fn: typeof onClient) => {
   onClient = fn;
 };
 
 // browsers attach cookies to cross-site WebSocket handshakes, so this is what stops another site opening a socket as the visitor
-function sameOrigin(req: Request) {
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
-  if (!origin || !host) return false;
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
-}
 
 export async function upgrade(req: Request, server: Server<SocketData>): Promise<Response | undefined> {
-  if (!sameOrigin(req)) return new Response("Forbidden", { status: 403 });
+  if (!req.headers.get("origin") || crossSite(req, new URL(req.url))) return new Response("Forbidden", { status: 403 });
   const wait = await hits(`ws:${ipOf(req)}`, 30, 60);
   if (wait) return new Response("Too many connections", { status: 429, headers: { "Retry-After": String(wait) } });
   const token = tokenOf(req);

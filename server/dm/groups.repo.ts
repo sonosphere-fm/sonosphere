@@ -251,10 +251,6 @@ export async function removeMemberTx(tx: Tx, groupId: number, userId: number): P
   await tx.delete(dmGroupMembers).where(membership(groupId, userId));
 }
 
-export async function isMemberTx(tx: Tx, groupId: number, userId: number): Promise<boolean> {
-  return (await tx.select({ one: sql`1` }).from(dmGroupMembers).where(membership(groupId, userId))).length > 0;
-}
-
 export async function updateTx(tx: Tx, groupId: number, set: { title?: string; ownerId?: number }): Promise<Group> {
   const [group] = await tx.update(dmGroups).set(set).where(eq(dmGroups.id, groupId)).returning();
   return group;

@@ -60,12 +60,3 @@ export type CosmeticsState = {
   equipped: EquippedCosmetic[];
   showCosmetics: boolean;
 };
-export type CosmeticAudit = {
-  id: number;
-  at: number;
-  adminId: number;
-  userId: number;
-  cosmeticId: string;
-  action: string;
-  note: string | null;
-};
