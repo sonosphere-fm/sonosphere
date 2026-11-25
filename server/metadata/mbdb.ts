@@ -258,6 +258,22 @@ export async function recorded(artistName: string, title: string): Promise<{ art
   return r ? { artist: tidy(r.artist), title: tidy(r.title) } : null;
 }
 
+export type Recording = { mbid: string; title: string; artist: string; artistMbid: string };
+
+/** The most played recording MusicBrainz has with that artist and title. */
+export async function recordingOf(artistName: string, title: string): Promise<Recording | null> {
+  const [r] = await db()<Recording[]>`
+    WITH k AS (SELECT mbkey(${artistName}) AS a, mbkey(${title}) AS t),
+    who AS (SELECT id FROM artist, k WHERE key = k.a UNION SELECT artist FROM artist_alias, k WHERE key = k.a)
+    SELECT r.gid::text AS mbid, r.name AS title, acn.name AS artist, a.gid::text AS "artistMbid"
+    FROM recording_top rt CROSS JOIN k JOIN recording r ON r.id = rt.id
+    JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
+    JOIN artist a ON a.id = acn.artist
+    WHERE k.a <> '' AND k.t <> '' AND rt.key = k.t AND acn.artist IN (SELECT id FROM who)
+    ORDER BY rt.n DESC LIMIT 1`;
+  return r ? { ...r, title: tidy(r.title), artist: tidy(r.artist) } : null;
+}
+
 export const track = (artistName: string, title: string) => orUnfeat(title, (t) => trackAs(artistName, t));
 async function trackAs(artistName: string, title: string): Promise<MbTrack | null> {
   type Rec = { id: number; name: string; length: number | null; comment: string; video: boolean; artist: string };

@@ -62,7 +62,7 @@ export async function unscramble(artist: string, track: string): Promise<{ artis
 }
 
 /** The names after community corrections, or null when artist or track is missing. */
-async function names(input: ScrobbleInput): Promise<TrackNames | null> {
+export async function names(input: ScrobbleInput): Promise<TrackNames | null> {
   let artist = clean(input.artist);
   let track = clean(input.track);
   if (!artist || !track) return null;

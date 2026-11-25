@@ -9,7 +9,7 @@ import { bump } from "../kv";
 import { appIdByKey } from "../apps/repo";
 import { sessionUser } from "../compat/repo";
 import { siteTop, top, counts, nowPlaying, deleteScrobble, setLoved, type Scope } from "../listening/repo";
-import { OLDEST, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
+import { names, OLDEST, scrobbleMany, setNowPlaying, type ScrobbleInput } from "../listening/service";
 import { canSee, canSeeCharts } from "../users/service";
 import { notify } from "../notifications/repo";
 import { neighbours } from "../recommend/service";
@@ -17,13 +17,15 @@ import { currentId } from "../site/short";
 import { findLink } from "../spotify/repo";
 import * as users from "../users/repo";
 import { clean, isObject, now, UUID } from "../util";
+import { findTrack } from "../catalog/repo";
+import { mbdbOn, recordingOf } from "../metadata/mbdb";
 import * as repo from "./repo";
 import type { TopAlbum, TopArtist, TopList, TopTrack } from "../../shared/listening";
 
 type User = users.User;
 type Json = Record<string, unknown>;
 type Ctx = { req: Request; q: URLSearchParams; params: string[]; viewer: () => Promise<User | null> };
-type Handler = (c: Ctx) => Promise<Json | null>;
+type Handler = (c: Ctx) => Promise<Json | Json[] | null>;
 
 const routes: { method: string; re: RegExp; run: Handler }[] = [];
 const on = (method: string, path: string, run: Handler) =>
@@ -35,18 +37,23 @@ const uuid = (v: unknown) => {
   return UUID.test(s) ? s : null;
 };
 
-// a recording_msid names one of our tracks, so it survives a round trip without being stored
+// a recording_msid names one of our tracks, so it survives a round trip without being stored. The metadata lookup
+// hands it out as the recording_mbid too when MusicBrainz doesn't know the song, so it is accepted in either field.
 const MSID = "5050c000-0000-4000-8000-";
 const msid = (trackId: number) => MSID + trackId.toString(16).padStart(12, "0");
 const msidTrack = (v: unknown) => {
   const s = uuid(v);
   return s?.startsWith(MSID) ? parseInt(s.slice(MSID.length), 16) || null : null;
 };
+const mbidOf = (v: unknown) => {
+  const s = uuid(v);
+  return s?.startsWith(MSID) ? null : s;
+};
 
 async function trackOf(recordingMsid: unknown, recordingMbid: unknown): Promise<number | null> {
-  const fromMsid = msidTrack(recordingMsid);
-  if (fromMsid) return currentId("track", fromMsid);
-  const mbid = uuid(recordingMbid);
+  const ours = msidTrack(recordingMsid) ?? msidTrack(recordingMbid);
+  if (ours) return currentId("track", ours);
+  const mbid = mbidOf(recordingMbid);
   return mbid ? repo.trackOfRecording(mbid) : null;
 }
 
@@ -162,7 +169,7 @@ function submitted(l: unknown, type: string): Submitted {
     album: str(m.release_name),
     timestamp,
     duration: ms > 0 ? Math.round(ms / 1000) : secs > 0 ? Math.round(secs) : 0,
-    mbid: uuid(info.recording_mbid),
+    mbid: mbidOf(info.recording_mbid),
     client: str(info.submission_client, 16) || str(info.media_player, 16) || "ListenBrainz",
   };
 }
@@ -422,6 +429,49 @@ on("GET", "/feedback/recording/:mbid/get-feedback-mbid", async (c) =>
   recordingFeedback(c, await trackOf(null, c.params[0]))
 );
 
+// --- metadata ---
+
+const MAX_LOOKUPS = 100;
+
+// Clients look up the song they're playing to love it, so the now playing update has usually put it in the catalog;
+// the MusicBrainz id is remembered for it so the love finds the track.
+async function lookup(artist: string, title: string): Promise<Json> {
+  const n = await names({ artist, track: title });
+  if (!n) return {};
+  const ours = await findTrack(n.artist, n.track);
+  const mb = mbdbOn ? await recordingOf(n.artist, n.track).catch(() => null) : null;
+  if (mb && ours) await repo.saveRecordingMbids([{ mbid: mb.mbid, trackId: ours.id }]);
+  if (!mb && !ours) return {};
+  const known = ours && (await repo.recordingsOf([ours.id])).get(ours.id);
+  return mb
+    ? {
+        artist_credit_name: mb.artist,
+        artist_mbids: [mb.artistMbid],
+        recording_mbid: mb.mbid,
+        recording_name: mb.title,
+      }
+    : {
+        artist_credit_name: ours!.artist,
+        artist_mbids: [],
+        recording_mbid: known || msid(ours!.id),
+        recording_name: ours!.title,
+      };
+}
+
+on("GET", "/metadata/lookup", (c) => lookup(str(c.q.get("artist_name")), str(c.q.get("recording_name"))));
+
+on("POST", "/metadata/lookup", async (c) => {
+  const b = await body(c.req);
+  const asked = Array.isArray(b.recordings) ? b.recordings : bad("invalidJsonDocumentSubmitted");
+  if (asked.length > MAX_LOOKUPS) bad("tooManyRecordingsAskAbout");
+  return Promise.all(
+    asked.map(async (r, index) => {
+      const o = isObject(r) ? r : {};
+      return { index, ...(await lookup(str(o.artist_name), str(o.recording_name))) };
+    })
+  );
+});
+
 // --- statistics ---
 
 const RANGES = [
@@ -662,7 +712,7 @@ const CORS = {
 const WINDOW = 10;
 const PER_WINDOW = 100;
 
-function reply(status: number, body: Json | null, rate: Record<string, string>) {
+function reply(status: number, body: Json | Json[] | null, rate: Record<string, string>) {
   const headers = { ...CORS, ...rate, "Content-Type": "application/json; charset=utf-8" };
   return new Response(body && JSON.stringify(body), { status: body ? status : 204, headers });
 }
