@@ -42,7 +42,7 @@ router.post<Session>("/api/auth/signup", async (c) => {
   const email = clean(c.body.email, 200).toLowerCase();
   const u = await signUp(username, email, String(c.body.password || ""), requestLocale(c.req), ipOf(c.req));
   await sendVerification(u, requestLocale(c.req));
-  await startSession(c.headers, u.id);
+  await startSession(c.headers, u.id, c.req);
   return { user: await me(u) };
 });
 

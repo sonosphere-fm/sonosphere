@@ -1,4 +1,4 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, lt } from "drizzle-orm";
 import { db } from "../db/client";
 import { sessions, users } from "../db/schema";
 import { digest, now } from "../util";
@@ -17,7 +17,7 @@ export const hexCookie = (req: Request, name: string) => {
 export const tokenOf = (req: Request) => hexCookie(req, "sid");
 const actAsOf = (req: Request) => Number(cookieOf(req, "act_as")) || null;
 
-export async function sessionUser(token: string) {
+export async function sessionUser(token: string, req?: Request) {
   if (!token) return null;
   const [row] = await db
     .select({ user: users })
@@ -27,6 +27,15 @@ export async function sessionUser(token: string) {
       and(eq(sessions.token, digest(token)), eq(users.banned, false), gt(sessions.createdAt, now() - SESSION_LIFE))
     )
     .limit(1);
+  if (row && req)
+    await db
+      .update(sessions)
+      .set({
+        lastSeenAt: now(),
+        ip: ipOf(req).slice(0, 64),
+        userAgent: req.headers.get("user-agent")?.slice(0, 512) ?? "",
+      })
+      .where(and(eq(sessions.token, digest(token)), lt(sessions.lastSeenAt, now() - 300)));
   return row?.user ?? null;
 }
 
@@ -56,7 +65,7 @@ function noteWhere(u: User, req: Request) {
 }
 
 export async function viewerOf(req: Request): Promise<{ user: User | null; actor: User | null }> {
-  const actor = await sessionUser(tokenOf(req));
+  const actor = await sessionUser(tokenOf(req), req);
   if (actor) {
     noteWhere(actor, req);
     noteIp(actor, ipOf(req));

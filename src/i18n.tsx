@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import en from "../shared/i18n/en";
+import { sessionCatalog } from "../shared/i18n/sessions";
 import { featureCatalog, type FeatureKey } from "../shared/i18n/features";
 import {
   format,
@@ -92,8 +93,13 @@ const main = translator(en, {
   "zh-Hant": () => import("../shared/i18n/zh-Hant/index"),
 });
 export const { tx } = main;
-export type MessageKey = Key<typeof en> | `features.${FeatureKey}`;
+export type MessageKey =
+  | Key<typeof en>
+  | `features.${FeatureKey}`
+  | `sessions.${keyof ReturnType<typeof sessionCatalog>}`;
 export function t(key: MessageKey, params?: Params) {
+  if (key.startsWith("sessions."))
+    return format(current, sessionCatalog(current)[key.slice(9) as keyof ReturnType<typeof sessionCatalog>], params);
   if (key.startsWith("features.")) return format(current, featureCatalog(current)[key.slice(9) as FeatureKey], params);
   return main.t(key as Key<typeof en>, params);
 }

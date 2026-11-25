@@ -72,6 +72,6 @@ router.post<Session & { next: string }>("/api/auth/totp", async (c) => {
     fail(401, "twoFactorExpired");
   if (!(await useFactor(factor, c.body.code))) bad("invalidTwoFactorCode");
   if (!(await consumeLogin(c))) fail(401, "twoFactorExpired");
-  await startSession(c.headers, u.id);
+  await startSession(c.headers, u.id, c.req);
   return { user: await me(u), next: pending.next };
 });

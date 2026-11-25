@@ -1,14 +1,23 @@
 import { and, count, eq, ne, or, sql } from "drizzle-orm";
 import { db, transact } from "../db/client";
 import { lockUsernameClaims, usernameUnavailable } from "../account/usernames";
-import { bad } from "../http";
+import { bad, ipOf } from "../http";
 import type { Locale } from "../../shared/i18n/core";
 import { notifications, reports, sessions, users } from "../db/schema";
 import { digest, first, norm, now } from "../util";
 import type { User } from "../users/repo";
 
-export async function createSession(token: string, userId: number): Promise<void> {
-  await db.insert(sessions).values({ token: digest(token), userId, createdAt: now() });
+export async function createSession(token: string, userId: number, req?: Request): Promise<void> {
+  await db
+    .insert(sessions)
+    .values({
+      token: digest(token),
+      userId,
+      createdAt: now(),
+      lastSeenAt: now(),
+      userAgent: req?.headers.get("user-agent")?.slice(0, 512) ?? "",
+      ip: req ? ipOf(req).slice(0, 64) : "",
+    });
 }
 export async function deleteSession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, digest(token)));

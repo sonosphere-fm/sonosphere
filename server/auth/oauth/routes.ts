@@ -187,7 +187,7 @@ router.post<OAuthCreated>("/api/auth/oauth/complete", async (c) => {
   const u = await createAccount(username, pd.email, "", requestLocale(c.req), true);
   await repo.addLink(pd.provider, pd.subject, u.id, pd.name);
   c.headers.append("Set-Cookie", cookie("oauth_ticket", "", 0));
-  await startSession(c.headers, u.id);
+  await startSession(c.headers, u.id, c.req);
   return { user: await me(u), next: pd.next };
 });
 

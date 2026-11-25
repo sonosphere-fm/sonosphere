@@ -191,6 +191,10 @@ export const oauthAccounts = pgTable(
 // tokens are stored as SHA-256 digests, so a copy of the database cannot be used to sign in
 export const sessions = pgTable("sessions", {
   token: text().primaryKey(),
+  id: text().notNull().unique().default(sql`replace(gen_random_uuid()::text, '-', '')`),
+  userAgent: text("user_agent").notNull().default(""),
+  ip: text().notNull().default(""),
+  lastSeenAt: integer("last_seen_at").notNull().default(0),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

@@ -33,7 +33,7 @@ export async function finishLogin(c: Ctx, u: User, next = "/"): Promise<LoginRes
     c.headers.append("Set-Cookie", cookie(token));
     return { twoFactor: true };
   }
-  await startSession(c.headers, u.id);
+  await startSession(c.headers, u.id, c.req);
   return { user: await me(u) };
 }
 

@@ -68,9 +68,9 @@ export const confirmedBy = (u: User, input: string): Promise<boolean> =>
   u.passwordHash ? passwordMatches(u, input) : Promise.resolve(norm(input) === u.usernameNorm);
 export const validEmail = (email: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 
-export async function startSession(headers: Headers, userId: number): Promise<void> {
+export async function startSession(headers: Headers, userId: number, req?: Request): Promise<void> {
   const token = rid(24);
-  await repo.createSession(token, userId);
+  await repo.createSession(token, userId, req);
   headers.append("Set-Cookie", sessionCookie(token));
   headers.append("Set-Cookie", clearActAsCookie());
 }
