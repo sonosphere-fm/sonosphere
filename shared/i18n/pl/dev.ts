@@ -112,6 +112,24 @@ export default {
   helpLbServer:
     "W aplikacji ustaw serwer lub URL API ListenBrainz na {origin} i wklej token. Jeśli aplikacja chce pełnego adresu API, użyj {full}.",
   helpLbPlay: "Słuchaj muzyki. Token pojawi się w sekcji {applications}, gdzie możesz go w każdej chwili rozłączyć.",
+  helpNavidromeConfig:
+    "W konfiguracji Navidrome ustaw {option} (lub zmienną środowiskową {env}) na {url}, a potem uruchom Navidrome ponownie.",
+  helpNavidromeLink: "W Navidrome otwórz ustawienia osobiste, włącz scrobblowanie do ListenBrainz i wklej token.",
+  helpNavidromeNote:
+    "Bazowy URL dotyczy całego serwera Navidrome: każdy, kto włączy scrobblowanie do ListenBrainz, wysyła odtworzenia tutaj, każdy z własnym tokenem.",
+  helpJellyfinRepo: "W panelu Jellyfin otwórz Wtyczki, potem kartę Repozytoria, i dodaj {repo}.",
+  helpJellyfinInstall: "Zainstaluj wtyczkę ListenBrainz z katalogu i uruchom Jellyfin ponownie.",
+  helpJellyfinUrl: "W ustawieniach wtyczki, na karcie General, ustaw {setting} na {url} i zapisz.",
+  helpJellyfinUser:
+    "Na karcie User Config wybierz swojego użytkownika, wklej token w {field}, zaznacz {enable} i zapisz.",
+  helpPlexIntro: "Plex nie umie sam wysyłać odtworzeń na inny serwer, więc uruchom obok {app}, który je przekaże.",
+  helpPlexSource: "Dodaj Plex jako źródło: ustaw {url} na adres swojego serwera Plex, a {token} na swój token Plex.",
+  helpPlexClient:
+    "Dodaj klienta ListenBrainz: ustaw {url} na {origin}, {token} na swój token, a {user} na swoją nazwę użytkownika Sonosphere.",
+  helpPlexPlay: "Uruchom ponownie multi-scrobbler i odtwórz coś w Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler to rozszerzenie przeglądarki, które scrobbluje z serwisów muzycznych.",
+  helpWebScrobblerEdit: "W opcjach Web Scrobbler znajdź ListenBrainz wśród kont i edytuj jego właściwości.",
+  helpWebScrobblerFields: "Ustaw adres API na {url}, a token użytkownika na swój token, i zapisz.",
   helpOtherApps: "Inne scrobblery",
   helpOtherIntro:
     "Każdy odtwarzacz, który obsługuje protokół Last.fm 2.0 i pozwala zmienić serwer, może tu scrobblować.",

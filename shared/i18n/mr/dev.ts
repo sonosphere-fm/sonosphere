@@ -110,6 +110,23 @@ export default {
   helpLbServer:
     "अॅपमध्ये, ListenBrainz सर्व्हर किंवा API URL {origin} वर सेट करा आणि टोकन पेस्ट करा. अॅपला पूर्ण API पत्ता हवा असल्यास, {full} वापरा.",
   helpLbPlay: "संगीत वाजवा. टोकन {applications} अंतर्गत दिसेल, जेथे तुम्ही तो कधीही डिस्कनेक्ट करू शकता.",
+  helpNavidromeConfig:
+    "Navidrome च्या कॉन्फिगरेशनमध्ये {option} (किंवा एन्व्हायर्नमेंट व्हेरिएबल {env}) {url} वर सेट करा, मग Navidrome पुन्हा सुरू करा.",
+  helpNavidromeLink: "Navidrome मध्ये तुमची वैयक्तिक सेटिंग्ज उघडा, ListenBrainz वर स्क्रॉबलिंग चालू करा आणि टोकन पेस्ट करा.",
+  helpNavidromeNote:
+    "बेस URL संपूर्ण Navidrome सर्व्हरला लागू होतो: तिथे जो कोणी ListenBrainz स्क्रॉबलिंग चालू करेल तो आपल्या टोकनने आपले प्ले इथे पाठवेल.",
+  helpJellyfinRepo: "Jellyfin च्या डॅशबोर्डमध्ये Plugins उघडा, मग Repositories टॅब, आणि {repo} जोडा.",
+  helpJellyfinInstall: "कॅटलॉगमधून ListenBrainz प्लगइन इन्स्टॉल करा आणि Jellyfin पुन्हा सुरू करा.",
+  helpJellyfinUrl: "प्लगइनच्या सेटिंग्जमध्ये General टॅबवर {setting} {url} वर सेट करा आणि सेव्ह करा.",
+  helpJellyfinUser: "User Config टॅबवर तुमचा वापरकर्ता निवडा, टोकन {field} मध्ये पेस्ट करा, {enable} वर टिक करा आणि सेव्ह करा.",
+  helpPlexIntro: "Plex स्वतःहून प्ले दुसऱ्या सर्व्हरला पाठवू शकत नाही, म्हणून ते पुढे पाठवण्यासाठी त्याच्यासोबत {app} चालवा.",
+  helpPlexSource: "Plex स्रोत म्हणून जोडा: {url} तुमच्या Plex सर्व्हरच्या पत्त्यावर आणि {token} तुमच्या Plex टोकनवर सेट करा.",
+  helpPlexClient:
+    "ListenBrainz क्लायंट जोडा: {url} {origin} वर, {token} तुमच्या टोकनवर आणि {user} तुमच्या Sonosphere वापरकर्तानावावर सेट करा.",
+  helpPlexPlay: "multi-scrobbler पुन्हा सुरू करा आणि Plex मध्ये काहीतरी वाजवा.",
+  helpWebScrobblerIntro: "Web Scrobbler हे संगीत वेबसाइट्सवरून स्क्रॉबल करणारे ब्राउझर एक्स्टेंशन आहे.",
+  helpWebScrobblerEdit: "Web Scrobbler च्या पर्यायांमध्ये खात्यांमध्ये ListenBrainz शोधा आणि त्याचे गुणधर्म संपादित करा.",
+  helpWebScrobblerFields: "API URL {url} वर आणि वापरकर्ता टोकन तुमच्या टोकनवर सेट करा, मग सेव्ह करा.",
   helpOtherApps: "इतर स्क्रॉबलर",
   helpOtherIntro: "Last.fm 2.0 प्रोटोकॉलला समर्थन देणारा आणि server बदलू देणारा कोणताही प्लेअर येथे स्क्रॉबल करू शकतो.",
   helpOtherServerUrl: "Server URL:",

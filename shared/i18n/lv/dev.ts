@@ -112,6 +112,26 @@ export default {
   helpLbServer:
     "Lietotnē iestati ListenBrainz servera vai API URL uz {origin} un ielīmē žetonu. Ja lietotne prasa pilnu API adresi, izmanto {full}.",
   helpLbPlay: "Klausies mūziku. Žetons parādīsies sadaļā {applications}, kur to jebkurā laikā vari atvienot.",
+  helpNavidromeConfig:
+    "Navidrome konfigurācijā iestatiet {option} (vai vides mainīgo {env}) uz {url} un restartējiet Navidrome.",
+  helpNavidromeLink:
+    "Navidrome atveriet personiskos iestatījumus, ieslēdziet skroblēšanu uz ListenBrainz un ielīmējiet žetonu.",
+  helpNavidromeNote:
+    "Bāzes URL attiecas uz visu Navidrome serveri: ikviens, kas ieslēdz skroblēšanu uz ListenBrainz, sūta atskaņojumus šeit, katrs ar savu žetonu.",
+  helpJellyfinRepo: "Jellyfin vadības panelī atveriet Plugins, tad cilni Repositories, un pievienojiet {repo}.",
+  helpJellyfinInstall: "Instalējiet ListenBrainz spraudni no kataloga un restartējiet Jellyfin.",
+  helpJellyfinUrl: "Spraudņa iestatījumu cilnē General iestatiet {setting} uz {url} un saglabājiet.",
+  helpJellyfinUser:
+    "Cilnē User Config izvēlieties savu lietotāju, ielīmējiet žetonu laukā {field}, atzīmējiet {enable} un saglabājiet.",
+  helpPlexIntro: "Plex pats nevar sūtīt atskaņojumus uz citu serveri, tāpēc palaidiet blakus {app}, kas tos pārsūtīs.",
+  helpPlexSource:
+    "Pievienojiet Plex kā avotu: iestatiet {url} uz sava Plex servera adresi un {token} uz savu Plex žetonu.",
+  helpPlexClient:
+    "Pievienojiet ListenBrainz klientu: iestatiet {url} uz {origin}, {token} uz savu žetonu un {user} uz savu Sonosphere lietotājvārdu.",
+  helpPlexPlay: "Restartējiet multi-scrobbler un atskaņojiet kaut ko Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler ir pārlūka paplašinājums, kas skroblē no mūzikas vietnēm.",
+  helpWebScrobblerEdit: "Web Scrobbler opcijās kontu sarakstā atrodiet ListenBrainz un rediģējiet tā rekvizītus.",
+  helpWebScrobblerFields: "Iestatiet API URL uz {url} un lietotāja žetonu uz savu žetonu, tad saglabājiet.",
   helpOtherApps: "Citi skrobleri",
   helpOtherIntro: "Jebkurš atskaņotājs, kas atbalsta Last.fm 2.0 protokolu un ļauj mainīt serveri, var skroblēt šeit.",
   helpOtherServerUrl: "Servera URL:",

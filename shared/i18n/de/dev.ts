@@ -113,6 +113,28 @@ export default {
   helpLbServer:
     "Setze in der App den ListenBrainz-Server oder die API-URL auf {origin} und füge den Token ein. Falls die App die vollständige API-Adresse will, nutze {full}.",
   helpLbPlay: "Hör Musik. Der Token erscheint unter {applications}, wo du ihn jederzeit trennen kannst.",
+  helpNavidromeConfig:
+    "Setze in der Navidrome-Konfiguration {option} (oder die Umgebungsvariable {env}) auf {url} und starte Navidrome neu.",
+  helpNavidromeLink:
+    "Öffne in Navidrome deine persönlichen Einstellungen, schalte das Scrobbeln zu ListenBrainz ein und füge den Token ein.",
+  helpNavidromeNote:
+    "Die Basis-URL gilt für den ganzen Navidrome-Server: Alle dort, die ListenBrainz-Scrobbeln einschalten, senden ihre Wiedergaben hierher, jeweils mit eigenem Token.",
+  helpJellyfinRepo: "Öffne im Jellyfin-Dashboard Plugins, dann den Tab Repositories, und füge {repo} hinzu.",
+  helpJellyfinInstall: "Installiere das ListenBrainz-Plugin aus dem Katalog und starte Jellyfin neu.",
+  helpJellyfinUrl: "Setze in den Plugin-Einstellungen im Tab General {setting} auf {url} und speichere.",
+  helpJellyfinUser:
+    "Wähle im Tab User Config deinen Benutzer, füge den Token in {field} ein, aktiviere {enable} und speichere.",
+  helpPlexIntro:
+    "Plex kann Wiedergaben nicht selbst an einen anderen Server senden. Lass daher {app} daneben laufen, um sie weiterzugeben.",
+  helpPlexSource:
+    "Füge Plex als Quelle hinzu: Setze {url} auf die Adresse deines Plex-Servers und {token} auf deinen Plex-Token.",
+  helpPlexClient:
+    "Füge einen ListenBrainz-Client hinzu: Setze {url} auf {origin}, {token} auf deinen Token und {user} auf deinen Sonosphere-Benutzernamen.",
+  helpPlexPlay: "Starte multi-scrobbler neu und spiel etwas in Plex ab.",
+  helpWebScrobblerIntro: "Web Scrobbler ist eine Browser-Erweiterung, die von Musik-Websites scrobbelt.",
+  helpWebScrobblerEdit:
+    "Suche in den Optionen von Web Scrobbler ListenBrainz unter den Konten und bearbeite die Eigenschaften.",
+  helpWebScrobblerFields: "Setze die API-URL auf {url} und den User-Token auf deinen Token und speichere.",
   helpOtherApps: "Andere Scrobbler",
   helpOtherIntro:
     "Jeder Player, der das Last.fm-2.0-Protokoll unterstützt und bei dem du den Server ändern kannst, kann hierher scrobbeln.",

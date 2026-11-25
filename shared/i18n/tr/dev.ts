@@ -112,6 +112,27 @@ export default {
   helpLbServer:
     "Uygulamada ListenBrainz sunucusunu veya API URL'sini {origin} olarak ayarla ve token'ı yapıştır. Uygulama tam API adresini istiyorsa {full} kullan.",
   helpLbPlay: "Müzik çal. Token {applications} altında görünür; bağlantısını istediğin zaman oradan kaldırabilirsin.",
+  helpNavidromeConfig:
+    "Navidrome yapılandırmasında {option} (veya {env} ortam değişkeni) değerini {url} yapın, ardından Navidrome'u yeniden başlatın.",
+  helpNavidromeLink: "Navidrome'da kişisel ayarlarınızı açın, ListenBrainz'e scrobble'ı açın ve jetonu yapıştırın.",
+  helpNavidromeNote:
+    "Temel URL tüm Navidrome sunucusu için geçerlidir: ListenBrainz scrobble'ını açan herkes dinlemelerini, her biri kendi jetonuyla buraya gönderir.",
+  helpJellyfinRepo: "Jellyfin panelinde Eklentiler'i, ardından Depolar sekmesini açın ve {repo} ekleyin.",
+  helpJellyfinInstall: "ListenBrainz eklentisini katalogdan kurun ve Jellyfin'i yeniden başlatın.",
+  helpJellyfinUrl: "Eklenti ayarlarında, General sekmesinde {setting} değerini {url} yapın ve kaydedin.",
+  helpJellyfinUser:
+    "User Config sekmesinde kullanıcınızı seçin, jetonu {field} alanına yapıştırın, {enable} seçeneğini işaretleyin ve kaydedin.",
+  helpPlexIntro:
+    "Plex dinlemeleri kendi başına başka bir sunucuya gönderemez, bu yüzden onları iletmesi için yanında {app} çalıştırın.",
+  helpPlexSource:
+    "Plex'i kaynak olarak ekleyin: {url} değerini Plex sunucunuzun adresi, {token} değerini Plex jetonunuz yapın.",
+  helpPlexClient:
+    "Bir ListenBrainz istemcisi ekleyin: {url} değerini {origin}, {token} değerini jetonunuz, {user} değerini Sonosphere kullanıcı adınız yapın.",
+  helpPlexPlay: "multi-scrobbler'ı yeniden başlatın ve Plex'te bir şey çalın.",
+  helpWebScrobblerIntro: "Web Scrobbler, müzik sitelerinden scrobble yapan bir tarayıcı eklentisidir.",
+  helpWebScrobblerEdit:
+    "Web Scrobbler seçeneklerinde hesaplar arasında ListenBrainz'i bulun ve özelliklerini düzenleyin.",
+  helpWebScrobblerFields: "API URL'sini {url}, kullanıcı jetonunu kendi jetonunuz yapın ve kaydedin.",
   helpOtherApps: "Diğer scrobbler'lar",
   helpOtherIntro:
     "Last.fm 2.0 protokolünü destekleyen ve sunucusunu değiştirmene izin veren her oynatıcı buraya scrobble edebilir.",

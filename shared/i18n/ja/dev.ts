@@ -111,6 +111,25 @@ export default {
   helpLbServer:
     "アプリでListenBrainzのサーバーまたはAPI URLを{origin}に設定し、トークンを貼り付けます。APIの完全なアドレスが必要な場合は{full}を使ってください。",
   helpLbPlay: "音楽を再生します。トークンは{applications}に表示され、いつでも接続を解除できます。",
+  helpNavidromeConfig: "Navidrome の設定で {option}（または環境変数 {env}）を {url} にして、Navidrome を再起動します。",
+  helpNavidromeLink: "Navidrome で個人設定を開き、ListenBrainz へのスクロブルをオンにしてトークンを貼り付けます。",
+  helpNavidromeNote:
+    "ベース URL は Navidrome サーバー全体に適用されます。ListenBrainz へのスクロブルをオンにした人は全員、それぞれのトークンで再生をここに送ります。",
+  helpJellyfinRepo: "Jellyfin のダッシュボードで「プラグイン」を開き、「リポジトリ」タブで {repo} を追加します。",
+  helpJellyfinInstall: "カタログから ListenBrainz プラグインをインストールし、Jellyfin を再起動します。",
+  helpJellyfinUrl: "プラグイン設定の General タブで {setting} を {url} にして保存します。",
+  helpJellyfinUser:
+    "User Config タブで自分のユーザーを選び、{field} にトークンを貼り付け、{enable} にチェックを入れて保存します。",
+  helpPlexIntro: "Plex は単体では別のサーバーに再生を送れないため、横で {app} を動かして中継します。",
+  helpPlexSource:
+    "Plex をソースとして追加します。{url} に Plex サーバーのアドレス、{token} に Plex トークンを設定します。",
+  helpPlexClient:
+    "ListenBrainz クライアントを追加します。{url} に {origin}、{token} にトークン、{user} に Sonosphere のユーザー名を設定します。",
+  helpPlexPlay: "multi-scrobbler を再起動し、Plex で何か再生します。",
+  helpWebScrobblerIntro: "Web Scrobbler は、音楽サイトからスクロブルするブラウザ拡張機能です。",
+  helpWebScrobblerEdit:
+    "Web Scrobbler のオプションで、アカウントの中から ListenBrainz を見つけてプロパティを編集します。",
+  helpWebScrobblerFields: "API URL を {url}、ユーザートークンを自分のトークンにして保存します。",
   helpOtherApps: "その他のスクロブラー",
   helpOtherIntro: "Last.fm 2.0プロトコルに対応し、サーバーを変更できるプレーヤーなら、ここにスクロブルできます。",
   helpOtherServerUrl: "サーバーURL:",

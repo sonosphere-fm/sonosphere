@@ -114,6 +114,26 @@ export default {
   helpLbServer:
     "În aplicație, setează serverul sau URL-ul API ListenBrainz la {origin} și lipește tokenul. Dacă aplicația cere adresa API completă, folosește {full}.",
   helpLbPlay: "Ascultă muzică. Tokenul apare la {applications}, de unde îl poți deconecta oricând.",
+  helpNavidromeConfig:
+    "În configurația Navidrome, setează {option} (sau variabila de mediu {env}) la {url}, apoi repornește Navidrome.",
+  helpNavidromeLink:
+    "În Navidrome, deschide setările personale, activează scrobbling-ul către ListenBrainz și lipește tokenul.",
+  helpNavidromeNote:
+    "URL-ul de bază se aplică întregului server Navidrome: oricine activează scrobbling-ul către ListenBrainz își trimite ascultările aici, fiecare cu tokenul propriu.",
+  helpJellyfinRepo: "În panoul Jellyfin, deschide Plugins, apoi fila Repositories, și adaugă {repo}.",
+  helpJellyfinInstall: "Instalează pluginul ListenBrainz din catalog și repornește Jellyfin.",
+  helpJellyfinUrl: "În setările pluginului, în fila General, setează {setting} la {url} și salvează.",
+  helpJellyfinUser:
+    "În fila User Config, alege utilizatorul tău, lipește tokenul în {field}, bifează {enable} și salvează.",
+  helpPlexIntro:
+    "Plex nu poate trimite singur ascultările către alt server, așa că rulează {app} alături ca să le transmită.",
+  helpPlexSource: "Adaugă Plex ca sursă: setează {url} la adresa serverului tău Plex și {token} la tokenul tău Plex.",
+  helpPlexClient:
+    "Adaugă un client ListenBrainz: setează {url} la {origin}, {token} la tokenul tău și {user} la numele tău de utilizator Sonosphere.",
+  helpPlexPlay: "Repornește multi-scrobbler și redă ceva în Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler este o extensie de browser care face scrobbling de pe site-uri de muzică.",
+  helpWebScrobblerEdit: "În opțiunile Web Scrobbler, găsește ListenBrainz printre conturi și editează-i proprietățile.",
+  helpWebScrobblerFields: "Setează URL-ul API la {url} și tokenul de utilizator la tokenul tău, apoi salvează.",
   helpOtherApps: "Alte aplicații de scrobble",
   helpOtherIntro:
     "Orice player care acceptă protocolul Last.fm 2.0 și îți permite să-i schimbi serverul poate face scrobble aici.",

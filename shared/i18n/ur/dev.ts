@@ -112,6 +112,27 @@ export default {
   helpLbServer:
     "ایپ میں ListenBrainz سرور یا API URL کو {origin} پر سیٹ کریں اور ٹوکن پیسٹ کریں۔ اگر ایپ مکمل API پتہ مانگے تو {full} استعمال کریں۔",
   helpLbPlay: "میوزک چلائیں۔ ٹوکن {applications} میں نظر آئے گا، جہاں آپ اسے کسی بھی وقت منقطع کر سکتے ہیں۔",
+  helpNavidromeConfig:
+    "Navidrome کی کنفیگریشن میں {option} (یا ماحولیاتی متغیر {env}) کو {url} پر سیٹ کریں، پھر Navidrome دوبارہ شروع کریں۔",
+  helpNavidromeLink: "Navidrome میں اپنی ذاتی ترتیبات کھولیں، ListenBrainz پر اسکروبلنگ آن کریں اور ٹوکن پیسٹ کریں۔",
+  helpNavidromeNote:
+    "بیس URL پورے Navidrome سرور پر لاگو ہوتا ہے: جو بھی وہاں ListenBrainz اسکروبلنگ آن کرے گا وہ اپنے ٹوکن کے ساتھ اپنی سماعتیں یہاں بھیجے گا۔",
+  helpJellyfinRepo: "Jellyfin کے ڈیش بورڈ میں Plugins کھولیں، پھر Repositories ٹیب، اور {repo} شامل کریں۔",
+  helpJellyfinInstall: "کیٹلاگ سے ListenBrainz پلگ اِن انسٹال کریں اور Jellyfin دوبارہ شروع کریں۔",
+  helpJellyfinUrl: "پلگ اِن کی ترتیبات میں General ٹیب پر {setting} کو {url} پر سیٹ کریں اور محفوظ کریں۔",
+  helpJellyfinUser:
+    "User Config ٹیب پر اپنا صارف چنیں، ٹوکن {field} میں پیسٹ کریں، {enable} پر نشان لگائیں اور محفوظ کریں۔",
+  helpPlexIntro:
+    "Plex خود سے سماعتیں کسی دوسرے سرور کو نہیں بھیج سکتا، اس لیے انہیں آگے بھیجنے کے لیے اس کے ساتھ {app} چلائیں۔",
+  helpPlexSource:
+    "Plex کو سورس کے طور پر شامل کریں: {url} کو اپنے Plex سرور کے پتے اور {token} کو اپنے Plex ٹوکن پر سیٹ کریں۔",
+  helpPlexClient:
+    "ListenBrainz کلائنٹ شامل کریں: {url} کو {origin}، {token} کو اپنے ٹوکن اور {user} کو اپنے Sonosphere صارف نام پر سیٹ کریں۔",
+  helpPlexPlay: "multi-scrobbler دوبارہ شروع کریں اور Plex میں کچھ چلائیں۔",
+  helpWebScrobblerIntro: "Web Scrobbler ایک براؤزر ایکسٹینشن ہے جو موسیقی کی ویب سائٹس سے اسکروبل کرتی ہے۔",
+  helpWebScrobblerEdit:
+    "Web Scrobbler کے اختیارات میں اکاؤنٹس میں ListenBrainz تلاش کریں اور اس کی خصوصیات میں ترمیم کریں۔",
+  helpWebScrobblerFields: "API URL کو {url} اور صارف ٹوکن کو اپنے ٹوکن پر سیٹ کریں، پھر محفوظ کریں۔",
   helpOtherApps: "دیگر اسکروبلرز",
   helpOtherIntro:
     "کوئی بھی پلیئر جو Last.fm 2.0 پروٹوکول کو سپورٹ کرتا ہو اور سرور بدلنے دیتا ہو، یہاں اسکروبل کر سکتا ہے۔",

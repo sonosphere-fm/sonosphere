@@ -105,6 +105,23 @@ export default {
   helpLbServer:
     "באפליקציה, מגדירים את כתובת השרת או ה־API של ListenBrainz ל־{origin} ומדביקים את הטוקן. אם האפליקציה מבקשת את כתובת ה־API המלאה, משתמשים ב־{full}.",
   helpLbPlay: "מנגנים מוזיקה. הטוקן מופיע תחת {applications}, ושם אפשר לנתק אותו בכל עת.",
+  helpNavidromeConfig:
+    "בהגדרות של Navidrome, קבעו את {option} (או את משתנה הסביבה {env}) ל־{url}, ואז הפעילו מחדש את Navidrome.",
+  helpNavidromeLink: "ב־Navidrome, פתחו את ההגדרות האישיות, הפעילו סקרובלינג ל־ListenBrainz והדביקו את האסימון.",
+  helpNavidromeNote:
+    "כתובת הבסיס חלה על כל שרת Navidrome: כל מי שמפעיל בו סקרובלינג ל־ListenBrainz ישלח את ההשמעות לכאן, כל אחד עם האסימון שלו.",
+  helpJellyfinRepo: "בלוח הבקרה של Jellyfin, פתחו את Plugins, אחר כך את הלשונית Repositories, והוסיפו את {repo}.",
+  helpJellyfinInstall: "התקינו את התוסף ListenBrainz מהקטלוג והפעילו מחדש את Jellyfin.",
+  helpJellyfinUrl: "בהגדרות התוסף, בלשונית General, קבעו את {setting} ל־{url} ושמרו.",
+  helpJellyfinUser: "בלשונית User Config, בחרו את המשתמש שלכם, הדביקו את האסימון ב־{field}, סמנו את {enable} ושמרו.",
+  helpPlexIntro: "Plex לא יכול לשלוח השמעות לשרת אחר בעצמו, לכן הריצו לצידו את {app} כדי להעביר אותן.",
+  helpPlexSource: "הוסיפו את Plex כמקור: קבעו את {url} לכתובת שרת ה־Plex שלכם ואת {token} לאסימון ה־Plex שלכם.",
+  helpPlexClient:
+    "הוסיפו לקוח ListenBrainz: קבעו את {url} ל־{origin}, את {token} לאסימון שלכם ואת {user} לשם המשתמש שלכם ב־Sonosphere.",
+  helpPlexPlay: "הפעילו מחדש את multi-scrobbler והשמיעו משהו ב־Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler הוא תוסף דפדפן שמבצע סקרובלינג מאתרי מוזיקה.",
+  helpWebScrobblerEdit: "באפשרויות של Web Scrobbler, מצאו את ListenBrainz בין החשבונות וערכו את המאפיינים שלו.",
+  helpWebScrobblerFields: "קבעו את כתובת ה־API ל־{url} ואת אסימון המשתמש לאסימון שלכם, ושמרו.",
   helpOtherApps: "אפליקציות סקרובל אחרות",
   helpOtherIntro: "כל נגן שתומך בפרוטוקול Last.fm 2.0 ומאפשר להחליף שרת יכול לסקרבל לכאן.",
   helpOtherServerUrl: "כתובת השרת:",

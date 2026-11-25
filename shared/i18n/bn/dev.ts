@@ -105,6 +105,23 @@ export default {
   helpLbServer:
     "অ্যাপে ListenBrainz সার্ভার বা API URL হিসেবে {origin} সেট করুন এবং টোকেনটি পেস্ট করুন। অ্যাপ পুরো API ঠিকানা চাইলে {full} ব্যবহার করুন।",
   helpLbPlay: "মিউজিক বাজান। টোকেনটি {applications}-এ দেখা যাবে, যেখান থেকে যেকোনো সময় এটি বিচ্ছিন্ন করতে পারবেন।",
+  helpNavidromeConfig:
+    "Navidrome-এর কনফিগারেশনে {option} (বা এনভায়রনমেন্ট ভ্যারিয়েবল {env}) {url}-এ সেট করুন, তারপর Navidrome রিস্টার্ট করুন।",
+  helpNavidromeLink: "Navidrome-এ আপনার ব্যক্তিগত সেটিংস খুলুন, ListenBrainz-এ স্ক্রবলিং চালু করুন এবং টোকেন পেস্ট করুন।",
+  helpNavidromeNote:
+    "বেস URL পুরো Navidrome সার্ভারে প্রযোজ্য: সেখানে যে-ই ListenBrainz স্ক্রবলিং চালু করবেন, তিনি নিজের টোকেন দিয়ে প্লে এখানে পাঠাবেন।",
+  helpJellyfinRepo: "Jellyfin-এর ড্যাশবোর্ডে Plugins খুলুন, তারপর Repositories ট্যাব, এবং {repo} যোগ করুন।",
+  helpJellyfinInstall: "ক্যাটালগ থেকে ListenBrainz প্লাগইন ইনস্টল করুন এবং Jellyfin রিস্টার্ট করুন।",
+  helpJellyfinUrl: "প্লাগইনের সেটিংসে General ট্যাবে {setting} {url}-এ সেট করুন এবং সেভ করুন।",
+  helpJellyfinUser: "User Config ট্যাবে আপনার ইউজার বেছে নিন, টোকেন {field}-এ পেস্ট করুন, {enable}-এ টিক দিন এবং সেভ করুন।",
+  helpPlexIntro: "Plex নিজে থেকে প্লে অন্য সার্ভারে পাঠাতে পারে না, তাই সেগুলো পৌঁছে দিতে পাশে {app} চালান।",
+  helpPlexSource: "Plex-কে সোর্স হিসেবে যোগ করুন: {url} আপনার Plex সার্ভারের ঠিকানায় এবং {token} আপনার Plex টোকেনে সেট করুন।",
+  helpPlexClient:
+    "একটি ListenBrainz ক্লায়েন্ট যোগ করুন: {url} {origin}-এ, {token} আপনার টোকেনে এবং {user} আপনার Sonosphere ইউজারনেমে সেট করুন।",
+  helpPlexPlay: "multi-scrobbler রিস্টার্ট করুন এবং Plex-এ কিছু চালান।",
+  helpWebScrobblerIntro: "Web Scrobbler একটি ব্রাউজার এক্সটেনশন যা মিউজিক ওয়েবসাইট থেকে স্ক্রবল করে।",
+  helpWebScrobblerEdit: "Web Scrobbler-এর অপশনে অ্যাকাউন্টগুলোর মধ্যে ListenBrainz খুঁজে এর প্রপার্টি এডিট করুন।",
+  helpWebScrobblerFields: "API URL {url}-এ এবং ইউজার টোকেন আপনার টোকেনে সেট করুন, তারপর সেভ করুন।",
   helpOtherApps: "অন্যান্য স্ক্রবলার",
   helpOtherIntro: "যে প্লেয়ার Last.fm 2.0 প্রোটোকল সমর্থন করে এবং সার্ভার বদলাতে দেয়, তা এখানে স্ক্রবল করতে পারে।",
   helpOtherServerUrl: "সার্ভার URL:",

@@ -106,6 +106,24 @@ export default {
   helpLbServer:
     "In the app, set the ListenBrainz server or API URL to {origin} and paste the token. If the app wants the full API address, use {full}.",
   helpLbPlay: "Play music. The token shows up under {applications}, where you can disconnect it at any time.",
+  helpNavidromeConfig:
+    "In Navidrome's configuration, set {option} (or the {env} environment variable) to {url}, then restart Navidrome.",
+  helpNavidromeLink:
+    "In Navidrome, open your personal settings, turn on scrobbling to ListenBrainz and paste the token.",
+  helpNavidromeNote:
+    "The base URL applies to the whole Navidrome server: everyone on it who turns on ListenBrainz scrobbling sends plays here, each with their own token.",
+  helpJellyfinRepo: "In Jellyfin's dashboard, open Plugins, then the Repositories tab, and add {repo}.",
+  helpJellyfinInstall: "Install the ListenBrainz plugin from the catalog and restart Jellyfin.",
+  helpJellyfinUrl: "In the plugin's settings, on the General tab, set {setting} to {url} and save.",
+  helpJellyfinUser: "On the User Config tab, pick your user, paste the token into {field}, tick {enable} and save.",
+  helpPlexIntro: "Plex can't send plays to another server by itself, so run {app} beside it to pass them on.",
+  helpPlexSource: "Add Plex as a source: set {url} to your Plex server's address and {token} to your Plex token.",
+  helpPlexClient:
+    "Add a ListenBrainz client: set {url} to {origin}, {token} to your token and {user} to your Sonosphere username.",
+  helpPlexPlay: "Restart multi-scrobbler and play something in Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler is a browser extension that scrobbles from music websites.",
+  helpWebScrobblerEdit: "In Web Scrobbler's options, find ListenBrainz among the accounts and edit its properties.",
+  helpWebScrobblerFields: "Set the API URL to {url} and the user token to your token, then save.",
   helpOtherApps: "Other scrobblers",
   helpOtherIntro: "Any player that supports the Last.fm 2.0 protocol and lets you change its server can scrobble here.",
   helpOtherServerUrl: "Server URL:",

@@ -107,6 +107,23 @@ export default {
   helpLbServer:
     "ऐप में, ListenBrainz सर्वर या API URL को {origin} पर सेट करें और token पेस्ट करें। अगर ऐप पूरा API पता मांगे, तो {full} इस्तेमाल करें।",
   helpLbPlay: "संगीत चलाएं। token {applications} में दिखेगा, जहां आप इसे कभी भी डिस्कनेक्ट कर सकते हैं।",
+  helpNavidromeConfig:
+    "Navidrome के कॉन्फ़िगरेशन में {option} (या एनवायरनमेंट वेरिएबल {env}) को {url} पर सेट करें, फिर Navidrome को रीस्टार्ट करें।",
+  helpNavidromeLink: "Navidrome में अपनी निजी सेटिंग्स खोलें, ListenBrainz पर स्क्रॉबलिंग चालू करें और टोकन पेस्ट करें।",
+  helpNavidromeNote:
+    "बेस URL पूरे Navidrome सर्वर पर लागू होता है: वहाँ जो भी ListenBrainz स्क्रॉबलिंग चालू करेगा, वह अपने टोकन से अपने प्ले यहाँ भेजेगा।",
+  helpJellyfinRepo: "Jellyfin के डैशबोर्ड में Plugins खोलें, फिर Repositories टैब, और {repo} जोड़ें।",
+  helpJellyfinInstall: "कैटलॉग से ListenBrainz प्लगइन इंस्टॉल करें और Jellyfin को रीस्टार्ट करें।",
+  helpJellyfinUrl: "प्लगइन की सेटिंग्स में General टैब पर {setting} को {url} पर सेट करें और सेव करें।",
+  helpJellyfinUser: "User Config टैब पर अपना यूज़र चुनें, टोकन {field} में पेस्ट करें, {enable} पर टिक करें और सेव करें।",
+  helpPlexIntro: "Plex खुद से प्ले किसी दूसरे सर्वर पर नहीं भेज सकता, इसलिए उन्हें आगे भेजने के लिए उसके साथ {app} चलाएँ।",
+  helpPlexSource: "Plex को सोर्स के रूप में जोड़ें: {url} को अपने Plex सर्वर के पते और {token} को अपने Plex टोकन पर सेट करें।",
+  helpPlexClient:
+    "ListenBrainz क्लाइंट जोड़ें: {url} को {origin}, {token} को अपने टोकन और {user} को अपने Sonosphere यूज़रनेम पर सेट करें।",
+  helpPlexPlay: "multi-scrobbler को रीस्टार्ट करें और Plex में कुछ चलाएँ।",
+  helpWebScrobblerIntro: "Web Scrobbler एक ब्राउज़र एक्सटेंशन है जो संगीत वेबसाइटों से स्क्रॉबल करता है।",
+  helpWebScrobblerEdit: "Web Scrobbler के विकल्पों में अकाउंट्स में ListenBrainz ढूँढें और उसकी प्रॉपर्टीज़ बदलें।",
+  helpWebScrobblerFields: "API URL को {url} और यूज़र टोकन को अपने टोकन पर सेट करें, फिर सेव करें।",
   helpOtherApps: "अन्य स्क्रॉबलर",
   helpOtherIntro: "कोई भी प्लेयर जो Last.fm 2.0 प्रोटोकॉल सपोर्ट करता है और अपना सर्वर बदलने देता है, यहां स्क्रॉबल कर सकता है।",
   helpOtherServerUrl: "सर्वर URL:",

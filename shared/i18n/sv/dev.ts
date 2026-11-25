@@ -110,6 +110,26 @@ export default {
   helpLbServer:
     "I appen, ställ in ListenBrainz-servern eller API-URL:en till {origin} och klistra in token. Om appen vill ha hela API-adressen, använd {full}.",
   helpLbPlay: "Spela musik. Token dyker upp under {applications}, där du kan koppla bort den när som helst.",
+  helpNavidromeConfig:
+    "Sätt {option} (eller miljövariabeln {env}) till {url} i Navidromes konfiguration och starta om Navidrome.",
+  helpNavidromeLink:
+    "Öppna dina personliga inställningar i Navidrome, slå på scrobbling till ListenBrainz och klistra in token.",
+  helpNavidromeNote:
+    "Bas-URL:en gäller hela Navidrome-servern: alla där som slår på ListenBrainz-scrobbling skickar sina lyssningar hit, var och en med sin egen token.",
+  helpJellyfinRepo: "Öppna Plugins i Jellyfins kontrollpanel, sedan fliken Repositories, och lägg till {repo}.",
+  helpJellyfinInstall: "Installera ListenBrainz-pluginet från katalogen och starta om Jellyfin.",
+  helpJellyfinUrl: "Sätt {setting} till {url} på fliken General i pluginets inställningar och spara.",
+  helpJellyfinUser:
+    "Välj din användare på fliken User Config, klistra in token i {field}, kryssa i {enable} och spara.",
+  helpPlexIntro:
+    "Plex kan inte skicka lyssningar till en annan server på egen hand, så kör {app} bredvid för att skicka dem vidare.",
+  helpPlexSource: "Lägg till Plex som källa: sätt {url} till din Plex-servers adress och {token} till din Plex-token.",
+  helpPlexClient:
+    "Lägg till en ListenBrainz-klient: sätt {url} till {origin}, {token} till din token och {user} till ditt Sonosphere-användarnamn.",
+  helpPlexPlay: "Starta om multi-scrobbler och spela något i Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler är ett webbläsartillägg som scrobblar från musiksajter.",
+  helpWebScrobblerEdit: "Hitta ListenBrainz bland kontona i Web Scrobblers alternativ och redigera dess egenskaper.",
+  helpWebScrobblerFields: "Sätt API-URL:en till {url} och användartoken till din token och spara.",
   helpOtherApps: "Andra scrobblers",
   helpOtherIntro: "Alla spelare som stöder Last.fm 2.0-protokollet och låter dig byta server kan scrobbla hit.",
   helpOtherServerUrl: "Server-URL:",

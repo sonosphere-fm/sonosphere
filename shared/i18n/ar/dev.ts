@@ -105,6 +105,22 @@ export default {
   helpLbServer:
     "في التطبيق، اضبط خادم ListenBrainz أو عنوان API على {origin} والصق الرمز. إن طلب التطبيق عنوان API الكامل، فاستخدم {full}.",
   helpLbPlay: "شغّل الموسيقى. يظهر الرمز في {applications}، حيث يمكنك فصله في أي وقت.",
+  helpNavidromeConfig: "في إعدادات Navidrome، اضبط {option} (أو متغير البيئة {env}) على {url}، ثم أعد تشغيل Navidrome.",
+  helpNavidromeLink: "في Navidrome، افتح إعداداتك الشخصية، وفعّل التسجيل إلى ListenBrainz، والصق الرمز.",
+  helpNavidromeNote:
+    "ينطبق عنوان URL الأساسي على خادم Navidrome بأكمله: كل من يفعّل التسجيل إلى ListenBrainz عليه يرسل استماعاته إلى هنا، كلٌّ برمزه الخاص.",
+  helpJellyfinRepo: "في لوحة تحكم Jellyfin، افتح الإضافات، ثم علامة تبويب المستودعات، وأضف {repo}.",
+  helpJellyfinInstall: "ثبّت إضافة ListenBrainz من الكتالوج وأعد تشغيل Jellyfin.",
+  helpJellyfinUrl: "في إعدادات الإضافة، في علامة التبويب General، اضبط {setting} على {url} واحفظ.",
+  helpJellyfinUser: "في علامة التبويب User Config، اختر مستخدمك، والصق الرمز في {field}، وحدّد {enable} واحفظ.",
+  helpPlexIntro: "لا يستطيع Plex إرسال الاستماعات إلى خادم آخر بمفرده، لذا شغّل {app} بجانبه لتمريرها.",
+  helpPlexSource: "أضف Plex كمصدر: اضبط {url} على عنوان خادم Plex الخاص بك و{token} على رمز Plex الخاص بك.",
+  helpPlexClient:
+    "أضف عميل ListenBrainz: اضبط {url} على {origin}، و{token} على رمزك، و{user} على اسم مستخدمك في Sonosphere.",
+  helpPlexPlay: "أعد تشغيل multi-scrobbler وشغّل شيئًا في Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler إضافة للمتصفح تسجّل الاستماع من مواقع الموسيقى.",
+  helpWebScrobblerEdit: "في خيارات Web Scrobbler، ابحث عن ListenBrainz بين الحسابات وعدّل خصائصه.",
+  helpWebScrobblerFields: "اضبط عنوان API على {url} ورمز المستخدم على رمزك، ثم احفظ.",
   helpOtherApps: "تطبيقات سكروبل أخرى",
   helpOtherIntro: "أي مشغّل يدعم بروتوكول Last.fm 2.0 ويتيح تغيير الخادم يمكنه السكروبل هنا.",
   helpOtherServerUrl: "عنوان الخادم:",
