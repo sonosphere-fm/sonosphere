@@ -1,5 +1,6 @@
 import type { ArtistHit, TitleHit } from "../metadata/mbdb";
 import type { FoundArtist } from "../../shared/search";
+import { digits } from "./numbers";
 
 // Must match mbkey() in the MusicBrainz copy.
 export const looseKey = (s: string) =>
@@ -11,6 +12,9 @@ export const looseKey = (s: string) =>
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim()
     .replace(/^the /, "");
+
+// spelled-out numbers count as digits, so "two phones" finds "2 phones"
+const searchKey = (s: string) => digits(looseKey(s));
 
 function textScore(key: string, q: string): number {
   if (key === q) return 70;
@@ -50,18 +54,18 @@ function isJunk(s: Ranked, above: Ranked[]): boolean {
 }
 
 export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: string, limit: number): FoundArtist[] {
-  const q = looseKey(typed);
+  const q = searchKey(typed);
   // several MusicBrainz artists can share a name: ours is taken to be the best known of them
   const known = new Map<string, ArtistHit>();
   for (const h of theirs) {
-    const key = looseKey(h.name);
+    const key = searchKey(h.name);
     const had = known.get(key);
     if (!had || h.releases > had.releases) known.set(key, h);
   }
   const scored: Ranked[] = [];
   const seen = new Set<string>();
   for (const a of ours) {
-    const key = looseKey(a.name);
+    const key = searchKey(a.name);
     const mb = known.get(key);
     seen.add(key);
     const text = textScore(key, q) - lengthPenalty(key, q) + 8;
@@ -71,10 +75,10 @@ export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: str
     scored.push({ a, score, key, releases: mb?.releases ?? 0, mbOnly: false });
   }
   for (const h of theirs) {
-    const key = looseKey(h.name);
+    const key = searchKey(h.name);
     if (seen.has(key)) continue;
     seen.add(key);
-    const text = textScore(h.key, q) - lengthPenalty(h.key, q) - (h.viaAlias ? 8 : 0);
+    const text = textScore(digits(h.key), q) - lengthPenalty(digits(h.key), q) - (h.viaAlias ? 8 : 0);
     const fame = 10 * Math.log10(1 + h.releases) + (h.spotify ? 5 : 0);
     const a = { id: 0, name: h.name, image: null, listeners: 0 };
     scored.push({ a, score: text + fame, key, releases: h.releases, mbOnly: true });
@@ -98,15 +102,15 @@ export function rankTitles<T extends Titled>(
   limit: number,
   stub: (h: TitleHit) => T
 ): T[] {
-  const q = looseKey(typed);
-  const both = (title: string, artist: string) => `${looseKey(title)}\n${looseKey(artist)}`;
+  const q = searchKey(typed);
+  const both = (title: string, artist: string) => `${searchKey(title)}\n${searchKey(artist)}`;
   const known = new Map<string, TitleHit>();
   for (const h of theirs) {
     const k = both(h.title, h.artist);
     if (!known.has(k)) known.set(k, h);
   }
   const text = (title: string) => {
-    const key = looseKey(title);
+    const key = searchKey(title);
     return textScore(key, q) - lengthPenalty(key, q);
   };
   const fame = (h: TitleHit | undefined) => (h ? 10 * Math.log10(1 + h.n) : 0);

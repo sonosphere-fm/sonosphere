@@ -28,6 +28,7 @@ import { startDiscord } from "./discord/service";
 import { startEventSync } from "./events/sync";
 import { startImports } from "./listening/imports";
 import { startMetadata } from "./metadata/service";
+import { startSearchSync } from "./search/sync";
 import { syncAdmins } from "./site/roles";
 import { pg } from "./db/client";
 import { readiness } from "./readiness";
@@ -62,6 +63,7 @@ startTasteWorker();
 startSpotify();
 startDiscord();
 startMetadata();
+startSearchSync();
 startEventSync();
 startImports();
 

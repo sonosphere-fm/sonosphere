@@ -7415,6 +7415,15 @@ html[data-profile-shell="custom"] :focus-visible {
     text-align: start;
     cursor: pointer;
   }
+  .language-picker {
+    max-width: 320px;
+    margin-top: 20px;
+  }
+  .language-picker-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
   .profile-theme-check-box {
     display: grid;
     place-items: center;
