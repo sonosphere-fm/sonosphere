@@ -6,10 +6,10 @@ const KEY = "spin.theme";
 
 export function applyTheme(p: ThemePref) {
   const root = document.documentElement;
-  if (p === "light") root.removeAttribute("data-scheme");
+  if (p === "system") root.removeAttribute("data-scheme");
   else root.setAttribute("data-scheme", p);
   try {
-    if (p === "light") localStorage.removeItem(KEY);
+    if (p === "system") localStorage.removeItem(KEY);
     else localStorage.setItem(KEY, p);
   } catch {}
 }
@@ -34,7 +34,7 @@ export async function changeTheme(theme: ThemePref, update?: () => void) {
 
 function startingTheme(): ThemePref {
   const s = document.documentElement.getAttribute("data-scheme");
-  return s === "dark" || s === "system" ? s : "light";
+  return s === "dark" || s === "light" ? s : "system";
 }
 
 function watchScheme(changed: () => void) {

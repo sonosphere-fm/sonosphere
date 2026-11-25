@@ -88,7 +88,7 @@ export const users = pgTable("users", {
   // comma separated
   emailMuted: text("email_muted").default("").notNull(),
   // "light", "system" or "dark"
-  theme: text().default("light").notNull(),
+  theme: text().default("system").notNull(),
   // "" follows the browser
   locale: text().default("").notNull(),
   digestAt: integer("digest_at"),

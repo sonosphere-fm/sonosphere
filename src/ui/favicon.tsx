@@ -4,8 +4,8 @@ function isDarkMode() {
   const root = document.documentElement;
   const scheme = root.dataset.scheme;
   if (scheme === "dark") return true;
-  if (scheme === "system") return matchMedia("(prefers-color-scheme: dark)").matches;
-  return false;
+  if (scheme === "light") return false;
+  return matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
 function currentBackground() {

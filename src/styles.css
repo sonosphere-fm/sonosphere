@@ -84,10 +84,10 @@
     --mono: var(--font); /* labels and links use the body family; monospace is only for code */
   }
   :root {
-    color-scheme: light;
-  }
-  :root[data-scheme="system"] {
     color-scheme: light dark;
+  }
+  :root[data-scheme="light"] {
+    color-scheme: light;
   }
   :root[data-scheme="dark"] {
     color-scheme: dark;
