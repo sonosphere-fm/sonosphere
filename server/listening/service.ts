@@ -251,18 +251,16 @@ export async function stats(userId: number, offset: number, tzMin: number, viewe
 
 export async function milestones(userId: number, viewerId = 0): Promise<Milestones> {
   const scope = { userId, viewerId };
-  const [first, firsts] = await Promise.all([repo.recent(scope, 1, 0, true), repo.firstPlays(userId, viewerId)]);
-  const reached = MILESTONES.filter((n) => n <= first.total);
-  const items = await Promise.all(
-    reached.map(async (n) => {
-      const track = n === 1 ? first.items[0] : (await repo.recent(scope, 1, n - 1, true)).items[0];
-      return track && { n, track };
-    })
+  const [{ total }, firsts] = await Promise.all([repo.recent(scope, 1, 0, true), repo.firstPlays(userId, viewerId)]);
+  const items = await repo.milestonePlays(
+    userId,
+    MILESTONES.filter((n) => n <= total),
+    viewerId
   );
   return {
-    total: first.total,
-    items: items.filter((m) => m !== undefined).reverse(),
-    next: MILESTONES.find((n) => n > first.total) ?? null,
+    total,
+    items: items.sort((a, b) => b.n - a.n),
+    next: MILESTONES.find((n) => n > total) ?? null,
     firsts,
   };
 }
