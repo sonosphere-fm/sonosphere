@@ -21,6 +21,7 @@ Never run `bun run reset`. Importing any DB module runs migrations against `DATA
 - Use existing helpers: `bad`/`fail`/`missing`, guards in `server/guards.ts`, `limit`, `paging`.
 - Request bodies are untrusted; validate every field.
 - Every user-facing string goes through i18n in all `shared/i18n/*` locales.
+- Translations: add new keys to `en`. On push, the Auto-translate workflow (`scripts/translate.ts`) fills keys missing from the DeepL locales and translates values still identical to the English, then opens a PR to review. It never changes a value that differs from the English. hi, bn, mr, te, ta, ur and zh-Hant have no DeepL target: translate those by hand. A value that should stay English goes in `KEEP_ENGLISH` in the script.
 - UI: keep Astryx components and restyle in `src/styles.css`. Use `<Arrow>`, never a unicode arrow. No em dashes.
 - Don't hand-edit generated `src/themes/sonosphere/sonosphere.*` files.
 
