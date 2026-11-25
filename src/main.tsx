@@ -1,4 +1,5 @@
 import { Ico, Spinner } from "./icons";
+import { registerPwa } from "./pwa";
 import {
   lazy,
   Suspense,
@@ -891,6 +892,7 @@ function reloadOnStaleBuild(error: unknown) {
 
 // Bun can re-evaluate this entry during HMR; keep one React root for the page.
 const g = globalThis as typeof globalThis & { __spinRoot?: ReturnType<typeof createRoot> };
+registerPwa();
 // The guest shell can paint on its own. Wait for the app layout styles before replacing it.
 const stylesheet = document.querySelector<HTMLLinkElement>("#app-styles");
 function render() {
