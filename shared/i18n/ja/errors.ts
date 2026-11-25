@@ -120,6 +120,7 @@ export default {
   accountEmailAlreadyExists: "そのメールアドレスのアカウントはすでに存在します",
   wrongUsernamePassword: "ユーザー名またはパスワードが違います",
   accountBanned: "このアカウントは BAN されています",
+  bannedFromService: "Sonosphere から BAN されています",
   completeCheckNotRobot: "ロボットでないことの確認を完了してください",
   couldNotConfirmNotRobot: "ロボットでないことを確認できませんでした。少ししてからもう一度お試しください。",
   robotCheckExpiredFailedTry: "ロボット確認が期限切れか、失敗しました。もう一度お試しください。",

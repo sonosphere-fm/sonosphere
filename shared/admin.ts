@@ -99,6 +99,7 @@ export type ReportBrief = {
 };
 export type ModNote = { id: number; body: string; createdAt: number; author: string | null };
 export type StaffUserSeen = { country: string; region: string | null; at: number };
+export type StaffUserIp = { masked: string; firstAt: number; lastAt: number; banned: boolean; shared: string[] };
 export type StaffUserPage = {
   user: {
     id: number;
@@ -137,6 +138,7 @@ export type StaffUserPage = {
   };
   lastLogin: number | null;
   seen?: StaffUserSeen | null;
+  ips?: StaffUserIp[];
   lastScrobble: number | null;
   reportsAgainst: ReportBrief[];
   reportsBy: ReportBrief[];

@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "Există deja un cont cu această adresă de email",
   wrongUsernamePassword: "Nume de utilizator sau parolă greșită",
   accountBanned: "Acest cont a fost banat",
+  bannedFromService: "Ai fost banat de pe Sonosphere",
   completeCheckNotRobot: "Completează verificarea că nu ești robot",
   couldNotConfirmNotRobot: "Nu am putut confirma că nu ești robot. Încearcă din nou imediat.",
   robotCheckExpiredFailedTry: "Verificarea anti-robot a expirat sau a eșuat. Încearc-o din nou.",

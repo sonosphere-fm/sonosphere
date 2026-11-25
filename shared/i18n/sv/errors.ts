@@ -120,6 +120,7 @@ export default {
   accountEmailAlreadyExists: "Det finns redan ett konto med den e-postadressen",
   wrongUsernamePassword: "Fel användarnamn eller lösenord",
   accountBanned: "Det här kontot har stängts av",
+  bannedFromService: "Du har stängts av från Sonosphere",
   completeCheckNotRobot: "Bekräfta att du inte är en robot",
   couldNotConfirmNotRobot: "Kunde inte bekräfta att du inte är en robot. Försök igen om en stund.",
   robotCheckExpiredFailedTry: "Robotkontrollen gick ut eller misslyckades. Försök igen.",

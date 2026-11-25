@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "使用此電子郵件的帳號已存在",
   wrongUsernamePassword: "使用者名稱或密碼錯誤",
   accountBanned: "此帳號已被停權",
+  bannedFromService: "你已被 Sonosphere 停權",
   completeCheckNotRobot: "請完成人機驗證",
   couldNotConfirmNotRobot: "無法確認你不是機器人。請稍後再試。",
   robotCheckExpiredFailedTry: "人機驗證已過期或未通過。請再試一次。",

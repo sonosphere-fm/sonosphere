@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import type { MeResponse } from "../../shared/auth";
 import { Ico } from "../icons";
@@ -37,6 +37,7 @@ import type {
   StaffTrust,
   StaffUserList,
   StaffUserPage,
+  StaffUserIp,
   StaffUserSeen,
   SuspendResult,
 } from "../../shared/admin";
@@ -515,6 +516,12 @@ export function UserDetail() {
                           <dd>{d.seen ? `${seenPlace(d.seen)} · ${ago(d.seen.at)}` : t("admin.notYet")}</dd>
                         </>
                       )}
+                      {d.ips !== undefined && (
+                        <>
+                          <dt>{t("admin.ipAddresses")}</dt>
+                          <dd>{d.ips.length ? <IpList ips={d.ips} /> : t("admin.notYet")}</dd>
+                        </>
+                      )}
                       <dt>{t("admin.sessions")}</dt>
                       <dd>
                         {t("admin.sessionsValue", { web: num(d.counts.sessions), app: num(d.counts.apiSessions) })}
@@ -813,6 +820,31 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
 }
 import { ManageUsernames } from "./usernames";
 import { countryNameOf } from "../../shared/countries";
+
+function IpList({ ips }: { ips: StaffUserIp[] }) {
+  return (
+    <ul className="admin-ips">
+      {ips.map((ip, i) => (
+        <li key={i}>
+          <span>{ip.masked}</span> <span className="muted">{ago(ip.lastAt)}</span>
+          {ip.banned && <span className="badge">{t("admin.ipBannedNetwork")}</span>}
+          {ip.shared.length > 0 && (
+            <div className="muted">
+              {tx("admin.ipAlsoUsedBy", {
+                names: ip.shared.map((name, j) => (
+                  <Fragment key={name}>
+                    {j > 0 && ", "}
+                    <Link to={adminUrl(name)}>{name}</Link>
+                  </Fragment>
+                )),
+              })}
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 // Cloudflare reports Tor exits as T1
 function seenPlace(s: StaffUserSeen) {

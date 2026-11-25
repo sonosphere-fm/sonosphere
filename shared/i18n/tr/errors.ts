@@ -119,6 +119,7 @@ export default {
   accountEmailAlreadyExists: "Bu e-postaya sahip bir hesap zaten var",
   wrongUsernamePassword: "Kullanıcı adı veya şifre yanlış",
   accountBanned: "Bu hesap yasaklandı",
+  bannedFromService: "Sonosphere'den yasaklandın",
   completeCheckNotRobot: "Robot olmadığını doğrulayan kontrolü tamamla",
   couldNotConfirmNotRobot: "Robot olmadığın doğrulanamadı. Birazdan tekrar dene.",
   robotCheckExpiredFailedTry: "Robot kontrolünün süresi doldu ya da başarısız oldu. Tekrar dene.",

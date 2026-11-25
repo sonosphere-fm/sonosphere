@@ -37,7 +37,7 @@ router.post<Session>("/api/auth/signup", async (c) => {
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "signup");
   const username = clean(c.body.username, 15);
   const email = clean(c.body.email, 200).toLowerCase();
-  const u = await signUp(username, email, String(c.body.password || ""), requestLocale(c.req));
+  const u = await signUp(username, email, String(c.body.password || ""), requestLocale(c.req), ipOf(c.req));
   await sendVerification(u, requestLocale(c.req));
   await startSession(c.headers, u.id);
   return { user: await me(u) };
@@ -49,7 +49,7 @@ router.post<Session>("/api/auth/login", async (c) => {
   const account = await findByLogin(norm(ident));
   await limit(loginKey(ipOf(c.req), ident, account), 30, 3600);
   await checkTurnstile(c.body.turnstile, ipOf(c.req), "login");
-  const u = await logIn(ident, String(c.body.password || ""));
+  const u = await logIn(ident, String(c.body.password || ""), ipOf(c.req));
   await startSession(c.headers, u.id);
   return { user: await me(u) };
 });

@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "Akun dengan email itu sudah ada",
   wrongUsernamePassword: "Nama pengguna atau kata sandi salah",
   accountBanned: "Akun ini telah diblokir",
+  bannedFromService: "Kamu telah diblokir dari Sonosphere",
   completeCheckNotRobot: "Selesaikan pemeriksaan bahwa kamu bukan robot",
   couldNotConfirmNotRobot: "Tidak dapat memastikan kamu bukan robot. Coba lagi sebentar.",
   robotCheckExpiredFailedTry: "Pemeriksaan robot kedaluwarsa atau gagal. Coba lagi.",

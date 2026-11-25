@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "이 이메일로 가입된 계정이 이미 있어요",
   wrongUsernamePassword: "사용자 이름 또는 비밀번호가 틀렸어요",
   accountBanned: "정지된 계정이에요",
+  bannedFromService: "Sonosphere에서 정지되었어요",
   completeCheckNotRobot: "로봇이 아님을 확인해 주세요",
   couldNotConfirmNotRobot: "로봇이 아님을 확인하지 못했어요. 잠시 뒤에 다시 시도해 주세요.",
   robotCheckExpiredFailedTry: "로봇 확인이 만료되었거나 실패했어요. 다시 시도해 주세요.",

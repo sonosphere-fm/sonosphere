@@ -11,6 +11,7 @@ import { dropStaleTokens } from "./compat/repo";
 import { dropExpiredEmailTokens, purgeUnverified, warnUnverified } from "./auth/email";
 import { sendDigests } from "./notifications/email";
 import { reviewProbation } from "./trust/service";
+import { dropOldIps } from "./auth/ips";
 import { deliver } from "./mail";
 import { dropOldMailLog } from "./mail/routes";
 import { syncCorrections } from "./corrections/service";
@@ -153,6 +154,7 @@ const tidy = () => {
       warnUnverified(),
       sendDigests(),
       reviewProbation(),
+      dropOldIps(),
     ]);
   exclusive("tidy", 5 * 60_000, jobs).catch((e) => {
     console.error(e);

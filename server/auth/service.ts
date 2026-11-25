@@ -1,4 +1,5 @@
 import { dmCounts } from "../dm/service";
+import { loginBanned, refuseBannedSignup } from "./ips";
 import { bad, fail } from "../http";
 import { configAdmins, roleOf, syncAdmins } from "../site/roles";
 import { setting } from "../site/settings";
@@ -78,13 +79,14 @@ export async function endSession(headers: Headers, token = ""): Promise<void> {
   headers.append("Set-Cookie", clearActAsCookie());
 }
 
-export async function checkNewAccount(username: string, email: string): Promise<void> {
+export async function checkNewAccount(username: string, email: string, ip: string): Promise<void> {
   const open = await setting("registrationsOpen");
   if (!open && !(await configAdmins()).includes(norm(username))) fail(403, "registrationsClosedMoment");
   if (!USERNAME.test(username)) bad("invalidUsername");
   if (!validEmail(email)) bad("enterValidEmailAddress");
   if (await usernameUnavailable(username)) bad("usernameTaken");
   if (await repo.emailTaken(email)) bad("accountEmailAlreadyExists");
+  await refuseBannedSignup(email, ip);
 }
 // An empty passwordHash makes an account that signs in only through OAuth until a password is set.
 export async function createAccount(
@@ -100,15 +102,22 @@ export async function createAccount(
   return (await findById(id)) ?? fail(500, "somethingWentWrong");
 }
 
-export async function signUp(username: string, email: string, password: string, locale: Locale): Promise<User> {
+export async function signUp(
+  username: string,
+  email: string,
+  password: string,
+  locale: Locale,
+  ip: string
+): Promise<User> {
   if (password.length < MIN_PASSWORD) bad("passwordsNeedLeast8Characters");
-  await checkNewAccount(username, email);
+  await checkNewAccount(username, email, ip);
   return createAccount(username, email, await hashPassword(password), locale);
 }
 
-export async function logIn(ident: string, password: string): Promise<User> {
+export async function logIn(ident: string, password: string, ip: string): Promise<User> {
   const u = await repo.findByLogin(norm(ident));
   if (!u || !(await passwordMatches(u, password))) return fail(401, "wrongUsernamePassword");
   if (u.banned) return fail(403, "accountBanned");
+  if (await loginBanned(u, ip)) return fail(403, "bannedFromService");
   return u;
 }
