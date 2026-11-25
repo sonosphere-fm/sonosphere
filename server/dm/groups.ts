@@ -89,8 +89,10 @@ async function shapeAll(groups: Group[], userId: number): Promise<DmGroup[]> {
     repo.unreadByGroup(ids, userId),
   ]);
   const lastById = new Map(lasts.map((m) => [m.groupId, m]));
+  const blocked = await blockedAmong([userId], [...new Set(lasts.map((m) => m.senderId))]);
   return groups.map((group) => {
-    const last = lastById.get(group.id);
+    const found = lastById.get(group.id);
+    const last = found && (found.event || !blocked.has(found.senderId)) ? found : undefined;
     return {
       id: group.id,
       title: group.title,
@@ -108,10 +110,22 @@ const shapeFor = async (groupId: number, userId: number): Promise<DmGroup> => {
   return (await shapeAll([group], userId))[0]!;
 };
 
-// Sends the new line to everyone now in the group, and tells anyone who is no longer in it.
-async function announce(groupId: number, messageId: number, gone: number[] = []): Promise<DmGroupMessage> {
+// Blocks made after both joined still count: the pair stop hearing from each other in the group.
+async function audience(groupId: number, userId: number): Promise<number[]> {
+  const ids = await repo.memberIds(groupId);
+  const blocked = await blockedAmong([userId], ids);
+  return ids.filter((id) => !blocked.has(id));
+}
+
+// Sends the new line to everyone now in the group (or just `to`), and tells anyone who is no longer in it.
+async function announce(
+  groupId: number,
+  messageId: number,
+  gone: number[] = [],
+  to?: number[]
+): Promise<DmGroupMessage> {
   const message = messageShape(await repo.messageById(messageId));
-  for (const uid of await repo.memberIds(groupId)) {
+  for (const uid of to ?? (await repo.memberIds(groupId))) {
     push(uid, { t: "dm-group", group: await shapeFor(groupId, uid), message, counts: await dmCounts(uid) });
   }
   for (const uid of gone) push(uid, { t: "dm-group-gone", groupId, counts: await dmCounts(uid) });
@@ -182,7 +196,8 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
 export async function page(locale: Locale, me: User, groupId: unknown, before: number): Promise<DmGroupPage> {
   const { group, member } = await mine(groupId, me.id);
   const rows = (await repo.messagesBetween(group.id, member.clearedId, before, 51)).reverse();
-  const shown = rows.slice(-50);
+  const blocked = await blockedAmong([me.id], [...new Set(rows.map((m) => m.senderId))]);
+  const shown = rows.slice(-50).filter((m) => m.event || !blocked.has(m.senderId));
   const reactions = await reactionsOf(
     "group",
     shown.map((m) => m.id)
@@ -217,12 +232,13 @@ export async function send(me: User, groupId: unknown, rawBody: unknown): Promis
     if ((await sent(t - 86400)) >= lim.perDay) fail(429, "youveReachedTodaysMessageLimit");
     return repo.addMessageTx(tx, group.id, me.id, body, null, t);
   });
-  const out = await announced(me, group.id, id);
-  for (const uid of await repo.memberIds(group.id)) {
-    const to = uid === me.id ? null : await findById(uid);
-    if (to) await mailMessage(to, me.username, `g${group.id}`, false, body);
+  const to = await audience(group.id, me.id);
+  const message = await announce(group.id, id, [], to);
+  for (const uid of to) {
+    const person = uid === me.id ? null : await findById(uid);
+    if (person) await mailMessage(person, me.username, `g${group.id}`, false, body);
   }
-  return out;
+  return { group: await shapeFor(group.id, me.id), message };
 }
 
 export async function read(me: User, groupId: unknown): Promise<DmDone> {
@@ -325,7 +341,7 @@ export async function react(me: User, messageId: unknown, emoji: unknown): Promi
   canPost(me);
   if (m.deletedAt) fail(403, "cantReactMessage");
   const reactions = await toggle("group", m.id, me.id, await checkReaction(me.id, emoji));
-  for (const uid of await repo.memberIds(m.groupId)) {
+  for (const uid of await audience(m.groupId, me.id)) {
     push(uid, { t: "dm-group-react", groupId: m.groupId, id: m.id, reactions });
   }
   return { reactions };
@@ -335,7 +351,7 @@ export async function relayGroupTyping(userId: number, groupId: number): Promise
   const found = await repo.groupFor(groupId, userId);
   const me = await findById(userId);
   if (!found || !me) return;
-  for (const uid of await repo.memberIds(groupId)) {
+  for (const uid of await audience(groupId, userId)) {
     if (uid !== userId) push(uid, { t: "dm-group-typing", groupId, name: me.username });
   }
 }
