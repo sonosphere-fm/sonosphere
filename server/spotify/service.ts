@@ -8,7 +8,7 @@ import * as repo from "./repo";
 import { clearNowPlaying } from "../listening/repo";
 import { seal, unseal } from "./seal";
 import { allowed, groupOf, pace, refused, spent, type Group } from "./quota";
-import type { SpotifyLink, SpotifyStatus } from "../../shared/spotify";
+import type { SpotifyLink, SpotifyNow, SpotifyPlaying, SpotifyStatus } from "../../shared/spotify";
 
 const ACCOUNTS = "https://accounts.spotify.com";
 const API = "https://api.spotify.com/v1";
@@ -436,6 +436,49 @@ export async function syncNow(userId: number): Promise<{ imported: number; link:
   if (!link) return null;
   const imported = link.broken ? 0 : await importRecent(link);
   return { imported, link: await view((await repo.findLink(userId)) ?? link) };
+}
+
+type Fetched = Omit<SpotifyPlaying, "ageMs"> & { at: number };
+
+const POSITION_FRESH = 1500;
+const positions = new Map<number, Promise<Fetched | null>>();
+
+async function fetchPlaying(link: repo.Link): Promise<Fetched | null> {
+  try {
+    const sent = Date.now();
+    const reply = await spotifyGet(link, "/me/player/currently-playing");
+    const spreadMs = (Date.now() - sent) / 2;
+    const input = reply?.currently_playing_type === "track" ? trackInput(reply.item) : null;
+    if (!reply || !input) return null;
+    return {
+      track: str(input.track),
+      artist: str(input.artist),
+      progressMs: numOr(reply.progress_ms),
+      durationMs: numOr(asObject(reply.item)?.duration_ms),
+      playing: reply.is_playing === true,
+      spreadMs,
+      at: sent + spreadMs,
+    };
+  } catch (e) {
+    failed(link, e);
+    return null;
+  }
+}
+
+// Asked for straight from Spotify, since the background poll runs only once a minute. Several tabs share one answer
+// for a moment. Spotify reads the position somewhere during the request, so it is dated to the middle of it.
+export async function playingNow(userId: number): Promise<SpotifyNow> {
+  const link = await repo.findLink(userId);
+  if (!link || link.broken) return { connected: false, playing: null };
+  let got = positions.get(userId);
+  const last = got && (await got);
+  if (!got || (last?.at ?? 0) < Date.now() - POSITION_FRESH) {
+    got = fetchPlaying(link);
+    positions.set(userId, got);
+  }
+  const now = await got;
+  if (!now) positions.delete(userId);
+  return { connected: true, playing: now && { ...now, ageMs: Date.now() - now.at } };
 }
 
 export const disconnect = (userId: number) => repo.dropLink(userId);

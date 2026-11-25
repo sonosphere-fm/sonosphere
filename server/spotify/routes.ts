@@ -3,7 +3,13 @@ import { fail, limit, Router } from "../http";
 import { clean } from "../util";
 import * as spotify from "./service";
 import type { Ok } from "../../shared/auth";
-import type { SpotifyConnect, SpotifyPlayerToken, SpotifyStatus, SpotifySynced } from "../../shared/spotify";
+import type {
+  SpotifyConnect,
+  SpotifyNow,
+  SpotifyPlayerToken,
+  SpotifyStatus,
+  SpotifySynced,
+} from "../../shared/spotify";
 
 export const router = new Router();
 
@@ -37,6 +43,12 @@ router.get<SpotifyPlayerToken>("/api/spotify/token", async (c) => {
   const u = need(c);
   await limit(`spotify-token:${u.id}`, 30, 3600, "tooManyRequestsSpotifyTry");
   return spotify.playerToken(u.id);
+});
+
+router.get<SpotifyNow>("/api/spotify/playing", async (c) => {
+  const u = need(c);
+  await limit(`spotify-playing:${u.id}`, 900, 3600, "tooManyRequestsSpotifyTry");
+  return spotify.playingNow(u.id);
 });
 
 router.post<SpotifySynced>("/api/spotify/sync", async (c) => {

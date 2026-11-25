@@ -14,3 +14,13 @@ export type SpotifyConnectBody = { clientId: string; playback?: boolean };
 export type SpotifyConnect = { url: string };
 export type SpotifyPlayerToken = { token: string | null; expiresAt: number };
 export type SpotifySynced = { imported: number; link: SpotifyLink };
+export type SpotifyPlaying = {
+  track: string;
+  artist: string;
+  progressMs: number;
+  durationMs: number;
+  playing: boolean;
+  ageMs: number;
+  spreadMs: number;
+};
+export type SpotifyNow = { connected: boolean; playing: SpotifyPlaying | null };
