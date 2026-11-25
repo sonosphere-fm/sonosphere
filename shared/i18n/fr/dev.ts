@@ -114,6 +114,28 @@ export default {
   helpLbServer:
     "Dans l'appli, règle le serveur ou l'URL d'API ListenBrainz sur {origin} et colle le jeton. Si l'appli demande l'adresse complète de l'API, utilise {full}.",
   helpLbPlay: "Écoute de la musique. Le jeton apparaît dans {applications}, où tu peux le déconnecter à tout moment.",
+  helpNavidromeConfig:
+    "Dans la configuration de Navidrome, réglez {option} (ou la variable d'environnement {env}) sur {url}, puis redémarrez Navidrome.",
+  helpNavidromeLink:
+    "Dans Navidrome, ouvrez vos paramètres personnels, activez le scrobbling vers ListenBrainz et collez le jeton.",
+  helpNavidromeNote:
+    "L'URL de base s'applique à tout le serveur Navidrome : chaque personne qui active le scrobbling ListenBrainz envoie ses écoutes ici, avec son propre jeton.",
+  helpJellyfinRepo: "Dans le tableau de bord de Jellyfin, ouvrez Plugins, puis l'onglet Dépôts, et ajoutez {repo}.",
+  helpJellyfinInstall: "Installez le plugin ListenBrainz depuis le catalogue et redémarrez Jellyfin.",
+  helpJellyfinUrl: "Dans les paramètres du plugin, onglet General, réglez {setting} sur {url} et enregistrez.",
+  helpJellyfinUser:
+    "Dans l'onglet User Config, choisissez votre utilisateur, collez le jeton dans {field}, cochez {enable} et enregistrez.",
+  helpPlexIntro:
+    "Plex ne peut pas envoyer les écoutes à un autre serveur tout seul : lancez {app} à côté pour les transmettre.",
+  helpPlexSource:
+    "Ajoutez Plex comme source : réglez {url} sur l'adresse de votre serveur Plex et {token} sur votre jeton Plex.",
+  helpPlexClient:
+    "Ajoutez un client ListenBrainz : réglez {url} sur {origin}, {token} sur votre jeton et {user} sur votre nom d'utilisateur Sonosphere.",
+  helpPlexPlay: "Redémarrez multi-scrobbler et lancez une lecture dans Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler est une extension de navigateur qui scrobble depuis les sites de musique.",
+  helpWebScrobblerEdit:
+    "Dans les options de Web Scrobbler, trouvez ListenBrainz parmi les comptes et modifiez ses propriétés.",
+  helpWebScrobblerFields: "Réglez l'URL de l'API sur {url} et le jeton utilisateur sur votre jeton, puis enregistrez.",
   helpOtherApps: "Autres scrobblers",
   helpOtherIntro:
     "Tout lecteur compatible avec le protocole Last.fm 2.0 et qui permet de changer de serveur peut scrobbler ici.",

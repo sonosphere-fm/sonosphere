@@ -110,6 +110,25 @@ export default {
   helpLbServer:
     "ஆப்பில், ListenBrainz சர்வர் அல்லது API URL ஐ {origin} ஆக அமைத்து token ஐ ஒட்டுங்கள். ஆப் முழு API முகவரியைக் கேட்டால் {full} ஐப் பயன்படுத்துங்கள்.",
   helpLbPlay: "இசையை இயக்குங்கள். Token {applications} பகுதியில் தோன்றும், அங்கே எப்போது வேண்டுமானாலும் அதைத் துண்டிக்கலாம்.",
+  helpNavidromeConfig:
+    "Navidrome கட்டமைப்பில் {option} (அல்லது சூழல் மாறி {env}) ஐ {url} என அமைத்து, Navidrome ஐ மறுதொடக்கம் செய்யுங்கள்.",
+  helpNavidromeLink: "Navidrome இல் உங்கள் தனிப்பட்ட அமைப்புகளைத் திறந்து, ListenBrainz க்கு ஸ்க்ரோப்ளிங்கை இயக்கி, டோக்கனை ஒட்டுங்கள்.",
+  helpNavidromeNote:
+    "அடிப்படை URL முழு Navidrome சேவையகத்துக்கும் பொருந்தும்: அதில் ListenBrainz ஸ்க்ரோப்ளிங்கை இயக்கும் அனைவரும் தங்கள் சொந்த டோக்கனுடன் இசைப்புகளை இங்கே அனுப்புவார்கள்.",
+  helpJellyfinRepo: "Jellyfin டாஷ்போர்டில் Plugins ஐத் திறந்து, Repositories தாவலில் {repo} ஐச் சேர்க்கவும்.",
+  helpJellyfinInstall: "பட்டியலிலிருந்து ListenBrainz செருகுநிரலை நிறுவி, Jellyfin ஐ மறுதொடக்கம் செய்யுங்கள்.",
+  helpJellyfinUrl: "செருகுநிரல் அமைப்புகளில் General தாவலில் {setting} ஐ {url} என அமைத்துச் சேமிக்கவும்.",
+  helpJellyfinUser:
+    "User Config தாவலில் உங்கள் பயனரைத் தேர்ந்தெடுத்து, டோக்கனை {field} இல் ஒட்டி, {enable} ஐத் தேர்வுசெய்து சேமிக்கவும்.",
+  helpPlexIntro: "Plex தானாக வேறு சேவையகத்துக்கு இசைப்புகளை அனுப்ப முடியாது, எனவே அவற்றை அனுப்ப அதன் அருகில் {app} ஐ இயக்குங்கள்.",
+  helpPlexSource:
+    "Plex ஐ மூலமாகச் சேர்க்கவும்: {url} ஐ உங்கள் Plex சேவையக முகவரியாகவும் {token} ஐ உங்கள் Plex டோக்கனாகவும் அமைக்கவும்.",
+  helpPlexClient:
+    "ListenBrainz கிளையண்டைச் சேர்க்கவும்: {url} ஐ {origin} ஆகவும், {token} ஐ உங்கள் டோக்கனாகவும், {user} ஐ உங்கள் Sonosphere பயனர்பெயராகவும் அமைக்கவும்.",
+  helpPlexPlay: "multi-scrobbler ஐ மறுதொடக்கம் செய்து Plex இல் ஏதாவது இசையுங்கள்.",
+  helpWebScrobblerIntro: "Web Scrobbler என்பது இசை இணையதளங்களிலிருந்து ஸ்க்ரோபிள் செய்யும் உலாவி நீட்டிப்பு.",
+  helpWebScrobblerEdit: "Web Scrobbler விருப்பங்களில் கணக்குகளில் ListenBrainz ஐக் கண்டு அதன் பண்புகளைத் திருத்தவும்.",
+  helpWebScrobblerFields: "API URL ஐ {url} ஆகவும் பயனர் டோக்கனை உங்கள் டோக்கனாகவும் அமைத்துச் சேமிக்கவும்.",
   helpOtherApps: "பிற ஸ்க்ராபிளர்கள்",
   helpOtherIntro: "Last.fm 2.0 நெறிமுறையை ஆதரித்து, சர்வரை மாற்ற அனுமதிக்கும் எந்த பிளேயரும் இங்கே ஸ்க்ராபிள் செய்யலாம்.",
   helpOtherServerUrl: "சர்வர் URL:",

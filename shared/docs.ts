@@ -40,6 +40,7 @@ const settingsLink = (to: string, page: DocKey): Span => ({
   label: [tr("common.settings"), { arrow: true }, tr(page)],
 });
 const applications = settingsLink("/settings/applications", "dev.applications");
+const listenToken = tr("dev.helpLbOpen", { applications, button: b(tr("dev.helpLbCreateToken")) });
 const codeList = (list: string[]) => list.flatMap((item, i) => (i ? [", ", code(item)] : [code(item)]));
 const groups = (list: [DocKey, string[]][]): Item[] =>
   list.map(([group, items]) => [b(tr("dev.groupLabel", { group: tr(group) })), " ", ...codeList(items)]);
@@ -330,9 +331,63 @@ export function helpDocs(origin: string): DocPage {
       { p: tr("dev.helpLbIntro") },
       {
         ol: [
-          tr("dev.helpLbOpen", { applications, button: b(tr("dev.helpLbCreateToken")) }),
+          listenToken,
           tr("dev.helpLbServer", { origin: code(origin), full: code(`${origin}/1/`) }),
           tr("dev.helpLbPlay", { applications }),
+        ],
+      },
+      { h2: "Navidrome", id: "navidrome" },
+      {
+        ol: [
+          tr("dev.helpNavidromeConfig", {
+            option: code("ListenBrainz.BaseURL"),
+            env: code("ND_LISTENBRAINZ_BASEURL"),
+            url: code(`${origin}/1/`),
+          }),
+          listenToken,
+          tr("dev.helpNavidromeLink"),
+        ],
+      },
+      { note: true, p: tr("dev.helpNavidromeNote") },
+      { h2: "Jellyfin", id: "jellyfin" },
+      {
+        ol: [
+          tr("dev.helpJellyfinRepo", { repo: code("https://repo.xkrivo.net/jellyfin/manifest.json") }),
+          tr("dev.helpJellyfinInstall"),
+          listenToken,
+          tr("dev.helpJellyfinUrl", { setting: b("ListenBrainz API URL"), url: code(origin) }),
+          tr("dev.helpJellyfinUser", {
+            field: b("ListenBrainz API token"),
+            enable: b("Enable submitting listens"),
+          }),
+        ],
+      },
+      { h2: "Plex", id: "plex" },
+      {
+        p: tr("dev.helpPlexIntro", {
+          app: { href: "https://foxxmd.github.io/multi-scrobbler/", label: "multi-scrobbler" },
+        }),
+      },
+      {
+        ol: [
+          listenToken,
+          tr("dev.helpPlexSource", { url: code("PLEX_URL"), token: code("PLEX_TOKEN") }),
+          tr("dev.helpPlexClient", {
+            url: code("LZ_URL"),
+            origin: code(origin),
+            token: code("LZ_TOKEN"),
+            user: code("LZ_USER"),
+          }),
+          tr("dev.helpPlexPlay"),
+        ],
+      },
+      { h2: "Web Scrobbler", id: "web-scrobbler" },
+      { p: tr("dev.helpWebScrobblerIntro") },
+      {
+        ol: [
+          listenToken,
+          tr("dev.helpWebScrobblerEdit"),
+          tr("dev.helpWebScrobblerFields", { url: code(`${origin}/1/submit-listens`) }),
         ],
       },
       { h2: tr("dev.helpOtherApps"), id: "other-apps" },

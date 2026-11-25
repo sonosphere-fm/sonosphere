@@ -104,6 +104,22 @@ export default {
   helpLbServer:
     "在应用中，将 ListenBrainz 服务器或 API URL 设为 {origin} 并粘贴令牌。如果应用需要完整的 API 地址，请使用 {full}。",
   helpLbPlay: "播放音乐。令牌会出现在{applications}中，你可以随时解除关联。",
+  helpNavidromeConfig: "在 Navidrome 的配置中，将 {option}（或环境变量 {env}）设为 {url}，然后重启 Navidrome。",
+  helpNavidromeLink: "在 Navidrome 中打开个人设置，开启向 ListenBrainz 记录播放，并粘贴令牌。",
+  helpNavidromeNote:
+    "基础 URL 对整个 Navidrome 服务器生效：服务器上开启 ListenBrainz 记录的每个人都会用各自的令牌把播放发送到这里。",
+  helpJellyfinRepo: "在 Jellyfin 控制台中打开“插件”，再打开“存储库”标签页，添加 {repo}。",
+  helpJellyfinInstall: "从目录中安装 ListenBrainz 插件，然后重启 Jellyfin。",
+  helpJellyfinUrl: "在插件设置的 General 标签页中，将 {setting} 设为 {url} 并保存。",
+  helpJellyfinUser: "在 User Config 标签页中选择你的用户，将令牌粘贴到 {field}，勾选 {enable} 并保存。",
+  helpPlexIntro: "Plex 本身无法把播放发送到其他服务器，所以在旁边运行 {app} 来转发。",
+  helpPlexSource: "将 Plex 添加为来源：把 {url} 设为你的 Plex 服务器地址，把 {token} 设为你的 Plex 令牌。",
+  helpPlexClient:
+    "添加一个 ListenBrainz 客户端：把 {url} 设为 {origin}，{token} 设为你的令牌，{user} 设为你的 Sonosphere 用户名。",
+  helpPlexPlay: "重启 multi-scrobbler，然后在 Plex 中播放音乐。",
+  helpWebScrobblerIntro: "Web Scrobbler 是一个从音乐网站记录播放的浏览器扩展。",
+  helpWebScrobblerEdit: "在 Web Scrobbler 的选项中，于账户里找到 ListenBrainz 并编辑其属性。",
+  helpWebScrobblerFields: "将 API URL 设为 {url}，用户令牌设为你的令牌，然后保存。",
   helpOtherApps: "其他记录器",
   helpOtherIntro: "任何支持 Last.fm 2.0 协议并允许更改服务器的播放器都可以在这里记录播放。",
   helpOtherServerUrl: "服务器 URL：",

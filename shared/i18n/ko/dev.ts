@@ -108,6 +108,24 @@ export default {
   helpLbServer:
     "앱에서 ListenBrainz 서버 또는 API URL을 {origin}(으)로 설정하고 토큰을 붙여 넣으세요. 앱이 전체 API 주소를 요구하면 {full}을(를) 사용하세요.",
   helpLbPlay: "음악을 재생하세요. 토큰은 {applications}에 표시되며, 언제든지 연결을 해제할 수 있어요.",
+  helpNavidromeConfig:
+    "Navidrome 설정에서 {option}(또는 환경 변수 {env})을 {url}(으)로 지정한 다음 Navidrome을 다시 시작하세요.",
+  helpNavidromeLink: "Navidrome에서 개인 설정을 열고 ListenBrainz 스크로블을 켠 뒤 토큰을 붙여 넣으세요.",
+  helpNavidromeNote:
+    "기본 URL은 Navidrome 서버 전체에 적용됩니다. ListenBrainz 스크로블을 켠 모든 사용자가 각자의 토큰으로 재생 기록을 여기로 보냅니다.",
+  helpJellyfinRepo: "Jellyfin 대시보드에서 플러그인을 열고 저장소 탭에서 {repo}을(를) 추가하세요.",
+  helpJellyfinInstall: "카탈로그에서 ListenBrainz 플러그인을 설치하고 Jellyfin을 다시 시작하세요.",
+  helpJellyfinUrl: "플러그인 설정의 General 탭에서 {setting}을(를) {url}(으)로 지정하고 저장하세요.",
+  helpJellyfinUser:
+    "User Config 탭에서 사용자를 고르고 {field}에 토큰을 붙여 넣은 뒤 {enable}을(를) 체크하고 저장하세요.",
+  helpPlexIntro: "Plex는 혼자서 다른 서버로 재생 기록을 보낼 수 없으므로, 옆에서 {app}을(를) 실행해 전달하세요.",
+  helpPlexSource: "Plex를 소스로 추가하세요. {url}에는 Plex 서버 주소를, {token}에는 Plex 토큰을 넣습니다.",
+  helpPlexClient:
+    "ListenBrainz 클라이언트를 추가하세요. {url}에는 {origin}, {token}에는 내 토큰, {user}에는 Sonosphere 사용자 이름을 넣습니다.",
+  helpPlexPlay: "multi-scrobbler를 다시 시작하고 Plex에서 음악을 재생하세요.",
+  helpWebScrobblerIntro: "Web Scrobbler는 음악 웹사이트에서 스크로블하는 브라우저 확장 프로그램입니다.",
+  helpWebScrobblerEdit: "Web Scrobbler 옵션의 계정 목록에서 ListenBrainz를 찾아 속성을 편집하세요.",
+  helpWebScrobblerFields: "API URL을 {url}(으)로, 사용자 토큰을 내 토큰으로 지정하고 저장하세요.",
   helpOtherApps: "기타 스크로블러",
   helpOtherIntro:
     "Last.fm 2.0 프로토콜을 지원하고 서버를 바꿀 수 있는 플레이어라면 어디서든 여기로 스크로블할 수 있어요.",

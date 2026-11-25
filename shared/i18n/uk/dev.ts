@@ -112,6 +112,27 @@ export default {
   helpLbServer:
     "У застосунку вкажи {origin} як сервер або API URL ListenBrainz і встав токен. Якщо застосунок просить повну адресу API, використай {full}.",
   helpLbPlay: "Слухай музику. Токен з’явиться в розділі {applications}, де його можна будь-коли відключити.",
+  helpNavidromeConfig:
+    "У конфігурації Navidrome задайте {option} (або змінну середовища {env}) значення {url} і перезапустіть Navidrome.",
+  helpNavidromeLink:
+    "У Navidrome відкрийте особисті налаштування, увімкніть скроблінг до ListenBrainz і вставте токен.",
+  helpNavidromeNote:
+    "Базова URL-адреса діє для всього сервера Navidrome: усі, хто ввімкне скроблінг до ListenBrainz, надсилатимуть прослуховування сюди, кожен зі своїм токеном.",
+  helpJellyfinRepo: "У панелі Jellyfin відкрийте «Плагіни», потім вкладку «Репозиторії» й додайте {repo}.",
+  helpJellyfinInstall: "Встановіть плагін ListenBrainz із каталогу та перезапустіть Jellyfin.",
+  helpJellyfinUrl: "У налаштуваннях плагіна на вкладці General задайте {setting} значення {url} і збережіть.",
+  helpJellyfinUser:
+    "На вкладці User Config виберіть свого користувача, вставте токен у {field}, позначте {enable} і збережіть.",
+  helpPlexIntro:
+    "Plex сам не вміє надсилати прослуховування на інший сервер, тож запустіть поруч {app}, щоб він їх передавав.",
+  helpPlexSource: "Додайте Plex як джерело: задайте {url} адресу вашого сервера Plex, а {token} ваш токен Plex.",
+  helpPlexClient:
+    "Додайте клієнт ListenBrainz: задайте {url} значення {origin}, {token} ваш токен, а {user} ваше ім'я користувача Sonosphere.",
+  helpPlexPlay: "Перезапустіть multi-scrobbler і ввімкніть щось у Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler це розширення браузера, яке скроблить із музичних сайтів.",
+  helpWebScrobblerEdit:
+    "У налаштуваннях Web Scrobbler знайдіть ListenBrainz серед облікових записів і змініть його властивості.",
+  helpWebScrobblerFields: "Вкажіть в адресі API {url}, а в токені користувача ваш токен, і збережіть.",
   helpOtherApps: "Інші скроблери",
   helpOtherIntro: "Скроблити сюди може будь-який плеєр, що підтримує протокол Last.fm 2.0 і дозволяє змінити сервер.",
   helpOtherServerUrl: "URL сервера:",

@@ -113,6 +113,27 @@ export default {
   helpLbServer:
     "Nell'app, imposta il server o l'URL dell'API di ListenBrainz su {origin} e incolla il token. Se l'app vuole l'indirizzo completo dell'API, usa {full}.",
   helpLbPlay: "Ascolta musica. Il token compare in {applications}, dove puoi scollegarlo in qualsiasi momento.",
+  helpNavidromeConfig:
+    "Nella configurazione di Navidrome, imposta {option} (o la variabile d'ambiente {env}) su {url}, poi riavvia Navidrome.",
+  helpNavidromeLink:
+    "In Navidrome, apri le impostazioni personali, attiva lo scrobbling su ListenBrainz e incolla il token.",
+  helpNavidromeNote:
+    "L'URL di base vale per tutto il server Navidrome: chiunque attivi lo scrobbling su ListenBrainz invierà gli ascolti qui, ognuno con il proprio token.",
+  helpJellyfinRepo: "Nella dashboard di Jellyfin, apri Plugin, poi la scheda Repository, e aggiungi {repo}.",
+  helpJellyfinInstall: "Installa il plugin ListenBrainz dal catalogo e riavvia Jellyfin.",
+  helpJellyfinUrl: "Nelle impostazioni del plugin, scheda General, imposta {setting} su {url} e salva.",
+  helpJellyfinUser:
+    "Nella scheda User Config, scegli il tuo utente, incolla il token in {field}, spunta {enable} e salva.",
+  helpPlexIntro:
+    "Plex non può inviare gli ascolti a un altro server da solo, quindi avvia {app} accanto per inoltrarli.",
+  helpPlexSource:
+    "Aggiungi Plex come sorgente: imposta {url} sull'indirizzo del tuo server Plex e {token} sul tuo token Plex.",
+  helpPlexClient:
+    "Aggiungi un client ListenBrainz: imposta {url} su {origin}, {token} sul tuo token e {user} sul tuo nome utente Sonosphere.",
+  helpPlexPlay: "Riavvia multi-scrobbler e riproduci qualcosa in Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler è un'estensione del browser che fa scrobbling dai siti di musica.",
+  helpWebScrobblerEdit: "Nelle opzioni di Web Scrobbler, trova ListenBrainz tra gli account e modificane le proprietà.",
+  helpWebScrobblerFields: "Imposta l'URL dell'API su {url} e il token utente sul tuo token, poi salva.",
   helpOtherApps: "Altri scrobbler",
   helpOtherIntro:
     "Qualsiasi player che supporti il protocollo Last.fm 2.0 e ti permetta di cambiare server può fare scrobble qui.",

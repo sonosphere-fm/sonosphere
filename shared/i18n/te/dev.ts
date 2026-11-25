@@ -105,6 +105,23 @@ export default {
   helpLbServer:
     "యాప్‌లో, ListenBrainz సర్వర్ లేదా API URLని {origin}కి సెట్ చేసి టోకెన్‌ను పేస్ట్ చేయండి. యాప్‌కు పూర్తి API చిరునామా కావాలంటే, {full} ఉపయోగించండి.",
   helpLbPlay: "సంగీతాన్ని ప్లే చేయండి. టోకెన్ {applications}లో కనిపిస్తుంది, అక్కడ మీరు దాన్ని ఎప్పుడైనా డిస్‌కనెక్ట్ చేయవచ్చు.",
+  helpNavidromeConfig:
+    "Navidrome కాన్ఫిగరేషన్‌లో {option} (లేదా ఎన్విరాన్‌మెంట్ వేరియబుల్ {env}) ను {url} కు సెట్ చేసి, Navidrome ను రీస్టార్ట్ చేయండి.",
+  helpNavidromeLink: "Navidrome లో మీ వ్యక్తిగత సెట్టింగ్‌లు తెరిచి, ListenBrainz కు స్క్రాబ్లింగ్ ఆన్ చేసి, టోకెన్ పేస్ట్ చేయండి.",
+  helpNavidromeNote:
+    "బేస్ URL మొత్తం Navidrome సర్వర్‌కు వర్తిస్తుంది: అందులో ListenBrainz స్క్రాబ్లింగ్ ఆన్ చేసిన ప్రతి ఒక్కరూ తమ సొంత టోకెన్‌తో ప్లేలను ఇక్కడికి పంపుతారు.",
+  helpJellyfinRepo: "Jellyfin డాష్‌బోర్డ్‌లో Plugins తెరిచి, Repositories ట్యాబ్‌లో {repo} ను జోడించండి.",
+  helpJellyfinInstall: "క్యాటలాగ్ నుండి ListenBrainz ప్లగిన్‌ను ఇన్‌స్టాల్ చేసి, Jellyfin ను రీస్టార్ట్ చేయండి.",
+  helpJellyfinUrl: "ప్లగిన్ సెట్టింగ్‌లలో General ట్యాబ్‌లో {setting} ను {url} కు సెట్ చేసి సేవ్ చేయండి.",
+  helpJellyfinUser: "User Config ట్యాబ్‌లో మీ యూజర్‌ను ఎంచుకుని, టోకెన్‌ను {field} లో పేస్ట్ చేసి, {enable} ను టిక్ చేసి సేవ్ చేయండి.",
+  helpPlexIntro: "Plex స్వయంగా ప్లేలను వేరే సర్వర్‌కు పంపలేదు, కాబట్టి వాటిని పంపడానికి దాని పక్కన {app} ను నడపండి.",
+  helpPlexSource: "Plex ను సోర్స్‌గా జోడించండి: {url} ను మీ Plex సర్వర్ చిరునామాకు, {token} ను మీ Plex టోకెన్‌కు సెట్ చేయండి.",
+  helpPlexClient:
+    "ListenBrainz క్లయింట్‌ను జోడించండి: {url} ను {origin} కు, {token} ను మీ టోకెన్‌కు, {user} ను మీ Sonosphere యూజర్‌నేమ్‌కు సెట్ చేయండి.",
+  helpPlexPlay: "multi-scrobbler ను రీస్టార్ట్ చేసి, Plex లో ఏదైనా ప్లే చేయండి.",
+  helpWebScrobblerIntro: "Web Scrobbler అనేది సంగీత వెబ్‌సైట్ల నుండి స్క్రాబుల్ చేసే బ్రౌజర్ ఎక్స్‌టెన్షన్.",
+  helpWebScrobblerEdit: "Web Scrobbler ఆప్షన్‌లలో ఖాతాలలో ListenBrainz ను కనుగొని దాని ప్రాపర్టీలను ఎడిట్ చేయండి.",
+  helpWebScrobblerFields: "API URL ను {url} కు, యూజర్ టోకెన్‌ను మీ టోకెన్‌కు సెట్ చేసి, సేవ్ చేయండి.",
   helpOtherApps: "ఇతర స్క్రోబ్లర్‌లు",
   helpOtherIntro: "Last.fm 2.0 ప్రోటోకాల్‌కు మద్దతు ఇచ్చి, సర్వర్‌ను మార్చడానికి అనుమతించే ఏ ప్లేయర్ అయినా ఇక్కడ స్క్రోబుల్ చేయగలదు.",
   helpOtherServerUrl: "సర్వర్ URL:",

@@ -111,6 +111,25 @@ export default {
   helpLbServer:
     "Di aplikasi, atur server ListenBrainz atau URL API ke {origin} dan tempel token. Jika aplikasi meminta alamat API lengkap, gunakan {full}.",
   helpLbPlay: "Putar musik. Token muncul di bawah {applications}, tempat kamu dapat memutuskannya kapan saja.",
+  helpNavidromeConfig:
+    "Di konfigurasi Navidrome, atur {option} (atau variabel lingkungan {env}) ke {url}, lalu mulai ulang Navidrome.",
+  helpNavidromeLink: "Di Navidrome, buka pengaturan pribadi, nyalakan scrobbling ke ListenBrainz, lalu tempel token.",
+  helpNavidromeNote:
+    "URL dasar berlaku untuk seluruh server Navidrome: siapa pun di sana yang menyalakan scrobbling ListenBrainz akan mengirim putarannya ke sini, masing-masing dengan tokennya sendiri.",
+  helpJellyfinRepo: "Di dasbor Jellyfin, buka Plugins, lalu tab Repositories, dan tambahkan {repo}.",
+  helpJellyfinInstall: "Pasang plugin ListenBrainz dari katalog dan mulai ulang Jellyfin.",
+  helpJellyfinUrl: "Di pengaturan plugin, pada tab General, atur {setting} ke {url} lalu simpan.",
+  helpJellyfinUser: "Di tab User Config, pilih pengguna Anda, tempel token ke {field}, centang {enable}, lalu simpan.",
+  helpPlexIntro:
+    "Plex tidak bisa mengirim putaran ke server lain sendiri, jadi jalankan {app} di sampingnya untuk meneruskannya.",
+  helpPlexSource:
+    "Tambahkan Plex sebagai sumber: atur {url} ke alamat server Plex Anda dan {token} ke token Plex Anda.",
+  helpPlexClient:
+    "Tambahkan klien ListenBrainz: atur {url} ke {origin}, {token} ke token Anda, dan {user} ke nama pengguna Sonosphere Anda.",
+  helpPlexPlay: "Mulai ulang multi-scrobbler dan putar sesuatu di Plex.",
+  helpWebScrobblerIntro: "Web Scrobbler adalah ekstensi peramban yang melakukan scrobble dari situs musik.",
+  helpWebScrobblerEdit: "Di opsi Web Scrobbler, cari ListenBrainz di antara akun dan ubah propertinya.",
+  helpWebScrobblerFields: "Atur URL API ke {url} dan token pengguna ke token Anda, lalu simpan.",
   helpOtherApps: "Scrobbler lain",
   helpOtherIntro:
     "Pemutar apa pun yang mendukung protokol Last.fm 2.0 dan memungkinkan mengubah servernya dapat scrobble di sini.",
