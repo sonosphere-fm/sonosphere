@@ -5,7 +5,7 @@ import * as mbdb from "../metadata/mbdb";
 import { rankArtists, rankTitles } from "./rank";
 import type { FoundAlbum, FoundArtist, FoundTrack, SearchResults } from "../../shared/search";
 import { wantBare, wantCovers } from "../metadata/wanted";
-import { esOn, find } from "./es";
+import { esOn, findAll, type Hit } from "./es";
 
 export const router = new Router();
 
@@ -17,120 +17,103 @@ router.get<SearchResults>("/api/search", async (c) => {
   const who = c.user ? `u${c.user.id}` : ipOf(c.req);
   await throttle(`search:${who}`, 60, 60, "tooManySearchesWaitMoment");
   await throttle(`search-h:${who}`, 1000, 3600, "tooManySearchesTryAgain");
-  const query = { term, limit: pg.limit, offset: pg.offset };
+  const q = { term, limit: pg.limit, offset: pg.offset };
   const want = (t: string) => type === "all" || type === t;
   const viewer = c.user?.id ?? 0;
-  const ours = {
-    artists: async () =>
-      wantBare("artist", await indexed("artists", query, repo.artistsById, repo.searchArtists), (r) => r.id),
-    albums: async () =>
-      wantBare("album", await indexed("albums", query, repo.albumsById, repo.searchAlbums), (r) => r.id),
-    tracks: async () =>
-      wantCovers(
-        await indexed(
-          "tracks",
-          query,
-          (ids) => repo.tracksById(ids, viewer),
-          (q) => repo.searchTracks(q, viewer)
-        ),
-        (r) => r.id
+  const found = await lookUp(KINDS.filter(want), q);
+  const ours = <T>(kind: Kind, byId: (ids: number[]) => Promise<T[]>, scan: (q: Query) => Promise<T[]>) => {
+    const hits = found.get(`ours_${kind}`);
+    if (!hits) return scan(q);
+    return hits.length ? byId(hits.map((h) => Number(h.id))) : Promise.resolve([]);
+  };
+  const theirs = <T, D>(kind: Kind, hit: (d: D) => T, scan: () => Promise<T[]>): Promise<T[]> => {
+    if (q.offset) return Promise.resolve([]);
+    const hits = found.get(`mb_${kind}`);
+    if (hits) return Promise.resolve(hits.map((h) => hit(h.doc as D)));
+    return mbdb.mbdbOn ? inTime(scan) : Promise.resolve([]);
+  };
+
+  const artists = async () => {
+    const [mine, mb] = await Promise.all([
+      ours("artists", repo.artistsById, repo.searchArtists),
+      theirs(
+        "artists",
+        (d: mbdb.IndexedArtist) => mbdb.artistHit(d, term),
+        () => mbdb.searchArtists(term)
       ),
+    ]);
+    const kept = wantBare("artist", mine, (r) => r.id);
+    return q.offset ? kept : rankArtists(kept, mb, term, q.limit);
   };
-  return {
-    artists: want("artists") ? await withMusicBrainz(await ours.artists(), term, pg.limit, pg.offset) : [],
-    albums: want("albums") ? await albumsToo(await ours.albums(), term, pg.limit, pg.offset) : [],
-    tracks: want("tracks") ? await tracksToo(await ours.tracks(), term, pg.limit, pg.offset) : [],
-    tags: want("tags") ? await repo.searchTags(query) : [],
-    users: want("users") ? await repo.searchUsers(query) : [],
-    ...pg,
+  const albums = async () => {
+    const [mine, mb] = await Promise.all([
+      ours("albums", repo.albumsById, repo.searchAlbums),
+      theirs("albums", mbdb.titleHit, () => mbdb.searchAlbums(term)),
+    ]);
+    const kept = wantBare("album", mine, (r) => r.id);
+    if (q.offset) return kept;
+    return rankTitles(kept, mb, term, q.limit, (h) => ({
+      id: 0,
+      title: h.title,
+      artist: h.artist,
+      image: null,
+      listeners: 0,
+    }));
   };
+  const tracks = async () => {
+    const [mine, mb] = await Promise.all([
+      ours(
+        "tracks",
+        (ids) => repo.tracksById(ids, viewer),
+        (x) => repo.searchTracks(x, viewer)
+      ),
+      theirs("tracks", mbdb.titleHit, () => mbdb.searchTracks(term)),
+    ]);
+    const kept = wantCovers(mine, (r) => r.id);
+    if (q.offset) return kept;
+    return rankTitles(kept, mb, term, q.limit, (h) => ({
+      id: 0,
+      title: h.title,
+      artist: h.artist,
+      album: null,
+      image: null,
+      duration: h.seconds,
+      listeners: 0,
+      playcount: 0,
+      loved: 0,
+    }));
+  };
+  const none = () => Promise.resolve([]);
+  const [a, l, t, tags, users] = await Promise.all([
+    want("artists") ? artists() : none(),
+    want("albums") ? albums() : none(),
+    want("tracks") ? tracks() : none(),
+    want("tags") ? repo.searchTags(q) : none(),
+    want("users") ? repo.searchUsers(q) : none(),
+  ]);
+  return { artists: a, albums: l, tracks: t, tags, users, ...pg };
 });
 
 type Query = { term: string; limit: number; offset: number };
+type Kind = "artists" | "albums" | "tracks";
+const KINDS: Kind[] = ["artists", "albums", "tracks"];
 
-// the search index when it answers, else a LIKE over the names
-async function indexed<T>(
-  kind: "artists" | "albums" | "tracks",
-  q: Query,
-  byId: (ids: number[]) => Promise<T[]>,
-  scan: (q: Query) => Promise<T[]>
-): Promise<T[]> {
-  if (!esOn) return scan(q);
-  let ids: number[];
-  try {
-    ids = (await find(`ours_${kind}`, q.term, q.limit, q.offset)).map((h) => Number(h.id));
-  } catch (e) {
+// Ours and MusicBrainz's for every kind wanted, in one trip to the search index. The first page asks ours for more
+// than it shows so the ranking against MusicBrainz has some to choose from. A missing entry means look elsewhere.
+async function lookUp(kinds: Kind[], q: Query): Promise<Map<string, Hit<unknown>[]>> {
+  if (!esOn) return new Map();
+  const asks = kinds.flatMap((k) => [
+    { index: `ours_${k}`, term: q.term, size: q.offset ? q.limit : Math.max(q.limit, 30), from: q.offset },
+    ...(q.offset ? [] : [{ index: `mb_${k}`, term: q.term, size: 60 }]),
+  ]);
+  const got = await findAll(asks).catch((e) => {
     console.error(e);
-    return scan(q);
-  }
-  return ids.length ? byId(ids) : [];
+    return [];
+  });
+  return new Map(asks.flatMap((a, i) => (got[i] ? [[a.index, got[i]] as const] : [])));
 }
 
-const theirs = <T>(index: () => Promise<T[]>, scan: () => Promise<T[]>) =>
-  esOn ? index().catch(() => (mbdb.mbdbOn ? scan() : [])) : scan();
-
-// MusicBrainz gets 800ms (a fresh connection through the tunnel takes most of that); past that the page shows ours alone.
+// MusicBrainz's own copy gets 800ms (a fresh connection through the tunnel takes most of that); past that the page
+// shows ours alone.
 const inTime = <T>(ask: () => Promise<T[]>): Promise<T[]> =>
   Promise.race([ask().catch(() => []), new Promise<T[]>((r) => setTimeout(() => r([]), 800))]);
-const askable = (offset: number) => (mbdb.mbdbOn || esOn) && offset === 0;
-
-const titles = async (index: string, term: string) =>
-  (await find<mbdb.IndexedTitle>(index, term, 60)).map((h) => mbdb.titleHit(h.doc));
-
-async function withMusicBrainz(
-  found: FoundArtist[],
-  term: string,
-  limit: number,
-  offset: number
-): Promise<FoundArtist[]> {
-  if (!askable(offset)) return found;
-  return rankArtists(
-    found,
-    await inTime(() =>
-      theirs(
-        () => find<mbdb.IndexedArtist>("mb_artists", term, 60).then((hs) => hs.map((h) => mbdb.artistHit(h.doc, term))),
-        () => mbdb.searchArtists(term)
-      )
-    ),
-    term,
-    limit
-  );
-}
-
-async function albumsToo(found: FoundAlbum[], term: string, limit: number, offset: number): Promise<FoundAlbum[]> {
-  if (!askable(offset)) return found;
-  const hits = await inTime(() =>
-    theirs(
-      () => titles("mb_albums", term),
-      () => mbdb.searchAlbums(term)
-    )
-  );
-  return rankTitles(found, hits, term, limit, (h) => ({
-    id: 0,
-    title: h.title,
-    artist: h.artist,
-    image: null,
-    listeners: 0,
-  }));
-}
-
-async function tracksToo(found: FoundTrack[], term: string, limit: number, offset: number): Promise<FoundTrack[]> {
-  if (!askable(offset)) return found;
-  const hits = await inTime(() =>
-    theirs(
-      () => titles("mb_tracks", term),
-      () => mbdb.searchTracks(term)
-    )
-  );
-  return rankTitles(found, hits, term, limit, (h) => ({
-    id: 0,
-    title: h.title,
-    artist: h.artist,
-    album: null,
-    image: null,
-    duration: h.seconds,
-    listeners: 0,
-    playcount: 0,
-    loved: 0,
-  }));
-}

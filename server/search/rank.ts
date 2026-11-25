@@ -25,6 +25,10 @@ function textScore(key: string, q: string): number {
 }
 
 const lengthPenalty = (key: string, q: string) => Math.min(15, Math.max(0, key.length - q.length) * 0.4);
+const keyScore = (key: string, q: string) => textScore(key, q) - lengthPenalty(key, q);
+
+// a credit shared with someone: "Kendrick Lamar, SZA", "Maroon 5 feat. Cardi B", "Playboi Carti & The Weeknd"
+const SHARED = /[,;&/+•·]|\b(feat|ft|featuring|with|and|x|vs)\b/i;
 
 // names of uploads, fan pages and tribute acts rather than artists: "Radiohead - Topic", "Radiohead • Lossless"
 const JUNK =
@@ -34,9 +38,20 @@ const junkWords =
 
 type Ranked = { a: FoundArtist; score: number; key: string; releases: number; mbOnly: boolean };
 
-// A placeholder ("[unknown]"), a junk name, or a much better known artist's name with junk after it
+const fame = (s: Ranked) => s.a.listeners + s.releases;
+
+// a credit shared by a better known artist listed above it, who is what was looked for; MusicBrainz knowing it
+// as an artist with releases of its own keeps it (Florence + the Machine, Simon & Garfunkel)
+const isShared = (s: Ranked, above: Ranked[]) =>
+  s.releases === 0 &&
+  SHARED.test(s.a.name) &&
+  above.some((b) => b.key !== s.key && ` ${s.key} `.includes(` ${b.key} `) && fame(b) >= 3 * (fame(s) + 1));
+
+// A shared credit, or for one only MusicBrainz knows: a placeholder ("[unknown]"), a junk name, or a much better known artist's name with junk after it
 // ("radiohead 3", "radiohead cover brasil", "aphextwinsucks"; blink-182 stays, it is better known than Blink).
 function isJunk(s: Ranked, above: Ranked[]): boolean {
+  if (isShared(s, above)) return true;
+  if (!s.mbOnly) return false;
   if (/^\[.*\]$/.test(s.a.name) || JUNK.test(s.a.name)) return true;
   const flat = s.key.replace(/ /g, "");
   return above.some((b) => {
@@ -68,7 +83,7 @@ export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: str
     const key = searchKey(a.name);
     const mb = known.get(key);
     seen.add(key);
-    const text = textScore(key, q) - lengthPenalty(key, q) + 8;
+    const text = keyScore(key, q) + 8;
     const ourFame = 14 * Math.log10(1 + a.listeners) + (a.image ? 4 : 0);
     const mbFame = mb ? 10 * Math.log10(1 + mb.releases) + (mb.spotify ? 5 : 0) : 0;
     const score = text + ourFame + mbFame;
@@ -78,7 +93,7 @@ export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: str
     const key = searchKey(h.name);
     if (seen.has(key)) continue;
     seen.add(key);
-    const text = textScore(digits(h.key), q) - lengthPenalty(digits(h.key), q) - (h.viaAlias ? 8 : 0);
+    const text = keyScore(digits(h.key), q) - (h.viaAlias ? 8 : 0);
     const fame = 10 * Math.log10(1 + h.releases) + (h.spotify ? 5 : 0);
     const a = { id: 0, name: h.name, image: null, listeners: 0 };
     scored.push({ a, score: text + fame, key, releases: h.releases, mbOnly: true });
@@ -86,7 +101,7 @@ export function rankArtists(ours: FoundArtist[], theirs: ArtistHit[], typed: str
   scored.sort((x, y) => y.score - x.score);
   const kept: Ranked[] = [];
   for (const s of scored) {
-    if (!s.mbOnly || !isJunk(s, kept)) kept.push(s);
+    if (!isJunk(s, kept)) kept.push(s);
   }
   // artists only MusicBrainz knows have no id here: they carry a negative one (opening one files it, see server/metadata)
   return kept.slice(0, limit).map((s, i) => (s.a.id ? s.a : { ...s.a, id: -(i + 1) }));
@@ -109,18 +124,20 @@ export function rankTitles<T extends Titled>(
     const k = both(h.title, h.artist);
     if (!known.has(k)) known.set(k, h);
   }
-  const text = (title: string) => {
-    const key = searchKey(title);
-    return textScore(key, q) - lengthPenalty(key, q);
+  // what was typed may be the title, the artist ("radiohead" lists Radiohead's best known) or both ("radiohead creep")
+  const text = (title: string, artist: string) => {
+    const t = searchKey(title);
+    const a = searchKey(artist);
+    return Math.max(keyScore(t, q), keyScore(a, q) - 5, keyScore(`${a} ${t}`, q), keyScore(`${t} ${a}`, q));
   };
   const fame = (h: TitleHit | undefined) => (h ? 10 * Math.log10(1 + h.n) : 0);
   const scored = ours.map((t) => {
     const k = both(t.title, t.artist);
     const mb = known.get(k);
     known.delete(k);
-    return { t, score: text(t.title) + 8 + 14 * Math.log10(1 + t.listeners) + (t.image ? 4 : 0) + fame(mb) };
+    return { t, score: text(t.title, t.artist) + 8 + 14 * Math.log10(1 + t.listeners) + (t.image ? 4 : 0) + fame(mb) };
   });
-  for (const h of known.values()) scored.push({ t: stub(h), score: text(h.title) + fame(h) });
+  for (const h of known.values()) scored.push({ t: stub(h), score: text(h.title, h.artist) + fame(h) });
   scored.sort((x, y) => y.score - x.score);
   return scored.slice(0, limit).map((s, i) => (s.t.id ? s.t : { ...s.t, id: -(i + 1) }));
 }
