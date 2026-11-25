@@ -150,7 +150,7 @@ export default {
   save: "Salvează",
   lyrics: "Versuri",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

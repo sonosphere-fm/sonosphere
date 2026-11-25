@@ -129,7 +129,7 @@ export default {
   save: "Spara",
   lyrics: "Låttext",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

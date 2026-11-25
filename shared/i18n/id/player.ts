@@ -131,7 +131,7 @@ export default {
   save: "Simpan",
   lyrics: "Lirik",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

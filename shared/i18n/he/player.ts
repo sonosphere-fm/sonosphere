@@ -143,7 +143,7 @@ export default {
   save: "שמירה",
   lyrics: "מילים",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

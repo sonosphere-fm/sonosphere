@@ -333,7 +333,7 @@ export default {
   removeImageTitle: "Remove this image?",
   removeImageBody: "Remove this image from {name}? This cannot be undone.",
   removeImageAction: "Remove image",
-  photoCount: { one: "{count} photo", other: "{count} photos" },
+  photoCount: { one: "{count} fotografie", few: "{count} fotografii", other: "{count} de fotografii" },
   yearCardTitle: "{year} în muzică",
   yearCardScrobbles: "Scrobbleuri",
   yearCardDays: "Zile cu muzică",

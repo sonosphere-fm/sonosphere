@@ -372,6 +372,13 @@
       "when": 1795595999271,
       "tag": "0052_shiny_franklin_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1795602094857,
+      "tag": "0053_secret_songbird",
+      "breakpoints": true
     }
   ]
 }

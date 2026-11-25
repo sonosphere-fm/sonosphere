@@ -34,7 +34,7 @@ import type {
   SpotifyStatus,
   SpotifySynced,
 } from "../../shared/spotify";
-import type { SubsonicConnectBody, SubsonicStatus } from "../../shared/subsonic";
+import type { MusicConnectBody, MusicKind, MusicStatus } from "../../shared/music";
 import { Arrow, Ico, Spinner } from "../icons";
 import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
@@ -891,34 +891,47 @@ function SpotifySetup({
 
 type SpotifyOn = Extract<SpotifyStatus, { enabled: true }>;
 
-function SubsonicSettings() {
-  const q = useApi<SubsonicStatus>("/subsonic");
+const MUSIC_KINDS: [MusicKind, MessageKey][] = [
+  ["subsonic", "settings.musicServerKindSubsonic"],
+  ["jellyfin", "settings.musicServerKindJellyfin"],
+];
+
+function MusicServerSettings() {
+  const q = useApi<MusicStatus>("/music");
   const act = useAction();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<SubsonicConnectBody>({ url: "", username: "", password: "" });
+  const [form, setForm] = useState<MusicConnectBody>({
+    kind: "subsonic",
+    url: "",
+    username: "",
+    password: "",
+  });
 
   const connect = () =>
     act.run(async () => {
-      q.setData(await api<SubsonicStatus>("/subsonic", { body: form }));
+      q.setData(await api<MusicStatus>("/music", { body: form }));
       setEditing(false);
-      setForm({ url: "", username: "", password: "" });
+      setForm({ ...form, url: "", username: "", password: "" });
       window.dispatchEvent(new Event("spin:playback-source"));
-      return t("settings.subsonicConnected");
+      return t("settings.musicServerConnected");
     });
 
   const disconnect = () =>
     act.run(async () => {
-      await api<Ok>("/subsonic", { method: "DELETE" });
+      await api<Ok>("/music", { method: "DELETE" });
       q.setData({ connected: false });
       setEditing(false);
       window.dispatchEvent(new Event("spin:playback-source"));
-      return t("settings.subsonicDisconnected");
+      return t("settings.musicServerDisconnected");
     });
 
-  const edit = (d: Extract<SubsonicStatus, { connected: true }>) => {
-    setForm({ url: d.url, username: d.username, password: "" });
+  const edit = (d: Extract<MusicStatus, { connected: true }>) => {
+    setForm({ kind: d.kind, url: d.url, username: d.username, password: "" });
     setEditing(true);
   };
+
+  const kindName = (kind: MusicKind) =>
+    t(MUSIC_KINDS.find(([value]) => value === kind)?.[1] ?? "settings.musicServerTitle");
 
   let badge = null;
   if (q.data)
@@ -929,23 +942,23 @@ function SubsonicSettings() {
     );
 
   return (
-    <Service name="OpenSubsonic" blurb={t("settings.subsonicBlurb")} badge={badge} open={false}>
+    <Service name={t("settings.musicServerTitle")} blurb={t("settings.musicServerBlurb")} badge={badge} open={false}>
       <Async q={q}>
         {(d) =>
           d.connected && !editing ? (
             <div className="form">
               <p>
-                {tx("settings.subsonicConnectedTo", { name: <b>{d.name || "OpenSubsonic"}</b> })}{" "}
+                {tx("settings.musicServerConnectedTo", { name: <b>{d.name || kindName(d.kind)}</b> })}{" "}
                 {d.version && <span className="muted small">{d.version}</span>}
               </p>
               <p className="muted small">
-                {d.url} · {d.username}
+                {kindName(d.kind)} · {d.url} · {d.username}
               </p>
-              <p className="muted small">{t("settings.subsonicNote")}</p>
+              <p className="muted small">{t("settings.musicServerNote")}</p>
               {act.note}
               <div className="row">
                 <Button kind="btn ghost" onClick={() => edit(d)}>
-                  {t("settings.subsonicChange")}
+                  {t("settings.musicServerChange")}
                 </Button>
                 <Button kind="btn ghost" onClick={disconnect}>
                   {t("settings.disconnect")}
@@ -960,9 +973,18 @@ function SubsonicSettings() {
                 connect();
               }}
             >
-              <p>{t("settings.subsonicIntro")}</p>
+              <p>{t("settings.musicServerIntro")}</p>
               <label>
-                {t("settings.subsonicUrl")}
+                {t("settings.musicServerKind")}
+                <Select
+                  label={t("settings.musicServerKind")}
+                  value={form.kind}
+                  onChange={(v) => setForm({ ...form, kind: v as MusicKind })}
+                  options={MUSIC_KINDS.map(([value, label]) => [value, t(label)])}
+                />
+              </label>
+              <label>
+                {t("settings.musicServerUrl")}
                 <Input
                   value={form.url}
                   onChange={(e) => setForm({ ...form, url: e.target.value })}
@@ -974,7 +996,7 @@ function SubsonicSettings() {
                 />
               </label>
               <label>
-                {t("settings.subsonicUsername")}
+                {t("settings.musicServerUsername")}
                 <Input
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -985,7 +1007,7 @@ function SubsonicSettings() {
                 />
               </label>
               <label>
-                {t("settings.subsonicPassword")}
+                {t("settings.musicServerPassword")}
                 <Input
                   type="password"
                   value={form.password}
@@ -1006,7 +1028,7 @@ function SubsonicSettings() {
                   </Button>
                 )}
               </div>
-              <p className="muted small">{t("settings.subsonicPasswordHint")}</p>
+              <p className="muted small">{t("settings.musicServerPasswordHint")}</p>
             </form>
           )
         }
@@ -1268,7 +1290,7 @@ function AppSettings() {
       {c.dialog}
       <Section title={t("settings.streamingServices")}>
         <div className="services">
-          <SubsonicSettings />
+          <MusicServerSettings />
           <SpotifySettings />
           <DiscordSettings />
         </div>

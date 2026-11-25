@@ -1,4 +1,4 @@
-export const PLAYBACK_SOURCES = ["youtube", "subsonic", "spotify"] as const;
+export const PLAYBACK_SOURCES = ["youtube", "music", "spotify"] as const;
 export type PlaybackSource = (typeof PLAYBACK_SOURCES)[number];
 
 export const isPlaybackSource = (v: unknown): v is PlaybackSource =>

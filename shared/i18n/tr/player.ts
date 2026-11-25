@@ -133,7 +133,7 @@ export default {
   save: "Kaydet",
   lyrics: "Şarkı sözleri",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

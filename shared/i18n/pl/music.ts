@@ -348,7 +348,7 @@ export default {
   removeImageTitle: "Remove this image?",
   removeImageBody: "Remove this image from {name}? This cannot be undone.",
   removeImageAction: "Remove image",
-  photoCount: { one: "{count} photo", other: "{count} photos" },
+  photoCount: { one: "{count} zdjęcie", few: "{count} zdjęcia", many: "{count} zdjęć", other: "{count} zdjęć" },
   yearCardTitle: "{year} w muzyce",
   yearCardScrobbles: "Scrobble",
   yearCardDays: "Dni z muzyką",

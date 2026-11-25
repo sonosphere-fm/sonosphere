@@ -176,7 +176,7 @@ export default {
   save: "حفظ",
   lyrics: "كلمات الأغنية",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

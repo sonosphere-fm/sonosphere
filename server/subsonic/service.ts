@@ -1,25 +1,18 @@
 import { createHash } from "node:crypto";
-import { asObject, clean, norm, now, rid } from "../util";
+import { asObject, clean, now, rid } from "../util";
 import { bad, fail, limit } from "../http";
 import { seal, unseal } from "../seal";
 import * as repo from "./repo";
-import { checkHost, parseServerUrl } from "./url";
-import {
-  albumWebUrl,
-  pickSongs,
-  type SongMatch,
-  type SubsonicAuth,
-  type SubsonicConnectBody,
-  type SubsonicSource,
-  type SubsonicStatus,
-} from "../../shared/subsonic";
+import { parseServerUrl } from "../music/url";
+import { requireReachable } from "../music/reach";
+import { cachedMatches, forgetMatches, rememberMatches } from "../music/matches";
+import { albumWebUrl, pickSongs } from "../../shared/subsonic";
+import type { MusicMatch } from "../../shared/music-match";
+import type { SubsonicAuth, SubsonicConnectBody, SubsonicSource, SubsonicStatus } from "../../shared/subsonic";
 
 const VERSION = "1.16.1";
 const CLIENT = "Sonosphere";
 const SEARCHES_PER_HOUR = 240;
-const HOUR = 3600_000;
-const FIVE_MINUTES = 300_000;
-const MAX_MATCHES = 500;
 
 type Credentials = { url: string; username: string; password: string };
 type Attempt =
@@ -28,40 +21,17 @@ type Attempt =
   | { kind: "missing" }
   | { kind: "failed" };
 
-type Match = { songs: SongMatch[]; until: number };
-const matches = new Map<string, Match>();
 /** Whether the server accepts token auth, learned from the answers it has given. */
 const authModes = new Map<number, boolean>();
 
-function cached(key: string): SongMatch[] | null {
-  const match = matches.get(key);
-  if (!match) return null;
-  if (match.until <= Date.now()) {
-    matches.delete(key);
-    return null;
-  }
-  return match.songs;
-}
-
-function remember(key: string, songs: SongMatch[]): void {
-  if (matches.size >= MAX_MATCHES) {
-    const oldest = matches.keys().next().value;
-    if (oldest !== undefined) matches.delete(oldest);
-  }
-  matches.set(key, { songs, until: Date.now() + (songs.length ? HOUR : FIVE_MINUTES) });
-}
-
 function forget(userId: number): void {
-  const prefix = `${userId}:`;
-  for (const key of matches.keys()) {
-    if (key.startsWith(prefix)) matches.delete(key);
-  }
+  forgetMatches("subsonic", userId);
   authModes.delete(userId);
 }
 
 function credentialsOf(link: repo.Link): Credentials {
   const password = unseal(link.password);
-  if (password === null) return fail(400, "subsonicAuthFailed");
+  if (password === null) return fail(400, "musicServerAuthFailed");
   return { url: link.url, username: link.username, password };
 }
 
@@ -87,25 +57,13 @@ function authQuery(credentials: Credentials, token: boolean): URLSearchParams {
   return query;
 }
 
-async function reachable(url: string): Promise<void> {
-  let host: string;
-  try {
-    host = new URL(url).hostname;
-  } catch {
-    return fail(400, "invalidSubsonicUrl");
-  }
-  const state = await checkHost(host);
-  if (state === "private") return fail(400, "subsonicPrivateAddress");
-  if (state === "unreachable") return fail(502, "subsonicUnreachable");
-}
-
 async function attemptJson(
   credentials: Credentials,
   method: string,
   extra: Record<string, string>,
   token: boolean
 ): Promise<Attempt> {
-  await reachable(credentials.url);
+  await requireReachable(credentials.url);
   const query = authQuery(credentials, token);
   for (const [key, value] of Object.entries(extra)) query.set(key, value);
   let response: Response;
@@ -115,18 +73,18 @@ async function attemptJson(
       signal: AbortSignal.timeout(10_000),
     });
   } catch {
-    return fail(502, "subsonicUnreachable");
+    return fail(502, "musicServerUnreachable");
   }
   const reply = asObject(asObject(await response.json().catch(() => null))?.["subsonic-response"]);
   if (!reply) {
     if (response.status === 401) return { kind: "auth" };
-    return fail(502, "subsonicRequestFailed");
+    return fail(502, "musicServerRequestFailed");
   }
   if (reply.status === "ok") return { kind: "ok", body: reply };
   const code = Number(asObject(reply.error)?.code) || 0;
   if (code === 40 || code === 41 || code === 42) return { kind: "auth" };
   if (code === 70) return { kind: "missing" };
-  return fail(502, "subsonicRequestFailed");
+  return fail(502, "musicServerRequestFailed");
 }
 
 async function jsonCall(
@@ -139,10 +97,10 @@ async function jsonCall(
   if (first.kind === "auth") {
     const second = await attemptJson(credentials, method, extra, false);
     if (second.kind === "ok") return { body: second.body, token: false };
-    if (second.kind === "auth") return fail(400, "subsonicAuthFailed");
+    if (second.kind === "auth") return fail(400, "musicServerAuthFailed");
   }
   if (first.kind === "missing") return { body: {}, token: true };
-  return fail(502, "subsonicRequestFailed");
+  return fail(502, "musicServerRequestFailed");
 }
 
 export async function verify(
@@ -166,9 +124,9 @@ export async function verify(
 
 export async function connect(userId: number, input: SubsonicConnectBody): Promise<SubsonicStatus> {
   const server = parseServerUrl(input.url);
-  if (!server.ok) return bad("invalidSubsonicUrl");
+  if (!server.ok) return bad("invalidMusicServerUrl");
   const username = clean(input.username, 100);
-  if (!username || !input.password) return bad("subsonicCredentialsRequired");
+  if (!username || !input.password) return bad("musicServerCredentialsRequired");
   const { token, ...info } = await verify(server.base, username, input.password);
   await repo.saveLink(userId, {
     url: server.base,
@@ -203,9 +161,10 @@ export async function disconnect(userId: number): Promise<void> {
 /** Token and address for calls the browser makes itself. Kept in memory only. */
 export async function auth(userId: number): Promise<SubsonicAuth> {
   const link = await repo.findLink(userId);
-  if (!link) return fail(404, "subsonicNotConnected");
+  if (!link) return fail(404, "musicServerNotConnected");
   const query = authQuery(credentialsOf(link), true);
   return {
+    kind: "subsonic",
     base: link.url,
     username: link.username,
     name: link.name,
@@ -215,11 +174,10 @@ export async function auth(userId: number): Promise<SubsonicAuth> {
   };
 }
 
-async function search(link: repo.Link, artist: string, track: string): Promise<SongMatch[]> {
-  const key = `${link.userId}:${norm(artist)}:${norm(track)}`;
-  const hit = cached(key);
+async function search(link: repo.Link, artist: string, track: string): Promise<MusicMatch[]> {
+  const hit = cachedMatches("subsonic", link.userId, artist, track);
   if (hit) return hit;
-  await limit(`subsonic-search:${link.userId}`, SEARCHES_PER_HOUR, 3600);
+  await limit(`music-search:${link.userId}`, SEARCHES_PER_HOUR, 3600);
   const { body, token } = await jsonCall(credentialsOf(link), "search3", {
     query: `${artist} ${track}`.slice(0, 500),
     artistCount: "0",
@@ -228,18 +186,18 @@ async function search(link: repo.Link, artist: string, track: string): Promise<S
   });
   authModes.set(link.userId, token);
   const songs = pickSongs(asObject(body.searchResult3)?.song, artist, track);
-  remember(key, songs);
+  rememberMatches("subsonic", link.userId, artist, track, songs);
   return songs;
 }
 
 /** What the player falls back to when the browser cannot reach the server. */
 export async function source(userId: number, artist: string, track: string): Promise<SubsonicSource> {
   const link = await repo.findLink(userId);
-  if (!link) return fail(404, "subsonicNotConnected");
+  if (!link) return fail(404, "musicServerNotConnected");
   const [song] = await search(link, artist, track);
-  if (!song) return fail(404, "subsonicNoMatch");
+  if (!song) return fail(404, "musicServerNoMatch");
   return {
-    proxy: `/api/subsonic/stream?${new URLSearchParams({ id: song.id })}`,
+    proxy: `/api/music/stream?${new URLSearchParams({ id: song.id })}`,
     albumUrl: albumWebUrl(link.url, link.name, song.albumId),
   };
 }
@@ -292,7 +250,7 @@ async function errorCode(response: Response): Promise<number> {
 
 async function streamIds(link: repo.Link, ids: string[], range: string | null): Promise<Response> {
   const credentials = credentialsOf(link);
-  await reachable(credentials.url);
+  await requireReachable(credentials.url);
   let failed = false;
   for (const id of ids) {
     let authFailed = true;
@@ -316,16 +274,16 @@ async function streamIds(link: repo.Link, ids: string[], range: string | null): 
         break;
       }
     }
-    if (authFailed) return fail(400, "subsonicAuthFailed");
+    if (authFailed) return fail(400, "musicServerAuthFailed");
   }
-  return failed ? fail(502, "subsonicRequestFailed") : fail(404, "subsonicNoMatch");
+  return failed ? fail(502, "musicServerRequestFailed") : fail(404, "musicServerNoMatch");
 }
 
 export async function stream(userId: number, artist: string, track: string, range: string | null): Promise<Response> {
   const link = await repo.findLink(userId);
-  if (!link) return fail(404, "subsonicNotConnected");
+  if (!link) return fail(404, "musicServerNotConnected");
   const songs = await search(link, artist, track);
-  if (!songs.length) return fail(404, "subsonicNoMatch");
+  if (!songs.length) return fail(404, "musicServerNoMatch");
   return streamIds(
     link,
     songs.map((song) => song.id),
@@ -335,6 +293,6 @@ export async function stream(userId: number, artist: string, track: string, rang
 
 export async function streamById(userId: number, id: string, range: string | null): Promise<Response> {
   const link = await repo.findLink(userId);
-  if (!link) return fail(404, "subsonicNotConnected");
+  if (!link) return fail(404, "musicServerNotConnected");
   return streamIds(link, [id], range);
 }

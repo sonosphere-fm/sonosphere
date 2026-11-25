@@ -45,7 +45,7 @@ mock.module("../seal", () => ({
   unseal: (sealed: string) => (sealed.startsWith("sealed:") ? sealed.slice(7) : null),
 }));
 
-process.env.SUBSONIC_ALLOW_PRIVATE = "1";
+process.env.MUSIC_SERVER_ALLOW_PRIVATE = "1";
 const { auth, connect, disconnect, source, status, stream, streamById, verify } = await import("./service");
 
 const PASSWORD = "hunter2";
@@ -141,25 +141,25 @@ beforeAll(async () => {
 
 afterAll(() => {
   server.stop(true);
-  delete process.env.SUBSONIC_ALLOW_PRIVATE;
+  delete process.env.MUSIC_SERVER_ALLOW_PRIVATE;
 });
 
 describe("connect", () => {
   test("refuses addresses that are not a server", async () => {
     await expect(connect(1, { url: "ftp://music.example.com", username: "a", password: "b" })).rejects.toMatchObject({
       status: 400,
-      key: "invalidSubsonicUrl",
+      key: "invalidMusicServerUrl",
     });
     await expect(connect(1, { url: base, username: "", password: "b" })).rejects.toMatchObject({
       status: 400,
-      key: "subsonicCredentialsRequired",
+      key: "musicServerCredentialsRequired",
     });
   });
 
   test("refuses credentials the server does not accept", async () => {
     await expect(connect(1, { url: base, username: "listener", password: "wrong" })).rejects.toMatchObject({
       status: 400,
-      key: "subsonicAuthFailed",
+      key: "musicServerAuthFailed",
     });
     expect(link).toBeNull();
   });
@@ -181,7 +181,7 @@ describe("stream", () => {
   test("says when nothing is connected", async () => {
     await expect(stream(1, "The Band", "Song One", null)).rejects.toMatchObject({
       status: 404,
-      key: "subsonicNotConnected",
+      key: "musicServerNotConnected",
     });
   });
 
@@ -217,15 +217,18 @@ describe("stream", () => {
   test("reports tracks the server does not have", async () => {
     await expect(stream(1, "The Band", "Song Silence", null)).rejects.toMatchObject({
       status: 404,
-      key: "subsonicNoMatch",
+      key: "musicServerNoMatch",
     });
-    await expect(stream(1, "Nobody", "Unknown", null)).rejects.toMatchObject({ status: 404, key: "subsonicNoMatch" });
+    await expect(stream(1, "Nobody", "Unknown", null)).rejects.toMatchObject({
+      status: 404,
+      key: "musicServerNoMatch",
+    });
   });
 
   test("reports a server that breaks rather than a missing track", async () => {
     await expect(stream(1, "The Band", "Song Boom", null)).rejects.toMatchObject({
       status: 502,
-      key: "subsonicRequestFailed",
+      key: "musicServerRequestFailed",
     });
   });
 
@@ -255,7 +258,7 @@ describe("browser auth", () => {
     ).then((r) => r.json());
     expect(reply["subsonic-response"].status).toBe("ok");
     const s = await source(1, "The Band", "Song One");
-    expect(s.proxy).toBe("/api/subsonic/stream?id=one");
+    expect(s.proxy).toBe("/api/music/stream?id=one");
     expect(s.albumUrl).toBe(`${base}/app/#/album/al1/show`);
   });
 

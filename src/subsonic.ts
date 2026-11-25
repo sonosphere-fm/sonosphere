@@ -1,10 +1,12 @@
-import { SUBSONIC_CLIENT, SUBSONIC_VERSION, pickSongs, type SongMatch, type SubsonicAuth } from "../shared/subsonic";
+import { SUBSONIC_CLIENT, SUBSONIC_VERSION, pickSongs } from "../shared/subsonic";
+import type { MusicMatch } from "../shared/music-match";
+import type { SubsonicAuth } from "../shared/subsonic";
 
 const asObject = (v: unknown): Record<string, unknown> | null =>
   typeof v === "object" && v !== null ? (v as Record<string, unknown>) : null;
 
 /** Asks the listener's own server for matches. Throws when the browser cannot reach it, null when it refuses. */
-export async function directMatches(auth: SubsonicAuth, artist: string, track: string): Promise<SongMatch[] | null> {
+export async function directMatches(auth: SubsonicAuth, artist: string, track: string): Promise<MusicMatch[] | null> {
   const query = new URLSearchParams({
     u: auth.username,
     v: SUBSONIC_VERSION,
