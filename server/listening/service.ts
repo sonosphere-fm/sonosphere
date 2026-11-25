@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/bun";
 import * as mbdb from "../metadata/mbdb";
 import * as repo from "./repo";
 import { listeningChanged } from "../realtime";
+import { weigh } from "./suspicion";
 import type { ImportRow } from "../../shared/imports";
 import {
   type Blasts,
@@ -110,6 +111,13 @@ export async function scrobbleMany(
     source
   );
   if (filed.some(Boolean)) listeningChanged(userId, "scrobbles");
+  if (source !== "import") {
+    const plays = checked.filter((c) => "playedAt" in c);
+    await weigh(
+      userId,
+      filed.flatMap((r, j) => (r ? [{ id: r.id, playedAt: plays[j]!.playedAt }] : []))
+    );
+  }
   let i = 0;
   return checked.map((c) => {
     if (!("playedAt" in c)) return c;

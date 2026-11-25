@@ -19,6 +19,7 @@ const REASON_KEY: Record<string, AdminKey> = {
   inappropriate: "admin.reasonInappropriate",
   impersonation: "admin.reasonImpersonation",
   other: "admin.reasonOther",
+  listening: "admin.reasonListening",
 };
 export const REASONS = Object.keys(REASON_KEY);
 export const reasonLabel = label(REASON_KEY);

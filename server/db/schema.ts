@@ -1334,3 +1334,14 @@ export const discordPresence = pgTable("discord_presence", {
   lastPlayAt: integer("last_play_at"),
   createdAt: integer("created_at").notNull(),
 });
+
+// Points for scrobbles that could not have been listened to (server/listening/suspicion.ts).
+export const listeningSuspicion = pgTable("listening_suspicion", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  score: real().default(0).notNull(),
+  // what the suspicious plays mostly went to, kept for the report
+  target: text(),
+  updatedAt: integer("updated_at").notNull(),
+});

@@ -33,7 +33,9 @@ router.post<ScrobbleResponse>("/api/scrobble", async (c) => {
   const list: unknown[] = Array.isArray(c.body.tracks) ? c.body.tracks : [c.body];
   if (list.length > 5000) bad("tooManyScrobblesPerRequest");
   const inputs = list.map(asInput);
-  const results = await scrobbleMany(u.id, inputs, clean(c.body.source, 20) || "web", requestLocale(c.req));
+  // "import" is kept for the import jobs, whose timing is not checked
+  const source = clean(c.body.source, 20).replace(/^import$/, "web") || "web";
+  const results = await scrobbleMany(u.id, inputs, source, requestLocale(c.req));
   const details: ScrobbleResponse["details"] = [];
   let accepted = 0;
   results.forEach((r, i) => {

@@ -11,7 +11,7 @@ import type { ReportResolved, ReportsClosed, StaffReport, StaffReportList } from
 export const router = new Router({ jsonOnly: true });
 
 const STATUSES = ["open", "closed", "all"] as const;
-const REASONS = ["spam", "abuse", "inappropriate", "impersonation", "other"] as const;
+const REASONS = ["spam", "abuse", "inappropriate", "impersonation", "other", "listening"] as const;
 const TYPES = ["shout", "wiki", "journal", "event", "playlist", "obsession", "user", "dm", "group"] as const;
 const DECISIONS = ["dismiss", "remove", "suspend", "mute"] as const;
 

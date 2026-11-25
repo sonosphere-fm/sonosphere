@@ -203,6 +203,7 @@ export function Reports() {
               <ul className="reports [&>li]:py-[14px] [&>li]:px-3">
                 {d.items.map((r) => {
                   const dm = r.type === "dm" || r.type === "group";
+                  const automatic = r.reason === "listening";
                   const canRemove = r.exists && r.type !== "user" && !r.removed;
                   const canMute = r.exists && dm && r.author && !r.authorStaff && !r.authorMuted && !r.authorBanned;
                   const canSuspend = r.exists && r.author && !r.authorStaff && !r.authorSuspended && !r.authorBanned;
@@ -230,7 +231,7 @@ export function Reports() {
                         )}
                       </div>
                       <blockquote className={dm ? "adm-dm-snap" : undefined}>
-                        {r.text || <span className="muted">{t("admin.emptyParen")}</span>}
+                        {(automatic ? r.detail : r.text) || <span className="muted">{t("admin.emptyParen")}</span>}
                       </blockquote>
                       <p className="small">
                         {tx(AUTHOR_LINE[r.type] ?? "admin.authorWritten", {
@@ -246,16 +247,20 @@ export function Reports() {
                         {r.authorMuted && <span className="muted"> {t("admin.messagingOffParen")}</span>}
                         {r.authorStaff && <span className="muted"> {t("admin.staffParen")}</span>}
                         {" · "}
-                        {tx("admin.reportedBy", {
-                          reporter: r.reporter ? (
-                            <Link to={adminUrl(r.reporter)}>
-                              <Username name={r.reporter} />
-                            </Link>
-                          ) : (
-                            t("admin.aDeletedUser")
-                          ),
-                          ago: <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>,
-                        })}
+                        {automatic
+                          ? tx("admin.flaggedAutomatically", {
+                              ago: <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>,
+                            })
+                          : tx("admin.reportedBy", {
+                              reporter: r.reporter ? (
+                                <Link to={adminUrl(r.reporter)}>
+                                  <Username name={r.reporter} />
+                                </Link>
+                              ) : (
+                                t("admin.aDeletedUser")
+                              ),
+                              ago: <span title={dateTime(r.createdAt)}>{ago(r.createdAt)}</span>,
+                            })}
                         {r.link && (
                           <>
                             {" "}
@@ -266,7 +271,7 @@ export function Reports() {
                           </>
                         )}
                       </p>
-                      {r.detail && (
+                      {r.detail && !automatic && (
                         <p className="small">
                           {tx("admin.reportersNote", { label: <b>{t("admin.reportersNoteLabel")}</b>, note: r.detail })}
                         </p>
