@@ -1,5 +1,7 @@
 import postgres from "postgres";
 import type { ListedTrack, MbAlbum, MbArtist, MbTrack } from "./sources";
+import { looseKey } from "../search/rank";
+import { digits } from "../search/numbers";
 
 const url = process.env.MBDB_URL || "";
 const g = globalThis as { __spinMbdb?: postgres.Sql };
@@ -38,7 +40,6 @@ export type ArtistHit = {
   mbid: string;
   name: string;
   key: string;
-  exact: boolean;
   viaAlias: boolean;
   releases: number;
   spotify: boolean;
@@ -82,7 +83,6 @@ export async function searchArtists(term: string): Promise<ArtistHit[]> {
         mbid: r.mbid,
         name,
         key: matchedKey ?? r.key,
-        exact: matchedKey === k,
         viaAlias,
         releases: r.releases,
         spotify: r.spotify,
@@ -91,6 +91,32 @@ export async function searchArtists(term: string): Promise<ArtistHit[]> {
 }
 
 export type TitleHit = { title: string; artist: string; n: number; seconds: number };
+
+// documents of the search index's mb_* indexes (sonomb/scripts/index.sh on the machine with this copy)
+export type IndexedArtist = { mbid: string; name: string; aliases: string[] | null; pop: number; spotify: boolean };
+export type IndexedTitle = { name: string; artist: string; pop: number; seconds?: number };
+
+export function artistHit(d: IndexedArtist, term: string): ArtistHit {
+  const k = digits(looseKey(term));
+  const has = (s: string) => digits(looseKey(s)).includes(k);
+  const alias = has(d.name) ? null : (d.aliases?.find(has) ?? null);
+  const shown = alias ?? (latin(d.name) ? null : (d.aliases?.find(latin) ?? null));
+  return {
+    mbid: d.mbid,
+    name: tidy(shownName(d.name, shown, term)),
+    key: looseKey(alias ?? d.name),
+    viaAlias: !!alias,
+    releases: d.pop,
+    spotify: d.spotify,
+  };
+}
+
+export const titleHit = (d: IndexedTitle): TitleHit => ({
+  title: tidy(d.name),
+  artist: tidy(d.artist),
+  n: d.pop,
+  seconds: d.seconds ?? 0,
+});
 
 // Exact titles always come back; a prefix of three letters or more adds the best known of a few thousand others.
 const titleHits = (table: string, term: string) => db()`

@@ -90,7 +90,8 @@ function useLanguage() {
 export function LanguagePicker() {
   const { act, value, options, change } = useLanguage();
   return (
-    <span className="language-picker">
+    <div className="language-picker">
+      <span className="language-picker-label">{t("common.language")}</span>
       <Select
         label={t("common.language")}
         value={value}
@@ -105,7 +106,7 @@ export function LanguagePicker() {
         )}
       />
       {act.note}
-    </span>
+    </div>
   );
 }
 
