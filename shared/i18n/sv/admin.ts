@@ -660,6 +660,8 @@ export default {
   account: "Konto",
   joined: "Gick med",
   lastLogin: "Senaste inloggning",
+  seenFrom: "Sedd från",
+  torNetwork: "Tor-nätverket",
   allUsers: "Alla användare",
   actAsName: "Agera som {name}",
   actAsUser: "Agera som användare",

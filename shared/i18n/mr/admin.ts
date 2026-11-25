@@ -646,6 +646,8 @@ export default {
   account: "खाते",
   joined: "सामील झाले",
   lastLogin: "शेवटचे लॉगिन",
+  seenFrom: "येथून पाहिले",
+  torNetwork: "Tor नेटवर्क",
   allUsers: "सर्व वापरकर्ते",
   actAsName: "{name} म्हणून वावरा",
   actAsUser: "वापरकर्ता म्हणून वावरा",

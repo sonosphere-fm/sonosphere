@@ -646,6 +646,8 @@ export default {
   account: "ଆକାଉଣ୍ଟ",
   joined: "ଯୋଗ ଦେଇଛନ୍ତି",
   lastLogin: "ଶେଷ ଲଗଇନ୍",
+  seenFrom: "ଏଠାରୁ ଦେଖାଗଲା",
+  torNetwork: "Tor ନେଟୱାର୍କ",
   allUsers: "ସମସ୍ତ ୟୁଜର",
   actAsName: "{name} ଭାବେ କାର୍ଯ୍ୟ କରନ୍ତୁ",
   actAsUser: "ୟୁଜର ଭାବେ କାର୍ଯ୍ୟ କରନ୍ତୁ",

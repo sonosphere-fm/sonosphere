@@ -652,6 +652,8 @@ export default {
   account: "ಖಾತೆ",
   joined: "ಸೇರಿದ್ದು",
   lastLogin: "ಕೊನೆಯ ಲಾಗಿನ್",
+  seenFrom: "ಇಲ್ಲಿಂದ ಕಾಣಿಸಿಕೊಂಡಿದೆ",
+  torNetwork: "Tor ನೆಟ್\u200cವರ್ಕ್",
   allUsers: "ಎಲ್ಲಾ ಬಳಕೆದಾರರು",
   actAsName: "{name} ಆಗಿ ಕಾರ್ಯನಿರ್ವಹಿಸಿ",
   actAsUser: "ಬಳಕೆದಾರರಾಗಿ ಕಾರ್ಯನಿರ್ವಹಿಸಿ",

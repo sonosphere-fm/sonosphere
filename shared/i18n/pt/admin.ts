@@ -652,6 +652,8 @@ export default {
   account: "Conta",
   joined: "Entrou",
   lastLogin: "Último login",
+  seenFrom: "Visto de",
+  torNetwork: "Rede Tor",
   allUsers: "Todos os usuários",
   actAsName: "Agir como {name}",
   actAsUser: "Agir como usuário",

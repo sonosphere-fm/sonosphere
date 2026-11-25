@@ -615,6 +615,8 @@ export default {
   account: "帳號",
   joined: "加入時間",
   lastLogin: "最後登入",
+  seenFrom: "存取位置",
+  torNetwork: "Tor 網路",
   allUsers: "所有使用者",
   actAsName: "以 {name} 的身分操作",
   actAsUser: "以使用者身分操作",

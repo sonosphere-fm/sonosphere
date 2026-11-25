@@ -657,6 +657,8 @@ export default {
   account: "Hesap",
   joined: "Katılma",
   lastLogin: "Son giriş",
+  seenFrom: "Görüldüğü yer",
+  torNetwork: "Tor ağı",
   allUsers: "Tüm kullanıcılar",
   actAsName: "{name} olarak işlem yap",
   actAsUser: "Kullanıcı olarak işlem yap",

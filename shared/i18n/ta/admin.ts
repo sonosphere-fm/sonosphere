@@ -656,6 +656,8 @@ export default {
   account: "கணக்கு",
   joined: "சேர்ந்தது",
   lastLogin: "கடைசி உள்நுழைவு",
+  seenFrom: "இங்கிருந்து காணப்பட்டது",
+  torNetwork: "Tor நெட்வொர்க்",
   allUsers: "அனைத்துப் பயனர்களும்",
   actAsName: "{name} ஆகச் செயல்படு",
   actAsUser: "பயனராகச் செயல்படு",

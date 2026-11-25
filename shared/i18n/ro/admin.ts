@@ -719,6 +719,8 @@ export default {
   account: "Cont",
   joined: "Înscris",
   lastLogin: "Ultima autentificare",
+  seenFrom: "Văzut din",
+  torNetwork: "Rețeaua Tor",
   allUsers: "Toți utilizatorii",
   actAsName: "Acționează ca {name}",
   actAsUser: "Acționează ca utilizator",

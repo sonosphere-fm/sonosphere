@@ -790,6 +790,8 @@ export default {
   account: "Обліковий запис",
   joined: "Приєднався",
   lastLogin: "Останній вхід",
+  seenFrom: "Заходив з",
+  torNetwork: "Мережа Tor",
   allUsers: "Усі користувачі",
   actAsName: "Діяти від імені {name}",
   actAsUser: "Діяти від імені користувача",
