@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 import { useEffect } from "react";
 import { useLocation, useNavigationType, createRoutesFromChildren, matchRoutes } from "react-router-dom";
-import { failedBuildLink, isStaleBuild, recoverAsset } from "./asset-recovery";
+import { isFailedBuildLink, isStaleBuild, recoverAsset } from "./asset-recovery";
 
 // the build defines SENTRY_RELEASE; the dev bundler only defines NODE_ENV
 const release = process.env.NODE_ENV === "production" ? process.env.SENTRY_RELEASE : "dev";
@@ -34,14 +34,11 @@ if (!Sentry.getClient()) {
       // Never report errors from non-production environments.
       const env = import.meta.env?.VITE_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development";
       if (env !== "production") return null;
-      const resource = failedBuildLink(hint.originalException);
+      // A build asset that fails to load belongs to a previous deploy: reload instead of reporting it.
       const stale = event.exception?.values?.some((e) => isStaleBuild(e.value));
-      if ((resource || stale) && recoverAsset()) return null;
-      if (resource) {
-        event.extra = { ...event.extra, failedResourceUrl: resource };
-        event.exception = {
-          values: [{ type: "AssetLoadError", value: `Failed to load build asset: ${resource}` }],
-        };
+      if (stale || isFailedBuildLink(hint.originalException)) {
+        recoverAsset();
+        return null;
       }
       return event;
     },

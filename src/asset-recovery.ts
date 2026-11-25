@@ -5,28 +5,26 @@ const state = globalThis as typeof globalThis & { __spinAssetReload?: boolean };
 
 export const isStaleBuild = (error: unknown) => STALE_BUILD.test(String(error));
 
-/** A failed build asset may belong to a previous deploy. Recover once, then report persistent failures. */
-export function recoverAsset(): boolean {
-  if (state.__spinAssetReload) return true;
-  if (!navigator.onLine) return false;
+/** A failed build asset belongs to a previous deploy: reload once to get the current one, at most every 30s. */
+export function recoverAsset() {
+  if (state.__spinAssetReload || !navigator.onLine) return;
   try {
     const last = sessionStorage.getItem(RELOAD_KEY);
-    if (last !== null && Date.now() - Number(last) < 30_000) return false;
+    if (last !== null && Date.now() - Number(last) < 30_000) return;
     sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
   } catch {
-    return false;
+    return;
   }
   state.__spinAssetReload = true;
   // Let React finish handling the error before navigating away.
   setTimeout(() => location.reload(), 0);
-  return true;
 }
 
 /** Only same-origin build links qualify; other resource failures retain their normal reporting. */
-export function failedBuildLink(error: unknown): string | undefined {
-  if (!(error instanceof Event) || error.type !== "error" || !(error.target instanceof HTMLLinkElement)) return;
+export function isFailedBuildLink(error: unknown) {
+  if (!(error instanceof Event) || error.type !== "error" || !(error.target instanceof HTMLLinkElement)) return false;
   const link = error.target;
-  if (!link.relList.contains("stylesheet") && !link.relList.contains("modulepreload")) return;
+  if (!link.relList.contains("stylesheet") && !link.relList.contains("modulepreload")) return false;
   const url = new URL(link.href, location.href);
-  if (url.origin === location.origin && url.pathname.startsWith("/assets/")) return url.href;
+  return url.origin === location.origin && url.pathname.startsWith("/assets/");
 }
