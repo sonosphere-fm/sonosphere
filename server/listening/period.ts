@@ -12,3 +12,8 @@ export function range(q: URLSearchParams): [number, number] {
   const days = PERIODS[q.get("period") || "overall"];
   return [days ? now() - days * 86400 : 0, FOREVER];
 }
+
+// For listeners who hide recent plays, so stacking narrow windows can't rebuild their history.
+export function coarse([from, to]: [number, number]): [number, number] {
+  return [from - (from % 3600), to === FOREVER ? to : to - (to % 3600)];
+}

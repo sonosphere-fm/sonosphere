@@ -1,7 +1,7 @@
 import { requireArtist, requireTag } from "../catalog/service";
 import { confirmed, need } from "../guards";
 import { bad, fail, oneOf, paging, Router } from "../http";
-import { range } from "../listening/period";
+import { coarse, range } from "../listening/period";
 import * as listening from "../listening/repo";
 import { blasts, report, stats } from "../listening/service";
 import { notify } from "../notifications/repo";
@@ -49,9 +49,9 @@ router.get<UserRecent>("/api/user/recent", async (c) => {
 router.get<UserTop>("/api/user/top", async (c) => {
   const u = await requireVisibleUser(c.q.get("name"), c.user);
   const pg = paging(c.q);
-  const [from, to] = range(c.q);
   const kind = oneOf(c.q.get("kind"), KINDS) ?? bad("kindArtistsAlbumsTracks");
   if (!canSeeCharts(u, c.user)) return { items: [], total: 0, hidden: true, ...pg };
+  const [from, to] = canSee(u, c.user) ? range(c.q) : coarse(range(c.q));
   const scope: listening.Scope = { userId: u.id, from, to, viewerId: c.user?.id };
   if (c.q.get("artist")) scope.artistId = (await requireArtist(c.q.get("artist"))).id;
   const chart = await listening.top(kind, scope, pg.limit, pg.offset);
