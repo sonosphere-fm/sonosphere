@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
   group: auto-translate
@@ -37,20 +36,12 @@ jobs:
       # Guard: translated files must still satisfy Translation<typeof en>.
       - run: bun run typecheck
 
-      - uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          add-paths: shared/i18n
-          commit-message: "chore(i18n): auto-translate missing strings"
-          committer: sonosphere-bot <sonosphere-bot@users.noreply.github.com>
-          author: sonosphere-bot <sonosphere-bot@users.noreply.github.com>
-          branch: auto-translate
-          delete-branch: true
-          title: "chore(i18n): auto-translate missing strings"
-          body: |
-            Auto-translated missing i18n strings via the DeepL worker.
-
-            Please review before merging — machine translation may miss nuance,
-            especially placeholders (`{name}`, `{count}`) and tone.
-
-          labels: i18n
+      # Straight to main, and only when something was added.
+      - run: |
+          git diff --quiet -- shared/i18n && exit 0
+          git config user.name sonosphere-bot
+          git config user.email sonosphere-bot@users.noreply.github.com
+          git add shared/i18n
+          git commit -m "translate missing strings"
+          git pull --rebase origin main
+          git push origin HEAD:main

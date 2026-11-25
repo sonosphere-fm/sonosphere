@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
 /**
- * Fills in keys that exist in `en` but are missing from another locale, via the DeepL worker, and translates
- * values that are still a copy of the English. New keys go in just above the closing `} satisfies`; copies are
- * replaced where they stand. Anything already translated is left alone.
+ * Fills in keys that exist in `en` but are missing from another locale, via the DeepL worker.
+ * Existing translations are never touched: new keys go in just above the closing `} satisfies`.
  *
  * Usage:
  *   TOKEN=... bun run scripts/translate.ts
@@ -38,53 +37,10 @@ const TARGET: Record<string, string> = {
   "zh-Hans": "ZH",
 };
 
-// Values that are meant to read the same as the English, as "locale/namespace.key".
-const KEEP_ENGLISH = new Set([
-  "de/common.charts",
-  "de/music.charts",
-  "de/music.tags",
-  "es/settings.musicServerKindSubsonic",
-  "es/settings.musicServerKindJellyfin",
-  "de/settings.musicServerKindSubsonic",
-  "de/settings.musicServerKindJellyfin",
-  "ro/settings.musicServerKindSubsonic",
-  "ro/settings.musicServerKindJellyfin",
-  "lv/settings.musicServerKindSubsonic",
-  "lv/settings.musicServerKindJellyfin",
-  "fr/settings.musicServerKindSubsonic",
-  "fr/settings.musicServerKindJellyfin",
-  "ja/settings.musicServerKindSubsonic",
-  "ja/settings.musicServerKindJellyfin",
-  "ko/settings.musicServerKindSubsonic",
-  "ko/settings.musicServerKindJellyfin",
-  "pt/settings.musicServerKindSubsonic",
-  "pt/settings.musicServerKindJellyfin",
-  "pl/settings.musicServerKindSubsonic",
-  "pl/settings.musicServerKindJellyfin",
-  "ru/settings.musicServerKindSubsonic",
-  "ru/settings.musicServerKindJellyfin",
-  "it/settings.musicServerKindSubsonic",
-  "it/settings.musicServerKindJellyfin",
-  "id/settings.musicServerKindSubsonic",
-  "id/settings.musicServerKindJellyfin",
-  "tr/settings.musicServerKindSubsonic",
-  "tr/settings.musicServerKindJellyfin",
-  "sv/settings.musicServerKindSubsonic",
-  "sv/settings.musicServerKindJellyfin",
-  "uk/settings.musicServerKindSubsonic",
-  "uk/settings.musicServerKindJellyfin",
-  "he/settings.musicServerKindSubsonic",
-  "he/settings.musicServerKindJellyfin",
-  "ar/settings.musicServerKindSubsonic",
-  "ar/settings.musicServerKindJellyfin",
-  "zh-Hans/settings.musicServerKindSubsonic",
-  "zh-Hans/settings.musicServerKindJellyfin",
-]);
-
 const CONCURRENCY = 3;
 const RETRIES = 3;
 
-type Job = { locale: string; ns: string; key: string; form?: string; text: string; copy: boolean };
+type Job = { locale: string; ns: string; key: string; form?: string; text: string };
 
 const load = async (path: string): Promise<Namespace> => (await import(resolve(path))).default;
 
@@ -121,27 +77,6 @@ async function translate(text: string, target: string): Promise<string> {
 
 const line = (key: string, value: Entry) => `  ${key}: ${JSON.stringify(value)},`;
 
-const hasWords = (text: string) => /\p{L}/u.test(text.replace(/\{[^}]+\}/g, ""));
-
-const LITERAL = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/;
-
-/** Swaps the strings of `key` in place: the one string, or the plural forms given. */
-function replaceValue(text: string, key: string, value: string | Record<string, string>) {
-  const start = text.search(new RegExp(`^  ${key}:`, "m"));
-  if (start === -1) return text;
-  const rest = text.slice(start + 1).search(/^ {2}[\w$]+:|^\} satisfies/m);
-  const end = rest === -1 ? text.length : start + 1 + rest;
-  const span =
-    typeof value === "string"
-      ? text.slice(start, end).replace(LITERAL, JSON.stringify(value))
-      : text
-          .slice(start, end)
-          .replace(new RegExp(`(\\w+)(:\\s*)(${LITERAL.source})`, "g"), (m, form, gap) =>
-            form in value ? `${form}${gap}${JSON.stringify(value[form])}` : m
-          );
-  return text.slice(0, start) + span + text.slice(end);
-}
-
 async function main() {
   const namespaces: [string, Namespace][] = [];
   for (const file of readdirSync(`${DIR}/en`)) {
@@ -163,14 +98,9 @@ async function main() {
       if (!(await Bun.file(path).exists())) continue;
       const have = await load(path);
       for (const [key, entry] of Object.entries(source)) {
-        const copy = key in have;
-        if (copy && JSON.stringify(have[key]) !== JSON.stringify(entry)) continue;
-        if (copy && KEEP_ENGLISH.has(`${locale}/${ns}.${key}`)) continue;
-        if (typeof entry === "string") {
-          if (!copy || hasWords(entry)) jobs.push({ locale, ns, key, text: entry, copy });
-          continue;
-        }
-        for (const [form, text] of Object.entries(entry)) jobs.push({ locale, ns, key, form, text: text!, copy });
+        if (key in have) continue;
+        if (typeof entry === "string") jobs.push({ locale, ns, key, text: entry });
+        else for (const [form, text] of Object.entries(entry)) jobs.push({ locale, ns, key, form, text: text! });
       }
     }
   }
@@ -191,46 +121,33 @@ async function main() {
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-  type Found = { copy: boolean; value: string | Record<string, string> };
-  const byFile = new Map<string, Map<string, Found>>();
+  const byFile = new Map<string, Map<string, Entry>>();
   for (const job of jobs) {
-    const translated = done.get(job);
-    if (translated === undefined || (job.copy && translated === job.text)) continue;
     const path = `${DIR}/${job.locale}/${job.ns}.ts`;
-    const found = byFile.get(path) ?? new Map<string, Found>();
-    byFile.set(path, found);
+    const entries = byFile.get(path) ?? new Map<string, Entry>();
+    byFile.set(path, entries);
     if (!job.form) {
-      found.set(job.key, { copy: job.copy, value: translated });
+      if (done.has(job)) entries.set(job.key, done.get(job)!);
       continue;
     }
-    const plural = found.get(job.key) ?? { copy: job.copy, value: {} };
-    (plural.value as Record<string, string>)[job.form] = translated;
-    found.set(job.key, plural);
+    const plural = (entries.get(job.key) ?? {}) as Record<string, string>;
+    entries.set(job.key, plural);
+    if (done.has(job)) plural[job.form] = done.get(job)!;
   }
 
-  for (const [path, found] of byFile) {
-    let text = await Bun.file(path).text();
-    const added: string[] = [];
-    let replaced = 0;
-    for (const [key, { copy, value }] of found) {
-      if (copy) {
-        text = replaceValue(text, key, value);
-        replaced++;
-      } else if (typeof value === "string" || "other" in value) {
-        added.push(line(key, value));
-      }
+  for (const [path, entries] of byFile) {
+    const complete = [...entries].filter(([, v]) => typeof v === "string" || "other" in v);
+    if (!complete.length) continue;
+    const text = await Bun.file(path).text();
+    const end = text.lastIndexOf("\n} satisfies");
+    if (end === -1) {
+      console.error(`skip ${path}: no closing "} satisfies" line`);
+      continue;
     }
-    if (added.length) {
-      const end = text.lastIndexOf("\n} satisfies");
-      if (end === -1) {
-        console.error(`skip ${path}: no closing "} satisfies" line`);
-        continue;
-      }
-      text = `${text.slice(0, end).replace(/,?\s*$/, ",")}\n${added.join("\n")}${text.slice(end)}`;
-    }
-    if (!added.length && !replaced) continue;
-    await Bun.write(path, text);
-    console.log(`${path}: ${added.length} added, ${replaced} translated from English`);
+    const added = complete.map(([k, v]) => line(k, v)).join("\n");
+    const before = text.slice(0, end).replace(/,?\s*$/, ",");
+    await Bun.write(path, `${before}\n${added}${text.slice(end)}`);
+    console.log(`added ${complete.length} to ${path}`);
   }
 
   console.log(`done: ${done.size} translated, ${jobs.length - done.size} failed`);
