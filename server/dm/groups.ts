@@ -200,6 +200,13 @@ export async function create(me: User, rawTitle: unknown, rawIds: unknown): Prom
   return announced(me, groupId, id);
 }
 
+export async function sharesLink(me: User, groupId: unknown, url: string): Promise<boolean> {
+  const { group, member } = await mine(groupId, me.id);
+  const senders = await repo.mentionedBy(group.id, member.clearedId, url);
+  const blocked = await blockedAmong([me.id], senders);
+  return senders.some((id) => !blocked.has(id));
+}
+
 export async function page(locale: Locale, me: User, groupId: unknown, before: number): Promise<DmGroupPage> {
   const { group, member } = await mine(groupId, me.id);
   const rows = (await repo.messagesBetween(group.id, member.clearedId, before, 51)).reverse();

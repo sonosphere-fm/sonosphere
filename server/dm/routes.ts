@@ -1,17 +1,19 @@
 import { confirmed, need } from "../guards";
-import { ipOf, Router } from "../http";
+import { ipOf, limit, missing, Router } from "../http";
 import { requestLocale } from "../i18n";
 import { onClientMessage } from "../realtime";
 import { checkTurnstile } from "../auth/turnstile";
 import { requireUser } from "../users/service";
 import * as dm from "./service";
 import * as groups from "./groups";
+import { linkFor, linkPicture } from "./links";
 import type {
   DmAccepted,
   DmDone,
   DmGroupCandidates,
   DmGroupPage,
   DmGroupSent,
+  DmLink,
   DmList,
   DmReacted,
   DmSent,
@@ -68,6 +70,16 @@ router.post<DmGroupSent>("/api/dm/group/:id/owner", (c) => groups.makeOwner(need
 router.post<DmDone>("/api/dm/group/:id/leave", (c) => groups.leave(need(c), c.params[0]));
 router.delete<DmUnsent>("/api/dm/group/message/:id", (c) => groups.unsend(need(c), c.params[0]));
 router.post<DmReacted>("/api/dm/group/message/:id/react", (c) => groups.react(need(c), c.params[0], c.body.emoji));
+
+router.get<DmLink>("/api/dm/link", (c) => linkFor(need(c), c.q));
+router.get("/api/dm/link/picture/:id", async (c) => {
+  need(c);
+  await limit(`dmlink-pic:${ipOf(c.req)}`, 600, 3600, "tooManyRequests");
+  const id = c.params[0] ?? "";
+  if (!/^[0-9a-f]{32}$/.test(id)) missing("imageNotFound");
+  const data = (await linkPicture(id)) ?? missing("imageNotFound");
+  return new Response(data, { headers: { "Content-Type": "image/webp", "Cache-Control": "private, max-age=86400" } });
+});
 
 export function startDm(): void {
   onClientMessage((userId, msg) => {
