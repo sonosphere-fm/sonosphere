@@ -81,7 +81,7 @@ const summary = (s: string) => Array.from(s.replace(/\s+/g, " ").trim()).slice(0
 const idOf = (s: string) => (/^\d+$/.test(s) && Number(s) > 0 && Number(s) <= 2147483647 ? Number(s) : 0);
 export const absolute = (path: string) => `${SITE_URL}${path}`;
 export const escape = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 type Page = {
   title: string;
