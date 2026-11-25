@@ -1,27 +1,22 @@
 #!/usr/bin/env bun
 /**
- * Auto-translate missing i18n strings via the DeepL worker.
- *
- * Only fills empty / missing values — never overwrites human-translated
- * strings, and never touches `en` (the source of truth).
+ * Fills in keys that exist in `en` but are missing from another locale, via the DeepL worker.
+ * Existing translations are never touched: new keys go in just above the closing `} satisfies`.
  *
  * Usage:
  *   TOKEN=... bun run scripts/translate.ts
  */
 
 import { readdirSync } from "node:fs";
-import { LOCALES } from "../shared/i18n/core";
+import { resolve } from "node:path";
+import { type Entry, LOCALES, type Namespace } from "../shared/i18n/core";
 
 const API = "https://translate-api.edideaur.workers.dev/hi/translate";
 const TOKEN = Bun.env.TOKEN ?? "didylate";
-const SOURCE = "en";
+const DIR = "shared/i18n";
 
-type Entry =
-  | { kind: "string"; key: string; value: string }
-  | { kind: "plural"; key: string; one: string; other: string };
-
-// DeepL target codes. Locales with no DeepL target are mapped to null and skipped.
-const TARGET: Record<string, string | null> = {
+// DeepL target codes; locales without one are skipped.
+const TARGET: Record<string, string> = {
   es: "ES",
   de: "DE",
   ro: "RO",
@@ -40,300 +35,122 @@ const TARGET: Record<string, string | null> = {
   he: "HE",
   ar: "AR",
   "zh-Hans": "ZH",
-  // No DeepL target: hi, bn, mr, te, ta, ur, "zh-Hant"
 };
 
 const CONCURRENCY = 3;
 const RETRIES = 3;
 
-function escapeJs(s: string): string {
-  return s.replace(/[\\"]/g, "\\$&").replace(/\n/g, "\\n").replace(/\r/g, "\\r");
-}
+type Job = { locale: string; ns: string; key: string; form?: string; text: string };
 
-function unescapeJs(s: string): string {
-  return s.replace(/\\(["\\/bfnrt])/g, (_, ch) => {
-    const m: Record<string, string> = {
-      '"': '"',
-      "\\": "\\",
-      "/": "/",
-      b: "\b",
-      f: "\f",
-      n: "\n",
-      r: "\r",
-      t: "\t",
-    };
-    return m[ch] ?? ch;
-  });
-}
+const load = async (path: string): Promise<Namespace> => (await import(resolve(path))).default;
 
-/** Mask `{name}` style placeholders so the translator never touches them. */
-function maskPlaceholders(text: string): { text: string; tokens: string[] } {
+const isFlat = (ns: Record<string, unknown>) =>
+  Object.values(ns).every((v) => typeof v === "string" || (typeof v === "object" && v !== null && "other" in v));
+
+const placeholders = (text: string) => (text.match(/\{[^}]+\}/g) ?? []).sort().join();
+
+// Placeholders are swapped for tokens the translator leaves alone, then put back.
+async function translate(text: string, target: string): Promise<string> {
   const tokens: string[] = [];
-  const masked = text.replace(/\{[^}]+\}/g, (m) => {
-    tokens.push(m);
-    return `\x00PH${tokens.length - 1}\x00`;
-  });
-  return { text: masked, tokens };
-}
-
-function restorePlaceholders(text: string, tokens: string[]): string {
-  return text.replace(/\x00PH(\d+)\x00/g, (_, i) => tokens[Number(i)]);
-}
-
-async function translateText(text: string, target: string): Promise<string> {
-  let lastError: unknown = null;
+  const masked = text.replace(/\{[^}]+\}/g, (m) => `<x${tokens.push(m) - 1}>`);
+  let lastError: unknown;
   for (let attempt = 0; attempt < RETRIES; attempt++) {
     try {
-      const { text: masked, tokens } = maskPlaceholders(text);
       const res = await fetch(API, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${TOKEN}`,
-        },
-        body: JSON.stringify({ sourceLang: "auto", targetLang: target, text: masked }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` },
+        body: JSON.stringify({ sourceLang: "EN", targetLang: target, text: masked }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      if (json.code !== 200 || typeof json.data !== "string") {
-        throw new Error(JSON.stringify(json));
-      }
-      return restorePlaceholders(json.data, tokens);
+      if (json.code !== 200 || typeof json.data !== "string") throw new Error(JSON.stringify(json));
+      const out = json.data.replace(/<x(\d+)>/g, (_: string, i: string) => tokens[Number(i)]);
+      if (placeholders(out) !== placeholders(text)) throw new Error(`placeholders lost: ${out}`);
+      return out;
     } catch (err) {
       lastError = err;
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      await Bun.sleep(500 * (attempt + 1));
     }
   }
   throw lastError;
 }
 
-function parseFile(text: string): {
-  header: string;
-  entries: Entry[];
-  footer: string;
-} {
-  const lines = text.split("\n");
-  let headerEnd = -1;
-  let footerStart = -1;
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trimStart().startsWith("export default {")) {
-      headerEnd = i;
-      break;
-    }
-  }
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (lines[i].trimStart().startsWith("} satisfies")) {
-      footerStart = i;
-      break;
-    }
-  }
-
-  const header = lines.slice(0, headerEnd + 1).join("\n");
-  const footer = footerStart === -1 ? "" : lines.slice(footerStart).join("\n");
-  const body = lines.slice(
-    headerEnd + 1,
-    footerStart === -1 ? lines.length : footerStart
-  );
-
-  const entries: Entry[] = [];
-  const lineRe = /^(\s*)([\w$]+):\s*(.+?)\s*,?\s*$/;
-  const keyOnlyRe = /^(\s*)([\w$]+):\s*$/;
-  let i = 0;
-  while (i < body.length) {
-    const line = body[i];
-    let m = line.match(lineRe) ?? line.match(keyOnlyRe);
-    if (!m) { i++; continue; }
-    const [, , key, restRaw] = m;
-    let rest = restRaw ? restRaw.replace(/,\s*$/, "").trim() : "";
-
-    if (rest === "") {
-      // Multi-line value: collect following lines until the closing quote/brace.
-      let acc = "";
-      let j = i + 1;
-      while (j < body.length) {
-        const l2 = body[j];
-        acc += l2 + "\n";
-        if (/^\s*".*"\s*,?\s*$/.test(l2) || /^\s*\}\s*,?\s*$/.test(l2)) break;
-        j++;
-      }
-      const trimmed = acc.trim().replace(/,\s*$/, "");
-      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-        entries.push({ kind: "string", key, value: unescapeJs(trimmed.slice(1, -1)) });
-      } else if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-        const inner = trimmed.slice(1, -1);
-        const one = inner.match(/one:\s*"([^"]*)"/)?.[1] ?? "";
-        const other = inner.match(/other:\s*"([^"]*)"/)?.[1] ?? "";
-        entries.push({ kind: "plural", key, one: unescapeJs(one), other: unescapeJs(other) });
-      }
-      i = j + 1;
-    } else if (rest.startsWith('"') && rest.endsWith('"')) {
-      entries.push({ kind: "string", key, value: unescapeJs(rest.slice(1, -1)) });
-      i++;
-    } else if (rest.startsWith("{") && rest.endsWith("}")) {
-      const inner = rest.slice(1, -1);
-      const one = inner.match(/one:\s*"([^"]*)"/)?.[1] ?? "";
-      const other = inner.match(/other:\s*"([^"]*)"/)?.[1] ?? "";
-      entries.push({ kind: "plural", key, one: unescapeJs(one), other: unescapeJs(other) });
-      i++;
-    } else {
-      i++;
-    }
-  }
-
-  return { header, entries, footer };
-}
-
-function serializeEntry(e: Entry): string {
-  if (e.kind === "string") {
-    return `  ${e.key}: "${escapeJs(e.value)}",`;
-  }
-  return `  ${e.key}: { one: "${escapeJs(e.one)}", other: "${escapeJs(e.other)}" },`;
-}
-
-async function readSourceNamespace(ns: string): Promise<Map<string, Entry>> {
-  const text = await Bun.file(`shared/i18n/${SOURCE}/${ns}.ts`).text();
-  const { entries } = parseFile(text);
-  const map = new Map<string, Entry>();
-  for (const e of entries) map.set(e.key, e);
-  return map;
-}
+const line = (key: string, value: Entry) => `  ${key}: ${JSON.stringify(value)},`;
 
 async function main() {
-  const sourceFiles = readdirSync("shared/i18n/en")
-    .filter((f) => f.endsWith(".ts") && f !== "index.ts")
-    .map((f) => `shared/i18n/en/${f}`);
-
-  const sourceByNs = new Map<string, Map<string, Entry>>();
-  for (const file of sourceFiles) {
-    const ns = file.replace("shared/i18n/en/", "").replace(/\.ts$/, "");
-    sourceByNs.set(ns, await readSourceNamespace(ns));
+  const namespaces: [string, Namespace][] = [];
+  for (const file of readdirSync(`${DIR}/en`)) {
+    if (!file.endsWith(".ts") || file === "index.ts") continue;
+    const ns = file.slice(0, -3);
+    const source = await load(`${DIR}/en/${file}`);
+    if (isFlat(source)) namespaces.push([ns, source]);
   }
 
-  const queue: {
-    locale: string;
-    ns: string;
-    key: string;
-    text: string;
-  }[] = [];
-  const targetMaps = new Map<string, Map<string, Entry>>();
-
+  const jobs: Job[] = [];
   for (const locale of LOCALES) {
-    if (locale === SOURCE) continue;
-    const target = TARGET[locale];
-    if (!target) {
+    if (locale === "en") continue;
+    if (!TARGET[locale]) {
       console.log(`skip ${locale}: no DeepL target`);
       continue;
     }
-    for (const ns of sourceByNs.keys()) {
-      const path = `shared/i18n/${locale}/${ns}.ts`;
+    for (const [ns, source] of namespaces) {
+      const path = `${DIR}/${locale}/${ns}.ts`;
       if (!(await Bun.file(path).exists())) continue;
-      const text = await Bun.file(path).text();
-      const { entries } = parseFile(text);
-      const map = new Map(entries.map((e) => [e.key, e]));
-      targetMaps.set(`${locale}/${ns}`, map);
-
-      const sourceMap = sourceByNs.get(ns)!;
-      for (const [key, sEntry] of sourceMap) {
-        const tEntry = map.get(key);
-        const missing =
-          !tEntry ||
-          (tEntry.kind === "string" && tEntry.value === "") ||
-          (tEntry.kind === "plural" && (tEntry.one === "" || tEntry.other === ""));
-        if (!missing) continue;
-        if (sEntry.kind === "string") {
-          queue.push({ locale, ns, key, text: sEntry.value });
-        } else {
-          if (!tEntry || tEntry.one === "") queue.push({ locale, ns, key: `${key}.one`, text: sEntry.one });
-          if (!tEntry || tEntry.other === "") queue.push({ locale, ns, key: `${key}.other`, text: sEntry.other });
-        }
+      const have = await load(path);
+      for (const [key, entry] of Object.entries(source)) {
+        if (key in have) continue;
+        if (typeof entry === "string") jobs.push({ locale, ns, key, text: entry });
+        else for (const [form, text] of Object.entries(entry)) jobs.push({ locale, ns, key, form, text: text! });
       }
     }
   }
+  console.log(`queued ${jobs.length} strings for translation`);
 
-  console.log(`queued ${queue.length} strings for translation`);
-
-  const results = new Map<string, string>();
-  let idx = 0;
+  const done = new Map<Job, string>();
+  let next = 0;
   async function worker() {
-    while (idx < queue.length) {
-      const i = idx++;
-      const item = queue[i];
+    while (next < jobs.length) {
+      const job = jobs[next++];
       try {
-        const translated = await translateText(item.text, TARGET[item.locale]!);
-        results.set(`${item.locale}/${item.ns}/${item.key}`, translated);
+        done.set(job, await translate(job.text, TARGET[job.locale]));
       } catch (err) {
-        console.error(`failed ${item.locale}/${item.ns}/${item.key}:`, err);
+        console.error(`failed ${job.locale}/${job.ns}.${job.key}${job.form ? `.${job.form}` : ""}:`, err);
       }
-      await new Promise((r) => setTimeout(r, 250));
+      await Bun.sleep(250);
     }
   }
-  await Promise.all(new Array(CONCURRENCY).fill(null).map(() => worker()));
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-  for (const [localeNs, targetMap] of targetMaps) {
-    const [locale, ns] = localeNs.split("/");
-    const sourceMap = sourceByNs.get(ns)!;
-    const text = await Bun.file(`shared/i18n/${locale}/${ns}.ts`).text();
-    const { header, entries, footer } = parseFile(text);
-
-    const out: Entry[] = [];
-    let changed = false;
-    for (const e of entries) {
-      if (e.kind === "string") {
-        const t = results.get(`${locale}/${ns}/${e.key}`);
-        if (t !== undefined && e.value === "") {
-          out.push({ kind: "string", key: e.key, value: t });
-          changed = true;
-        } else {
-          out.push(e);
-        }
-      } else {
-        const one = results.get(`${locale}/${ns}/${e.key}.one`);
-        const other = results.get(`${locale}/${ns}/${e.key}.other`);
-        if ((one !== undefined && e.one === "") || (other !== undefined && e.other === "")) {
-          out.push({
-            kind: "plural",
-            key: e.key,
-            one: one !== undefined ? one : e.one,
-            other: other !== undefined ? other : e.other,
-          });
-          changed = true;
-        } else {
-          out.push(e);
-        }
-      }
+  const byFile = new Map<string, Map<string, Entry>>();
+  for (const job of jobs) {
+    const path = `${DIR}/${job.locale}/${job.ns}.ts`;
+    const entries = byFile.get(path) ?? new Map<string, Entry>();
+    byFile.set(path, entries);
+    if (!job.form) {
+      if (done.has(job)) entries.set(job.key, done.get(job)!);
+      continue;
     }
-
-    // Append brand-new keys (present in en, absent here) at the end.
-    for (const [key, sEntry] of sourceMap) {
-      if (targetMap.has(key)) continue;
-      if (sEntry.kind === "string") {
-        const t = results.get(`${locale}/${ns}/${key}`);
-        if (t !== undefined) {
-          out.push({ kind: "string", key, value: t });
-          changed = true;
-        }
-      } else {
-        const one = results.get(`${locale}/${ns}/${key}.one`);
-        const other = results.get(`${locale}/${ns}/${key}.other`);
-        if (one !== undefined || other !== undefined) {
-          out.push({ kind: "plural", key, one: one ?? "", other: other ?? "" });
-          changed = true;
-        }
-      }
-    }
-
-    if (!changed) continue;
-
-    const body = out.map(serializeEntry).join("\n");
-    const content = `${header}\n${body}\n${footer}\n`;
-    await Bun.write(`shared/i18n/${locale}/${ns}.ts`, content);
-    console.log(`updated shared/i18n/${locale}/${ns}.ts`);
+    const plural = (entries.get(job.key) ?? {}) as Record<string, string>;
+    entries.set(job.key, plural);
+    if (done.has(job)) plural[job.form] = done.get(job)!;
   }
 
-  console.log("done");
+  for (const [path, entries] of byFile) {
+    const complete = [...entries].filter(([, v]) => typeof v === "string" || "other" in v);
+    if (!complete.length) continue;
+    const text = await Bun.file(path).text();
+    const end = text.lastIndexOf("\n} satisfies");
+    if (end === -1) {
+      console.error(`skip ${path}: no closing "} satisfies" line`);
+      continue;
+    }
+    const added = complete.map(([k, v]) => line(k, v)).join("\n");
+    const before = text.slice(0, end).replace(/,?\s*$/, ",");
+    await Bun.write(path, `${before}\n${added}${text.slice(end)}`);
+    console.log(`added ${complete.length} to ${path}`);
+  }
+
+  console.log(`done: ${done.size} translated, ${jobs.length - done.size} failed`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+await main();
