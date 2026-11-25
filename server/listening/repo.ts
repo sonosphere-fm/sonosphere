@@ -12,6 +12,7 @@ import {
   inArray,
   isNotNull,
   lt,
+  lte,
   max,
   min,
   ne,
@@ -55,6 +56,7 @@ import type {
   EditScope,
   ExportRow,
   FirstPlay,
+  Milestone,
   NowPlaying,
   RecentTrack,
   ScopeCounts,
@@ -602,6 +604,40 @@ async function recentRows(s: Scope, limit = 50, offset = 0, oldest = false): Pro
         .where(eq(userArtists.userId, s.userId ?? 0))
     : db.select({ c: count() }).from(scrobbles).where(w);
   return { items, total: await total(count_) };
+}
+
+/** The user's `ns`th scrobbles, counting from the oldest, in one pass that stops at the largest. */
+export async function milestonePlays(userId: number, ns: number[], viewerId = 0): Promise<Milestone[]> {
+  if (!ns.length) return [];
+  const ranked = db
+    .select({
+      id: scrobbles.id,
+      n: sql<number>`row_number() OVER (ORDER BY ${scrobbles.playedAt}, ${scrobbles.id})`.as("n"),
+    })
+    .from(scrobbles)
+    .where(eq(scrobbles.userId, userId))
+    .as("ranked");
+  const hits = await db
+    // cast outside the window, or Postgres cannot stop counting at the largest milestone
+    .select({ id: ranked.id, n: sql<number>`${ranked.n}::int` })
+    .from(ranked)
+    .where(and(lte(ranked.n, Math.max(...ns)), inArray(ranked.n, ns)));
+  if (!hits.length) return [];
+  const rows = new Map(
+    (
+      await playRows(viewerId).where(
+        inArray(
+          scrobbles.id,
+          hits.map((h) => h.id)
+        )
+      )
+    ).map((r) => [r.id, r])
+  );
+  wantCovers([...rows.values()], (r) => r.trackId);
+  return hits.flatMap(({ id, n }) => {
+    const track = rows.get(id);
+    return track ? [{ n, track }] : [];
+  });
 }
 
 /** The first scrobble of each of the user's top artists, most played first. */
