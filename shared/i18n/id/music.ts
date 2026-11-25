@@ -91,6 +91,8 @@ export default {
   heroTitle: "Catat apa yang kamu cintai.",
   heroBody:
     "Sonosphere scrobble semua yang kamu putar, mengubahnya menjadi tanggamu sendiri, dan menemukan musik serta orang yang cocok denganmu.",
+  heroLastfm:
+    "Pindahan dari Last.fm? Impor seluruh riwayatmu dalam beberapa klik. Sonosphere sepenuhnya kompatibel dengan API Last.fm, jadi scrobbler-mu juga berfungsi di sini.",
   joinFree: "Gabung gratis",
   logIn: "Masuk",
   heroChartTitle: "Lagu teratas saat ini",

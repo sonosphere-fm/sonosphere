@@ -13,6 +13,7 @@ export function HomeHero({ stats, chart = <HomeHeroChart /> }: { stats?: ReactNo
         <div className="banner-copy">
           <h1>{t("music.heroTitle")}</h1>
           <p>{t("music.heroBody")}</p>
+          <p>{t("music.heroLastfm")}</p>
           <div className="row">
             <Button kind="btn inverse" href="/join">
               {t("music.joinFree")}

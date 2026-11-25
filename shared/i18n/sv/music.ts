@@ -93,6 +93,8 @@ export default {
   heroTitle: "Håll koll på det du älskar.",
   heroBody:
     "Sonosphere scrobblar allt du spelar, gör om det till dina egna topplistor och hittar musiken och människorna som matchar din smak.",
+  heroLastfm:
+    "Kommer du från Last.fm? Importera hela din historik med några klick. Sonosphere är helt kompatibelt med Last.fm:s API, så dina scrobblers fungerar här också.",
   joinFree: "Gå med gratis",
   logIn: "Logga in",
   heroChartTitle: "Topplåtar just nu",

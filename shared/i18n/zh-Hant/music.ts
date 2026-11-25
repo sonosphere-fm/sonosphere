@@ -89,6 +89,8 @@ export default {
   elsewhere: "其他平台",
   heroTitle: "記錄你所愛的音樂。",
   heroBody: "Sonosphere 記錄你播放的每一首歌，產生屬於你的排行榜，並為你找到品味相投的音樂和人。",
+  heroLastfm:
+    "從 Last.fm 轉移過來？只要幾次點擊就能匯入你的全部記錄。Sonosphere 完全相容 Last.fm API，你現在用的記錄工具也能直接使用。",
   joinFree: "免費註冊",
   logIn: "登入",
   heroChartTitle: "目前熱門曲目",

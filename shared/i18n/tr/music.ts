@@ -91,6 +91,8 @@ export default {
   heroTitle: "Sevdiğin müziğin kaydını tut.",
   heroBody:
     "Sonosphere çaldığın her şeyi scrobble eder, bunları sana özel listelere dönüştürür ve zevkine uyan müziği ve insanları bulur.",
+  heroLastfm:
+    "Last.fm'den mi geliyorsun? Tüm geçmişini birkaç tıklamayla içe aktar. Sonosphere, Last.fm API'si ile tamamen uyumlu; yani scrobbler'ların burada da çalışır.",
   joinFree: "Ücretsiz katıl",
   logIn: "Giriş yap",
   heroChartTitle: "Şu anda popüler parçalar",

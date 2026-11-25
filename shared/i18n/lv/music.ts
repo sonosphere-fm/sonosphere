@@ -100,6 +100,8 @@ export default {
   heroTitle: "Seko mūzikai, ko mīli.",
   heroBody:
     "Sonosphere skroblē visu, ko klausies, pārvērš to tavos personīgajos topos un atrod mūziku un cilvēkus, kas atbilst tavai gaumei.",
+  heroLastfm:
+    "Nāc no Last.fm? Importē visu savu vēsturi ar dažiem klikšķiem. Sonosphere ir pilnībā saderīgs ar Last.fm API, tāpēc tavi skrobleri darbojas arī šeit.",
   joinFree: "Pievienojies bez maksas",
   logIn: "Pieteikties",
   heroChartTitle: "Top dziesmas šobrīd",

@@ -102,6 +102,8 @@ export default {
   heroTitle: "Urmărește muzica pe care o iubești.",
   heroBody:
     "Sonosphere face scrobble la tot ce asculți, transformă totul în topurile tale și găsește muzica și oamenii care se potrivesc gusturilor tale.",
+  heroLastfm:
+    "Vii de pe Last.fm? Importă-ți tot istoricul în câteva clicuri. Sonosphere este pe deplin compatibil cu API-ul Last.fm, așa că scrobblerele tale funcționează și aici.",
   joinFree: "Înscrie-te gratuit",
   logIn: "Autentificare",
   heroChartTitle: "Piese de top acum",

@@ -89,6 +89,8 @@ export default {
   elsewhere: "다른 곳에서",
   heroTitle: "좋아하는 음악을 기록하세요.",
   heroBody: "Sonosphere는 내가 듣는 모든 곡을 스크로블해서 나만의 차트로 만들고, 취향에 맞는 음악과 사람을 찾아 줘요.",
+  heroLastfm:
+    "Last.fm에서 오셨나요? 몇 번의 클릭으로 기록 전체를 가져올 수 있어요. Sonosphere는 Last.fm API와 완전히 호환되므로 쓰던 스크로블러도 그대로 작동해요.",
   joinFree: "무료 가입",
   logIn: "로그인",
   heroChartTitle: "지금 인기 있는 트랙",
