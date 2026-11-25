@@ -828,6 +828,8 @@ export default {
   account: "Konto",
   joined: "Dołączył(a)",
   lastLogin: "Ostatnie logowanie",
+  seenFrom: "Widziany z",
+  torNetwork: "Sieć Tor",
   allUsers: "Wszyscy użytkownicy",
   actAsName: "Działaj jako {name}",
   actAsUser: "Działaj jako użytkownik",

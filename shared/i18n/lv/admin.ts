@@ -722,6 +722,8 @@ export default {
   account: "Konts",
   joined: "Pievienojās",
   lastLogin: "Pēdējā pieteikšanās",
+  seenFrom: "Redzēts no",
+  torNetwork: "Tor tīkls",
   allUsers: "Visi lietotāji",
   actAsName: "Darboties kā {name}",
   actAsUser: "Darboties kā lietotājs",

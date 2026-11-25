@@ -649,6 +649,8 @@ export default {
   account: "Akun",
   joined: "Bergabung",
   lastLogin: "Login terakhir",
+  seenFrom: "Terlihat dari",
+  torNetwork: "Jaringan Tor",
   allUsers: "Semua pengguna",
   actAsName: "Bertindak sebagai {name}",
   actAsUser: "Bertindak sebagai pengguna",

@@ -647,6 +647,8 @@ export default {
   account: "একাউণ্ট",
   joined: "যোগদান",
   lastLogin: "শেষ লগ ইন",
+  seenFrom: "ৰ পৰা দেখা গৈছে",
+  torNetwork: "Tor নেটৱৰ্ক",
   allUsers: "সকলো ব্যৱহাৰকাৰী",
   actAsName: "{name} হিচাপে কাম কৰক",
   actAsUser: "ব্যৱহাৰকাৰী হিচাপে কাম কৰক",

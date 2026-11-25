@@ -330,6 +330,13 @@
       "when": 1795563663348,
       "tag": "0046_dry_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795572413625,
+      "tag": "0047_unknown_meteorite",
+      "breakpoints": true
     }
   ]
 }

@@ -644,6 +644,8 @@ export default {
   account: "ఖాతా",
   joined: "చేరింది",
   lastLogin: "చివరి లాగిన్",
+  seenFrom: "ఇక్కడి నుండి కనిపించారు",
+  torNetwork: "Tor నెట్\u200cవర్క్",
   allUsers: "అందరు యూజర్‌లు",
   actAsName: "{name}గా వ్యవహరించండి",
   actAsUser: "యూజర్‌గా వ్యవహరించండి",

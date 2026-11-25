@@ -98,6 +98,7 @@ export type ReportBrief = {
   author: string | null;
 };
 export type ModNote = { id: number; body: string; createdAt: number; author: string | null };
+export type StaffUserSeen = { country: string; region: string | null; at: number };
 export type StaffUserPage = {
   user: {
     id: number;
@@ -135,6 +136,7 @@ export type StaffUserPage = {
     apiSessions: number;
   };
   lastLogin: number | null;
+  seen?: StaffUserSeen | null;
   lastScrobble: number | null;
   reportsAgainst: ReportBrief[];
   reportsBy: ReportBrief[];

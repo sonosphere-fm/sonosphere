@@ -6,6 +6,7 @@ import { like, norm, now } from "../util";
 import { disconnect } from "../realtime";
 import { canAct, note, paging } from "./common";
 import { requireUser } from "../users/service";
+import type { User } from "../users/repo";
 import { pageOf } from "../moderation/repo";
 import * as repo from "./users.repo";
 import { setProbation, standing } from "../trust/service";
@@ -23,6 +24,7 @@ import type {
   SessionsResult,
   StaffUserList,
   StaffUserPage,
+  StaffUserSeen,
   SuspendResult,
   VerifyResult,
 } from "../../shared/admin";
@@ -133,6 +135,9 @@ router.get<StaffUserList>("/api/admin/users", async (c) => {
   return { items, total, ...pg };
 });
 
+const seenOf = (u: User): StaffUserSeen | null =>
+  u.seenCountry && u.seenAt ? { country: u.seenCountry, region: u.seenRegion, at: u.seenAt } : null;
+
 router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
   const me = staff(c);
   const u = await requireUser(c.params[0]!);
@@ -171,6 +176,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
     },
     counts: await repo.userCounts(id),
     lastLogin: await repo.lastLoginOf(id),
+    seen: isAdmin(me) ? seenOf(u) : undefined,
     lastScrobble: await repo.lastScrobbleOf(id),
     reportsAgainst: await repo.reportsAgainst(u),
     reportsBy: await repo.reportsBy(id),

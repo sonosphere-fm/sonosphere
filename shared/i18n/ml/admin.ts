@@ -651,6 +651,8 @@ export default {
   account: "അക്കൗണ്ട്",
   joined: "ചേർന്നത്",
   lastLogin: "അവസാന ലോഗിൻ",
+  seenFrom: "ഇവിടെ നിന്ന് കണ്ടു",
+  torNetwork: "Tor നെറ്റ്\u200cവർക്ക്",
   allUsers: "എല്ലാ ഉപയോക്താക്കളും",
   actAsName: "{name} ആയി പ്രവർത്തിക്കുക",
   actAsUser: "ഉപയോക്താവായി പ്രവർത്തിക്കുക",

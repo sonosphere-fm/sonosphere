@@ -614,6 +614,8 @@ export default {
   account: "账号",
   joined: "加入时间",
   lastLogin: "最后登录",
+  seenFrom: "访问位置",
+  torNetwork: "Tor 网络",
   allUsers: "所有用户",
   actAsName: "以 {name} 的身份操作",
   actAsUser: "以用户身份操作",

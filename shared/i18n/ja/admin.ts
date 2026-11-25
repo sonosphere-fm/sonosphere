@@ -634,6 +634,8 @@ export default {
   account: "アカウント",
   joined: "登録日",
   lastLogin: "最終ログイン",
+  seenFrom: "アクセス元",
+  torNetwork: "Tor ネットワーク",
   allUsers: "すべてのユーザー",
   actAsName: "{name} として操作",
   actAsUser: "ユーザーとして操作",

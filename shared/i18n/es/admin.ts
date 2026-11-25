@@ -664,6 +664,8 @@ export default {
   account: "Cuenta",
   joined: "Registro",
   lastLogin: "Último acceso",
+  seenFrom: "Visto desde",
+  torNetwork: "Red Tor",
   allUsers: "Todos los usuarios",
   actAsName: "Actuar como {name}",
   actAsUser: "Actuar como el usuario",

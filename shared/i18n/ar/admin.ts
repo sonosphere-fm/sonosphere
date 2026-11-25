@@ -895,6 +895,8 @@ export default {
   account: "الحساب",
   joined: "تاريخ الانضمام",
   lastLogin: "آخر تسجيل دخول",
+  seenFrom: "شوهد من",
+  torNetwork: "شبكة Tor",
   allUsers: "كل المستخدمين",
   actAsName: "التصرف باسم {name}",
   actAsUser: "التصرف باسم المستخدم",

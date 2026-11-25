@@ -826,6 +826,8 @@ export default {
   account: "Аккаунт",
   joined: "Регистрация",
   lastLogin: "Последний вход",
+  seenFrom: "Заходил из",
+  torNetwork: "Сеть Tor",
   allUsers: "Все пользователи",
   actAsName: "Войти как {name}",
   actAsUser: "Войти как пользователь",

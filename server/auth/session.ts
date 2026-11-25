@@ -33,6 +33,7 @@ export const HTTPS = SITE_URL.startsWith("https:");
 export const SECURE = HTTPS ? "; Secure" : "";
 
 export const SESSION_LIFE = 60 * 60 * 24 * 365;
+const SEEN_REFRESH = 60 * 60 * 24;
 export const sessionCookie = (token: string, maxAge = SESSION_LIFE) =>
   `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${SECURE}`;
 export const actAsCookie = (id: number) => `act_as=${id}; Path=/; HttpOnly; SameSite=Lax${SECURE}`;
@@ -40,8 +41,21 @@ export const clearActAsCookie = () => `act_as=; Path=/; HttpOnly; SameSite=Lax; 
 
 export const impersonating = (user: User | null, actor: User | null) => !!user && !!actor && user.id !== actor.id;
 
+// From Cloudflare's own lookup, so no address is kept. The region only arrives with its visitor location headers on.
+function noteWhere(u: User, req: Request) {
+  const country = req.headers.get("cf-ipcountry")?.toUpperCase();
+  if (!country || !/^[A-Z][A-Z0-9]$/.test(country) || country === "XX") return;
+  const region = req.headers.get("cf-region")?.trim().slice(0, 80) || null;
+  if (country === u.seenCountry && region === u.seenRegion && (u.seenAt ?? 0) > now() - SEEN_REFRESH) return;
+  db.update(users)
+    .set({ seenCountry: country, seenRegion: region, seenAt: now() })
+    .where(eq(users.id, u.id))
+    .catch((e) => console.error(e));
+}
+
 export async function viewerOf(req: Request): Promise<{ user: User | null; actor: User | null }> {
   const actor = await sessionUser(tokenOf(req));
+  if (actor) noteWhere(actor, req);
   const id = actAsOf(req);
   if (!actor || !id || !isAdmin(actor) || id === actor.id) return { user: actor, actor };
   const target = await findById(id);

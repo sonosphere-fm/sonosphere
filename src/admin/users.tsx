@@ -37,6 +37,7 @@ import type {
   StaffTrust,
   StaffUserList,
   StaffUserPage,
+  StaffUserSeen,
   SuspendResult,
 } from "../../shared/admin";
 
@@ -508,6 +509,12 @@ export function UserDetail() {
                       <dd>{dateTime(u.registeredAt)}</dd>
                       <dt>{t("admin.lastLogin")}</dt>
                       <dd>{d.lastLogin ? dateTime(d.lastLogin) : t("admin.noActiveSession")}</dd>
+                      {d.seen !== undefined && (
+                        <>
+                          <dt>{t("admin.seenFrom")}</dt>
+                          <dd>{d.seen ? `${seenPlace(d.seen)} · ${ago(d.seen.at)}` : t("admin.notYet")}</dd>
+                        </>
+                      )}
                       <dt>{t("admin.sessions")}</dt>
                       <dd>
                         {t("admin.sessionsValue", { web: num(d.counts.sessions), app: num(d.counts.apiSessions) })}
@@ -805,5 +812,12 @@ function ReportMini({ items, empty, show }: { items: ReportBrief[]; empty: strin
   );
 }
 import { ManageUsernames } from "./usernames";
+import { countryNameOf } from "../../shared/countries";
+
+// Cloudflare reports Tor exits as T1
+function seenPlace(s: StaffUserSeen) {
+  const country = s.country === "T1" ? t("admin.torNetwork") : countryNameOf(s.country) || s.country;
+  return s.region ? `${s.region}, ${country}` : country;
+}
 import { CosmeticsAdmin } from "./cosmetics";
 import { Username } from "../ui/username";

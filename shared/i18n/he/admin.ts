@@ -661,6 +661,8 @@ export default {
   account: "חשבון",
   joined: "הצטרף",
   lastLogin: "התחברות אחרונה",
+  seenFrom: "נראה מ",
+  torNetwork: "רשת Tor",
   allUsers: "כל המשתמשים",
   actAsName: "פעולה בשם {name}",
   actAsUser: "פעולה בשם המשתמש",

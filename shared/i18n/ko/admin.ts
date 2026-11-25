@@ -625,6 +625,8 @@ export default {
   account: "계정",
   joined: "가입일",
   lastLogin: "마지막 로그인",
+  seenFrom: "접속 위치",
+  torNetwork: "Tor 네트워크",
   allUsers: "모든 사용자",
   actAsName: "{name} 님으로 대신 접속",
   actAsUser: "사용자로 대신 접속",

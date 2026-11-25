@@ -655,6 +655,8 @@ export default {
   account: "اکاؤنٹ",
   joined: "شمولیت",
   lastLogin: "آخری لاگ ان",
+  seenFrom: "یہاں سے دیکھا گیا",
+  torNetwork: "Tor نیٹ ورک",
   allUsers: "تمام صارفین",
   actAsName: "{name} کے طور پر کام کریں",
   actAsUser: "صارف کے طور پر کام کریں",
