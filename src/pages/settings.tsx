@@ -767,6 +767,7 @@ const SPOTIFY_OUTCOME: Record<string, { ok: boolean; text: MessageKey }> = {
   failed: { ok: false, text: "settings.spotifyFailed" },
 };
 const SPOTIFY_DASHBOARD = "https://developer.spotify.com/dashboard";
+const SPOTIFY_QUOTA_MODES = "https://developer.spotify.com/documentation/web-api/concepts/quota-modes";
 
 const selectContents = (e: MouseEvent<HTMLElement>) => {
   const r = document.createRange();
@@ -808,7 +809,15 @@ function SpotifySetup({
 
   return (
     <>
-      <p>{t("settings.spotifyIntro")}</p>
+      <p>
+        {tx("settings.spotifyIntro", {
+          quotaModes: (
+            <a href={SPOTIFY_QUOTA_MODES} target="_blank" rel="noreferrer">
+              {t("settings.spotifyQuotaModes")}
+            </a>
+          ),
+        })}
+      </p>
       <ol className="steps">
         <li>
           {tx("settings.spotifyStep1", {

@@ -188,22 +188,20 @@ export default {
     "Spotify ha rifiutato questo account. Se hai effettuato l'accesso con un account Spotify diverso da quello che ha creato l'app, aggiungilo in User Management nelle impostazioni dell'app, poi collegati di nuovo.",
   spotifyFailed: "Impossibile collegare Spotify. Controlla il Client ID e riprova.",
   spotifyIntro:
-    "Spotify permette di usare ogni app solo a poche persone, quindi ti colleghi tramite una tua app Spotify gratuita. Ci vogliono circa due minuti:",
-  spotifyStep1:
-    "Apri la {dashboard} e accedi con il tuo account Spotify. Accetta i termini per sviluppatori se richiesto.",
+    "Spotify avvia ogni app in modalità sviluppo, in cui possono usarla solo pochi account aggiunti dal proprietario. Questo limite viene rimosso solo per aziende affermate ({quotaModes}), quindi un'unica app Sonosphere condivisa non può servire tutti. Crei invece la tua app gratuita in circa due minuti:",
+  spotifyQuotaModes: "modalità di quota di Spotify",
+  spotifyStep1: "Accedi alla {dashboard} e accetta i termini per sviluppatori se richiesto.",
   spotifyDashboard: "dashboard per sviluppatori di Spotify",
-  spotifyStep2:
-    "Clicca su {create}. Vanno bene un nome e una descrizione qualsiasi, ad esempio «Il mio scrobbler Sonosphere».",
+  spotifyStep2: "Fai clic su {create} e inserisci un nome e una descrizione qualsiasi.",
   spotifyCreateApp: "Create app",
-  spotifyStep3: "In {redirect}, incolla esattamente questo indirizzo e clicca su {add}:",
+  spotifyStep3: "In {redirect}, incolla questo indirizzo e fai clic su {add}:",
   spotifyRedirectUris: "Redirect URIs",
   spotifyAdd: "Add",
   spotifyStep4:
     "In {question}, seleziona {webApi} (e {playbackSdk} per riprodurre musica qui), accetta i termini e clicca su {save}.",
   spotifyApiQuestion: "Which API/SDKs are you planning to use?",
   spotifySave: "Save",
-  spotifyStep5:
-    "Apri le {settings} dell'app, copia il suo {clientId} e incollalo qui sotto. Non ti serve il client secret.",
+  spotifyStep5: "Nelle {settings} dell'app, copia il {clientId} e incollalo qui sotto.",
   spotifySettings: "Settings",
   spotifyClientId: "Client ID",
   spotifyClientIdPlaceholder: "32 lettere e numeri",

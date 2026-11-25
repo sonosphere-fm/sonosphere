@@ -186,22 +186,20 @@ export default {
     "Spotify nekade det här kontot. Om du loggade in med ett annat Spotify-konto än det som skapade appen, lägg till det under User Management i appens inställningar och koppla sedan igen.",
   spotifyFailed: "Spotify kunde inte kopplas. Kontrollera klient-ID:t och försök igen.",
   spotifyIntro:
-    "Spotify låter bara ett fåtal personer använda varje app, så du kopplar via din egen gratis Spotify-app. Det tar ungefär två minuter:",
-  spotifyStep1:
-    "Öppna {dashboard} och logga in med ditt Spotify-konto. Godkänn utvecklarvillkoren om du blir tillfrågad.",
+    "Spotify startar varje app i utvecklingsläge, där bara ett fåtal konton som ägaren lagt till kan använda den. Den gränsen hävs bara för etablerade företag ({quotaModes}), så en gemensam Sonosphere-app kan inte räcka till alla. I stället skapar du din egen gratisapp på ungefär två minuter:",
+  spotifyQuotaModes: "Spotifys kvotlägen",
+  spotifyStep1: "Logga in på {dashboard} och godkänn utvecklarvillkoren om du blir ombedd.",
   spotifyDashboard: "Spotifys utvecklarpanel",
-  spotifyStep2:
-    "Klicka på {create}. Vilket namn och vilken beskrivning som helst duger, till exempel ”Min Sonosphere-scrobbler”.",
+  spotifyStep2: "Klicka på {create} och ange valfritt namn och valfri beskrivning.",
   spotifyCreateApp: "Create app",
-  spotifyStep3: "Under {redirect}, klistra in exakt den här adressen och klicka på {add}:",
+  spotifyStep3: "Under {redirect}, klistra in den här adressen och klicka på {add}:",
   spotifyRedirectUris: "Redirect URIs",
   spotifyAdd: "Add",
   spotifyStep4:
     "Under {question}, kryssa i {webApi} (och {playbackSdk} för att spela musik här), godkänn villkoren och klicka på {save}.",
   spotifyApiQuestion: "Which API/SDKs are you planning to use?",
   spotifySave: "Save",
-  spotifyStep5:
-    "Öppna appens {settings}, kopiera dess {clientId} och klistra in det nedan. Du behöver inte klienthemligheten.",
+  spotifyStep5: "Kopiera appens {clientId} under {settings} och klistra in det nedan.",
   spotifySettings: "Settings",
   spotifyClientId: "Client ID",
   spotifyClientIdPlaceholder: "32 bokstäver och siffror",
