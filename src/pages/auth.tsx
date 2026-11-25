@@ -13,6 +13,8 @@ import {
 } from "../../shared/auth";
 import { oauthError as oauthErrorText, OAuthButtons } from "../ui/oauth";
 import { t, tx } from "../i18n";
+import { TotpChallenge } from "../ui/totp";
+import type { LoginResult } from "../../shared/totp";
 
 type Turnstile = {
   render: (el: HTMLElement, o: Record<string, unknown>) => string;
@@ -139,6 +141,7 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
   const [sp] = useSearchParams();
   const next = safeNext(sp.get("next"));
   const [f, setF] = useState({ username: "", email: "", password: "" });
+  const [twoFactor, setTwoFactor] = useState(sp.get("twoFactor") === "1");
   const act = useAction();
   const robot = useTurnstile(mode === "login" ? "login" : "signup");
   const config = useApi<AuthConfig>("/auth/config").data;
@@ -153,11 +156,28 @@ export function AuthPage({ mode }: { mode: "login" | "join" }) {
     e.preventDefault();
     act.run(async () => {
       const turnstile = await robot.check();
-      const r = await api<Session>(`/auth/${login ? "login" : "signup"}`, { body: { ...f, turnstile } });
+      const r = await api<LoginResult>(`/auth/${login ? "login" : "signup"}`, { body: { ...f, turnstile, next } });
+      if ("twoFactor" in r) {
+        setF({ ...f, password: "" });
+        setTwoFactor(true);
+        return;
+      }
       setMe(r.user);
       nav(login || next !== "/" ? next : "/welcome");
     });
   };
+
+  if (twoFactor)
+    return (
+      <div className="wrap page narrow">
+        <TotpChallenge
+          onLogin={(r) => {
+            setMe(r.user);
+            nav(r.next);
+          }}
+        />
+      </div>
+    );
 
   return (
     <div className="wrap page narrow">
@@ -348,17 +368,35 @@ export function ResetPage() {
   const { setMe } = useAuth();
   const nav = useNavigate();
   const [pw, setPw] = useState("");
+  const [twoFactor, setTwoFactor] = useState(false);
   const act = useAction();
   useTitle(TITLES.reset);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      const r = await api<Session>("/auth/reset", { body: { token, password: pw } });
+      const r = await api<LoginResult>("/auth/reset", { body: { token, password: pw } });
+      if ("twoFactor" in r) {
+        setPw("");
+        setTwoFactor(true);
+        return;
+      }
       setMe(r.user);
       nav("/");
     });
   };
+
+  if (twoFactor)
+    return (
+      <div className="wrap page narrow">
+        <TotpChallenge
+          onLogin={(r) => {
+            setMe(r.user);
+            nav(r.next);
+          }}
+        />
+      </div>
+    );
 
   return (
     <div className="wrap page narrow">

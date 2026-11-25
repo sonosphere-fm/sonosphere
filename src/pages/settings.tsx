@@ -12,6 +12,7 @@ import {
 import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
+import { TotpSettings } from "../ui/totp";
 import { ProfileLinksEditor } from "../ui/profile-links-editor";
 import { ProfileStyleSettings } from "../ui/profile-style-settings";
 import { Username } from "../ui/username";
@@ -746,6 +747,7 @@ function AccountSettings() {
         </form>
       </Section>
       <SignInMethods />
+      <TotpSettings />
       <Section title={t("settings.deleteAccount")}>
         <form className="form" onSubmit={submitDelete}>
           <p>{t("settings.deleteAccountHint")}</p>

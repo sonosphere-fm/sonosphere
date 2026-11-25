@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import en from "../shared/i18n/en";
+import { featureCatalog, type FeatureKey } from "../shared/i18n/features";
 import {
   format,
   isLocale,
@@ -90,8 +91,12 @@ const main = translator(en, {
   "zh-Hans": () => import("../shared/i18n/zh-Hans/index"),
   "zh-Hant": () => import("../shared/i18n/zh-Hant/index"),
 });
-export const { t, tx } = main;
-export type MessageKey = Key<typeof en>;
+export const { tx } = main;
+export type MessageKey = Key<typeof en> | `features.${FeatureKey}`;
+export function t(key: MessageKey, params?: Params) {
+  if (key.startsWith("features.")) return format(current, featureCatalog(current)[key.slice(9) as FeatureKey], params);
+  return main.t(key as Key<typeof en>, params);
+}
 
 /** A signed-in account's choice wins, then this browser's, then the browser's own languages. */
 export async function loadLocale(account?: Locale | "") {

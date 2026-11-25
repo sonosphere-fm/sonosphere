@@ -330,6 +330,8 @@ const methods: Record<string, Method> = {
       if (u) await bump(misses, 1, 3600_000);
       return fail(4, "Authentication Failed - You do not have permissions to access the service");
     }
+    const { factorOf } = await import("../auth/totp");
+    if (await factorOf(u.id)) return fail(4, "Use browser authorization for accounts with two-factor authentication");
     return newSession(c, u.id);
   },
 

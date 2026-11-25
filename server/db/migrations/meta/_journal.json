@@ -379,6 +379,13 @@
       "when": 1795602094857,
       "tag": "0053_secret_songbird",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1795607600551,
+      "tag": "0054_abnormal_raider",
+      "breakpoints": true
     }
   ]
 }

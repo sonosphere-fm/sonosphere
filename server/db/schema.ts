@@ -96,6 +96,15 @@ export const users = pgTable("users", {
   digestAt: integer("digest_at"),
 });
 
+export const userTotp = pgTable("user_totp", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  secret: text().notNull(),
+  recovery: text().notNull(),
+  lastStep: integer("last_step").notNull(),
+});
+
 export const userLabels = pgTable("user_labels", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   text: text().notNull(),

@@ -15,6 +15,7 @@ import { loginBanned } from "../ips";
 import { emailTaken } from "../repo";
 import { checkNewAccount, createAccount, me, startSession, USERNAME } from "../service";
 import { PROVIDERS, providerById, providerLabel, type Provider } from "./providers";
+import { finishLogin } from "../totp";
 import * as repo from "./repo";
 import { safeNext, type Logins, type OAuthCreated, type OAuthPending, type Ok } from "../../../shared/auth";
 
@@ -118,7 +119,8 @@ router.get("/api/auth/oauth/:provider/callback", async (c) => {
       await repo.renameLink(p.id, who.subject, who.name);
       await recordChange(u.id, `${p.id} name`, link.name, who.name);
     }
-    await startSession(c.headers, u.id);
+    const result = await finishLogin(c, u, st.next);
+    if ("twoFactor" in result) return go(c, "/login?twoFactor=1");
     return go(c, st.next);
   }
   if (await emailTaken(who.email)) return failTo(c, "login", "email");
