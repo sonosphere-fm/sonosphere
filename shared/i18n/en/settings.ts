@@ -226,6 +226,20 @@ export default {
   spotifyBlurb: "Import what you play on Spotify",
   spotifyDisabled: "Scrobbling from Spotify is disabled.",
 
+  discordBlurb: "Log plays from your Discord status",
+  discordDisabled: "Logging plays from Discord isn't available right now.",
+  discordIntro:
+    "Our Discord bot can log what you play from your Discord status, in any app that shows “Listening to” there, such as YouTube Music through PreMiD. It works while Discord's desktop app is open.",
+  discordLinkFirst: "Link your Discord account first.",
+  linkDiscord: "Link Discord",
+  discordJoinFirst: "Join the Sonosphere Discord so the bot can see your status.",
+  joinDiscord: "Join the Discord",
+  checkAgain: "Check again",
+  discordToggle: "Log plays from my Discord status",
+  discordToggleHint:
+    "Only your music status is read. A play that already arrived another way, such as from a connected Spotify account, is not logged twice.",
+  discordLastPlay: "Last play logged {ago}.",
+  discordNoPlays: "No plays logged yet. Play something with your status showing.",
   deleteAppConfirmTitle: "Delete “{name}”?",
   deleteAppConfirmBody: "Apps using this key will stop working.",
   streamingServices: "Streaming services",

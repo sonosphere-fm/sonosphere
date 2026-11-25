@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTitle } from "../lib";
 
-const UPDATED = "November 23, 2026";
+const UPDATED = "November 24, 2026";
 const CONTACT = "legal@sonosphere.fm";
 const Mail = () => <a href={`mailto:${CONTACT}`}>{CONTACT}</a>;
 const D = ({ children }: { children: ReactNode }) => <b>"{children}"</b>;
@@ -1145,6 +1145,13 @@ export function Privacy() {
           which we process into Listening Data. If you enable playback, your browser communicates directly with Spotify
           using a short-lived access token we issue to it, and Spotify may collect information subject to its own
           privacy policy;
+        </li>
+        <li>
+          <b>Discord:</b> if you link a Discord account, we receive your Discord account identifier and username. If you
+          also turn on logging plays from your Discord status, our bot receives the activity status that Discord shares
+          with members of the Sonosphere Discord server while you are a member. We use only the music you are shown
+          listening to, which we process into Listening Data, and we do not store the status itself. We disregard the
+          status of members who have not turned this on;
         </li>
         <li>
           <b>Applications:</b> Applications you authorize transmit to us Listening Data, now-playing information and any

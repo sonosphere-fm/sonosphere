@@ -227,6 +227,20 @@ export default {
   spotifyBlurb: "Spotifyで再生した曲をインポート",
   spotifyDisabled: "Spotifyからのスクロブルは無効になっています。",
 
+  discordBlurb: "Discordのステータスから再生を記録",
+  discordDisabled: "Discordからの再生記録は現在利用できません。",
+  discordIntro:
+    "Discordボットが、Discordのステータスに「再生中」と表示するアプリ(PreMiD経由のYouTube Musicなど)から、あなたが聴いている曲を記録できます。Discordのデスクトップアプリが開いている間だけ動作します。",
+  discordLinkFirst: "まずDiscordアカウントを連携してください。",
+  linkDiscord: "Discordを連携",
+  discordJoinFirst: "ボットがステータスを見られるよう、SonosphereのDiscordに参加してください。",
+  joinDiscord: "Discordに参加",
+  checkAgain: "もう一度確認",
+  discordToggle: "Discordのステータスから再生を記録する",
+  discordToggleHint:
+    "読み取るのは音楽のステータスだけです。連携済みのSpotifyアカウントなど、別の方法ですでに届いた再生は二重に記録されません。",
+  discordLastPlay: "最後の記録: {ago}",
+  discordNoPlays: "まだ記録された再生はありません。ステータスを表示したまま何か再生してください。",
   deleteAppConfirmTitle: "「{name}」を削除しますか？",
   deleteAppConfirmBody: "このキーを使っているアプリは動作しなくなります。",
   streamingServices: "ストリーミングサービス",

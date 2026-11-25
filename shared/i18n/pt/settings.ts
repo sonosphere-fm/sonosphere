@@ -232,6 +232,20 @@ export default {
   spotifyBlurb: "Importe o que você ouve no Spotify",
   spotifyDisabled: "Os scrobbles do Spotify estão desativados.",
 
+  discordBlurb: "Registre reproduções pelo seu status do Discord",
+  discordDisabled: "O registro de reproduções pelo Discord não está disponível no momento.",
+  discordIntro:
+    "Nosso bot do Discord pode registrar o que você ouve a partir do seu status do Discord, em qualquer app que mostre “Ouvindo” lá, como o YouTube Music pelo PreMiD. Funciona enquanto o app de desktop do Discord estiver aberto.",
+  discordLinkFirst: "Vincule sua conta do Discord primeiro.",
+  linkDiscord: "Vincular Discord",
+  discordJoinFirst: "Entre no Discord do Sonosphere para que o bot possa ver seu status.",
+  joinDiscord: "Entrar no Discord",
+  checkAgain: "Verificar de novo",
+  discordToggle: "Registrar reproduções pelo meu status do Discord",
+  discordToggleHint:
+    "Só o seu status de música é lido. Uma reprodução que já chegou de outra forma, como por uma conta do Spotify conectada, não é registrada duas vezes.",
+  discordLastPlay: "Última reprodução registrada {ago}.",
+  discordNoPlays: "Nenhuma reprodução registrada ainda. Toque algo com seu status visível.",
   deleteAppConfirmTitle: "Excluir “{name}”?",
   deleteAppConfirmBody: "Os apps que usam esta chave vão parar de funcionar.",
   streamingServices: "Serviços de streaming",

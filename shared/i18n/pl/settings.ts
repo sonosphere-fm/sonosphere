@@ -242,6 +242,20 @@ export default {
   spotifyBlurb: "Importuj to, czego słuchasz w Spotify",
   spotifyDisabled: "Scrobblowanie ze Spotify jest wyłączone.",
 
+  discordBlurb: "Zapisuj odtworzenia ze statusu na Discordzie",
+  discordDisabled: "Zapisywanie odtworzeń z Discorda jest teraz niedostępne.",
+  discordIntro:
+    "Nasz bot na Discordzie może zapisywać, czego słuchasz, na podstawie Twojego statusu na Discordzie, w każdej aplikacji, która pokazuje tam „Słucha”, np. YouTube Music przez PreMiD. Działa, gdy aplikacja Discord na komputer jest otwarta.",
+  discordLinkFirst: "Najpierw połącz konto Discord.",
+  linkDiscord: "Połącz Discord",
+  discordJoinFirst: "Dołącz do Discorda Sonosphere, żeby bot widział Twój status.",
+  joinDiscord: "Dołącz do Discorda",
+  checkAgain: "Sprawdź ponownie",
+  discordToggle: "Zapisuj odtworzenia z mojego statusu na Discordzie",
+  discordToggleHint:
+    "Odczytywany jest tylko Twój status muzyczny. Odtworzenie, które dotarło już inną drogą, np. z połączonego konta Spotify, nie zostanie zapisane podwójnie.",
+  discordLastPlay: "Ostatnie odtworzenie zapisane {ago}.",
+  discordNoPlays: "Nie zapisano jeszcze żadnych odtworzeń. Włącz coś przy widocznym statusie.",
   deleteAppConfirmTitle: "Usunąć „{name}”?",
   deleteAppConfirmBody: "Aplikacje używające tego klucza przestaną działać.",
   streamingServices: "Serwisy streamingowe",

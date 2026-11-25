@@ -227,6 +227,20 @@ export default {
   spotifyBlurb: "Spotify ನಲ್ಲಿ ನೀವು ಪ್ಲೇ ಮಾಡುವುದನ್ನು ಆಮದು ಮಾಡಿ",
   spotifyDisabled: "Spotify ನಿಂದ ಸ್ಕ್ರಾಬಲ್ ಮಾಡುವುದನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.",
 
+  discordBlurb: "ನಿಮ್ಮ Discord ಸ್ಟೇಟಸ್‌ನಿಂದ ಪ್ಲೇಗಳನ್ನು ದಾಖಲಿಸಿ",
+  discordDisabled: "ಸದ್ಯಕ್ಕೆ Discordನಿಂದ ಪ್ಲೇಗಳನ್ನು ದಾಖಲಿಸುವುದು ಲಭ್ಯವಿಲ್ಲ.",
+  discordIntro:
+    "ನಮ್ಮ Discord ಬಾಟ್ ನಿಮ್ಮ Discord ಸ್ಟೇಟಸ್‌ನಿಂದ ನೀವು ಏನು ಕೇಳುತ್ತಿದ್ದೀರಿ ಎಂಬುದನ್ನು ದಾಖಲಿಸಬಹುದು, ಅಲ್ಲಿ “ಕೇಳುತ್ತಿದ್ದಾರೆ” ಎಂದು ತೋರಿಸುವ ಯಾವುದೇ ಆ್ಯಪ್‌ನಲ್ಲಿ, ಉದಾ. PreMiD ಮೂಲಕ YouTube Music. Discord ಡೆಸ್ಕ್‌ಟಾಪ್ ಆ್ಯಪ್ ತೆರೆದಿರುವವರೆಗೆ ಇದು ಕೆಲಸ ಮಾಡುತ್ತದೆ.",
+  discordLinkFirst: "ಮೊದಲು ನಿಮ್ಮ Discord ಖಾತೆಯನ್ನು ಲಿಂಕ್ ಮಾಡಿ.",
+  linkDiscord: "Discord ಲಿಂಕ್ ಮಾಡಿ",
+  discordJoinFirst: "ಬಾಟ್ ನಿಮ್ಮ ಸ್ಟೇಟಸ್ ನೋಡಲು Sonosphere Discordಗೆ ಸೇರಿ.",
+  joinDiscord: "Discordಗೆ ಸೇರಿ",
+  checkAgain: "ಮತ್ತೆ ಪರಿಶೀಲಿಸಿ",
+  discordToggle: "ನನ್ನ Discord ಸ್ಟೇಟಸ್‌ನಿಂದ ಪ್ಲೇಗಳನ್ನು ದಾಖಲಿಸಿ",
+  discordToggleHint:
+    "ನಿಮ್ಮ ಸಂಗೀತ ಸ್ಟೇಟಸ್ ಮಾತ್ರ ಓದಲಾಗುತ್ತದೆ. ಸಂಪರ್ಕಿತ Spotify ಖಾತೆಯಂತಹ ಬೇರೆ ಮಾರ್ಗದಲ್ಲಿ ಈಗಾಗಲೇ ಬಂದ ಪ್ಲೇ ಎರಡು ಬಾರಿ ದಾಖಲಾಗುವುದಿಲ್ಲ.",
+  discordLastPlay: "ಕೊನೆಯ ಪ್ಲೇ ದಾಖಲಾಗಿದೆ {ago}.",
+  discordNoPlays: "ಇನ್ನೂ ಯಾವುದೇ ಪ್ಲೇ ದಾಖಲಾಗಿಲ್ಲ. ಸ್ಟೇಟಸ್ ಕಾಣುವಾಗ ಏನಾದರೂ ಪ್ಲೇ ಮಾಡಿ.",
   deleteAppConfirmTitle: "“{name}” ಅಳಿಸಬೇಕೆ?",
   deleteAppConfirmBody: "ಈ ಕೀ ಬಳಸುವ ಆ್ಯಪ್‌ಗಳು ಕೆಲಸ ಮಾಡುವುದನ್ನು ನಿಲ್ಲಿಸುತ್ತವೆ.",
   streamingServices: "ಸ್ಟ್ರೀಮಿಂಗ್ ಸೇವೆಗಳು",

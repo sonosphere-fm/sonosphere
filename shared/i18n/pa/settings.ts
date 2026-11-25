@@ -227,6 +227,20 @@ export default {
   spotifyBlurb: "Spotify 'ਤੇ ਜੋ ਚਲਾਉਂਦੇ ਹੋ ਉਹ ਇੰਪੋਰਟ ਕਰੋ",
   spotifyDisabled: "Spotify ਤੋਂ ਸਕ੍ਰੌਬਲਿੰਗ ਬੰਦ ਹੈ।",
 
+  discordBlurb: "ਆਪਣੇ Discord ਸਟੇਟਸ ਤੋਂ ਪਲੇ ਦਰਜ ਕਰੋ",
+  discordDisabled: "ਇਸ ਵੇਲੇ Discord ਤੋਂ ਪਲੇ ਦਰਜ ਕਰਨਾ ਉਪਲਬਧ ਨਹੀਂ।",
+  discordIntro:
+    "ਸਾਡਾ Discord ਬੋਟ ਤੁਹਾਡੇ Discord ਸਟੇਟਸ ਤੋਂ ਦਰਜ ਕਰ ਸਕਦਾ ਹੈ ਕਿ ਤੁਸੀਂ ਕੀ ਸੁਣ ਰਹੇ ਹੋ, ਕਿਸੇ ਵੀ ਐਪ ਵਿੱਚ ਜੋ ਉੱਥੇ “ਸੁਣ ਰਹੇ ਹਨ” ਦਿਖਾਉਂਦੀ ਹੈ, ਜਿਵੇਂ PreMiD ਰਾਹੀਂ YouTube Music। ਇਹ ਉਦੋਂ ਤੱਕ ਕੰਮ ਕਰਦਾ ਹੈ ਜਦੋਂ ਤੱਕ Discord ਦੀ ਡੈਸਕਟਾਪ ਐਪ ਖੁੱਲ੍ਹੀ ਹੋਵੇ।",
+  discordLinkFirst: "ਪਹਿਲਾਂ ਆਪਣਾ Discord ਖਾਤਾ ਲਿੰਕ ਕਰੋ।",
+  linkDiscord: "Discord ਲਿੰਕ ਕਰੋ",
+  discordJoinFirst: "Sonosphere ਦੇ Discord ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ ਤਾਂ ਜੋ ਬੋਟ ਤੁਹਾਡਾ ਸਟੇਟਸ ਦੇਖ ਸਕੇ।",
+  joinDiscord: "Discord ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ",
+  checkAgain: "ਮੁੜ ਜਾਂਚੋ",
+  discordToggle: "ਮੇਰੇ Discord ਸਟੇਟਸ ਤੋਂ ਪਲੇ ਦਰਜ ਕਰੋ",
+  discordToggleHint:
+    "ਸਿਰਫ਼ ਤੁਹਾਡਾ ਸੰਗੀਤ ਸਟੇਟਸ ਪੜ੍ਹਿਆ ਜਾਂਦਾ ਹੈ। ਜੋ ਪਲੇ ਪਹਿਲਾਂ ਹੀ ਕਿਸੇ ਹੋਰ ਤਰੀਕੇ ਨਾਲ ਆ ਚੁੱਕਾ ਹੈ, ਜਿਵੇਂ ਜੁੜੇ Spotify ਖਾਤੇ ਤੋਂ, ਉਹ ਦੋ ਵਾਰ ਦਰਜ ਨਹੀਂ ਹੁੰਦਾ।",
+  discordLastPlay: "ਆਖਰੀ ਪਲੇ ਦਰਜ ਹੋਇਆ {ago}।",
+  discordNoPlays: "ਹਾਲੇ ਕੋਈ ਪਲੇ ਦਰਜ ਨਹੀਂ ਹੋਇਆ। ਸਟੇਟਸ ਦਿਖਾਉਂਦੇ ਹੋਏ ਕੁਝ ਚਲਾਓ।",
   deleteAppConfirmTitle: "ਕੀ “{name}” ਮਿਟਾਉਣੀ ਹੈ?",
   deleteAppConfirmBody: "ਇਹ ਕੁੰਜੀ ਵਰਤਣ ਵਾਲੀਆਂ ਐਪਾਂ ਕੰਮ ਕਰਨਾ ਬੰਦ ਕਰ ਦੇਣਗੀਆਂ।",
   streamingServices: "ਸਟ੍ਰੀਮਿੰਗ ਸੇਵਾਵਾਂ",

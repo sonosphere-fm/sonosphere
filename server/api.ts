@@ -12,6 +12,7 @@ import { router as changelog } from "./changelog/routes";
 import { router as charts } from "./charts/routes";
 import { router as dm } from "./dm/routes";
 import { router as spotify } from "./spotify/routes";
+import { router as discord } from "./discord/routes";
 import { router as events } from "./events/routes";
 import { router as home } from "./home/routes";
 import { router as images } from "./images/routes";
@@ -75,6 +76,7 @@ export const api = new Router().include(
   reports,
   dm,
   spotify,
+  discord,
   adminDashboard,
   adminUsers,
   adminReports,

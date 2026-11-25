@@ -1,3 +1,4 @@
+import { DISCORD_INVITE } from "../../shared/discord";
 import { DropdownMenu, DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import type { ComponentProps } from "react";
 import { useNavigate } from "react-router-dom";
@@ -56,7 +57,7 @@ export default function AccountMenu({
           href={me.openReports > 0 ? "/admin/reports" : "/admin"}
         />
       )}
-      <DropdownMenuItem icon={<Ico.Discord />} label={t("common.joinDiscord")} href="/discord" />
+      <DropdownMenuItem icon={<Ico.Discord />} label={t("common.joinDiscord")} href={DISCORD_INVITE} />
       <DropdownMenuItem icon={<Ico.LogOut />} label={t("common.logOut")} onClick={logout} />
     </DropdownMenu>
   );

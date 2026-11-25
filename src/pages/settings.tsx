@@ -23,6 +23,7 @@ import { useTurnstile } from "./auth";
 import { oauthError, OAuthMark, oauthStart } from "../ui/oauth";
 import { locale, t, tx, type MessageKey } from "../i18n";
 import type { Logins } from "../../shared/auth";
+import { DISCORD_INVITE, type DiscordStatus, type DiscordToggle } from "../../shared/discord";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES, type EmailKind } from "../../shared/notifications";
@@ -1011,6 +1012,84 @@ function SpotifySettings() {
   );
 }
 
+type DiscordOn = Extract<DiscordStatus, { enabled: true }>;
+
+function DiscordSettings() {
+  const q = useApi<DiscordStatus>("/discord");
+  const act = useAction();
+
+  const toggle = (on: boolean) =>
+    act.run(async () => {
+      const body: DiscordToggle = { on };
+      q.setData(await api<DiscordStatus>("/discord", { body }));
+    });
+
+  const steps = (d: DiscordOn) => {
+    if (!d.linked)
+      return (
+        <>
+          <p>{t("settings.discordLinkFirst")}</p>
+          <div className="row">
+            <Button kind="btn" href={oauthStart("discord", "link", "/settings/applications")}>
+              {t("settings.linkDiscord")}
+            </Button>
+          </div>
+        </>
+      );
+    if (!d.inServer)
+      return (
+        <>
+          <p>{t("settings.discordJoinFirst")}</p>
+          <div className="row">
+            <Button kind="btn" href={DISCORD_INVITE}>
+              {t("settings.joinDiscord")}
+            </Button>
+            <Button kind="btn ghost" onClick={q.reload}>
+              {t("settings.checkAgain")}
+            </Button>
+          </div>
+        </>
+      );
+    return (
+      <>
+        <CheckOption title={t("settings.discordToggle")} checked={d.on} disabled={act.busy} onChange={toggle}>
+          {t("settings.discordToggleHint")}
+        </CheckOption>
+        {d.on && (
+          <p className="muted small">
+            {d.lastPlayAt ? t("settings.discordLastPlay", { ago: ago(d.lastPlayAt) }) : t("settings.discordNoPlays")}
+          </p>
+        )}
+        {act.note}
+      </>
+    );
+  };
+
+  let badge = null;
+  if (q.data) {
+    if (!q.data.enabled) badge = <span className="badge off">{t("settings.badgeDisabled")}</span>;
+    else if (q.data.on && q.data.inServer) badge = <span className="badge">{t("settings.badgeConnected")}</span>;
+    else badge = <span className="badge off">{t("settings.badgeNotConnected")}</span>;
+  }
+
+  return (
+    <Service name="Discord" blurb={t("settings.discordBlurb")} badge={badge} open={false}>
+      <Async q={q}>
+        {(d) =>
+          !d.enabled ? (
+            <p className="muted">{t("settings.discordDisabled")}</p>
+          ) : (
+            <div className="form">
+              <p>{t("settings.discordIntro")}</p>
+              {steps(d)}
+            </div>
+          )
+        }
+      </Async>
+    </Service>
+  );
+}
+
 function Service({
   name,
   blurb,
@@ -1064,6 +1143,7 @@ function AppSettings() {
       <Section title={t("settings.streamingServices")}>
         <div className="services">
           <SpotifySettings />
+          <DiscordSettings />
         </div>
       </Section>
       <Section title={t("settings.connectedApplications")}>

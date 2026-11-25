@@ -23,6 +23,8 @@ import { upgrade, websocket, type SocketData } from "./realtime";
 import { publicNowPlaying, publicPlayingWebsocket } from "./listening/public";
 import { startTasteWorker } from "./recommend/worker";
 import { startSpotify } from "./spotify/service";
+import { DISCORD_INVITE } from "../shared/discord";
+import { startDiscord } from "./discord/service";
 import { startEventSync } from "./events/sync";
 import { startImports } from "./listening/imports";
 import { startMetadata } from "./metadata/service";
@@ -58,11 +60,10 @@ await syncAdmins();
 startDm();
 startTasteWorker();
 startSpotify();
+startDiscord();
 startMetadata();
 startEventSync();
 startImports();
-
-const DISCORD_INVITE = "https://discord.gg/sonosphere";
 
 const app = production ? await appRoutes() : { "/*": (await import("../src/index.html")).default };
 

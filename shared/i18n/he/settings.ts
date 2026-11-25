@@ -227,6 +227,20 @@ export default {
   spotifyBlurb: "ייבוא של מה שמנגנים ב־Spotify",
   spotifyDisabled: "סקרובל מ־Spotify מושבת.",
 
+  discordBlurb: "תיעוד השמעות מהסטטוס שלך ב-Discord",
+  discordDisabled: "תיעוד השמעות מ-Discord אינו זמין כרגע.",
+  discordIntro:
+    "הבוט שלנו ב-Discord יכול לתעד מה אתם שומעים לפי הסטטוס שלכם ב-Discord, בכל אפליקציה שמציגה שם „מאזין ל”, כמו YouTube Music דרך PreMiD. זה עובד כל עוד אפליקציית Discord למחשב פתוחה.",
+  discordLinkFirst: "קודם יש לקשר את חשבון ה-Discord שלך.",
+  linkDiscord: "קישור Discord",
+  discordJoinFirst: "הצטרפו ל-Discord של Sonosphere כדי שהבוט יוכל לראות את הסטטוס שלכם.",
+  joinDiscord: "הצטרפות ל-Discord",
+  checkAgain: "בדיקה חוזרת",
+  discordToggle: "תיעוד השמעות מהסטטוס שלי ב-Discord",
+  discordToggleHint:
+    "רק סטטוס המוזיקה שלך נקרא. השמעה שכבר הגיעה בדרך אחרת, למשל מחשבון Spotify מחובר, לא מתועדת פעמיים.",
+  discordLastPlay: "ההשמעה האחרונה תועדה {ago}.",
+  discordNoPlays: "עוד לא תועדו השמעות. השמיעו משהו כשהסטטוס שלכם גלוי.",
   deleteAppConfirmTitle: 'למחוק את "{name}"?',
   deleteAppConfirmBody: "אפליקציות שמשתמשות במפתח הזה יפסיקו לעבוד.",
   streamingServices: "שירותי סטרימינג",
