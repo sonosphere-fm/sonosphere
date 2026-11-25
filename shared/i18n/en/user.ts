@@ -246,4 +246,9 @@ export default {
   noOneHere: "No one here yet.",
   following: "Following",
   follow: "Follow",
+  milestones: "Milestones",
+  firstScrobble: "First scrobble",
+  scrobbleNumber: "Scrobble #{n}",
+  nextMilestone: "Next up: scrobble #{n}, {left} to go",
+  yearCard: "Year card",
 };

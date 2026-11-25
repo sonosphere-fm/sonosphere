@@ -252,4 +252,9 @@ export default {
   noOneHere: "अजून येथे कोणी नाही.",
   following: "फॉलो करत आहात",
   follow: "फॉलो करा",
+  milestones: "टप्पे",
+  firstScrobble: "पहिला स्क्रॉबल",
+  scrobbleNumber: "स्क्रॉबल #{n}",
+  nextMilestone: "पुढे: स्क्रॉबल #{n}, अजून {left}",
+  yearCard: "वार्षिक कार्ड",
 } satisfies Translation<typeof en>;

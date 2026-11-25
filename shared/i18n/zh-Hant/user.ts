@@ -244,4 +244,9 @@ export default {
   noOneHere: "這裡還沒有人。",
   following: "追蹤中",
   follow: "追蹤",
+  milestones: "里程碑",
+  firstScrobble: "第一筆紀錄",
+  scrobbleNumber: "第 {n} 筆紀錄",
+  nextMilestone: "下一個：第 {n} 筆紀錄，還差 {left}",
+  yearCard: "年度卡片",
 } satisfies Translation<typeof en>;

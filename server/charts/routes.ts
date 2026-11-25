@@ -12,12 +12,16 @@ import {
   type ChartRequest,
   type ChartTitles,
 } from "../../shared/charts";
+import { counts, series, topArtists, topTracks } from "../listening/repo";
+import { canSee, requireVisibleUser } from "../users/service";
 import { gather, type ChartItem } from "./data";
 import type { RenderCell, RenderJob } from "./render";
+import type { CardJob } from "./year-card";
 
 export const router = new Router();
 
 const SCRIPT = join(import.meta.dir, "render.ts");
+const CARD_SCRIPT = join(import.meta.dir, "year-card.ts");
 const FONTS = join(import.meta.dir, "../../node_modules/@fontsource-variable/source-sans-3/files");
 const TIME_LIMIT_MS = 45_000;
 const MAX_RUNNING = 2;
@@ -114,8 +118,8 @@ async function cells(items: ChartItem[], req: ChartRequest, size: number, locale
 }
 
 // Decoding pictures and drawing runs in its own process, with no environment and a hard time limit.
-async function draw(job: RenderJob): Promise<{ drawn: number; jpeg: string }> {
-  const child = Bun.spawn([process.execPath, SCRIPT, FONTS], {
+async function draw<T>(script: string, job: RenderJob | CardJob): Promise<T> {
+  const child = Bun.spawn([process.execPath, script, FONTS], {
     stdin: new TextEncoder().encode(JSON.stringify(job)),
     stdout: "pipe",
     stderr: "pipe",
@@ -151,7 +155,7 @@ router.post<ChartReply>("/api/charts", async (c) => {
       if (found.status !== "Ok") return found;
       const size = cellSize(req.width, req.height);
       const words = await music(locale);
-      const { drawn, jpeg } = await draw({
+      const { drawn, jpeg } = await draw<{ drawn: number; jpeg: string }>(SCRIPT, {
         width: req.width,
         height: req.height,
         cellSize: size,
@@ -175,4 +179,65 @@ router.post<ChartReply>("/api/charts", async (c) => {
   } finally {
     inFlight.delete(user.id);
   }
+});
+
+router.get("/api/user/year-card", async (c) => {
+  const u = await requireVisibleUser(c.q.get("name"), c.user);
+  if (!canSee(u, c.user)) fail(403, "userKeepsTheirListeningPrivate");
+  await limit(`yearcard:${ipOf(c.req)}`, 20, 600, "goingABitFast");
+  const year = Number(c.q.get("year"));
+  if (!Number.isInteger(year) || year < 2000 || year > new Date().getUTCFullYear()) bad("invalidNumber");
+  const tz = Math.max(-900, Math.min(900, Math.round(Number(c.q.get("tz")) || 0)));
+  const scope = {
+    userId: u.id,
+    from: Date.UTC(year, 0, 1) / 1000 - tz * 60,
+    to: Date.UTC(year + 1, 0, 1) / 1000 - tz * 60,
+  };
+  const locale = requestLocale(c.req);
+  const [total, days, artists, tracks, words] = await Promise.all([
+    counts(scope),
+    series(scope, "day", tz),
+    topArtists(scope, 5),
+    topTracks(scope, 5),
+    music(locale),
+  ]);
+  const number = new Intl.NumberFormat(locale);
+  const plays = (count: number) => format(locale, words.chartPlays!, { count });
+  const base64 = async (id: string | null, small: boolean) => {
+    const pic = id ? await picture(id, small).catch(() => null) : null;
+    return pic ? Buffer.from(pic.data).toString("base64") : null;
+  };
+  const job: CardJob = {
+    name: u.username,
+    title: format(locale, words.yearCardTitle!, { year }),
+    plays: number.format(total.playcount),
+    playsLabel: format(locale, words.yearCardScrobbles!, { count: total.playcount }),
+    days: number.format(days.length),
+    daysLabel: format(locale, words.yearCardDays!, { count: days.length }),
+    artistsLabel: format(locale, words.topArtists!),
+    tracksLabel: format(locale, words.topTracks!),
+    artists: await Promise.all(
+      artists.items.map(async (a, i) => ({
+        name: a.name,
+        plays: plays(a.playcount),
+        image: i ? null : await base64(a.image, false),
+      }))
+    ),
+    tracks: await Promise.all(
+      tracks.items.map(async (t) => ({
+        title: t.title,
+        artist: t.artist,
+        plays: plays(t.playcount),
+        image: await base64(t.image, true),
+      }))
+    ),
+  };
+  const { png } = await slot(() => draw<{ png: string }>(CARD_SCRIPT, job));
+  return new Response(Buffer.from(png, "base64"), {
+    headers: {
+      "Content-Type": "image/png",
+      "Content-Disposition": `attachment; filename="${u.username}-${year}.png"`,
+      "Cache-Control": "private, max-age=3600",
+    },
+  });
 });

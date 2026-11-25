@@ -1378,6 +1378,18 @@
     font-size: 26px;
     margin-bottom: 16px;
   }
+  .report-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .milestones .art {
+    width: 44px;
+    flex: none;
+    border-radius: 4px;
+  }
 
   @media (max-width: 900px) {
     .cols,

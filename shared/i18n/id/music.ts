@@ -315,4 +315,8 @@ export default {
   removeImageBody: "Remove this image from {name}? This cannot be undone.",
   removeImageAction: "Remove image",
   photoCount: { one: "{count} photo", other: "{count} photos" },
+  yearCardTitle: "{year} dalam musik",
+  yearCardScrobbles: "Scrobble",
+  yearCardDays: "Hari dengan musik",
+  thisWeekIn: "Minggu ini di {year}",
 } satisfies Translation<typeof en>;

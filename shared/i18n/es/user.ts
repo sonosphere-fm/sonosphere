@@ -252,4 +252,9 @@ export default {
   noOneHere: "Aún no hay nadie aquí.",
   following: "Siguiendo",
   follow: "Seguir",
+  milestones: "Hitos",
+  firstScrobble: "Primer scrobble",
+  scrobbleNumber: "Scrobble n.º {n}",
+  nextMilestone: "Siguiente: scrobble n.º {n}, faltan {left}",
+  yearCard: "Tarjeta del año",
 } satisfies Translation<typeof en>;

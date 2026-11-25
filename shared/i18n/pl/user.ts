@@ -312,4 +312,9 @@ export default {
   noOneHere: "Na razie nikogo tu nie ma.",
   following: "Obserwujesz",
   follow: "Obserwuj",
+  milestones: "Kamienie milowe",
+  firstScrobble: "Pierwszy scrobble",
+  scrobbleNumber: "Scrobble nr {n}",
+  nextMilestone: "Następny: scrobble nr {n}, zostało {left}",
+  yearCard: "Karta roku",
 } satisfies Translation<typeof en>;

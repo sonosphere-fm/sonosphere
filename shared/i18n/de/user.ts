@@ -253,4 +253,9 @@ export default {
   noOneHere: "Noch niemand hier.",
   following: "Folge ich",
   follow: "Folgen",
+  milestones: "Meilensteine",
+  firstScrobble: "Erster Scrobble",
+  scrobbleNumber: "Scrobble Nr. {n}",
+  nextMilestone: "Als Nächstes: Scrobble Nr. {n}, noch {left}",
+  yearCard: "Jahreskarte",
 } satisfies Translation<typeof en>;

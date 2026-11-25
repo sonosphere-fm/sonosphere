@@ -251,4 +251,9 @@ export default {
   noOneHere: "अभी यहाँ कोई नहीं।",
   following: "फ़ॉलो कर रहे हैं",
   follow: "फ़ॉलो करें",
+  milestones: "उपलब्धियाँ",
+  firstScrobble: "पहला स्क्रॉबल",
+  scrobbleNumber: "स्क्रॉबल #{n}",
+  nextMilestone: "अगला: स्क्रॉबल #{n}, {left} बाकी",
+  yearCard: "वार्षिक कार्ड",
 } satisfies Translation<typeof en>;

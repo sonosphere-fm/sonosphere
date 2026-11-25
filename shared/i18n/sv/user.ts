@@ -262,4 +262,9 @@ export default {
   noOneHere: "Ingen här än.",
   following: "Följer",
   follow: "Följ",
+  milestones: "Milstolpar",
+  firstScrobble: "Första scrobble",
+  scrobbleNumber: "Scrobble nr {n}",
+  nextMilestone: "Nästa: scrobble nr {n}, {left} kvar",
+  yearCard: "Årskort",
 } satisfies Translation<typeof en>;

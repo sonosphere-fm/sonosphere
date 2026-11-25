@@ -306,4 +306,9 @@ export default {
   noOneHere: "Тут ще нікого немає.",
   following: "Ти підписаний",
   follow: "Підписатися",
+  milestones: "Віхи",
+  firstScrobble: "Перший скробл",
+  scrobbleNumber: "Скробл № {n}",
+  nextMilestone: "Далі: скробл № {n}, залишилось {left}",
+  yearCard: "Картка року",
 } satisfies Translation<typeof en>;

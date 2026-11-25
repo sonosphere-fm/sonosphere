@@ -259,4 +259,9 @@ export default {
   noOneHere: "Henüz burada kimse yok.",
   following: "Takip ediliyor",
   follow: "Takip et",
+  milestones: "Dönüm noktaları",
+  firstScrobble: "İlk scrobble",
+  scrobbleNumber: "{n}. scrobble",
+  nextMilestone: "Sıradaki: {n}. scrobble, {left} kaldı",
+  yearCard: "Yıl kartı",
 } satisfies Translation<typeof en>;

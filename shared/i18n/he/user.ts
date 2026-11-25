@@ -263,4 +263,9 @@ export default {
   noOneHere: "אין כאן עדיין אף אחד.",
   following: "במעקב",
   follow: "מעקב",
+  milestones: "אבני דרך",
+  firstScrobble: "הסקרובל הראשון",
+  scrobbleNumber: "סקרובל מס׳ {n}",
+  nextMilestone: "הבא: סקרובל מס׳ {n}, עוד {left}",
+  yearCard: "כרטיס השנה",
 } satisfies Translation<typeof en>;

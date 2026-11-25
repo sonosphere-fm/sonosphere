@@ -283,4 +283,9 @@ export default {
   noOneHere: "Šeit vēl neviena nav.",
   following: "Seko",
   follow: "Sekot",
+  milestones: "Pagrieziena punkti",
+  firstScrobble: "Pirmais skrobls",
+  scrobbleNumber: "Skrobls Nr. {n}",
+  nextMilestone: "Nākamais: skrobls Nr. {n}, vēl {left}",
+  yearCard: "Gada kartīte",
 } satisfies Translation<typeof en>;

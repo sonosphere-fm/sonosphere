@@ -311,4 +311,8 @@ export default {
   findingLinks: "Finding song links…",
   noLinks: "No matching song links found.",
   searchYouTube: "Search YouTube",
+  yearCardTitle: "{year} in music",
+  yearCardScrobbles: "Scrobbles",
+  yearCardDays: "Days with music",
+  thisWeekIn: "This week in {year}",
 };

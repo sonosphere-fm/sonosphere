@@ -311,4 +311,9 @@ export default {
   noOneHere: "Здесь пока никого нет.",
   following: "В подписках",
   follow: "Подписаться",
+  milestones: "Вехи",
+  firstScrobble: "Первый скроббл",
+  scrobbleNumber: "Скроббл № {n}",
+  nextMilestone: "Далее: скроббл № {n}, осталось {left}",
+  yearCard: "Карточка года",
 } satisfies Translation<typeof en>;

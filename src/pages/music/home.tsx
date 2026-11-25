@@ -1,19 +1,20 @@
 import { Ico, Spinner } from "../../icons";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { SiteBanner } from "../../banner";
 import { t, tx } from "../../i18n";
 import { Button } from "../../kit";
 import { Link } from "react-router-dom";
-import { artistUrl, date, prefetch, qs, TITLES, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
+import { api, artistUrl, date, prefetch, qs, TITLES, trackUrl, useApi, useAuth, userUrl, useTitle } from "../../lib";
 import { Async, Avatar, Pane, Section } from "../../ui/base";
 import { UserLabels } from "../../ui/user-labels";
-import { RecCard, Grid, TrackList } from "../../ui/lists";
+import { RecCard, Grid, RankList, TrackList } from "../../ui/lists";
 import { EventList } from "../../ui/events";
 import { TagChips } from "../../ui/tags";
 import { StationRow } from "../../player";
 import { HomeHero, HomeHeroChart, HomeHeroStats } from "./home-hero";
 import { HomeTabs, ImportPrompt, mixRecs } from "./shared";
-import type { FriendActivity, FriendLove, Home as HomeData, Recommended } from "../../../shared/home";
+import type { FriendActivity, FriendLove, Friends, Home as HomeData, Recommended } from "../../../shared/home";
+import type { Blasts } from "../../../shared/listening";
 import type { UserRecent } from "../../../shared/users";
 
 const WELCOME_KEY = "spin:welcome";
@@ -86,7 +87,25 @@ function PlayRows() {
   );
 }
 
-function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: string }) {
+const FRIENDS_EVERY = 30_000;
+
+function FriendsListening({ initial, me }: { initial: FriendActivity[]; me: string }) {
+  const [friends, setFriends] = useState(initial);
+  useEffect(() => setFriends(initial), [initial]);
+  useEffect(() => {
+    const refresh = () => {
+      if (document.hidden) return;
+      api<Friends>("/home/friends")
+        .then((r) => setFriends(r.items))
+        .catch(() => {});
+    };
+    const timer = setInterval(refresh, FRIENDS_EVERY);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
   return (
     <Section title={t("music.friendsListening")} more={`${userUrl(me)}/following`} moreLabel={t("music.following")}>
       <ul className="feed">
@@ -124,6 +143,21 @@ function FriendsListening({ friends, me }: { friends: FriendActivity[]; me: stri
           </li>
         ))}
       </ul>
+    </Section>
+  );
+}
+
+function ThisWeekBack({ name }: { name: string }) {
+  const { data } = useApi<Blasts>(`/user/blasts${qs({ name, offset: 0, tz: -new Date().getTimezoneOffset() })}`);
+  const year = data?.years[0];
+  if (!year) return null;
+  return (
+    <Section
+      title={t("music.thisWeekIn", { year: year.year })}
+      more={`${userUrl(name)}/listening-report/blasts`}
+      moreLabel={t("user.scrobbleCount", { count: year.playcount })}
+    >
+      <RankList kind="artist" items={year.topArtists.slice(0, 3)} compact />
     </Section>
   );
 }
@@ -211,7 +245,7 @@ function HomeContent({ name }: { name?: string }) {
                     <Suspense fallback={null}>
                       <HomeRecent name={name} />
                     </Suspense>
-                    {d.friends && d.friends.length > 0 && <FriendsListening friends={d.friends} me={name} />}
+                    {d.friends && d.friends.length > 0 && <FriendsListening initial={d.friends} me={name} />}
                   </>
                 )}
                 <Section title={week ? t("music.trendingArtists") : t("music.topArtists")} more="/charts">
@@ -226,6 +260,11 @@ function HomeContent({ name }: { name?: string }) {
               </div>
               <aside className="side">
                 {name && <PlayRows />}
+                {name && (
+                  <Suspense fallback={null}>
+                    <ThisWeekBack name={name} />
+                  </Suspense>
+                )}
                 {name && d.friendLoves && d.friendLoves.length > 0 && <FriendLoves items={d.friendLoves} />}
                 <Section title={t("music.popularTags")} more="/charts?kind=tags">
                   <TagChips tags={d.tags} />

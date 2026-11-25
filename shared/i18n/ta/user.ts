@@ -262,4 +262,9 @@ export default {
   noOneHere: "இங்கே இன்னும் யாரும் இல்லை.",
   following: "பின்தொடர்கிறீர்கள்",
   follow: "பின்தொடர்",
+  milestones: "மைல்கற்கள்",
+  firstScrobble: "முதல் ஸ்க்ராபிள்",
+  scrobbleNumber: "ஸ்க்ராபிள் #{n}",
+  nextMilestone: "அடுத்து: ஸ்க்ராபிள் #{n}, இன்னும் {left}",
+  yearCard: "ஆண்டு அட்டை",
 } satisfies Translation<typeof en>;

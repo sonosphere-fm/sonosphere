@@ -248,4 +248,9 @@ export default {
   noOneHere: "এখানে এখনও কেউ নেই।",
   following: "অনুসরণ করছেন",
   follow: "অনুসরণ করুন",
+  milestones: "মাইলফলক",
+  firstScrobble: "প্রথম স্ক্রবল",
+  scrobbleNumber: "স্ক্রবল #{n}",
+  nextMilestone: "পরবর্তী: স্ক্রবল #{n}, আর {left}",
+  yearCard: "বার্ষিক কার্ড",
 } satisfies Translation<typeof en>;
