@@ -11,7 +11,6 @@ export default {
   playTitle: "Играть {title}",
   trackUnavailable: "Трек недоступен.",
   finding: "Ищем «{title}»…",
-  onSpotify: "в Spotify",
   scrobbled: "Заскробблено",
   openInSpotify: "Открыть в Spotify",
   watchOnYouTube: "Смотреть на YouTube",
@@ -163,4 +162,9 @@ export default {
   },
   save: "Сохранить",
   lyrics: "Текст песни",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

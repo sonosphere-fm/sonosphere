@@ -11,7 +11,6 @@ export default {
   playTitle: "Spela {title}",
   trackUnavailable: "Låten är inte tillgänglig.",
   finding: "Letar efter ”{title}”…",
-  onSpotify: "på Spotify",
   scrobbled: "Scrobblad",
   openInSpotify: "Öppna i Spotify",
   watchOnYouTube: "Titta på YouTube",
@@ -128,4 +127,9 @@ export default {
   updateScrobbles: { one: "Uppdatera {count} scrobblingar", other: "Uppdatera {count} scrobblingar" },
   save: "Spara",
   lyrics: "Låttext",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

@@ -205,7 +205,7 @@ export default {
   spotifySettings: "Settings",
   spotifyClientId: "Client ID",
   spotifyClientIdPlaceholder: "32 harf ve rakam",
-  spotifyPlayback: "Müziği burada videolar yerine Spotify üzerinden de çal (Spotify Premium gerekir)",
+  spotifyPlayback: "Also offer Spotify as a playback source (needs Spotify Premium)",
   connectSpotify: "Spotify'ı bağla",
   spotifyOtherAccount:
     "Uygulamayı yalnızca onu oluşturan Spotify hesabı hemen kullanabilir. Farklı bir hesap bağlamak için önce uygulama ayarlarında {userManagement} bölümüne ekle.",
@@ -220,16 +220,15 @@ export default {
   },
   spotifyImporting: "Son dinlediklerin içe aktarılıyor. Yeni dinlemeler birkaç dakikada bir alınır.",
   spotifyResting: "Spotify yavaşlamamızı istedi, içe aktarma yaklaşık {time} civarında devam edecek.",
-  spotifyPlaybackOn: "Parça Spotify'da varsa oynatıcı Spotify üzerinden çalar.",
-  spotifyPlaybackOff:
-    "Oynatıcı videoları kullanıyor. Bunun yerine Spotify (Premium) üzerinden çalmak için Uygulamayı değiştir'i seç ve çalma seçeneğini işaretle.",
+  spotifyPlaybackOn: "Spotify is available as a playback source in the player.",
+  spotifyPlaybackOff: "To play through Spotify (Premium) too, choose Change app and tick the playback option.",
   importNow: "Şimdi içe aktar",
   changeApp: "Uygulamayı değiştir",
   badgeDisabled: "Devre dışı",
   badgeNeedsAttention: "İlgi gerekiyor",
   badgeConnected: "Bağlı",
   badgeNotConnected: "Bağlı değil",
-  spotifyBlurb: "Spotify'da dinlediklerini içe aktar",
+  spotifyBlurb: "Import and play from Spotify",
   spotifyDisabled: "Spotify'dan scrobble devre dışı.",
 
   discordBlurb: "Discord durumundan dinlemeleri kaydet",
@@ -303,4 +302,16 @@ export default {
   clearHintAs:
     "Kullanıcının ({name}) kitaplığındaki tüm scrobble'ları siler. Sevilen parçalar, etiketler ve çalma listeleri korunur.",
   clearImpersonating: "{name} olarak işlem yapıyorsun; şifre gerekmez. Bu silme işlemi denetim kaydına yazılır.",
+  subsonicBlurb: "Play from your own music server",
+  subsonicIntro:
+    "Connect a Navidrome, Airsonic, Gonic or other OpenSubsonic server. The player can then stream from it instead of YouTube.",
+  subsonicUrl: "Server address",
+  subsonicUsername: "Username",
+  subsonicPassword: "Password",
+  subsonicPasswordHint: "The password is stored encrypted and only used to ask your server for tracks.",
+  subsonicConnected: "Music server connected.",
+  subsonicDisconnected: "Music server disconnected.",
+  subsonicConnectedTo: "Connected to {name}.",
+  subsonicChange: "Change server",
+  subsonicNote: "OpenSubsonic is only used for playback. Plays still scrobble to Sonosphere.",
 } satisfies Translation<typeof en>;

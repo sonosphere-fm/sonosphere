@@ -11,7 +11,6 @@ export default {
   playTitle: "{title} चलाएँ",
   trackUnavailable: "ट्रैक उपलब्ध नहीं है।",
   finding: "“{title}” ढूँढा जा रहा है…",
-  onSpotify: "Spotify पर",
   scrobbled: "स्क्रॉबल हो गया",
   openInSpotify: "Spotify में खोलें",
   watchOnYouTube: "YouTube पर देखें",
@@ -126,4 +125,9 @@ export default {
   updateScrobbles: { one: "{count} स्क्रॉबल अपडेट करें", other: "{count} स्क्रॉबल अपडेट करें" },
   save: "सहेजें",
   lyrics: "गीत के बोल",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

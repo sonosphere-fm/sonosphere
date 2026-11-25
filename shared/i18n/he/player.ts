@@ -11,7 +11,6 @@ export default {
   playTitle: "ניגון {title}",
   trackUnavailable: "השיר לא זמין.",
   finding: 'מחפשים את "{title}"…',
-  onSpotify: "ב־Spotify",
   scrobbled: "סוקרבל",
   openInSpotify: "פתיחה ב־Spotify",
   watchOnYouTube: "צפייה ב־YouTube",
@@ -142,4 +141,9 @@ export default {
   },
   save: "שמירה",
   lyrics: "מילים",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

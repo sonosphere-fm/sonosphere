@@ -1,4 +1,5 @@
 import type { Locale } from "./i18n/core";
+import type { PlaybackSource } from "./playback";
 import type { Role } from "./site";
 import type { ProfileLink } from "./profile-links";
 import type { UserAppearance } from "./username-fonts";
@@ -32,6 +33,7 @@ export type Me = UserAppearance & {
   emailMuted: string[];
   theme: "light" | "system" | "dark";
   locale: Locale | "";
+  playbackSource: PlaybackSource;
   useProfileTheme?: boolean;
   emailVerified: boolean;
   pendingEmail: string | null;

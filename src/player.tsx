@@ -10,15 +10,19 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "./kit";
-import { t } from "./i18n";
+import { t, type MessageKey } from "./i18n";
 import { Link, useNavigate } from "react-router-dom";
 import { api, artistUrl, imageUrl, qs, trackUrl, useAuth } from "./lib";
 import { errorText } from "./ui/base";
 import { Mark } from "./ui/brand";
 import { ImageWithFallback } from "./ui/image";
 import type { Ok } from "../shared/auth";
+import type { ProfileSaved } from "../shared/account";
 import type { ScrobbleResponse } from "../shared/listening";
+import { isPlaybackSource, PLAYBACK_SOURCES, type PlaybackSource } from "../shared/playback";
 import type { Station as StationReply } from "../shared/stations";
+import type { SpotifyStatus } from "../shared/spotify";
+import type { SubsonicStatus } from "../shared/subsonic";
 import type { VideoLookup } from "../shared/video";
 import { artId, isTrack, openSpotify, type SdkState, type SdkTrack, type SpotifyOut } from "./spotify";
 
@@ -36,6 +40,7 @@ type State = {
   status: Status;
   videoId: string | null;
   spotify: { id: string; art: string | null } | null;
+  source: PlaybackSource | null;
   position: number;
   length: number;
   scrobbled: boolean;
@@ -48,6 +53,7 @@ const empty: State = {
   status: "finding",
   videoId: null,
   spotify: null,
+  source: null,
   position: 0,
   length: 0,
   scrobbled: false,
@@ -61,6 +67,7 @@ type Saved = {
   station: Station | null;
   position: number;
   length: number;
+  source?: PlaybackSource | null;
   art?: string | null;
 };
 /** Spotify's cover from before the reload, shown while the status is "saved". */
@@ -77,6 +84,7 @@ function loadSaved(): State {
       index: v.index,
       station: v.station,
       status: "saved",
+      source: isPlaybackSource(v.source) ? v.source : null,
       position: Number(v.position) || 0,
       length: Number(v.length) || 0,
     };
@@ -95,6 +103,7 @@ function save(s: State) {
       station: s.station,
       position: s.position,
       length: s.length,
+      source: s.source,
       art: s.spotify?.art ?? (s.status === "saved" ? savedArt : null),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(v));
@@ -118,6 +127,12 @@ export const usePlayer = () => {
   return p;
 };
 const same = (a?: PTrack, b?: PTrack) => !!a && !!b && a.title === b.title && a.artist === b.artist;
+
+type Availability = Record<PlaybackSource, boolean | null>;
+const sourceOrder = (selected: PlaybackSource, available: Availability): PlaybackSource[] =>
+  [...new Set<PlaybackSource>([selected, "youtube", "subsonic", "spotify"])].filter(
+    (source) => available[source] !== false
+  );
 
 // The parts of the YouTube IFrame API used here (no @types package is installed).
 type YTPlayer = {
@@ -181,15 +196,27 @@ type SpotifyLink = {
 const trackKey = (t: PTrack) => `${t.artist}\n${t.title}`.toLowerCase();
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const { me } = useAuth();
+  const { me, setMe } = useAuth();
   const [state, setState] = useState<State>(loadSaved);
   const ref = useRef(state);
   ref.current = state;
   const meRef = useRef(me);
   meRef.current = me;
   const yt = useRef<YTPlayer | null>(null);
+  const audio = useRef<HTMLAudioElement>(null);
   const mount = useRef<HTMLDivElement>(null);
   const run = useRef({ token: 0, listened: 0, startedAt: 0 });
+  const [source, setSource] = useState<PlaybackSource>(me?.playbackSource ?? "youtube");
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
+  const [available, setAvailable] = useState<Availability>({
+    youtube: true,
+    subsonic: null,
+    spotify: null,
+  });
+  const availableRef = useRef(available);
+  availableRef.current = available;
+  const [sourceCheck, setSourceCheck] = useState(0);
   // videos still to try for this track: some can't be embedded
   const cands = useRef<string[]>([]);
   const station = useRef<(Station & { loading: boolean }) | null>(
@@ -231,6 +258,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       status: "ready",
       playing: true,
       spotify: { id: cur.id, art: null },
+      source: "spotify",
       position: st.position / 1000,
       length: st.duration / 1000,
     });
@@ -273,7 +301,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     sp.current.uri = "";
     sp.current.out?.pause();
     from.current = ref.current.position;
-    setState((v) => ({ ...v, spotify: null, status: "finding" }));
+    setState((v) => ({ ...v, spotify: null, source: null, status: "finding" }));
     fallBack.current();
   };
 
@@ -307,6 +335,49 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [me?.id]);
 
+  // Which sources this account can use. Unknown while the check runs, so they are still worth trying.
+  useEffect(() => {
+    const bump = () => setSourceCheck((n) => n + 1);
+    window.addEventListener("spin:playback-source", bump);
+    return () => window.removeEventListener("spin:playback-source", bump);
+  }, []);
+
+  useEffect(() => {
+    if (!me) return;
+    sourceRef.current = me.playbackSource;
+    setSource(me.playbackSource);
+  }, [me?.id]);
+
+  useEffect(() => {
+    if (!me) {
+      const only: Availability = { youtube: true, subsonic: false, spotify: false };
+      availableRef.current = only;
+      setAvailable(only);
+      sourceRef.current = "youtube";
+      setSource("youtube");
+      return;
+    }
+    let dead = false;
+    Promise.all([
+      api<SubsonicStatus>("/subsonic").then(
+        (r) => r.connected,
+        () => null
+      ),
+      api<SpotifyStatus>("/spotify").then(
+        (r) => r.enabled && !!r.link && !r.link.broken && r.link.playback,
+        () => null
+      ),
+    ]).then(([subsonic, spotify]) => {
+      if (dead) return;
+      const next: Availability = { youtube: true, subsonic, spotify };
+      availableRef.current = next;
+      setAvailable(next);
+    });
+    return () => {
+      dead = true;
+    };
+  }, [me?.id, sourceCheck]);
+
   // A station tops itself up before it runs dry, skipping tracks heard in the last couple of batches.
   const refill = () => {
     const st = station.current;
@@ -339,6 +410,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     sp.current.uri = "";
     sp.current.external = false;
     sp.current.out?.pause();
+    const el = audio.current;
+    if (el) {
+      el.pause();
+      el.removeAttribute("src");
+      el.load();
+    }
 
     if (!t) {
       station.current = null;
@@ -362,7 +439,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         sp.current.uri = "";
         return false;
       }
-      setState((s) => ({ ...s, spotify: { id: hit.id, art: hit.art }, videoId: null, status: "ready", playing: true }));
+      setState((s) => ({
+        ...s,
+        spotify: { id: hit.id, art: hit.art },
+        videoId: null,
+        source: "spotify",
+        status: "ready",
+        playing: true,
+      }));
       return true;
     };
     const playVideo = async () => {
@@ -372,25 +456,111 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       );
       if (!ids[0] || stale()) return false;
       cands.current = ids;
-      setState((s) => ({ ...s, videoId: ids[0]!, status: "ready", playing: true }));
+      setState((s) => ({ ...s, videoId: ids[0]!, source: "youtube", status: "ready", playing: true }));
       if (meRef.current) {
         const body = { artist: t.artist, track: t.title, album: t.album || "", duration: t.duration || 0 };
         api<Ok>("/nowplaying", { body }).catch(() => {});
       }
       return true;
     };
-    // Spotify first when linked; each source is tried once per track
-    const sources = [playSpotify, playVideo];
+    const playSubsonic = () =>
+      new Promise<boolean>((resolve) => {
+        const player = audio.current;
+        if (!player) return resolve(false);
+        const startAt = from.current;
+        let done = false;
+        const timer = setTimeout(() => {
+          if (player.readyState >= 1) ready();
+          else finish(false);
+        }, 15_000);
+        const finish = (ok: boolean) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          player.removeEventListener("loadedmetadata", ready);
+          player.removeEventListener("error", failed);
+          resolve(ok);
+        };
+        const ready = () => {
+          if (done) return;
+          if (stale()) return finish(false);
+          if (startAt > 0) {
+            try {
+              player.currentTime = startAt;
+            } catch {}
+          }
+          const length = Number.isFinite(player.duration) ? player.duration : 0;
+          setState((s) => ({
+            ...s,
+            source: "subsonic",
+            videoId: null,
+            spotify: null,
+            status: "ready",
+            playing: !player.paused,
+            length: length || t.duration || 0,
+          }));
+          if (meRef.current) {
+            const body = {
+              artist: t.artist,
+              track: t.title,
+              album: t.album || "",
+              duration: Math.round(length) || t.duration || 0,
+            };
+            api<Ok>("/nowplaying", { body }).catch(() => {});
+          }
+          finish(true);
+        };
+        const failed = () => finish(false);
+        player.addEventListener("loadedmetadata", ready);
+        player.addEventListener("error", failed);
+        player.src = `/api/subsonic/stream${qs({ artist: t.artist, track: t.title })}`;
+        player.load();
+        player.play().catch((e: DOMException) => {
+          if (e?.name === "NotAllowedError" && player.readyState >= 1) ready();
+          else finish(false);
+        });
+      });
+
+    const players: Record<PlaybackSource, () => Promise<boolean>> = {
+      youtube: playVideo,
+      subsonic: playSubsonic,
+      spotify: playSpotify,
+    };
+    const order = meRef.current
+      ? sourceOrder(sourceRef.current, availableRef.current)
+      : (["youtube"] as PlaybackSource[]);
+    let trying = false;
     fallBack.current = async () => {
-      for (let source = sources.shift(); source; source = sources.shift()) {
-        if (await source().catch(() => false)) return;
-        if (stale()) return;
+      if (trying) return;
+      trying = true;
+      try {
+        for (let source = order.shift(); source; source = order.shift()) {
+          if (await players[source]().catch(() => false)) return;
+          if (stale()) return;
+        }
+        setState((s) => ({ ...s, status: "missing", playing: false, source: null }));
+      } finally {
+        trying = false;
       }
-      setState((s) => ({ ...s, status: "missing", playing: false }));
     };
     fallBack.current();
   };
   const next = () => start(ref.current.queue, ref.current.index + 1);
+
+  const chooseSource = (next: PlaybackSource) => {
+    if (!meRef.current || next === sourceRef.current) return;
+    const previous = sourceRef.current;
+    sourceRef.current = next;
+    setSource(next);
+    const s = ref.current;
+    api<ProfileSaved>("/me", { method: "PATCH", body: { playbackSource: next } })
+      .then((r) => setMe(r.user))
+      .catch(() => {
+        sourceRef.current = previous;
+        setSource(previous);
+      });
+    if (s.index >= 0) start(s.queue, s.index, live(s.status) ? s.position : from.current);
+  };
 
   // Create the embedded player once, then just swap videos in it.
   useEffect(() => {
@@ -416,7 +586,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         cands.current = rest;
         if (rest[0]) return setState((s) => ({ ...s, videoId: rest[0]! }));
         from.current = ref.current.position;
-        setState((s) => ({ ...s, videoId: null, status: "finding" }));
+        setState((s) => ({ ...s, videoId: null, source: null, status: "finding" }));
         fallBack.current();
       };
       yt.current = new YT.Player(el, {
@@ -444,14 +614,24 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const tick = () => {
       const s = ref.current;
       const t = s.queue[s.index];
-      const p = yt.current;
+      if (!t) return;
       if (s.spotify) {
         tickSpotify();
         return;
       }
-      if (!t || !p?.getDuration) return;
-      const length = p.getDuration() || 0;
-      const position = p.getCurrentTime() || 0;
+      let length = 0;
+      let position = 0;
+      if (s.source === "subsonic") {
+        const player = audio.current;
+        if (!player) return;
+        length = (Number.isFinite(player.duration) ? player.duration : 0) || s.length || t.duration || 0;
+        position = player.currentTime || 0;
+      } else {
+        const p = yt.current;
+        if (!p?.getDuration) return;
+        length = p.getDuration() || 0;
+        position = p.getCurrentTime() || 0;
+      }
       run.current.listened++;
       let scrobbled = s.scrobbled;
       if (!scrobbled && meRef.current && length > 30 && run.current.listened >= Math.min(length / 2, 240)) {
@@ -472,7 +652,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [state.playing, state.status, state.index]);
+  }, [state.playing, state.status, state.index, state.source]);
 
   // saved on every change of track, and every few seconds of progress
   useEffect(() => {
@@ -485,7 +665,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     sec = Math.max(0, Math.min(sec, s.length || sec));
     if (s.status === "ready") {
       if (s.spotify) sp.current.out?.seek(sec * 1000);
-      else
+      else if (s.source === "subsonic") {
+        const player = audio.current;
+        if (player) player.currentTime = sec;
+      } else
         try {
           yt.current?.seekTo?.(sec, true);
         } catch {}
@@ -496,6 +679,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const s = ref.current;
     if (s.status === "saved") return start(s.queue, s.index, s.position);
     if (s.spotify) return sp.current.out?.toggle();
+    if (s.source === "subsonic") {
+      const player = audio.current;
+      if (!player) return;
+      if (s.playing) player.pause();
+      else player.play().catch(() => {});
+      return;
+    }
     const p = yt.current;
     if (!p?.getPlayerState) return;
     if (s.playing) p.pauseVideo();
@@ -509,10 +699,26 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const close = () => {
     start([], 0);
     sp.current.out?.pause();
+    const player = audio.current;
+    if (player) {
+      player.pause();
+      player.removeAttribute("src");
+      player.load();
+    }
     try {
       yt.current?.destroy?.();
     } catch {}
     yt.current = null;
+  };
+  const audioFailed = () => {
+    const s = ref.current;
+    if (s.source !== "subsonic" || s.status !== "ready") return;
+    // clearing the element for the next track also raises an error
+    if (!audio.current?.getAttribute("src")) return;
+    from.current = s.position;
+    audio.current?.pause();
+    setState((v) => ({ ...v, source: null, status: "finding", playing: false }));
+    fallBack.current();
   };
   const value = {
     state,
@@ -532,7 +738,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const track = state.queue[state.index];
   const hasNext = state.index < state.queue.length - 1;
-  const showCover = (state.status === "ready" && state.spotify) || state.status === "saved";
+  const showCover =
+    (state.status === "ready" && (state.spotify || state.source === "subsonic")) || state.status === "saved";
   const cover = state.spotify?.art || (state.status === "saved" ? savedArt : null) || track?.image;
   const coverSrc = cover ? imageUrl(cover) : null;
   return (
@@ -551,7 +758,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           <div
             className="vplayer-video"
             ref={mount}
-            style={{ visibility: state.status === "ready" && !state.spotify ? "visible" : "hidden" }}
+            style={{ visibility: state.status === "ready" && state.source === "youtube" ? "visible" : "hidden" }}
           />
           {showCover && <Cover key={`${state.index}:${state.status}:${state.spotify?.id}`} src={coverSrc} />}
           {!showCover && state.status !== "ready" && (
@@ -560,6 +767,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             </div>
           )}
         </div>
+        <audio
+          ref={audio}
+          preload="metadata"
+          onPlay={() => {
+            if (ref.current.source === "subsonic") setState((v) => (v.playing ? v : { ...v, playing: true }));
+          }}
+          onPause={() => {
+            const s = ref.current;
+            if (s.source === "subsonic" && s.status === "ready" && !audio.current?.ended)
+              setState((v) => (v.playing ? { ...v, playing: false } : v));
+          }}
+          onEnded={() => {
+            if (ref.current.source === "subsonic" && ref.current.status === "ready") next();
+          }}
+          onError={audioFailed}
+        />
         <SeekBar position={state.position} length={live(state.status) ? state.length : 0} onSeek={seek} />
         {track && (
           <div className="vplayer-bar">
@@ -572,8 +795,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
               <TrackMeta
                 track={track}
                 status={state.status}
-                spotify={!!state.spotify}
                 scrobbled={!!me && state.scrobbled}
+                source={state.source}
+                selected={source}
+                available={available}
+                canSwitch={!!me}
+                onSource={chooseSource}
               />
             </div>
             <button type="button" aria-label={t("player.previousTrack")} disabled={!live(state.status)} onClick={prev}>
@@ -598,38 +825,151 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const SOURCE_LABELS: Record<PlaybackSource, MessageKey> = {
+  youtube: "player.sourceYouTube",
+  subsonic: "player.sourceSubsonic",
+  spotify: "player.sourceSpotify",
+};
+
 function TrackMeta({
   track,
   status,
-  spotify,
   scrobbled,
+  source,
+  selected,
+  available,
+  canSwitch,
+  onSource,
 }: {
   track: PTrack;
   status: Status;
-  spotify: boolean;
   scrobbled: boolean;
+  source: PlaybackSource | null;
+  selected: PlaybackSource;
+  available: Availability;
+  canSwitch: boolean;
+  onSource: (source: PlaybackSource) => void;
 }) {
-  if (status === "missing") return <span>{t("player.trackUnavailable")}</span>;
-  if (status === "finding") return <span>{t("player.finding", { title: track.title })}</span>;
+  const menu = (
+    <SourceMenu
+      playing={status === "ready" ? source : null}
+      selected={selected}
+      available={available}
+      canSwitch={canSwitch}
+      onSelect={onSource}
+    />
+  );
+  if (status === "missing")
+    return (
+      <span className="vplayer-line">
+        <span className="vplayer-status">{t("player.trackUnavailable")}</span> {menu}
+      </span>
+    );
+  if (status === "finding")
+    return (
+      <span className="vplayer-line">
+        <span className="vplayer-status">{t("player.finding", { title: track.title })}</span> {menu}
+      </span>
+    );
   return (
     <>
       <Link to={trackUrl(track.artist, track.title)} className="strong">
         {track.title}
       </Link>
-      <span>
+      <span className="vplayer-line">
         <Link to={artistUrl(track.artist)}>{track.artist}</Link>
-        {spotify ? (
-          <em> · {t("player.onSpotify")}</em>
-        ) : (
-          scrobbled && (
-            <em>
-              {" "}
-              · <Ico.Check /> {t("player.scrobbled")}
-            </em>
-          )
+        {" · "}
+        {menu}
+        {scrobbled && (
+          <em>
+            {" "}
+            · <Ico.Check /> {t("player.scrobbled")}
+          </em>
         )}
       </span>
     </>
+  );
+}
+
+function SourceMenu({
+  playing,
+  selected,
+  available,
+  canSwitch,
+  onSelect,
+}: {
+  playing: PlaybackSource | null;
+  selected: PlaybackSource;
+  available: Availability;
+  canSwitch: boolean;
+  onSelect: (source: PlaybackSource) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: globalThis.PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const key = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+  const label = t(SOURCE_LABELS[playing ?? selected]);
+  if (!canSwitch) return <span className="vplayer-source-label">{label}</span>;
+  return (
+    <span className="vplayer-source" ref={box}>
+      <button
+        type="button"
+        className="vplayer-source-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t("player.playbackSource")}
+        title={t("player.playbackSource")}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {label} <Ico.ChevDown />
+      </button>
+      {open && (
+        <span className="vplayer-source-menu" role="menu">
+          {PLAYBACK_SOURCES.map((item) =>
+            available[item] === false ? (
+              <Link
+                key={item}
+                to="/settings/applications"
+                role="menuitem"
+                className="vplayer-source-item setup"
+                onClick={() => setOpen(false)}
+              >
+                <span>{t(SOURCE_LABELS[item])}</span>
+                <small>{t("player.setUpSource")}</small>
+              </Link>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected === item}
+                className="vplayer-source-item"
+                onClick={() => {
+                  setOpen(false);
+                  onSelect(item);
+                }}
+              >
+                <span>{t(SOURCE_LABELS[item])}</span>
+                {selected === item && <Ico.Check />}
+              </button>
+            )
+          )}
+        </span>
+      )}
+    </span>
   );
 }
 

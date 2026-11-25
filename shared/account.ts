@@ -1,4 +1,5 @@
 import type { Session } from "./auth";
+import type { PlaybackSource } from "./playback";
 import type { ProfileLink } from "./profile-links";
 import type { UsernameFont } from "./username-fonts";
 
@@ -21,6 +22,7 @@ export type ProfileEdit = {
   emailNotify?: string;
   emailMuted?: string[];
   theme?: string;
+  playbackSource?: PlaybackSource;
 };
 export type ProfileSaved = Session;
 export type ScrobblesCleared = { deleted: number };

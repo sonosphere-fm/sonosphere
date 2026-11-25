@@ -2,12 +2,13 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Tokens are encrypted so a copied database or backup holds nothing usable. The key file lives next to the
-// database, not in it or its backups; losing the key only means listeners have to reconnect Spotify.
+// Secrets are encrypted so a copied database or backup holds nothing usable. The key file lives next to the
+// database, not in it or its backups; losing the key only means listeners have to connect the service again.
 let cached: Buffer | null = null;
 function key(): Buffer {
   if (cached) return cached;
-  const fromEnv = process.env.SPOTIFY_TOKEN_KEY;
+  // the Spotify name predates the other sealed secrets, so existing deployments keep their key
+  const fromEnv = process.env.SPOTIFY_TOKEN_KEY || process.env.TOKEN_KEY;
   if (fromEnv) {
     cached = createHash("sha256").update(fromEnv).digest();
     return cached;

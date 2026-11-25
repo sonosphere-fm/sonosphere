@@ -2955,6 +2955,88 @@
     height: 12px;
     vertical-align: -1px;
   }
+  .vplayer-meta > span.vplayer-line {
+    display: flex;
+    align-items: center;
+    overflow: visible;
+  }
+  .vplayer-line > a,
+  .vplayer-line > .vplayer-status {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .vplayer-line > em,
+  .vplayer-source,
+  .vplayer-source-label {
+    flex: none;
+  }
+  .vplayer-source {
+    position: relative;
+    display: inline-block;
+  }
+  .vplayer-source-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #c8c8c8;
+    font: inherit;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .vplayer-source-btn:hover {
+    color: #fff;
+  }
+  .vplayer-source-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  .vplayer-source-label {
+    font-style: normal;
+    color: #c8c8c8;
+    font-size: 13.5px;
+  }
+  .vplayer-source-menu {
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: calc(100% + 10px);
+    z-index: 2;
+    display: block;
+    min-width: 200px;
+    padding: 4px;
+    background: #2d2d2d;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+  .vplayer-source-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 7px 9px;
+    border: 0;
+    background: none;
+    color: #fff;
+    font: inherit;
+    font-size: 13.5px;
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .vplayer-source-item:hover {
+    background: #3b3b3b;
+  }
+  .vplayer-source-item svg {
+    width: 14px;
+    height: 14px;
+  }
+  .vplayer-source-item.setup small {
+    color: #9a9a9a;
+    font-size: 12px;
+  }
   .vplayer-bar > button,
   .vplayer-bar > a {
     flex: none;

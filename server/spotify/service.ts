@@ -6,7 +6,7 @@ import { asObject, now, rid } from "../util";
 import * as Sentry from "@sentry/bun";
 import * as repo from "./repo";
 import { clearNowPlaying } from "../listening/repo";
-import { seal, unseal } from "./seal";
+import { seal, unseal } from "../seal";
 import { allowed, groupOf, pace, refused, spent, type Group } from "./quota";
 import type { SpotifyLink, SpotifyNow, SpotifyPlaying, SpotifyStatus } from "../../shared/spotify";
 

@@ -11,7 +11,6 @@ export default {
   playTitle: "{title} ప్లే చేయండి",
   trackUnavailable: "ట్రాక్ అందుబాటులో లేదు.",
   finding: "“{title}” కోసం వెతుకుతోంది…",
-  onSpotify: "Spotifyలో",
   scrobbled: "స్క్రోబుల్ చేయబడింది",
   openInSpotify: "Spotifyలో తెరవండి",
   watchOnYouTube: "YouTubeలో చూడండి",
@@ -126,4 +125,9 @@ export default {
   updateScrobbles: { one: "{count} స్క్రోబుల్‌ను అప్‌డేట్ చేయండి", other: "{count} స్క్రోబుల్‌లను అప్‌డేట్ చేయండి" },
   save: "సేవ్ చేయండి",
   lyrics: "సాహిత్యం",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

@@ -11,7 +11,6 @@ export default {
   playTitle: "Redă {title}",
   trackUnavailable: "Piesă indisponibilă.",
   finding: "Se caută „{title}”…",
-  onSpotify: "pe Spotify",
   scrobbled: "Scrobble făcut",
   openInSpotify: "Deschide în Spotify",
   watchOnYouTube: "Urmărește pe YouTube",
@@ -149,4 +148,9 @@ export default {
   },
   save: "Salvează",
   lyrics: "Versuri",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

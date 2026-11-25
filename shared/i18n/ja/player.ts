@@ -11,7 +11,6 @@ export default {
   playTitle: "{title}を再生",
   trackUnavailable: "このトラックは再生できません。",
   finding: "「{title}」を検索中…",
-  onSpotify: "Spotifyで再生中",
   scrobbled: "スクロブル済み",
   openInSpotify: "Spotifyで開く",
   watchOnYouTube: "YouTubeで見る",
@@ -128,4 +127,9 @@ export default {
   updateScrobbles: { other: "{count}件のスクロブルを更新" },
   save: "保存",
   lyrics: "歌詞",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

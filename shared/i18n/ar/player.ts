@@ -11,7 +11,6 @@ export default {
   playTitle: "تشغيل {title}",
   trackUnavailable: "المقطع غير متاح.",
   finding: "جارٍ البحث عن «{title}»…",
-  onSpotify: "على Spotify",
   scrobbled: "تم السكروبل",
   openInSpotify: "فتح في Spotify",
   watchOnYouTube: "شاهد على YouTube",
@@ -175,4 +174,9 @@ export default {
   },
   save: "حفظ",
   lyrics: "كلمات الأغنية",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

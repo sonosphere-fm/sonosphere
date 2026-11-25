@@ -45,6 +45,7 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     emailMuted: u.emailMuted.split(",").filter(Boolean),
     theme: u.theme === "dark" || u.theme === "light" ? u.theme : "system",
     locale: isLocale(u.locale) ? u.locale : "",
+    playbackSource: u.playbackSource,
     useProfileTheme: u.useProfileTheme,
     emailVerified: !!u.emailVerifiedAt,
     pendingEmail: await pendingEmail(u.id),

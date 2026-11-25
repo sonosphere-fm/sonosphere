@@ -11,7 +11,6 @@ export default {
   playTitle: "Écouter {title}",
   trackUnavailable: "Titre indisponible.",
   finding: "Recherche de « {title} »…",
-  onSpotify: "sur Spotify",
   scrobbled: "Scrobblé",
   openInSpotify: "Ouvrir dans Spotify",
   watchOnYouTube: "Regarder sur YouTube",
@@ -131,4 +130,9 @@ export default {
   updateScrobbles: { one: "Modifier {count} scrobble", other: "Modifier {count} scrobbles" },
   save: "Enregistrer",
   lyrics: "Paroles",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

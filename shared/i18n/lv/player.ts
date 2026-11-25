@@ -11,7 +11,6 @@ export default {
   playTitle: "Atskaņot {title}",
   trackUnavailable: "Dziesma nav pieejama.",
   finding: "Meklē „{title}”…",
-  onSpotify: "Spotify",
   scrobbled: "Skroblēts",
   openInSpotify: "Atvērt Spotify",
   watchOnYouTube: "Skatīties YouTube",
@@ -148,4 +147,9 @@ export default {
   },
   save: "Saglabāt",
   lyrics: "Dziesmas vārdi",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

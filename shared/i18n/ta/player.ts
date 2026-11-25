@@ -11,7 +11,6 @@ export default {
   playTitle: "{title} ஐ இயக்கு",
   trackUnavailable: "பாடல் கிடைக்கவில்லை.",
   finding: "“{title}” ஐத் தேடுகிறது…",
-  onSpotify: "Spotify இல்",
   scrobbled: "ஸ்க்ராபிள் செய்யப்பட்டது",
   openInSpotify: "Spotify இல் திற",
   watchOnYouTube: "YouTube இல் பார்",
@@ -140,4 +139,9 @@ export default {
   updateScrobbles: { one: "{count} ஸ்க்ராபிளைப் புதுப்பி", other: "{count} ஸ்க்ராபிள்களைப் புதுப்பி" },
   save: "சேமி",
   lyrics: "பாடல் வரிகள்",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

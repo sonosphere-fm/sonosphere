@@ -23,6 +23,7 @@ type ProfileFields = Partial<
     | "digestAt"
     | "theme"
     | "locale"
+    | "playbackSource"
     | "useProfileTheme"
     | "usernameFont"
     | "profileAccent"

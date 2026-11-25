@@ -13,6 +13,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { PlaybackSource } from "../../shared/playback";
 import type { UsernameFont } from "../../shared/username-fonts";
 
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
@@ -91,6 +92,7 @@ export const users = pgTable("users", {
   theme: text().default("system").notNull(),
   // "" follows the browser
   locale: text().default("").notNull(),
+  playbackSource: text("playback_source").$type<PlaybackSource>().default("youtube").notNull(),
   digestAt: integer("digest_at"),
 });
 
@@ -1203,7 +1205,7 @@ export const tasteFactors = pgTable(
   (table) => [primaryKey({ columns: [table.kind, table.id] })]
 );
 
-// tokens are sealed (server/spotify/seal.ts)
+// tokens are sealed (server/seal.ts)
 export const spotifyLinks = pgTable(
   "spotify_links",
   {
@@ -1242,6 +1244,20 @@ export const spotifyAuth = pgTable("spotify_auth", {
   // where to return to when Spotify comes back through a relay
   origin: text().notNull().default(""),
   redirectUri: text("redirect_uri").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
+// the password is sealed (server/seal.ts)
+export const subsonicLinks = pgTable("subsonic_links", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  url: text().notNull(),
+  username: text().notNull(),
+  password: text().notNull(),
+  name: text().default("").notNull(),
+  version: text().default("").notNull(),
+  openSubsonic: boolean("open_subsonic").default(false).notNull(),
   createdAt: integer("created_at").notNull(),
 });
 
