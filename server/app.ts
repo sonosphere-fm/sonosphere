@@ -64,7 +64,7 @@ export async function appRoutes() {
       pageSeo(url),
     ]);
     const data = escapeScript(JSON.stringify({ user: viewer ? await me(viewer, actor) : null }));
-    const scheme = viewer?.theme === "dark" || viewer?.theme === "system" ? ` data-scheme="${viewer.theme}"` : "";
+    const scheme = viewer?.theme === "dark" || viewer?.theme === "light" ? ` data-scheme="${viewer.theme}"` : "";
     const home = /^\/+$/u.test(url.pathname);
     const publicHome = home && !viewer;
     const seo = home && viewer ? { ...found, title: TITLES.home } : found;

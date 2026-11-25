@@ -8,7 +8,7 @@ import type { ProfileSaved } from "../../shared/account";
 
 const isDark = () =>
   getComputedStyle(document.documentElement).colorScheme === "dark" ||
-  (document.documentElement.dataset.scheme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+  (!document.documentElement.dataset.scheme && matchMedia("(prefers-color-scheme: dark)").matches);
 
 const button =
   "inline-grid place-items-center size-8 p-0 bg-transparent text-[#f6f2e9] border-none rounded-none " +

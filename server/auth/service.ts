@@ -43,7 +43,7 @@ export async function me(u: User, actor?: User | null): Promise<Me> {
     dmPolicy: u.dmPolicy || "requests",
     emailNotify: u.emailNotify,
     emailMuted: u.emailMuted.split(",").filter(Boolean),
-    theme: u.theme === "dark" || u.theme === "system" ? u.theme : "light",
+    theme: u.theme === "dark" || u.theme === "light" ? u.theme : "system",
     locale: isLocale(u.locale) ? u.locale : "",
     useProfileTheme: u.useProfileTheme,
     emailVerified: !!u.emailVerifiedAt,
