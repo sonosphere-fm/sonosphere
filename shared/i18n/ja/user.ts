@@ -253,5 +253,7 @@ export default {
   firstScrobble: "最初のスクロブル",
   scrobbleNumber: "{n}回目のスクロブル",
   nextMilestone: "次は{n}回目のスクロブル、あと{left}",
+  firstPlays: "最初の再生",
+  startedWith: "{track} から始まった",
   yearCard: "年間カード",
 } satisfies Translation<typeof en>;

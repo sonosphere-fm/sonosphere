@@ -266,5 +266,7 @@ export default {
   firstScrobble: "முதல் ஸ்க்ராபிள்",
   scrobbleNumber: "ஸ்க்ராபிள் #{n}",
   nextMilestone: "அடுத்து: ஸ்க்ராபிள் #{n}, இன்னும் {left}",
+  firstPlays: "முதல் கேட்டவை",
+  startedWith: "{track} உடன் தொடங்கியது",
   yearCard: "ஆண்டு அட்டை",
 } satisfies Translation<typeof en>;

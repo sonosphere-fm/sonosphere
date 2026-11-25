@@ -248,5 +248,7 @@ export default {
   firstScrobble: "第一筆紀錄",
   scrobbleNumber: "第 {n} 筆紀錄",
   nextMilestone: "下一個：第 {n} 筆紀錄，還差 {left}",
+  firstPlays: "首次播放",
+  startedWith: "從 {track} 開始",
   yearCard: "年度卡片",
 } satisfies Translation<typeof en>;

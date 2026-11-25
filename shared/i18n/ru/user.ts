@@ -315,5 +315,7 @@ export default {
   firstScrobble: "Первый скроббл",
   scrobbleNumber: "Скроббл № {n}",
   nextMilestone: "Далее: скроббл № {n}, осталось {left}",
+  firstPlays: "Первые прослушивания",
+  startedWith: "Всё началось с {track}",
   yearCard: "Карточка года",
 } satisfies Translation<typeof en>;

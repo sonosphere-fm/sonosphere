@@ -6,7 +6,13 @@ import { Button } from "../../kit";
 import { Art, Empty, Section, Stat } from "../../ui/base";
 import { BarChart } from "../../ui/charts";
 import { Username } from "../../ui/username";
-import { type DayCount, type ListeningStats, type Milestones, streaks } from "../../../shared/listening";
+import {
+  type DayCount,
+  type ListeningStats,
+  type Milestones,
+  type RecentTrack,
+  streaks,
+} from "../../../shared/listening";
 
 const weekdayNames = () =>
   Array.from({ length: 7 }, (_, i) =>
@@ -90,34 +96,59 @@ function PixelGrid({ name, year, today, days }: { name: string; year: number; to
 
 function MilestoneList({ name }: { name: string }) {
   const { data } = useApi<Milestones>(`/user/milestones${qs({ name })}`);
-  if (!data?.items.length) return null;
+  if (!data) return null;
+  const trackLink = (track: RecentTrack) => <Link to={trackUrl(track.artist, track.title)}>{track.title}</Link>;
   return (
-    <Section title={t("user.milestones")}>
-      <ul className="feed milestones">
-        {data.items.map(({ n, track }) => (
-          <li key={n}>
-            <Art image={track.image} />
-            <div className="grow">
-              <span className="strong">
-                {n === 1 ? t("user.firstScrobble") : t("user.scrobbleNumber", { n: num(n) })}
-              </span>
-              <span className="muted">
-                {tx("music.trackByArtist", {
-                  track: <Link to={trackUrl(track.artist, track.title)}>{track.title}</Link>,
-                  artist: <Link to={artistUrl(track.artist)}>{track.artist}</Link>,
-                })}
-              </span>
-            </div>
-            <span className="muted small">{date(track.playedAt)}</span>
-          </li>
-        ))}
-      </ul>
-      {data.next && (
-        <p className="muted small">
-          {t("user.nextMilestone", { n: num(data.next), left: num(data.next - data.total) })}
-        </p>
+    <>
+      {data.items.length > 0 && (
+        <Section title={t("user.milestones")}>
+          <ul className="feed milestones">
+            {data.items.map(({ n, track }) => (
+              <li key={n}>
+                <Art image={track.image} />
+                <div className="grow">
+                  <span className="strong">
+                    {n === 1 ? t("user.firstScrobble") : t("user.scrobbleNumber", { n: num(n) })}
+                  </span>
+                  <span className="muted">
+                    {tx("music.trackByArtist", {
+                      track: trackLink(track),
+                      artist: <Link to={artistUrl(track.artist)}>{track.artist}</Link>,
+                    })}
+                  </span>
+                </div>
+                <span className="muted small">{date(track.playedAt)}</span>
+              </li>
+            ))}
+          </ul>
+          {data.next && (
+            <p className="muted small">
+              {t("user.nextMilestone", { n: num(data.next), left: num(data.next - data.total) })}
+            </p>
+          )}
+        </Section>
       )}
-    </Section>
+      {data.firsts.length > 0 && (
+        <Section title={t("user.firstPlays")}>
+          <ul className="feed milestones">
+            {data.firsts.map(({ plays, track }) => (
+              <li key={track.id}>
+                <Art image={track.image} />
+                <div className="grow">
+                  <Link className="strong" to={artistUrl(track.artist)}>
+                    {track.artist}
+                  </Link>
+                  <span className="muted">
+                    {tx("user.startedWith", { track: trackLink(track) })} · {t("music.chartPlays", { count: plays })}
+                  </span>
+                </div>
+                <span className="muted small">{date(track.playedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+    </>
   );
 }
 

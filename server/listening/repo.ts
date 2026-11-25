@@ -54,6 +54,7 @@ import type {
   Counts,
   EditScope,
   ExportRow,
+  FirstPlay,
   NowPlaying,
   RecentTrack,
   ScopeCounts,
@@ -563,9 +564,8 @@ export async function counts(s: Scope): Promise<Counts> {
   return r;
 }
 
-async function recentRows(s: Scope, limit = 50, offset = 0, oldest = false): Promise<TopList<RecentTrack>> {
-  const w = within(s);
-  const items = await db
+const playRows = (viewerId: number | undefined) =>
+  db
     .select({
       id: scrobbles.id,
       playedAt: scrobbles.playedAt,
@@ -577,13 +577,17 @@ async function recentRows(s: Scope, limit = 50, offset = 0, oldest = false): Pro
       image: playImage(),
       user: users.username,
       userImage: users.imageId,
-      loved: lovedBy(s.viewerId),
+      loved: lovedBy(viewerId),
     })
     .from(scrobbles)
     .innerJoin(tracks, eq(tracks.id, scrobbles.trackId))
     .innerJoin(artists, eq(artists.id, scrobbles.artistId))
     .leftJoin(albums, eq(albums.id, sql`COALESCE(${scrobbles.albumId}, ${tracks.albumId})`))
-    .innerJoin(users, eq(users.id, scrobbles.userId))
+    .innerJoin(users, eq(users.id, scrobbles.userId));
+
+async function recentRows(s: Scope, limit = 50, offset = 0, oldest = false): Promise<TopList<RecentTrack>> {
+  const w = within(s);
+  const items = await playRows(s.viewerId)
     .where(w)
     .orderBy(
       ...(oldest ? [asc(scrobbles.playedAt), asc(scrobbles.id)] : [desc(scrobbles.playedAt), desc(scrobbles.id)])
@@ -598,6 +602,32 @@ async function recentRows(s: Scope, limit = 50, offset = 0, oldest = false): Pro
         .where(eq(userArtists.userId, s.userId ?? 0))
     : db.select({ c: count() }).from(scrobbles).where(w);
   return { items, total: await total(count_) };
+}
+
+/** The first scrobble of each of the user's top artists, most played first. */
+export async function firstPlays(userId: number, viewerId = 0, limit = 10): Promise<FirstPlay[]> {
+  const top = await db
+    .select({
+      scrobbleId: sql<number>`(
+        SELECT s.id FROM ${scrobbles} s
+        WHERE s.user_id = ${userId} AND s.artist_id = "user_artists"."artist_id"
+        ORDER BY s.played_at, s.id
+        LIMIT 1
+      )`,
+      plays: userArtists.plays,
+    })
+    .from(userArtists)
+    .where(eq(userArtists.userId, userId))
+    .orderBy(desc(userArtists.plays), asc(userArtists.artistId))
+    .limit(limit);
+  const ids = top.flatMap((t) => (t.scrobbleId ? [t.scrobbleId] : []));
+  if (!ids.length) return [];
+  const rows = new Map((await playRows(viewerId).where(inArray(scrobbles.id, ids))).map((r) => [r.id, r]));
+  wantCovers([...rows.values()], (r) => r.trackId);
+  return top.flatMap(({ scrobbleId, plays }) => {
+    const track = rows.get(scrobbleId);
+    return track ? [{ plays, track }] : [];
+  });
 }
 
 export function nowPlaying(userId: number, viewerId = 0): Promise<NowPlaying | null> {

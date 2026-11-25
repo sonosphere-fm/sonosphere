@@ -266,5 +266,7 @@ export default {
   firstScrobble: "Första scrobble",
   scrobbleNumber: "Scrobble nr {n}",
   nextMilestone: "Nästa: scrobble nr {n}, {left} kvar",
+  firstPlays: "Första lyssningarna",
+  startedWith: "Började med {track}",
   yearCard: "Årskort",
 } satisfies Translation<typeof en>;

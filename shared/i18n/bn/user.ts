@@ -252,5 +252,7 @@ export default {
   firstScrobble: "প্রথম স্ক্রবল",
   scrobbleNumber: "স্ক্রবল #{n}",
   nextMilestone: "পরবর্তী: স্ক্রবল #{n}, আর {left}",
+  firstPlays: "প্রথম শোনা",
+  startedWith: "শুরু হয়েছিল {track} দিয়ে",
   yearCard: "বার্ষিক কার্ড",
 } satisfies Translation<typeof en>;

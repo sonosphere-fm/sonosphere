@@ -267,5 +267,7 @@ export default {
   firstScrobble: "הסקרובל הראשון",
   scrobbleNumber: "סקרובל מס׳ {n}",
   nextMilestone: "הבא: סקרובל מס׳ {n}, עוד {left}",
+  firstPlays: "השמעות ראשונות",
+  startedWith: "התחיל עם {track}",
   yearCard: "כרטיס השנה",
 } satisfies Translation<typeof en>;

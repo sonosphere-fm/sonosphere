@@ -287,5 +287,7 @@ export default {
   firstScrobble: "Primul scrobble",
   scrobbleNumber: "Scrobble nr. {n}",
   nextMilestone: "Urmează: scrobble nr. {n}, mai sunt {left}",
+  firstPlays: "Primele ascultări",
+  startedWith: "A început cu {track}",
   yearCard: "Cardul anului",
 } satisfies Translation<typeof en>;

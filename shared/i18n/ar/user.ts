@@ -380,5 +380,7 @@ export default {
   firstScrobble: "أول سكروبل",
   scrobbleNumber: "السكروبل رقم {n}",
   nextMilestone: "التالي: السكروبل رقم {n}، بقي {left}",
+  firstPlays: "أول استماع",
+  startedWith: "البداية مع {track}",
   yearCard: "بطاقة العام",
 } satisfies Translation<typeof en>;

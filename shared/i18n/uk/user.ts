@@ -310,5 +310,7 @@ export default {
   firstScrobble: "Перший скробл",
   scrobbleNumber: "Скробл № {n}",
   nextMilestone: "Далі: скробл № {n}, залишилось {left}",
+  firstPlays: "Перші прослуховування",
+  startedWith: "Усе почалося з {track}",
   yearCard: "Картка року",
 } satisfies Translation<typeof en>;
