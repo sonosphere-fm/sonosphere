@@ -1,4 +1,5 @@
 import { Router } from "./http";
+import { router as credits } from "./catalog/credits";
 import { router as activeSessions } from "./account/sessions";
 import { router as feeds } from "./feeds/routes";
 import { router as totp } from "./auth/totp-routes";
@@ -47,6 +48,7 @@ import { router as adminSettings } from "./admin/settings";
 import { router as adminUsers } from "./admin/users";
 
 export const api = new Router().include(
+  credits,
   activeSessions,
   feeds,
   cosmetics,

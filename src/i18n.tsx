@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import en from "../shared/i18n/en";
 import { sessionCatalog } from "../shared/i18n/sessions";
+import { creditsCatalog } from "../shared/i18n/credits";
 import { featureCatalog, type FeatureKey } from "../shared/i18n/features";
 import {
   format,
@@ -96,8 +97,11 @@ export const { tx } = main;
 export type MessageKey =
   | Key<typeof en>
   | `features.${FeatureKey}`
-  | `sessions.${keyof ReturnType<typeof sessionCatalog>}`;
+  | `sessions.${keyof ReturnType<typeof sessionCatalog>}`
+  | `credits.${keyof ReturnType<typeof creditsCatalog>}`;
 export function t(key: MessageKey, params?: Params) {
+  if (key.startsWith("credits."))
+    return format(current, creditsCatalog(current)[key.slice(8) as keyof ReturnType<typeof creditsCatalog>], params);
   if (key.startsWith("sessions."))
     return format(current, sessionCatalog(current)[key.slice(9) as keyof ReturnType<typeof sessionCatalog>], params);
   if (key.startsWith("features.")) return format(current, featureCatalog(current)[key.slice(9) as FeatureKey], params);

@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, type ReactNode } from "react";
+import { Credits } from "../../ui/credits";
 import { Link, useParams } from "react-router-dom";
 import { t } from "../../i18n";
 import { albumUrl, artistUrl, dec, dur, qs, releaseTitle, useApi, useAuth, useTitle } from "../../lib";
@@ -126,6 +127,7 @@ export function AlbumPage({ tab }: { tab: "overview" | "wiki" | "images" }) {
                       <TrackList items={a.tracks} numbered showArtist={false} showDuration count="listeners" />
                     </Section>
                     <Listeners items={a.topListeners} />
+                    <Credits kind="album" artist={a.artist} title={a.title} />
                     <Section title={t("music.wall")}>
                       <Shoutbox type="album" id={a.id} limit={10} />
                     </Section>

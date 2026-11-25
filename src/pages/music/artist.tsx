@@ -1,4 +1,5 @@
 import { Ico, Spinner } from "../../icons";
+import { Credits } from "../../ui/credits";
 import { useState } from "react";
 import { t } from "../../i18n";
 import { Select } from "../../kit";
@@ -113,6 +114,7 @@ function Overview({ a, base }: { a: ArtistData; base: string }) {
           <Tagger type="artist" id={a.id} tags={a.tags} myTags={a.myTags} />
         </About>
         <ArtistTopTracks name={a.name} base={base} initial={a.topTracks} />
+        <Credits kind="artist" artist={a.name} />
         <Section title={t("music.albums")} more={`${base}/+albums`} moreLabel={t("music.viewAllAlbums")} foot>
           <Grid below kind="album" cols={4} items={a.topAlbums.slice(0, 4)} sub={albumSub} />
         </Section>

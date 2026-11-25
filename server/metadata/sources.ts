@@ -4,6 +4,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { catalogueGet, NoCapacity } from "../spotify/service";
 import * as mbdb from "./mbdb";
 import { spotifyCatalogue } from "../spotify/catalogue";
+import type { ArtistCredit, Credits } from "../../shared/credits";
+import { UUID } from "../util";
 
 type Json = Record<string, unknown>;
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -93,6 +95,68 @@ const credit = (v: unknown) =>
     .map((c) => tidy(c.name) + str(c.joinphrase))
     .join("");
 const firstArtist = (v: unknown) => tidy(objs(v)[0]?.name);
+
+export function artistCredits(data: unknown): ArtistCredit[] {
+  const result = new Map<string, ArtistCredit>();
+  for (const relation of objs(asObject(data)?.relations)) {
+    const artist = asObject(relation.artist);
+    if (!artist || !UUID.test(str(artist.id)) || !str(artist.name)) continue;
+    const item: ArtistCredit = {
+      mbid: str(artist.id),
+      name: tidy(artist.name),
+      role: str(relation.type),
+      attributes: list(relation.attributes).filter((v): v is string => typeof v === "string"),
+      begin: str(relation.begin),
+      end: str(relation.end),
+      ended: relation.ended === true,
+    };
+    const key = JSON.stringify(item);
+    result.set(key, item);
+  }
+  return [...result.values()].sort((a, b) => a.role.localeCompare(b.role) || a.name.localeCompare(b.name));
+}
+
+export async function mbCredits(
+  kind: "artist" | "album" | "track",
+  mbid: string,
+  artist: string,
+  title: string
+): Promise<Credits> {
+  const entity = kind === "album" ? "release-group" : kind === "track" ? "recording" : "artist";
+  if (!mbid && kind === "artist") mbid = (await mbArtist(artist))?.mbid ?? "";
+  if (!mbid && kind === "album") mbid = (await mbAlbum(artist, title))?.mbid ?? "";
+  if (!mbid && kind === "track") {
+    const data = await mb("/recording", {
+      query: `recording:${phrase(title)} AND artist:${phrase(artist)}`,
+      limit: "10",
+    });
+    const matches = objs(data?.recordings).filter(
+      (r) => same(str(r.title), title) && same(firstArtist(r["artist-credit"]), artist) && num(r.score) >= 90
+    );
+    const match = matches.find((r) => !r.disambiguation && !r.video) ?? matches[0];
+    mbid = str(match?.id);
+  }
+  if (!UUID.test(mbid)) return { items: [], source: null };
+  const data = await mb(`/${entity}/${mbid}`, { inc: kind === "track" ? "artist-rels+work-rels" : "artist-rels" });
+  const items = artistCredits(data);
+  if (kind === "track") {
+    const works = objs(data?.relations)
+      .map((r) => asObject(r.work))
+      .filter((w) => w && UUID.test(str(w.id)))
+      .slice(0, 3);
+    for (const work of works) items.push(...artistCredits(await mb(`/work/${str(work!.id)}`, { inc: "artist-rels" })));
+  }
+  if (kind === "album") {
+    const releases = await mb("/release", { "release-group": mbid, status: "official", limit: "10" });
+    const release = objs(releases?.releases).sort((a, b) =>
+      (str(a.date) || "9999").localeCompare(str(b.date) || "9999")
+    )[0];
+    if (UUID.test(str(release?.id)))
+      items.push(...artistCredits(await mb(`/release/${str(release!.id)}`, { inc: "artist-rels" })));
+  }
+  const unique = new Map(items.map((item) => [JSON.stringify(item), item]));
+  return { items: [...unique.values()], source: `https://musicbrainz.org/${entity}/${mbid}` };
+}
 
 export type MbArtist = { mbid: string; name: string };
 async function apiArtist(name: string): Promise<MbArtist | null> {

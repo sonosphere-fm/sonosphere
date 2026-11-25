@@ -1,5 +1,6 @@
 import { DropdownMenuItem } from "@astryxdesign/core/DropdownMenu";
 import { Lyrics } from "../../ui/lyrics";
+import { Credits } from "../../ui/credits";
 import { useState, type FormEvent, Suspense } from "react";
 import { t } from "../../i18n";
 import { Button, Input, Modal } from "../../kit";
@@ -249,6 +250,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
                       <Tagger type="track" id={item.id} tags={item.tags} myTags={item.myTags} />
                     </About>
                     <Lyrics track={item} />
+                    <Credits kind="track" artist={item.artist} title={item.title} />
                     <Section title={t("music.similarTracks")} aside={<PlayButton queue={item.similar} />}>
                       <TrackList items={item.similar} count="listeners" />
                     </Section>
