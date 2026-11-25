@@ -36,7 +36,7 @@ export async function checkHost(host: string): Promise<HostCheck> {
   if (!addresses.length) return "unreachable";
   const metadata = addresses.some((a) => a === "169.254.169.254" || a.toLowerCase() === "fd00:ec2::254");
   if (metadata) return "private";
-  if (process.env.SUBSONIC_ALLOW_PRIVATE === "1") return "ok";
+  if (process.env.MUSIC_SERVER_ALLOW_PRIVATE === "1" || process.env.SUBSONIC_ALLOW_PRIVATE === "1") return "ok";
   return addresses.some(isPrivateAddress) ? "private" : "ok";
 }
 

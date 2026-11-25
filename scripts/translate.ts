@@ -39,7 +39,47 @@ const TARGET: Record<string, string> = {
 };
 
 // Values that are meant to read the same as the English, as "locale/namespace.key".
-const KEEP_ENGLISH = new Set(["de/common.charts", "de/music.charts", "de/music.tags"]);
+const KEEP_ENGLISH = new Set([
+  "de/common.charts",
+  "de/music.charts",
+  "de/music.tags",
+  "es/settings.musicServerKindSubsonic",
+  "es/settings.musicServerKindJellyfin",
+  "de/settings.musicServerKindSubsonic",
+  "de/settings.musicServerKindJellyfin",
+  "ro/settings.musicServerKindSubsonic",
+  "ro/settings.musicServerKindJellyfin",
+  "lv/settings.musicServerKindSubsonic",
+  "lv/settings.musicServerKindJellyfin",
+  "fr/settings.musicServerKindSubsonic",
+  "fr/settings.musicServerKindJellyfin",
+  "ja/settings.musicServerKindSubsonic",
+  "ja/settings.musicServerKindJellyfin",
+  "ko/settings.musicServerKindSubsonic",
+  "ko/settings.musicServerKindJellyfin",
+  "pt/settings.musicServerKindSubsonic",
+  "pt/settings.musicServerKindJellyfin",
+  "pl/settings.musicServerKindSubsonic",
+  "pl/settings.musicServerKindJellyfin",
+  "ru/settings.musicServerKindSubsonic",
+  "ru/settings.musicServerKindJellyfin",
+  "it/settings.musicServerKindSubsonic",
+  "it/settings.musicServerKindJellyfin",
+  "id/settings.musicServerKindSubsonic",
+  "id/settings.musicServerKindJellyfin",
+  "tr/settings.musicServerKindSubsonic",
+  "tr/settings.musicServerKindJellyfin",
+  "sv/settings.musicServerKindSubsonic",
+  "sv/settings.musicServerKindJellyfin",
+  "uk/settings.musicServerKindSubsonic",
+  "uk/settings.musicServerKindJellyfin",
+  "he/settings.musicServerKindSubsonic",
+  "he/settings.musicServerKindJellyfin",
+  "ar/settings.musicServerKindSubsonic",
+  "ar/settings.musicServerKindJellyfin",
+  "zh-Hans/settings.musicServerKindSubsonic",
+  "zh-Hans/settings.musicServerKindJellyfin",
+]);
 
 const CONCURRENCY = 3;
 const RETRIES = 3;

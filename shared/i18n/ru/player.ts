@@ -164,7 +164,7 @@ export default {
   save: "Сохранить",
   lyrics: "Текст песни",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

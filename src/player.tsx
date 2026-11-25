@@ -22,10 +22,10 @@ import type { ScrobbleResponse } from "../shared/listening";
 import { isPlaybackSource, PLAYBACK_SOURCES, type PlaybackSource } from "../shared/playback";
 import type { Station as StationReply } from "../shared/stations";
 import type { SpotifyStatus } from "../shared/spotify";
-import { albumWebUrl, type SubsonicAuth, type SubsonicSource, type SubsonicStatus } from "../shared/subsonic";
+import type { MusicAuth, MusicSource, MusicStatus } from "../shared/music";
 import type { VideoLookup } from "../shared/video";
 import { artId, isTrack, openSpotify, type SdkState, type SdkTrack, type SpotifyOut } from "./spotify";
-import { directMatches, directStreamUrl } from "./subsonic";
+import { musicAlbumUrl, musicDirectAllowed, musicMatches, musicStreamUrl } from "./music";
 
 export type PTrack = { title: string; artist: string; album?: string | null; image?: string | null; duration?: number };
 /** "saved": restored after a reload, waiting for a press of play (browsers don't let pages autoplay). */
@@ -42,7 +42,7 @@ type State = {
   videoId: string | null;
   spotify: { id: string; art: string | null } | null;
   source: PlaybackSource | null;
-  subsonic: { direct: boolean; albumUrl: string } | null;
+  music: { direct: boolean; albumUrl: string } | null;
   position: number;
   length: number;
   scrobbled: boolean;
@@ -56,7 +56,7 @@ const empty: State = {
   videoId: null,
   spotify: null,
   source: null,
-  subsonic: null,
+  music: null,
   position: 0,
   length: 0,
   scrobbled: false,
@@ -133,7 +133,7 @@ const same = (a?: PTrack, b?: PTrack) => !!a && !!b && a.title === b.title && a.
 
 type Availability = Record<PlaybackSource, boolean | null>;
 const sourceOrder = (selected: PlaybackSource, available: Availability): PlaybackSource[] =>
-  [...new Set<PlaybackSource>([selected, "youtube", "subsonic", "spotify"])].filter(
+  [...new Set<PlaybackSource>([selected, "youtube", "music", "spotify"])].filter(
     (source) => available[source] !== false
   );
 
@@ -214,13 +214,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   sourceRef.current = source;
   const [available, setAvailable] = useState<Availability>({
     youtube: true,
-    subsonic: null,
+    music: null,
     spotify: null,
   });
   const availableRef = useRef(available);
   availableRef.current = available;
   const [sourceCheck, setSourceCheck] = useState(0);
-  const subAuth = useRef<{ key: string; value: SubsonicAuth } | null>(null);
+  const musicAuthRef = useRef<{ key: string; value: MusicAuth } | null>(null);
   const directOff = useRef(false);
   // videos still to try for this track: some can't be embedded
   const cands = useRef<string[]>([]);
@@ -343,7 +343,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // Which sources this account can use. Unknown while the check runs, so they are still worth trying.
   useEffect(() => {
     const bumped = () => {
-      subAuth.current = null;
+      musicAuthRef.current = null;
       directOff.current = false;
       setSourceCheck((n) => n + 1);
     };
@@ -352,7 +352,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    subAuth.current = null;
+    musicAuthRef.current = null;
     directOff.current = false;
     if (!me) return;
     sourceRef.current = me.playbackSource;
@@ -361,7 +361,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!me) {
-      const only: Availability = { youtube: true, subsonic: false, spotify: false };
+      const only: Availability = { youtube: true, music: false, spotify: false };
       availableRef.current = only;
       setAvailable(only);
       sourceRef.current = "youtube";
@@ -370,7 +370,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
     let dead = false;
     Promise.all([
-      api<SubsonicStatus>("/subsonic").then(
+      api<MusicStatus>("/music").then(
         (r) => r.connected,
         () => null
       ),
@@ -378,9 +378,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         (r) => r.enabled && !!r.link && !r.link.broken && r.link.playback,
         () => null
       ),
-    ]).then(([subsonic, spotify]) => {
+    ]).then(([music, spotify]) => {
       if (dead) return;
-      const next: Availability = { youtube: true, subsonic, spotify };
+      const next: Availability = { youtube: true, music, spotify };
       availableRef.current = next;
       setAvailable(next);
     });
@@ -409,17 +409,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   };
 
   // Kept for the page, so every track does not ask for it again.
-  const subsonicAuth = async (): Promise<SubsonicAuth | null> => {
+  const musicAuth = async (): Promise<MusicAuth | null> => {
     if (!meRef.current) return null;
     const key = String(meRef.current.id);
-    const cached = subAuth.current;
+    const cached = musicAuthRef.current;
     if (cached?.key === key) return cached.value;
-    const value = await api<SubsonicAuth>("/subsonic/auth").catch(() => null);
-    if (value) subAuth.current = { key, value };
+    const value = await api<MusicAuth>("/music/auth").catch(() => null);
+    if (value) musicAuthRef.current = { key, value };
     return value;
   };
 
-  const loadSubsonicAudio = (url: string, at: number): Promise<boolean> =>
+  const loadMusicAudio = (url: string, at: number): Promise<boolean> =>
     new Promise((resolve) => {
       const player = audio.current;
       if (!player) return resolve(false);
@@ -453,18 +453,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       });
     });
 
-  const markSubsonic = (track: PTrack, direct: boolean, albumUrl: string) => {
+  const markMusic = (track: PTrack, direct: boolean, albumUrl: string) => {
     const player = audio.current;
     const length = (player && Number.isFinite(player.duration) ? player.duration : 0) || track.duration || 0;
     setState((s) => ({
       ...s,
-      source: "subsonic",
+      source: "music",
       videoId: null,
       spotify: null,
       status: "ready",
       playing: !(player?.paused ?? false),
       length,
-      subsonic: { direct, albumUrl },
+      music: { direct, albumUrl },
     }));
     if (meRef.current) {
       const body = {
@@ -524,7 +524,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         spotify: { id: hit.id, art: hit.art },
         videoId: null,
         source: "spotify",
-        subsonic: null,
+        music: null,
         status: "ready",
         playing: true,
       }));
@@ -537,42 +537,42 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       );
       if (!ids[0] || stale()) return false;
       cands.current = ids;
-      setState((s) => ({ ...s, videoId: ids[0]!, source: "youtube", subsonic: null, status: "ready", playing: true }));
+      setState((s) => ({ ...s, videoId: ids[0]!, source: "youtube", music: null, status: "ready", playing: true }));
       if (meRef.current) {
         const body = { artist: t.artist, track: t.title, album: t.album || "", duration: t.duration || 0 };
         api<Ok>("/nowplaying", { body }).catch(() => {});
       }
       return true;
     };
-    const playSubsonic = async () => {
-      const auth = await subsonicAuth();
+    const playMusic = async () => {
+      const auth = await musicAuth();
       if (stale()) return false;
       // the browser talks to the listener's server first; the proxy only steps in when that fails
-      if (auth?.direct && !directOff.current) {
-        const matches = await directMatches(auth, t.artist, t.title).catch(() => null);
+      if (auth && musicDirectAllowed(auth) && !directOff.current) {
+        const matches = await musicMatches(auth, t.artist, t.title).catch(() => null);
         if (stale()) return false;
         if (matches === null) directOff.current = true;
         else if (!matches.length) return false;
-        else if (await loadSubsonicAudio(directStreamUrl(auth, matches[0]!.id), from.current)) {
+        else if (await loadMusicAudio(musicStreamUrl(auth, matches[0]!.id), from.current)) {
           if (stale()) return false;
-          markSubsonic(t, true, albumWebUrl(auth.base, auth.name, matches[0]!.albumId));
+          markMusic(t, true, musicAlbumUrl(auth, matches[0]!.albumId));
           return true;
         } else directOff.current = true;
         if (stale()) return false;
       }
-      const source = await api<SubsonicSource>(`/subsonic/source${qs({ artist: t.artist, track: t.title })}`).catch(
+      const source = await api<MusicSource>(`/music/source${qs({ artist: t.artist, track: t.title })}`).catch(
         () => null
       );
       if (!source || stale()) return false;
-      if (!(await loadSubsonicAudio(source.proxy, from.current))) return false;
+      if (!(await loadMusicAudio(source.proxy, from.current))) return false;
       if (stale()) return false;
-      markSubsonic(t, false, source.albumUrl);
+      markMusic(t, false, source.albumUrl);
       return true;
     };
 
     const players: Record<PlaybackSource, () => Promise<boolean>> = {
       youtube: playVideo,
-      subsonic: playSubsonic,
+      music: playMusic,
       spotify: playSpotify,
     };
     const order = meRef.current
@@ -670,7 +670,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       }
       let length = 0;
       let position = 0;
-      if (s.source === "subsonic") {
+      if (s.source === "music") {
         const player = audio.current;
         if (!player) return;
         length = (Number.isFinite(player.duration) ? player.duration : 0) || s.length || t.duration || 0;
@@ -714,7 +714,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     sec = Math.max(0, Math.min(sec, s.length || sec));
     if (s.status === "ready") {
       if (s.spotify) sp.current.out?.seek(sec * 1000);
-      else if (s.source === "subsonic") {
+      else if (s.source === "music") {
         const player = audio.current;
         if (player) player.currentTime = sec;
       } else
@@ -728,7 +728,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const s = ref.current;
     if (s.status === "saved") return start(s.queue, s.index, s.position);
     if (s.spotify) return sp.current.out?.toggle();
-    if (s.source === "subsonic") {
+    if (s.source === "music") {
       const player = audio.current;
       if (!player) return;
       if (s.playing) player.pause();
@@ -761,7 +761,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   };
   const audioFailed = () => {
     const s = ref.current;
-    if (s.source !== "subsonic" || s.status !== "ready") return;
+    if (s.source !== "music" || s.status !== "ready") return;
     const player = audio.current;
     // clearing the element for the next track also raises an error
     if (!player?.getAttribute("src")) return;
@@ -774,16 +774,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setState((v) => ({ ...v, source: null, status: "finding", playing: false }));
       fallBack.current();
     };
-    if (!s.subsonic?.direct) return giveUp();
+    if (!s.music?.direct) return giveUp();
     // the browser lost the server: try the same track through the proxy before another source
     const token = run.current.token;
     setState((v) => ({ ...v, status: "finding", playing: false }));
-    api<SubsonicSource>(`/subsonic/source${qs({ artist: track.artist, track: track.title })}`)
+    api<MusicSource>(`/music/source${qs({ artist: track.artist, track: track.title })}`)
       .then(async (source) => {
         if (run.current.token !== token) return true;
-        if (!(await loadSubsonicAudio(source.proxy, at))) return false;
+        if (!(await loadMusicAudio(source.proxy, at))) return false;
         if (run.current.token !== token) return true;
-        markSubsonic(track, false, source.albumUrl);
+        markMusic(track, false, source.albumUrl);
         return true;
       })
       .then((ok) => {
@@ -810,7 +810,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const track = state.queue[state.index];
   const hasNext = state.index < state.queue.length - 1;
   const showCover =
-    (state.status === "ready" && (state.spotify || state.source === "subsonic")) || state.status === "saved";
+    (state.status === "ready" && (state.spotify || state.source === "music")) || state.status === "saved";
   const cover = state.spotify?.art || (state.status === "saved" ? savedArt : null) || track?.image;
   const coverSrc = cover ? imageUrl(cover) : null;
   return (
@@ -842,15 +842,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           ref={audio}
           preload="metadata"
           onPlay={() => {
-            if (ref.current.source === "subsonic") setState((v) => (v.playing ? v : { ...v, playing: true }));
+            if (ref.current.source === "music") setState((v) => (v.playing ? v : { ...v, playing: true }));
           }}
           onPause={() => {
             const s = ref.current;
-            if (s.source === "subsonic" && s.status === "ready" && !audio.current?.ended)
+            if (s.source === "music" && s.status === "ready" && !audio.current?.ended)
               setState((v) => (v.playing ? { ...v, playing: false } : v));
           }}
           onEnded={() => {
-            if (ref.current.source === "subsonic" && ref.current.status === "ready") next();
+            if (ref.current.source === "music" && ref.current.status === "ready") next();
           }}
           onError={audioFailed}
         />
@@ -892,7 +892,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
               track={track}
               spotifyId={state.spotify?.id}
               videoId={state.videoId}
-              subsonic={state.source === "subsonic" ? state.subsonic : null}
+              music={state.source === "music" ? state.music : null}
             />
           </div>
         )}
@@ -903,7 +903,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
 const SOURCE_LABELS: Record<PlaybackSource, MessageKey> = {
   youtube: "player.sourceYouTube",
-  subsonic: "player.sourceSubsonic",
+  music: "player.sourceMusic",
   spotify: "player.sourceSpotify",
 };
 
@@ -1053,17 +1053,17 @@ function ExternalLink({
   track,
   spotifyId,
   videoId,
-  subsonic,
+  music,
 }: {
   track: PTrack;
   spotifyId?: string;
   videoId: string | null;
-  subsonic: { albumUrl: string } | null;
+  music: { albumUrl: string } | null;
 }) {
-  if (subsonic)
+  if (music)
     return (
       <a
-        href={subsonic.albumUrl}
+        href={music.albumUrl}
         target="_blank"
         rel="noreferrer"
         aria-label={t("player.openInMusicServer")}

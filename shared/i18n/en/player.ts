@@ -9,7 +9,7 @@ export default {
   trackUnavailable: "Track unavailable.",
   finding: "Finding “{title}”…",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

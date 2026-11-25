@@ -149,7 +149,7 @@ export default {
   save: "Saglabāt",
   lyrics: "Dziesmas vārdi",
   sourceYouTube: "YouTube",
-  sourceSubsonic: "OpenSubsonic",
+  sourceMusic: "Music server",
   sourceSpotify: "Spotify",
   playbackSource: "Playback source",
   setUpSource: "Set up",

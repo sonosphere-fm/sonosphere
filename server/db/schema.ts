@@ -1261,6 +1261,21 @@ export const subsonicLinks = pgTable("subsonic_links", {
   createdAt: integer("created_at").notNull(),
 });
 
+// the password is sealed (server/seal.ts)
+export const jellyfinLinks = pgTable("jellyfin_links", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  url: text().notNull(),
+  username: text().notNull(),
+  password: text().notNull(),
+  jellyfinUserId: text("jellyfin_user_id").notNull(),
+  deviceId: text("device_id").notNull(),
+  name: text().default("").notNull(),
+  version: text().default("").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
 // kind: "scrobbles" or "loved" (from a file), "lastfm" (read from a Last.fm profile), or "listenbrainz" (export ZIP).
 // status: "uploading" (file chunks still arriving), "queued", "running", "done", "failed" or "cancelled".
 // cursor: how many rows have been worked through (files), or Last.fm pages read in the current phase.

@@ -356,13 +356,14 @@ export default {
   notYourImage: "You can only remove pictures you uploaded",
   tooManyVotes: "Too many votes. Wait a while and try again.",
   pickPlaybackSource: "Pick a playback source.",
-  invalidSubsonicUrl: "Enter the address of your music server, like https://music.example.com",
-  subsonicUnreachable: "Couldn't reach that music server. Check the address and try again.",
-  subsonicAuthFailed: "That server didn't accept those credentials.",
-  subsonicRequestFailed: "The music server couldn't complete that request.",
-  subsonicPrivateAddress:
+  invalidMusicServerUrl: "Enter the address of your music server, like https://music.example.com",
+  musicServerUnreachable: "Couldn't reach that music server. Check the address and try again.",
+  musicServerAuthFailed: "That server didn't accept those credentials.",
+  musicServerRequestFailed: "The music server couldn't complete that request.",
+  musicServerPrivateAddress:
     "That address is on a private network. Local music servers must be allowed by the site owner.",
-  subsonicCredentialsRequired: "Enter the server's username and password.",
-  subsonicNotConnected: "OpenSubsonic is not connected",
-  subsonicNoMatch: "No matching track on that music server.",
+  musicServerCredentialsRequired: "Enter the server's username and password.",
+  musicServerNotConnected: "The music server is not connected",
+  musicServerNoMatch: "No matching track on that music server.",
+  pickMusicServerKind: "Pick a music server type.",
 } satisfies Translation<typeof en>;
