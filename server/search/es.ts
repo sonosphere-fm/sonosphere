@@ -1,4 +1,4 @@
-import { NUMBER_WORDS } from "./numbers";
+import { digits, NUMBER_WORDS } from "./numbers";
 
 // Elasticsearch on the machine that holds the MusicBrainz copy, reached like it through a tunnel.
 // mb_* indexes are built there after each MusicBrainz export (sonomb/scripts/index.sh); ours_* are kept here (sync.ts).
@@ -60,32 +60,62 @@ const TEMPLATE = {
 
 export const putTemplate = () => es("PUT", "/_index_template/sono", TEMPLATE);
 
-// every word typed, the last one as a prefix; the whole phrase and how well known it is lift a result
-export async function find<T>(index: string, term: string, size: number, from = 0): Promise<{ id: string; doc: T }[]> {
-  const fields = index === "mb_artists" ? ["name", "aliases"] : ["name"];
-  const r = await es<{ hits: { hits: { _id: string; _source: T }[] } }>(
-    "POST",
-    `/${index}/_search?filter_path=hits.hits._id,hits.hits._source`,
-    {
-      from,
-      size,
-      query: {
-        function_score: {
-          query: {
-            bool: {
-              should: fields.flatMap((f) => [
-                { match_bool_prefix: { [f]: { query: term, operator: "and" } } },
-                { match_phrase: { [f]: { query: term, boost: 3 } } },
-              ]),
-              minimum_should_match: 1,
-            },
+export type Ask = { index: string; term: string; size: number; from?: number };
+export type Hit<T> = { id: string; doc: T };
+
+const words = (term: string) =>
+  digits(
+    term
+      .normalize("NFKD")
+      .replace(/\p{M}/gu, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()
+  )
+    .split(" ")
+    .filter(Boolean);
+
+// Every word typed must be in the name or the artist (the last word as a prefix), so "radiohead creep" finds Creep.
+// The whole phrase as the name or the artist lifts a result, and how well known it is decides among the rest.
+function search({ index, term, size, from = 0 }: Ask) {
+  const artists = index === "mb_artists" || index === "ours_artists";
+  const fields = artists ? ["name^1.5", "aliases"] : ["name^1.5", "artist"];
+  const ws = words(term);
+  return {
+    from,
+    size,
+    _source: { excludes: ["seen"] },
+    query: {
+      function_score: {
+        query: {
+          bool: {
+            must: ws.map((w, i) => ({
+              multi_match: { query: w, fields, type: i === ws.length - 1 ? "bool_prefix" : "best_fields" },
+            })),
+            should: [
+              { match_phrase: { name: { query: term, boost: 3 } } },
+              { match_phrase: { [artists ? "aliases" : "artist"]: { query: term, boost: 3 } } },
+            ],
           },
-          field_value_factor: { field: "pop", modifier: "log2p", missing: 0 },
-          boost_mode: "multiply",
         },
+        field_value_factor: { field: "pop", modifier: "log2p", missing: 0 },
+        boost_mode: "multiply",
       },
     },
-    3000
+  };
+}
+
+/** All the searches in one request, as the tunnel costs ~200ms a trip; a search that failed comes back null. */
+export async function findAll(asks: Ask[]): Promise<(Hit<unknown>[] | null)[]> {
+  if (!asks.length) return [];
+  const r = await es<{ responses: { status: number; hits?: { hits: { _id: string; _source: unknown }[] } }[] }>(
+    "POST",
+    "/_msearch?filter_path=responses.hits.hits._id,responses.hits.hits._source,responses.status",
+    asks.flatMap((a) => [{ index: a.index }, search(a)]),
+    1500
   );
-  return (r.hits?.hits ?? []).map((h) => ({ id: h._id, doc: h._source }));
+  return r.responses.map((x) =>
+    x.status === 200 ? (x.hits?.hits ?? []).map((h) => ({ id: h._id, doc: h._source })) : null
+  );
 }
