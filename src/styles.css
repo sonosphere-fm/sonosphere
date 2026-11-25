@@ -7736,6 +7736,67 @@ html[data-profile-shell="custom"] :focus-visible {
 .cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-crown .cos-glint {
   animation: cos-glint 0.9s ease-in-out;
 }
+.cos-hat,
+.cos-flowers,
+.cos-antler,
+.cos-antenna,
+.cos-scarf-tail,
+.cos-bowtie,
+.cos-earring-hoop,
+.cos-pin-shine {
+  transform-box: view-box;
+}
+.cos-hat {
+  transform-origin: 50% 70%;
+}
+.cos-flowers {
+  transform-origin: 50% 34%;
+}
+.cos-antler {
+  transform-origin: 50% 25%;
+}
+.cos-antenna {
+  transform-origin: 50% 25%;
+}
+.cos-scarf-tail {
+  transform-origin: 72% 83%;
+}
+.cos-bowtie {
+  transform-origin: 50% 84%;
+}
+.cos-earring-hoop {
+  transform-origin: 14% 66%;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-beret .cos-hat {
+  animation: cos-settle 0.6s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-beanie .cos-hat {
+  animation: cos-bob 0.7s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-cap .cos-hat {
+  animation: cos-tilt 0.8s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-flowercrown .cos-flowers {
+  animation: cos-wiggle 0.7s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-antlers .cos-antler {
+  animation: cos-tilt 1.2s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-antenna .cos-antenna {
+  animation: cos-wiggle 0.5s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-scarf .cos-scarf-tail {
+  animation: cos-lift 0.7s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-bowtie .cos-bowtie {
+  animation: cos-waggle 0.6s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-earring .cos-earring-hoop {
+  animation: cos-swing 0.8s ease-in-out;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-acc-acc-pin .cos-pin-shine {
+  animation: cos-pin-shine 0.8s ease-in-out;
+}
 
 @keyframes cos-twitch {
   0%,
@@ -7847,6 +7908,60 @@ html[data-profile-shell="custom"] :focus-visible {
     translate: 150px 0;
   }
 }
+@keyframes cos-settle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  50% {
+    rotate: 2deg;
+  }
+}
+@keyframes cos-lift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+@keyframes cos-waggle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30% {
+    rotate: 6deg;
+  }
+  70% {
+    rotate: -6deg;
+  }
+}
+@keyframes cos-swing {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30% {
+    rotate: 14deg;
+  }
+  60% {
+    rotate: -10deg;
+  }
+  80% {
+    rotate: 4deg;
+  }
+}
+@keyframes cos-pin-shine {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
 
 /* ---------- Frames ---------- */
 .cos-frame {
@@ -7858,7 +7973,8 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 .cos-frame-vinyl,
 .cos-frame-pixel,
-.cos-frame-holo {
+.cos-frame-holo,
+.cos-frame-arcade {
   --_hole: radial-gradient(
     farthest-side,
     transparent calc(100% - var(--cos-ring) * 1.2),
@@ -7905,15 +8021,182 @@ html[data-profile-shell="custom"] :focus-visible {
   height: 100%;
   overflow: visible;
 }
+.cos-frame-tape {
+  inset: calc(var(--cos-ring) * -1.5);
+  border: calc(var(--cos-ring) * 0.85) solid #57525e;
+  box-shadow:
+    inset 0 0 0 calc(var(--cos-ring) * 0.22) #2a2130,
+    0 0 0 calc(var(--cos-ring) * 0.16) #2a2130;
+}
+.cos-frame-reels {
+  position: absolute;
+  inset: 0;
+}
+.cos-frame-reels i {
+  position: absolute;
+  bottom: 9%;
+  width: 18%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a2130 0 14%, #cbbd9f 15% 54%, #7a7280 55% 100%);
+  box-shadow: inset 0 0 0 1px #2a2130;
+}
+.cos-frame-reels i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  width: 12%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #2a2130;
+  transform: translateX(-50%);
+}
+.cos-frame-reels i:first-child {
+  left: 16%;
+}
+.cos-frame-reels i:last-child {
+  right: 16%;
+}
+.cos-frame-reels::after {
+  content: "";
+  position: absolute;
+  left: 31%;
+  right: 31%;
+  bottom: 18%;
+  height: 1px;
+  background: #cbbd9f;
+  opacity: 0.6;
+}
+.cos-frame-orbit {
+  border: 1px solid var(--edge);
+}
+.cos-frame-orbit .cos-frame-arm i {
+  left: 78%;
+  top: 6%;
+  transform: none;
+}
+.cos-frame-arm {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+}
+.cos-frame-arm i {
+  position: absolute;
+  left: 50%;
+  top: -5%;
+  width: 11%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--sun);
+  box-shadow: 0 0 0 1px #2a213055;
+  transform: translateX(-50%);
+}
+.cos-frame-stitch {
+  border: var(--cos-ring) dashed var(--ink);
+  opacity: 0.72;
+}
+.cos-frame-stitch::before,
+.cos-frame-stitch::after {
+  content: "";
+  position: absolute;
+  bottom: 16%;
+  width: 7%;
+  height: 7%;
+  background: var(--ink);
+  opacity: 0.8;
+}
+.cos-frame-stitch::before {
+  left: 13%;
+  rotate: 24deg;
+}
+.cos-frame-stitch::after {
+  left: 21%;
+  rotate: -24deg;
+}
+.cos-frame-ripple {
+  border: calc(var(--cos-ring) * 0.7) solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.cos-frame-ripple::before {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border: calc(var(--cos-ring) * 0.5) solid var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+}
+.cos-frame-eclipse {
+  border: calc(var(--cos-ring) * 1.1) solid #17161b;
+}
+.cos-frame-eclipse::before {
+  content: "";
+  position: absolute;
+  top: 6%;
+  right: 10%;
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: calc(var(--cos-ring) * 0.9) solid var(--sun);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  rotate: -35deg;
+  filter: drop-shadow(0 0 4px #ffcf3380);
+}
+.cos-frame-garden {
+  inset: -10%;
+}
+.cos-garden {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.cos-frame-arcade {
+  background: repeating-conic-gradient(var(--edge) 0 7deg, transparent 7deg 30deg);
+  opacity: 0.9;
+}
+.cos-frame-arcade .cos-frame-arm i {
+  top: 1%;
+  width: 10%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
 
 .cos-decoration[data-motion="on"] .cos-frame-neon {
   animation: cos-breathe 3.4s ease-in-out infinite;
 }
+.cos-decoration[data-motion="on"] .cos-frame-orbit .cos-frame-arm {
+  animation: cos-spin 24s linear infinite;
+}
+.cos-decoration[data-motion="on"] .cos-frame-ripple::before {
+  animation: cos-ring-pulse 4s ease-out infinite;
+}
+.cos-decoration[data-motion="on"] .cos-frame-eclipse::before {
+  animation: cos-eclipse-turn 30s linear infinite;
+}
 .cos-avatar[data-now-playing="on"] > .cos-decoration[data-motion="on"] .cos-frame-vinyl {
   animation: cos-spin 3.6s linear infinite;
 }
+.cos-avatar[data-now-playing="on"] > .cos-decoration[data-motion="on"] .cos-frame-tape .cos-frame-reels i {
+  animation: cos-spin 2.8s linear infinite;
+}
+.cos-avatar[data-now-playing="on"] > .cos-decoration[data-motion="on"] .cos-frame-arcade .cos-frame-arm {
+  animation: cos-spin 3s linear infinite;
+}
+.cos-avatar:is(:hover, :focus-within) > .cos-decoration[data-motion="on"] .cos-frame-garden .cos-garden {
+  animation: cos-wiggle 1.2s ease-in-out;
+}
 .cos-avatar[data-offscreen] .cos-frame,
-:root[data-cos-hidden] .cos-frame {
+.cos-avatar[data-offscreen] .cos-frame *,
+.cos-avatar[data-offscreen] .cos-frame::before,
+.cos-avatar[data-offscreen] .cos-frame *::before,
+.cos-avatar[data-offscreen] .cos-frame::after,
+.cos-avatar[data-offscreen] .cos-frame *::after,
+:root[data-cos-hidden] .cos-frame,
+:root[data-cos-hidden] .cos-frame *,
+:root[data-cos-hidden] .cos-frame::before,
+:root[data-cos-hidden] .cos-frame *::before,
+:root[data-cos-hidden] .cos-frame::after,
+:root[data-cos-hidden] .cos-frame *::after {
   animation-play-state: paused !important;
 }
 @keyframes cos-breathe {
@@ -7930,10 +8213,36 @@ html[data-profile-shell="custom"] :focus-visible {
     rotate: 360deg;
   }
 }
+@keyframes cos-eclipse-turn {
+  from {
+    rotate: -35deg;
+  }
+  to {
+    rotate: 325deg;
+  }
+}
+@keyframes cos-ring-pulse {
+  0%,
+  70% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  76% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .cos-decoration *,
-  .cos-frame {
+  .cos-decoration *::before,
+  .cos-decoration *::after,
+  .cos-frame,
+  .cos-frame::before,
+  .cos-frame::after {
     animation: none !important;
     transition: none !important;
   }
@@ -7980,6 +8289,154 @@ html[data-profile-shell="custom"] :focus-visible {
   text-shadow:
     -1px 0 #cd5587,
     1px 0 #318995;
+}
+[data-name-fx="shimmer"],
+[data-name-fx="spotlight"] {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+[data-name-fx="shimmer"] {
+  background-image:
+    linear-gradient(100deg, transparent 40%, #ffcf33 47%, #fff3b0 50%, #ffcf33 53%, transparent 60%),
+    linear-gradient(var(--ink), var(--ink));
+  background-size:
+    200% 100%,
+    100% 100%;
+  background-position:
+    150% 0,
+    0 0;
+  background-repeat: no-repeat, no-repeat;
+}
+[data-name-fx="vapor"] {
+  text-shadow:
+    -1px 0 #f27bb5b3,
+    1px 0 #43e0f0b3;
+}
+[data-name-fx="halo"] {
+  text-shadow: 0 0 9px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+[data-name-fx="echo"] {
+  text-shadow: 1px 1px 0 var(--accent-tint);
+}
+@property --cos-spot {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: -20%;
+}
+[data-name-fx="spotlight"] {
+  background-image: radial-gradient(circle at var(--cos-spot) 50%, var(--ink) 0 16%, var(--muted) 46%);
+  background-repeat: no-repeat;
+}
+[data-name-fx="cascade"] > span,
+[data-name-fx="marquee"] > span {
+  display: inline-block;
+  white-space: pre;
+}
+[data-name-fx="decrypt"] {
+  display: inline-block;
+}
+.cos-decrypt-real {
+  position: relative;
+}
+.cos-decrypt-scramble {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="shimmer"] {
+  animation: cos-shimmer 4s linear infinite;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="spotlight"] {
+  animation: cos-spotlight 8s ease-in-out infinite;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="cascade"] > span {
+  animation: cos-cascade 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--letter) * -120ms);
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="marquee"] > span {
+  animation: cos-marquee 2s linear infinite;
+  animation-delay: calc(var(--letter) * -90ms);
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="decrypt"] .cos-decrypt-real {
+  animation: cos-decrypt-real 5s steps(1) infinite;
+}
+.profile-theme[data-effects-active="on"] .hero-name [data-name-fx="decrypt"] .cos-decrypt-scramble {
+  animation: cos-decrypt-scramble 5s steps(1) infinite;
+}
+@keyframes cos-shimmer {
+  0%,
+  50% {
+    background-position:
+      150% 0,
+      0 0;
+  }
+  75%,
+  100% {
+    background-position:
+      -50% 0,
+      0 0;
+  }
+}
+@keyframes cos-spotlight {
+  0%,
+  10% {
+    --cos-spot: -20%;
+  }
+  90%,
+  100% {
+    --cos-spot: 120%;
+  }
+}
+@keyframes cos-cascade {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.1em);
+  }
+}
+@keyframes cos-marquee {
+  0%,
+  70%,
+  100% {
+    color: var(--ink);
+    text-shadow: none;
+  }
+  82%,
+  90% {
+    color: var(--sun);
+    text-shadow: 0 0 6px #ffcf3380;
+  }
+}
+@keyframes cos-decrypt-real {
+  0%,
+  92%,
+  97%,
+  100% {
+    opacity: 1;
+  }
+  93%,
+  96% {
+    opacity: 0;
+  }
+}
+@keyframes cos-decrypt-scramble {
+  0%,
+  92%,
+  97%,
+  100% {
+    opacity: 0;
+  }
+  93%,
+  96% {
+    opacity: 1;
+  }
 }
 .cos-name-particles {
   display: none;
@@ -8242,6 +8699,18 @@ html[data-profile-shell="custom"] :focus-visible {
   .hero-name .cos-name-particles i,
   .cos-eq i {
     animation: none !important;
+  }
+  .hero-name [data-name-fx="shimmer"],
+  .hero-name [data-name-fx="spotlight"] {
+    background: none;
+    -webkit-text-fill-color: var(--ink);
+    color: var(--ink);
+  }
+  .hero-name [data-name-fx="decrypt"] .cos-decrypt-scramble {
+    display: none;
+  }
+  .hero-name [data-name-fx="decrypt"] .cos-decrypt-real {
+    opacity: 1 !important;
   }
 }
 

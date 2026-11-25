@@ -47,13 +47,52 @@ const PHONES: Record<string, { band: string; cup: string; pad: string }> = {
   white: { band: "#e9e1d3", cup: "#fbf3e6", pad: "#cfc4b2" },
   neon: { band: "#2fc8ad", cup: "#6af4db", pad: "#1d8f7c" },
 };
+const SOLID: Record<string, string> = {
+  black: "#2b2830",
+  charcoal: "#393640",
+  cream: "#efe4c9",
+  red: "#de6a40",
+  cobalt: "#2438d6",
+  mustard: "#d6a328",
+  olive: "#7e8b4d",
+  oak: "#8a6a3f",
+  birch: "#d8c9ae",
+  velvet: "#6e3b52",
+  lime: "#7ed04c",
+  rust: "#b65a34",
+  teal: "#2f8f88",
+  crimson: "#a52a3a",
+  gold: "#f2cd5c",
+  silver: "#b9c6d4",
+  plaid: "#6b4a3f",
+  wildflower: "#9a7fc9",
+  rose: "#d76c8a",
+  daisy: "#e9be3d",
+  lavender: "#b7a0dd",
+};
+const FLOWERS: Record<string, { petals: string[]; center: string }> = {
+  wildflower: { petals: ["#a78bd6", "#f0a6c0", "#f2d05a"], center: "#f6e6a8" },
+  rose: { petals: ["#d76c8a", "#e78ba4", "#c95b78"], center: "#7b3b4e" },
+  daisy: { petals: ["#f5efe0", "#f0e6cf", "#fff8e6"], center: "#e8b53a" },
+  lavender: { petals: ["#b8a1df", "#c9b7ea", "#a58bd4"], center: "#6d5a94" },
+};
+const ANTLER: Record<string, { fill: string; line: string }> = {
+  oak: { fill: "#8a6a3f", line: "#5c4529" },
+  birch: { fill: "#d8c9ae", line: "#8f7a58" },
+  velvet: { fill: "#8a4d63", line: "#5a2d3b" },
+};
 
 /** Swatch colours for the settings picker. */
 export const COSMETIC_COLORS: Record<string, string> = {
   ...Object.fromEntries(Object.entries(FUR).map(([k, v]) => [k, v.base])),
-  gold: HALO.gold,
   purple: HORNS.purple,
   neon: PHONES.neon.cup,
+  ...SOLID,
+  gold: HALO.gold,
+  wildflower: FLOWERS.wildflower.petals[0],
+  rose: FLOWERS.rose.petals[0],
+  daisy: FLOWERS.daisy.center,
+  lavender: FLOWERS.lavender.petals[0],
 };
 
 const LINE = {
@@ -239,6 +278,205 @@ function Crown({ uid }: { uid: string }) {
   );
 }
 
+function Beret({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.black;
+  return (
+    <g transform="rotate(-6 50 40)">
+      <g className="cos-hat">
+        <path d="M18 40C18 27 32 20 50 20C68 20 82 27 82 40C82 48 68 52 50 52C32 52 18 48 18 40Z" fill={c} {...LINE} />
+        <path d="M20 40C24 47 35 51 50 51C65 51 76 47 80 40" fill="none" stroke="#fff" strokeOpacity="0.18" />
+        <path d="M50 21C54 15 61 12 67 13" fill="none" stroke={c} strokeWidth="3" strokeLinecap="round" />
+        <circle cx="68" cy="12" r="2.6" fill={c} {...LINE} />
+      </g>
+    </g>
+  );
+}
+
+function Beanie({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.charcoal;
+  return (
+    <g className="cos-hat">
+      <path d="M20 46C20 28 32 17 50 17C68 17 80 28 80 46Z" fill={c} {...LINE} />
+      <path d="M20 43C30 39 70 39 80 43L80 52C70 48 30 48 20 52Z" fill={c} {...LINE} />
+      <path d="M24 44V51M32 42V50M40 41V49M50 40V48M60 41V49M68 42V50M76 44V51" stroke="#fff" strokeOpacity="0.2" />
+      <path d="M50 17V8" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="50" cy="7" r="4" fill={c} {...LINE} />
+    </g>
+  );
+}
+
+function Cap({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.black;
+  return (
+    <g className="cos-hat">
+      <path d="M22 46C22 30 33 20 50 20C67 20 78 30 78 46Z" fill={c} {...LINE} />
+      <path
+        d="M24 45C40 41 62 41 79 45C88 46 93 51 91 56C82 53 72 51 62 52L34 52C24 51 14 54 8 56C7 51 14 46 24 45Z"
+        fill={c}
+        {...LINE}
+      />
+      <path d="M24 45C38 42 62 42 79 45" fill="none" stroke="#fff" strokeOpacity="0.16" />
+      <circle cx="50" cy="19" r="2.6" fill={c} {...LINE} />
+    </g>
+  );
+}
+
+function Flower({
+  x,
+  y,
+  petal,
+  center,
+  scale = 1,
+}: {
+  x: number;
+  y: number;
+  petal: string;
+  center: string;
+  scale?: number;
+}) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      {[0, 72, 144, 216, 288].map((a) => (
+        <ellipse key={a} cx="0" cy="-3.4" rx="2.1" ry="3.2" fill={petal} transform={`rotate(${a})`} />
+      ))}
+      <circle cx="0" cy="0" r="1.7" fill={center} />
+    </g>
+  );
+}
+
+function FlowerCrown({ color }: { color: string }) {
+  const pal = FLOWERS[color] ?? FLOWERS.wildflower;
+  return (
+    <g className="cos-flowers">
+      <path d="M18 34C28 18 72 18 82 34" fill="none" stroke="#5f7a4a" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M27 27C22 24 18 20 15 15M73 27C78 24 82 20 85 15" fill="none" stroke="#6f8a55" strokeWidth="2" />
+      <ellipse cx="22" cy="26" rx="4.6" ry="2.2" fill="#6f8a55" transform="rotate(-40 22 26)" />
+      <ellipse cx="78" cy="26" rx="4.6" ry="2.2" fill="#6f8a55" transform="rotate(40 78 26)" />
+      <Flower x={27} y={24} petal={pal.petals[0]} center={pal.center} />
+      <Flower x={40} y={18} petal={pal.petals[1]} center={pal.center} scale={0.9} />
+      <Flower x={50} y={16} petal={pal.petals[2]} center={pal.center} />
+      <Flower x={60} y={18} petal={pal.petals[0]} center={pal.center} scale={0.9} />
+      <Flower x={73} y={24} petal={pal.petals[1]} center={pal.center} />
+    </g>
+  );
+}
+
+function Antlers({ color }: { color: string }) {
+  const c = ANTLER[color] ?? ANTLER.oak;
+  const branch = (side: "l" | "r") => (
+    <g transform={side === "r" ? MIRROR : undefined}>
+      <g className="cos-antler">
+        <path
+          d="M31 30C27 20 24 10 25 0M25 9C19 5 14 1 10 -5M25 9C30 6 34 2 37 -4M28 20C22 17 17 14 13 9"
+          fill="none"
+          stroke={c.line}
+          strokeWidth="4.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M31 30C27 20 24 10 25 0M25 9C19 5 14 1 10 -5M25 9C30 6 34 2 37 -4M28 20C22 17 17 14 13 9"
+          fill="none"
+          stroke={c.fill}
+          strokeWidth="3.1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+    </g>
+  );
+  return (
+    <>
+      {branch("l")}
+      {branch("r")}
+    </>
+  );
+}
+
+function Antennae({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.lime;
+  const stalk = (side: "l" | "r") => (
+    <g transform={side === "r" ? MIRROR : undefined}>
+      <g className="cos-antenna">
+        <path d="M35 25C29 12 25 2 21 -9" fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
+        <circle cx="20" cy="-11" r="4.6" fill={c} {...LINE} />
+        <circle cx="18.4" cy="-12.6" r="1.4" fill="#fff" fillOpacity="0.55" />
+      </g>
+    </g>
+  );
+  return (
+    <>
+      {stalk("l")}
+      {stalk("r")}
+    </>
+  );
+}
+
+function Scarf({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.cobalt;
+  return (
+    <g>
+      <path d="M18 77C31 71 69 71 82 77L78 90C64 84 36 84 22 90Z" fill={c} {...LINE} />
+      <g className="cos-scarf-tail">
+        <path d="M72 83C83 85 88 93 85 104L74 101C77 94 74 89 68 86Z" fill={c} {...LINE} />
+      </g>
+      {color === "plaid" && (
+        <g stroke="#f2dca8" strokeOpacity="0.5" strokeWidth="1.4">
+          <path d="M28 76L25 89M42 74L40 86M56 74L58 86M70 76L73 89" />
+          <path d="M22 80C38 76 64 76 80 80" />
+        </g>
+      )}
+    </g>
+  );
+}
+
+function BowTie({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.black;
+  return (
+    <g className="cos-bowtie">
+      <path d="M50 84L35 75L35 93Z" fill={c} {...LINE} />
+      <path d="M50 84L65 75L65 93Z" fill={c} {...LINE} />
+      <rect x="46" y="80" width="8" height="8" fill={c} {...LINE} />
+    </g>
+  );
+}
+
+function Earring({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.gold;
+  return (
+    <g className="cos-earring-hoop">
+      <circle cx="14" cy="66" r="2.8" fill={c} {...LINE} />
+      <circle cx="14" cy="77" r="8" fill="none" stroke={c} strokeWidth="2.3" />
+    </g>
+  );
+}
+
+function Pin({ color }: { color: string }) {
+  const c = SOLID[color] ?? SOLID.gold;
+  return (
+    <g>
+      <circle cx="82" cy="66" r="7.4" fill={c} {...LINE} />
+      <path
+        d="M82 60V72M82 72C78.5 72 76.4 70 76.4 67.2"
+        fill="none"
+        stroke="#2a2130"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <rect
+        className="cos-pin-shine"
+        x="79"
+        y="61"
+        width="1.8"
+        height="10"
+        fill="#fff"
+        fillOpacity="0.55"
+        transform="rotate(20 80 66)"
+      />
+    </g>
+  );
+}
+
 function Accessory({ item }: { item: Equipped }) {
   const uid = useId().replace(/\W/g, "");
   const [group, kind] = item.id.split(".");
@@ -250,6 +488,16 @@ function Accessory({ item }: { item: Equipped }) {
   else if (item.id === "acc.halo") body = <Halo color={color} />;
   else if (item.id === "acc.headphones") (body = <Headphones color={color} />), (layer = "front");
   else if (item.id === "acc.crown") (body = <Crown uid={uid} />), (layer = "front");
+  else if (item.id === "acc.beret") (body = <Beret color={color} />), (layer = "front");
+  else if (item.id === "acc.beanie") (body = <Beanie color={color} />), (layer = "front");
+  else if (item.id === "acc.cap") (body = <Cap color={color} />), (layer = "front");
+  else if (item.id === "acc.flowercrown") (body = <FlowerCrown color={color} />), (layer = "front");
+  else if (item.id === "acc.antlers") body = <Antlers color={color} />;
+  else if (item.id === "acc.antenna") body = <Antennae color={color} />;
+  else if (item.id === "acc.scarf") (body = <Scarf color={color} />), (layer = "front");
+  else if (item.id === "acc.bowtie") (body = <BowTie color={color} />), (layer = "front");
+  else if (item.id === "acc.earring") (body = <Earring color={color} />), (layer = "front");
+  else if (item.id === "acc.pin") (body = <Pin color={color} />), (layer = "front");
   if (!body) return null;
   return (
     <svg
@@ -306,11 +554,50 @@ function Laurel() {
   );
 }
 
+function Garden() {
+  const leaves = Array.from({ length: 12 }, (_, i) => {
+    const a = i * 30;
+    const x = 50 + 40 * Math.cos((a * Math.PI) / 180);
+    const y = 50 + 40 * Math.sin((a * Math.PI) / 180);
+    return (
+      <ellipse
+        key={a}
+        cx={x.toFixed(2)}
+        cy={y.toFixed(2)}
+        rx="5.2"
+        ry="2.1"
+        fill={i % 3 === 0 ? "#7ca36a" : "#5f8a5b"}
+        stroke="#3f5d3e"
+        strokeWidth="0.6"
+        transform={`rotate(${a + 90} ${x.toFixed(2)} ${y.toFixed(2)})`}
+      />
+    );
+  });
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false" className="cos-garden">
+      <g className="cos-garden-leaves">{leaves}</g>
+      <Flower x={50} y={10} petal="#e8b53a" center="#7a5a1e" scale={1.15} />
+    </svg>
+  );
+}
+
 function Frame({ id }: { id: string }) {
   const kind = id.slice(id.indexOf(".") + 1);
   return (
     <span aria-hidden="true" className={`cos-frame cos-frame-${kind}`}>
       {kind === "laurel" && <Laurel />}
+      {kind === "garden" && <Garden />}
+      {kind === "tape" && (
+        <span className="cos-frame-reels">
+          <i />
+          <i />
+        </span>
+      )}
+      {(kind === "orbit" || kind === "arcade") && (
+        <span className="cos-frame-arm">
+          <i />
+        </span>
+      )}
     </span>
   );
 }
