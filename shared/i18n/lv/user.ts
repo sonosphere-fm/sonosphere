@@ -287,5 +287,7 @@ export default {
   firstScrobble: "Pirmais skrobls",
   scrobbleNumber: "Skrobls Nr. {n}",
   nextMilestone: "Nākamais: skrobls Nr. {n}, vēl {left}",
+  firstPlays: "Pirmās klausīšanās",
+  startedWith: "Sākās ar {track}",
   yearCard: "Gada kartīte",
 } satisfies Translation<typeof en>;

@@ -250,5 +250,7 @@ export default {
   firstScrobble: "First scrobble",
   scrobbleNumber: "Scrobble #{n}",
   nextMilestone: "Next up: scrobble #{n}, {left} to go",
+  firstPlays: "First plays",
+  startedWith: "Started with {track}",
   yearCard: "Year card",
 };

@@ -254,5 +254,7 @@ export default {
   firstScrobble: "پہلا اسکروبل",
   scrobbleNumber: "اسکروبل #{n}",
   nextMilestone: "اگلا: اسکروبل #{n}، {left} باقی",
+  firstPlays: "پہلی بار سنا",
+  startedWith: "آغاز {track} سے",
   yearCard: "سالانہ کارڈ",
 } satisfies Translation<typeof en>;

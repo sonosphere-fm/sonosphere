@@ -252,5 +252,7 @@ export default {
   firstScrobble: "첫 스크로블",
   scrobbleNumber: "{n}번째 스크로블",
   nextMilestone: "다음: {n}번째 스크로블, {left} 남음",
+  firstPlays: "첫 재생",
+  startedWith: "{track}(으)로 시작",
   yearCard: "연간 카드",
 } satisfies Translation<typeof en>;

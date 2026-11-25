@@ -316,5 +316,7 @@ export default {
   firstScrobble: "Pierwszy scrobble",
   scrobbleNumber: "Scrobble nr {n}",
   nextMilestone: "Następny: scrobble nr {n}, zostało {left}",
+  firstPlays: "Pierwsze odsłuchania",
+  startedWith: "Zaczęło się od {track}",
   yearCard: "Karta roku",
 } satisfies Translation<typeof en>;

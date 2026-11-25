@@ -252,5 +252,7 @@ export default {
   firstScrobble: "మొదటి స్క్రాబుల్",
   scrobbleNumber: "స్క్రాబుల్ #{n}",
   nextMilestone: "తదుపరి: స్క్రాబుల్ #{n}, ఇంకా {left}",
+  firstPlays: "మొదటి వినికిడి",
+  startedWith: "{track} తో మొదలైంది",
   yearCard: "వార్షిక కార్డ్",
 } satisfies Translation<typeof en>;

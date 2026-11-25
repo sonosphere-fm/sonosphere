@@ -263,5 +263,7 @@ export default {
   firstScrobble: "İlk scrobble",
   scrobbleNumber: "{n}. scrobble",
   nextMilestone: "Sıradaki: {n}. scrobble, {left} kaldı",
+  firstPlays: "İlk dinlemeler",
+  startedWith: "{track} ile başladı",
   yearCard: "Yıl kartı",
 } satisfies Translation<typeof en>;

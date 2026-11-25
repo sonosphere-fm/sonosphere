@@ -263,5 +263,7 @@ export default {
   firstScrobble: "Primo scrobble",
   scrobbleNumber: "Scrobble n. {n}",
   nextMilestone: "Prossimo: scrobble n. {n}, ne mancano {left}",
+  firstPlays: "Primi ascolti",
+  startedWith: "Iniziato con {track}",
   yearCard: "Scheda dell’anno",
 } satisfies Translation<typeof en>;

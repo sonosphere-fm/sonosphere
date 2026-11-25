@@ -255,5 +255,7 @@ export default {
   firstScrobble: "पहला स्क्रॉबल",
   scrobbleNumber: "स्क्रॉबल #{n}",
   nextMilestone: "अगला: स्क्रॉबल #{n}, {left} बाकी",
+  firstPlays: "पहली बार सुना",
+  startedWith: "शुरुआत {track} से",
   yearCard: "वार्षिक कार्ड",
 } satisfies Translation<typeof en>;

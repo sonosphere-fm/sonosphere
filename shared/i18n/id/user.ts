@@ -257,5 +257,7 @@ export default {
   firstScrobble: "Scrobble pertama",
   scrobbleNumber: "Scrobble ke-{n}",
   nextMilestone: "Berikutnya: scrobble ke-{n}, kurang {left}",
+  firstPlays: "Putaran pertama",
+  startedWith: "Dimulai dengan {track}",
   yearCard: "Kartu tahunan",
 } satisfies Translation<typeof en>;
