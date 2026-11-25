@@ -4,6 +4,19 @@ import { useApi, useAuth } from "../lib";
 
 type NamedUser = UserAppearance & { username: string | null };
 
+const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@?";
+
+function scrambled(text: string) {
+  let changed = 0;
+  return Array.from(text)
+    .map((char, i) => {
+      if (changed >= 2 || i % 3 !== 1 || !/[a-z0-9]/i.test(char)) return char;
+      changed += 1;
+      return GLYPHS[(char.charCodeAt(0) + i * 7) % GLYPHS.length];
+    })
+    .join("");
+}
+
 function ResolvedUsername({ name }: { name: string }) {
   const appearance = useApi<UserAppearance>(`/user/appearance?name=${encodeURIComponent(name)}`);
   return <Username user={{ username: name, ...appearance.data }} font={appearance.data?.usernameFont ?? "default"} />;
@@ -54,7 +67,10 @@ export function Username({
         <Suspense fallback={text}>
           <ResolvedUsername name={text} />
         </Suspense>
-      ) : user?.cosmetics?.some((c) => c.id === "name.bounce") && text ? (
+      ) : (nameEffect?.id === "name.bounce" ||
+          nameEffect?.id === "name.cascade" ||
+          nameEffect?.id === "name.marquee") &&
+        text ? (
         <>
           {Array.from(text).map((letter, i) => (
             <span key={i} style={{ "--letter": i } as import("react").CSSProperties}>
@@ -62,7 +78,14 @@ export function Username({
             </span>
           ))}
         </>
-      ) : user?.cosmetics?.some((c) => c.id === "name.eq") ? (
+      ) : nameEffect?.id === "name.decrypt" && text ? (
+        <>
+          <span className="cos-decrypt-real">{text}</span>
+          <span className="cos-decrypt-scramble" aria-hidden="true">
+            {scrambled(text)}
+          </span>
+        </>
+      ) : nameEffect?.id === "name.eq" ? (
         <>
           {text}
           <span className="cos-eq" aria-hidden="true">
