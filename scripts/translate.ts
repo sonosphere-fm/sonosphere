@@ -9,6 +9,7 @@
  *   TOKEN=... bun run scripts/translate.ts
  */
 
+import { readdirSync } from "node:fs";
 import { LOCALES } from "../shared/i18n/core";
 
 const API = "https://translate-api.edideaur.workers.dev/hi/translate";
@@ -198,9 +199,9 @@ async function readSourceNamespace(ns: string): Promise<Map<string, Entry>> {
 }
 
 async function main() {
-  const sourceFiles = (await Bun.glob("shared/i18n/en/*.ts")).filter(
-    (f) => !f.endsWith("/index.ts")
-  );
+  const sourceFiles = readdirSync("shared/i18n/en")
+    .filter((f) => f.endsWith(".ts") && f !== "index.ts")
+    .map((f) => `shared/i18n/en/${f}`);
 
   const sourceByNs = new Map<string, Map<string, Entry>>();
   for (const file of sourceFiles) {
