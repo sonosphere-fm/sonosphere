@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Semestrial",
   chartYearly: "Anual",
   chartOverall: "Dintotdeauna",
+  chartCustomDates: "Date personalizate",
   chartTitlesNames: "Nume",
   chartTitlesPlays: "Nume + număr de ascultări",
   chartTitlesNone: "Fără titluri",

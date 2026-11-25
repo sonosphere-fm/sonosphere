@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "نصف سنوي",
   chartYearly: "سنوي",
   chartOverall: "الكل",
+  chartCustomDates: "تواريخ مخصصة",
   chartTitlesNames: "الأسماء",
   chartTitlesPlays: "الأسماء + عدد التشغيل",
   chartTitlesNone: "بلا عناوين",

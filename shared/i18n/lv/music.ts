@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Pusgads",
   chartYearly: "Gads",
   chartOverall: "Visu laiku",
+  chartCustomDates: "Izvēlēti datumi",
   chartTitlesNames: "Nosaukumi",
   chartTitlesPlays: "Nosaukumi + atskaņojumi",
   chartTitlesNone: "Bez nosaukumiem",

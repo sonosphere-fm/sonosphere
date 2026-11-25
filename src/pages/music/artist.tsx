@@ -19,7 +19,7 @@ import {
   userUrl,
   useTitle,
 } from "../../lib";
-import { Art, Async, Empty, Pager, PeriodPicker, Section, Tabs, Pane } from "../../ui/base";
+import { Art, Async, DateRange, Empty, Pager, Section, Tabs, Pane, useRange } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { Grid, TrackList, UserList } from "../../ui/lists";
 import { MoreMenu } from "../../ui/more-menu";
@@ -291,13 +291,12 @@ function ArtistTopTracks({ name, base, initial }: { name: string; base: string; 
 function ArtistTracks({ name }: { name: string }) {
   const [sp] = useSearchParams();
   const page = Number(sp.get("page")) || 1;
-  const period = sp.get("period") || "overall";
-  const q = useApi<ArtistTracksData>(`/artist/tracks${qs({ name, period, page })}`);
+  const q = useApi<ArtistTracksData>(`/artist/tracks${qs({ name, page, ...useRange() })}`);
   return (
     <>
       <div className="toolbar">
         <h2>{t("music.topTracks")}</h2>
-        <PeriodPicker />
+        <DateRange />
       </div>
       <Async q={q}>
         {(d) => (

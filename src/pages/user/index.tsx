@@ -23,7 +23,7 @@ import {
   useTitle,
   userTitle,
 } from "../../lib";
-import { Art, Async, Empty, Pane, PeriodPicker, Section, Stat, Tabs } from "../../ui/base";
+import { Art, Async, DateRange, Empty, Pane, Section, Stat, Tabs, useRange } from "../../ui/base";
 import { EventList } from "../../ui/events";
 import { FollowButton, Grid, TrackList } from "../../ui/lists";
 import { MoreMenu } from "../../ui/more-menu";
@@ -467,9 +467,11 @@ function RecentTracks({ d, u, mine }: { d: UserRecent; u: Profile; mine: boolean
 function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
   const base = userUrl(u.username);
   const [sp] = useSearchParams();
-  const period = sp.get("period") || "7day";
+  const range = useRange("7day");
   const top = (kind: "artists" | "albums" | "tracks") =>
-    `/user/top${qs({ name: u.username, kind, period, limit: kind === "tracks" ? 10 : 8 })}`;
+    `/user/top${qs({ name: u.username, kind, ...range, limit: kind === "tracks" ? 10 : 8 })}`;
+  const library = (kind: string) =>
+    `${base}/library/${kind}${qs({ period: range.period, from: sp.get("from"), to: sp.get("to") })}`;
   const paths = [`/user/recent${qs({ name: u.username, limit: 10 })}`, top("artists"), top("albums"), top("tracks")];
   // Each useApi waits for its own reply before the next one runs, so ask for all of them (and the wall) up front.
   for (const p of [...paths, `/shouts${qs({ type: "user", id: u.id, page: 1, limit: 5 })}`]) prefetch(p);
@@ -486,9 +488,9 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
         </Section>
         <div className="toolbar">
           <h2>{t("user.topMusic")}</h2>
-          <PeriodPicker def="7day" />
+          <DateRange def="7day" />
         </div>
-        <Section sub title={t("music.artists")} more={`${base}/library/artists?period=${period}`}>
+        <Section sub title={t("music.artists")} more={library("artists")}>
           <Async q={artists}>
             {(d) => (
               <Grid
@@ -500,7 +502,7 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
             )}
           </Async>
         </Section>
-        <Section sub title={t("music.albums")} more={`${base}/library/albums?period=${period}`}>
+        <Section sub title={t("music.albums")} more={library("albums")}>
           <Async q={albums}>
             {(d) => (
               <Grid
@@ -512,7 +514,7 @@ function OpenOverview({ u, mine }: { u: Profile; mine: boolean }) {
             )}
           </Async>
         </Section>
-        <Section sub title={t("music.tracks")} more={`${base}/library/tracks?period=${period}`}>
+        <Section sub title={t("music.tracks")} more={library("tracks")}>
           <Async q={tracks}>{(d) => <TrackList items={d.items} rank={1} count="playcount" />}</Async>
         </Section>
         <Section title={t("user.wall")} more={`${base}/wall`} moreLabel={t("user.wholeWall")}>

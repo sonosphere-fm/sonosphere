@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "सहामाही",
   chartYearly: "वार्षिक",
   chartOverall: "एकूण",
+  chartCustomDates: "निवडलेल्या तारखा",
   chartTitlesNames: "नावे",
   chartTitlesPlays: "नावे + प्ले संख्या",
   chartTitlesNone: "शीर्षके नाहीत",

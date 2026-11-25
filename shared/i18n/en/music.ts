@@ -7,6 +7,7 @@ export default {
   chartHalfYearly: "Half-yearly",
   chartYearly: "Yearly",
   chartOverall: "Overall",
+  chartCustomDates: "Custom dates",
   chartTitlesNames: "Names",
   chartTitlesPlays: "Names + play counts",
   chartTitlesNone: "No titles",

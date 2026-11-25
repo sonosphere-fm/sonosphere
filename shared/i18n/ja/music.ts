@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "半年",
   chartYearly: "年間",
   chartOverall: "全期間",
+  chartCustomDates: "期間を指定",
   chartTitlesNames: "名前",
   chartTitlesPlays: "名前と再生回数",
   chartTitlesNone: "タイトルなし",

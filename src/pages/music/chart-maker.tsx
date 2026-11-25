@@ -5,7 +5,8 @@ import { t } from "../../i18n";
 import { Ico } from "../../icons";
 import { Button, Input, Select } from "../../kit";
 import { api, TITLES, useAuth, useTitle } from "../../lib";
-import { Section } from "../../ui/base";
+import { DatePicker } from "../../datepicker";
+import { dayStart, Section } from "../../ui/base";
 import {
   CHART_MAX_SIDE,
   type ChartPeriod,
@@ -17,7 +18,9 @@ import {
 type Form = {
   username: string;
   kind: "albums" | "artists";
-  period: ChartPeriod;
+  period: ChartPeriod | "custom";
+  fromDay: string;
+  toDay: string;
   width: string;
   height: string;
   titles: ChartTitles;
@@ -36,6 +39,8 @@ const INITIAL: Form = {
   username: "",
   kind: "albums",
   period: "weekly",
+  fromDay: "",
+  toDay: "",
   width: "3",
   height: "3",
   titles: "titles",
@@ -139,10 +144,13 @@ export function ChartMaker() {
       return fail(t("music.chartWholeNumbers"));
     }
 
+    const custom = form.period === "custom";
     const req: ChartRequest = {
       username: form.username.trim(),
       kind: form.kind,
-      period: form.period,
+      period: form.period === "custom" ? "all" : form.period,
+      from: custom ? (dayStart(form.fromDay) ?? null) : null,
+      to: custom ? (dayStart(form.toDay, true) ?? null) : null,
       width,
       height,
       titles: form.titles,
@@ -166,10 +174,11 @@ export function ChartMaker() {
     try {
       const reply = await api<ChartReply>("/charts", { body: req });
       if (reply.status !== "Ok") return fail(shortage(reply, req));
+      const span = custom ? [form.fromDay, form.toDay].filter(Boolean).join("_") : "";
       setLines(settingsLines(req));
       setChart({
         url: jpegUrl(reply.image),
-        name: `${req.kind === "artists" ? "artist" : "album"}-chart-${width}w-${height}h-${req.period}-${req.username}.jpg`,
+        name: `${req.kind === "artists" ? "artist" : "album"}-chart-${width}w-${height}h-${span || req.period}-${req.username}.jpg`,
         width: reply.width,
         height: reply.height,
         count: reply.drawn,
@@ -228,7 +237,7 @@ export function ChartMaker() {
             <Select
               label={t("music.chartPeriod")}
               value={form.period}
-              onChange={(v) => set("period", v as ChartPeriod)}
+              onChange={(v) => set("period", v as Form["period"])}
               options={periodOptions()}
             />
           </label>
@@ -252,6 +261,33 @@ export function ChartMaker() {
           <Button kind="btn" type="submit" loading={busy} disabled={busy}>
             {t("music.chartMake")}
           </Button>
+          {form.period === "custom" && (
+            <span className="daterange cm-dates">
+              <label>
+                {t("user.from")}{" "}
+                <DatePicker
+                  compact
+                  label={t("user.from")}
+                  placeholder={t("user.anyDate")}
+                  value={form.fromDay}
+                  onChange={(v) => set("fromDay", v)}
+                  max={form.toDay || "now"}
+                />
+              </label>
+              <label>
+                {t("user.toLower")}{" "}
+                <DatePicker
+                  compact
+                  label={t("user.to")}
+                  placeholder={t("user.anyDate")}
+                  value={form.toDay}
+                  onChange={(v) => set("toDay", v)}
+                  min={form.fromDay || undefined}
+                  max="now"
+                />
+              </label>
+            </span>
+          )}
         </div>
 
         <div className="cm-body">

@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "每半年",
   chartYearly: "每年",
   chartOverall: "全部",
+  chartCustomDates: "自定义日期",
   chartTitlesNames: "名称",
   chartTitlesPlays: "名称 + 播放次数",
   chartTitlesNone: "不显示标题",

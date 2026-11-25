@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "חצי שנתי",
   chartYearly: "שנתי",
   chartOverall: "כל הזמנים",
+  chartCustomDates: "תאריכים מותאמים",
   chartTitlesNames: "שמות",
   chartTitlesPlays: "שמות + מספר השמעות",
   chartTitlesNone: "ללא כותרות",

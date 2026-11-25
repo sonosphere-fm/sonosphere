@@ -1,11 +1,10 @@
-import { DatePicker } from "../../datepicker";
 import { Username } from "../../ui/username";
 import { useEffect, useRef, useState } from "react";
 import { Button, Input } from "../../kit";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { api, artistUrl, date, invalidateAll, enc, num, qs, useApi, userUrl } from "../../lib";
 import { t, tx } from "../../i18n";
-import { Art, Async, Empty, Pager, PeriodPicker, Section, Stat, useAction } from "../../ui/base";
+import { Art, Async, DateRange, Empty, Pager, Section, Stat, useAction, useRange } from "../../ui/base";
 import { BarChart, weekTrend } from "../../ui/charts";
 import { Grid, RankList, TrackList, type TrackRow } from "../../ui/lists";
 import { ScrobbleMenu } from "../../ui/scrobble-menu";
@@ -27,75 +26,12 @@ export function rangeIds(ids: number[], anchor: number | null, target: number): 
   return ids.slice(Math.min(a, b), Math.max(a, b) + 1);
 }
 
-function toTs(d: string, end = false) {
-  if (!d) return undefined;
-  return Math.floor(new Date(d + "T00:00:00").getTime() / 1000) + (end ? 86400 : 0);
-}
-
 const libraryTabs = () => [
   ["", t("user.statScrobbles")],
   ["/artists", t("user.statArtists")],
   ["/albums", t("user.statAlbums")],
   ["/tracks", t("user.statTracks")],
 ];
-
-function DateRange() {
-  const [sp, setSp] = useSearchParams();
-  const from = sp.get("from") || "";
-  const to = sp.get("to") || "";
-
-  const set = (k: string, v: string) =>
-    setSp((prev) => {
-      const n = new URLSearchParams(prev);
-      if (v) n.set(k, v);
-      else n.delete(k);
-      n.delete("page");
-      return n;
-    });
-
-  const clear = () =>
-    setSp((prev) => {
-      const n = new URLSearchParams(prev);
-      n.delete("from");
-      n.delete("to");
-      return n;
-    });
-
-  return (
-    <span className="daterange">
-      <label>
-        {t("user.from")}{" "}
-        <DatePicker
-          compact
-          label={t("user.from")}
-          placeholder={t("user.anyDate")}
-          value={from}
-          onChange={(v) => set("from", v)}
-          max={to || "now"}
-        />
-      </label>
-      <label>
-        {t("user.toLower")}{" "}
-        <DatePicker
-          compact
-          label={t("user.to")}
-          placeholder={t("user.anyDate")}
-          value={to}
-          onChange={(v) => set("to", v)}
-          min={from || undefined}
-          max="now"
-        />
-      </label>
-      {from || to ? (
-        <Button kind="link" onClick={clear}>
-          {t("user.clear")}
-        </Button>
-      ) : (
-        <PeriodPicker />
-      )}
-    </span>
-  );
-}
 
 function kindCount(kind: string, count: number) {
   if (kind === "artists") return t("user.artistCount", { count });
@@ -117,14 +53,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   const base = `${userUrl(name)}/library`;
   const [sp] = useSearchParams();
   const page = Number(sp.get("page")) || 1;
-  const params = {
-    name,
-    page,
-    limit: 50,
-    period: sp.get("period") || "overall",
-    from: toTs(sp.get("from") || ""),
-    to: toTs(sp.get("to") || "", true),
-  };
+  const params = { name, page, limit: 50, ...useRange() };
   const q = useApi<UserRecent | UserTop>(
     kind === "scrobbles" ? `/user/recent${qs(params)}` : `/user/top${qs({ ...params, kind })}`
   );
@@ -257,10 +186,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   };
 
   const list = (d: UserRecent | UserTop) => {
-    if ("hidden" in d)
-      return (
-        <Empty>{tx("user.historyPrivate", { name: <Username name={name} /> })}</Empty>
-      );
+    if ("hidden" in d) return <Empty>{tx("user.historyPrivate", { name: <Username name={name} /> })}</Empty>;
     if (kind === "scrobbles") {
       return (
         <TrackList
@@ -377,7 +303,12 @@ export function LibraryArtist({ name, artist }: { name: string; artist: string }
                 </div>
                 <aside className="side">
                   <Section title={t("user.statAlbums")}>
-                    <Grid kind="album" cols={2} items={d.albums} sub={(a) => t("user.scrobbleCount", { count: a.playcount })} />
+                    <Grid
+                      kind="album"
+                      cols={2}
+                      items={d.albums}
+                      sub={(a) => t("user.scrobbleCount", { count: a.playcount })}
+                    />
                   </Section>
                 </aside>
               </div>

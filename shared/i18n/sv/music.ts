@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Halvår",
   chartYearly: "År",
   chartOverall: "Totalt",
+  chartCustomDates: "Egna datum",
   chartTitlesNames: "Namn",
   chartTitlesPlays: "Namn + antal spelningar",
   chartTitlesNone: "Inga titlar",

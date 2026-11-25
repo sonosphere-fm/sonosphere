@@ -16,6 +16,9 @@ export type ChartRequest = {
   username: string;
   kind: "albums" | "artists";
   period: ChartPeriod;
+  /** Unix seconds; either one set replaces `period`. */
+  from: number | null;
+  to: number | null;
   width: number;
   height: number;
   titles: ChartTitles;

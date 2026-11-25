@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "Semesteran",
   chartYearly: "Tahunan",
   chartOverall: "Keseluruhan",
+  chartCustomDates: "Tanggal pilihan",
   chartTitlesNames: "Nama",
   chartTitlesPlays: "Nama + jumlah putar",
   chartTitlesNone: "Tanpa judul",

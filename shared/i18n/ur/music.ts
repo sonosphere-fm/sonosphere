@@ -10,6 +10,7 @@ export default {
   chartHalfYearly: "ششماہی",
   chartYearly: "سالانہ",
   chartOverall: "مجموعی",
+  chartCustomDates: "منتخب تاریخیں",
   chartTitlesNames: "نام",
   chartTitlesPlays: "نام + پلے کاؤنٹ",
   chartTitlesNone: "کوئی عنوان نہیں",
