@@ -34,6 +34,7 @@ import type {
   SpotifyStatus,
   SpotifySynced,
 } from "../../shared/spotify";
+import type { SubsonicConnectBody, SubsonicStatus } from "../../shared/subsonic";
 import { Arrow, Ico, Spinner } from "../icons";
 import { Art, Async, Pane, Section, useAction } from "../ui/base";
 import { ImageWithFallback } from "../ui/image";
@@ -890,6 +891,130 @@ function SpotifySetup({
 
 type SpotifyOn = Extract<SpotifyStatus, { enabled: true }>;
 
+function SubsonicSettings() {
+  const q = useApi<SubsonicStatus>("/subsonic");
+  const act = useAction();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<SubsonicConnectBody>({ url: "", username: "", password: "" });
+
+  const connect = () =>
+    act.run(async () => {
+      q.setData(await api<SubsonicStatus>("/subsonic", { body: form }));
+      setEditing(false);
+      setForm({ url: "", username: "", password: "" });
+      window.dispatchEvent(new Event("spin:playback-source"));
+      return t("settings.subsonicConnected");
+    });
+
+  const disconnect = () =>
+    act.run(async () => {
+      await api<Ok>("/subsonic", { method: "DELETE" });
+      q.setData({ connected: false });
+      setEditing(false);
+      window.dispatchEvent(new Event("spin:playback-source"));
+      return t("settings.subsonicDisconnected");
+    });
+
+  const edit = (d: Extract<SubsonicStatus, { connected: true }>) => {
+    setForm({ url: d.url, username: d.username, password: "" });
+    setEditing(true);
+  };
+
+  let badge = null;
+  if (q.data)
+    badge = q.data.connected ? (
+      <span className="badge">{t("settings.badgeConnected")}</span>
+    ) : (
+      <span className="badge off">{t("settings.badgeNotConnected")}</span>
+    );
+
+  return (
+    <Service name="OpenSubsonic" blurb={t("settings.subsonicBlurb")} badge={badge} open={false}>
+      <Async q={q}>
+        {(d) =>
+          d.connected && !editing ? (
+            <div className="form">
+              <p>
+                {tx("settings.subsonicConnectedTo", { name: <b>{d.name || "OpenSubsonic"}</b> })}{" "}
+                {d.version && <span className="muted small">{d.version}</span>}
+              </p>
+              <p className="muted small">
+                {d.url} · {d.username}
+              </p>
+              <p className="muted small">{t("settings.subsonicNote")}</p>
+              {act.note}
+              <div className="row">
+                <Button kind="btn ghost" onClick={() => edit(d)}>
+                  {t("settings.subsonicChange")}
+                </Button>
+                <Button kind="btn ghost" onClick={disconnect}>
+                  {t("settings.disconnect")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <form
+              className="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                connect();
+              }}
+            >
+              <p>{t("settings.subsonicIntro")}</p>
+              <label>
+                {t("settings.subsonicUrl")}
+                <Input
+                  value={form.url}
+                  onChange={(e) => setForm({ ...form, url: e.target.value })}
+                  placeholder="https://music.example.com"
+                  required
+                  maxLength={500}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <label>
+                {t("settings.subsonicUsername")}
+                <Input
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  required
+                  maxLength={100}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <label>
+                {t("settings.subsonicPassword")}
+                <Input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
+                  maxLength={500}
+                  autoComplete="off"
+                />
+              </label>
+              {act.note}
+              <div className="row">
+                <Button kind="btn" loading={act.busy}>
+                  {t("settings.connect")}
+                </Button>
+                {editing && (
+                  <Button kind="btn ghost" type="button" onClick={() => setEditing(false)}>
+                    {t("common.cancel")}
+                  </Button>
+                )}
+              </div>
+              <p className="muted small">{t("settings.subsonicPasswordHint")}</p>
+            </form>
+          )
+        }
+      </Async>
+    </Service>
+  );
+}
+
 function SpotifySettings() {
   const q = useApi<SpotifyStatus>("/spotify");
   const act = useAction();
@@ -915,6 +1040,7 @@ function SpotifySettings() {
   const disconnect = () =>
     act.run(async () => {
       await api<Ok>("/spotify", { method: "DELETE" });
+      window.dispatchEvent(new Event("spin:playback-source"));
       setSp({}, { replace: true });
       setRedo(false);
       q.reload();
@@ -1142,6 +1268,7 @@ function AppSettings() {
       {c.dialog}
       <Section title={t("settings.streamingServices")}>
         <div className="services">
+          <SubsonicSettings />
           <SpotifySettings />
           <DiscordSettings />
         </div>

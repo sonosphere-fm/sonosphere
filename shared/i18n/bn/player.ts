@@ -11,7 +11,6 @@ export default {
   playTitle: "{title} বাজান",
   trackUnavailable: "ট্র্যাকটি উপলব্ধ নয়।",
   finding: "“{title}” খোঁজা হচ্ছে…",
-  onSpotify: "Spotify-তে",
   scrobbled: "স্ক্রবল হয়েছে",
   openInSpotify: "Spotify-তে খুলুন",
   watchOnYouTube: "YouTube-এ দেখুন",
@@ -127,4 +126,9 @@ export default {
   updateScrobbles: { one: "{count}টি স্ক্রবল আপডেট করুন", other: "{count}টি স্ক্রবল আপডেট করুন" },
   save: "সংরক্ষণ",
   lyrics: "গানের কথা",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

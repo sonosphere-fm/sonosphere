@@ -11,7 +11,6 @@ export default {
   playTitle: "播放 {title}",
   trackUnavailable: "曲目不可用。",
   finding: "正在查找“{title}”…",
-  onSpotify: "在 Spotify 上",
   scrobbled: "已记录",
   openInSpotify: "在 Spotify 中打开",
   watchOnYouTube: "在 YouTube 上观看",
@@ -125,4 +124,9 @@ export default {
   updateScrobbles: { other: "更新 {count} 条播放记录" },
   save: "保存",
   lyrics: "歌词",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

@@ -201,7 +201,7 @@ export default {
   spotifySettings: "Settings",
   spotifyClientId: "Client ID",
   spotifyClientIdPlaceholder: "英数字32文字",
-  spotifyPlayback: "動画の代わりにSpotifyでもここで音楽を再生する（Spotify Premiumが必要）",
+  spotifyPlayback: "Also offer Spotify as a playback source (needs Spotify Premium)",
   connectSpotify: "Spotifyを接続",
   spotifyOtherAccount:
     "すぐに使えるのは、アプリを作成したSpotifyアカウントだけです。別のアカウントを接続するには、先にアプリの設定の{userManagement}にそのアカウントを追加してください。",
@@ -215,16 +215,15 @@ export default {
   },
   spotifyImporting: "最近の再生をインポートしています。新しい再生は数分ごとに取り込まれます。",
   spotifyResting: "Spotifyから間隔を空けるよう求められたため、インポートは{time}ごろに再開します。",
-  spotifyPlaybackOn: "トラックがある場合、プレーヤーはSpotifyで再生します。",
-  spotifyPlaybackOff:
-    "プレーヤーは動画を使っています。代わりにSpotify（Premium）で再生するには、「アプリを変更」を選んで再生オプションにチェックを入れてください。",
+  spotifyPlaybackOn: "Spotify is available as a playback source in the player.",
+  spotifyPlaybackOff: "To play through Spotify (Premium) too, choose Change app and tick the playback option.",
   importNow: "今すぐインポート",
   changeApp: "アプリを変更",
   badgeDisabled: "無効",
   badgeNeedsAttention: "要対応",
   badgeConnected: "接続済み",
   badgeNotConnected: "未接続",
-  spotifyBlurb: "Spotifyで再生した曲をインポート",
+  spotifyBlurb: "Import and play from Spotify",
   spotifyDisabled: "Spotifyからのスクロブルは無効になっています。",
 
   discordBlurb: "Discordのステータスから再生を記録",
@@ -298,4 +297,16 @@ export default {
   clearHintAs:
     "{name}のライブラリからすべてのスクロブルを削除します。お気に入りトラック、タグ、プレイリストは残ります。",
   clearImpersonating: "{name}として操作中のため、パスワードは不要です。この削除は監査ログに記録されます。",
+  subsonicBlurb: "Play from your own music server",
+  subsonicIntro:
+    "Connect a Navidrome, Airsonic, Gonic or other OpenSubsonic server. The player can then stream from it instead of YouTube.",
+  subsonicUrl: "Server address",
+  subsonicUsername: "Username",
+  subsonicPassword: "Password",
+  subsonicPasswordHint: "The password is stored encrypted and only used to ask your server for tracks.",
+  subsonicConnected: "Music server connected.",
+  subsonicDisconnected: "Music server disconnected.",
+  subsonicConnectedTo: "Connected to {name}.",
+  subsonicChange: "Change server",
+  subsonicNote: "OpenSubsonic is only used for playback. Plays still scrobble to Sonosphere.",
 } satisfies Translation<typeof en>;

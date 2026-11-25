@@ -11,7 +11,6 @@ export default {
   playTitle: "{title} 재생",
   trackUnavailable: "재생할 수 없는 트랙이에요.",
   finding: "“{title}” 찾는 중…",
-  onSpotify: "Spotify에서",
   scrobbled: "스크로블됨",
   openInSpotify: "Spotify에서 열기",
   watchOnYouTube: "YouTube에서 보기",
@@ -128,4 +127,9 @@ export default {
   updateScrobbles: { other: "스크로블 {count}개 업데이트" },
   save: "저장",
   lyrics: "가사",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

@@ -11,7 +11,6 @@ export default {
   playTitle: "Çal: {title}",
   trackUnavailable: "Parça kullanılamıyor.",
   finding: "“{title}” aranıyor…",
-  onSpotify: "Spotify'da",
   scrobbled: "Scrobble edildi",
   openInSpotify: "Spotify'da aç",
   watchOnYouTube: "YouTube'da izle",
@@ -132,4 +131,9 @@ export default {
   updateScrobbles: { one: "{count} scrobble'ı güncelle", other: "{count} scrobble'ı güncelle" },
   save: "Kaydet",
   lyrics: "Şarkı sözleri",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;

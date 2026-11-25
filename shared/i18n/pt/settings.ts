@@ -204,7 +204,7 @@ export default {
   spotifySettings: "Settings",
   spotifyClientId: "Client ID",
   spotifyClientIdPlaceholder: "32 letras e números",
-  spotifyPlayback: "Também tocar música aqui pelo Spotify em vez de vídeos (requer Spotify Premium)",
+  spotifyPlayback: "Also offer Spotify as a playback source (needs Spotify Premium)",
   connectSpotify: "Conectar Spotify",
   spotifyOtherAccount:
     "Só a conta do Spotify que criou o app pode usá-lo de cara. Para conectar outra conta, adicione-a primeiro em {userManagement} nas configurações do app.",
@@ -220,16 +220,15 @@ export default {
   },
   spotifyImporting: "Importando suas reproduções recentes. Novas reproduções são buscadas a cada poucos minutos.",
   spotifyResting: "O Spotify pediu para irmos mais devagar, então a importação volta por volta de {time}.",
-  spotifyPlaybackOn: "O player toca pelo Spotify quando a faixa está disponível lá.",
-  spotifyPlaybackOff:
-    "O player usa vídeos. Para tocar pelo Spotify (Premium), escolha Trocar app e marque a opção de reprodução.",
+  spotifyPlaybackOn: "Spotify is available as a playback source in the player.",
+  spotifyPlaybackOff: "To play through Spotify (Premium) too, choose Change app and tick the playback option.",
   importNow: "Importar agora",
   changeApp: "Trocar app",
   badgeDisabled: "Desativado",
   badgeNeedsAttention: "Requer atenção",
   badgeConnected: "Conectado",
   badgeNotConnected: "Não conectado",
-  spotifyBlurb: "Importe o que você ouve no Spotify",
+  spotifyBlurb: "Import and play from Spotify",
   spotifyDisabled: "Os scrobbles do Spotify estão desativados.",
 
   discordBlurb: "Registre reproduções pelo seu status do Discord",
@@ -304,4 +303,16 @@ export default {
   clearHintAs: "Remove todos os scrobbles da biblioteca de {name}. Faixas amadas, tags e playlists são mantidas.",
   clearImpersonating:
     "Você está atuando como {name}; não é preciso senha. Esta exclusão fica registrada no log de auditoria.",
+  subsonicBlurb: "Play from your own music server",
+  subsonicIntro:
+    "Connect a Navidrome, Airsonic, Gonic or other OpenSubsonic server. The player can then stream from it instead of YouTube.",
+  subsonicUrl: "Server address",
+  subsonicUsername: "Username",
+  subsonicPassword: "Password",
+  subsonicPasswordHint: "The password is stored encrypted and only used to ask your server for tracks.",
+  subsonicConnected: "Music server connected.",
+  subsonicDisconnected: "Music server disconnected.",
+  subsonicConnectedTo: "Connected to {name}.",
+  subsonicChange: "Change server",
+  subsonicNote: "OpenSubsonic is only used for playback. Plays still scrobble to Sonosphere.",
 } satisfies Translation<typeof en>;

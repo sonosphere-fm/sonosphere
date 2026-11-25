@@ -9,6 +9,7 @@ import type { UsernameStatus } from "../../shared/account";
 import { countryName } from "../../shared/countries";
 import { isLocale } from "../../shared/i18n/core";
 import { profileLinks } from "../../shared/profile-links";
+import { PLAYBACK_SOURCES } from "../../shared/playback";
 import { isUsernameFont } from "../../shared/username-fonts";
 import { profileColors } from "./profile-accent";
 import { bad, fail, limit, missing, oneOf, Router, throttle, tokenOf } from "../http";
@@ -104,6 +105,10 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
   }
   const theme = b.theme === undefined ? undefined : (oneOf(b.theme, ["light", "system", "dark"]) ?? bad("pickTheme"));
   const locale = b.locale === undefined || b.locale === "" || isLocale(b.locale) ? b.locale : bad("pickLanguage");
+  const playbackSource =
+    b.playbackSource === undefined
+      ? undefined
+      : (oneOf(b.playbackSource, PLAYBACK_SOURCES) ?? bad("pickPlaybackSource"));
   await repo.updateProfile(u.id, {
     useProfileTheme: b.useProfileTheme === undefined ? u.useProfileTheme : (b.useProfileTheme as boolean),
     usernameFont,
@@ -123,6 +128,7 @@ router.patch<ProfileSaved>("/api/me", async (c) => {
     ...(emailMuted !== undefined && { emailMuted }),
     ...(theme && { theme }),
     ...(locale !== undefined && { locale }),
+    ...(playbackSource && { playbackSource }),
   });
   await recordChange(u.id, "realname", u.realname, realname);
   return { user: await me((await findById(u.id)) ?? missing("userNotFound"), c.actor) };

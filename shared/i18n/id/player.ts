@@ -11,7 +11,6 @@ export default {
   playTitle: "Putar {title}",
   trackUnavailable: "Lagu tidak tersedia.",
   finding: "Mencari “{title}”…",
-  onSpotify: "di Spotify",
   scrobbled: "Di-scrobble",
   openInSpotify: "Buka di Spotify",
   watchOnYouTube: "Tonton di YouTube",
@@ -130,4 +129,9 @@ export default {
   updateScrobbles: { one: "Perbarui {count} scrobble", other: "Perbarui {count} scrobble" },
   save: "Simpan",
   lyrics: "Lirik",
+  sourceYouTube: "YouTube",
+  sourceSubsonic: "OpenSubsonic",
+  sourceSpotify: "Spotify",
+  playbackSource: "Playback source",
+  setUpSource: "Set up",
 } satisfies Translation<typeof en>;
