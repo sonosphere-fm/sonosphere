@@ -14,6 +14,7 @@ export default {
   scrobbled: "Skroblēts",
   openInSpotify: "Atvērt Spotify",
   watchOnYouTube: "Skatīties YouTube",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "Meklēt YouTube",
   seek: "Pārtīt",
   timeOf: "{position} no {length}",

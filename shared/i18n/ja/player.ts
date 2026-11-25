@@ -14,6 +14,7 @@ export default {
   scrobbled: "スクロブル済み",
   openInSpotify: "Spotifyで開く",
   watchOnYouTube: "YouTubeで見る",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTubeで検索",
   seek: "シーク",
   timeOf: "{position} / {length}",

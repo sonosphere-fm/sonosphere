@@ -14,6 +14,7 @@ export default {
   scrobbled: "स्क्रॉबल हो गया",
   openInSpotify: "Spotify में खोलें",
   watchOnYouTube: "YouTube पर देखें",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTube पर खोजें",
   seek: "आगे-पीछे करें",
   timeOf: "{length} में से {position}",

@@ -1,6 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { clean, isObject, norm } from "../util";
+import { clean } from "../util";
 
 const MAX_URL = 500;
 
@@ -78,42 +78,4 @@ function v4(high: string, low: string): string {
   const h = parseInt(high, 16);
   const l = parseInt(low, 16);
   return `${h >> 8}.${h & 255}.${l >> 8}.${l & 255}`;
-}
-
-const loose = (s: string) =>
-  norm(s.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""))
-    .replace(/\s*[([].*?[)\]]\s*/g, " ")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim();
-
-const score = (want: string, got: string) => {
-  if (!want || !got) return 0;
-  if (want === got) return 2;
-  return got.includes(want) || want.includes(got) ? 1 : 0;
-};
-
-/** The best few song ids for an artist and title, so the player can fall through ones the server won't stream. */
-export function pickSongs(songs: unknown, artist: string, track: string): string[] {
-  const list = Array.isArray(songs) ? songs : songs ? [songs] : [];
-  const wantArtist = loose(artist);
-  const wantTitle = loose(track);
-  const found = list
-    .map((song, index) => {
-      if (!isObject(song) || song.isVideo === true) return null;
-      if (typeof song.type === "string" && song.type !== "music" && song.type !== "song") return null;
-      const id = typeof song.id === "string" ? song.id : typeof song.id === "number" ? String(song.id) : "";
-      if (!id) return null;
-      const title = loose(String(song.title ?? ""));
-      const by = loose(String(song.artist ?? ""));
-      return { id, index, score: score(wantArtist, by) + score(wantTitle, title) };
-    })
-    .filter((song): song is { id: string; index: number; score: number } => !!song && song.score >= 2);
-  found.sort((a, b) => b.score - a.score || a.index - b.index);
-  const ids: string[] = [];
-  for (const song of found) {
-    if (ids.includes(song.id)) continue;
-    ids.push(song.id);
-    if (ids.length === 3) break;
-  }
-  return ids;
 }

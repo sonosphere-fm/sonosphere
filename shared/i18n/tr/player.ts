@@ -14,6 +14,7 @@ export default {
   scrobbled: "Scrobble edildi",
   openInSpotify: "Spotify'da aç",
   watchOnYouTube: "YouTube'da izle",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTube'da ara",
   seek: "Sar",
   timeOf: "{position} / {length}",

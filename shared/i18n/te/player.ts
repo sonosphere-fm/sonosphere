@@ -14,6 +14,7 @@ export default {
   scrobbled: "స్క్రోబుల్ చేయబడింది",
   openInSpotify: "Spotifyలో తెరవండి",
   watchOnYouTube: "YouTubeలో చూడండి",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "YouTubeలో శోధించండి",
   seek: "సీక్",
   timeOf: "{length}లో {position}",

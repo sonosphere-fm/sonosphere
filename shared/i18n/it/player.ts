@@ -14,6 +14,7 @@ export default {
   scrobbled: "Scrobblato",
   openInSpotify: "Apri in Spotify",
   watchOnYouTube: "Guarda su YouTube",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "Cerca su YouTube",
   seek: "Posizione",
   timeOf: "{position} di {length}",

@@ -3,8 +3,16 @@ import { asObject, clean, norm, now, rid } from "../util";
 import { bad, fail, limit } from "../http";
 import { seal, unseal } from "../seal";
 import * as repo from "./repo";
-import { checkHost, parseServerUrl, pickSongs } from "./url";
-import type { SubsonicConnectBody, SubsonicStatus } from "../../shared/subsonic";
+import { checkHost, parseServerUrl } from "./url";
+import {
+  albumWebUrl,
+  pickSongs,
+  type SongMatch,
+  type SubsonicAuth,
+  type SubsonicConnectBody,
+  type SubsonicSource,
+  type SubsonicStatus,
+} from "../../shared/subsonic";
 
 const VERSION = "1.16.1";
 const CLIENT = "Sonosphere";
@@ -20,25 +28,27 @@ type Attempt =
   | { kind: "missing" }
   | { kind: "failed" };
 
-type Match = { ids: string[]; until: number };
+type Match = { songs: SongMatch[]; until: number };
 const matches = new Map<string, Match>();
+/** Whether the server accepts token auth, learned from the answers it has given. */
+const authModes = new Map<number, boolean>();
 
-function cached(key: string): string[] | null {
+function cached(key: string): SongMatch[] | null {
   const match = matches.get(key);
   if (!match) return null;
   if (match.until <= Date.now()) {
     matches.delete(key);
     return null;
   }
-  return match.ids;
+  return match.songs;
 }
 
-function remember(key: string, ids: string[]): void {
+function remember(key: string, songs: SongMatch[]): void {
   if (matches.size >= MAX_MATCHES) {
     const oldest = matches.keys().next().value;
     if (oldest !== undefined) matches.delete(oldest);
   }
-  matches.set(key, { ids, until: Date.now() + (ids.length ? HOUR : FIVE_MINUTES) });
+  matches.set(key, { songs, until: Date.now() + (songs.length ? HOUR : FIVE_MINUTES) });
 }
 
 function forget(userId: number): void {
@@ -46,6 +56,7 @@ function forget(userId: number): void {
   for (const key of matches.keys()) {
     if (key.startsWith(prefix)) matches.delete(key);
   }
+  authModes.delete(userId);
 }
 
 function credentialsOf(link: repo.Link): Credentials {
@@ -122,15 +133,15 @@ async function jsonCall(
   credentials: Credentials,
   method: string,
   extra: Record<string, string> = {}
-): Promise<Record<string, unknown>> {
+): Promise<{ body: Record<string, unknown>; token: boolean }> {
   const first = await attemptJson(credentials, method, extra, true);
-  if (first.kind === "ok") return first.body;
+  if (first.kind === "ok") return { body: first.body, token: true };
   if (first.kind === "auth") {
     const second = await attemptJson(credentials, method, extra, false);
-    if (second.kind === "ok") return second.body;
+    if (second.kind === "ok") return { body: second.body, token: false };
     if (second.kind === "auth") return fail(400, "subsonicAuthFailed");
   }
-  if (first.kind === "missing") return {};
+  if (first.kind === "missing") return { body: {}, token: true };
   return fail(502, "subsonicRequestFailed");
 }
 
@@ -138,8 +149,8 @@ export async function verify(
   url: string,
   username: string,
   password: string
-): Promise<{ name: string; version: string; openSubsonic: boolean }> {
-  const body = await jsonCall({ url, username, password }, "ping");
+): Promise<{ name: string; version: string; openSubsonic: boolean; token: boolean }> {
+  const { body, token } = await jsonCall({ url, username, password }, "ping");
   return {
     name: typeof body.type === "string" ? body.type : "",
     version:
@@ -149,6 +160,7 @@ export async function verify(
           ? body.version
           : "",
     openSubsonic: body.openSubsonic === true,
+    token,
   };
 }
 
@@ -157,7 +169,7 @@ export async function connect(userId: number, input: SubsonicConnectBody): Promi
   if (!server.ok) return bad("invalidSubsonicUrl");
   const username = clean(input.username, 100);
   if (!username || !input.password) return bad("subsonicCredentialsRequired");
-  const info = await verify(server.base, username, input.password);
+  const { token, ...info } = await verify(server.base, username, input.password);
   await repo.saveLink(userId, {
     url: server.base,
     username,
@@ -166,6 +178,7 @@ export async function connect(userId: number, input: SubsonicConnectBody): Promi
     createdAt: now(),
   });
   forget(userId);
+  authModes.set(userId, token);
   return status(userId);
 }
 
@@ -187,22 +200,48 @@ export async function disconnect(userId: number): Promise<void> {
   forget(userId);
 }
 
-async function search(link: repo.Link, artist: string, track: string): Promise<string[]> {
+/** Token and address for calls the browser makes itself. Kept in memory only. */
+export async function auth(userId: number): Promise<SubsonicAuth> {
+  const link = await repo.findLink(userId);
+  if (!link) return fail(404, "subsonicNotConnected");
+  const query = authQuery(credentialsOf(link), true);
+  return {
+    base: link.url,
+    username: link.username,
+    name: link.name,
+    token: query.get("t") ?? "",
+    salt: query.get("s") ?? "",
+    direct: authModes.get(userId) !== false,
+  };
+}
+
+async function search(link: repo.Link, artist: string, track: string): Promise<SongMatch[]> {
   const key = `${link.userId}:${norm(artist)}:${norm(track)}`;
   const hit = cached(key);
   if (hit) return hit;
   await limit(`subsonic-search:${link.userId}`, SEARCHES_PER_HOUR, 3600);
-  const credentials = credentialsOf(link);
-  const body = await jsonCall(credentials, "search3", {
+  const { body, token } = await jsonCall(credentialsOf(link), "search3", {
     query: `${artist} ${track}`.slice(0, 500),
     artistCount: "0",
     albumCount: "0",
     songCount: "20",
   });
-  const songs = asObject(body.searchResult3)?.song;
-  const ids = pickSongs(songs, artist, track);
-  remember(key, ids);
-  return ids;
+  authModes.set(link.userId, token);
+  const songs = pickSongs(asObject(body.searchResult3)?.song, artist, track);
+  remember(key, songs);
+  return songs;
+}
+
+/** What the player falls back to when the browser cannot reach the server. */
+export async function source(userId: number, artist: string, track: string): Promise<SubsonicSource> {
+  const link = await repo.findLink(userId);
+  if (!link) return fail(404, "subsonicNotConnected");
+  const [song] = await search(link, artist, track);
+  if (!song) return fail(404, "subsonicNoMatch");
+  return {
+    proxy: `/api/subsonic/stream?${new URLSearchParams({ id: song.id })}`,
+    albumUrl: albumWebUrl(link.url, link.name, song.albumId),
+  };
 }
 
 async function streamRequest(
@@ -251,11 +290,7 @@ async function errorCode(response: Response): Promise<number> {
   return Number(/<error[^>]*\bcode="(\d+)"/.exec(text)?.[1]) || 0;
 }
 
-export async function stream(userId: number, artist: string, track: string, range: string | null): Promise<Response> {
-  const link = await repo.findLink(userId);
-  if (!link) return fail(404, "subsonicNotConnected");
-  const ids = await search(link, artist, track);
-  if (!ids.length) return fail(404, "subsonicNoMatch");
+async function streamIds(link: repo.Link, ids: string[], range: string | null): Promise<Response> {
   const credentials = credentialsOf(link);
   await reachable(credentials.url);
   let failed = false;
@@ -284,4 +319,22 @@ export async function stream(userId: number, artist: string, track: string, rang
     if (authFailed) return fail(400, "subsonicAuthFailed");
   }
   return failed ? fail(502, "subsonicRequestFailed") : fail(404, "subsonicNoMatch");
+}
+
+export async function stream(userId: number, artist: string, track: string, range: string | null): Promise<Response> {
+  const link = await repo.findLink(userId);
+  if (!link) return fail(404, "subsonicNotConnected");
+  const songs = await search(link, artist, track);
+  if (!songs.length) return fail(404, "subsonicNoMatch");
+  return streamIds(
+    link,
+    songs.map((song) => song.id),
+    range
+  );
+}
+
+export async function streamById(userId: number, id: string, range: string | null): Promise<Response> {
+  const link = await repo.findLink(userId);
+  if (!link) return fail(404, "subsonicNotConnected");
+  return streamIds(link, [id], range);
 }

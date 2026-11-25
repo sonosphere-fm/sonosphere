@@ -14,6 +14,7 @@ export default {
   scrobbled: "סוקרבל",
   openInSpotify: "פתיחה ב־Spotify",
   watchOnYouTube: "צפייה ב־YouTube",
+  openInMusicServer: "Open album on your music server",
   searchOnYouTube: "חיפוש ב־YouTube",
   seek: "דילוג",
   timeOf: "{position} מתוך {length}",
