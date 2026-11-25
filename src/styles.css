@@ -1388,7 +1388,6 @@
   .milestones .art {
     width: 44px;
     flex: none;
-    border-radius: 4px;
   }
 
   @media (max-width: 900px) {
