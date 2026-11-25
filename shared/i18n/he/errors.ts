@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "כבר קיים חשבון עם כתובת האימייל הזו",
   wrongUsernamePassword: "שם משתמש או סיסמה שגויים",
   accountBanned: "החשבון הזה נחסם",
+  bannedFromService: "נחסמת מ-Sonosphere",
   completeCheckNotRobot: "יש להשלים את הבדיקה שאינך רובוט",
   couldNotConfirmNotRobot: "לא הצלחנו לוודא שאינך רובוט. אפשר לנסות שוב בעוד רגע.",
   robotCheckExpiredFailedTry: "בדיקת הרובוט פגה או נכשלה. אפשר לנסות שוב.",

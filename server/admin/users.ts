@@ -1,4 +1,5 @@
 import { bad, fail, missing, oneOf, Router } from "../http";
+import { ipsOf } from "../auth/ips";
 import { adminOnly, staff } from "../guards";
 import { adminCount, configAdmins, isAdmin, isStaff, roleOf, setRole } from "../site/roles";
 import { audit } from "../site/audit";
@@ -177,6 +178,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
     counts: await repo.userCounts(id),
     lastLogin: await repo.lastLoginOf(id),
     seen: isAdmin(me) ? seenOf(u) : undefined,
+    ips: isAdmin(me) ? await ipsOf(id) : undefined,
     lastScrobble: await repo.lastScrobbleOf(id),
     reportsAgainst: await repo.reportsAgainst(u),
     reportsBy: await repo.reportsBy(id),

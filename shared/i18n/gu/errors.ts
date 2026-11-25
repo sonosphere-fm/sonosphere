@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "આ ઇમેઇલ સાથેનું એકાઉન્ટ પહેલેથી અસ્તિત્વમાં છે",
   wrongUsernamePassword: "ખોટું વપરાશકર્તાનામ અથવા પાસવર્ડ",
   accountBanned: "આ એકાઉન્ટ પર પ્રતિબંધ મુકાયો છે",
+  bannedFromService: "તમારા પર Sonosphere પર પ્રતિબંધ મુકાયો છે",
   completeCheckNotRobot: "તમે રોબોટ નથી તેની ચકાસણી પૂરી કરો",
   couldNotConfirmNotRobot: "તમે રોબોટ નથી તે કન્ફર્મ થઈ શક્યું નહીં. થોડી વાર પછી ફરી પ્રયાસ કરો.",
   robotCheckExpiredFailedTry: "રોબોટ ચકાસણીની મુદત પૂરી થઈ ગઈ અથવા તે નિષ્ફળ ગઈ. ફરી પ્રયાસ કરો.",

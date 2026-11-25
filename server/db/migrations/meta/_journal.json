@@ -337,6 +337,13 @@
       "when": 1795572413625,
       "tag": "0047_unknown_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795573605207,
+      "tag": "0048_rainy_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }

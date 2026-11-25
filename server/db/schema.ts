@@ -186,6 +186,31 @@ export const sessions = pgTable("sessions", {
   createdAt: integer("created_at").notNull(),
 });
 
+export const userIps = pgTable(
+  "user_ips",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    ip: text().notNull(),
+    firstAt: integer("first_at").notNull(),
+    lastAt: integer("last_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.ip] }), index("user_ips_ip").on(t.ip), index("user_ips_last").on(t.lastAt)]
+);
+
+// No foreign key, so a ban still holds after the account is deleted.
+export const banMarks = pgTable(
+  "ban_marks",
+  {
+    userId: integer("user_id").notNull(),
+    kind: text().$type<"email" | "ip">().notNull(),
+    value: text().notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.value] }), index("ban_marks_value").on(t.kind, t.value)]
+);
+
 export const artists = pgTable("artists", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
   name: text().notNull(),

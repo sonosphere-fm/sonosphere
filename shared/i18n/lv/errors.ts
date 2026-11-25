@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "Konts ar šo e-pastu jau pastāv",
   wrongUsernamePassword: "Nepareizs lietotājvārds vai parole",
   accountBanned: "Šis konts ir bloķēts",
+  bannedFromService: "Jums ir liegta piekļuve Sonosphere",
   completeCheckNotRobot: "Apstiprini, ka neesi robots",
   couldNotConfirmNotRobot: "Neizdevās apstiprināt, ka neesi robots. Pēc brīža mēģini vēlreiz.",
   robotCheckExpiredFailedTry: "Robotu pārbaudei beidzies derīgums vai tā neizdevās. Mēģini vēlreiz.",

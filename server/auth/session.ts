@@ -5,6 +5,8 @@ import { digest, now } from "../util";
 import { isAdmin, isStaff } from "../site/roles";
 import { findById, type User } from "../users/repo";
 import { SITE_URL } from "../mail";
+import { ipOf } from "../http";
+import { noteIp } from "./ips";
 
 const cookieOf = (req: Request, name: string) =>
   new RegExp(`(?:^|;\\s*)${name}=([^;]*)`).exec(req.headers.get("cookie") || "")?.[1] ?? "";
@@ -41,7 +43,7 @@ export const clearActAsCookie = () => `act_as=; Path=/; HttpOnly; SameSite=Lax; 
 
 export const impersonating = (user: User | null, actor: User | null) => !!user && !!actor && user.id !== actor.id;
 
-// From Cloudflare's own lookup, so no address is kept. The region only arrives with its visitor location headers on.
+// From Cloudflare's own lookup. The region only arrives with its visitor location headers on.
 function noteWhere(u: User, req: Request) {
   const country = req.headers.get("cf-ipcountry")?.toUpperCase();
   if (!country || !/^[A-Z][A-Z0-9]$/.test(country) || country === "XX") return;
@@ -55,7 +57,10 @@ function noteWhere(u: User, req: Request) {
 
 export async function viewerOf(req: Request): Promise<{ user: User | null; actor: User | null }> {
   const actor = await sessionUser(tokenOf(req));
-  if (actor) noteWhere(actor, req);
+  if (actor) {
+    noteWhere(actor, req);
+    noteIp(actor, ipOf(req));
+  }
   const id = actAsOf(req);
   if (!actor || !id || !isAdmin(actor) || id === actor.id) return { user: actor, actor };
   const target = await findById(id);

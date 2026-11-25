@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "সেই ইমেইলৰ এটা একাউণ্ট ইতিমধ্যে আছে",
   wrongUsernamePassword: "ভুল ব্যৱহাৰকাৰীৰ নাম বা পাছৱৰ্ড",
   accountBanned: "এই একাউণ্টটো নিষিদ্ধ কৰা হৈছে",
+  bannedFromService: "আপোনাক Sonosphere-ৰ পৰা নিষিদ্ধ কৰা হৈছে",
   completeCheckNotRobot: "আপুনি ৰবট নহয় বুলি পৰীক্ষাটো সম্পূৰ্ণ কৰক",
   couldNotConfirmNotRobot: "আপুনি ৰবট নহয় বুলি নিশ্চিত কৰিব পৰা নগ'ল। অলপ পিছত পুনৰ চেষ্টা কৰক।",
   robotCheckExpiredFailedTry: "ৰবট পৰীক্ষাৰ ম্যাদ উকলিল বা বিফল হ'ল। পুনৰ চেষ্টা কৰক।",

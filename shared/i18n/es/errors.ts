@@ -120,6 +120,7 @@ export default {
   accountEmailAlreadyExists: "Ya existe una cuenta con ese correo",
   wrongUsernamePassword: "Usuario o contraseña incorrectos",
   accountBanned: "Esta cuenta ha sido vetada",
+  bannedFromService: "Se te ha vetado en Sonosphere",
   completeCheckNotRobot: "Completa la verificación de que no eres un robot",
   couldNotConfirmNotRobot: "No pudimos confirmar que no eres un robot. Vuelve a intentarlo en un momento.",
   robotCheckExpiredFailedTry: "La verificación anti-robots caducó o falló. Inténtalo de nuevo.",

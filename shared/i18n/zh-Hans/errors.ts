@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "使用该邮箱的账号已存在",
   wrongUsernamePassword: "用户名或密码错误",
   accountBanned: "此账号已被封禁",
+  bannedFromService: "你已被 Sonosphere 封禁",
   completeCheckNotRobot: "请完成人机验证",
   couldNotConfirmNotRobot: "无法确认你不是机器人。请稍后再试。",
   robotCheckExpiredFailedTry: "人机验证已过期或未通过。请再试一次。",

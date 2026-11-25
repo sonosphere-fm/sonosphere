@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, gt, gte, inArray, isNull, max, ne, notLike, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, transact } from "../db/client";
+import { markBan, unmarkBan } from "../auth/ips";
 import {
   apiSessions,
   apiTokens,
@@ -326,13 +327,19 @@ export async function setBanned(
 ): Promise<void> {
   await transact(async (tx) => {
     if (banned) {
-      await tx.update(users).set({ banned: true, bannedAt: now(), banReason: reason }).where(eq(users.id, id));
+      const [u] = await tx
+        .update(users)
+        .set({ banned: true, bannedAt: now(), banReason: reason })
+        .where(eq(users.id, id))
+        .returning();
+      await markBan(tx, u!);
       await tx.delete(sessions).where(eq(sessions.userId, id));
       await tx.delete(apiSessions).where(eq(apiSessions.userId, id));
       await tx.delete(apiTokens).where(eq(apiTokens.userId, id));
       await tx.delete(nowPlaying).where(eq(nowPlaying.userId, id));
     } else {
       await tx.update(users).set({ banned: false, bannedAt: null, banReason: "" }).where(eq(users.id, id));
+      await unmarkBan(tx, id);
     }
     await auditTx(tx, actor, entry);
   });

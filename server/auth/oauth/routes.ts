@@ -11,6 +11,7 @@ import { hexCookie, SECURE } from "../session";
 import { findById } from "../../users/repo";
 import { clean, digest, rid } from "../../util";
 import * as Sentry from "@sentry/bun";
+import { loginBanned } from "../ips";
 import { emailTaken } from "../repo";
 import { checkNewAccount, createAccount, me, startSession, USERNAME } from "../service";
 import { PROVIDERS, providerById, providerLabel, type Provider } from "./providers";
@@ -112,7 +113,7 @@ router.get("/api/auth/oauth/:provider/callback", async (c) => {
   if (link) {
     const u = await findById(link.userId);
     if (!u) return failTo(c, "login", "failed");
-    if (u.banned) return failTo(c, "login", "banned");
+    if (u.banned || (await loginBanned(u, ipOf(c.req)))) return failTo(c, "login", "banned");
     if (link.name !== who.name) {
       await repo.renameLink(p.id, who.subject, who.name);
       await recordChange(u.id, `${p.id} name`, link.name, who.name);
@@ -175,7 +176,7 @@ router.post<OAuthCreated>("/api/auth/oauth/complete", async (c) => {
   const key = `oauth:pending:${digest(t)}`;
   const pd = (t && (await getJson<Pending>(key))) || bad("signUpExpiredStartAgain");
   const username = clean(c.body.username, 15);
-  await checkNewAccount(username, pd.email);
+  await checkNewAccount(username, pd.email, ipOf(c.req));
   if (await repo.findLink(pd.provider, pd.subject)) {
     bad("providerAlreadyConnected", { provider: providerLabel(pd.provider) });
   }

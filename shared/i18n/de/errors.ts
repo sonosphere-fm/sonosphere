@@ -124,6 +124,7 @@ export default {
   accountEmailAlreadyExists: "Ein Konto mit dieser E-Mail-Adresse existiert bereits",
   wrongUsernamePassword: "Falscher Benutzername oder falsches Passwort",
   accountBanned: "Dieses Konto wurde gebannt",
+  bannedFromService: "Du wurdest von Sonosphere gebannt",
   completeCheckNotRobot: "Bestätige, dass du kein Roboter bist",
   couldNotConfirmNotRobot: "Wir konnten nicht bestätigen, dass du kein Roboter bist. Versuch es gleich noch einmal.",
   robotCheckExpiredFailedTry: "Die Roboterprüfung ist abgelaufen oder fehlgeschlagen. Versuch es noch einmal.",

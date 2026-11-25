@@ -1,4 +1,5 @@
 import { and, eq, gt, gte, inArray, isNull, lt, lte, notLike, or, sql } from "drizzle-orm";
+import { refuseBannedEmail } from "./ips";
 import { UNVERIFIED_DAYS } from "../../shared/auth";
 import { db, type Conn } from "../db/client";
 import { apiSessions, apiTokens, emailTokens, oauthAccounts, sessions, users } from "../db/schema";
@@ -75,6 +76,7 @@ export async function sendVerification(u: User, fallback: Locale): Promise<void>
 
 export async function startEmailChange(u: User, email: string): Promise<void> {
   if (await emailTaken(email, u.id)) bad("emailAlreadyUse");
+  await refuseBannedEmail(email);
   const token = rid(32);
   await db.transaction(async (tx) => {
     const [current] = await tx.select().from(users).where(eq(users.id, u.id)).for("update");

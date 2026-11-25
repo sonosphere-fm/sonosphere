@@ -118,6 +118,7 @@ export default {
   accountEmailAlreadyExists: "Аккаунт с этой почтой уже существует",
   wrongUsernamePassword: "Неверное имя пользователя или пароль",
   accountBanned: "Этот аккаунт заблокирован",
+  bannedFromService: "Вы заблокированы в Sonosphere",
   completeCheckNotRobot: "Пройди проверку, что ты не робот",
   couldNotConfirmNotRobot: "Не удалось подтвердить, что ты не робот. Попробуй через минуту.",
   robotCheckExpiredFailedTry: "Проверка на робота истекла или не прошла. Попробуй ещё раз.",
