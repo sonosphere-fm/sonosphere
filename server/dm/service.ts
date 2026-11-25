@@ -318,6 +318,13 @@ export async function withUser(locale: Locale, me: User, to: User): Promise<DmWi
   };
 }
 
+// Links open once a conversation is accepted, including ones sent while it was a request.
+export async function sharesLink(me: User, threadId: unknown, url: string): Promise<boolean> {
+  const t = await myThread(threadId, me.id);
+  if (t.status !== "active") return false;
+  return repo.mentions(t.id, side(t, me.id) === "lo" ? t.loCleared : t.hiCleared, url);
+}
+
 export async function page(locale: Locale, me: User, threadId: unknown, before: number): Promise<DmThreadPage> {
   const t = await myThread(threadId, me.id);
   const cleared = side(t, me.id) === "lo" ? t.loCleared : t.hiCleared;

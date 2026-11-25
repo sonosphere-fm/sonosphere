@@ -64,6 +64,14 @@ export type DmSent = { message: DmMessage; thread: DmThread };
 export type DmDone = { ok: true; counts: DmCounts };
 export type DmAccepted = { thread: DmThread; counts: DmCounts };
 export type DmUnsent = { ok: true };
+export type DmLinkPreview = {
+  url: string;
+  title: string;
+  description: string | null;
+  site: string | null;
+  image: string | null;
+};
+export type DmLink = { preview: DmLinkPreview | null };
 export type DmReacted = { reactions: DmReaction[] };
 export type DmGroupPage = {
   group: DmGroup;

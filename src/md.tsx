@@ -33,8 +33,12 @@ type Inline =
   | { t: "auto"; url: string };
 
 // Groups: 1 code, 2 bold, 3 underline, 4 strike, 5 italic *, 6 italic _, 7+8 link text and url, 9 bare url.
-const INLINE =
-  /(`[^`\n]+`)|\*\*([^\n]+?)\*\*(?!\*)|__([^\n]+?)__(?!_)|~~([^\n]+?)~~|\*(?=\S)([^*\n]+?)(?<=\S)\*|(?<![\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]*[^\s<>.,;:!?)\]'"*_~])/g;
+export const BARE_URL = /https?:\/\/[^\s<>]*[^\s<>.,;:!?)\]'"*_~]/;
+const INLINE = new RegExp(
+  /(`[^`\n]+`)|\*\*([^\n]+?)\*\*(?!\*)|__([^\n]+?)__(?!_)|~~([^\n]+?)~~|\*(?=\S)([^*\n]+?)(?<=\S)\*|(?<![\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|/
+    .source + `(${BARE_URL.source})`,
+  "g"
+);
 
 function inline(s: string): Inline[] {
   const out: Inline[] = [];

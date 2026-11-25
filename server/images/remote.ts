@@ -42,7 +42,7 @@ const HOSTS = [
 ];
 const allowed = (u: URL) => u.protocol === "https:" && u.port === "" && HOSTS.includes(u.hostname);
 
-async function readCapped(body: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer> | null> {
+export async function readCapped(body: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer> | null> {
   const parts: Uint8Array[] = [];
   let n = 0;
   for await (const chunk of body) {

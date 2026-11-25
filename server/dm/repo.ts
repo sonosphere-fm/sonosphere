@@ -240,6 +240,22 @@ export const messagesBetween = (
     .orderBy(desc(dmMessages.id))
     .limit(limit);
 
+export const mentions = async (threadId: number, afterId: number, url: string): Promise<boolean> =>
+  !!(await first(
+    db
+      .select({ id: dmMessages.id })
+      .from(dmMessages)
+      .where(
+        and(
+          eq(dmMessages.threadId, threadId),
+          gt(dmMessages.id, afterId),
+          isNull(dmMessages.deletedAt),
+          sql`strpos(${dmMessages.body}, ${url}) > 0`
+        )
+      )
+      .limit(1)
+  ));
+
 export const findMessage = (id: number): Promise<Message | null> =>
   first(db.select().from(dmMessages).where(eq(dmMessages.id, id)).limit(1));
 

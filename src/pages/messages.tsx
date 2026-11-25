@@ -27,12 +27,15 @@ import type {
   DmGroupMessage,
   DmGroupPage,
   DmGroupSent,
+  DmLink,
+  DmLinkPreview,
   DmReacted,
   DmSent,
   DmUnsent,
   DmUser,
   DmWith,
 } from "../../shared/dm";
+import { BARE_URL } from "../md";
 import { Avatar, useAction } from "../ui/base";
 import { UserLabels } from "../ui/user-labels";
 import { ReportButton } from "../ui/shoutbox";
@@ -453,11 +456,82 @@ function Reactions({
   );
 }
 
+const LINKS = new RegExp(`(${BARE_URL.source})`, "g");
+const OUT = { target: "_blank", rel: "noopener noreferrer nofollow ugc" } as const;
+
+function Linked({ text }: { text: string }) {
+  return text.split(LINKS).map((s, i) =>
+    i % 2 ? (
+      <a key={i} href={s} {...OUT}>
+        {s}
+      </a>
+    ) : (
+      s
+    )
+  );
+}
+
+const previews = new Map<string, Promise<DmLinkPreview | null>>();
+
+function previewOf(key: string): Promise<DmLinkPreview | null> {
+  let req = previews.get(key);
+  if (!req) {
+    req = api<DmLink>(`/dm/link?${key}`).then(
+      (r) => r.preview,
+      () => {
+        previews.delete(key);
+        return null;
+      }
+    );
+    previews.set(key, req);
+  }
+  return req;
+}
+
+function LinkCard({ where, url }: { where: string; url: string }) {
+  const [p, setP] = useState<DmLinkPreview | null>(null);
+  const [broken, setBroken] = useState(false);
+  const card = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    let live = true;
+    previewOf(`${where}&url=${encodeURIComponent(url)}`).then((v) => live && setP(v));
+    return () => {
+      live = false;
+    };
+  }, [where, url]);
+
+  // arriving after the messages, so keep the newest in view if that's where the reader was
+  useLayoutEffect(() => {
+    const el = card.current;
+    const pane = el?.closest(".dm-scroll");
+    if (!el || !pane) return;
+    if (pane.scrollHeight - pane.scrollTop - pane.clientHeight - el.offsetHeight < 120) {
+      pane.scrollTop = pane.scrollHeight;
+    }
+  }, [p]);
+
+  if (!p) return null;
+  return (
+    <a ref={card} className="dm-link" href={p.url} {...OUT}>
+      {p.image && !broken && (
+        <img src={`/api/dm/link/picture/${p.image}`} alt="" loading="lazy" onError={() => setBroken(true)} />
+      )}
+      <span className="dm-link-text">
+        {p.site && <span className="dm-link-site">{p.site}</span>}
+        <b>{p.title}</b>
+        {p.description && <span className="dm-link-desc">{p.description}</span>}
+      </span>
+    </a>
+  );
+}
+
 function Bubble({
   m,
   mine,
   myId,
   who,
+  links,
   open,
   onToggle,
   unsendable,
@@ -470,6 +544,7 @@ function Bubble({
   mine: boolean;
   myId: number;
   who: (id: number) => string;
+  links: string | null;
   open: boolean;
   onToggle: () => void;
   unsendable: boolean;
@@ -492,11 +567,27 @@ function Bubble({
         {t("messages.unsend")}
       </Button>
     );
+  const url = links ? BARE_URL.exec(m.body)?.[0] : undefined;
   return (
     <>
-      <button type="button" className="dm-bubble" title={clock(m.at)} aria-expanded={open} onClick={onToggle}>
-        {m.body}
-      </button>
+      <div
+        role="button"
+        tabIndex={0}
+        className="dm-bubble"
+        title={clock(m.at)}
+        aria-expanded={open}
+        onClick={(e) => {
+          if (!(e.target instanceof Element && e.target.closest("a"))) onToggle();
+        }}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
+          e.preventDefault();
+          onToggle();
+        }}
+      >
+        {links ? <Linked text={m.body} /> : m.body}
+      </div>
+      {links && url && <LinkCard where={links} url={url} />}
       <Reactions m={m} myId={myId} who={who} canReact={canReact} onReact={onReact} />
       {open && canReact && (
         <div className="dm-picker" role="group" aria-label={t("messages.react")}>
@@ -723,6 +814,7 @@ function Conversation({ id, back }: { id: number; back: string }) {
                   mine={mine}
                   myId={me!.id}
                   who={who}
+                  links={thread.status === "active" ? `thread=${id}` : null}
                   open={picked === m.id}
                   onToggle={() => setPicked(picked === m.id ? 0 : m.id)}
                   unsendable={Date.now() / 1000 - m.at < d.unsendFor}
@@ -911,6 +1003,7 @@ function GroupConversation({ id }: { id: number }) {
                     mine={mine}
                     myId={myId}
                     who={who}
+                    links={`group=${id}`}
                     open={picked === m.id}
                     onToggle={() => setPicked(picked === m.id ? 0 : m.id)}
                     unsendable={Date.now() / 1000 - m.at < d.unsendFor}

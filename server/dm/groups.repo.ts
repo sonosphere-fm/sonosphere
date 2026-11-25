@@ -210,6 +210,23 @@ export const messagesBetween = (
     .orderBy(desc(dmGroupMessages.id))
     .limit(limit);
 
+export const mentionedBy = async (groupId: number, afterId: number, url: string): Promise<number[]> =>
+  (
+    await db
+      .selectDistinct({ id: dmGroupMessages.senderId })
+      .from(dmGroupMessages)
+      .where(
+        and(
+          eq(dmGroupMessages.groupId, groupId),
+          gt(dmGroupMessages.id, afterId),
+          isNull(dmGroupMessages.deletedAt),
+          isNull(dmGroupMessages.event),
+          sql`strpos(${dmGroupMessages.body}, ${url}) > 0`
+        )
+      )
+      .limit(50)
+  ).map((r) => r.id);
+
 export async function markRead(groupId: number, userId: number, messageId: number): Promise<void> {
   await db.update(dmGroupMembers).set({ readId: messageId }).where(membership(groupId, userId));
 }
