@@ -10,9 +10,14 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: auto-translate
+  cancel-in-progress: true
+
 jobs:
   translate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -32,27 +37,13 @@ jobs:
       # Guard: translated files must still satisfy Translation<typeof en>.
       - run: bun run typecheck
 
-      - id: git
-        run: |
-          git config user.name "sonosphere-bot"
-          git config user.email "sonosphere-bot@users.noreply.github.com"
-          if git status --porcelain shared/i18n | grep -q .; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - if: steps.git.outputs.changed == 'true'
-        run: |
-          git checkout -B auto-translate
-          git add shared/i18n
-          git commit -m "chore(i18n): auto-translate missing strings"
-          git push -f origin auto-translate
-
-      - if: steps.git.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v6
+      - uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: shared/i18n
+          commit-message: "chore(i18n): auto-translate missing strings"
+          committer: sonosphere-bot <sonosphere-bot@users.noreply.github.com>
+          author: sonosphere-bot <sonosphere-bot@users.noreply.github.com>
           branch: auto-translate
           delete-branch: true
           title: "chore(i18n): auto-translate missing strings"
