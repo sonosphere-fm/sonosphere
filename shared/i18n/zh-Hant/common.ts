@@ -121,6 +121,7 @@ export default {
   apiDocs: "API 文件",
   changelog: "更新日誌",
   apiKeys: "API 金鑰",
+  sourceCode: "原始碼",
   joinDiscord: "加入我們的 Discord",
   guidelines: "社群守則",
   yourLibrary: "你的音樂庫",

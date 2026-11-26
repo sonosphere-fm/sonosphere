@@ -121,6 +121,7 @@ export default {
   apiDocs: "Documentação da API",
   changelog: "Novidades",
   apiKeys: "Chaves de API",
+  sourceCode: "Código-fonte",
   joinDiscord: "Entre no nosso Discord",
   guidelines: "Diretrizes",
   yourLibrary: "Sua biblioteca",

@@ -119,6 +119,7 @@ export default {
   apiDocs: "API documentation",
   changelog: "Changelog",
   apiKeys: "API keys",
+  sourceCode: "Source code",
   joinDiscord: "Join our Discord",
   guidelines: "Guidelines",
   yourLibrary: "Your library",

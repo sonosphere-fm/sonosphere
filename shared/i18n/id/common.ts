@@ -121,6 +121,7 @@ export default {
   apiDocs: "Dokumentasi API",
   changelog: "Catatan perubahan",
   apiKeys: "Kunci API",
+  sourceCode: "Kode sumber",
   joinDiscord: "Gabung Discord kami",
   guidelines: "Pedoman",
   yourLibrary: "Pustakamu",

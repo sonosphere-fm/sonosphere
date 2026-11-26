@@ -121,6 +121,7 @@ export default {
   apiDocs: "Documentație API",
   changelog: "Noutăți",
   apiKeys: "Chei API",
+  sourceCode: "Cod sursă",
   joinDiscord: "Intră pe Discordul nostru",
   guidelines: "Reguli",
   yourLibrary: "Biblioteca ta",

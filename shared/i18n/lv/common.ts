@@ -121,6 +121,7 @@ export default {
   apiDocs: "API dokumentācija",
   changelog: "Izmaiņu žurnāls",
   apiKeys: "API atslēgas",
+  sourceCode: "Pirmkods",
   joinDiscord: "Pievienojies mūsu Discord",
   guidelines: "Vadlīnijas",
   yourLibrary: "Tava bibliotēka",

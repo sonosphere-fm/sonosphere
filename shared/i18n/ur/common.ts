@@ -121,6 +121,7 @@ export default {
   apiDocs: "API دستاویزات",
   changelog: "تبدیلیوں کی فہرست",
   apiKeys: "API کیز",
+  sourceCode: "سورس کوڈ",
   joinDiscord: "ہمارے Discord میں شامل ہوں",
   guidelines: "رہنما اصول",
   yourLibrary: "آپ کی لائبریری",

@@ -121,6 +121,7 @@ export default {
   apiDocs: "API belgeleri",
   changelog: "Değişiklik günlüğü",
   apiKeys: "API anahtarları",
+  sourceCode: "Kaynak kodu",
   joinDiscord: "Discord'umuza katıl",
   guidelines: "Kurallar",
   yourLibrary: "Kitaplığın",

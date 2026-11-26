@@ -121,6 +121,7 @@ export default {
   apiDocs: "API दस्तऐवज",
   changelog: "बदलांची नोंद",
   apiKeys: "API की",
+  sourceCode: "सोर्स कोड",
   joinDiscord: "आमच्या Discord मध्ये सामील व्हा",
   guidelines: "मार्गदर्शक तत्त्वे",
   yourLibrary: "तुमची लायब्ररी",

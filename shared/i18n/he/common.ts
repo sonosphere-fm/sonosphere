@@ -121,6 +121,7 @@ export default {
   apiDocs: "תיעוד API",
   changelog: "יומן שינויים",
   apiKeys: "מפתחות API",
+  sourceCode: "קוד מקור",
   joinDiscord: "הצטרפות ל־Discord שלנו",
   guidelines: "כללים",
   yourLibrary: "הספרייה שלך",

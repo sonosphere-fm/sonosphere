@@ -121,6 +121,7 @@ export default {
   apiDocs: "API డాక్యుమెంటేషన్",
   changelog: "మార్పుల చరిత్ర",
   apiKeys: "API కీలు",
+  sourceCode: "సోర్స్ కోడ్",
   joinDiscord: "మా Discordలో చేరండి",
   guidelines: "మార్గదర్శకాలు",
   yourLibrary: "మీ లైబ్రరీ",

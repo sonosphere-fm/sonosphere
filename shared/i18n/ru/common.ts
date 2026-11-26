@@ -121,6 +121,7 @@ export default {
   apiDocs: "Документация API",
   changelog: "Список изменений",
   apiKeys: "Ключи API",
+  sourceCode: "Исходный код",
   joinDiscord: "Наш Discord",
   guidelines: "Правила",
   yourLibrary: "Твоя библиотека",

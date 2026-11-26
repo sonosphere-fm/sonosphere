@@ -121,6 +121,7 @@ export default {
   apiDocs: "API ডকুমেন্টেশন",
   changelog: "পরিবর্তনের তালিকা",
   apiKeys: "API কি",
+  sourceCode: "সোর্স কোড",
   joinDiscord: "আমাদের Discord-এ যোগ দিন",
   guidelines: "নির্দেশিকা",
   yourLibrary: "আপনার লাইব্রেরি",

@@ -292,6 +292,7 @@ function Footer() {
         [t("common.apiDocs"), "/developers"],
         [t("common.changelog"), "/changelog"],
         [t("common.apiKeys"), "/settings/applications"],
+        [t("common.sourceCode"), "https://github.com/sonosphere-fm/sonosphere"],
       ],
     ],
     [

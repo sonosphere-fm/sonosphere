@@ -121,6 +121,7 @@ export default {
   apiDocs: "API 文档",
   changelog: "更新日志",
   apiKeys: "API 密钥",
+  sourceCode: "源代码",
   joinDiscord: "加入我们的 Discord",
   guidelines: "社区准则",
   yourLibrary: "你的音乐库",

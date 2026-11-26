@@ -121,6 +121,7 @@ export default {
   apiDocs: "API-dokumentation",
   changelog: "Ändringslogg",
   apiKeys: "API-nycklar",
+  sourceCode: "Källkod",
   joinDiscord: "Gå med i vår Discord",
   guidelines: "Riktlinjer",
   yourLibrary: "Ditt bibliotek",

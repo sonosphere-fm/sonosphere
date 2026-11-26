@@ -121,6 +121,7 @@ export default {
   apiDocs: "APIドキュメント",
   changelog: "更新履歴",
   apiKeys: "APIキー",
+  sourceCode: "ソースコード",
   joinDiscord: "Discordに参加",
   guidelines: "ガイドライン",
   yourLibrary: "あなたのライブラリ",

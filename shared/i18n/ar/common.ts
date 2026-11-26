@@ -121,6 +121,7 @@ export default {
   apiDocs: "وثائق API",
   changelog: "سجل التغييرات",
   apiKeys: "مفاتيح API",
+  sourceCode: "الشيفرة المصدرية",
   joinDiscord: "انضم إلى Discord",
   guidelines: "الإرشادات",
   yourLibrary: "مكتبتك",
