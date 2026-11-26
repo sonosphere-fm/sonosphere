@@ -1,10 +1,25 @@
-import { useId, useState } from "react";
+import { Fragment } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "../kit";
 import { artistUrl, qs, useApi } from "../lib";
 import { t } from "../i18n";
-import { Async, Section } from "./base";
-import type { Credits as CreditsData } from "../../shared/credits";
+import { Section } from "./base";
+import type { ArtistCredit, Credits as CreditsData } from "../../shared/credits";
+
+type Person = { mbid: string; name: string; notes: string[] };
+
+function byRole(items: ArtistCredit[]) {
+  const roles = new Map<string, Map<string, Person>>();
+  for (const c of items) {
+    const people = roles.get(c.role) ?? new Map<string, Person>();
+    roles.set(c.role, people);
+    const person = people.get(c.mbid) ?? { mbid: c.mbid, name: c.name, notes: [] };
+    people.set(c.mbid, person);
+    const [from, to] = [c.begin.slice(0, 4), c.end.slice(0, 4)];
+    const years = from === to ? from : [from, to].filter(Boolean).join("–");
+    for (const note of [...c.attributes, years]) if (note && !person.notes.includes(note)) person.notes.push(note);
+  }
+  return [...roles].map(([role, people]) => ({ role, people: [...people.values()] }));
+}
 
 export function Credits({
   kind,
@@ -15,61 +30,30 @@ export function Credits({
   artist: string;
   title?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  return (
-    <Section title={t("credits.credits")}>
-      <Button
-        type="button"
-        kind="btn ghost small"
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => setOpen(!open)}
-      >
-        {t("credits.show")}
-      </Button>
-      <div id={id} hidden={!open}>
-        {open && <CreditList key={`${kind}:${artist}:${title}`} path={`/credits${qs({ kind, artist, title })}`} />}
-      </div>
-    </Section>
+  const q = useApi<CreditsData>(`/credits${qs({ kind, artist, title })}`);
+  if (!q.data?.items.length) return null;
+  const source = q.data.source && (
+    <a className="more" href={q.data.source} target="_blank" rel="noreferrer">
+      {t("credits.source")}
+    </a>
   );
-}
-
-function CreditList({ path }: { path: string }) {
-  const q = useApi<CreditsData>(path);
   return (
-    <>
-      {q.loading && <p role="status">{t("common.loading")}</p>}
-      <Async q={q}>
-        {(data) => (
-          <>
-            {data.items.length ? (
-              <ul className="feed">
-                {data.items.map((credit, i) => (
-                  <li key={`${credit.mbid}:${credit.role}:${i}`}>
-                    <Link className="strong" to={artistUrl(credit.name)}>
-                      {credit.name}
-                    </Link>
-                    <span className="muted">{[credit.role, ...credit.attributes].filter(Boolean).join(" · ")}</span>
-                    {(credit.begin || credit.end) && (
-                      <span className="muted small">{[credit.begin, credit.end].filter(Boolean).join(" / ")}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="muted">{t("credits.empty")}</p>
-            )}
-            {data.source && (
-              <p className="small">
-                <a href={data.source} target="_blank" rel="noreferrer">
-                  {t("credits.source")}
-                </a>
-              </p>
-            )}
-          </>
-        )}
-      </Async>
-    </>
+    <Section title={t("credits.credits")} aside={source}>
+      <dl className="credits">
+        {byRole(q.data.items).map(({ role, people }) => (
+          <Fragment key={role}>
+            <dt>{role}</dt>
+            <dd>
+              {people.map((p) => (
+                <span key={p.mbid}>
+                  <Link to={artistUrl(p.name)}>{p.name}</Link>
+                  {p.notes.length > 0 && <span className="muted">{p.notes.join(", ")}</span>}
+                </span>
+              ))}
+            </dd>
+          </Fragment>
+        ))}
+      </dl>
+    </Section>
   );
 }

@@ -12,7 +12,7 @@ export function MoreMenu({ label, link, children }: { label: string; link: strin
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
-  const button = { label, variant: "secondary", className: "more-btn", children: <Ico.More /> } as const;
+  const button = { label, variant: "secondary", className: "more-btn sq", children: <Ico.MoreV /> } as const;
   return (
     <DropdownMenu placement="below" alignment="end" hasChevron={false} menuWidth={200} button={button}>
       <DropdownMenuItem

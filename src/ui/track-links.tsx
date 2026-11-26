@@ -40,12 +40,8 @@ export function OpenIn({ artist, title }: { artist: string; title: string }) {
   const button = {
     label: t("music.openIn"),
     variant: "secondary",
-    className: "btn ghost",
-    children: (
-      <>
-        <Ico.External /> {t("music.openIn")}
-      </>
-    ),
+    className: "btn ghost sq",
+    children: <Ico.External />,
   } as const;
   return (
     <DropdownMenu

@@ -16,6 +16,7 @@ import {
   Check,
   CircleNotch,
   DotsThree,
+  DotsThreeVertical,
   Eyedropper,
   GearSix,
   Heart,
@@ -90,6 +91,7 @@ export const Ico = {
     </svg>
   ),
   More: mk(DotsThree),
+  MoreV: mk(DotsThreeVertical),
   Edit: mk(PencilSimple),
   Delete: mk(Trash),
   Shield: mk(ShieldCheck, true),

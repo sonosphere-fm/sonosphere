@@ -85,7 +85,7 @@ export function MusicHero({
 export function HeroStat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col leading-[1.15]">
-      <span className="text-[11px] text-site-muted uppercase tracking-[.06em]">{label}</span>
+      <span className="text-[13px] text-site-muted">{label}</span>
       <b className="text-[22px] font-site-display" title={num(value)}>
         {short(value)}
       </b>

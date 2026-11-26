@@ -1332,7 +1332,7 @@ export function StationRow({ type, label }: { type: "library" | "recommended" | 
     p.playStation(path).catch((e) => setError(errorText(e)));
   };
   return (
-    <li>
+    <li onClick={(e) => !(e.target as Element).closest("button") && click()}>
       <Button
         kind={"play-btn" + (on ? " on" : "")}
         type="button"

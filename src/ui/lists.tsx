@@ -18,12 +18,12 @@ export function LoveButton({
   track,
   loved,
   onChange,
-  label,
+  hero,
 }: {
   track: { id?: number; trackId?: number; artist: string; title: string };
   loved: boolean | number;
   onChange?: (v: boolean) => void;
-  label?: boolean;
+  hero?: boolean;
 }) {
   const { me } = useAuth();
   const nav = useNavigate();
@@ -42,14 +42,13 @@ export function LoveButton({
   };
   return (
     <Button
-      kind={(label ? "btn ghost love" : "love") + (on ? " on" : "")}
+      kind={(hero ? "btn ghost sq love" : "love") + (on ? " on" : "")}
       aria-pressed={on}
       aria-label={on ? t("user.unloveTrack") : t("user.loveTrack")}
       title={on ? t("user.unlove") : t("user.love")}
       onClick={toggle}
     >
       <Ico.Heart on={on} />
-      {label && ` ${on ? t("user.loved") : t("user.love")}`}
     </Button>
   );
 }

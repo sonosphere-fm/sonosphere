@@ -196,7 +196,7 @@ export function TrackPage({ tab }: { tab: "overview" | "wiki" }) {
             actions={
               <>
                 <PlayButton queue={[item, ...item.similar]} label={t("music.playTrack")} />
-                <LoveButton track={item} loved={item.loved} label onChange={q.reload} />
+                <LoveButton track={item} loved={item.loved} hero onChange={q.reload} />
                 <OpenIn key={item.id} artist={item.artist} title={item.title} />
                 <MoreMenu label={t("music.moreActionsFor", { name: item.title })} link={shortMusicUrl("t", item.id)}>
                   {me && <DropdownMenuItem label={t("music.addToPlaylist")} onClick={() => setModal("playlist")} />}

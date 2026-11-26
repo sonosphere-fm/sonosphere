@@ -19,7 +19,7 @@ router.get<Credits>("/api/credits", async (c) => {
       : kind === "album"
         ? await requireAlbum(name, title)
         : await requireTrack(name, title);
-  const key = `credits:v1:${kind}:${item.id}`;
+  const key = `credits:v2:${kind}:${item.id}`;
   const cached = await getJson<Credits>(key);
   if (cached) return cached;
   await throttle(`credits:${c.user?.id ?? ipOf(c.req)}`, 20, 60);

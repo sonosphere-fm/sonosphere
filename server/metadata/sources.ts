@@ -96,9 +96,13 @@ const credit = (v: unknown) =>
     .join("");
 const firstArtist = (v: unknown) => tidy(objs(v)[0]?.name);
 
+// links between artists that say nothing about who made the music
+const NOT_CREDITS = new Set(["tribute", "named after artist", "artist rename", "fan", "is person"]);
+
 export function artistCredits(data: unknown): ArtistCredit[] {
   const result = new Map<string, ArtistCredit>();
   for (const relation of objs(asObject(data)?.relations)) {
+    if (NOT_CREDITS.has(str(relation.type))) continue;
     const artist = asObject(relation.artist);
     if (!artist || !UUID.test(str(artist.id)) || !str(artist.name)) continue;
     const item: ArtistCredit = {
