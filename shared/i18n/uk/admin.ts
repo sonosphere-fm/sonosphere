@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Вимкнено повідомлення",
   actionDmUnmute: "Увімкнено повідомлення",
   actionDmResolve: "Розглянуто позначку спаму",
+  actionCosmeticsGrant: "Видано косметичний предмет",
+  actionCosmeticsRevoke: "Відкликано косметичний предмет",
   fieldReleaseDate: "дата випуску",
   fieldReleaseType: "тип",
   fieldMbid: "MusicBrainz ID",

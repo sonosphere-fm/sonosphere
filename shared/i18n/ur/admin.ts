@@ -94,6 +94,8 @@ export default {
   actionDmMute: "پیغام رسانی بند کی",
   actionDmUnmute: "پیغام رسانی بحال کی",
   actionDmResolve: "اسپام فلیگ حل کیا",
+  actionCosmeticsGrant: "کاسمیٹک دیا گیا",
+  actionCosmeticsRevoke: "کاسمیٹک واپس لیا گیا",
   fieldReleaseDate: "ریلیز کی تاریخ",
   fieldReleaseType: "قسم",
   fieldMbid: "MusicBrainz ID",

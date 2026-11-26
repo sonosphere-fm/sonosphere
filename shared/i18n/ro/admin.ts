@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Dezactivare mesagerie",
   actionDmUnmute: "Reactivare mesagerie",
   actionDmResolve: "Rezolvare semnalare spam",
+  actionCosmeticsGrant: "Cosmetic acordat",
+  actionCosmeticsRevoke: "Cosmetic retras",
   fieldReleaseDate: "data lansării",
   fieldReleaseType: "tipul",
   fieldMbid: "ID MusicBrainz",

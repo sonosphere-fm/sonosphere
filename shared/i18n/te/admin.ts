@@ -93,6 +93,8 @@ export default {
   actionDmMute: "సందేశాలు ఆఫ్ చేశారు",
   actionDmUnmute: "సందేశాలు పునరుద్ధరించారు",
   actionDmResolve: "స్పామ్ ఫ్లాగ్ పరిష్కరించారు",
+  actionCosmeticsGrant: "కాస్మెటిక్ ఇవ్వబడింది",
+  actionCosmeticsRevoke: "కాస్మెటిక్ వెనక్కి తీసుకోబడింది",
   fieldReleaseDate: "విడుదల తేదీ",
   fieldReleaseType: "రకం",
   fieldMbid: "MusicBrainz ID",

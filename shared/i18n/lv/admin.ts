@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Izslēdza ziņapmaiņu",
   actionDmUnmute: "Atjaunoja ziņapmaiņu",
   actionDmResolve: "Atrisināja surogātsatura atzīmi",
+  actionCosmeticsGrant: "Piešķirts kosmētikas priekšmets",
+  actionCosmeticsRevoke: "Atņemts kosmētikas priekšmets",
   fieldReleaseDate: "izdošanas datums",
   fieldReleaseType: "veids",
   fieldMbid: "MusicBrainz ID",

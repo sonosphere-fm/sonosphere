@@ -93,6 +93,8 @@ export default {
   actionDmMute: "বার্তা পাঠানো বন্ধ করেছেন",
   actionDmUnmute: "বার্তা পাঠানো ফিরিয়ে দিয়েছেন",
   actionDmResolve: "স্প্যাম ফ্ল্যাগ সমাধান করেছেন",
+  actionCosmeticsGrant: "কসমেটিক দেওয়া হয়েছে",
+  actionCosmeticsRevoke: "কসমেটিক ফিরিয়ে নেওয়া হয়েছে",
   fieldReleaseDate: "রিলিজের তারিখ",
   fieldReleaseType: "ধরন",
   fieldMbid: "MusicBrainz ID",

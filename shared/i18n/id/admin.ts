@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Pesan dimatikan",
   actionDmUnmute: "Pesan dipulihkan",
   actionDmResolve: "Tanda spam diselesaikan",
+  actionCosmeticsGrant: "Kosmetik diberikan",
+  actionCosmeticsRevoke: "Kosmetik dicabut",
   fieldReleaseDate: "tanggal rilis",
   fieldReleaseType: "jenis",
   fieldMbid: "ID MusicBrainz",

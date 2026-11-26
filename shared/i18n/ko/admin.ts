@@ -93,6 +93,8 @@ export default {
   actionDmMute: "메시지 차단함",
   actionDmUnmute: "메시지 차단 해제함",
   actionDmResolve: "스팸 플래그 처리함",
+  actionCosmeticsGrant: "꾸미기 아이템 지급",
+  actionCosmeticsRevoke: "꾸미기 아이템 회수",
   fieldReleaseDate: "발매일",
   fieldReleaseType: "유형",
   fieldMbid: "MusicBrainz ID",

@@ -94,6 +94,8 @@ export default {
   actionDmMute: "メッセージ機能をオフ",
   actionDmUnmute: "メッセージ機能を復元",
   actionDmResolve: "スパムフラグを解決",
+  actionCosmeticsGrant: "コスメを付与",
+  actionCosmeticsRevoke: "コスメを取り消し",
   fieldReleaseDate: "リリース日",
   fieldReleaseType: "タイプ",
   fieldMbid: "MusicBrainz ID",

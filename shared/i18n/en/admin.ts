@@ -91,6 +91,8 @@ export default {
   actionDmMute: "Turned off messaging",
   actionDmUnmute: "Restored messaging",
   actionDmResolve: "Resolved spam flag",
+  actionCosmeticsGrant: "Granted cosmetic",
+  actionCosmeticsRevoke: "Revoked cosmetic",
   fieldReleaseDate: "release date",
   fieldReleaseType: "type",
   fieldMbid: "MusicBrainz ID",

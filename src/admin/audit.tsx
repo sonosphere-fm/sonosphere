@@ -18,6 +18,8 @@ import {
 import { act, actButton, adminUrl, useConfirm, useFlash, useQuery, useRole } from "./common";
 import { t, tx } from "./i18n";
 import type { AuditRow } from "../../shared/admin";
+import { COSMETICS } from "../../shared/cosmetics";
+import { Ico } from "../icons";
 import type { AuditList as AuditPage, Ok } from "../../shared/admin-content";
 
 const ACTION: Record<string, AdminKey> = {
@@ -62,6 +64,8 @@ const ACTION: Record<string, AdminKey> = {
   "dm.mute": "admin.actionDmMute",
   "dm.unmute": "admin.actionDmUnmute",
   "dm.resolve": "admin.actionDmResolve",
+  "cosmetics.grant": "admin.actionCosmeticsGrant",
+  "cosmetics.revoke": "admin.actionCosmeticsRevoke",
 };
 const actionLabel = (a: string) => (ACTION[a] ? t(ACTION[a]) : a);
 const actionGroup = (a: string) => a.split(".")[0];
@@ -147,60 +151,141 @@ function details(a: AuditRow): ReactNode {
   }
   if (a.action === "dm.delete")
     return d.closedReports ? t("admin.auditClosedReports", { count: count(d.closedReports) }) : "";
+  if (a.action.startsWith("cosmetics."))
+    return COSMETICS.find((x) => x.id === d.cosmeticId)?.name ?? String(d.cosmeticId);
   if (d.text) {
     const text = String(d.text);
     return `“${text.slice(0, 120)}${text.length > 120 ? "…" : ""}”`;
   }
   return "";
 }
+// One staff member doing the same thing several times in a row, like granting a few cosmetics, is one entry that opens.
+const RUN_GAP = 15 * 60;
+function runs(items: AuditRow[]): AuditRow[][] {
+  const out: AuditRow[][] = [];
+  for (const a of items) {
+    const run = out.at(-1);
+    const last = run?.at(-1);
+    const same = last && last.actor === a.actor && last.action === a.action && last.note === a.note;
+    if (same && last.createdAt - a.createdAt <= RUN_GAP) run!.push(a);
+    else out.push([a]);
+  }
+  return out;
+}
+const oneTarget = (run: AuditRow[]) =>
+  run.every((a) => a.targetType === run[0]!.targetType && a.targetId === run[0]!.targetId);
+
+function useOpen() {
+  const [open, setOpen] = useState<Set<number>>(new Set());
+  const toggle = (id: number) =>
+    setOpen((s) => {
+      const next = new Set(s);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  return [open, toggle] as const;
+}
+
+function RunToggle({ run, open, onToggle }: { run: AuditRow[]; open: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" className={LINKISH} aria-expanded={open} onClick={onToggle}>
+      {t("admin.entries", { count: run.length })}{" "}
+      <span className={`inline-block transition-transform ${open ? "rotate-180" : ""}`}>
+        <Ico.ChevDown />
+      </span>
+    </button>
+  );
+}
+
+function tableTarget(a: AuditRow): ReactNode {
+  const userLink = auditUserLink(a);
+  if (userLink) return <Link to={userLink}>{arrowed(a.label || a.subject)}</Link>;
+  if (a.targetType === "dm_thread") return <Link to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link>;
+  if (a.label) return arrowed(a.label);
+  return <span className="muted">{a.targetType}</span>;
+}
+const RUN_CHILD = "[&_td]:bg-site-panel [&>td:first-child]:pl-6";
+
 function auditUserLink(a: AuditRow) {
   return a.targetType === "user" && (a.subject || a.label) ? adminUrl(a.subject || a.label) : null;
 }
 const AUDIT_ROW = "flex gap-3 items-baseline flex-wrap py-[9px] text-[14px] border-b border-b-site-line";
+function listTarget(a: AuditRow): ReactNode {
+  const userLink = auditUserLink(a);
+  if (userLink)
+    return (
+      <Link className="strong" to={userLink}>
+        {arrowed(a.label || a.subject)}
+      </Link>
+    );
+  if (a.targetType === "dm_thread")
+    return (
+      <Link className="strong" to={`/admin/messages/${a.targetId}`}>
+        {arrowed(a.label)}
+      </Link>
+    );
+  return <b>{arrowed(a.label || a.targetType)}</b>;
+}
+
 export function AuditList({ items, empty }: { items: AuditRow[]; empty: string }) {
+  const [open, toggle] = useOpen();
   if (!items.length) return <Empty>{empty}</Empty>;
   return (
     <ul className="list-none m-0 p-0">
-      {items.map((a) => {
-        const extra = details(a);
-        const userLink = auditUserLink(a);
-        let target: ReactNode = <b>{arrowed(a.label || a.targetType)}</b>;
-        if (userLink)
-          target = (
-            <Link className="strong" to={userLink}>
-              {arrowed(a.label || a.subject)}
-            </Link>
-          );
-        else if (a.targetType === "dm_thread")
-          target = (
-            <Link className="strong" to={`/admin/messages/${a.targetId}`}>
-              {arrowed(a.label)}
-            </Link>
-          );
+      {runs(items).map((run) => {
+        const a = run[0]!;
+        if (run.length === 1) return <AuditItem key={a.id} a={a} />;
+        const isOpen = open.has(a.id);
         return (
-          <li key={a.id} className={AUDIT_ROW}>
-            <span className={act(actionGroup(a.action))}>{actionLabel(a.action)}</span>
-            <span className="min-w-0 flex-[1_1_240px] wrap-anywhere">
-              {target}
-              {a.subject && a.targetType !== "user" && (
-                <>
-                  {" "}
-                  ·{" "}
-                  <Link to={adminUrl(a.subject)}>
-                    <Username name={a.subject} />
-                  </Link>
-                </>
-              )}
-              {extra && <span className="muted"> · {extra}</span>}
-              {a.note && <span className={NOTE}>“{a.note}”</span>}
-            </span>
-            <span className="muted small nowrap" title={dateTime(a.createdAt)}>
-              {a.actor} · {ago(a.createdAt)}
-            </span>
+          <li key={a.id}>
+            <div className={AUDIT_ROW}>
+              <span className={act(actionGroup(a.action))}>{actionLabel(a.action)}</span>
+              <span className="min-w-0 flex-[1_1_240px] wrap-anywhere">
+                {oneTarget(run) && <>{listTarget(a)} · </>}
+                <RunToggle run={run} open={isOpen} onToggle={() => toggle(a.id)} />
+                {a.note && <span className={NOTE}>“{a.note}”</span>}
+              </span>
+              <span className="muted small nowrap" title={dateTime(a.createdAt)}>
+                {a.actor} · {ago(a.createdAt)}
+              </span>
+            </div>
+            {isOpen && (
+              <ul className="list-none m-0 p-0 pl-6">
+                {run.map((r) => (
+                  <AuditItem key={r.id} a={r} />
+                ))}
+              </ul>
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function AuditItem({ a }: { a: AuditRow }) {
+  const extra = details(a);
+  return (
+    <li className={AUDIT_ROW}>
+      <span className={act(actionGroup(a.action))}>{actionLabel(a.action)}</span>
+      <span className="min-w-0 flex-[1_1_240px] wrap-anywhere">
+        {listTarget(a)}
+        {a.subject && a.targetType !== "user" && (
+          <>
+            {" "}
+            ·{" "}
+            <Link to={adminUrl(a.subject)}>
+              <Username name={a.subject} />
+            </Link>
+          </>
+        )}
+        {extra && <span className="muted"> · {extra}</span>}
+        {a.note && <span className={NOTE}>“{a.note}”</span>}
+      </span>
+      <span className="muted small nowrap" title={dateTime(a.createdAt)}>
+        {a.actor} · {ago(a.createdAt)}
+      </span>
+    </li>
   );
 }
 
@@ -234,6 +319,53 @@ export function Audit() {
           flash.set({ ok: true, text: t("admin.changeUndone") });
         }),
     });
+  const [open, toggle] = useOpen();
+  const actorCell = (a: AuditRow) => (
+    <button type="button" className={LINKISH} onClick={() => set({ actor: a.actor })}>
+      {a.actor}
+    </button>
+  );
+  const actionCell = (a: AuditRow) => (
+    <button type="button" className={actButton(actionGroup(a.action))} onClick={() => set({ action: a.action })}>
+      {actionLabel(a.action)}
+    </button>
+  );
+  const tableRow = (a: AuditRow, child = false) => {
+    const extra = details(a);
+    return (
+      <tr key={a.id} className={child ? RUN_CHILD : undefined}>
+        <td className="nowrap small" title={dateTime(a.createdAt)}>
+          {dateTime(a.createdAt)}
+        </td>
+        <td>{actorCell(a)}</td>
+        <td>{actionCell(a)}</td>
+        <td>
+          {tableTarget(a)}
+          {a.subject && a.targetType !== "user" && (
+            <span className="muted small">
+              {" "}
+              ·{" "}
+              <Link to={adminUrl(a.subject)}>
+                <Username name={a.subject} />
+              </Link>
+            </span>
+          )}
+        </td>
+        <td className="small">
+          {extra && <span className="muted">{extra}</span>}
+          {a.note && <span className={NOTE}>“{a.note}”</span>}
+          {admin && UNDOABLE.has(a.action) && (
+            <>
+              {" "}
+              <Button kind="link small" type="button" onClick={() => askUndo(a)}>
+                {t("admin.undo")}
+              </Button>
+            </>
+          )}
+        </td>
+      </tr>
+    );
+  };
   const filter = (e: FormEvent) => {
     e.preventDefault();
     set({ user: user.trim(), q: text.trim() });
@@ -316,58 +448,26 @@ export function Audit() {
                     </tr>
                   </thead>
                   <tbody>
-                    {d.items.map((a) => {
-                      const extra = details(a);
-                      const userLink = auditUserLink(a);
-                      let target: ReactNode = <span className="muted">{a.targetType}</span>;
-                      if (userLink) target = <Link to={userLink}>{arrowed(a.label || a.subject)}</Link>;
-                      else if (a.targetType === "dm_thread")
-                        target = <Link to={`/admin/messages/${a.targetId}`}>{arrowed(a.label)}</Link>;
-                      else if (a.label) target = arrowed(a.label);
+                    {runs(d.items).map((run) => {
+                      const a = run[0]!;
+                      if (run.length === 1) return tableRow(a);
+                      const isOpen = open.has(a.id);
                       return (
-                        <tr key={a.id}>
-                          <td className="nowrap small" title={dateTime(a.createdAt)}>
-                            {dateTime(a.createdAt)}
-                          </td>
-                          <td>
-                            <button type="button" className={LINKISH} onClick={() => set({ actor: a.actor })}>
-                              {a.actor}
-                            </button>
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className={actButton(actionGroup(a.action))}
-                              onClick={() => set({ action: a.action })}
-                            >
-                              {actionLabel(a.action)}
-                            </button>
-                          </td>
-                          <td>
-                            {target}
-                            {a.subject && a.targetType !== "user" && (
-                              <span className="muted small">
-                                {" "}
-                                ·{" "}
-                                <Link to={adminUrl(a.subject)}>
-                                  <Username name={a.subject} />
-                                </Link>
-                              </span>
-                            )}
-                          </td>
-                          <td className="small">
-                            {extra && <span className="muted">{extra}</span>}
-                            {a.note && <span className={NOTE}>“{a.note}”</span>}
-                            {admin && UNDOABLE.has(a.action) && (
-                              <>
-                                {" "}
-                                <Button kind="link small" type="button" onClick={() => askUndo(a)}>
-                                  {t("admin.undo")}
-                                </Button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
+                        <Fragment key={a.id}>
+                          <tr>
+                            <td className="nowrap small" title={dateTime(a.createdAt)}>
+                              {dateTime(a.createdAt)}
+                            </td>
+                            <td>{actorCell(a)}</td>
+                            <td>{actionCell(a)}</td>
+                            <td>{oneTarget(run) && tableTarget(a)}</td>
+                            <td className="small">
+                              <RunToggle run={run} open={isOpen} onToggle={() => toggle(a.id)} />
+                              {a.note && <span className={NOTE}>“{a.note}”</span>}
+                            </td>
+                          </tr>
+                          {isOpen && run.map((r) => tableRow(r, true))}
+                        </Fragment>
                       );
                     })}
                   </tbody>

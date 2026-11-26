@@ -94,6 +94,8 @@ export default {
   actionDmMute: "أوقف المراسلة",
   actionDmUnmute: "أعاد المراسلة",
   actionDmResolve: "عالج علامة رسائل مزعجة",
+  actionCosmeticsGrant: "مُنح عنصر تجميلي",
+  actionCosmeticsRevoke: "سُحب عنصر تجميلي",
   fieldReleaseDate: "تاريخ الإصدار",
   fieldReleaseType: "النوع",
   fieldMbid: "معرّف MusicBrainz",

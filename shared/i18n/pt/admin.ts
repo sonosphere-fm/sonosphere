@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Desativou mensagens",
   actionDmUnmute: "Reativou mensagens",
   actionDmResolve: "Resolveu alerta de spam",
+  actionCosmeticsGrant: "Cosmético concedido",
+  actionCosmeticsRevoke: "Cosmético removido",
   fieldReleaseDate: "data de lançamento",
   fieldReleaseType: "tipo",
   fieldMbid: "ID do MusicBrainz",

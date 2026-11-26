@@ -93,6 +93,8 @@ export default {
   actionDmMute: "संदेश पाठवणे बंद केले",
   actionDmUnmute: "संदेश पाठवणे पुन्हा सुरू केले",
   actionDmResolve: "स्पॅम फ्लॅग निकाली काढला",
+  actionCosmeticsGrant: "कॉस्मेटिक दिले",
+  actionCosmeticsRevoke: "कॉस्मेटिक काढून घेतले",
   fieldReleaseDate: "प्रकाशन तारीख",
   fieldReleaseType: "प्रकार",
   fieldMbid: "MusicBrainz ID",

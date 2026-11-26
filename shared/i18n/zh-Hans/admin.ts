@@ -93,6 +93,8 @@ export default {
   actionDmMute: "关闭私信",
   actionDmUnmute: "恢复私信",
   actionDmResolve: "处理垃圾信息标记",
+  actionCosmeticsGrant: "授予了装扮",
+  actionCosmeticsRevoke: "收回了装扮",
   fieldReleaseDate: "发行日期",
   fieldReleaseType: "类型",
   fieldMbid: "MusicBrainz ID",

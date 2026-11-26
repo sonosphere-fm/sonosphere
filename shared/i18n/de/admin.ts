@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Nachrichten deaktiviert",
   actionDmUnmute: "Nachrichten wiederhergestellt",
   actionDmResolve: "Spam-Markierung erledigt",
+  actionCosmeticsGrant: "Kosmetik vergeben",
+  actionCosmeticsRevoke: "Kosmetik entzogen",
   fieldReleaseDate: "Erscheinungsdatum",
   fieldReleaseType: "Typ",
   fieldMbid: "MusicBrainz-ID",

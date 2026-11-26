@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Stängde av meddelanden",
   actionDmUnmute: "Återställde meddelanden",
   actionDmResolve: "Hanterade spamflagga",
+  actionCosmeticsGrant: "Kosmetik tilldelad",
+  actionCosmeticsRevoke: "Kosmetik återkallad",
   fieldReleaseDate: "utgivningsdatum",
   fieldReleaseType: "typ",
   fieldMbid: "MusicBrainz-ID",

@@ -93,6 +93,8 @@ export default {
   actionDmMute: "मैसेजिंग बंद की",
   actionDmUnmute: "मैसेजिंग बहाल की",
   actionDmResolve: "स्पैम फ़्लैग सुलझाया",
+  actionCosmeticsGrant: "कॉस्मेटिक दिया",
+  actionCosmeticsRevoke: "कॉस्मेटिक वापस लिया",
   fieldReleaseDate: "रिलीज़ तिथि",
   fieldReleaseType: "प्रकार",
   fieldMbid: "MusicBrainz ID",

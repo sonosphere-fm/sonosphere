@@ -93,6 +93,8 @@ export default {
   actionDmMute: "שליחת הודעות כובתה",
   actionDmUnmute: "שליחת הודעות הוחזרה",
   actionDmResolve: "סימון ספאם טופל",
+  actionCosmeticsGrant: "הוענק פריט קוסמטי",
+  actionCosmeticsRevoke: "נשלל פריט קוסמטי",
   fieldReleaseDate: "תאריך יציאה",
   fieldReleaseType: "סוג",
   fieldMbid: "מזהה MusicBrainz",

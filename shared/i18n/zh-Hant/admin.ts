@@ -93,6 +93,8 @@ export default {
   actionDmMute: "關閉私訊",
   actionDmUnmute: "恢復私訊",
   actionDmResolve: "處理垃圾訊息標記",
+  actionCosmeticsGrant: "授予了裝扮",
+  actionCosmeticsRevoke: "收回了裝扮",
   fieldReleaseDate: "發行日期",
   fieldReleaseType: "類型",
   fieldMbid: "MusicBrainz ID",

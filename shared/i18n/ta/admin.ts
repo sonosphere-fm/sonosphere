@@ -94,6 +94,8 @@ export default {
   actionDmMute: "செய்தியிடல் முடக்கப்பட்டது",
   actionDmUnmute: "செய்தியிடல் மீட்டமைக்கப்பட்டது",
   actionDmResolve: "ஸ்பேம் கொடி தீர்க்கப்பட்டது",
+  actionCosmeticsGrant: "அலங்காரப் பொருள் வழங்கப்பட்டது",
+  actionCosmeticsRevoke: "அலங்காரப் பொருள் திரும்பப் பெறப்பட்டது",
   fieldReleaseDate: "வெளியீட்டுத் தேதி",
   fieldReleaseType: "வகை",
   fieldMbid: "MusicBrainz ID",

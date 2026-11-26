@@ -94,6 +94,8 @@ export default {
   actionDmMute: "Mesajlaşmayı kapattı",
   actionDmUnmute: "Mesajlaşmayı geri açtı",
   actionDmResolve: "Spam işaretini çözdü",
+  actionCosmeticsGrant: "Kozmetik verildi",
+  actionCosmeticsRevoke: "Kozmetik geri alındı",
   fieldReleaseDate: "çıkış tarihi",
   fieldReleaseType: "tür",
   fieldMbid: "MusicBrainz ID",
