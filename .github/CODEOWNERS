@@ -8,3 +8,17 @@
 /DESIGN.md @bl791
 /CONTRIBUTING.md @bl791
 /SECURITY.md @bl791
+
+# Sophie -- Formatting
+/biome.json sophie@sad.ovh
+
+# Sophie -- Cosmetics
+/src/ui/cosmetic-effects.tsx sophie@sad.ovh
+/src/ui/cosmetics.tsx sophie@sad.ovh
+/src/ui/profile-cosmetics.tsx sophie@sad.ovh
+
+# Sophie -- PWA
+/server/pwa.ts sophie@sad.ovh
+/src/manifest.webmanifest sophie@sad.ovh
+/src/pwa.ts sophie@sad.ovh
+/src/sw.js sophie@sad.ovh
