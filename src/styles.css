@@ -5800,43 +5800,34 @@
   }
   .credits {
     display: grid;
-    grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
-    gap: 0 24px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
     margin: 0;
-    font-size: 14px;
+    padding: 0;
+    list-style: none;
   }
-  .credits :is(dt, dd) {
-    margin: 0;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .credits dt {
-    font-weight: 700;
-  }
-  .credits dt::first-letter {
-    text-transform: uppercase;
-  }
-  .credits dd {
+  .credits li {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: var(--card);
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--muted);
   }
-  .credits dd > span {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 8px;
-  }
-  .credits dd a {
+  .credits a {
     color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
   }
-  @media (max-width: 700px) {
-    .credits {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .credits dt {
-      padding-bottom: 0;
-      border-bottom: 0;
-    }
+  .credits li > span:first-of-type {
+    color: var(--ink-2);
+  }
+  .credits li > span:first-of-type::first-letter {
+    text-transform: uppercase;
   }
   .dm-link-desc {
     display: -webkit-box;

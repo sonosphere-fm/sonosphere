@@ -1,24 +1,24 @@
-import { Fragment } from "react";
 import { Link } from "react-router-dom";
 import { artistUrl, qs, useApi } from "../lib";
 import { t } from "../i18n";
 import { Section } from "./base";
 import type { ArtistCredit, Credits as CreditsData } from "../../shared/credits";
 
-type Person = { mbid: string; name: string; notes: string[] };
+type Person = { mbid: string; name: string; roles: string[]; notes: string[] };
 
-function byRole(items: ArtistCredit[]) {
-  const roles = new Map<string, Map<string, Person>>();
+const add = (list: string[], v: string) => v && !list.includes(v) && list.push(v);
+
+function byPerson(items: ArtistCredit[]) {
+  const people = new Map<string, Person>();
   for (const c of items) {
-    const people = roles.get(c.role) ?? new Map<string, Person>();
-    roles.set(c.role, people);
-    const person = people.get(c.mbid) ?? { mbid: c.mbid, name: c.name, notes: [] };
-    people.set(c.mbid, person);
+    const p = people.get(c.mbid) ?? { mbid: c.mbid, name: c.name, roles: [], notes: [] };
+    people.set(c.mbid, p);
+    add(p.roles, c.role);
+    for (const a of c.attributes) add(p.notes, a);
     const [from, to] = [c.begin.slice(0, 4), c.end.slice(0, 4)];
-    const years = from === to ? from : [from, to].filter(Boolean).join("–");
-    for (const note of [...c.attributes, years]) if (note && !person.notes.includes(note)) person.notes.push(note);
+    add(p.notes, from === to ? from : [from, to].filter(Boolean).join("–"));
   }
-  return [...roles].map(([role, people]) => ({ role, people: [...people.values()] }));
+  return [...people.values()];
 }
 
 export function Credits({
@@ -32,28 +32,17 @@ export function Credits({
 }) {
   const q = useApi<CreditsData>(`/credits${qs({ kind, artist, title })}`);
   if (!q.data?.items.length) return null;
-  const source = q.data.source && (
-    <a className="more" href={q.data.source} target="_blank" rel="noreferrer">
-      {t("credits.source")}
-    </a>
-  );
   return (
-    <Section title={t("credits.credits")} aside={source}>
-      <dl className="credits">
-        {byRole(q.data.items).map(({ role, people }) => (
-          <Fragment key={role}>
-            <dt>{role}</dt>
-            <dd>
-              {people.map((p) => (
-                <span key={p.mbid}>
-                  <Link to={artistUrl(p.name)}>{p.name}</Link>
-                  {p.notes.length > 0 && <span className="muted">{p.notes.join(", ")}</span>}
-                </span>
-              ))}
-            </dd>
-          </Fragment>
+    <Section title={t("credits.credits")}>
+      <ul className="credits">
+        {byPerson(q.data.items).map((p) => (
+          <li key={p.mbid}>
+            <Link to={artistUrl(p.name)}>{p.name}</Link>
+            <span>{p.roles.join(", ")}</span>
+            {p.notes.length > 0 && <span>{p.notes.join(", ")}</span>}
+          </li>
         ))}
-      </dl>
+      </ul>
     </Section>
   );
 }

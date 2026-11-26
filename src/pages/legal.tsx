@@ -512,6 +512,13 @@ export function Terms() {
         Third-Party Service, including any suspension of your account with that service or any change to its interfaces
         that causes the connected feature to cease functioning.
       </p>
+      <p>
+        11.6 <i>Music data.</i> Artist, release and credit information on the Service includes data from{" "}
+        <a href="https://musicbrainz.org" target="_blank" rel="noreferrer">
+          MusicBrainz
+        </a>
+        , made available by the MetaBrainz Foundation under CC0.
+      </p>
 
       <h2>12. Events and Interactions with Other Users</h2>
       <p>
