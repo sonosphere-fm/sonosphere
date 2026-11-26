@@ -25,7 +25,6 @@ export default {
   imGoing: "参加する",
   lineup: "出演者",
   details: "詳細",
-  moreOnMusicBrainz: "MusicBrainzで詳しく見る",
   tickets: "チケット・詳細情報",
   wall: "ウォール",
   goingCount: "参加 ({count})",

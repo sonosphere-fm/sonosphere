@@ -25,7 +25,6 @@ export default {
   imGoing: "אני מגיע",
   lineup: "ליינאפ",
   details: "פרטים",
-  moreOnMusicBrainz: "עוד ב־MusicBrainz",
   tickets: "כרטיסים ומידע",
   wall: "קיר",
   goingCount: "מגיעים ({count})",

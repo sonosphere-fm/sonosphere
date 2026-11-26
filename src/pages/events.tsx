@@ -107,9 +107,19 @@ export function EventsPage() {
   );
 }
 
-function Listed({ e }: { e: EventData }) {
-  if (e.source === "musicbrainz") return <>{t("events.listedOn", { source: "MusicBrainz" })}</>;
-  if (e.source === "ticketmaster") return <>{t("events.listedOn", { source: "Ticketmaster" })}</>;
+const SOURCES: Record<string, string> = { musicbrainz: "MusicBrainz", ticketmaster: "Ticketmaster" };
+
+function Source({ e }: { e: EventData }) {
+  const site = SOURCES[e.source];
+  const out = (label: string) => (
+    <a href={e.url} target="_blank" rel="nofollow noopener noreferrer">
+      {label} <Ico.External />
+    </a>
+  );
+  if (site) {
+    const label = t("events.listedOn", { source: site });
+    return <p className="event-source">{e.url ? out(label) : <span className="muted">{label}</span>}</p>;
+  }
   const user = e.creator ? (
     <Link to={userUrl(e.creator)}>
       <Username name={e.creator} />
@@ -117,7 +127,12 @@ function Listed({ e }: { e: EventData }) {
   ) : (
     t("events.deletedUser")
   );
-  return <>{tx("events.addedBy", { user })}</>;
+  return (
+    <p className="event-source">
+      <span className="muted">{tx("events.addedBy", { user })}</span>
+      {e.url && out(t("events.tickets"))}
+    </p>
+  );
 }
 
 export function EventPage() {
@@ -192,7 +207,7 @@ export function EventPage() {
                       {t("events.deleteEvent")}
                     </Button>
                   ) : (
-                    <ReportButton type="event" id={e.id} />
+                    <ReportButton type="event" id={e.id} kind="btn ghost" />
                   )}
                 </>
               }
@@ -208,19 +223,12 @@ export function EventPage() {
                       <Markdown text={e.description} />
                     </Section>
                   )}
-                  {e.url && (
-                    <p>
-                      <a href={e.url} target="_blank" rel="nofollow noopener noreferrer">
-                        {e.source === "musicbrainz" ? t("events.moreOnMusicBrainz") : t("events.tickets")}{" "}
-                        <Ico.External />
-                      </a>
-                    </p>
-                  )}
                   <Section title={t("events.wall")}>
                     <Shoutbox type="event" id={e.id} />
                   </Section>
                 </div>
                 <aside className="side">
+                  <Source e={e} />
                   <Section title={t("events.goingCount", { count: e.going })}>
                     {e.attendees.going.length ? (
                       <UserList items={e.attendees.going} avatar={40} />
@@ -235,9 +243,6 @@ export function EventPage() {
                       <p className="muted">{t("events.nobodyYet")}</p>
                     )}
                   </Section>
-                  <p className="muted small">
-                    <Listed e={e} />
-                  </p>
                 </aside>
               </div>
             </div>

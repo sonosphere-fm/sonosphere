@@ -1,5 +1,5 @@
 import { Ico } from "../../icons";
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { t } from "../../i18n";
 import { artistUrl, date, imageUrl, num, short, trackUrl, useApi, useAuth } from "../../lib";
@@ -27,7 +27,26 @@ type MusicHeroProps = {
   children?: ReactNode;
 };
 
-const MHERO = "hero bg-site-panel p-0 min-h-[300px] flex flex-col max-[700px]:min-h-0";
+// Averages the strip of the picture where it fades out, so the hero background continues its colours.
+function fadeEdgeColor(img: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 8;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  const strip = img.naturalWidth / 4;
+  const sx = document.dir === "rtl" ? img.naturalWidth - strip : 0;
+  ctx.drawImage(img, sx, 0, strip, img.naturalHeight, 0, 0, 8, 8);
+  const px = ctx.getImageData(0, 0, 8, 8).data;
+  const sum = [0, 0, 0];
+  for (let i = 0; i < px.length; i += 4) {
+    sum[0] += px[i];
+    sum[1] += px[i + 1];
+    sum[2] += px[i + 2];
+  }
+  const [r, g, b] = sum.map((v) => Math.round(v / (px.length / 4)));
+  return `rgb(${r} ${g} ${b})`;
+}
+
+const MHERO = "hero bg-site-panel transition-[background-color] duration-500 p-0 min-h-[300px] flex flex-col max-[700px]:min-h-0";
 const MHERO_INNER =
   "wrap flex-1 flex flex-col justify-end gap-3.5 pt-14 pb-[26px] *:max-w-[760px] max-[700px]:pt-7 max-[700px]:pb-[18px] max-[700px]:gap-3";
 const MHERO_OVER = "text-[18px] font-semibold -mb-2 max-[700px]:text-[15px] max-[700px]:-mb-1.5 [&_a]:text-site-link";
@@ -45,14 +64,18 @@ export function MusicHero({
   tabs,
   children,
 }: MusicHeroProps) {
+  const [tint, setTint] = useState({ image: "", color: "" });
+  const color = image && tint.image === image ? tint.color : "";
+  const style = color ? { backgroundColor: `color-mix(in oklab, ${color} 40%, var(--panel))` } : undefined;
   return (
-    <div className={MHERO}>
+    <div className={MHERO} style={style}>
       {image ? (
         <ImageWithFallback
           className={cover ? "mhero-img cover" : "mhero-img"}
           src={imageUrl(image)}
           alt=""
           loading="eager"
+          onLoad={(img) => setTint({ image, color: fadeEdgeColor(img) })}
         />
       ) : null}
       {imageHref && image ? (
@@ -201,7 +224,7 @@ export function Listeners({ items, more }: { items: Listener[]; more?: string })
 const TRENDING_LIST =
   "list-none m-0 p-0 grid grid-cols-6 gap-4 max-[900px]:grid-cols-3 max-[900px]:gap-x-3.5 max-[900px]:gap-y-5 max-[700px]:grid-cols-2";
 const TRENDING_ITEM =
-  "grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 items-baseline text-site-ink hover:text-site-link hover:underline [&>.art]:col-span-full [&>.art]:mb-2";
+  "grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 items-baseline text-site-ink hover:text-site-link [&:hover>strong]:underline [&>.art]:col-span-full [&>.art]:mb-2";
 
 export function TrendingBand() {
   const q = useApi<Charts>("/charts?kind=tracks&limit=6");

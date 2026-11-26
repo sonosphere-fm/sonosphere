@@ -7,6 +7,7 @@ type ImageProps = {
   fallback?: ReactNode;
   errorFallback?: ReactNode;
   loading?: "lazy" | "eager";
+  onLoad?: (img: HTMLImageElement) => void;
 };
 
 export function ImageWithFallback(props: ImageProps) {
@@ -21,6 +22,7 @@ function ImageState({
   fallback = null,
   errorFallback = fallback,
   loading = "lazy",
+  onLoad,
 }: ImageProps) {
   const [state, setState] = useState<"loading" | "loaded" | "error">(src ? "loading" : "error");
   return (
@@ -32,7 +34,11 @@ function ImageState({
           alt={alt}
           loading={loading}
           aria-hidden={state !== "loaded"}
-          onLoad={(e) => setState(e.currentTarget.naturalWidth > 0 ? "loaded" : "error")}
+          onLoad={(e) => {
+            const ok = e.currentTarget.naturalWidth > 0;
+            setState(ok ? "loaded" : "error");
+            if (ok) onLoad?.(e.currentTarget);
+          }}
           onError={() => setState("error")}
         />
       )}

@@ -26,7 +26,6 @@ export default {
   imGoing: "Ci vado",
   lineup: "Line-up",
   details: "Dettagli",
-  moreOnMusicBrainz: "Altro su MusicBrainz",
   tickets: "Biglietti e informazioni",
   wall: "Bacheca",
   goingCount: "Partecipanti ({count})",

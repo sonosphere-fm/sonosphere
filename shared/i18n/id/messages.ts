@@ -86,14 +86,18 @@ export default {
   addPeopleNone:
     "Kamu dapat menambah orang yang sudah kamu miliki percakapan. Saat ini tidak ada orang lain yang dapat ditambah.",
   add: "Tambah",
-  addUser: "Tambah {name}",
-  newGroupIntro:
-    "Kamu dapat menambah orang yang sudah kamu miliki percakapan, hingga {count} orang termasuk kamu. Kamu akan menjadi pemilik grup.",
-  peopleHeading: "Orang",
-  noOneToAdd: "Belum ada yang dapat kamu tambahkan. Mulai percakapan dengan seseorang dulu.",
   searchPeople: "Cari orang",
   noMatch: 'Tidak ada yang cocok dengan "{query}".',
   startGroup: "Mulai grup",
+  newMessage: "Pesan baru",
+  to: "Kepada",
+  next: "Berikutnya",
+  backToPeople: "Kembali ke daftar orang",
+  removeUser: "Hapus {name}",
+  addMoreForGroup: "Tambahkan lebih banyak orang untuk memulai grup. Grup bisa berisi orang yang pernah kamu kirimi pesan.",
+  strangerNoGroup: "Kamu belum pernah mengirim pesan ke {name}, jadi kamu tidak bisa menambahkannya ke grup. Hapus dia untuk menambahkan orang lain.",
+  groupFull: "Grup bisa berisi hingga {count} orang termasuk kamu.",
+  ownerNote: "Kamu akan menjadi pemilik grup.",
   requestIntro:
     "{name} tidak mengikutimu, jadi pesanmu akan tiba sebagai permintaan. Kamu dapat mengirim hingga 3 pesan, tanpa tautan, sampai mereka membalas.",
   sayHello: "Sapa {name}.",

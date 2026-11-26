@@ -85,14 +85,18 @@ export default {
   addPeopleNone:
     "Puoi aggiungere persone con cui hai già una conversazione. Al momento non c'è nessun altro da aggiungere.",
   add: "Aggiungi",
-  addUser: "Aggiungi {name}",
-  newGroupIntro:
-    "Puoi aggiungere persone con cui hai già una conversazione, fino a {count} persone incluso te. Sarai il proprietario del gruppo.",
-  peopleHeading: "Persone",
-  noOneToAdd: "Non c'è ancora nessuno da aggiungere. Prima inizia una conversazione con qualcuno.",
   searchPeople: "Cerca persone",
   noMatch: "Nessuno corrisponde a «{query}».",
   startGroup: "Crea gruppo",
+  newMessage: "Nuovo messaggio",
+  to: "A",
+  next: "Avanti",
+  backToPeople: "Torna alle persone",
+  removeUser: "Rimuovi {name}",
+  addMoreForGroup: "Aggiungi altre persone per creare un gruppo. I gruppi possono includere persone a cui hai già scritto.",
+  strangerNoGroup: "Non hai mai scritto a {name}, quindi non puoi aggiungerlo a un gruppo. Rimuovilo per aggiungere altre persone.",
+  groupFull: "I gruppi possono avere fino a {count} persone, te compreso.",
+  ownerNote: "Sarai il proprietario del gruppo.",
   requestIntro:
     "{name} non ti segue, quindi il tuo messaggio arriverà come richiesta. Puoi inviare fino a 3 messaggi, senza link, finché non risponde.",
   sayHello: "Saluta {name}.",

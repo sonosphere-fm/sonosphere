@@ -25,7 +25,6 @@ export default {
   imGoing: "Gidiyorum",
   lineup: "Kadro",
   details: "Ayrıntılar",
-  moreOnMusicBrainz: "MusicBrainz'de daha fazlası",
   tickets: "Biletler ve bilgi",
   wall: "Duvar",
   goingCount: "Gidiyor ({count})",

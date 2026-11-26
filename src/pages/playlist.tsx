@@ -80,7 +80,7 @@ export function PlaylistPage() {
                 </Button>
               </>
             ) : (
-              <ReportButton type="playlist" id={p.id} />
+              <ReportButton type="playlist" id={p.id} kind="btn ghost" />
             )}
           </>
         );

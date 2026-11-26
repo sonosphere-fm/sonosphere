@@ -25,7 +25,6 @@ export default {
   imGoing: "Я піду",
   lineup: "Лайнап",
   details: "Подробиці",
-  moreOnMusicBrainz: "Більше на MusicBrainz",
   tickets: "Квитки та інформація",
   wall: "Стіна",
   goingCount: "Підуть ({count})",

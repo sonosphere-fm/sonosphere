@@ -25,7 +25,6 @@ export default {
   imGoing: "我要去",
   lineup: "演出阵容",
   details: "详情",
-  moreOnMusicBrainz: "在 MusicBrainz 上查看更多",
   tickets: "门票和信息",
   wall: "留言板",
   goingCount: "要去（{count}）",

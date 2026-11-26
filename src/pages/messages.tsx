@@ -14,7 +14,7 @@ import { Ico } from "../icons";
 import { locale, t, tx } from "../i18n";
 import { Button, Input, useConfirm } from "../kit";
 import { useTurnstile } from "./auth";
-import { ago, api, date, invalidateAll, liveSend, mutate, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
+import { ago, api, date, invalidateAll, liveSend, mutate, qs, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
 import type { BlockResult } from "../../shared/blocks";
 import { DM_REACTIONS } from "../../shared/dm";
 import type {
@@ -35,6 +35,7 @@ import type {
   DmUser,
   DmWith,
 } from "../../shared/dm";
+import type { SearchResults } from "../../shared/search";
 import { BARE_URL } from "../md";
 import { Avatar, useAction } from "../ui/base";
 import { UserLabels } from "../ui/user-labels";
@@ -67,7 +68,7 @@ function dayLabel(at: number) {
 
 const setBlocked = (username: string, block: boolean) => api<BlockResult>("/block", { body: { username, block } });
 
-type View = "inbox" | "requests" | "thread" | "new" | "group" | "new-group";
+type View = "inbox" | "requests" | "thread" | "new" | "group" | "compose";
 type Row = { kind: "thread"; at: number; t: Thread } | { kind: "group"; at: number; g: DmGroup };
 
 export function MessagesPage({ view }: { view: View }) {
@@ -87,8 +88,8 @@ export function MessagesPage({ view }: { view: View }) {
     pane = <NewConversation key={p.name} name={p.name || ""} />;
   } else if (view === "group") {
     pane = <GroupConversation key={p.id} id={Number(p.id) || 0} />;
-  } else if (view === "new-group") {
-    pane = <NewGroup />;
+  } else if (view === "compose") {
+    pane = <Compose />;
   } else {
     pane = (
       <div className="dm-blank muted">
@@ -110,8 +111,13 @@ export function MessagesPage({ view }: { view: View }) {
         <aside className="dm-side" aria-label={t("messages.conversations")}>
           <div className="dm-title-row">
             <h1 className="dm-title">{t("messages.title")}</h1>
-            <Button kind="btn ghost small" href="/messages/new-group">
-              <Ico.Plus /> {t("messages.newGroup")}
+            <Button
+              kind="btn ghost small dm-new"
+              href="/messages/new"
+              aria-label={t("messages.newMessage")}
+              title={t("messages.newMessage")}
+            >
+              <Ico.Plus />
             </Button>
           </div>
           <nav className="tabs dm-tabs">
@@ -1164,14 +1170,39 @@ function AddPeople({ groupId, onAdd }: { groupId: number; onAdd: (r: DmGroupSent
   );
 }
 
-function NewGroup() {
+function PersonRow({ user, onPick }: { user: DmUser; onPick: (u: DmUser) => void }) {
+  return (
+    <li>
+      <button type="button" className="dm-suggest" onClick={() => onPick(user)}>
+        <Avatar user={user} size={32} plain />
+        <span className="grow">
+          <Username user={user} /> <UserLabels name={user.username} />
+        </span>
+      </button>
+    </li>
+  );
+}
+
+function FoundPeople({ term, skip, onPick }: { term: string; skip: Set<number>; onPick: (u: DmUser) => void }) {
+  const q = useApi<SearchResults>(`/search${qs({ q: term, type: "users" })}`);
+  const users = (q.data?.users ?? []).filter((u) => !skip.has(u.id));
+  return users.map((u) => <PersonRow key={u.id} user={u} onPick={onPick} />);
+}
+
+function Compose() {
   const q = useApi<DmGroupCandidates>("/dm/group/candidates");
+  const { me } = useAuth();
   const nav = useNavigate();
   const act = useAction();
-  const [title, setTitle] = useState("");
-  const [picked, setPicked] = useState<number[]>([]);
+  const [picked, setPicked] = useState<DmUser[]>([]);
   const [find, setFind] = useState("");
-  const d = q.data;
+  const [term, setTerm] = useState("");
+  const [naming, setNaming] = useState(false);
+  const [title, setTitle] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setTerm(find.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [find]);
   if (q.error) {
     return (
       <div className="dm-blank muted">
@@ -1180,29 +1211,95 @@ function NewGroup() {
       </div>
     );
   }
+  const d = q.data;
   if (!d) return null;
-  const room = d.size - 1 - picked.length;
-  const needle = find.trim().toLowerCase();
-  const shown = d.users.filter(
+
+  const contacts = new Set(d.users.map((u) => u.id));
+  const stranger = picked.find((u) => !contacts.has(u.id));
+  const full = picked.length >= d.size - 1;
+  const skip = new Set([me!.id, ...picked.map((u) => u.id)]);
+  const needle = term.toLowerCase();
+  const local = d.users.filter(
     (u) =>
-      !needle ||
-      picked.includes(u.id) ||
-      u.username.toLowerCase().includes(needle) ||
-      u.realname.toLowerCase().includes(needle)
+      !skip.has(u.id) &&
+      (!needle || u.username.toLowerCase().includes(needle) || u.realname.toLowerCase().includes(needle))
   );
+  const searchAll = !!term && !picked.length;
 
-  const toggle = (id: number, on: boolean) => {
-    setPicked((ids) => (on ? [...ids, id] : ids.filter((x) => x !== id)));
+  const pick = (u: DmUser) => {
+    setPicked((list) => [...list, u]);
+    setFind("");
+    setTerm("");
   };
-
+  const drop = (id: number) => setPicked((list) => list.filter((u) => u.id !== id));
+  const next = () => {
+    if (picked.length === 1) nav(`/messages/to/${encodeURIComponent(picked[0].username)}`);
+    else setNaming(true);
+  };
   const create = (e: FormEvent) => {
     e.preventDefault();
     act.run(async () => {
-      const r = await api<DmGroupSent>("/dm/group", { body: { title, users: picked } });
+      const r = await api<DmGroupSent>("/dm/group", { body: { title, users: picked.map((u) => u.id) } });
       placeGroup(r.group);
       nav(`/messages/g/${r.group.id}`, { replace: true });
     });
   };
+
+  const tags = (removable: boolean) => (
+    <ul className="dm-tags">
+      {picked.map((u) => (
+        <li key={u.id}>
+          <Avatar user={u} size={20} plain />
+          {u.username}
+          {removable && (
+            <button type="button" aria-label={t("messages.removeUser", { name: u.username })} onClick={() => drop(u.id)}>
+              <Ico.X />
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (naming) {
+    return (
+      <>
+        <header className="dm-head">
+          <button
+            type="button"
+            className="dm-back dm-back-step"
+            aria-label={t("messages.backToPeople")}
+            onClick={() => setNaming(false)}
+          >
+            <Ico.ChevLeft />
+          </button>
+          <span className="dm-who">
+            <b>{t("messages.newGroup")}</b>
+          </span>
+        </header>
+        <form className="dm-scroll dm-info" onSubmit={create}>
+          {tags(false)}
+          <Input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t("messages.groupNameOptional")}
+            aria-label={t("messages.groupName")}
+          />
+          <p className="muted small">{t("messages.ownerNote")}</p>
+          {act.note}
+          <Button kind="btn" loading={act.busy}>
+            {t("messages.startGroup")}
+          </Button>
+        </form>
+      </>
+    );
+  }
+
+  let hint = "";
+  if (stranger) hint = t("messages.strangerNoGroup", { name: stranger.username });
+  else if (full) hint = t("messages.groupFull", { count: d.size });
+  else if (picked.length === 1) hint = t("messages.addMoreForGroup");
 
   return (
     <>
@@ -1211,56 +1308,41 @@ function NewGroup() {
           <Ico.ChevLeft />
         </Link>
         <span className="dm-who">
-          <b>{t("messages.newGroup")}</b>
+          <b>{t("messages.newMessage")}</b>
         </span>
+        <Button kind="btn ghost small" type="button" disabled={!picked.length} onClick={next}>
+          {t("messages.next")}
+        </Button>
       </header>
-      <form className="dm-scroll dm-info" onSubmit={create}>
-        <p className="muted small">{t("messages.newGroupIntro", { count: d.size })}</p>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t("messages.groupNameOptional")}
-          aria-label={t("messages.groupName")}
-        />
-        <h3>{t("messages.peopleHeading")}</h3>
-        {!d.users.length && <p className="muted small">{t("messages.noOneToAdd")}</p>}
-        {d.users.length > 8 && (
+      <div className="dm-scroll dm-info">
+        {!stranger && !full && (
           <Input
             type="search"
+            autoFocus
             value={find}
             onChange={(e) => setFind(e.target.value)}
             placeholder={t("messages.searchPeople")}
-            aria-label={t("messages.searchPeople")}
+            aria-label={t("messages.to")}
           />
         )}
-        {needle && !shown.length && <p className="muted small">{t("messages.noMatch", { query: find.trim() })}</p>}
-        <ul className="dm-members">
-          {shown.map((u) => {
-            const on = picked.includes(u.id);
-            return (
-              <li key={u.id}>
-                <label className="check dm-pick">
-                  <Input
-                    type="checkbox"
-                    aria-label={t("messages.addUser", { name: u.username })}
-                    checked={on}
-                    disabled={!on && room <= 0}
-                    onChange={(e) => toggle(u.id, e.target.checked)}
-                  />
-                  <Avatar user={u} size={32} plain />
-                  <span className="grow">
-                    <Username user={u} /> <UserLabels name={u.username} />
-                  </span>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-        {act.note}
-        <Button kind="btn" loading={act.busy} disabled={picked.length < 2}>
-          {t("messages.startGroup")}
-        </Button>
-      </form>
+        {picked.length > 0 && tags(true)}
+        {hint && <p className="muted small">{hint}</p>}
+        {!stranger && !full && (
+          <ul className="dm-members">
+            {local.map((u) => (
+              <PersonRow key={u.id} user={u} onPick={pick} />
+            ))}
+            {searchAll && (
+              <Suspense fallback={null}>
+                <FoundPeople term={term} skip={new Set([...skip, ...local.map((u) => u.id)])} onPick={pick} />
+              </Suspense>
+            )}
+          </ul>
+        )}
+        {needle && !searchAll && !local.length && (
+          <p className="muted small">{t("messages.noMatch", { query: term })}</p>
+        )}
+      </div>
     </>
   );
 }

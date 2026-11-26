@@ -26,7 +26,6 @@ export default {
   imGoing: "Ich bin dabei",
   lineup: "Line-up",
   details: "Details",
-  moreOnMusicBrainz: "Mehr auf MusicBrainz",
   tickets: "Tickets und Infos",
   wall: "Pinnwand",
   goingCount: "Dabei ({count})",

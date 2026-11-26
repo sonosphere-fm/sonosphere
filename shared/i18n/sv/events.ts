@@ -25,7 +25,6 @@ export default {
   imGoing: "Jag ska gå",
   lineup: "Line-up",
   details: "Detaljer",
-  moreOnMusicBrainz: "Mer på MusicBrainz",
   tickets: "Biljetter och information",
   wall: "Vägg",
   goingCount: "Ska gå ({count})",

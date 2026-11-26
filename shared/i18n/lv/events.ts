@@ -25,7 +25,6 @@ export default {
   imGoing: "Es iešu",
   lineup: "Programma",
   details: "Informācija",
-  moreOnMusicBrainz: "Vairāk MusicBrainz",
   tickets: "Biļetes un informācija",
   wall: "Siena",
   goingCount: "Ies ({count})",

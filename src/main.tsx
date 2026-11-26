@@ -608,10 +608,10 @@ function Pages() {
         }
       />
       <Route
-        path="/messages/new-group"
+        path="/messages/new"
         element={
           <Private>
-            <MessagesPage view="new-group" />
+            <MessagesPage view="compose" />
           </Private>
         }
       />

@@ -21,12 +21,14 @@ export function ReportButton({
   type,
   id,
   label = t("messages.report"),
+  kind = "link small",
   open: forced,
   onClose,
 }: {
   type: "shout" | "wiki" | "journal" | "event" | "playlist" | "obsession" | "user" | "dm" | "group";
   id: number;
   label?: string;
+  kind?: string;
   open?: boolean;
   onClose?: () => void;
 }) {
@@ -54,7 +56,7 @@ export function ReportButton({
   return (
     <>
       {forced === undefined && (
-        <Button kind="link small" type="button" onClick={() => setOpen(true)}>
+        <Button kind={kind} type="button" onClick={() => setOpen(true)}>
           {label}
         </Button>
       )}

@@ -26,7 +26,6 @@ export default {
   imGoing: "Eu vou",
   lineup: "Line-up",
   details: "Detalhes",
-  moreOnMusicBrainz: "Mais no MusicBrainz",
   tickets: "Ingressos e informações",
   wall: "Mural",
   goingCount: "Vão ({count})",

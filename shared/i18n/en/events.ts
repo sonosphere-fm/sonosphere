@@ -22,7 +22,6 @@ export default {
   imGoing: "I'm going",
   lineup: "Line-up",
   details: "Details",
-  moreOnMusicBrainz: "More on MusicBrainz",
   tickets: "Tickets and information",
   wall: "Wall",
   goingCount: "Going ({count})",

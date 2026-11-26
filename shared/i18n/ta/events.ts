@@ -25,7 +25,6 @@ export default {
   imGoing: "நான் செல்கிறேன்",
   lineup: "கலைஞர் வரிசை",
   details: "விவரங்கள்",
-  moreOnMusicBrainz: "MusicBrainz இல் மேலும்",
   tickets: "டிக்கெட்டுகள் மற்றும் தகவல்",
   wall: "சுவர்",
   goingCount: "செல்பவர்கள் ({count})",

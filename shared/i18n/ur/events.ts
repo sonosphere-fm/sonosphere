@@ -25,7 +25,6 @@ export default {
   imGoing: "میں شریک ہوں",
   lineup: "لائن اپ",
   details: "تفصیلات",
-  moreOnMusicBrainz: "MusicBrainz پر مزید",
   tickets: "ٹکٹ اور معلومات",
   wall: "وال",
   goingCount: "جا رہے ہیں ({count})",

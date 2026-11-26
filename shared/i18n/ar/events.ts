@@ -25,7 +25,6 @@ export default {
   imGoing: "سأحضر",
   lineup: "المشاركون",
   details: "التفاصيل",
-  moreOnMusicBrainz: "المزيد على MusicBrainz",
   tickets: "التذاكر والمعلومات",
   wall: "الحائط",
   goingCount: "الحضور ({count})",

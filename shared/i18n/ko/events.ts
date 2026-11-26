@@ -25,7 +25,6 @@ export default {
   imGoing: "참석할래요",
   lineup: "라인업",
   details: "상세 정보",
-  moreOnMusicBrainz: "MusicBrainz에서 더 보기",
   tickets: "티켓 및 정보",
   wall: "담벼락",
   goingCount: "참석 ({count})",

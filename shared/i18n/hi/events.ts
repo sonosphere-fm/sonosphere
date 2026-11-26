@@ -25,7 +25,6 @@ export default {
   imGoing: "जाना पक्का",
   lineup: "लाइन-अप",
   details: "विवरण",
-  moreOnMusicBrainz: "MusicBrainz पर और जानें",
   tickets: "टिकट और जानकारी",
   wall: "वॉल",
   goingCount: "जा रहे हैं ({count})",

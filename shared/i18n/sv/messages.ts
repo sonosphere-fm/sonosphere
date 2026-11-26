@@ -85,14 +85,18 @@ export default {
   addPeopleNone:
     "Du kan lägga till personer du redan har en konversation med. Det finns ingen mer att lägga till just nu.",
   add: "Lägg till",
-  addUser: "Lägg till {name}",
-  newGroupIntro:
-    "Du kan lägga till personer du redan har en konversation med, upp till {count} personer inklusive dig. Du blir gruppens ägare.",
-  peopleHeading: "Personer",
-  noOneToAdd: "Det finns ingen du kan lägga till än. Starta en konversation med någon först.",
   searchPeople: "Sök personer",
   noMatch: "Ingen matchar ”{query}”.",
   startGroup: "Starta grupp",
+  newMessage: "Nytt meddelande",
+  to: "Till",
+  next: "Nästa",
+  backToPeople: "Tillbaka till personer",
+  removeUser: "Ta bort {name}",
+  addMoreForGroup: "Lägg till fler personer för att starta en grupp. Grupper kan innehålla personer du redan har skrivit till.",
+  strangerNoGroup: "Du har aldrig skrivit till {name}, så du kan inte lägga till hen i en grupp. Ta bort hen för att lägga till andra.",
+  groupFull: "Grupper kan ha upp till {count} personer inklusive dig.",
+  ownerNote: "Du blir gruppens ägare.",
   requestIntro:
     "{name} följer inte dig, så ditt meddelande kommer fram som en förfrågan. Du kan skicka upp till 3 meddelanden, utan länkar, tills hen svarar.",
   sayHello: "Säg hej till {name}.",

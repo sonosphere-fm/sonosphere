@@ -37,9 +37,11 @@ export function Credits({
       <ul className="credits">
         {byPerson(q.data.items).map((p) => (
           <li key={p.mbid}>
-            <Link to={artistUrl(p.name)}>{p.name}</Link>
-            <span>{p.roles.join(", ")}</span>
-            {p.notes.length > 0 && <span>{p.notes.join(", ")}</span>}
+            <Link to={artistUrl(p.name)}>
+              <b>{p.name}</b>
+              <span>{p.roles.join(", ")}</span>
+              {p.notes.length > 0 && <span>{p.notes.join(", ")}</span>}
+            </Link>
           </li>
         ))}
       </ul>

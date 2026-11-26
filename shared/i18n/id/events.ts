@@ -25,7 +25,6 @@ export default {
   imGoing: "Aku pergi",
   lineup: "Line-up",
   details: "Detail",
-  moreOnMusicBrainz: "Selengkapnya di MusicBrainz",
   tickets: "Tiket dan informasi",
   wall: "Dinding",
   goingCount: "Pergi ({count})",

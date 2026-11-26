@@ -26,7 +26,6 @@ export default {
   imGoing: "Merg și eu",
   lineup: "Line-up",
   details: "Detalii",
-  moreOnMusicBrainz: "Mai multe pe MusicBrainz",
   tickets: "Bilete și informații",
   wall: "Perete",
   goingCount: "Merg ({count})",
