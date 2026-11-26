@@ -3,7 +3,7 @@
 # private). Posts progress to the Discord webhook in /opt/spin/discord.webhook if there is one.
 A=/opt/spin
 SRC=$A/src
-REPO=github.com/bl791/sonosphere
+REPO=github.com/sonosphere-fm/sonosphere
 LOG=/tmp/deploy.log
 COMPOSE="docker compose -f $SRC/compose.yaml"
 
@@ -87,6 +87,7 @@ deploy() {
   short=$(echo "$head" | cut -c1-7)
   if ! { git_ -C $SRC fetch -q --depth 50 "https://$REPO" main && git -C $SRC checkout -q --force --detach "$head"; } > $LOG 2>&1; then
     notify 15548997 "Deploy failed: couldn't fetch $short" $LOG
+    echo "$head" > $A/deployed
     return
   fi
   what=$(git -C $SRC log -1 --format='%h %an: %s')
@@ -96,9 +97,11 @@ deploy() {
   if ! (ship "$head") > $LOG 2>&1; then
     cat $LOG
     notify 15548997 "Deploy failed: $what (the live site was left as it was)" $LOG
+    echo "$head" > $A/deployed
     return
   fi
   cat $LOG
+  echo "$head" > $A/deployed
   notify 5763719 "Deployed $what in $(( $(date +%s) - started ))s"
   # A container can't replace itself, so a throwaway one does it.
   $COMPOSE build -q deployer && docker run -d --rm -v /run/user/1001/docker.sock:/var/run/docker.sock -v $A:$A \
@@ -108,7 +111,6 @@ deploy() {
 while true; do
   head=$(git_ ls-remote "https://$REPO" refs/heads/main | cut -f1)
   if [ -n "$head" ] && [ "$head" != "$(cat $A/deployed 2>/dev/null)" ]; then
-    echo "$head" > $A/deployed
     deploy "$head"
   fi
   sleep 10
