@@ -16,7 +16,10 @@ export default {
   verifyNote:
     "Bağlantı 3 gün geçerli; Ayarlar'dan yenisini isteyebilirsin. {days} gün içinde onaylanmayan hesaplar silinir. Kaydolan sen değilsen bu mesajı yok say, hesap kaldırılacak.",
 
-  purgeSubject: { one: "Sonosphere hesabın {count} gün içinde silinecek", other: "Sonosphere hesabın {count} gün içinde silinecek" },
+  purgeSubject: {
+    one: "Sonosphere hesabın {count} gün içinde silinecek",
+    other: "Sonosphere hesabın {count} gün içinde silinecek",
+  },
   purgeHeading: "Merhaba {username}, hesabın silinmek üzere",
   purgeBody: {
     one: "E-posta adresini henüz onaylamadın. {count} gün içinde onaylamazsan hesabın ve içindeki her şey kalıcı olarak silinecek.",
