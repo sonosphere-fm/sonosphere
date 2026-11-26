@@ -37,12 +37,13 @@ const LOGO_URL = `${SITE_URL}/pwa/icon-512.png`;
 const TEXT_LIMIT = 128;
 
 const sessionKey = (userId: number) => `presence-session:${userId}`;
-type Session = { token: string; trackId: number; startedAt: number; activityHash: string };
+type Session = { token: string; trackId: number; startedAt: number; endAt: number; activityHash: string };
 
 let active = false;
 let cooldownUntil = 0;
 let logo: Promise<string> | undefined;
 const timers = new Map<number, ReturnType<typeof setTimeout>>();
+const expiries = new Map<number, ReturnType<typeof setTimeout>>();
 const chains = new Map<number, Promise<void>>();
 
 function notify(userId: number) {
@@ -68,6 +69,20 @@ function schedule(userId: number) {
       timers.delete(userId);
       enqueue(userId, () => sync(userId));
     }, SYNC_DEBOUNCE)
+  );
+}
+
+function scheduleExpiry(userId: number, endAt: number) {
+  clearTimeout(expiries.get(userId));
+  expiries.delete(userId);
+  const delay = Math.min(Math.max(0, (endAt - now()) * 1000), 2_147_000_000);
+  if (!delay) return;
+  expiries.set(
+    userId,
+    setTimeout(() => {
+      expiries.delete(userId);
+      enqueue(userId, () => sync(userId));
+    }, delay)
   );
 }
 
@@ -117,6 +132,8 @@ async function accessToken(link: repo.Link): Promise<string> {
 }
 
 async function markBroken(userId: number) {
+  clearTimeout(expiries.get(userId));
+  expiries.delete(userId);
   await repo.updateLink(userId, { broken: true });
   console.warn(`Discord presence: user ${userId} needs to connect again`);
 }
@@ -175,6 +192,10 @@ async function activityOf(p: NowPlaying, startedAt: number, prefs: PresencePrefe
 }
 
 async function dropSession(userId: number, link: repo.Link | null, session: Session) {
+  clearTimeout(timers.get(userId));
+  timers.delete(userId);
+  clearTimeout(expiries.get(userId));
+  expiries.delete(userId);
   await takeJson(sessionKey(userId));
   // without a working grant there is no way to delete; the session expires on its own
   if (!link || link.broken) return;
@@ -194,6 +215,7 @@ async function sync(userId: number, keepAlive = false) {
     if (session) await dropSession(userId, link, session);
     return;
   }
+
   const playing = await nowPlaying(userId);
   if (!playing) {
     if (session) await dropSession(userId, link, session);
@@ -203,14 +225,26 @@ async function sync(userId: number, keepAlive = false) {
   const sameTrack = !!session && session.trackId === playing.trackId;
   const startedAt = sameTrack ? session.startedAt : playing.startedAt;
   const activity = await activityOf(playing, startedAt, link);
-  const next = { trackId: playing.trackId, startedAt, activityHash: digest(JSON.stringify(activity)) };
-  if (sameTrack && session.activityHash === next.activityHash && !keepAlive) return;
+  const next = {
+    trackId: playing.trackId,
+    startedAt,
+    endAt: startedAt + (playing.duration > 0 ? playing.duration : SESSION_LIFE / 1000),
+    activityHash: digest(JSON.stringify(activity)),
+  };
+  if (next.endAt <= now()) {
+    if (session) await dropSession(userId, link, session);
+    return;
+  }
+  scheduleExpiry(userId, next.endAt);
+  if (sameTrack && session.endAt === next.endAt && session.activityHash === next.activityHash && !keepAlive) return;
 
   let access: string;
   try {
     access = await accessToken(link);
   } catch (e) {
     if (e instanceof api.Revoked) {
+      clearTimeout(expiries.get(userId));
+      expiries.delete(userId);
       await takeJson(sessionKey(userId));
       await markBroken(userId);
     } else console.error("Discord presence:", e);
@@ -220,6 +254,7 @@ async function sync(userId: number, keepAlive = false) {
     const r = await retry(() => api.updateSession(access, session.token, activity));
     if (r.ok) {
       await setJson(sessionKey(userId), { ...next, token: r.value.token }, SESSION_LIFE);
+      scheduleExpiry(userId, next.endAt);
       return;
     }
     await takeJson(sessionKey(userId));
@@ -230,8 +265,10 @@ async function sync(userId: number, keepAlive = false) {
     // the session went stale: start a new one below
   }
   const r = await retry(() => api.createSession(access, activity));
-  if (r.ok) await setJson(sessionKey(userId), { ...next, token: r.value.token }, SESSION_LIFE);
-  else if (r.error.type === "unauthorized") await markBroken(userId);
+  if (r.ok) {
+    await setJson(sessionKey(userId), { ...next, token: r.value.token }, SESSION_LIFE);
+    scheduleExpiry(userId, next.endAt);
+  } else if (r.error.type === "unauthorized") await markBroken(userId);
 }
 
 export async function connectUrl(userId: number): Promise<string> {
@@ -350,6 +387,8 @@ async function hold() {
       clearInterval(beat);
       for (const t of timers.values()) clearTimeout(t);
       timers.clear();
+      for (const t of expiries.values()) clearTimeout(t);
+      expiries.clear();
     });
   } catch (e) {
     console.error("Discord presence:", e);

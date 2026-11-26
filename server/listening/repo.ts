@@ -739,7 +739,6 @@ export async function recordScrobbles(
       refs.push(ref);
     }
     const out: (Scrobbled | null)[] = [];
-    const recorded = new Set<number>();
     // Bound parameters and lock duration per statement while keeping the whole input transaction atomic.
     for (let offset = 0; offset < plays.length; offset += 500) {
       const batch = plays.slice(offset, offset + 500);
@@ -765,11 +764,10 @@ export async function recordScrobbles(
         const id = inserted.get(key);
         out.push(id === undefined ? null : { id, ...ref });
         inserted.delete(key); // Only the first occurrence of a duplicate input is accepted.
-        if (id !== undefined) recorded.add(ref.trackId);
       }
     }
-    if (recorded.size)
-      await tx.delete(playing).where(and(eq(playing.userId, userId), inArray(playing.trackId, [...recorded])));
+    // Scrobblers may file a play halfway through it, so recording it must not clear now-playing. The row's TTL
+    // (or an explicit stop from the player) owns cleanup.
     return out;
   });
 }
