@@ -17,7 +17,7 @@ import {
 } from "./common";
 import { act, actButton, adminUrl, useConfirm, useFlash, useQuery, useRole } from "./common";
 import { t, tx } from "./i18n";
-import type { AuditRow } from "../../shared/admin";
+import { sameRun, type AuditRow } from "../../shared/admin";
 import { COSMETICS } from "../../shared/cosmetics";
 import { Ico } from "../icons";
 import type { AuditList as AuditPage, Ok } from "../../shared/admin-content";
@@ -159,15 +159,12 @@ function details(a: AuditRow): ReactNode {
   }
   return "";
 }
-// One staff member doing the same thing several times in a row, like granting a few cosmetics, is one entry that opens.
-const RUN_GAP = 15 * 60;
 function runs(items: AuditRow[]): AuditRow[][] {
   const out: AuditRow[][] = [];
   for (const a of items) {
     const run = out.at(-1);
     const last = run?.at(-1);
-    const same = last && last.actor === a.actor && last.action === a.action && last.note === a.note;
-    if (same && last.createdAt - a.createdAt <= RUN_GAP) run!.push(a);
+    if (last && sameRun(last, a)) run!.push(a);
     else out.push([a]);
   }
   return out;

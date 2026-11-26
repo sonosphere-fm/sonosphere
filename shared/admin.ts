@@ -26,6 +26,11 @@ export type AuditRow = {
   createdAt: number;
 };
 
+// One staff member doing the same thing several times in a row, like granting a few cosmetics, reads as one entry.
+export const RUN_GAP = 15 * 60;
+export const sameRun = (a: AuditRow, b: AuditRow) =>
+  a.actor === b.actor && a.action === b.action && a.note === b.note && Math.abs(a.createdAt - b.createdAt) <= RUN_GAP;
+
 export type DayCount = { day: number; count: number };
 export type Dashboard = {
   totals: {

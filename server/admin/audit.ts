@@ -17,10 +17,11 @@ router.get<AuditList>("/api/admin/audit", async (c) => {
     term: text("q"),
     automatic: c.q.get("automatic") === "1",
   };
+  const { items, total } = await repo.entries(filter, pg);
   return {
-    items: await repo.entries(filter, pg),
+    items,
     ...pg,
-    total: await repo.entryCount(filter),
+    total,
     actors: await repo.actors(),
     actions: await repo.actions(),
   };

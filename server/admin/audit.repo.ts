@@ -1,9 +1,9 @@
-import { and, asc, count, eq, like as likeOp, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, like as likeOp, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { db } from "../db/client";
-import { auditLog } from "../db/schema";
+import { auditLog, users } from "../db/schema";
 import { like } from "../util";
 import { auditRows, auditSubject } from "../site/repo";
-import { AUTOMATIC_ACTOR, type AuditRow } from "../../shared/admin";
+import { AUTOMATIC_ACTOR, RUN_GAP, type AuditRow } from "../../shared/admin";
 
 // Empty strings mean "any". `action` is an exact action ("user.ban") or a group ("user").
 // Automatic entries are left out unless `automatic` is set or an actor is picked.
@@ -29,16 +29,32 @@ function where(f: AuditFilter): SQL | undefined {
   );
 }
 
-export const entries = (f: AuditFilter, pg: { limit: number; offset: number }): Promise<AuditRow[]> =>
-  auditRows(where(f), pg.limit, pg.offset);
-
-export async function entryCount(f: AuditFilter): Promise<number> {
-  const [row] = await db
-    .select({ c: count() })
-    .from(auditLog)
-    .leftJoin(auditSubject, eq(auditSubject.id, auditLog.subjectId))
-    .where(where(f));
-  return row?.c ?? 0;
+// Pages count runs (see sameRun), so a run is never split and every page shows as many lines.
+export async function entries(
+  f: AuditFilter,
+  pg: { limit: number; offset: number }
+): Promise<{ items: AuditRow[]; total: number }> {
+  const rows = await db.execute<{ id: number | null; runs: number }>(sql`
+    with t as (
+      select ${auditLog.id} as id, ${auditLog.createdAt} as at,
+        case when lag(${auditLog.actorName}) over w = ${auditLog.actorName}
+          and lag(${auditLog.action}) over w = ${auditLog.action}
+          and lag(${auditLog.note}) over w = ${auditLog.note}
+          and lag(${auditLog.createdAt}) over w - ${auditLog.createdAt} <= ${RUN_GAP}
+        then 0 else 1 end as starts
+      from ${auditLog}
+      left join ${users} ${auditSubject} on ${auditSubject.id} = ${auditLog.subjectId}
+      ${where(f) ? sql`where ${where(f)}` : sql``}
+      window w as (order by ${auditLog.createdAt} desc, ${auditLog.id} desc)
+    ), r as (
+      select id, (sum(starts) over (order by at desc, id desc))::int - 1 as run from t
+    )
+    select r.id, n.runs from (select (coalesce(max(run), -1) + 1)::int as runs from r) n
+    left join r on r.run >= ${pg.offset} and r.run < ${pg.offset + pg.limit}
+  `);
+  const ids = rows.flatMap((r) => (r.id === null ? [] : [r.id]));
+  const items = ids.length ? await auditRows(inArray(auditLog.id, ids), ids.length, 0) : [];
+  return { items, total: rows[0]!.runs };
 }
 
 export async function actors(): Promise<string[]> {
