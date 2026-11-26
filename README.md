@@ -29,7 +29,7 @@ And finally, if you have a history of scrobbles and loved tracks somewhere else,
 
 Sonosphere will always be free to use, including our API. We believe that charging for access to your own data is a violation not only of the basic principles of data ownership, but of the open web itself. Service providers - including us - have no right to hold your data hostage, demanding money merely to integrate it into your own projects.
 
-API keys are free for all users, with full access to our Last.fm 2.0 and ListenBrainz endpoints. If you'd simply like to display what you're currently playing on a personal website, we also support a public, unauthenticated now-playing endpoint (JSON, SSE, and WebSockets). Full details are in the [API docs](https://sonosphere.fm/developers).
+API keys are free for all users, with full access to our Last.fm 2.0 and ListenBrainz endpoints. Public Last.fm-compatible reads do not require a key; writes and private account context do. If you'd simply like to display what you're currently playing on a personal website, we also support a public, unauthenticated now-playing endpoint (JSON, SSE, and WebSockets). Full details are in the [API docs](https://sonosphere.fm/developers).
 
 ## Local development
 

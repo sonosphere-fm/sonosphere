@@ -18,6 +18,7 @@ import { loginKey, passwordMatches } from "../auth/service";
 import { latestWiki } from "../wiki/repo";
 import { countryName } from "../../shared/countries";
 import * as repo from "./repo";
+import { requiresApp } from "./access";
 
 export class ApiError extends Error {
   constructor(
@@ -32,11 +33,14 @@ function fail(code: number, message: string): never {
   throw new ApiError(code, message);
 }
 
+const appOf = (c: Call): repo.App =>
+  c.app ?? fail(10, "Invalid API key - You must be granted a valid key by this service");
+
 // A JSON body can put anything in the parameters, so nothing is assumed to be a string.
 export type Params = Record<string, unknown>;
 export type Reply = Record<string, unknown>;
 type Page = { limit: number; page: number; offset: number };
-type Call = { p: Params; origin: string; ip: string; app: repo.App; pg: Page };
+type Call = { p: Params; origin: string; ip: string; app: repo.App | null; pg: Page };
 type Method = (c: Call) => Promise<Reply>;
 
 function text(v: unknown): string {
@@ -66,23 +70,24 @@ function period(p: Params, name: unknown = p.period): [number, number] {
 const md5 = (s: string) => createHash("md5").update(s, "utf8").digest("hex");
 const UNSIGNED = ["format", "callback", "api_sig"];
 
-function signed({ p, app }: Call): void {
-  const base = Object.keys(p)
+function signed(c: Call): void {
+  const app = appOf(c);
+  const base = Object.keys(c.p)
     .filter((k) => !UNSIGNED.includes(k))
     .sort()
-    .map((k) => k + String(p[k]))
+    .map((k) => k + String(c.p[k]))
     .join("");
-  if (md5(base + app.secret) !== String(p.api_sig || "").toLowerCase()) fail(13, "Invalid method signature supplied");
+  if (md5(base + app.secret) !== String(c.p.api_sig || "").toLowerCase()) fail(13, "Invalid method signature supplied");
 }
 
 async function session(c: Call): Promise<number> {
   signed(c);
-  return (await repo.sessionUser(key(c.p.sk), c.app.id)) ?? fail(9, "Invalid session key - Please re-authenticate");
+  return (await repo.sessionUser(key(c.p.sk), appOf(c).id)) ?? fail(9, "Invalid session key - Please re-authenticate");
 }
 
 async function newSession(c: Call, userId: number): Promise<Reply> {
   const sk = rid(16);
-  await repo.createSession(sk, c.app.id, userId);
+  await repo.createSession(sk, appOf(c).id, userId);
   const user = await findById(userId);
   if (!user) throw new Error("Session created for a user who does not exist");
   return { session: { name: user.username, key: sk, subscriber: 0 } };
@@ -307,12 +312,12 @@ const methods: Record<string, Method> = {
   "auth.gettoken": async (c) => {
     signed(c);
     const token = rid(16);
-    await repo.createToken(token, c.app.id);
+    await repo.createToken(token, appOf(c).id);
     return { token };
   },
   "auth.getsession": async (c) => {
     signed(c);
-    const t = (await repo.findToken(key(c.p.token), c.app.id)) ?? fail(4, "Invalid authentication token supplied");
+    const t = (await repo.findToken(key(c.p.token), appOf(c).id)) ?? fail(4, "Invalid authentication token supplied");
     if (!t.userId) fail(14, "This token has not been authorized");
     if (t.createdAt < now() - 3600) fail(15, "This token has expired");
     if (!(await repo.takeToken(key(c.p.token)))) fail(4, "Invalid authentication token supplied");
@@ -339,7 +344,7 @@ const methods: Record<string, Method> = {
     const uid = await session(c);
     const inputs = scrobbleInputs(c.p);
     if (!inputs.length) fail(6, "Invalid parameters - Your request is missing a required parameter");
-    const results = await scrobbleMany(uid, inputs, "api:" + c.app.name.slice(0, 16));
+    const results = await scrobbleMany(uid, inputs, "api:" + appOf(c).name.slice(0, 16));
     const out = inputs.map((input, n) => {
       const r = results[n];
       let refused: string | null = null;
@@ -911,11 +916,12 @@ const methods: Record<string, Method> = {
 };
 
 export async function call(p: Params, origin: string, ip: string): Promise<Reply> {
-  const app =
-    (await repo.appByKey(key(p.api_key))) ??
-    fail(10, "Invalid API key - You must be granted a valid key by this service");
   const name = String(p.method || "").toLowerCase();
   const method = Object.hasOwn(methods, name) ? methods[name] : undefined;
   if (!method) fail(3, "Invalid Method - No method with that name in this package");
+  const app = requiresApp(name, p.sk)
+    ? ((await repo.appByKey(key(p.api_key))) ??
+      fail(10, "Invalid API key - You must be granted a valid key by this service"))
+    : null;
   return method({ p, origin, ip, app, pg: page(p) });
 }
