@@ -216,7 +216,6 @@ on("GET", "/user/:name/listens", async (c) => {
   const u = await named(c.params[0]!);
   const min = tsParam(c.q, "min_ts");
   const max = tsParam(c.q, "max_ts");
-  if (min && max) bad("mayOnlySpecifyOneMin");
   const { count } = paging(c.q, 25, 1000);
   const hidden = !canSee(u, await c.viewer());
   const rows = hidden ? [] : await repo.listens(u.id, min, max, count);
