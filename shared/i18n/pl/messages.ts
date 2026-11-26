@@ -105,7 +105,8 @@ export default {
   backToPeople: "Wróć do osób",
   removeUser: "Usuń {name}",
   addMoreForGroup: "Dodaj więcej osób, aby utworzyć grupę. Do grupy możesz dodać osoby, do których już pisałeś.",
-  strangerNoGroup: "Nie pisałeś jeszcze do {name}, więc nie możesz dodać tej osoby do grupy. Usuń ją, aby dodać inne osoby.",
+  strangerNoGroup:
+    "Nie pisałeś jeszcze do {name}, więc nie możesz dodać tej osoby do grupy. Usuń ją, aby dodać inne osoby.",
   groupFull: "Grupa może liczyć do {count} osób, łącznie z tobą.",
   ownerNote: "Zostaniesz właścicielem grupy.",
   requestIntro:

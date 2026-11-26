@@ -93,8 +93,10 @@ export default {
   next: "İleri",
   backToPeople: "Kişilere dön",
   removeUser: "{name} kişisini kaldır",
-  addMoreForGroup: "Grup başlatmak için daha fazla kişi ekle. Gruplara daha önce mesajlaştığın kişileri ekleyebilirsin.",
-  strangerNoGroup: "{name} ile daha önce hiç mesajlaşmadın, bu yüzden onu bir gruba ekleyemezsin. Başkalarını eklemek için onu kaldır.",
+  addMoreForGroup:
+    "Grup başlatmak için daha fazla kişi ekle. Gruplara daha önce mesajlaştığın kişileri ekleyebilirsin.",
+  strangerNoGroup:
+    "{name} ile daha önce hiç mesajlaşmadın, bu yüzden onu bir gruba ekleyemezsin. Başkalarını eklemek için onu kaldır.",
   groupFull: "Gruplar sen dahil en fazla {count} kişiden oluşabilir.",
   ownerNote: "Grubun sahibi sen olacaksın.",
   requestIntro:

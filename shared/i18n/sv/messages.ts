@@ -93,8 +93,10 @@ export default {
   next: "Nästa",
   backToPeople: "Tillbaka till personer",
   removeUser: "Ta bort {name}",
-  addMoreForGroup: "Lägg till fler personer för att starta en grupp. Grupper kan innehålla personer du redan har skrivit till.",
-  strangerNoGroup: "Du har aldrig skrivit till {name}, så du kan inte lägga till hen i en grupp. Ta bort hen för att lägga till andra.",
+  addMoreForGroup:
+    "Lägg till fler personer för att starta en grupp. Grupper kan innehålla personer du redan har skrivit till.",
+  strangerNoGroup:
+    "Du har aldrig skrivit till {name}, så du kan inte lägga till hen i en grupp. Ta bort hen för att lägga till andra.",
   groupFull: "Grupper kan ha upp till {count} personer inklusive dig.",
   ownerNote: "Du blir gruppens ägare.",
   requestIntro:

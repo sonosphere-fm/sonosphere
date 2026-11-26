@@ -94,8 +94,10 @@ export default {
   next: "Berikutnya",
   backToPeople: "Kembali ke daftar orang",
   removeUser: "Hapus {name}",
-  addMoreForGroup: "Tambahkan lebih banyak orang untuk memulai grup. Grup bisa berisi orang yang pernah kamu kirimi pesan.",
-  strangerNoGroup: "Kamu belum pernah mengirim pesan ke {name}, jadi kamu tidak bisa menambahkannya ke grup. Hapus dia untuk menambahkan orang lain.",
+  addMoreForGroup:
+    "Tambahkan lebih banyak orang untuk memulai grup. Grup bisa berisi orang yang pernah kamu kirimi pesan.",
+  strangerNoGroup:
+    "Kamu belum pernah mengirim pesan ke {name}, jadi kamu tidak bisa menambahkannya ke grup. Hapus dia untuk menambahkan orang lain.",
   groupFull: "Grup bisa berisi hingga {count} orang termasuk kamu.",
   ownerNote: "Kamu akan menjadi pemilik grup.",
   requestIntro:

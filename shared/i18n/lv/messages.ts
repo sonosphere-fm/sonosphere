@@ -97,8 +97,10 @@ export default {
   next: "Tālāk",
   backToPeople: "Atpakaļ pie cilvēkiem",
   removeUser: "Noņemt {name}",
-  addMoreForGroup: "Pievieno vairāk cilvēku, lai izveidotu grupu. Grupā var pievienot cilvēkus, kuriem esi jau rakstījis.",
-  strangerNoGroup: "Tu vēl neesi rakstījis {name}, tāpēc nevari viņu pievienot grupai. Noņem viņu, lai pievienotu citus.",
+  addMoreForGroup:
+    "Pievieno vairāk cilvēku, lai izveidotu grupu. Grupā var pievienot cilvēkus, kuriem esi jau rakstījis.",
+  strangerNoGroup:
+    "Tu vēl neesi rakstījis {name}, tāpēc nevari viņu pievienot grupai. Noņem viņu, lai pievienotu citus.",
   groupFull: "Grupā var būt līdz {count} cilvēkiem, ieskaitot tevi.",
   ownerNote: "Tu būsi grupas īpašnieks.",
   requestIntro:

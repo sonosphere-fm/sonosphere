@@ -92,8 +92,10 @@ export default {
   next: "Seguinte",
   backToPeople: "Voltar às pessoas",
   removeUser: "Remover {name}",
-  addMoreForGroup: "Adicione mais pessoas para criar um grupo. Os grupos podem incluir pessoas a quem já enviou mensagens.",
-  strangerNoGroup: "Nunca enviou mensagens a {name}, por isso não pode adicioná-lo a um grupo. Remova-o para adicionar outras pessoas.",
+  addMoreForGroup:
+    "Adicione mais pessoas para criar um grupo. Os grupos podem incluir pessoas a quem já enviou mensagens.",
+  strangerNoGroup:
+    "Nunca enviou mensagens a {name}, por isso não pode adicioná-lo a um grupo. Remova-o para adicionar outras pessoas.",
   groupFull: "Os grupos podem ter até {count} pessoas, incluindo você.",
   ownerNote: "Será o proprietário do grupo.",
   requestIntro:

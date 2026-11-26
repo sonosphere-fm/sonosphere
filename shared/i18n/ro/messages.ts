@@ -101,8 +101,10 @@ export default {
   next: "Înainte",
   backToPeople: "Înapoi la persoane",
   removeUser: "Elimină pe {name}",
-  addMoreForGroup: "Adaugă mai multe persoane pentru a crea un grup. Grupurile pot include persoane cărora le-ai scris deja.",
-  strangerNoGroup: "Nu i-ai scris niciodată lui {name}, așa că nu îl poți adăuga într-un grup. Elimină-l pentru a adăuga alte persoane.",
+  addMoreForGroup:
+    "Adaugă mai multe persoane pentru a crea un grup. Grupurile pot include persoane cărora le-ai scris deja.",
+  strangerNoGroup:
+    "Nu i-ai scris niciodată lui {name}, așa că nu îl poți adăuga într-un grup. Elimină-l pentru a adăuga alte persoane.",
   groupFull: "Grupurile pot avea până la {count} persoane, inclusiv tu.",
   ownerNote: "Vei fi proprietarul grupului.",
   requestIntro:

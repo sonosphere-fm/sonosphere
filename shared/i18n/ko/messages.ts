@@ -90,8 +90,10 @@ export default {
   next: "다음",
   backToPeople: "사람 선택으로 돌아가기",
   removeUser: "{name} 삭제",
-  addMoreForGroup: "사람을 더 추가하면 그룹을 시작할 수 있어요. 그룹에는 이전에 메시지를 주고받은 사람만 추가할 수 있어요.",
-  strangerNoGroup: "{name}님과 메시지를 주고받은 적이 없어서 그룹에 추가할 수 없어요. 다른 사람을 추가하려면 삭제하세요.",
+  addMoreForGroup:
+    "사람을 더 추가하면 그룹을 시작할 수 있어요. 그룹에는 이전에 메시지를 주고받은 사람만 추가할 수 있어요.",
+  strangerNoGroup:
+    "{name}님과 메시지를 주고받은 적이 없어서 그룹에 추가할 수 없어요. 다른 사람을 추가하려면 삭제하세요.",
   groupFull: "그룹은 나를 포함해 최대 {count}명까지 가능해요.",
   ownerNote: "내가 그룹 소유자가 돼요.",
   requestIntro:

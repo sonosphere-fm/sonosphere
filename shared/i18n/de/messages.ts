@@ -94,8 +94,10 @@ export default {
   next: "Weiter",
   backToPeople: "Zurück zur Auswahl",
   removeUser: "{name} entfernen",
-  addMoreForGroup: "Füge weitere Personen hinzu, um eine Gruppe zu starten. In Gruppen kannst du Personen aufnehmen, denen du schon geschrieben hast.",
-  strangerNoGroup: "Du hast {name} noch nie geschrieben und kannst die Person daher nicht zu einer Gruppe hinzufügen. Entferne sie, um andere hinzuzufügen.",
+  addMoreForGroup:
+    "Füge weitere Personen hinzu, um eine Gruppe zu starten. In Gruppen kannst du Personen aufnehmen, denen du schon geschrieben hast.",
+  strangerNoGroup:
+    "Du hast {name} noch nie geschrieben und kannst die Person daher nicht zu einer Gruppe hinzufügen. Entferne sie, um andere hinzuzufügen.",
   groupFull: "Gruppen können bis zu {count} Personen haben, dich eingeschlossen.",
   ownerNote: "Du wirst Inhaber der Gruppe.",
   requestIntro:

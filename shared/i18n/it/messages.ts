@@ -93,8 +93,10 @@ export default {
   next: "Avanti",
   backToPeople: "Torna alle persone",
   removeUser: "Rimuovi {name}",
-  addMoreForGroup: "Aggiungi altre persone per creare un gruppo. I gruppi possono includere persone a cui hai già scritto.",
-  strangerNoGroup: "Non hai mai scritto a {name}, quindi non puoi aggiungerlo a un gruppo. Rimuovilo per aggiungere altre persone.",
+  addMoreForGroup:
+    "Aggiungi altre persone per creare un gruppo. I gruppi possono includere persone a cui hai già scritto.",
+  strangerNoGroup:
+    "Non hai mai scritto a {name}, quindi non puoi aggiungerlo a un gruppo. Rimuovilo per aggiungere altre persone.",
   groupFull: "I gruppi possono avere fino a {count} persone, te compreso.",
   ownerNote: "Sarai il proprietario del gruppo.",
   requestIntro:

@@ -89,7 +89,8 @@ export default {
   backToPeople: "Back to people",
   removeUser: "Remove {name}",
   addMoreForGroup: "Add more people to start a group. Groups can include people you've messaged before.",
-  strangerNoGroup: "You haven't messaged {name} before, so you can't add them to a group. Remove them to add other people.",
+  strangerNoGroup:
+    "You haven't messaged {name} before, so you can't add them to a group. Remove them to add other people.",
   groupFull: "Groups can have up to {count} people including you.",
   ownerNote: "You'll be the group's owner.",
   requestIntro:
