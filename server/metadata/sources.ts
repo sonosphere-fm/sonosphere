@@ -397,7 +397,8 @@ export async function coverArt(
     headers: { "User-Agent": agent() },
     signal: AbortSignal.timeout(30_000),
   });
-  if (res.status === 404) return null;
+  // 403: the archive holds the image but withholds it
+  if (res.status === 404 || res.status === 403) return null;
   if (res.status === 429) {
     await pause("caa", Number(res.headers.get("retry-after")) || 60);
     throw new Busy("caa");
