@@ -132,7 +132,7 @@ function VoteButtons({
         <Ico.ThumbsUp on={item.mine === 1} />
         {counts && <span className="gallery-vote-count">{item.up}</span>}
       </button>
-      <span className="gallery-score">{item.score}</span>
+      {!counts && <span className="gallery-score">{item.score}</span>}
       <button
         type="button"
         className="gallery-vote"
@@ -226,76 +226,66 @@ function GalleryPhoto({
   return (
     <section className="section gallery-photo">
       <header className="section-head gallery-head">
-        <h2>{t("music.images")}</h2>
+        <h2>
+          <Link to={`${base}/+images`}>{t("music.images")}</Link>
+        </h2>
         <span className="photo-count">
           {at + 1} / {items.length}
         </span>
         {me && <UploadImage type={type} id={id} onDone={onDone} />}
       </header>
-      <div className="cols photo-cols">
-        <div className="main">
-          <div className="photo-stage">
-            {prev && (
-              <Link
-                className="photo-nav photo-prev"
-                to={`${base}/+images/${prev.image}`}
-                aria-label={t("music.previous")}
-              >
-                <Ico.ChevLeft />
-              </Link>
-            )}
-            <ImageWithFallback className="photo-full" src={imageUrl(item.image)} alt={name} loading="eager" />
-            {next && (
-              <Link className="photo-nav photo-next" to={`${base}/+images/${next.image}`} aria-label={t("music.next")}>
-                <Ico.Chevron />
-              </Link>
-            )}
-          </div>
-          {items.length > 1 && (
-            <ul className="photo-thumbs">
-              {items.map((it, n) => (
-                <li key={it.id}>
-                  <Link
-                    className="photo-thumb"
-                    to={`${base}/+images/${it.image}`}
-                    aria-current={it.id === item.id ? "page" : undefined}
-                    aria-label={`${n + 1} / ${items.length}`}
-                  >
-                    <ImageWithFallback className="photo-thumb-img" src={imageUrl(it.image, "small")} alt="" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      <div className="photo-stage">
+        <div className="photo-backdrop" style={{ backgroundImage: `url(${imageUrl(item.image, "small")})` }} />
+        {prev && (
+          <Link className="photo-nav photo-prev" to={`${base}/+images/${prev.image}`} aria-label={t("music.previous")}>
+            <Ico.ChevLeft />
+          </Link>
+        )}
+        <ImageWithFallback className="photo-full" src={imageUrl(item.image)} alt={name} loading="eager" />
+        {next && (
+          <Link className="photo-nav photo-next" to={`${base}/+images/${next.image}`} aria-label={t("music.next")}>
+            <Ico.Chevron />
+          </Link>
+        )}
+      </div>
+      <div className="photo-bar">
+        <p className="photo-meta">
+          {item.main && <span className="gallery-main-open">{t("music.mainImage")}</span>}
+          {item.uploader && <Link to={userUrl(item.uploader)}>{t("music.uploadedBy", { name: item.uploader })}</Link>}
+          <time dateTime={new Date(item.createdAt * 1000).toISOString()}>{date(item.createdAt)}</time>
+        </p>
+        <div className="photo-votes">
+          <VoteButtons item={item} busy={act.busy} canVote={!!me} counts onVote={vote} />
+          {canRemove && (
+            <button
+              type="button"
+              className="gallery-remove"
+              aria-label={t("music.removeImage")}
+              title={t("music.removeImage")}
+              onClick={remove}
+            >
+              <Ico.Delete />
+            </button>
           )}
         </div>
-        <aside className="side photo-side">
-          <div className="gallery-votes photo-votes">
-            <VoteButtons item={item} busy={act.busy} canVote={!!me} counts onVote={vote} />
-            {canRemove && (
-              <button
-                type="button"
-                className="gallery-remove"
-                aria-label={t("music.removeImage")}
-                title={t("music.removeImage")}
-                onClick={remove}
-              >
-                <Ico.Delete />
-              </button>
-            )}
-          </div>
-          <p className="gallery-meta photo-meta">
-            {item.main && <span className="gallery-main-open">{t("music.mainImage")}</span>}
-            {item.uploader ? (
-              <Link to={userUrl(item.uploader)}>{t("music.uploadedBy", { name: item.uploader })}</Link>
-            ) : null}
-            <time dateTime={new Date(item.createdAt * 1000).toISOString()}>{date(item.createdAt)}</time>
-          </p>
-          {act.note}
-          <p className="gallery-back">
-            <Link to={`${base}/+images`}>{t("music.images")}</Link>
-          </p>
-        </aside>
       </div>
+      {act.note}
+      {items.length > 1 && (
+        <ul className="photo-thumbs">
+          {items.map((it, n) => (
+            <li key={it.id}>
+              <Link
+                className="photo-thumb"
+                to={`${base}/+images/${it.image}`}
+                aria-current={it.id === item.id ? "page" : undefined}
+                aria-label={`${n + 1} / ${items.length}`}
+              >
+                <ImageWithFallback className="photo-thumb-img" src={imageUrl(it.image, "small")} alt="" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
       <Section title={t("music.wall")}>
         <Shoutbox key={item.id} type="image" id={item.id} limit={10} word="comment" />
       </Section>
