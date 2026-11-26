@@ -247,29 +247,29 @@ export async function discography(mbid: string): Promise<MbAlbum[]> {
 
 /** The names as MusicBrainz credits them, when the artist has a recording with that title. */
 export async function recorded(artistName: string, title: string): Promise<{ artist: string; title: string } | null> {
-  const [r] = await db()<{ artist: string; title: string }[]>`
-    WITH k AS (SELECT mbkey(${artistName}) AS a, mbkey(${title}) AS t),
-    who AS (SELECT id FROM artist, k WHERE key = k.a UNION SELECT artist FROM artist_alias, k WHERE key = k.a)
-    SELECT acn.name AS artist, r.name AS title
-    FROM recording_top rt CROSS JOIN k JOIN recording r ON r.id = rt.id
-    JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
-    WHERE k.a <> '' AND k.t <> '' AND rt.key = k.t AND acn.artist IN (SELECT id FROM who)
-    ORDER BY rt.n DESC LIMIT 1`;
-  return r ? { artist: tidy(r.artist), title: tidy(r.title) } : null;
+  const r = await recordingOf(artistName, title);
+  return r && { artist: r.artist, title: r.title };
 }
 
 export type Recording = { mbid: string; title: string; artist: string; artistMbid: string };
 
 /** The most played recording MusicBrainz has with that artist and title. */
 export async function recordingOf(artistName: string, title: string): Promise<Recording | null> {
+  // Credits go in as values: in one query the planner can't see how common the title or how prolific the artist
+  // is, and a title like "Intro" then reads every recording that has it.
+  const credits = await db()<{ id: number }[]>`
+    SELECT DISTINCT artist_credit AS id FROM artist_credit_name
+    WHERE position = 0 AND mbkey(${artistName}) <> '' AND artist IN
+      (SELECT id FROM artist WHERE key = mbkey(${artistName})
+       UNION SELECT artist FROM artist_alias WHERE key = mbkey(${artistName}))`;
+  if (!credits.length) return null;
   const [r] = await db()<Recording[]>`
-    WITH k AS (SELECT mbkey(${artistName}) AS a, mbkey(${title}) AS t),
-    who AS (SELECT id FROM artist, k WHERE key = k.a UNION SELECT artist FROM artist_alias, k WHERE key = k.a)
     SELECT r.gid::text AS mbid, r.name AS title, acn.name AS artist, a.gid::text AS "artistMbid"
-    FROM recording_top rt CROSS JOIN k JOIN recording r ON r.id = rt.id
+    FROM recording r JOIN recording_top rt ON rt.id = r.id
     JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
     JOIN artist a ON a.id = acn.artist
-    WHERE k.a <> '' AND k.t <> '' AND rt.key = k.t AND acn.artist IN (SELECT id FROM who)
+    WHERE r.artist_credit IN ${db()(credits.map((c) => c.id))} AND mbkey(${title}) <> ''
+      AND r.key = mbkey(${title}) AND rt.key = mbkey(${title})
     ORDER BY rt.n DESC LIMIT 1`;
   return r ? { ...r, title: tidy(r.title), artist: tidy(r.artist) } : null;
 }
