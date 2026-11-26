@@ -28,7 +28,8 @@ type MusicHeroProps = {
 };
 
 // Averages the strip of the picture where it fades out, so the hero background continues its colours.
-function fadeEdgeColor(img: HTMLImageElement) {
+// Brighter edges get a weaker mix so white hero text keeps its contrast.
+function fadeEdgeTint(img: HTMLImageElement) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 8;
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
@@ -43,7 +44,9 @@ function fadeEdgeColor(img: HTMLImageElement) {
     sum[2] += px[i + 2];
   }
   const [r, g, b] = sum.map((v) => Math.round(v / (px.length / 4)));
-  return `rgb(${r} ${g} ${b})`;
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const mix = Math.round(40 - 15 * lum);
+  return `color-mix(in oklab, rgb(${r} ${g} ${b}) ${mix}%, var(--panel))`;
 }
 
 const MHERO = "hero bg-site-panel transition-[background-color] duration-500 p-0 min-h-[300px] flex flex-col max-[700px]:min-h-0";
@@ -65,8 +68,7 @@ export function MusicHero({
   children,
 }: MusicHeroProps) {
   const [tint, setTint] = useState({ image: "", color: "" });
-  const color = image && tint.image === image ? tint.color : "";
-  const style = color ? { backgroundColor: `color-mix(in oklab, ${color} 40%, var(--panel))` } : undefined;
+  const style = image && tint.image === image ? { backgroundColor: tint.color } : undefined;
   return (
     <div className={MHERO} style={style}>
       {image ? (
@@ -75,7 +77,7 @@ export function MusicHero({
           src={imageUrl(image)}
           alt=""
           loading="eager"
-          onLoad={(img) => setTint({ image, color: fadeEdgeColor(img) })}
+          onLoad={(img) => setTint({ image, color: fadeEdgeTint(img) })}
         />
       ) : null}
       {imageHref && image ? (
