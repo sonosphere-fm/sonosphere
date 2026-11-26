@@ -131,7 +131,8 @@ export async function scrobbleMany(
 export async function setNowPlaying(userId: number, input: ScrobbleInput): Promise<TrackRef | null> {
   const ref = await resolve(input);
   if (!ref) return null;
-  const seconds = Number(input.duration) || (await findItem("track", ref.trackId))?.duration || 240;
+  const sent = Math.round(Number(input.duration));
+  const seconds = (sent > 0 && sent <= 86400 && sent) || (await findItem("track", ref.trackId))?.duration || 240;
   await repo.saveNowPlaying(userId, ref, seconds);
   listeningChanged(userId, "nowplaying");
   return ref;
