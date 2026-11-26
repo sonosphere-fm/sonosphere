@@ -48,4 +48,4 @@ We welcome contributions from the community. Please refer to the [CONTRIBUTING.m
 
 ## License
 
-Sonosphere is free and open source software. Please refer to the [LICENSE](LICENSE) file for more details.
+Sonosphere is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for the copyright notice and the terms for the Sonosphere name and logo, which are not covered by the license.
