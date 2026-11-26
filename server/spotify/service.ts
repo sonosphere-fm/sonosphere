@@ -353,7 +353,9 @@ function failed(link: repo.Link, e: unknown): number {
     });
     return 0;
   }
-  if (!(e instanceof Slowed)) {
+  // a slow Spotify is retried on the next poll, like a 5xx
+  const timedOut = e instanceof Error && e.name === "TimeoutError";
+  if (!(e instanceof Slowed) && !timedOut) {
     console.error(`Spotify (user ${link.userId}):`, e);
     Sentry.captureException(e);
   }
