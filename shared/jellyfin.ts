@@ -15,7 +15,6 @@ const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "obj
 
 const text = (v: unknown): string => (typeof v === "string" ? v : typeof v === "number" ? String(v) : "");
 
-/** Jellyfin calls the artist on an audio item `Artists`, an array. */
 export function pickJellyfin(items: unknown, artist: string, track: string): MusicMatch[] {
   const list = Array.isArray(items) ? items : items ? [items] : [];
   const candidates = list.flatMap((item) => {

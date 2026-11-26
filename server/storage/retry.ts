@@ -13,13 +13,11 @@ const TRANSIENT_CODES = new Set([
 
 const ATTEMPTS = 4;
 
-/** True for failures the provider expects clients to retry, such as S3 `InternalError` and dropped connections. */
 export function isTransientS3(e: unknown): boolean {
   const code = e && typeof e === "object" ? (e as { code?: unknown }).code : undefined;
   return typeof code === "string" && TRANSIENT_CODES.has(code);
 }
 
-/** Retry an idempotent S3 operation on transient failures, preserving the final error. */
 export async function retryS3<T>(op: () => Promise<T>): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
@@ -32,7 +30,6 @@ export async function retryS3<T>(op: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Deleting an object is idempotent; retry transient failures, preserving the final error. */
 export async function retryS3Delete(op: () => Promise<void>): Promise<void> {
   return retryS3(op);
 }

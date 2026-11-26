@@ -10,7 +10,6 @@ import { blockedEither } from "../users/repo";
 
 export const router = new Router();
 
-/** Pictures are not catalogue items, but they have a shoutbox of their own. */
 async function requireShoutTarget(type: unknown, id: unknown): Promise<ShoutTarget> {
   if (type === "image") {
     const n = Number(id);

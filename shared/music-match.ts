@@ -15,7 +15,6 @@ export const score = (want: string, got: string) => {
   return got.includes(want) || want.includes(got) ? 1 : 0;
 };
 
-/** The best few candidates for an artist and title, so playback can fall through ones the server won't stream. */
 export function pickMatches(
   candidates: { id: string; title: string; artist: string; albumId: string | null }[],
   artist: string,

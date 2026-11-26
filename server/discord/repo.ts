@@ -51,8 +51,5 @@ export async function sentAround(userId: number, at: number, within: number) {
 }
 
 export async function counted(userId: number) {
-  await db
-    .update(discordPresence)
-    .set({ lastPlayAt: now() })
-    .where(eq(discordPresence.userId, userId));
+  await db.update(discordPresence).set({ lastPlayAt: now() }).where(eq(discordPresence.userId, userId));
 }

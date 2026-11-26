@@ -157,7 +157,6 @@ async function search(link: repo.Link, artist: string, track: string): Promise<M
   return matches;
 }
 
-/** What the player falls back to when the browser cannot reach the server. */
 export async function source(userId: number, artist: string, track: string): Promise<JellyfinSource> {
   const link = await repo.findLink(userId);
   if (!link) return fail(404, "musicServerNotConnected");

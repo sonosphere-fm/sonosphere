@@ -8,7 +8,6 @@ import { now } from "../util";
 import { pickMain, type MainCandidate } from "./main";
 import type { GalleryImage, GalleryKind, GalleryList, GalleryVote } from "../../shared/images";
 
-/** Candidates kept per artist or album. */
 const MAX_IMAGES = 12;
 
 const candidateScore = sql<number>`COALESCE(SUM(${catalogueImageVotes.value}), 0)::int`;
@@ -27,7 +26,6 @@ async function candidateRows(conn: Conn, kind: GalleryKind, id: number): Promise
     .groupBy(catalogueImages.id, catalogueImages.imageId, catalogueImages.createdAt);
 }
 
-/** Locks the item row. `undefined` means the item no longer exists. */
 async function lockItem(tx: Tx, kind: GalleryKind, id: number): Promise<string | null | undefined> {
   if (kind === "artist") {
     const [row] = await tx.select({ imageId: artists.imageId }).from(artists).where(eq(artists.id, id)).for("update");
@@ -42,7 +40,6 @@ async function setMainTx(tx: Tx, kind: GalleryKind, id: number, imageId: string 
   else await tx.update(albums).set({ imageId }).where(eq(albums.id, id));
 }
 
-/** Recomputes and stores the winning picture. Locks the item first, so concurrent votes cannot leave a stale main image. */
 export async function syncMainTx(tx: Tx, kind: GalleryKind, id: number): Promise<string | null> {
   const current = await lockItem(tx, kind, id);
   if (current === undefined) return null;
@@ -138,7 +135,6 @@ export async function count(kind: GalleryKind, itemId: number): Promise<number> 
   return row?.n ?? 0;
 }
 
-/** Whether a gallery entry exists, for pages that hang their own content (shouts) off one. */
 export async function entryExists(entryId: number): Promise<boolean> {
   const [row] = await db
     .select({ id: catalogueImages.id })
@@ -148,7 +144,6 @@ export async function entryExists(entryId: number): Promise<boolean> {
   return !!row;
 }
 
-/** Adds a candidate. A first picture becomes main; later uploads wait for votes. */
 export async function add(
   kind: GalleryKind,
   itemId: number,
@@ -185,7 +180,6 @@ export async function add(
   });
 }
 
-/** Automation (metadata lookups) offers a picture; a full gallery is ignored rather than failing a lookup. */
 export async function offer(
   kind: GalleryKind,
   itemId: number,
@@ -233,7 +227,6 @@ export async function vote(
   });
 }
 
-/** The uploader may remove their own picture; staff may remove any. Staff removals are audited. */
 export async function remove(
   viewer: Viewer,
   actor: Viewer,
@@ -271,7 +264,6 @@ export async function remove(
   });
 }
 
-/** Moves a merged item's gallery to its destination, carrying votes where both sides have the same picture. */
 export async function moveEntriesTx(tx: Tx, kind: GalleryKind, src: number, dst: number): Promise<void> {
   await tx.execute(sql`
     UPDATE "catalogue_image_votes" v

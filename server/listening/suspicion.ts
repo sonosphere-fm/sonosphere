@@ -92,16 +92,14 @@ async function flag(userId: number, score: number, target: string | null) {
   );
   if (open) await db.update(reports).set({ detail }).where(eq(reports.id, open.id));
   else
-    await db
-      .insert(reports)
-      .values({
-        reporterId: null,
-        targetType: "user",
-        targetId: userId,
-        reason: "listening",
-        detail,
-        createdAt: now(),
-      });
+    await db.insert(reports).values({
+      reporterId: null,
+      targetType: "user",
+      targetId: userId,
+      reason: "listening",
+      detail,
+      createdAt: now(),
+    });
 }
 
 /** Scores the scrobbles just recorded and flags the account once it has scored too much too quickly. */

@@ -1,21 +1,16 @@
 #!/usr/bin/env bun
-/**
- * Fills in keys that exist in `en` but are missing from another locale, via the DeepL worker.
- * Existing translations are never touched: new keys go in just above the closing `} satisfies`.
- *
- * Usage:
- *   TOKEN=... bun run scripts/translate.ts
- */
-
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { type Entry, LOCALES, type Namespace } from "../shared/i18n/core";
 
-const API = "https://translate-api.edideaur.workers.dev/hi/translate";
-const TOKEN = Bun.env.TOKEN ?? "didylate";
+const API = Bun.env.TRANSLATE_API ?? "https://translate-api.edideaur.workers.dev/hi/translate";
+const TOKEN = Bun.env.TOKEN;
+if (!TOKEN) {
+  console.error("TOKEN is required");
+  process.exit(1);
+}
 const DIR = "shared/i18n";
 
-// DeepL target codes; locales without one are skipped.
 const TARGET: Record<string, string> = {
   es: "ES",
   de: "DE",

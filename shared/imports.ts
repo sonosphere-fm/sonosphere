@@ -1,6 +1,5 @@
 export type ImportKind = "scrobbles" | "loved" | "lastfm" | "listenbrainz";
 export type ImportStatus = "uploading" | "queued" | "running" | "done" | "failed" | "cancelled";
-/** One uploaded row. Feedback rows have a score and MBID instead of a name. */
 export type ImportRow = {
   artist: string;
   track: string;

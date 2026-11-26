@@ -1,7 +1,6 @@
 import type { ItemType, Paged } from "./catalog";
 import type { PublicUser } from "./users";
 
-/** Catalogue items plus pictures, which carry their own shoutbox. */
 export type ShoutTarget = ItemType | "image";
 
 export type Shout = {

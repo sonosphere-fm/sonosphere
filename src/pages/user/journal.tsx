@@ -21,9 +21,7 @@ export function Journal({ name, mine }: { name: string; mine: boolean }) {
   const page = Number(sp.get("page")) || 1;
   const base = `${userUrl(name)}/journal`;
   const q = useApi<JournalList>(`/user/journal${qs({ name, page })}`);
-  const empty = mine
-    ? t("user.journalEmptyMine")
-    : t("user.journalEmpty", { name });
+  const empty = mine ? t("user.journalEmptyMine") : t("user.journalEmpty", { name });
   return (
     <div className="narrow-col">
       {mine && (

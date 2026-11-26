@@ -8,16 +8,14 @@ import { digest, first, norm, now } from "../util";
 import type { User } from "../users/repo";
 
 export async function createSession(token: string, userId: number, req?: Request): Promise<void> {
-  await db
-    .insert(sessions)
-    .values({
-      token: digest(token),
-      userId,
-      createdAt: now(),
-      lastSeenAt: now(),
-      userAgent: req?.headers.get("user-agent")?.slice(0, 512) ?? "",
-      ip: req ? ipOf(req).slice(0, 64) : "",
-    });
+  await db.insert(sessions).values({
+    token: digest(token),
+    userId,
+    createdAt: now(),
+    lastSeenAt: now(),
+    userAgent: req?.headers.get("user-agent")?.slice(0, 512) ?? "",
+    ip: req ? ipOf(req).slice(0, 64) : "",
+  });
 }
 export async function deleteSession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, digest(token)));

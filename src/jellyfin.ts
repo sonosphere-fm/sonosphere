@@ -5,7 +5,6 @@ import type { MusicMatch } from "../shared/music-match";
 const asObject = (v: unknown): Record<string, unknown> | null =>
   typeof v === "object" && v !== null ? (v as Record<string, unknown>) : null;
 
-/** Asks the listener's own server for matches. Throws when the browser cannot reach it, null when it refuses. */
 export async function directMatches(auth: JellyfinAuth, artist: string, track: string): Promise<MusicMatch[] | null> {
   const query = new URLSearchParams({
     userId: auth.userId,

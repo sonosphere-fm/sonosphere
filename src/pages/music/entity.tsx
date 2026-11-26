@@ -15,7 +15,6 @@ import type { WikiVersion } from "../../../shared/wiki";
 type MusicHeroProps = {
   image?: string | null;
   cover?: boolean;
-  /** When set, the visible side of the hero picture links to this address. */
   imageHref?: string;
   imageCount?: number;
   over?: ReactNode;
@@ -49,7 +48,8 @@ function fadeEdgeTint(img: HTMLImageElement) {
   return `color-mix(in oklab, rgb(${r} ${g} ${b}) ${mix}%, var(--panel))`;
 }
 
-const MHERO = "hero bg-site-panel transition-[background-color] duration-500 p-0 min-h-[300px] flex flex-col max-[700px]:min-h-0";
+const MHERO =
+  "hero bg-site-panel transition-[background-color] duration-500 p-0 min-h-[300px] flex flex-col max-[700px]:min-h-0";
 const MHERO_INNER =
   "wrap flex-1 flex flex-col justify-end gap-3.5 pt-14 pb-[26px] *:max-w-[760px] max-[700px]:pt-7 max-[700px]:pb-[18px] max-[700px]:gap-3";
 const MHERO_OVER = "text-[18px] font-semibold -mb-2 max-[700px]:text-[15px] max-[700px]:-mb-1.5 [&_a]:text-site-link";

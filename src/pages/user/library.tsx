@@ -18,7 +18,6 @@ const isArtist = (i: LibraryRow): i is TopArtist => !("title" in i);
 const isAlbum = (i: LibraryRow): i is TopAlbum => "title" in i && !("duration" in i);
 const isTopTrack = (i: LibraryRow): i is TopTrack => "duration" in i && "listeners" in i;
 
-/** Ids from anchor to target inclusive, in display order; empty when either end is off the page. */
 export function rangeIds(ids: number[], anchor: number | null, target: number): number[] {
   const a = anchor === null ? -1 : ids.indexOf(anchor);
   const b = ids.indexOf(target);
@@ -57,9 +56,7 @@ export function Library({ name, mine }: { name: string; mine: boolean }) {
   const q = useApi<UserRecent | UserTop>(
     kind === "scrobbles" ? `/user/recent${qs(params)}` : `/user/top${qs({ ...params, kind })}`
   );
-  // Scrobbles picked for bulk delete; null when not in select mode.
   const [picked, setPicked] = useState<Set<number> | null>(null);
-  // Origin of the next shift-range: the last row clicked, plain or shift.
   const anchor = useRef<number | null>(null);
   const [confirm, setConfirm] = useState(false);
   const bulk = useAction();

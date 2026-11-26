@@ -12,8 +12,8 @@ function gitSha(): string | undefined {
 const release = process.env.SENTRY_RELEASE || process.env.GIT_SHA || gitSha();
 
 const dsn = process.env.SENTRY_DSN;
-// only the Docker image sets SENTRY_RELEASE, so local production-mode runs stay quiet
-const deployed = !!process.env.SENTRY_RELEASE;
+// only deployed sonosphere.fm Docker builds fall back to the default DSN
+const deployed = !!process.env.SENTRY_RELEASE && /^https?:\/\/sonosphere\.fm(\/|$)/.test(process.env.SITE_URL ?? "");
 Sentry.init({
   dsn: dsn ?? (deployed ? "https://62e81253f648439c9e4564bb857a504b@rustrak.edideaur.works/3" : undefined),
   enabled: process.env.SENTRY_DISABLED !== "1" && (deployed || !!dsn),
@@ -21,11 +21,8 @@ Sentry.init({
   release,
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
   beforeSend(event, hint) {
-    // Never report errors from non-production environments.
     if (process.env.NODE_ENV !== "production") return null;
-    // Ignore aborted / closed connections on the Sentry tunnel (/api/diag): a
-    // browser navigating away while an error report is forwarded triggers this,
-    // and it only produces noise (e.g. SONOSPHERE-BACKEND-28).
+    // Ignore aborted /api/diag tunnel requests when a browser navigates away.
     const exc = event.exception?.values?.[0];
     if (exc && (exc.type === "AbortError" || /connection.*closed/i.test(exc.value ?? ""))) return null;
     return event;

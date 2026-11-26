@@ -8,7 +8,6 @@ import { setting } from "../site/settings";
 import { blockedEither } from "../users/repo";
 import * as repo from "./repo";
 
-/** Catalogue items plus pictures, which carry their own shoutbox. */
 export type ShoutTarget = Item | { type: "image"; row: { id: number } };
 
 export function ownerOf(it: ShoutTarget): number | null {

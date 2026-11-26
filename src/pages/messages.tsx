@@ -14,7 +14,20 @@ import { Ico } from "../icons";
 import { locale, t, tx } from "../i18n";
 import { Button, Input, useConfirm } from "../kit";
 import { useTurnstile } from "./auth";
-import { ago, api, date, invalidateAll, liveSend, mutate, qs, useApi, useAuth, useLive, useTitle, userUrl } from "../lib";
+import {
+  ago,
+  api,
+  date,
+  invalidateAll,
+  liveSend,
+  mutate,
+  qs,
+  useApi,
+  useAuth,
+  useLive,
+  useTitle,
+  userUrl,
+} from "../lib";
 import type { BlockResult } from "../../shared/blocks";
 import { DM_REACTIONS } from "../../shared/dm";
 import type {
@@ -1252,7 +1265,11 @@ function Compose() {
           <Avatar user={u} size={20} plain />
           {u.username}
           {removable && (
-            <button type="button" aria-label={t("messages.removeUser", { name: u.username })} onClick={() => drop(u.id)}>
+            <button
+              type="button"
+              aria-label={t("messages.removeUser", { name: u.username })}
+              onClick={() => drop(u.id)}
+            >
               <Ico.X />
             </button>
           )}

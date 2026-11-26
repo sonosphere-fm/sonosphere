@@ -16,7 +16,6 @@ export type SubsonicStatus =
 
 export type SubsonicConnectBody = { url: string; username: string; password: string };
 
-/** What the browser needs to call the listener's server itself, until the page closes. */
 export type SubsonicAuth = {
   kind: "subsonic";
   base: string;
@@ -27,12 +26,10 @@ export type SubsonicAuth = {
   direct: boolean;
 };
 
-/** The proxy route for a resolved song, used when the browser cannot reach the server. */
 export type SubsonicSource = { proxy: string; albumUrl: string };
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
 
-/** The best few songs for an artist and title, so playback can fall through ones the server won't stream. */
 export function pickSongs(songs: unknown, artist: string, track: string): MusicMatch[] {
   const list = Array.isArray(songs) ? songs : songs ? [songs] : [];
   const candidates = list.flatMap((song) => {
@@ -47,7 +44,6 @@ export function pickSongs(songs: unknown, artist: string, track: string): MusicM
   return pickMatches(candidates, artist, track);
 }
 
-/** Where the album lives in the server's own web interface. Only Navidrome's route is standard enough to link to. */
 export function albumWebUrl(base: string, serverName: string, albumId: string | null): string {
   if (albumId && serverName.toLowerCase() === "navidrome")
     return `${base}/app/#/album/${encodeURIComponent(albumId)}/show`;

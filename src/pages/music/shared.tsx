@@ -78,7 +78,6 @@ export function UploadImage({
   );
 }
 
-/** MoreMenu item: removes every scrobble of this artist, album or track from the viewer's library. */
 export function RemoveScrobbles({
   scope,
   id,

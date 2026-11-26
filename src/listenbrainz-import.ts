@@ -1,7 +1,3 @@
-// Reads a ListenBrainz export ZIP in the browser so imports can use the same chunked, resumable path as other files.
-// ZIP is just a directory of byte ranges; modern browsers inflate raw DEFLATE through DecompressionStream, so no extra
-// dependency is needed. Sizes are checked before inflating to avoid a hostile archive exhausting the tab. ListenBrainz
-// exports use plain DEFLATE with sizes in the central directory, so ZIP64 and encrypted entries aren't expected.
 import { IMPORT_MAX, type ImportRow } from "../shared/imports";
 import { t } from "./i18n";
 
@@ -75,7 +71,6 @@ async function inflate(bytes: Uint8Array, method: number, size: number): Promise
   return out;
 }
 
-/** The JSON files of an export, keyed by their path inside the archive. */
 export async function readExportFiles(buffer: ArrayBuffer): Promise<Map<string, string>> {
   const bytes = new Uint8Array(buffer);
   const view = new DataView(buffer);

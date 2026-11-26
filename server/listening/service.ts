@@ -339,7 +339,6 @@ export async function importLoved(userId: number, list: unknown[]): Promise<numb
   return repo.loveTracks(userId, entries);
 }
 
-/** Imports a slice of a ListenBrainz export: scrobbles with their recording IDs, then loves for those recordings. */
 export async function importListenBrainz(userId: number, rows: ImportRow[]): Promise<number> {
   const plays = rows.filter((r) => !r.score);
   let accepted = 0;

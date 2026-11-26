@@ -21,7 +21,6 @@ type Attempt =
   | { kind: "missing" }
   | { kind: "failed" };
 
-/** Whether the server accepts token auth, learned from the answers it has given. */
 const authModes = new Map<number, boolean>();
 
 function forget(userId: number): void {
@@ -158,7 +157,6 @@ export async function disconnect(userId: number): Promise<void> {
   forget(userId);
 }
 
-/** Token and address for calls the browser makes itself. Kept in memory only. */
 export async function auth(userId: number): Promise<SubsonicAuth> {
   const link = await repo.findLink(userId);
   if (!link) return fail(404, "musicServerNotConnected");
@@ -190,7 +188,6 @@ async function search(link: repo.Link, artist: string, track: string): Promise<M
   return songs;
 }
 
-/** What the player falls back to when the browser cannot reach the server. */
 export async function source(userId: number, artist: string, track: string): Promise<SubsonicSource> {
   const link = await repo.findLink(userId);
   if (!link) return fail(404, "musicServerNotConnected");

@@ -73,7 +73,6 @@ export function ImageGallery({ type, id, name, base, onChanged }: Props) {
   );
 }
 
-/** Voting and removal, shared by the grid and the single-photo view. */
 function useGalleryActions(
   item: GalleryImage,
   name: string,

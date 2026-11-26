@@ -1,7 +1,6 @@
 import { fail } from "../http";
 import { checkHost } from "./url";
 
-/** Refuses addresses the site is not allowed to call, before any credentials go to them. */
 export async function requireReachable(url: string): Promise<void> {
   let host: string;
   try {

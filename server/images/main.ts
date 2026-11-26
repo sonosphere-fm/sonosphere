@@ -5,10 +5,6 @@ export type MainCandidate = {
   createdAt: number;
 };
 
-/**
- * Highest net score wins. A tie keeps the current main picture. Without a usable current
- * picture, the earliest candidate among the leaders wins. Returns null for an empty gallery.
- */
 export function pickMain(candidates: readonly MainCandidate[], current: string | null): MainCandidate | null {
   if (!candidates.length) return null;
   let top = -Infinity;

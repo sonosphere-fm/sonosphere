@@ -22,5 +22,4 @@ export type MusicConnectBody = { kind: MusicKind; url: string; username: string;
 
 export type MusicAuth = SubsonicAuth | JellyfinAuth;
 
-/** The proxy route for a resolved song, used when the browser cannot reach the server. */
 export type MusicSource = { proxy: string; albumUrl: string };

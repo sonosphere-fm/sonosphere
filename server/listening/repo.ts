@@ -927,7 +927,6 @@ export async function deleteScrobbles(userId: number, ids: number[]): Promise<nu
   return gone.length;
 }
 
-/** Removes every play of one track, album or artist from the listener's library. Returns how many went. */
 export async function deleteScrobblesBy(userId: number, scope: EditScope, itemId: number): Promise<number> {
   const col = scope === "track" ? scrobbles.trackId : scope === "album" ? scrobbles.albumId : scrobbles.artistId;
   // Count inside the delete statement: one artist can hold a whole history, and RETURNING would ship every id back.
@@ -1072,7 +1071,6 @@ export async function setLoved(userId: number, trackId: number, loved: boolean):
   else await db.delete(lovedTracks).where(and(eq(lovedTracks.userId, userId), eq(lovedTracks.trackId, trackId)));
 }
 
-/** Returns how many were not loved already. Loved time comes from the imported data. */
 export async function loveTracksByIds(userId: number, list: { trackId: number; lovedAt: number }[]): Promise<number> {
   return transact(async (tx) => {
     let added = 0;
