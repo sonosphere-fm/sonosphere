@@ -18,6 +18,7 @@ import { router as dm } from "./dm/routes";
 import { router as spotify } from "./spotify/routes";
 import { router as music } from "./music/routes";
 import { router as discord } from "./discord/routes";
+import { router as presence } from "./presence/routes";
 import { router as events } from "./events/routes";
 import { router as home } from "./home/routes";
 import { router as images } from "./images/routes";
@@ -87,6 +88,7 @@ export const api = new Router().include(
   spotify,
   music,
   discord,
+  presence,
   adminDashboard,
   adminUsers,
   adminReports,

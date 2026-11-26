@@ -1,0 +1,1 @@
+ALTER TABLE "discord_rich_presence" ADD COLUMN "image" text DEFAULT 'album' NOT NULL;

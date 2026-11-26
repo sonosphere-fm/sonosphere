@@ -10,6 +10,7 @@ import type { DiscordStatus } from "../../shared/discord";
 
 export const GUILD_ID = "1573635846580736042";
 const TOKEN = process.env.DISCORD_BOT_TOKEN || "";
+const OWN_APP = process.env.DISCORD_CLIENT_ID || "";
 const API = "https://discord.com/api/v10";
 const LISTENING = 2;
 const REFRESH_EVERY = 60_000;
@@ -43,6 +44,8 @@ function heard(activities: Activity[], spotify: boolean): Heard | null {
   for (const a of activities) {
     if (a.type !== LISTENING || !a.details?.trim() || !a.state?.trim()) continue;
     if (spotify && a.name === "Spotify") continue;
+    // our own rich presence would otherwise be logged back into the listener's history
+    if (OWN_APP && a.application_id === OWN_APP) continue;
     const artist = artistOf(a.name, a.state);
     const track = a.details.trim();
     if (!artist) continue;

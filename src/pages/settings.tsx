@@ -25,7 +25,18 @@ import { useTurnstile } from "./auth";
 import { oauthError, OAuthMark, oauthStart } from "../ui/oauth";
 import { locale, t, tx, type MessageKey } from "../i18n";
 import type { Logins } from "../../shared/auth";
-import { DISCORD_INVITE, type DiscordStatus, type DiscordToggle } from "../../shared/discord";
+import {
+  DISCORD_INVITE,
+  PRESENCE_DETAILS,
+  PRESENCE_LAYOUTS,
+  type DiscordStatus,
+  type DiscordToggle,
+  type PresenceDetails,
+  type PresenceLayout,
+  type PresencePreferencesPatch,
+  type PresenceStatus,
+  type PresenceToggle,
+} from "../../shared/discord";
 import type { BlockResult, Blocks } from "../../shared/blocks";
 import type { ImageSaved } from "../../shared/images";
 import { EMAIL_KINDS, EMAIL_MODES, type EmailKind } from "../../shared/notifications";
@@ -411,7 +422,13 @@ function CheckOption({
 }) {
   return (
     <label className="check">
-      <Input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />{" "}
+      <Input
+        type="checkbox"
+        aria-label={title}
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />{" "}
       <span>
         <b>{title}</b>
         <br />
@@ -1165,15 +1182,58 @@ function SpotifySettings() {
 }
 
 type DiscordOn = Extract<DiscordStatus, { enabled: true }>;
+type PresenceOn = Extract<PresenceStatus, { enabled: true }>;
+
+const PRESENCE_DETAIL_LABELS: Record<PresenceDetails, MessageKey> = {
+  trackArtist: "settings.presenceTrackArtist",
+  track: "settings.presenceTrackOnly",
+  artist: "settings.presenceArtistOnly",
+};
+const PRESENCE_LAYOUT_LABELS: Record<PresenceLayout, MessageKey> = {
+  stacked: "settings.presenceLayoutStacked",
+  inline: "settings.presenceLayoutInline",
+};
+
+// What /api/discord/presence/callback reports back in ?presence=.
+const PRESENCE_OUTCOME: Record<string, { ok: boolean; text: MessageKey }> = {
+  connected: { ok: true, text: "settings.presenceConnected" },
+  denied: { ok: false, text: "settings.presenceDenied" },
+  expired: { ok: false, text: "settings.presenceExpired" },
+  failed: { ok: false, text: "settings.presenceFailed" },
+  mismatch: { ok: false, text: "settings.presenceMismatch" },
+};
 
 function DiscordSettings() {
   const q = useApi<DiscordStatus>("/discord");
+  const p = useApi<PresenceStatus>("/discord/presence");
   const act = useAction();
+  const pact = useAction();
+  const [sp, setSp] = useSearchParams();
+  const outcome = PRESENCE_OUTCOME[sp.get("presence") ?? ""];
 
   const toggle = (on: boolean) =>
     act.run(async () => {
       const body: DiscordToggle = { on };
       q.setData(await api<DiscordStatus>("/discord", { body }));
+    });
+
+  const togglePresence = (on: boolean) =>
+    pact.run(async () => {
+      const body: PresenceToggle = { on };
+      p.setData(await api<PresenceStatus>("/discord/presence", { body }));
+    });
+
+  const savePresence = (body: PresencePreferencesPatch) =>
+    pact.run(async () => {
+      p.setData(await api<PresenceStatus>("/discord/presence", { method: "PATCH", body }));
+    });
+
+  const disconnectPresence = () =>
+    pact.run(async () => {
+      await api<Ok>("/discord/presence", { method: "DELETE" });
+      setSp({}, { replace: true });
+      p.reload();
+      return t("settings.presenceDisconnected");
     });
 
   const steps = (d: DiscordOn) => {
@@ -1217,15 +1277,124 @@ function DiscordSettings() {
     );
   };
 
+  const presence = (d: PresenceOn) => {
+    if (!d.linked) return null;
+    const link = d.link;
+    return (
+      <div className="form">
+        {outcome && <p className={outcome.ok ? "form-ok" : "form-error"}>{t(outcome.text)}</p>}
+        {link ? (
+          <>
+            <p>
+              {tx("settings.spotifyConnectedAs", { name: <b>{link.name}</b> })}{" "}
+              <span className="muted small">{t("settings.since", { date: date(link.since) })}</span>
+            </p>
+            {link.broken ? (
+              <>
+                <p className="form-error">{t("settings.presenceBroken")}</p>
+                <div className="row">
+                  <Button kind="btn" href="/api/discord/presence/start">
+                    {t("settings.presenceConnect")}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <CheckOption
+                  title={t("settings.presenceToggle")}
+                  checked={link.on}
+                  disabled={pact.busy}
+                  onChange={togglePresence}
+                >
+                  {t("settings.presenceToggleHint")}
+                </CheckOption>
+                <label>
+                  {t("settings.presenceDetails")}
+                  <Select
+                    label={t("settings.presenceDetails")}
+                    value={link.details}
+                    disabled={pact.busy}
+                    options={PRESENCE_DETAILS.map((v) => [v, t(PRESENCE_DETAIL_LABELS[v])])}
+                    onChange={(v) => {
+                      const details = PRESENCE_DETAILS.find((option) => option === v);
+                      if (details) savePresence({ details });
+                    }}
+                  />
+                </label>
+                {link.details === "trackArtist" && (
+                  <label>
+                    {t("settings.presenceLayout")}
+                    <Select
+                      label={t("settings.presenceLayout")}
+                      value={link.layout}
+                      disabled={pact.busy}
+                      options={PRESENCE_LAYOUTS.map((v) => [v, t(PRESENCE_LAYOUT_LABELS[v])])}
+                      onChange={(v) => {
+                        const layout = PRESENCE_LAYOUTS.find((option) => option === v);
+                        if (layout) savePresence({ layout });
+                      }}
+                    />
+                  </label>
+                )}
+                <label>
+                  {t("settings.presenceImage")}
+                  <Select
+                    label={t("settings.presenceImage")}
+                    value={link.image}
+                    disabled={pact.busy}
+                    onChange={(v) => {
+                      if (v === "album" || v === "logo") savePresence({ image: v });
+                    }}
+                    options={[
+                      ["album", t("settings.presenceImageAlbum")],
+                      ["logo", t("settings.presenceImageLogo")],
+                    ]}
+                  />
+                </label>
+                <CheckOption
+                  title={t("settings.presenceBranding")}
+                  checked={link.branding}
+                  disabled={pact.busy}
+                  onChange={(branding) => savePresence({ branding })}
+                >
+                  {t("settings.presenceBrandingHint")}
+                </CheckOption>
+              </>
+            )}
+            <div className="row">
+              <Button kind="btn ghost" disabled={pact.busy} onClick={disconnectPresence}>
+                {t("settings.disconnect")}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p>{t("settings.presenceIntro")}</p>
+            <div className="row">
+              <Button kind="btn" href="/api/discord/presence/start">
+                {t("settings.presenceConnect")}
+              </Button>
+            </div>
+          </>
+        )}
+        {pact.note}
+      </div>
+    );
+  };
+
   let badge = null;
-  if (q.data) {
-    if (!q.data.enabled) badge = <span className="badge off">{t("settings.badgeDisabled")}</span>;
-    else if (q.data.on && q.data.inServer) badge = <span className="badge">{t("settings.badgeConnected")}</span>;
+  if (q.data && p.data) {
+    const pd = p.data.enabled ? p.data : null;
+    const presenceOn = !!pd?.link && pd.link.on && !pd.link.broken;
+    const inboundOn = q.data.enabled && q.data.on && q.data.inServer;
+    if (!q.data.enabled && !p.data.enabled) badge = <span className="badge off">{t("settings.badgeDisabled")}</span>;
+    else if (pd?.link?.broken) badge = <span className="badge warn">{t("settings.badgeNeedsAttention")}</span>;
+    else if (presenceOn || inboundOn) badge = <span className="badge">{t("settings.badgeConnected")}</span>;
     else badge = <span className="badge off">{t("settings.badgeNotConnected")}</span>;
   }
 
   return (
-    <Service name="Discord" blurb={t("settings.discordBlurb")} badge={badge} open={false}>
+    <Service name="Discord" blurb={t("settings.discordBlurb")} badge={badge} open={!!outcome}>
       <Async q={q}>
         {(d) =>
           !d.enabled ? (
@@ -1238,6 +1407,7 @@ function DiscordSettings() {
           )
         }
       </Async>
+      <Async q={p}>{(d) => (d.enabled ? presence(d) : null)}</Async>
     </Service>
   );
 }

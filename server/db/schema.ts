@@ -13,6 +13,7 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { PresenceDetails, PresenceImage, PresenceLayout } from "../../shared/discord";
 import type { PlaybackSource } from "../../shared/playback";
 import type { UsernameFont } from "../../shared/username-fonts";
 
@@ -1336,6 +1337,26 @@ export const discordPresence = pgTable("discord_presence", {
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
   lastPlayAt: integer("last_play_at"),
+  createdAt: integer("created_at").notNull(),
+});
+
+// A row means the listener asked for their listening to show on their Discord profile. Tokens are sealed (server/seal.ts).
+export const discordRichPresence = pgTable("discord_rich_presence", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  discordId: text("discord_id").notNull(),
+  name: text().default("").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  on: boolean().default(true).notNull(),
+  image: text().$type<PresenceImage>().default("album").notNull(),
+  details: text().$type<PresenceDetails>().default("trackArtist").notNull(),
+  layout: text().$type<PresenceLayout>().default("stacked").notNull(),
+  branding: boolean().default(true).notNull(),
+  // set when Discord refuses the link; updates stop until the listener connects again
+  broken: boolean().default(false).notNull(),
   createdAt: integer("created_at").notNull(),
 });
 

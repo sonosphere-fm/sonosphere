@@ -9,6 +9,7 @@ const FATAL = new Set([4004, 4010, 4011, 4012, 4013, 4014]);
 export type Activity = {
   type: number;
   name: string;
+  application_id?: string;
   details?: string;
   state?: string;
   timestamps?: { start?: number; end?: number };
