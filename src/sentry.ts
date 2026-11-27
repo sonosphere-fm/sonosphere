@@ -30,8 +30,8 @@ if (!Sentry.getClient()) {
     tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
-    // Brave and Firefox on iOS inject user scripts under this namespace
-    ignoreErrors: [/__firefox__/],
+    // Injected by browsers, not our code: iOS Brave/Firefox user scripts and in-browser crypto wallets
+    ignoreErrors: [/__firefox__/, /window\.ethereum/],
     beforeSend(event, hint) {
       const env = import.meta.env?.VITE_SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development";
       if (env !== "production") return null;
