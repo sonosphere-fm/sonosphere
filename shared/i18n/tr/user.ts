@@ -277,6 +277,10 @@ export default {
   inviteRoles: "Discord hesabını bağla ve sunucumuza katılarak orada roller al.",
   linkedRole: "Bağlı hesap",
   inviteTier: "{count}+ davet",
+  invitePerks: "Ödüller",
+  invitePerksIntro:
+    "Her seviye adının yanına bir rozet, kuşanabileceğin kozmetikler ve Discord sunucumuzda buna uygun rolü ekler.",
+  earlyAccess: "Discord'da beta rolü",
   invitedYou: "{name} seni Sonosphere'e davet etti",
   invitedYouBody:
     "Sonosphere ne dinlediğinin kaydını tutar, listelerini oluşturur ve yeni müzikler ile benzer zevkte insanlar bulmana yardım eder.",

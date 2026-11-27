@@ -3,7 +3,7 @@ import { exclusive } from "../kv";
 import { inviteCounts } from "../invites/repo";
 import * as repo from "./repo";
 import { API, GUILD_ID, TOKEN } from "./service";
-import { INVITE_TIERS, LINKED_ROLE } from "../../shared/invites";
+import { INVITE_TIERS, LINKED_ROLE, tierFor } from "../../shared/invites";
 
 type Member = { user: { id: string; bot?: boolean }; roles: string[] };
 
@@ -25,10 +25,9 @@ async function call(method: string, path: string, body?: unknown): Promise<Respo
 }
 
 // Roles are kept by id, so staff can rename or recolour them in Discord; a deleted one is made again.
-async function ensureRoles(): Promise<repo.RoleIds> {
-  const existing = new Set(
-    ((await (await call("GET", `/guilds/${GUILD_ID}/roles`)).json()) as { id: string }[]).map((r) => r.id)
-  );
+async function ensureRoles(): Promise<repo.RoleIds & { beta?: string }> {
+  const roles = (await (await call("GET", `/guilds/${GUILD_ID}/roles`)).json()) as { id: string; name: string }[];
+  const existing = new Set(roles.map((r) => r.id));
   const stored = await repo.roleIds();
   const make = async (id: string | undefined, { role: name, color }: { role: string; color: string }) => {
     if (id && existing.has(id)) return id;
@@ -46,7 +45,7 @@ async function ensureRoles(): Promise<repo.RoleIds> {
   }
   const ids = { linked: await make(stored?.linked, LINKED_ROLE), tiers };
   if (JSON.stringify(ids) !== JSON.stringify(stored)) await repo.saveRoleIds(ids);
-  return ids;
+  return { ...ids, beta: roles.find((r) => r.name.toLowerCase() === "beta")?.id };
 }
 
 async function members(): Promise<Member[]> {
@@ -62,13 +61,6 @@ async function members(): Promise<Member[]> {
   }
 }
 
-function wanted(ids: repo.RoleIds, userId: number | undefined, counts: Map<number, number>): Set<string> {
-  if (!userId) return new Set();
-  const invited = counts.get(userId) ?? 0;
-  const tier = INVITE_TIERS.filter((t) => invited >= t.invited).length - 1;
-  return new Set(tier < 0 ? [ids.linked] : [ids.linked, ids.tiers[tier]!]);
-}
-
 export async function syncRoles() {
   if (!TOKEN) return;
   await exclusive("discord-roles", 5 * 60_000, async () => {
@@ -77,12 +69,17 @@ export async function syncRoles() {
     const [linked, counts, everyone] = await Promise.all([repo.linkedAccounts(), inviteCounts(), members()]);
     for (const m of everyone) {
       if (m.user.bot) continue;
-      const want = wanted(ids, linked.get(m.user.id), counts);
+      const userId = linked.get(m.user.id);
+      const tier = userId ? tierFor(counts.get(userId) ?? 0) : -1;
+      const want = new Set(!userId ? [] : tier < 0 ? [ids.linked] : [ids.linked, ids.tiers[tier]!]);
       for (const role of managed) {
         const path = `/guilds/${GUILD_ID}/members/${m.user.id}/roles/${role}`;
         if (want.has(role) && !m.roles.includes(role)) await call("PUT", path);
         else if (!want.has(role) && m.roles.includes(role)) await call("DELETE", path);
       }
+      // Staff hand out beta by hand too, so the sync only ever adds it.
+      if (ids.beta && INVITE_TIERS[tier]?.earlyAccess && !m.roles.includes(ids.beta))
+        await call("PUT", `/guilds/${GUILD_ID}/members/${m.user.id}/roles/${ids.beta}`);
     }
   });
 }

@@ -330,6 +330,10 @@ export default {
   inviteRoles: "Połącz Discorda i dołącz do naszego serwera, aby dostać tam role.",
   linkedRole: "Połączone konto",
   inviteTier: "Zaproszenia: {count}+",
+  invitePerks: "Nagrody",
+  invitePerksIntro:
+    "Każdy poziom dodaje odznakę przy nazwie, kosmetyki do założenia i odpowiednią rolę na naszym Discordzie.",
+  earlyAccess: "rola beta na Discordzie",
   invitedYou: "{name} zaprasza Cię do Sonosphere",
   invitedYouBody:
     "Sonosphere zapisuje, czego słuchasz, tworzy Twoje listy przebojów i pomaga znaleźć nową muzykę oraz ludzi o podobnym guście.",

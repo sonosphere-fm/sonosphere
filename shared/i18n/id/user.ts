@@ -271,6 +271,10 @@ export default {
   inviteRoles: "Tautkan Discord dan gabung ke server kami untuk mendapat peran di sana.",
   linkedRole: "Akun tertaut",
   inviteTier: "{count}+ undangan",
+  invitePerks: "Hadiah",
+  invitePerksIntro:
+    "Setiap tingkat menambahkan lencana di samping namamu, kosmetik untuk dipakai, dan peran yang sesuai di Discord kami.",
+  earlyAccess: "peran beta di Discord",
   invitedYou: "{name} mengundangmu ke Sonosphere",
   invitedYouBody:
     "Sonosphere mencatat apa yang kamu dengarkan, membuat tangga lagumu, dan membantumu menemukan musik baru serta orang dengan selera serupa.",

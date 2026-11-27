@@ -266,6 +266,9 @@ export default {
   inviteRoles: "Discord를 연결하고 서버에 참여하면 역할을 받을 수 있어요.",
   linkedRole: "연결된 계정",
   inviteTier: "{count}명 이상 초대",
+  invitePerks: "보상",
+  invitePerksIntro: "단계마다 이름 옆 배지, 장착할 수 있는 꾸미기 아이템, Discord의 해당 역할이 추가됩니다.",
+  earlyAccess: "Discord beta 역할",
   invitedYou: "{name}님이 Sonosphere에 초대했어요",
   invitedYouBody:
     "Sonosphere는 내가 듣는 음악을 기록하고, 차트를 만들고, 새로운 음악과 취향이 비슷한 사람을 찾도록 도와줍니다.",

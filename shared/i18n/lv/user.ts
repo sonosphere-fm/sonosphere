@@ -301,6 +301,10 @@ export default {
   inviteRoles: "Piesaisti savu Discord un pievienojies mūsu serverim, lai tur saņemtu lomas.",
   linkedRole: "Piesaistīts konts",
   inviteTier: "{count}+ ielūgumi",
+  invitePerks: "Balvas",
+  invitePerksIntro:
+    "Katrs līmenis pievieno nozīmīti blakus tavam vārdam, kosmētiku, ko uzlikt, un atbilstošu lomu mūsu Discord.",
+  earlyAccess: "beta loma Discord",
   invitedYou: "{name} tevi uzaicināja uz Sonosphere",
   invitedYouBody:
     "Sonosphere pieraksta, ko tu klausies, veido tavus topus un palīdz atrast jaunu mūziku un cilvēkus ar līdzīgu gaumi.",

@@ -267,6 +267,9 @@ export default {
   inviteRoles: "Discord を連携してサーバーに参加すると、ロールがもらえます。",
   linkedRole: "連携済みアカウント",
   inviteTier: "{count} 人以上招待",
+  invitePerks: "特典",
+  invitePerksIntro: "ランクごとに、名前の横のバッジ、装備できるコスメ、Discord の対応ロールがもらえます。",
+  earlyAccess: "Discord の beta ロール",
   invitedYou: "{name} さんから Sonosphere への招待が届きました",
   invitedYouBody:
     "Sonosphere はあなたが聴いた音楽を記録し、チャートを作成し、新しい音楽や好みの近い人との出会いを手伝います。",

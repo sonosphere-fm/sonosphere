@@ -276,6 +276,10 @@ export default {
   inviteRoles: "Vincule seu Discord e entre no nosso servidor para ganhar cargos lá.",
   linkedRole: "Conta vinculada",
   inviteTier: "{count}+ convites",
+  invitePerks: "Recompensas",
+  invitePerksIntro:
+    "Cada nível adiciona um selo ao lado do seu nome, cosméticos para equipar e o cargo correspondente no nosso Discord.",
+  earlyAccess: "cargo beta no Discord",
   invitedYou: "{name} convidou você para o Sonosphere",
   invitedYouBody:
     "O Sonosphere registra o que você ouve, monta suas paradas e ajuda você a encontrar músicas novas e pessoas com gosto parecido.",

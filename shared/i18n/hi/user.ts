@@ -269,6 +269,9 @@ export default {
   inviteRoles: "अपना Discord जोड़ें और हमारे सर्वर से जुड़ें ताकि वहाँ रोल मिल सकें।",
   linkedRole: "जुड़ा हुआ अकाउंट",
   inviteTier: "{count}+ आमंत्रण",
+  invitePerks: "इनाम",
+  invitePerksIntro: "हर स्तर आपके नाम के पास एक बैज, लगाने के लिए कॉस्मेटिक्स और हमारे Discord में उससे मिलता रोल जोड़ता है।",
+  earlyAccess: "Discord में beta रोल",
   invitedYou: "{name} ने आपको Sonosphere पर आमंत्रित किया है",
   invitedYouBody:
     "Sonosphere आपकी सुनी हुई चीज़ों का रिकॉर्ड रखता है, आपके चार्ट बनाता है और नया संगीत तथा मिलती-जुलती पसंद वाले लोग खोजने में मदद करता है।",

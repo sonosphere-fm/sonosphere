@@ -280,6 +280,10 @@ export default {
   inviteRoles: "Koppla ditt Discord och gå med i vår server för att få roller där.",
   linkedRole: "Kopplat konto",
   inviteTier: "{count}+ inbjudningar",
+  invitePerks: "Belöningar",
+  invitePerksIntro:
+    "Varje nivå ger ett märke bredvid ditt namn, kosmetika att använda och motsvarande roll i vår Discord.",
+  earlyAccess: "beta-roll i Discord",
   invitedYou: "{name} har bjudit in dig till Sonosphere",
   invitedYouBody:
     "Sonosphere loggar det du lyssnar på, bygger dina topplistor och hjälper dig hitta ny musik och folk med liknande smak.",

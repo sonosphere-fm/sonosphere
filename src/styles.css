@@ -6433,13 +6433,19 @@
   .invite-roles {
     margin-block: 4px 16px;
   }
-  .invite-roles li {
+  .invite-roles .role-head {
     display: flex;
     align-items: center;
     gap: 10px;
   }
   .invite-roles .muted {
     margin-inline-start: auto;
+    font-size: 14px;
+  }
+  .role-perks {
+    margin: 2px 0 0;
+    margin-inline-start: 22px;
+    color: var(--ink-2);
     font-size: 14px;
   }
   .role-swatch {

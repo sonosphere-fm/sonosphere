@@ -59,3 +59,12 @@ export async function inviteCounts(): Promise<Map<number, number>> {
   const rows = await db.select({ inviterId: t.inviterId, n: t.n }).from(t);
   return new Map(rows.map((r) => [r.inviterId, r.n]));
 }
+
+export async function inviterNames(): Promise<{ name: string; invited: number }[]> {
+  const t = tallies();
+  return db
+    .select({ name: users.username, invited: t.n })
+    .from(t)
+    .innerJoin(users, eq(users.id, t.inviterId))
+    .where(and(eq(users.banned, false), eq(users.suspended, false)));
+}

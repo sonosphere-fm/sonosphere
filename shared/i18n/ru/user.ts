@@ -329,6 +329,10 @@ export default {
   inviteRoles: "Привяжите Discord и вступите на наш сервер, чтобы получить там роли.",
   linkedRole: "Привязанный аккаунт",
   inviteTier: "Приглашений: {count}+",
+  invitePerks: "Награды",
+  invitePerksIntro:
+    "Каждый уровень даёт значок рядом с вашим именем, косметику и соответствующую роль в нашем Discord.",
+  earlyAccess: "роль beta в Discord",
   invitedYou: "{name} приглашает вас в Sonosphere",
   invitedYouBody:
     "Sonosphere ведёт журнал того, что вы слушаете, строит ваши чарты и помогает находить новую музыку и людей с похожим вкусом.",

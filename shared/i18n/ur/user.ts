@@ -268,6 +268,10 @@ export default {
   inviteRoles: "اپنا Discord منسلک کریں اور ہمارے سرور میں شامل ہو کر وہاں رولز حاصل کریں۔",
   linkedRole: "منسلک اکاؤنٹ",
   inviteTier: "{count}+ دعوتیں",
+  invitePerks: "انعامات",
+  invitePerksIntro:
+    "ہر درجہ آپ کے نام کے ساتھ ایک بیج، لگانے کے لیے کاسمیٹکس اور ہمارے Discord میں اس کا رول شامل کرتا ہے۔",
+  earlyAccess: "Discord میں beta رول",
   invitedYou: "{name} نے آپ کو Sonosphere پر مدعو کیا ہے",
   invitedYouBody:
     "Sonosphere آپ کی سنی ہوئی موسیقی کا ریکارڈ رکھتا ہے، آپ کے چارٹس بناتا ہے اور نئی موسیقی اور ملتے جلتے ذوق والے لوگ ڈھونڈنے میں مدد کرتا ہے۔",

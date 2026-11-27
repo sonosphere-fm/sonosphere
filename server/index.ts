@@ -26,6 +26,7 @@ import { startSpotify } from "./spotify/service";
 import { DISCORD_INVITE } from "../shared/discord";
 import { startDiscord } from "./discord/service";
 import { syncRoles } from "./discord/roles";
+import { syncInviteCosmetics } from "./invites/perks";
 import { startPresence } from "./presence/service";
 import { startEventSync } from "./events/sync";
 import { startImports } from "./listening/imports";
@@ -164,6 +165,7 @@ const tidy = () => {
       reviewProbation(),
       dropOldIps(),
       syncRoles(),
+      syncInviteCosmetics(),
     ]);
   exclusive("tidy", 5 * 60_000, jobs).catch((e) => {
     console.error(e);

@@ -6,6 +6,7 @@ import { Async, Avatar, Empty, Section } from "../ui/base";
 import { CopyField } from "../ui/copy-field";
 import { oauthStart } from "../ui/oauth";
 import { Username } from "../ui/username";
+import { COSMETICS } from "../../shared/cosmetics";
 import { DISCORD_INVITE, type DiscordStatus } from "../../shared/discord";
 import { INVITE_TIERS, LINKED_ROLE, type InviteBoard, type InviteFrom, type InviteLeader } from "../../shared/invites";
 
@@ -32,6 +33,7 @@ export function Invites() {
               </Section>
             </div>
             <aside className="side">
+              <Rewards />
               <DiscordRoles signedIn={!!d.mine} />
             </aside>
           </div>
@@ -53,6 +55,26 @@ export function YourInvites({ link, invited }: { link: string; invited: number }
   );
 }
 
+function Rewards() {
+  return (
+    <Section title={t("user.invitePerks")}>
+      <p>{t("user.invitePerksIntro")}</p>
+      <ul className="plain invite-roles">
+        {INVITE_TIERS.map((tier) => (
+          <Role key={tier.role} role={tier} need={t("user.inviteTier", { count: tier.invited })}>
+            {[
+              ...tier.cosmetics.map((id) => COSMETICS.find((c) => c.id === id)?.name),
+              tier.earlyAccess && t("user.earlyAccess"),
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          </Role>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
 function DiscordRoles({ signedIn }: { signedIn: boolean }) {
   const q = useApi<DiscordStatus>("/discord");
   const d = q.data?.enabled ? q.data : null;
@@ -61,9 +83,6 @@ function DiscordRoles({ signedIn }: { signedIn: boolean }) {
       <p>{t("user.inviteRoles")}</p>
       <ul className="plain invite-roles">
         <Role role={LINKED_ROLE} need={t("user.linkedRole")} />
-        {INVITE_TIERS.map((tier) => (
-          <Role key={tier.role} role={tier} need={t("user.inviteTier", { count: tier.invited })} />
-        ))}
       </ul>
       {signedIn && d && !d.linked && (
         <Button kind="btn" href={oauthStart("discord", "link", "/invites")}>
@@ -79,12 +98,15 @@ function DiscordRoles({ signedIn }: { signedIn: boolean }) {
   );
 }
 
-function Role({ role, need }: { role: { role: string; color: string }; need: string }) {
+function Role({ role, need, children }: { role: { role: string; color: string }; need: string; children?: string }) {
   return (
     <li>
-      <i className="role-swatch" style={{ background: role.color }} />
-      <b>{role.role}</b>
-      <span className="muted">{need}</span>
+      <div className="role-head">
+        <i className="role-swatch" style={{ background: role.color }} />
+        <b>{role.role}</b>
+        <span className="muted">{need}</span>
+      </div>
+      {children && <p className="role-perks">{children}</p>}
     </li>
   );
 }

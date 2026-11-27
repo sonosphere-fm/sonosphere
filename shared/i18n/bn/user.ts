@@ -266,6 +266,10 @@ export default {
   inviteRoles: "আপনার Discord যুক্ত করুন এবং আমাদের সার্ভারে যোগ দিয়ে সেখানে রোল পান।",
   linkedRole: "যুক্ত অ্যাকাউন্ট",
   inviteTier: "{count}+ আমন্ত্রণ",
+  invitePerks: "পুরস্কার",
+  invitePerksIntro:
+    "প্রতিটি স্তরে আপনার নামের পাশে একটি ব্যাজ, ব্যবহারের জন্য কসমেটিকস এবং আমাদের Discord-এ মিল রেখে একটি রোল যোগ হয়।",
+  earlyAccess: "Discord-এ beta রোল",
   invitedYou: "{name} আপনাকে Sonosphere-এ আমন্ত্রণ জানিয়েছেন",
   invitedYouBody: "Sonosphere আপনি যা শোনেন তার হিসাব রাখে, আপনার চার্ট তৈরি করে এবং নতুন গান ও একই রুচির মানুষ খুঁজে পেতে সাহায্য করে।",
 } satisfies Translation<typeof en>;

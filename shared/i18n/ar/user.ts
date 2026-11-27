@@ -393,6 +393,9 @@ export default {
   inviteRoles: "اربط حسابك على Discord وانضم إلى خادمنا لتحصل على أدوار هناك.",
   linkedRole: "حساب مربوط",
   inviteTier: "{count}+ دعوات",
+  invitePerks: "المكافآت",
+  invitePerksIntro: "كل مستوى يضيف شارة بجانب اسمك ومظاهر يمكنك ارتداؤها والدور المطابق في Discord الخاص بنا.",
+  earlyAccess: "دور beta في Discord",
   invitedYou: "{name} يدعوك إلى Sonosphere",
   invitedYouBody: "يسجّل Sonosphere ما تستمع إليه، ويبني قوائمك، ويساعدك على اكتشاف موسيقى جديدة وأشخاص بذوق مشابه.",
 } satisfies Translation<typeof en>;

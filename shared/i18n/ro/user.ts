@@ -301,6 +301,10 @@ export default {
   inviteRoles: "Conectează-ți Discordul și intră pe serverul nostru ca să primești roluri acolo.",
   linkedRole: "Cont conectat",
   inviteTier: "{count}+ invitații",
+  invitePerks: "Recompense",
+  invitePerksIntro:
+    "Fiecare nivel adaugă o insignă lângă numele tău, cosmetice de echipat și rolul potrivit pe Discordul nostru.",
+  earlyAccess: "rol beta pe Discord",
   invitedYou: "{name} te-a invitat pe Sonosphere",
   invitedYouBody:
     "Sonosphere ține evidența a ceea ce asculți, îți face topurile și te ajută să descoperi muzică nouă și oameni cu gusturi asemănătoare.",

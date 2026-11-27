@@ -264,6 +264,10 @@ export default {
   inviteRoles: "Link your Discord and join our server to get roles there.",
   linkedRole: "Linked account",
   inviteTier: "{count}+ invites",
+  invitePerks: "Rewards",
+  invitePerksIntro:
+    "Every tier adds a badge next to your name, cosmetics to equip and the matching role in our Discord.",
+  earlyAccess: "beta role in Discord",
   invitedYou: "{name} invited you to Sonosphere",
   invitedYouBody:
     "Sonosphere keeps a log of what you listen to, builds your charts and helps you find new music and people with similar taste.",

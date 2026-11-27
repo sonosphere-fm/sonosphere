@@ -280,6 +280,9 @@ export default {
   inviteRoles: "קשרו את ה-Discord שלכם והצטרפו לשרת שלנו כדי לקבל שם תפקידים.",
   linkedRole: "חשבון מקושר",
   inviteTier: "{count}+ הזמנות",
+  invitePerks: "פרסים",
+  invitePerksIntro: "כל דרגה מוסיפה תג ליד השם שלך, קוסמטיקה להצטייד בה ואת התפקיד המתאים ב-Discord שלנו.",
+  earlyAccess: "תפקיד beta ב-Discord",
   invitedYou: "{name} הזמין אותך ל-Sonosphere",
   invitedYouBody:
     "Sonosphere מתעד את מה שאתם מאזינים לו, בונה את המצעדים שלכם ועוזר למצוא מוזיקה חדשה ואנשים עם טעם דומה.",

@@ -3,6 +3,7 @@ import { COSMETICS, COSMETIC_SLOTS, type CosmeticsState } from "../../shared/cos
 import { db, transact } from "../db/client";
 import { cosmetics, userCosmetics, userEquipped, users } from "../db/schema";
 import { auditTx } from "../site/audit";
+import { seedCatalog } from "./catalog";
 import { adminOnly, need } from "../guards";
 import { bad, missing, Router } from "../http";
 import { now } from "../util";
@@ -92,10 +93,7 @@ router.post("/api/admin/cosmetics", async (c) => {
     .trim()
     .slice(0, 500);
   await transact(async (tx) => {
-    await tx
-      .insert(cosmetics)
-      .values(COSMETICS.map((x) => ({ ...x, variants: JSON.stringify(x.colors) })))
-      .onConflictDoNothing();
+    await seedCatalog(tx);
     await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for("update");
     const owned = await tx.select().from(userCosmetics).where(eq(userCosmetics.userId, user.id));
     const ownedIds = new Set(owned.map((item) => item.cosmeticId));

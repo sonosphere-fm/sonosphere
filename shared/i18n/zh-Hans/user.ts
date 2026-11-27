@@ -261,6 +261,9 @@ export default {
   inviteRoles: "关联 Discord 并加入我们的服务器即可获得身份组。",
   linkedRole: "已关联账号",
   inviteTier: "邀请 {count}+ 人",
+  invitePerks: "奖励",
+  invitePerksIntro: "每个等级都会在你的名字旁加上徽章、可装备的外观，以及我们 Discord 中对应的身份组。",
+  earlyAccess: "Discord 的 beta 身份组",
   invitedYou: "{name} 邀请你加入 Sonosphere",
   invitedYouBody: "Sonosphere 记录你听过的音乐，生成你的排行榜，帮你发现新音乐和品味相近的人。",
 } satisfies Translation<typeof en>;

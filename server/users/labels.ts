@@ -4,6 +4,8 @@ import { userLabels, userLabelAssignments, users } from "../db/schema";
 import { adminOnly } from "../guards";
 import { bad, missing, Router } from "../http";
 import { audit } from "../site/audit";
+import { inviterNames } from "../invites/repo";
+import { INVITE_TIERS, tierFor } from "../../shared/invites";
 import { LABEL_ICONS, type LabelDirectory, type UserLabel } from "../../shared/user-labels";
 
 export const router = new Router({ jsonOnly: true });
@@ -19,7 +21,16 @@ async function directory(includeBanned = false): Promise<LabelDirectory> {
   for (const row of assignments) (directory[row.name.toLowerCase()] ??= []).push(row.labelId);
   return { labels: labels as UserLabel[], users: directory };
 }
-router.get<LabelDirectory>("/api/user-labels", () => directory());
+// Invite tiers show as labels too, after any staff ones.
+router.get<LabelDirectory>("/api/user-labels", async () => {
+  const [base, inviters] = await Promise.all([directory(), inviterNames()]);
+  const tiers = INVITE_TIERS.map((t, i) => ({ id: -1 - i, text: t.role, icon: "medal" as const, color: t.color }));
+  for (const { name, invited } of inviters) {
+    const tier = tierFor(invited);
+    if (tier >= 0) (base.users[name.toLowerCase()] ??= []).push(tiers[tier]!.id);
+  }
+  return { labels: [...base.labels, ...tiers], users: base.users };
+});
 router.get<LabelDirectory>("/api/admin/user-labels", (c) => {
   adminOnly(c);
   return directory(true);
