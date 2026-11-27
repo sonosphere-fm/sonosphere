@@ -52,7 +52,7 @@ const SOLID: Record<string, string> = {
   charcoal: "#393640",
   cream: "#efe4c9",
   red: "#de6a40",
-  cobalt: "#2438d6",
+  cobalt: "#4a63c9",
   mustard: "#d6a328",
   olive: "#7e8b4d",
   oak: "#8a6a3f",
@@ -218,23 +218,25 @@ function Horns({ color, uid }: { color: string; uid: string }) {
 function Halo({ color }: { color: string }) {
   const c = HALO[color] ?? HALO.gold;
   return (
-    <g className="cos-halo" style={{ "--glow": c } as CSSProperties}>
-      <ellipse cx="50" cy="-7" rx="25" ry="6.5" fill="none" stroke="#2a2130" strokeOpacity="0.35" strokeWidth="6.8" />
-      <ellipse cx="50" cy="-7" rx="25" ry="6.5" fill="none" stroke={c} strokeWidth="4.6" />
-      <path
-        d="M31 -9C36 -13 44 -14.2 50 -14.2"
-        fill="none"
-        stroke="#fff"
-        strokeOpacity="0.55"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
+    <g transform="translate(0 9)">
+      <g className="cos-halo" style={{ "--glow": c } as CSSProperties}>
+        <ellipse cx="50" cy="-7" rx="25" ry="6.5" fill="none" stroke="#2a2130" strokeOpacity="0.35" strokeWidth="6.8" />
+        <ellipse cx="50" cy="-7" rx="25" ry="6.5" fill="none" stroke={c} strokeWidth="4.6" />
+        <path
+          d="M31 -9C36 -13 44 -14.2 50 -14.2"
+          fill="none"
+          stroke="#fff"
+          strokeOpacity="0.55"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+      </g>
     </g>
   );
 }
 
 function Headphones({ color }: { color: string }) {
-  const t = PHONES[color] ?? PHONES.black;
+  const t = PHONES[color] ?? PHONES.white;
   const band = "M5 47C5 8 25 -9 50 -9C75 -9 95 8 95 47";
   const cup = (side: "l" | "r") => (
     <g transform={side === "r" ? MIRROR : undefined}>
@@ -279,9 +281,9 @@ function Crown({ uid }: { uid: string }) {
 }
 
 function Beret({ color }: { color: string }) {
-  const c = SOLID[color] ?? SOLID.black;
+  const c = SOLID[color] ?? SOLID.red;
   return (
-    <g transform="rotate(-6 50 40)">
+    <g transform="translate(0 -18) rotate(-6 50 40)">
       <g className="cos-hat">
         <path d="M18 40C18 27 32 20 50 20C68 20 82 27 82 40C82 48 68 52 50 52C32 52 18 48 18 40Z" fill={c} {...LINE} />
         <path d="M20 40C24 47 35 51 50 51C65 51 76 47 80 40" fill="none" stroke="#fff" strokeOpacity="0.18" />
@@ -293,30 +295,34 @@ function Beret({ color }: { color: string }) {
 }
 
 function Beanie({ color }: { color: string }) {
-  const c = SOLID[color] ?? SOLID.charcoal;
+  const c = SOLID[color] ?? SOLID.rust;
   return (
-    <g className="cos-hat">
-      <path d="M20 46C20 28 32 17 50 17C68 17 80 28 80 46Z" fill={c} {...LINE} />
-      <path d="M20 43C30 39 70 39 80 43L80 52C70 48 30 48 20 52Z" fill={c} {...LINE} />
-      <path d="M24 44V51M32 42V50M40 41V49M50 40V48M60 41V49M68 42V50M76 44V51" stroke="#fff" strokeOpacity="0.2" />
-      <path d="M50 17V8" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
-      <circle cx="50" cy="7" r="4" fill={c} {...LINE} />
+    <g transform="translate(0 -20)">
+      <g className="cos-hat">
+        <path d="M20 46C20 28 32 17 50 17C68 17 80 28 80 46Z" fill={c} {...LINE} />
+        <path d="M20 43C30 39 70 39 80 43L80 52C70 48 30 48 20 52Z" fill={c} {...LINE} />
+        <path d="M24 44V51M32 42V50M40 41V49M50 40V48M60 41V49M68 42V50M76 44V51" stroke="#fff" strokeOpacity="0.2" />
+        <path d="M50 17V8" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="50" cy="7" r="4" fill={c} {...LINE} />
+      </g>
     </g>
   );
 }
 
 function Cap({ color }: { color: string }) {
-  const c = SOLID[color] ?? SOLID.black;
+  const c = SOLID[color] ?? SOLID.cream;
   return (
-    <g className="cos-hat">
-      <path d="M22 46C22 30 33 20 50 20C67 20 78 30 78 46Z" fill={c} {...LINE} />
-      <path
-        d="M24 45C40 41 62 41 79 45C88 46 93 51 91 56C82 53 72 51 62 52L34 52C24 51 14 54 8 56C7 51 14 46 24 45Z"
-        fill={c}
-        {...LINE}
-      />
-      <path d="M24 45C38 42 62 42 79 45" fill="none" stroke="#fff" strokeOpacity="0.16" />
-      <circle cx="50" cy="19" r="2.6" fill={c} {...LINE} />
+    <g transform="translate(0 -20)">
+      <g className="cos-hat">
+        <path d="M22 46C22 30 33 20 50 20C67 20 78 30 78 46Z" fill={c} {...LINE} />
+        <path
+          d="M24 45C40 41 62 41 79 45C88 46 93 51 91 56C82 53 72 51 62 52L34 52C24 51 14 54 8 56C7 51 14 46 24 45Z"
+          fill={c}
+          {...LINE}
+        />
+        <path d="M24 45C38 42 62 42 79 45" fill="none" stroke="#fff" strokeOpacity="0.16" />
+        <circle cx="50" cy="19" r="2.6" fill={c} {...LINE} />
+      </g>
     </g>
   );
 }
@@ -413,7 +419,7 @@ function Antennae({ color }: { color: string }) {
 }
 
 function Scarf({ color }: { color: string }) {
-  const c = SOLID[color] ?? SOLID.cobalt;
+  const c = SOLID[color] ?? SOLID.rust;
   return (
     <g>
       <path d="M18 77C31 71 69 71 82 77L78 90C64 84 36 84 22 90Z" fill={c} {...LINE} />
@@ -431,7 +437,7 @@ function Scarf({ color }: { color: string }) {
 }
 
 function BowTie({ color }: { color: string }) {
-  const c = SOLID[color] ?? SOLID.black;
+  const c = SOLID[color] ?? SOLID.crimson;
   return (
     <g className="cos-bowtie">
       <path d="M50 84L35 75L35 93Z" fill={c} {...LINE} />

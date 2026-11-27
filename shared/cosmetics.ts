@@ -20,7 +20,7 @@ const item = (id: string, name: string, slot: CosmeticSlot, colors = "", descrip
   colors: colors.split(",").filter(Boolean),
 });
 export const COSMETICS: Cosmetic[] = [
-  item("ears.cat", "Cat Ears", "accessory", "black,white,orange,grey,calico,pink"),
+  item("ears.cat", "Cat Ears", "accessory", "orange,black,white,grey,calico,pink"),
   item("ears.dog", "Dog Ears", "accessory", "brown,golden,black,white,spotted"),
   item("ears.bunny", "Bunny Ears", "accessory", "white,pink,brown"),
   item("ears.fox", "Fox Ears", "accessory", "red,arctic,silver"),
@@ -28,11 +28,11 @@ export const COSMETICS: Cosmetic[] = [
   item("ears.bear", "Bear Ears", "accessory", "brown,black,panda,polar"),
   item("acc.halo", "Halo", "accessory", "gold,silver,pink"),
   item("acc.horns", "Little Horns", "accessory", "red,purple,black"),
-  item("acc.headphones", "Headphones", "accessory", "black,white,neon"),
+  item("acc.headphones", "Headphones", "accessory", "white,black,neon"),
   item("acc.crown", "Tiny Crown", "accessory", "gold"),
-  item("acc.beret", "Beret", "accessory", "black,cream,red,cobalt,mustard", "A soft beret tilted over one side."),
-  item("acc.beanie", "Beanie", "accessory", "charcoal,cream,rust,teal", "A knit cuff with a folded brim and pom."),
-  item("acc.cap", "Curved Cap", "accessory", "black,cobalt,cream,olive", "A low cap with a short curved brim."),
+  item("acc.beret", "Beret", "accessory", "red,black,cream,cobalt,mustard", "A soft beret tilted over one side."),
+  item("acc.beanie", "Beanie", "accessory", "rust,charcoal,cream,teal", "A knit cuff with a folded brim and pom."),
+  item("acc.cap", "Curved Cap", "accessory", "cream,black,cobalt,olive", "A low cap with a short curved brim."),
   item(
     "acc.flowercrown",
     "Flower Crown",
@@ -42,8 +42,8 @@ export const COSMETICS: Cosmetic[] = [
   ),
   item("acc.antlers", "Antlers", "accessory", "oak,birch,velvet", "Two branching antlers above the rim."),
   item("acc.antenna", "Antennae", "accessory", "lime,pink,cobalt", "Two round-tipped stalks with a spring."),
-  item("acc.scarf", "Scarf", "accessory", "cobalt,mustard,plaid,rust", "A folded scarf with a short hanging tail."),
-  item("acc.bowtie", "Bow Tie", "accessory", "black,crimson,cobalt,gold", "A small bow at the bottom of the avatar."),
+  item("acc.scarf", "Scarf", "accessory", "rust,mustard,plaid,cobalt", "A folded scarf with a short hanging tail."),
+  item("acc.bowtie", "Bow Tie", "accessory", "crimson,black,cobalt,gold", "A small bow at the bottom of the avatar."),
   item("acc.earring", "Hoop Earring", "accessory", "gold,silver,black", "A single hoop at the lower rim."),
   item("acc.pin", "Enamel Pin", "accessory", "gold,silver,cobalt,red", "A music-note pin on the lower rim."),
   ...[

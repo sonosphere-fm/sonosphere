@@ -77,7 +77,7 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
   const current = view.equipped.find((e) => e.slot === slot);
 
   return (
-    <div className="form cos-settings">
+    <div className="cos-settings">
       <div className="cos-preview profile-theme">
         <CosmeticAvatar name={me!.username} image={me!.image} size={96} appearance={appearance} />
         <div className="hero-name">
@@ -128,22 +128,49 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
           })}
         </nav>
 
-        <div id="cos-panel" role="tabpanel" aria-labelledby={`cos-tab-${slot}`} className="cos-panel">
+        <div id="cos-panel" role="tabpanel" aria-labelledby={`cos-tab-${slot}`} className="cos-grid">
           {owned.length === 0 && <p className="muted">{t("settings.cosmeticSlotEmpty")}</p>}
+          {owned.length > 0 && (
+            <div className="cos-item" data-equipped={current ? undefined : ""}>
+              <button
+                type="button"
+                className="cos-item-main"
+                aria-pressed={!current}
+                disabled={act.busy}
+                onClick={() => current && save({ slot, id: null })}
+              >
+                <b>{t("settings.none")}</b>
+              </button>
+            </div>
+          )}
           {owned.map((c) => {
             const eq = view.equipped.find((e) => e.id === c.id);
+            const sample: Equipped = { slot: c.slot, id: c.id, options: { color: eq?.options.color ?? c.colors[0] } };
             return (
-              <div key={c.id} className="cos-owned-item" data-equipped={eq ? "" : undefined}>
-                <Button
+              <div key={c.id} className="cos-item" data-equipped={eq ? "" : undefined}>
+                <button
                   type="button"
-                  kind={eq ? "btn" : "btn ghost"}
+                  className="cos-item-main"
                   aria-pressed={!!eq}
                   disabled={act.busy}
                   onClick={() => !eq && save({ slot, id: c.id, color: c.colors[0] })}
                 >
-                  {c.name}
-                </Button>
-                {eq && c.colors.length > 0 && (
+                  {(c.slot === "accessory" || c.slot === "frame") && (
+                    <CosmeticAvatar
+                      name={me!.username}
+                      image={me!.image}
+                      size={64}
+                      appearance={{ cosmetics: [sample], showCosmetics: true }}
+                    />
+                  )}
+                  {c.slot === "name_fx" && (
+                    <span className="cos-item-sample hero-name">
+                      <Username user={{ ...me!, cosmetics: [sample] }} />
+                    </span>
+                  )}
+                  <b>{c.name}</b>
+                </button>
+                {eq && c.colors.length > 1 && (
                   <div
                     className="cos-swatches"
                     role="group"
@@ -171,11 +198,6 @@ function Editor({ d, reload }: { d: CosmeticsState; reload: () => unknown }) {
               </div>
             );
           })}
-          {current && (
-            <Button type="button" kind="btn ghost" disabled={act.busy} onClick={() => save({ slot, id: null })}>
-              {t("settings.remove")}
-            </Button>
-          )}
         </div>
       </div>
       {act.note}

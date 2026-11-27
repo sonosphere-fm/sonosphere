@@ -206,7 +206,6 @@ export function UserPage({ tab }: { tab: Tab }) {
               actions={<ProfileActions u={u} mine={mine} onChange={q.reload} />}
             />
             <div className="wrap page">
-              <FeedLinks name={u.username} hidden={u.hidden || u.locked} locked={u.locked} />
               {u.blocked && (
                 <p className="notice">
                   {tx("user.blockedNotice", { name: <Username user={u} /> })}{" "}
@@ -269,6 +268,7 @@ export function UserPage({ tab }: { tab: Tab }) {
                     <Empty>{tx("user.onlyOwnerCosmetics", { name: <Username user={u} /> })}</Empty>
                   ))}
               </Pane>
+              <FeedLinks name={u.username} hidden={u.hidden || u.locked} locked={u.locked} />
             </div>
           </div>
         );

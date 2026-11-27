@@ -8193,7 +8193,7 @@ html[data-profile-shell="custom"] :focus-visible {
 .cos-frame-vinyl,
 .cos-frame-pixel,
 .cos-frame-holo,
-.cos-frame-arcade {
+.cos-frame-arcade::before {
   --_hole: radial-gradient(
     farthest-side,
     transparent calc(100% - var(--cos-ring) * 1.2),
@@ -8207,12 +8207,12 @@ html[data-profile-shell="custom"] :focus-visible {
     conic-gradient(
       from 20deg,
       transparent 0 4%,
-      rgba(255, 255, 255, 0.4) 10%,
+      rgba(255, 255, 255, 0.55) 10%,
       transparent 20% 52%,
-      rgba(255, 255, 255, 0.3) 60%,
+      rgba(255, 255, 255, 0.4) 60%,
       transparent 70%
     ),
-    repeating-radial-gradient(circle, #17161b 0 1.2px, #2c2b33 1.2px 2.4px);
+    repeating-radial-gradient(circle, #0e0d11 0 1px, #4a4853 1px 2px);
 }
 .cos-frame-pixel {
   background: repeating-conic-gradient(var(--accent, #e9a23b) 0 12deg, #2a2230 12deg 24deg);
@@ -8315,24 +8315,6 @@ html[data-profile-shell="custom"] :focus-visible {
   border: var(--cos-ring) dashed var(--ink);
   opacity: 0.72;
 }
-.cos-frame-stitch::before,
-.cos-frame-stitch::after {
-  content: "";
-  position: absolute;
-  bottom: 16%;
-  width: 7%;
-  height: 7%;
-  background: var(--ink);
-  opacity: 0.8;
-}
-.cos-frame-stitch::before {
-  left: 13%;
-  rotate: 24deg;
-}
-.cos-frame-stitch::after {
-  left: 21%;
-  rotate: -24deg;
-}
 .cos-frame-ripple {
   border: calc(var(--cos-ring) * 0.7) solid color-mix(in srgb, var(--accent) 55%, transparent);
 }
@@ -8346,6 +8328,7 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 .cos-frame-eclipse {
   border: calc(var(--cos-ring) * 1.1) solid #17161b;
+  box-shadow: 0 0 calc(var(--cos-ring) * 1.5) #ffcf3366;
 }
 .cos-frame-eclipse::before {
   content: "";
@@ -8369,9 +8352,12 @@ html[data-profile-shell="custom"] :focus-visible {
   height: 100%;
   overflow: visible;
 }
-.cos-frame-arcade {
-  background: repeating-conic-gradient(var(--edge) 0 7deg, transparent 7deg 30deg);
-  opacity: 0.9;
+.cos-frame-arcade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--muted) 0 7deg, transparent 7deg 30deg);
 }
 .cos-frame-arcade .cos-frame-arm i {
   top: 1%;
@@ -8537,7 +8523,9 @@ html[data-profile-shell="custom"] :focus-visible {
   text-shadow: 0 0 9px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 [data-name-fx="echo"] {
-  text-shadow: 1px 1px 0 var(--accent-tint);
+  text-shadow:
+    0.06em 0.06em 0 color-mix(in srgb, var(--accent) 50%, transparent),
+    0.12em 0.12em 0 color-mix(in srgb, var(--accent) 22%, transparent);
 }
 @property --cos-spot {
   syntax: "<percentage>";
@@ -9059,17 +9047,74 @@ html[data-profile-shell="custom"] :focus-visible {
   font-size: 0.75em;
   opacity: 0.6;
 }
-.cos-panel {
+.cos-settings {
   display: grid;
-  gap: 10px;
-  margin-top: 12px;
-  justify-items: start;
+  gap: 16px;
 }
-.cos-owned-item {
+.cos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+.cos-item {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-radius: 4px;
+  background: var(--panel);
+}
+.cos-item:hover {
+  background: var(--card);
+}
+.cos-item[data-equipped] {
+  background: var(--now);
+  box-shadow: inset 0 -3px 0 var(--np);
+}
+.cos-item-main {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  width: 100%;
+  min-height: 72px;
+  padding: 28px 12px 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.cos-item-main[aria-pressed="true"] {
+  cursor: default;
+}
+.cos-item-main .cos-avatar {
+  margin-bottom: 8px;
+}
+.cos-item-sample {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+.cos-item .cos-swatches {
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-inline: 12px;
+}
+.feed-links {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  gap: 4px 16px;
+  margin-top: 48px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.feed-links a {
+  color: var(--ink-2);
 }
 .cos-swatches {
   display: flex;
