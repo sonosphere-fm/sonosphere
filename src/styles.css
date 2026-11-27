@@ -8496,11 +8496,8 @@ html[data-profile-shell="custom"] :focus-visible {
 [data-name-fx="neon"] {
   --_lit: color-mix(in srgb, #fff 70%, var(--link));
   --_glow:
-    0 0 1px #fff,
-    0 0 3px var(--link),
-    0 0 8px color-mix(in srgb, var(--link) 75%, transparent),
-    0 0 18px color-mix(in srgb, var(--link) 45%, transparent),
-    0 0 36px color-mix(in srgb, var(--link) 20%, transparent);
+    0 0 1px #fff, 0 0 3px var(--link), 0 0 8px color-mix(in srgb, var(--link) 75%, transparent),
+    0 0 18px color-mix(in srgb, var(--link) 45%, transparent), 0 0 36px color-mix(in srgb, var(--link) 20%, transparent);
   color: var(--_lit);
   text-shadow: var(--_glow);
 }
