@@ -31,6 +31,22 @@ export async function artist(name: string): Promise<MbArtist | null> {
   return r ? { mbid: r.mbid, name: tidy(shownName(r.name, r.alias, name)) } : null;
 }
 
+export type Credit = { mbid: string; name: string };
+
+/** The first credited artist of each recording MusicBrainz has, by recording id. */
+export async function firstCredits(recordings: string[]): Promise<Map<string, Credit>> {
+  const out = new Map<string, Credit>();
+  for (let i = 0; i < recordings.length; i += 2000) {
+    const rows = await db()<(Credit & { recording: string })[]>`
+      SELECT r.gid::text AS recording, a.gid::text AS mbid, acn.name FROM recording r
+      JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
+      JOIN artist a ON a.id = acn.artist
+      WHERE r.gid = ANY(${recordings.slice(i, i + 2000)}::uuid[])`;
+    for (const r of rows) out.set(r.recording, { mbid: r.mbid, name: r.name });
+  }
+  return out;
+}
+
 /** Whether MusicBrainz credits any of these recordings to the artist first. */
 export async function creditsAny(recordings: string[], artistMbid: string): Promise<boolean> {
   if (!recordings.length) return false;
