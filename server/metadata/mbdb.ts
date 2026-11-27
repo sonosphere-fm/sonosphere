@@ -31,6 +31,12 @@ export async function artist(name: string): Promise<MbArtist | null> {
   return r ? { mbid: r.mbid, name: tidy(shownName(r.name, r.alias, name)) } : null;
 }
 
+/** What MusicBrainz tells this artist apart from others of the name by, empty when it has none. */
+export async function artistComment(mbid: string): Promise<string> {
+  const [r] = await db()<{ comment: string }[]>`SELECT comment FROM artist WHERE gid = ${mbid}::uuid`;
+  return tidy(r?.comment ?? "").trim();
+}
+
 const latin = (s: string) => /[a-z]/i.test(s);
 // their own name, unless it's in a script the search wasn't (青葉市子 found by typing "ichiko aoba"): then the alias that matched
 const shownName = (name: string, alias: string | null, typed: string) =>

@@ -730,7 +730,7 @@ export async function recordScrobbles(
     const cache = { artists: new Map<string, number>(), albums: new Map<string, number>() };
     for (const play of plays) {
       // Explicit albums are stable within the transaction; album-less tracks can gain a fallback album later.
-      const key = JSON.stringify([play.artist, play.track, play.album, play.duration ?? 0]);
+      const key = JSON.stringify([play.artist, play.track, play.album, play.duration ?? 0, play.artistMbid]);
       let ref = play.album ? resolved.get(key) : undefined;
       if (!ref) {
         ref = await resolveTrackTx(tx, play, cache);

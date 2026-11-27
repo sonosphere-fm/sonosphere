@@ -149,8 +149,12 @@ function submitted(l: unknown, type: string): Submitted {
   if (!isObject(m)) return bad("missingTrackMetadata");
   const info = isObject(m.additional_info) ? m.additional_info : {};
   // a shared credit ("Metallica, Joey Jordison") counts for its first artist when the client lists them apart
-  const credited = Array.isArray(info.artist_names) && info.artist_names.length > 1 ? str(info.artist_names[0]) : "";
+  const names = Array.isArray(info.artist_names) ? info.artist_names : [];
+  const credited = names.length > 1 ? str(names[0]) : "";
   const artist = credited || str(m.artist_name);
+  // one id per credited artist, so the first only belongs to the name when it is theirs alone or listed apart
+  const ids = Array.isArray(info.artist_mbids) ? info.artist_mbids : [];
+  const artistMbid = ids.length === Math.max(names.length, 1) ? mbidOf(ids[0]) : null;
   const track = str(m.track_name);
   if (!artist) bad("missingArtistName");
   if (!track) bad("missingTrackName");
@@ -171,6 +175,7 @@ function submitted(l: unknown, type: string): Submitted {
     album: str(m.release_name),
     timestamp,
     duration: ms > 0 ? Math.round(ms / 1000) : secs > 0 ? Math.round(secs) : 0,
+    artistMbid,
     mbid: mbidOf(info.recording_mbid),
     client: str(info.submission_client, 16) || str(info.media_player, 16) || "ListenBrainz",
   };

@@ -33,6 +33,7 @@ import {
   userTracks,
   users,
 } from "../db/schema";
+import { artistComment, mbdbOn } from "../metadata/mbdb";
 import { openListener, publicCols } from "../users/repo";
 import { clean, first, norm, now } from "../util";
 import type {
@@ -112,13 +113,47 @@ const byId: { [K in ItemType]: (id: number) => Promise<ItemRows[K] | null> } = {
 export const ITEM_TYPES = Object.keys(byId) as ItemType[];
 export const findItem = <K extends ItemType>(type: K, id: number): Promise<ItemRows[K] | null> => byId[type](id);
 
-export async function getOrCreateArtistTx(tx: Tx, name: string): Promise<number> {
+const commentOf = (mbid: string) => (mbdbOn ? artistComment(mbid).catch(() => "") : Promise.resolve(""));
+const labelled = (name: string, disambig: string) => `${name} (${disambig})`;
+const taken = async (tx: Tx, name: string) =>
+  !!(await first(
+    tx
+      .select({ id: artists.id })
+      .from(artists)
+      .where(eq(artists.nameNorm, norm(name)))
+      .limit(1)
+  ));
+
+/**
+ * A MusicBrainz id picks among artists of one name: the one under the bare name when it has that id or none yet,
+ * otherwise another, named with MusicBrainz's comment in brackets ("ACE (Japanese heavy metal band)").
+ */
+export async function getOrCreateArtistTx(tx: Tx, name: string, mbid?: string | null): Promise<number> {
   const n = norm(name);
-  const [row] = await tx.select({ id: artists.id }).from(artists).where(eq(artists.nameNorm, n));
-  if (row) return row.id;
+  const [main] = await tx.select({ id: artists.id, mbid: artists.mbid }).from(artists).where(eq(artists.nameNorm, n));
+  if (main && (!mbid || main.mbid === mbid)) return main.id;
+  if (mbid) {
+    const others = await tx
+      .select({ id: artists.id, nameNorm: artists.nameNorm, disambig: artists.disambig })
+      .from(artists)
+      .where(and(eq(artists.mbid, mbid), ne(artists.disambig, "")));
+    const known = others.find((a) => a.nameNorm === norm(labelled(n, a.disambig)));
+    if (known) return known.id;
+  }
+  if (main && !main.mbid) {
+    await tx.update(artists).set({ mbid }).where(eq(artists.id, main.id));
+    return main.id;
+  }
+  let shown = clean(name);
+  let disambig = "";
+  if (main) {
+    disambig = await commentOf(mbid!);
+    for (let i = 2; !disambig || (await taken(tx, labelled(shown, disambig))); i++) disambig = String(i);
+    shown = labelled(shown, disambig);
+  }
   const [created] = await tx
     .insert(artists)
-    .values({ name: clean(name), nameNorm: n, createdAt: now() })
+    .values({ name: shown, nameNorm: norm(shown), disambig, mbid: mbid || null, createdAt: now() })
     .returning({ id: artists.id });
   return created.id;
 }
@@ -234,15 +269,21 @@ export async function getOrCreateTrackTx(
 }
 
 /** An empty or missing album means none was given. */
-export type TrackNames = { artist: string; track: string; album?: string; duration?: number };
+export type TrackNames = {
+  artist: string;
+  track: string;
+  album?: string;
+  duration?: number;
+  artistMbid?: string | null;
+};
 /** `albumId` falls back to the album the track is already known to be on. */
 export type TrackRef = { artistId: number; trackId: number; albumId: number | null };
 
 export type ResolutionCache = { artists: Map<string, number>; albums: Map<string, number> };
 
 export async function resolveTrackTx(tx: Tx, names: TrackNames, cache?: ResolutionCache): Promise<TrackRef> {
-  const artistKey = norm(names.artist);
-  const artistId = cache?.artists.get(artistKey) ?? (await getOrCreateArtistTx(tx, names.artist));
+  const artistKey = `${norm(names.artist)}\n${names.artistMbid ?? ""}`;
+  const artistId = cache?.artists.get(artistKey) ?? (await getOrCreateArtistTx(tx, names.artist, names.artistMbid));
   cache?.artists.set(artistKey, artistId);
   let albumId: number | null = null;
   if (names.album) {

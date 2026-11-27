@@ -193,7 +193,7 @@ async function fromCatalogueCopy(a: { id: number; name: string; spotifyId: strin
 
 /** From the catalogue copy, else Wikidata by MusicBrainz id, else Spotify (by the Spotify id MusicBrainz links, else by name). */
 async function artistPhoto(
-  a: { id: number; name: string; spotifyId: string | null; spAt: number | null },
+  a: { id: number; name: string; disambig: string; spotifyId: string | null; spAt: number | null },
   mbid: string | null
 ) {
   if (await fromCatalogueCopy(a, mbid)) return;
@@ -213,6 +213,8 @@ async function artistPhoto(
   }
   const s = await askSpotify("artist", a.id, a.spAt, async () => {
     const spotifyId = a.spotifyId || (mbid ? await src.mbSpotifyId(mbid) : null);
+    // a search by name finds the better known artist of it
+    if (!spotifyId && a.disambig) return null;
     return src.spArtist(a.name, spotifyId);
   });
   if (!s) return;

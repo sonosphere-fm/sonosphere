@@ -242,22 +242,28 @@ export const banMarks = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.kind, t.value] }), index("ban_marks_value").on(t.kind, t.value)]
 );
 
-export const artists = pgTable("artists", {
-  id: integer().primaryKey().generatedByDefaultAsIdentity(),
-  name: text().notNull(),
-  nameNorm: text("name_norm").notNull().unique(),
-  imageId: text("image_id").references(() => images.id, { onDelete: "set null" }),
-  createdAt: integer("created_at").notNull(),
-  baseListeners: big("base_listeners").default(0).notNull(),
-  basePlaycount: big("base_playcount").default(0).notNull(),
-  mbid: text(),
-  spotifyId: text("spotify_id"),
-  metaAt: integer("meta_at"),
-  // Spotify is asked once, never again after a real answer
-  spAt: integer("sp_at"),
-  // Wikidata is asked again after a month: photos get added there
-  wdAt: integer("wd_at"),
-});
+export const artists = pgTable(
+  "artists",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+    name: text().notNull(),
+    nameNorm: text("name_norm").notNull().unique(),
+    // MusicBrainz's comment ("Japanese heavy metal band") on another artist of a name, which is then in brackets after it
+    disambig: text().default("").notNull(),
+    imageId: text("image_id").references(() => images.id, { onDelete: "set null" }),
+    createdAt: integer("created_at").notNull(),
+    baseListeners: big("base_listeners").default(0).notNull(),
+    basePlaycount: big("base_playcount").default(0).notNull(),
+    mbid: text(),
+    spotifyId: text("spotify_id"),
+    metaAt: integer("meta_at"),
+    // Spotify is asked once, never again after a real answer
+    spAt: integer("sp_at"),
+    // Wikidata is asked again after a month: photos get added there
+    wdAt: integer("wd_at"),
+  },
+  (t) => [index("artists_mbid").on(t.mbid)]
+);
 
 // artist pictures from a copy of Spotify's catalogue, loaded by hand and left out of backups
 export const spotifyArtistPics = pgTable(

@@ -428,6 +428,13 @@
       "when": 1795748713483,
       "tag": "0060_tearful_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1795765303917,
+      "tag": "0061_chubby_harrier",
+      "breakpoints": true
     }
   ]
 }

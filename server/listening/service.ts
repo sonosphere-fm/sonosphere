@@ -31,6 +31,8 @@ export type ScrobbleInput = {
   album?: unknown;
   timestamp?: unknown;
   duration?: unknown;
+  /** MusicBrainz's id for the artist, which tells apart artists of one name. */
+  artistMbid?: string | null;
 };
 
 export const OLDEST = 946684800;
@@ -66,9 +68,13 @@ export async function names(input: ScrobbleInput): Promise<TrackNames | null> {
   let artist = clean(input.artist);
   let track = clean(input.track);
   if (!artist || !track) return null;
+  const sent = artist;
   const moved = await unscramble(artist, track);
   if (moved) ({ artist, track } = moved);
-  return { ...correct(artist, track, clean(input.album)), duration: Number(input.duration) || 0 };
+  const fixed = correct(artist, track, clean(input.album));
+  // the id was for the name as sent
+  const artistMbid = norm(fixed.artist) === norm(sent) ? input.artistMbid : null;
+  return { ...fixed, duration: Number(input.duration) || 0, artistMbid };
 }
 
 export async function resolve(input: ScrobbleInput): Promise<TrackRef | null> {
@@ -96,6 +102,7 @@ export async function scrobbleMany(
         clean(input.track),
         clean(input.album),
         Number(input.duration) || 0,
+        input.artistMbid,
       ]);
       let n = prepared.get(key);
       if (n === undefined) {
