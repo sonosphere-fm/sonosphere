@@ -213,6 +213,8 @@ export default {
   colName: "Ad",
   colArtist: "Sanatçı",
   colScrobbles: "Scrobble",
+  linkedTo: "{name} bağlı",
+  importedFrom: "{name} üzerinden içe aktarıldı",
   mergeIntoEllipsis: "Şununla birleştir…",
   trackList: "Parça listesi",
   renamed: "“{from}” adı “{to}” olarak değiştirildi.",

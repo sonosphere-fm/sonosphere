@@ -235,6 +235,8 @@ export default {
   colName: "Nosaukums",
   colArtist: "Izpildītājs",
   colScrobbles: "Skrobļi",
+  linkedTo: "{name} piesaistīts",
+  importedFrom: "Importēts no {name}",
   mergeIntoEllipsis: "Apvienot ar…",
   trackList: "Dziesmu saraksts",
   renamed: "„{from}” pārdēvēts par „{to}”.",

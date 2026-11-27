@@ -20,6 +20,7 @@ import {
   Eyedropper,
   GearSix,
   Heart,
+  LastfmLogo,
   MagnifyingGlass,
   MusicNotes,
   Pause,
@@ -43,6 +44,7 @@ import {
   X,
   XCircle,
   type Icon,
+  SpotifyLogo,
 } from "@phosphor-icons/react";
 import { t } from "./i18n";
 
@@ -90,6 +92,8 @@ export const Ico = {
       <path d={DISCORD} />
     </svg>
   ),
+  Spotify: mk(SpotifyLogo, true),
+  Lastfm: mk(LastfmLogo, true),
   More: mk(DotsThree),
   MoreV: mk(DotsThreeVertical),
   Edit: mk(PencilSimple),

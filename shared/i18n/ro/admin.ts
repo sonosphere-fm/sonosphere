@@ -227,6 +227,8 @@ export default {
   colName: "Nume",
   colArtist: "Artist",
   colScrobbles: "Scrobble-uri",
+  linkedTo: "{name} conectat",
+  importedFrom: "Importat din {name}",
   mergeIntoEllipsis: "Unește în…",
   trackList: "Listă de piese",
   renamed: "Am redenumit „{from}” în „{to}”.",

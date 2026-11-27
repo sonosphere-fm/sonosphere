@@ -208,6 +208,8 @@ export default {
   colName: "పేరు",
   colArtist: "ఆర్టిస్ట్",
   colScrobbles: "స్క్రోబుల్‌లు",
+  linkedTo: "{name} లింక్ చేయబడింది",
+  importedFrom: "{name} నుండి దిగుమతి చేయబడింది",
   mergeIntoEllipsis: "దీనిలో విలీనం చేయండి…",
   trackList: "ట్రాక్ జాబితా",
   renamed: "“{from}” పేరును “{to}”గా మార్చాము.",

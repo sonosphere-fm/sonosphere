@@ -297,6 +297,8 @@ export default {
   colName: "Название",
   colArtist: "Исполнитель",
   colScrobbles: "Скробблы",
+  linkedTo: "{name} привязан",
+  importedFrom: "Импортировано из {name}",
   mergeIntoEllipsis: "Объединить с…",
   trackList: "Список треков",
   renamed: "«{from}» переименован в «{to}».",

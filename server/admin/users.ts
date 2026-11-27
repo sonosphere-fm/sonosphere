@@ -132,6 +132,7 @@ router.get<StaffUserList>("/api/admin/users", async (c) => {
     scrobbles: u.scrobbles,
     openReports: u.openReports,
     lastLogin: u.lastLogin,
+    links: u.links,
   }));
   return { items, total, ...pg };
 });

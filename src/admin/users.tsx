@@ -1,4 +1,4 @@
-import { Fragment, useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import type { MeResponse } from "../../shared/auth";
 import { Ico } from "../icons";
@@ -35,6 +35,7 @@ import type {
   RoleResult,
   SessionsResult,
   StaffTrust,
+  StaffUserLink,
   StaffUserList,
   StaffUserPage,
   StaffUserIp,
@@ -81,6 +82,28 @@ const MAKE_ROLE: Record<Role, AdminKey> = {
 };
 
 const defaultDir = (key: string) => (key === "username" ? "asc" : "desc");
+
+const LINKS: Record<StaffUserLink, () => [ReactNode, string]> = {
+  spotify: () => [<Ico.Spotify />, t("admin.linkedTo", { name: "Spotify" })],
+  discord: () => [<Ico.Discord />, t("admin.linkedTo", { name: "Discord" })],
+  lastfm: () => [<Ico.Lastfm />, t("admin.importedFrom", { name: "Last.fm" })],
+};
+
+function UserLinks({ links }: { links: StaffUserLink[] }) {
+  if (!links.length) return null;
+  return (
+    <span className="inline-flex gap-1 ms-1.5 align-middle text-[13px] text-site-muted">
+      {links.map((l) => {
+        const [icon, label] = LINKS[l]();
+        return (
+          <span key={l} title={label} aria-label={label} role="img" className="inline-flex">
+            {icon}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 export function Users() {
   const [sp, set] = useQuery();
@@ -168,6 +191,7 @@ export function Users() {
                               <Link className="strong" to={adminUrl(u.username)}>
                                 <Username user={u} />
                               </Link>
+                              <UserLinks links={u.links} />
                               {(u.realname || u.email) && (
                                 <span className="muted small">
                                   {" "}

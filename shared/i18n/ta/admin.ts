@@ -210,6 +210,8 @@ export default {
   colName: "பெயர்",
   colArtist: "கலைஞர்",
   colScrobbles: "ஸ்க்ராபிள்கள்",
+  linkedTo: "{name} இணைக்கப்பட்டது",
+  importedFrom: "{name} இலிருந்து இறக்குமதி செய்யப்பட்டது",
   mergeIntoEllipsis: "இதில் இணை…",
   trackList: "பாடல் பட்டியல்",
   renamed: "“{from}” என்பது “{to}” என மறுபெயரிடப்பட்டது.",

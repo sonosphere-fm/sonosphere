@@ -329,6 +329,8 @@ export default {
   colName: "الاسم",
   colArtist: "الفنان",
   colScrobbles: "السكروبلات",
+  linkedTo: "تم ربط {name}",
+  importedFrom: "مستورد من {name}",
   mergeIntoEllipsis: "دمج في…",
   trackList: "قائمة المقطوعات",
   renamed: "تمت إعادة تسمية «{from}» إلى «{to}».",

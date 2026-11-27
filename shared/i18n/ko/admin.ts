@@ -202,6 +202,8 @@ export default {
   colName: "이름",
   colArtist: "아티스트",
   colScrobbles: "스크로블",
+  linkedTo: "{name} 연결됨",
+  importedFrom: "{name}에서 가져옴",
   mergeIntoEllipsis: "병합 대상…",
   trackList: "트랙 목록",
   renamed: "“{from}”의 이름을 “{to}”(으)로 바꿨어요.",

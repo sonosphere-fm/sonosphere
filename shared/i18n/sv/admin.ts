@@ -213,6 +213,8 @@ export default {
   colName: "Namn",
   colArtist: "Artist",
   colScrobbles: "Scrobblingar",
+  linkedTo: "{name} kopplat",
+  importedFrom: "Importerat från {name}",
   mergeIntoEllipsis: "Slå ihop med…",
   trackList: "Låtlista",
   renamed: "Bytte namn på ”{from}” till ”{to}”.",

@@ -76,7 +76,9 @@ type StaffUserRow = UserAppearance & {
   scrobbles: number;
   openReports: number;
   lastLogin: number | null;
+  links: StaffUserLink[];
 };
+export type StaffUserLink = "spotify" | "discord" | "lastfm";
 export type StaffTrust = {
   staff: boolean;
   probation: boolean;

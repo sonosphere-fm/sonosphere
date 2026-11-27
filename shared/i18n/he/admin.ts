@@ -209,6 +209,8 @@ export default {
   colName: "שם",
   colArtist: "אמן",
   colScrobbles: "סקרובלים",
+  linkedTo: "{name} מקושר",
+  importedFrom: "יובא מ-{name}",
   mergeIntoEllipsis: "מיזוג אל…",
   trackList: "רשימת שירים",
   renamed: "השם ״{from}״ שונה ל־״{to}״.",

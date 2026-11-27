@@ -201,6 +201,8 @@ export default {
   colName: "名稱",
   colArtist: "藝人",
   colScrobbles: "播放紀錄",
+  linkedTo: "已連結 {name}",
+  importedFrom: "從 {name} 匯入",
   mergeIntoEllipsis: "合併到…",
   trackList: "曲目清單",
   renamed: "已將「{from}」重新命名為「{to}」。",

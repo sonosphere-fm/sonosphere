@@ -208,6 +208,8 @@ export default {
   colName: "नाव",
   colArtist: "कलाकार",
   colScrobbles: "स्क्रॉबल",
+  linkedTo: "{name} जोडलेले",
+  importedFrom: "{name} मधून इम्पोर्ट केले",
   mergeIntoEllipsis: "यात विलीन करा…",
   trackList: "ट्रॅक यादी",
   renamed: "“{from}” चे नाव बदलून “{to}” केले.",

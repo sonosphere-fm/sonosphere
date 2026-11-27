@@ -207,6 +207,8 @@ export default {
   colName: "名前",
   colArtist: "アーティスト",
   colScrobbles: "スクロブル",
+  linkedTo: "{name} 連携済み",
+  importedFrom: "{name} からインポート",
   mergeIntoEllipsis: "統合先…",
   trackList: "トラックリスト",
   renamed: "「{from}」を「{to}」に変更しました。",

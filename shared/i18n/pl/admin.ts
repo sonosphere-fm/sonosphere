@@ -297,6 +297,8 @@ export default {
   colName: "Nazwa",
   colArtist: "Wykonawca",
   colScrobbles: "Scrobble",
+  linkedTo: "Połączono {name}",
+  importedFrom: "Zaimportowano z {name}",
   mergeIntoEllipsis: "Scal z…",
   trackList: "Lista utworów",
   renamed: "Zmieniono nazwę z „{from}” na „{to}”.",

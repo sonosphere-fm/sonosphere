@@ -206,6 +206,8 @@ export default {
   colName: "Nama",
   colArtist: "Artis",
   colScrobbles: "Scrobble",
+  linkedTo: "{name} tertaut",
+  importedFrom: "Diimpor dari {name}",
   mergeIntoEllipsis: "Gabung ke…",
   trackList: "Daftar lagu",
   renamed: "Mengganti nama “{from}” menjadi “{to}”.",

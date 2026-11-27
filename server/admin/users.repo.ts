@@ -12,15 +12,18 @@ import {
   dmMessages,
   dmThreads,
   follows,
+  importJobs,
   journals,
   lovedTracks,
   modNotes,
   nowPlaying,
+  oauthAccounts,
   playlists,
   reports,
   scrobbles,
   sessions,
   shouts,
+  spotifyLinks,
   taggings,
   userArtists,
   users,
@@ -35,7 +38,7 @@ import { auditRows } from "../site/repo";
 import { auditTx } from "../site/audit";
 import { handOffGroupsTx } from "../dm/groups.repo";
 import { probationSql } from "../trust/repo";
-import type { AuditRow, ModNote, ReportBrief, StaffUserPage } from "../../shared/admin";
+import type { AuditRow, ModNote, ReportBrief, StaffUserLink, StaffUserPage } from "../../shared/admin";
 
 const DAY = 86400;
 type Actor = { id: number; username: string };
@@ -83,7 +86,13 @@ type UserQuery = {
   limit: number;
   offset: number;
 };
-type UserListRow = User & { scrobbles: number; openReports: number; lastLogin: number | null; probation: boolean };
+type UserListRow = User & {
+  scrobbles: number;
+  openReports: number;
+  lastLogin: number | null;
+  probation: boolean;
+  links: StaffUserLink[];
+};
 
 export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; total: number }> {
   const plays = db
@@ -110,8 +119,13 @@ export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; to
     login: lastLogin,
   };
   const key = sortKeys[q.sort];
+  const links = sql<StaffUserLink[]>`array_remove(ARRAY[
+    CASE WHEN EXISTS (SELECT 1 FROM ${spotifyLinks} WHERE ${spotifyLinks.userId} = ${users.id}) THEN 'spotify' END,
+    CASE WHEN EXISTS (SELECT 1 FROM ${oauthAccounts} WHERE ${oauthAccounts.userId} = ${users.id} AND ${oauthAccounts.provider} = 'discord') THEN 'discord' END,
+    CASE WHEN EXISTS (SELECT 1 FROM ${importJobs} WHERE ${importJobs.userId} = ${users.id} AND ${importJobs.kind} = 'lastfm' AND ${importJobs.status} = 'done') THEN 'lastfm' END
+  ], NULL)`;
   const rows = await db
-    .select({ user: users, scrobbles: played, openReports, lastLogin, probation: probationSql })
+    .select({ user: users, scrobbles: played, openReports, lastLogin, probation: probationSql, links })
     .from(users)
     .leftJoin(plays, eq(plays.userId, users.id))
     .where(where)
@@ -125,6 +139,7 @@ export async function listUsers(q: UserQuery): Promise<{ rows: UserListRow[]; to
       openReports: r.openReports,
       lastLogin: r.lastLogin,
       probation: r.probation,
+      links: r.links,
     })),
     total: await db.$count(users, where),
   };
