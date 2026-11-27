@@ -7911,10 +7911,11 @@ html[data-profile-shell="custom"] :focus-visible {
   transform-origin: center;
 }
 .cos-halo {
-  filter: drop-shadow(0 0 2.5px var(--glow, #f2cd5c));
+  filter: drop-shadow(0 0 0.5px #fff) drop-shadow(0 0 2px var(--glow, #f2cd5c))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--glow, #f2cd5c) 45%, transparent));
 }
 .cos-phones-neon {
-  filter: drop-shadow(0 0 2px #6af4db);
+  filter: drop-shadow(0 0 0.5px #fff) drop-shadow(0 0 2px #6af4db) drop-shadow(0 0 6px #6af4db66);
 }
 .cos-horn-glow {
   opacity: 0;
@@ -8218,10 +8219,14 @@ html[data-profile-shell="custom"] :focus-visible {
   background: repeating-conic-gradient(var(--accent, #e9a23b) 0 12deg, #2a2230 12deg 24deg);
 }
 .cos-frame-neon {
-  border: var(--cos-ring) solid var(--accent, #6af4db);
+  --_tube: var(--accent, #6af4db);
+  border: var(--cos-ring) solid color-mix(in srgb, #fff 60%, var(--_tube));
   box-shadow:
-    0 0 calc(var(--cos-ring) * 2) var(--accent, #6af4db),
-    inset 0 0 calc(var(--cos-ring) * 1.5) var(--accent, #6af4db);
+    0 0 calc(var(--cos-ring) * 0.6) var(--_tube),
+    0 0 calc(var(--cos-ring) * 2) color-mix(in srgb, var(--_tube) 60%, transparent),
+    0 0 calc(var(--cos-ring) * 5) color-mix(in srgb, var(--_tube) 25%, transparent),
+    inset 0 0 calc(var(--cos-ring) * 0.6) var(--_tube),
+    inset 0 0 calc(var(--cos-ring) * 2.5) color-mix(in srgb, var(--_tube) 35%, transparent);
 }
 @property --holo-angle {
   syntax: "<angle>";
@@ -8328,7 +8333,10 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 .cos-frame-eclipse {
   border: calc(var(--cos-ring) * 1.1) solid #17161b;
-  box-shadow: 0 0 calc(var(--cos-ring) * 1.5) #ffcf3366;
+  box-shadow:
+    0 0 calc(var(--cos-ring) * 0.6) #fff3c066,
+    0 0 calc(var(--cos-ring) * 1.6) #ffcf3355,
+    0 0 calc(var(--cos-ring) * 4) #ffcf331f;
 }
 .cos-frame-eclipse::before {
   content: "";
@@ -8342,7 +8350,7 @@ html[data-profile-shell="custom"] :focus-visible {
   border-left-color: transparent;
   border-bottom-color: transparent;
   rotate: -35deg;
-  filter: drop-shadow(0 0 4px #ffcf3380);
+  filter: drop-shadow(0 0 1px #fff3c0) drop-shadow(0 0 4px #ffcf33aa) drop-shadow(0 0 10px #ffcf3340);
 }
 .cos-frame-garden {
   inset: -10%;
@@ -8362,8 +8370,10 @@ html[data-profile-shell="custom"] :focus-visible {
 .cos-frame-arcade .cos-frame-arm i {
   top: 1%;
   width: 10%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
+  background: color-mix(in srgb, #fff 55%, var(--accent));
+  box-shadow:
+    0 0 2px var(--accent),
+    0 0 7px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .cos-decoration[data-motion="on"] .cos-frame-neon {
@@ -8470,11 +8480,9 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 [data-name-fx="rainbow"] {
   background-image: linear-gradient(100deg, #ff416c, #ff922b, #ffe34d, #38e884, #34cfff, #7480ff, #d85cff, #ff416c);
-  filter: drop-shadow(0 0 3px #ff416c4d);
 }
 [data-name-fx="rainbow"][data-name-palette="pastel"] {
   background-image: linear-gradient(100deg, #f4a9c4, #f5d69b, #afe0c2, #a9d3f5, #cfb5ed, #f4a9c4);
-  filter: drop-shadow(0 0 3px #cfb5ed66);
 }
 [data-name-fx="fire"] {
   background-image: linear-gradient(100deg, light-dark(#96320f, #ffc47c), light-dark(#b9600d, #ff9475));
@@ -8486,9 +8494,15 @@ html[data-profile-shell="custom"] :focus-visible {
   background-image: linear-gradient(180deg, var(--ink) 0%, var(--muted) 45%, var(--ink) 50%, var(--muted) 90%);
 }
 [data-name-fx="neon"] {
-  text-shadow:
-    0 0 5px var(--link),
-    0 0 12px var(--link);
+  --_lit: color-mix(in srgb, #fff 70%, var(--link));
+  --_glow:
+    0 0 1px #fff,
+    0 0 3px var(--link),
+    0 0 8px color-mix(in srgb, var(--link) 75%, transparent),
+    0 0 18px color-mix(in srgb, var(--link) 45%, transparent),
+    0 0 36px color-mix(in srgb, var(--link) 20%, transparent);
+  color: var(--_lit);
+  text-shadow: var(--_glow);
 }
 [data-name-fx="glitch"] {
   text-shadow:
@@ -8520,7 +8534,11 @@ html[data-profile-shell="custom"] :focus-visible {
     1px 0 #43e0f0b3;
 }
 [data-name-fx="halo"] {
-  text-shadow: 0 0 9px color-mix(in srgb, var(--accent) 70%, transparent);
+  color: color-mix(in srgb, #fff 80%, var(--accent));
+  text-shadow:
+    0 0 2px color-mix(in srgb, var(--accent) 80%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 22px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 [data-name-fx="echo"] {
   text-shadow:
@@ -8617,8 +8635,11 @@ html[data-profile-shell="custom"] :focus-visible {
   }
   82%,
   90% {
-    color: var(--sun);
-    text-shadow: 0 0 6px #ffcf3380;
+    color: color-mix(in srgb, #fff 45%, var(--sun));
+    text-shadow:
+      0 0 2px var(--sun),
+      0 0 8px #ffcf3399,
+      0 0 20px #ffcf3340;
   }
 }
 @keyframes cos-decrypt-real {
@@ -8669,17 +8690,23 @@ html[data-profile-shell="custom"] :focus-visible {
   clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
   width: 0.24em;
   height: 0.24em;
-  filter: drop-shadow(0 0 2px #ffcf3380);
+  filter: drop-shadow(0 0 1px #fff8) drop-shadow(0 0 3px #ffcf33aa);
 }
 [data-name-fx="frost"] .cos-name-particles i {
   border: 1px solid light-dark(#367ca5, #d5f7ff);
-  box-shadow: 0 0 3px #8bdfff80;
+  box-shadow:
+    0 0 1px #fff,
+    0 0 4px #8bdfff99,
+    0 0 9px #8bdfff40;
   rotate: 45deg;
 }
 [data-name-fx="fire"] .cos-name-particles i {
   background: light-dark(#d35d1d, #ffb85c);
   border-radius: 50%;
-  box-shadow: 0 0 4px #ff752980;
+  box-shadow:
+    0 0 1px #ffe2b0,
+    0 0 4px #ff7529aa,
+    0 0 10px #ff752944;
   top: 80%;
 }
 .profile-theme[data-effects-active="on"] .hero-name .cos-name-particles i {
@@ -8803,7 +8830,7 @@ html[data-profile-shell="custom"] :focus-visible {
   }
   50% {
     background-position: 100% 50%;
-    filter: drop-shadow(0 0 4px #76cfff80);
+    filter: drop-shadow(0 0 2px #76cfffaa) drop-shadow(0 0 8px #76cfff40);
   }
 }
 @keyframes cos-fire-glow {
@@ -8813,7 +8840,7 @@ html[data-profile-shell="custom"] :focus-visible {
   }
   to {
     background-position: 100% 50%;
-    filter: drop-shadow(0 -2px 4px #f5792080);
+    filter: drop-shadow(0 -1px 2px #f57920aa) drop-shadow(0 -3px 8px #f5792040);
   }
 }
 @keyframes cos-chrome-sweep {
@@ -8833,20 +8860,14 @@ html[data-profile-shell="custom"] :focus-visible {
   60%,
   64%,
   100% {
-    text-shadow:
-      0 0 3px var(--link),
-      0 0 10px var(--link);
+    color: var(--_lit);
+    text-shadow: var(--_glow);
   }
   20%,
   24%,
   62% {
-    text-shadow: 0 0 1px var(--link);
-  }
-  40%,
-  80% {
-    text-shadow:
-      0 0 5px var(--link),
-      0 0 16px var(--link);
+    color: color-mix(in srgb, var(--ink) 45%, var(--link));
+    text-shadow: none;
   }
 }
 @keyframes cos-gradient {
@@ -9037,7 +9058,6 @@ html[data-profile-shell="custom"] :focus-visible {
   width: 6px;
   height: 6px;
   margin-inline-start: 6px;
-  border-radius: 50%;
   background: currentColor;
   opacity: 0.6;
   vertical-align: middle;
@@ -9062,7 +9082,6 @@ html[data-profile-shell="custom"] :focus-visible {
   align-content: start;
   gap: 10px;
   padding-bottom: 12px;
-  border-radius: 4px;
   background: var(--panel);
 }
 .cos-item:hover {
@@ -9070,7 +9089,6 @@ html[data-profile-shell="custom"] :focus-visible {
 }
 .cos-item[data-equipped] {
   background: var(--now);
-  box-shadow: inset 0 -3px 0 var(--np);
 }
 .cos-item-main {
   display: grid;
@@ -9143,7 +9161,6 @@ html[data-profile-shell="custom"] :focus-visible {
   width: 22px;
   height: 22px;
   padding: 0;
-  border-radius: 50%;
   cursor: pointer;
   background: var(--swatch, #888);
   border: 2px solid transparent;
