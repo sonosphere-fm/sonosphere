@@ -6413,6 +6413,74 @@
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
   }
+  .invite-intro {
+    margin-bottom: 16px;
+    color: var(--ink-2);
+  }
+  .invite-link {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 24px;
+  }
+  .main > .invite-link,
+  .main > .btn {
+    margin-bottom: 34px;
+  }
+  .invite-link .stat {
+    text-align: end;
+  }
+  .invite-roles {
+    margin-block: 4px 16px;
+  }
+  .invite-roles li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .invite-roles .muted {
+    margin-inline-start: auto;
+    font-size: 14px;
+  }
+  .role-swatch {
+    width: 12px;
+    height: 12px;
+    flex: none;
+  }
+  .invite-leaders .rank {
+    width: 24px;
+    text-align: end;
+    color: var(--muted);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .invite-landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: 720px;
+    margin-inline: auto;
+    padding-block: 48px 24px;
+    text-align: center;
+  }
+  .invite-landing .page-title {
+    margin: 0;
+  }
+  .invite-landing p {
+    max-width: 560px;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+  @media (max-width: 560px) {
+    .invite-link {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    .invite-link .stat {
+      text-align: start;
+    }
+  }
   .new-token {
     display: flex;
     flex-direction: column;

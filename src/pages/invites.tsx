@@ -10,94 +10,96 @@ import { DISCORD_INVITE, type DiscordStatus } from "../../shared/discord";
 import { INVITE_TIERS, LINKED_ROLE, type InviteBoard, type InviteFrom, type InviteLeader } from "../../shared/invites";
 
 export function Invites() {
-  const { me } = useAuth();
   const q = useApi<InviteBoard>("/invites");
   useTitle(t("user.invitesTitle"));
   return (
     <div className="wrap page">
       <h1 className="page-title">{t("user.invitesTitle")}</h1>
-      <div className="narrow-col">
-        <Async q={q}>
-          {(d) => (
-            <>
-              <Section title={t("user.yourInviteLink")}>
-                <p>{t("user.invitesIntro")}</p>
-                {d.mine ? (
-                  <YourInvites link={d.mine.link} invited={d.mine.invited} />
-                ) : (
-                  <p>
-                    <Link to="/login?next=/invites">{t("user.logInForInvite")}</Link>
-                  </p>
-                )}
-              </Section>
-              {me && <DiscordRoles />}
+      <Async q={q}>
+        {(d) => (
+          <div className="cols">
+            <div className="main">
+              <p className="invite-intro">{t("user.invitesIntro")}</p>
+              {d.mine ? (
+                <YourInvites link={d.mine.link} invited={d.mine.invited} />
+              ) : (
+                <Button kind="btn" href="/login?next=/invites">
+                  {t("user.logInForInvite")}
+                </Button>
+              )}
               <Section title={t("user.topInviters")}>
                 <Leaders items={d.items} />
               </Section>
-            </>
-          )}
-        </Async>
-      </div>
+            </div>
+            <aside className="side">
+              <DiscordRoles signedIn={!!d.mine} />
+            </aside>
+          </div>
+        )}
+      </Async>
     </div>
   );
 }
 
 export function YourInvites({ link, invited }: { link: string; invited: number }) {
   return (
-    <>
+    <div className="invite-link">
       <CopyField label={t("user.yourInviteLink")} value={link} />
-      <p className="muted">
-        {t("user.joinedFromLink")}: <b className="text-site-ink">{num(invited)}</b>
-      </p>
-    </>
+      <div className="stat">
+        <div className="stat-label">{t("user.joinedFromLink")}</div>
+        <div className="stat-value">{num(invited)}</div>
+      </div>
+    </div>
   );
 }
 
-function DiscordRoles() {
+function DiscordRoles({ signedIn }: { signedIn: boolean }) {
   const q = useApi<DiscordStatus>("/discord");
-  if (!q.data?.enabled) return null;
-  const d = q.data;
+  const d = q.data?.enabled ? q.data : null;
   return (
     <Section title="Discord">
       <p>{t("user.inviteRoles")}</p>
-      <ul className="m-0 mb-3 ps-5">
-        <li>
-          <b>{LINKED_ROLE}</b>: {t("user.linkedRole")}
-        </li>
+      <ul className="plain invite-roles">
+        <Role role={LINKED_ROLE} need={t("user.linkedRole")} />
         {INVITE_TIERS.map((tier) => (
-          <li key={tier.role}>
-            <b>{tier.role}</b>: {t("user.inviteTier", { count: tier.invited })}
-          </li>
+          <Role key={tier.role} role={tier} need={t("user.inviteTier", { count: tier.invited })} />
         ))}
       </ul>
-      {!d.linked ? (
+      {signedIn && d && !d.linked && (
         <Button kind="btn" href={oauthStart("discord", "link", "/invites")}>
           {t("settings.linkDiscord")}
         </Button>
-      ) : (
-        !d.inServer && (
-          <Button kind="btn" href={DISCORD_INVITE}>
-            {t("settings.joinDiscord")}
-          </Button>
-        )
+      )}
+      {signedIn && d?.linked && !d.inServer && (
+        <Button kind="btn" href={DISCORD_INVITE}>
+          {t("settings.joinDiscord")}
+        </Button>
       )}
     </Section>
+  );
+}
+
+function Role({ role, need }: { role: { role: string; color: string }; need: string }) {
+  return (
+    <li>
+      <i className="role-swatch" style={{ background: role.color }} />
+      <b>{role.role}</b>
+      <span className="muted">{need}</span>
+    </li>
   );
 }
 
 function Leaders({ items }: { items: InviteLeader[] }) {
   if (!items.length) return <Empty>{t("user.noInvitesYet")}</Empty>;
   return (
-    <ol className="userlist">
+    <ol className="userlist invite-leaders">
       {items.map((u, i) => (
         <li key={u.id}>
-          <b className="w-6 text-end text-site-muted">{i + 1}</b>
+          <span className="rank">{i + 1}</span>
           <Avatar user={u} size={40} />
-          <div className="grow">
-            <Link className="strong" to={userUrl(u.username)}>
-              <Username user={u} />
-            </Link>
-          </div>
+          <Link className="strong grow" to={userUrl(u.username)}>
+            <Username user={u} />
+          </Link>
           <b>{num(u.invited)}</b>
         </li>
       ))}
@@ -113,20 +115,18 @@ export function InviteLanding() {
   if (me) return <Navigate to="/invites" replace />;
   return (
     <div className="wrap page">
-      <div className="narrow-col flex flex-col items-center gap-4 text-center py-10">
-        <Async q={q}>
-          {(d) => (
-            <>
-              <Avatar user={d.inviter} size={88} />
-              <h1 className="page-title m-0">{t("user.invitedYou", { name: d.inviter.username })}</h1>
-              <p className="max-w-[460px]">{t("user.invitedYouBody")}</p>
-              <Button kind="btn" href="/join">
-                {t("common.join")}
-              </Button>
-            </>
-          )}
-        </Async>
-      </div>
+      <Async q={q}>
+        {(d) => (
+          <div className="invite-landing">
+            <Avatar user={d.inviter} size={88} />
+            <h1 className="page-title">{t("user.invitedYou", { name: d.inviter.username })}</h1>
+            <p>{t("user.invitedYouBody")}</p>
+            <Button kind="btn" href="/join">
+              {t("common.join")}
+            </Button>
+          </div>
+        )}
+      </Async>
     </div>
   );
 }
