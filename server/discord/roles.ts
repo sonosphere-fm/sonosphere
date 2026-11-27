@@ -5,6 +5,9 @@ import * as repo from "./repo";
 import { API, GUILD_ID, TOKEN } from "./service";
 import { INVITE_TIERS, LINKED_ROLE } from "../../shared/invites";
 
+const LINKED_COLOR = 0xffd257;
+const TIER_COLORS = [0x57d9a3, 0x5468ff, 0xff7a59];
+
 type Member = { user: { id: string; bot?: boolean }; roles: string[] };
 
 async function call(method: string, path: string, body?: unknown): Promise<Response> {
@@ -30,16 +33,17 @@ async function ensureRoles(): Promise<repo.RoleIds> {
     ((await (await call("GET", `/guilds/${GUILD_ID}/roles`)).json()) as { id: string }[]).map((r) => r.id)
   );
   const stored = await repo.roleIds();
-  const make = async (id: string | undefined, name: string) => {
+  const make = async (id: string | undefined, name: string, color: number) => {
     if (id && existing.has(id)) return id;
-    const res = await call("POST", `/guilds/${GUILD_ID}/roles`, { name, mentionable: false });
+    const res = await call("POST", `/guilds/${GUILD_ID}/roles`, { name, color, mentionable: false });
     return ((await res.json()) as { id: string }).id;
   };
-  const ids = {
-    linked: await make(stored?.linked, LINKED_ROLE),
-    tiers: [] as string[],
-  };
-  for (const [i, t] of INVITE_TIERS.entries()) ids.tiers.push(await make(stored?.tiers[i], t.role));
+  // New roles land at the bottom, so making the top tier first leaves the tiers stacked above the linked role.
+  const tiers: string[] = [];
+  for (let i = INVITE_TIERS.length - 1; i >= 0; i--) {
+    tiers[i] = await make(stored?.tiers[i], INVITE_TIERS[i]!.role, TIER_COLORS[i]!);
+  }
+  const ids = { linked: await make(stored?.linked, LINKED_ROLE, LINKED_COLOR), tiers };
   if (JSON.stringify(ids) !== JSON.stringify(stored)) await repo.saveRoleIds(ids);
   return ids;
 }
