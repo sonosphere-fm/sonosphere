@@ -147,7 +147,10 @@ function submitted(l: unknown, type: string): Submitted {
   if (!isObject(l)) return bad("eachListenShouldJsonObject");
   const m = l.track_metadata;
   if (!isObject(m)) return bad("missingTrackMetadata");
-  const artist = str(m.artist_name);
+  const info = isObject(m.additional_info) ? m.additional_info : {};
+  // a shared credit ("Metallica, Joey Jordison") counts for its first artist when the client lists them apart
+  const credited = Array.isArray(info.artist_names) && info.artist_names.length > 1 ? str(info.artist_names[0]) : "";
+  const artist = credited || str(m.artist_name);
   const track = str(m.track_name);
   if (!artist) bad("missingArtistName");
   if (!track) bad("missingTrackName");
@@ -160,7 +163,6 @@ function submitted(l: unknown, type: string): Submitted {
     if (timestamp! < OLDEST) bad("listenedAtTooLow");
     if (timestamp! > now() + 3600) bad("listenedAtTooHigh");
   }
-  const info = isObject(m.additional_info) ? m.additional_info : {};
   const ms = Number(info.duration_ms);
   const secs = Number(info.duration);
   return {
