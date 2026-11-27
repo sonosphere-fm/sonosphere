@@ -259,4 +259,18 @@ export default {
   firstPlays: "Primeras escuchas",
   startedWith: "Empezó con {track}",
   yearCard: "Tarjeta del año",
+  invitesTitle: "Invita a tus amigos",
+  invitesIntro:
+    "Comparte tu enlace. Quien se registre con él, confirme su correo y empiece a hacer scrobbling cuenta como tu invitación.",
+  yourInviteLink: "Tu enlace de invitación",
+  joinedFromLink: "Se unieron con tu enlace",
+  topInviters: "Quienes más invitan",
+  noInvitesYet: "Nadie ha invitado a nadie todavía.",
+  logInForInvite: "Inicia sesión para obtener tu enlace de invitación.",
+  inviteRoles: "Vincula tu Discord y únete a nuestro servidor para conseguir roles allí.",
+  linkedRole: "Cuenta vinculada",
+  inviteTier: "{count}+ invitaciones",
+  invitedYou: "{name} te ha invitado a Sonosphere",
+  invitedYouBody:
+    "Sonosphere registra lo que escuchas, crea tus listas y te ayuda a descubrir música nueva y personas con gustos parecidos.",
 } satisfies Translation<typeof en>;

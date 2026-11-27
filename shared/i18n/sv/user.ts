@@ -269,4 +269,18 @@ export default {
   firstPlays: "Första lyssningarna",
   startedWith: "Började med {track}",
   yearCard: "Årskort",
+  invitesTitle: "Bjud in vänner",
+  invitesIntro:
+    "Dela din länk. Alla som registrerar sig med den, bekräftar sin e-post och börjar scrobbla räknas som din inbjudan.",
+  yourInviteLink: "Din inbjudningslänk",
+  joinedFromLink: "Gick med via din länk",
+  topInviters: "Flest inbjudningar",
+  noInvitesYet: "Ingen har bjudit in någon än.",
+  logInForInvite: "Logga in för att få din inbjudningslänk.",
+  inviteRoles: "Koppla ditt Discord och gå med i vår server för att få roller där.",
+  linkedRole: "Kopplat konto",
+  inviteTier: "{count}+ inbjudningar",
+  invitedYou: "{name} har bjudit in dig till Sonosphere",
+  invitedYouBody:
+    "Sonosphere loggar det du lyssnar på, bygger dina topplistor och hjälper dig hitta ny musik och folk med liknande smak.",
 } satisfies Translation<typeof en>;

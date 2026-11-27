@@ -253,4 +253,18 @@ export default {
   firstPlays: "First plays",
   startedWith: "Started with {track}",
   yearCard: "Year card",
+  invitesTitle: "Invite friends",
+  invitesIntro:
+    "Share your link. Anyone who signs up with it, confirms their email and starts scrobbling counts as your invite.",
+  yourInviteLink: "Your invite link",
+  joinedFromLink: "Joined from your link",
+  topInviters: "Top inviters",
+  noInvitesYet: "Nobody has invited anyone yet.",
+  logInForInvite: "Log in to get your invite link.",
+  inviteRoles: "Link your Discord and join our server to get roles there.",
+  linkedRole: "Linked account",
+  inviteTier: "{count}+ invites",
+  invitedYou: "{name} invited you to Sonosphere",
+  invitedYouBody:
+    "Sonosphere keeps a log of what you listen to, builds your charts and helps you find new music and people with similar taste.",
 };

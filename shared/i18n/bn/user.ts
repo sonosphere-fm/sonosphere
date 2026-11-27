@@ -255,4 +255,17 @@ export default {
   firstPlays: "প্রথম শোনা",
   startedWith: "শুরু হয়েছিল {track} দিয়ে",
   yearCard: "বার্ষিক কার্ড",
+  invitesTitle: "বন্ধুদের আমন্ত্রণ জানান",
+  invitesIntro:
+    "আপনার লিংক শেয়ার করুন। যে কেউ এটি দিয়ে সাইন আপ করে, ইমেল নিশ্চিত করে এবং স্ক্রবল শুরু করে, সে আপনার আমন্ত্রণ হিসেবে গণ্য হবে।",
+  yourInviteLink: "আপনার আমন্ত্রণ লিংক",
+  joinedFromLink: "আপনার লিংক দিয়ে যোগ দিয়েছেন",
+  topInviters: "সবচেয়ে বেশি আমন্ত্রণকারী",
+  noInvitesYet: "এখনও কেউ কাউকে আমন্ত্রণ জানায়নি।",
+  logInForInvite: "আপনার আমন্ত্রণ লিংক পেতে লগ ইন করুন।",
+  inviteRoles: "আপনার Discord যুক্ত করুন এবং আমাদের সার্ভারে যোগ দিয়ে সেখানে রোল পান।",
+  linkedRole: "যুক্ত অ্যাকাউন্ট",
+  inviteTier: "{count}+ আমন্ত্রণ",
+  invitedYou: "{name} আপনাকে Sonosphere-এ আমন্ত্রণ জানিয়েছেন",
+  invitedYouBody: "Sonosphere আপনি যা শোনেন তার হিসাব রাখে, আপনার চার্ট তৈরি করে এবং নতুন গান ও একই রুচির মানুষ খুঁজে পেতে সাহায্য করে।",
 } satisfies Translation<typeof en>;

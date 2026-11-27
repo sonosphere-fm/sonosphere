@@ -9,9 +9,9 @@ import { watch, type Activity, type Presence } from "./gateway";
 import type { DiscordStatus } from "../../shared/discord";
 
 export const GUILD_ID = "1573635846580736042";
-const TOKEN = process.env.DISCORD_BOT_TOKEN || "";
+export const TOKEN = process.env.DISCORD_BOT_TOKEN || "";
 const OWN_APP = process.env.DISCORD_CLIENT_ID || "";
-const API = "https://discord.com/api/v10";
+export const API = "https://discord.com/api/v10";
 const LISTENING = 2;
 const REFRESH_EVERY = 60_000;
 const MEMBER_FOR = 5 * 60_000;

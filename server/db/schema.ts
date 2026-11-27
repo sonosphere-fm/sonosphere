@@ -189,6 +189,21 @@ export const oauthAccounts = pgTable(
   ]
 );
 
+// A row means the account was created from the inviter's invite link.
+export const invites = pgTable(
+  "invites",
+  {
+    userId: integer("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    inviterId: integer("inviter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [index("invites_inviter").on(table.inviterId)]
+);
+
 // tokens are stored as SHA-256 digests, so a copy of the database cannot be used to sign in
 export const sessions = pgTable("sessions", {
   token: text().primaryKey(),

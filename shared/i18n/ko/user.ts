@@ -255,4 +255,18 @@ export default {
   firstPlays: "첫 재생",
   startedWith: "{track}(으)로 시작",
   yearCard: "연간 카드",
+  invitesTitle: "친구 초대",
+  invitesIntro:
+    "링크를 공유하세요. 이 링크로 가입하고 이메일을 인증한 뒤 스크로블을 시작한 사람이 내 초대로 집계됩니다.",
+  yourInviteLink: "내 초대 링크",
+  joinedFromLink: "내 링크로 가입",
+  topInviters: "초대 순위",
+  noInvitesYet: "아직 아무도 초대하지 않았어요.",
+  logInForInvite: "로그인하면 초대 링크를 받을 수 있어요.",
+  inviteRoles: "Discord를 연결하고 서버에 참여하면 역할을 받을 수 있어요.",
+  linkedRole: "연결된 계정",
+  inviteTier: "{count}명 이상 초대",
+  invitedYou: "{name}님이 Sonosphere에 초대했어요",
+  invitedYouBody:
+    "Sonosphere는 내가 듣는 음악을 기록하고, 차트를 만들고, 새로운 음악과 취향이 비슷한 사람을 찾도록 도와줍니다.",
 } satisfies Translation<typeof en>;

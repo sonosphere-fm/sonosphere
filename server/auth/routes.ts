@@ -18,6 +18,7 @@ import {
 } from "./service";
 import { checkTurnstile, turnstileSiteKey } from "./turnstile";
 import { oauthProviders } from "./oauth/routes";
+import { creditInvite } from "../invites/routes";
 import { finishLogin } from "./totp";
 import type { LoginResult } from "../../shared/totp";
 import { safeNext } from "../../shared/auth";
@@ -41,6 +42,7 @@ router.post<Session>("/api/auth/signup", async (c) => {
   const username = clean(c.body.username, 15);
   const email = clean(c.body.email, 200).toLowerCase();
   const u = await signUp(username, email, String(c.body.password || ""), requestLocale(c.req), ipOf(c.req));
+  await creditInvite(c, u.id);
   await sendVerification(u, requestLocale(c.req));
   await startSession(c.headers, u.id, c.req);
   return { user: await me(u) };

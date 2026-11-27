@@ -290,4 +290,18 @@ export default {
   firstPlays: "Primele ascultări",
   startedWith: "A început cu {track}",
   yearCard: "Cardul anului",
+  invitesTitle: "Invită prieteni",
+  invitesIntro:
+    "Distribuie linkul tău. Oricine se înscrie cu el, își confirmă e-mailul și începe să facă scrobble contează ca invitația ta.",
+  yourInviteLink: "Linkul tău de invitație",
+  joinedFromLink: "S-au alăturat prin linkul tău",
+  topInviters: "Cei mai activi invitatori",
+  noInvitesYet: "Nimeni nu a invitat pe nimeni încă.",
+  logInForInvite: "Conectează-te ca să primești linkul de invitație.",
+  inviteRoles: "Conectează-ți Discordul și intră pe serverul nostru ca să primești roluri acolo.",
+  linkedRole: "Cont conectat",
+  inviteTier: "{count}+ invitații",
+  invitedYou: "{name} te-a invitat pe Sonosphere",
+  invitedYouBody:
+    "Sonosphere ține evidența a ceea ce asculți, îți face topurile și te ajută să descoperi muzică nouă și oameni cu gusturi asemănătoare.",
 } satisfies Translation<typeof en>;

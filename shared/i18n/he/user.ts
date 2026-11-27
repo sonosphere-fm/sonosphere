@@ -270,4 +270,17 @@ export default {
   firstPlays: "השמעות ראשונות",
   startedWith: "התחיל עם {track}",
   yearCard: "כרטיס השנה",
+  invitesTitle: "הזמנת חברים",
+  invitesIntro: "שתפו את הקישור שלכם. כל מי שנרשם דרכו, מאשר את האימייל ומתחיל לעשות סקרובלינג נחשב להזמנה שלכם.",
+  yourInviteLink: "קישור ההזמנה שלך",
+  joinedFromLink: "הצטרפו דרך הקישור שלך",
+  topInviters: "המזמינים המובילים",
+  noInvitesYet: "עדיין אף אחד לא הזמין אף אחד.",
+  logInForInvite: "התחברו כדי לקבל את קישור ההזמנה שלכם.",
+  inviteRoles: "קשרו את ה-Discord שלכם והצטרפו לשרת שלנו כדי לקבל שם תפקידים.",
+  linkedRole: "חשבון מקושר",
+  inviteTier: "{count}+ הזמנות",
+  invitedYou: "{name} הזמין אותך ל-Sonosphere",
+  invitedYouBody:
+    "Sonosphere מתעד את מה שאתם מאזינים לו, בונה את המצעדים שלכם ועוזר למצוא מוזיקה חדשה ואנשים עם טעם דומה.",
 } satisfies Translation<typeof en>;

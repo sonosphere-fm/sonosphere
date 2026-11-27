@@ -290,4 +290,18 @@ export default {
   firstPlays: "Pirmās klausīšanās",
   startedWith: "Sākās ar {track}",
   yearCard: "Gada kartīte",
+  invitesTitle: "Uzaicini draugus",
+  invitesIntro:
+    "Kopīgo savu saiti. Ikviens, kas ar to reģistrējas, apstiprina e-pastu un sāk skrobot, tiek ieskaitīts kā tavs ielūgums.",
+  yourInviteLink: "Tava ielūguma saite",
+  joinedFromLink: "Pievienojās ar tavu saiti",
+  topInviters: "Aktīvākie aicinātāji",
+  noInvitesYet: "Neviens vēl nevienu nav uzaicinājis.",
+  logInForInvite: "Piesakies, lai saņemtu savu ielūguma saiti.",
+  inviteRoles: "Piesaisti savu Discord un pievienojies mūsu serverim, lai tur saņemtu lomas.",
+  linkedRole: "Piesaistīts konts",
+  inviteTier: "{count}+ ielūgumi",
+  invitedYou: "{name} tevi uzaicināja uz Sonosphere",
+  invitedYouBody:
+    "Sonosphere pieraksta, ko tu klausies, veido tavus topus un palīdz atrast jaunu mūziku un cilvēkus ar līdzīgu gaumi.",
 } satisfies Translation<typeof en>;

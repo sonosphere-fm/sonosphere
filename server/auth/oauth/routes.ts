@@ -17,6 +17,8 @@ import { checkNewAccount, createAccount, me, startSession, USERNAME } from "../s
 import { PROVIDERS, providerById, providerLabel, type Provider } from "./providers";
 import { finishLogin } from "../totp";
 import * as repo from "./repo";
+import { creditInvite } from "../../invites/routes";
+import { syncRoles } from "../../discord/roles";
 import { safeNext, type Logins, type OAuthCreated, type OAuthPending, type Ok } from "../../../shared/auth";
 
 export const router = new Router();
@@ -107,6 +109,7 @@ router.get("/api/auth/oauth/:provider/callback", async (c) => {
     if (!link) {
       if (await repo.linkOf(c.user.id, p.id)) return failTo(c, "link", "already");
       await repo.addLink(p.id, who.subject, c.user.id, who.name);
+      if (p.id === "discord") syncRoles().catch((e) => console.error("Discord roles:", e));
     }
     return go(c, `/settings/account?linked=${p.id}`);
   }
@@ -186,6 +189,8 @@ router.post<OAuthCreated>("/api/auth/oauth/complete", async (c) => {
   // the provider confirmed the address, so it counts as confirmed here
   const u = await createAccount(username, pd.email, "", requestLocale(c.req), true);
   await repo.addLink(pd.provider, pd.subject, u.id, pd.name);
+  await creditInvite(c, u.id);
+  if (pd.provider === "discord") syncRoles().catch((e) => console.error("Discord roles:", e));
   c.headers.append("Set-Cookie", cookie("oauth_ticket", "", 0));
   await startSession(c.headers, u.id, c.req);
   return { user: await me(u), next: pd.next };

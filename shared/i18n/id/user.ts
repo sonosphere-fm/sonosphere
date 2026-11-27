@@ -260,4 +260,18 @@ export default {
   firstPlays: "Putaran pertama",
   startedWith: "Dimulai dengan {track}",
   yearCard: "Kartu tahunan",
+  invitesTitle: "Undang teman",
+  invitesIntro:
+    "Bagikan tautanmu. Siapa pun yang mendaftar lewat tautan itu, mengonfirmasi email, dan mulai scrobble dihitung sebagai undanganmu.",
+  yourInviteLink: "Tautan undanganmu",
+  joinedFromLink: "Bergabung lewat tautanmu",
+  topInviters: "Pengundang teratas",
+  noInvitesYet: "Belum ada yang mengundang siapa pun.",
+  logInForInvite: "Masuk untuk mendapatkan tautan undanganmu.",
+  inviteRoles: "Tautkan Discord dan gabung ke server kami untuk mendapat peran di sana.",
+  linkedRole: "Akun tertaut",
+  inviteTier: "{count}+ undangan",
+  invitedYou: "{name} mengundangmu ke Sonosphere",
+  invitedYouBody:
+    "Sonosphere mencatat apa yang kamu dengarkan, membuat tangga lagumu, dan membantumu menemukan musik baru serta orang dengan selera serupa.",
 } satisfies Translation<typeof en>;

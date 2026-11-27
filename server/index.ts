@@ -25,6 +25,7 @@ import { startTasteWorker } from "./recommend/worker";
 import { startSpotify } from "./spotify/service";
 import { DISCORD_INVITE } from "../shared/discord";
 import { startDiscord } from "./discord/service";
+import { syncRoles } from "./discord/roles";
 import { startPresence } from "./presence/service";
 import { startEventSync } from "./events/sync";
 import { startImports } from "./listening/imports";
@@ -162,6 +163,7 @@ const tidy = () => {
       sendDigests(),
       reviewProbation(),
       dropOldIps(),
+      syncRoles(),
     ]);
   exclusive("tidy", 5 * 60_000, jobs).catch((e) => {
     console.error(e);

@@ -87,6 +87,8 @@ const ImportPage = lazy(() => import("./pages/import").then((m) => ({ default: m
 const ScrobblePage = lazy(() => import("./pages/scrobble").then((m) => ({ default: m.ScrobblePage })));
 const Connect = lazy(() => import("./pages/connect").then((m) => ({ default: m.Connect })));
 const Onboarding = lazy(() => import("./pages/onboarding").then((m) => ({ default: m.Onboarding })));
+const Invites = lazy(() => import("./pages/invites").then((m) => ({ default: m.Invites })));
+const InviteLanding = lazy(() => import("./pages/invites").then((m) => ({ default: m.InviteLanding })));
 const Help = lazy(() => import("./pages/help").then((m) => ({ default: m.Help })));
 const Changelog = lazy(() => import("./pages/changelog").then((m) => ({ default: m.Changelog })));
 const Developers = lazy(() => import("./pages/developers").then((m) => ({ default: m.Developers })));
@@ -299,6 +301,7 @@ function Footer() {
       t("common.footerCommunity"),
       [
         [t("common.joinDiscord"), DISCORD_INVITE],
+        [t("user.invitesTitle"), "/invites"],
         [t("common.guidelines"), "/guidelines"],
       ],
     ],
@@ -672,6 +675,8 @@ function Pages() {
           </Private>
         }
       />
+      <Route path="/invites" element={<Invites />} />
+      <Route path="/invite/:name" element={<InviteLanding />} />
       <Route path="/help" element={<Help />} />
       <Route path="/changelog" element={<Changelog />} />
       <Route path="/developers" element={<Developers />} />

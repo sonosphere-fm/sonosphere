@@ -1,14 +1,5 @@
 import { LanguagePicker } from "../ui/language-picker";
-import {
-  lazy,
-  Suspense,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { lazy, Suspense, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Button, Input, Select, useConfirm } from "../kit";
 import { Markdown, MdEditor } from "../md";
 import { UsernameSettings } from "../ui/username-settings";
@@ -17,6 +8,9 @@ import { SessionSettings } from "../ui/sessions";
 import { ProfileLinksEditor } from "../ui/profile-links-editor";
 import { ProfileStyleSettings } from "../ui/profile-style-settings";
 import { Username } from "../ui/username";
+import { CopyField, selectContents } from "../ui/copy-field";
+import { YourInvites } from "./invites";
+import type { InviteBoard } from "../../shared/invites";
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ago, api, copyText, date, imageUrl, invalidateAll, useApi, useAuth, useTitle, type Ok } from "../lib";
 import type { ProfileEdit, ProfileSaved, ScrobblesCleared } from "../../shared/account";
@@ -86,6 +80,7 @@ export function Settings() {
       <div className="narrow-col">
         <Pane>
           {tab === "profile" && <ProfileSettings />}
+          {tab === "profile" && <InviteSettings />}
           {tab === "appearance" && <AppearanceSettings />}
           {tab === "privacy" && <PrivacySettings />}
           {tab === "notifications" && <NotificationSettings />}
@@ -95,6 +90,16 @@ export function Settings() {
         </Pane>
       </div>
     </div>
+  );
+}
+
+function InviteSettings() {
+  const q = useApi<InviteBoard>("/invites");
+  if (!q.data?.mine) return null;
+  return (
+    <Section title={t("user.invitesTitle")} more="/invites" moreLabel={t("user.topInviters")}>
+      <YourInvites link={q.data.mine.link} invited={q.data.mine.invited} />
+    </Section>
   );
 }
 
@@ -791,13 +796,6 @@ const SPOTIFY_OUTCOME: Record<string, { ok: boolean; text: MessageKey }> = {
 };
 const SPOTIFY_DASHBOARD = "https://developer.spotify.com/dashboard";
 const SPOTIFY_QUOTA_MODES = "https://developer.spotify.com/documentation/web-api/concepts/quota-modes";
-
-const selectContents = (e: MouseEvent<HTMLElement>) => {
-  const r = document.createRange();
-  r.selectNodeContents(e.currentTarget);
-  getSelection()?.removeAllRanges();
-  getSelection()?.addRange(r);
-};
 
 function SpotifySetup({
   redirectUri,
@@ -1693,27 +1691,6 @@ function NewApp({ onCreated }: { onCreated: () => void }) {
         {t("settings.createApiAccount")}
       </Button>
     </form>
-  );
-}
-
-function CopyField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () =>
-    copyText(value).then((ok) => {
-      if (!ok) return;
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  return (
-    <div className="copy-field">
-      <span className="copy-label">{label}</span>
-      <span className="copy-value">
-        <span onClick={selectContents}>{value}</span>
-        <Button kind="btn ghost small" type="button" onClick={copy}>
-          {copied ? t("settings.copied") : t("settings.copy")}
-        </Button>
-      </span>
-    </div>
   );
 }
 

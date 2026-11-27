@@ -266,4 +266,18 @@ export default {
   firstPlays: "İlk dinlemeler",
   startedWith: "{track} ile başladı",
   yearCard: "Yıl kartı",
+  invitesTitle: "Arkadaşlarını davet et",
+  invitesIntro:
+    "Bağlantını paylaş. Bununla kaydolan, e-postasını onaylayan ve scrobble yapmaya başlayan herkes davetin sayılır.",
+  yourInviteLink: "Davet bağlantın",
+  joinedFromLink: "Bağlantınla katılanlar",
+  topInviters: "En çok davet edenler",
+  noInvitesYet: "Henüz kimse kimseyi davet etmedi.",
+  logInForInvite: "Davet bağlantını almak için giriş yap.",
+  inviteRoles: "Discord hesabını bağla ve sunucumuza katılarak orada roller al.",
+  linkedRole: "Bağlı hesap",
+  inviteTier: "{count}+ davet",
+  invitedYou: "{name} seni Sonosphere'e davet etti",
+  invitedYouBody:
+    "Sonosphere ne dinlediğinin kaydını tutar, listelerini oluşturur ve yeni müzikler ile benzer zevkte insanlar bulmana yardım eder.",
 } satisfies Translation<typeof en>;

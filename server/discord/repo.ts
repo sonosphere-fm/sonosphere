@@ -1,7 +1,7 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { discordPresence, oauthAccounts, scrobbles, spotifyLinks, users } from "../db/schema";
-import { now } from "../util";
+import { discordPresence, meta, oauthAccounts, scrobbles, spotifyLinks, users } from "../db/schema";
+import { first, now } from "../util";
 
 export type Optin = typeof discordPresence.$inferSelect;
 export type Watched = { discordId: string; userId: number; spotify: boolean };
@@ -52,4 +52,27 @@ export async function sentAround(userId: number, at: number, within: number) {
 
 export async function counted(userId: number) {
   await db.update(discordPresence).set({ lastPlayAt: now() }).where(eq(discordPresence.userId, userId));
+}
+
+// Discord ids of linked accounts in good standing, mapped to their Sonosphere user.
+export async function linkedAccounts(): Promise<Map<string, number>> {
+  const rows = await db
+    .select({ discordId: oauthAccounts.subject, userId: users.id })
+    .from(oauthAccounts)
+    .innerJoin(users, eq(users.id, oauthAccounts.userId))
+    .where(and(eq(oauthAccounts.provider, "discord"), eq(users.banned, false), eq(users.suspended, false)));
+  return new Map(rows.map((r) => [r.discordId, r.userId]));
+}
+
+const ROLES_KEY = "discord-roles";
+export type RoleIds = { linked: string; tiers: string[] };
+
+export async function roleIds(): Promise<RoleIds | null> {
+  const row = await first(db.select({ value: meta.value }).from(meta).where(eq(meta.key, ROLES_KEY)));
+  return row ? JSON.parse(row.value) : null;
+}
+
+export async function saveRoleIds(ids: RoleIds) {
+  const value = JSON.stringify(ids);
+  await db.insert(meta).values({ key: ROLES_KEY, value }).onConflictDoUpdate({ target: meta.key, set: { value } });
 }

@@ -259,4 +259,18 @@ export default {
   firstPlays: "पहिल्यांदा ऐकले",
   startedWith: "सुरुवात {track} ने",
   yearCard: "वार्षिक कार्ड",
+  invitesTitle: "मित्रांना आमंत्रित करा",
+  invitesIntro:
+    "तुमची लिंक शेअर करा. जो कोणी तिच्याद्वारे साइन अप करेल, ईमेल पुष्टी करेल आणि स्क्रॉबल करू लागेल तो तुमचे आमंत्रण मानला जाईल.",
+  yourInviteLink: "तुमची आमंत्रण लिंक",
+  joinedFromLink: "तुमच्या लिंकने सामील झाले",
+  topInviters: "सर्वाधिक आमंत्रित करणारे",
+  noInvitesYet: "अजून कोणीही कोणाला आमंत्रित केलेले नाही.",
+  logInForInvite: "तुमची आमंत्रण लिंक मिळवण्यासाठी लॉग इन करा.",
+  inviteRoles: "तुमचे Discord जोडा आणि आमच्या सर्व्हरमध्ये सामील होऊन तिथे रोल मिळवा.",
+  linkedRole: "जोडलेले खाते",
+  inviteTier: "{count}+ आमंत्रणे",
+  invitedYou: "{name} यांनी तुम्हाला Sonosphere वर आमंत्रित केले आहे",
+  invitedYouBody:
+    "Sonosphere तुम्ही काय ऐकता याची नोंद ठेवते, तुमचे चार्ट बनवते आणि नवीन संगीत व सारखी आवड असलेले लोक शोधायला मदत करते.",
 } satisfies Translation<typeof en>;
