@@ -34,7 +34,7 @@ export default {
   backToJoin: "Kembali ke halaman gabung",
   oauthSigningUp: "Kamu mendaftar dengan {provider} sebagai {email}. Pilih nama pengguna untuk menyelesaikan.",
   oauthUsernameHint:
-    "2 hingga 15 karakter: huruf, angka, - dan _, dimulai dengan huruf. Kamu dapat mengatur kata sandi nanti di Pengaturan, yang dibutuhkan beberapa aplikasi scrobbler.",
+    "3 hingga 15 karakter: huruf, angka, - dan _, dimulai dengan huruf. Kamu dapat mengatur kata sandi nanti di Pengaturan, yang dibutuhkan beberapa aplikasi scrobbler.",
   resetTitle: "Atur ulang kata sandimu",
   resetSent:
     "Jika sebuah akun menggunakan {email}, tautan untuk memilih kata sandi baru sedang dikirim. Berlaku satu jam.",

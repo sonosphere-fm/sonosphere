@@ -143,7 +143,9 @@ export default {
   username: "Kullanıcı adı",
   usernameIntro:
     "Kullanıcı adını 7 günde bir değiştirebilirsin. Eski adın 14 gün boyunca profiline yönlendirir, sonra başkalarının kullanımına açılır.",
-  usernameRules: "2–15 karakter: harf, rakam, - ve _; bir harfle başlamalı.",
+  usernameRules: "{min}–15 karakter: harf, rakam, - ve _; bir harfle başlamalı.",
+  usernameShortUnlock:
+    "2 karakterli kullanıcı adlarının kilidini açmak için 25 kişiyi, 1 karakter için 100 kişiyi davet et.",
   usernameChangeAfter: "Kullanıcı adını {date} tarihinde yeniden değiştirebilirsin.",
   changeUsername: "Kullanıcı adını değiştir",
   usernameRestoreUntil:

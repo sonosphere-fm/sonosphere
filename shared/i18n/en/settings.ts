@@ -139,7 +139,8 @@ export default {
   username: "Username",
   usernameIntro:
     "You can change your username once every 7 days. Your previous name redirects to your profile for 14 days, then becomes available to others.",
-  usernameRules: "2–15 characters: letters, numbers, - and _, starting with a letter.",
+  usernameRules: "{min}–15 characters: letters, numbers, - and _, starting with a letter.",
+  usernameShortUnlock: "Invite 25 people to unlock 2-character usernames, or 100 for 1 character.",
   usernameChangeAfter: "You can change your username again on {date}.",
   changeUsername: "Change username",
   usernameRestoreUntil: "Restore {name} until {date}. Undo starts a new 7-day cooldown.",

@@ -144,7 +144,8 @@ export default {
   username: "Nome de usuário",
   usernameIntro:
     "Você pode mudar seu nome de usuário uma vez a cada 7 dias. Seu nome anterior redireciona para o seu perfil por 14 dias e depois fica disponível para outras pessoas.",
-  usernameRules: "2–15 caracteres: letras, números, - e _, começando com uma letra.",
+  usernameRules: "{min}–15 caracteres: letras, números, - e _, começando com uma letra.",
+  usernameShortUnlock: "Convide 25 pessoas para desbloquear nomes de usuário de 2 caracteres, ou 100 para 1 caractere.",
   usernameChangeAfter: "Você poderá mudar seu nome de usuário de novo em {date}.",
   changeUsername: "Mudar nome de usuário",
   usernameRestoreUntil: "Restaure {name} até {date}. Desfazer inicia um novo intervalo de 7 dias.",

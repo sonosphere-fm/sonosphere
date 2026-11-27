@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "이미 데이터를 여러 번 다운로드했어요. 1시간 뒤에 다시 시도해 주세요.",
   usernameChangeNoLongerUndone: "이 사용자 이름 변경은 더 이상 되돌릴 수 없어요",
   changeUsernameOnceEvery7: "사용자 이름은 7일에 한 번만 바꿀 수 있어요",
-  invalidUsername: "사용자 이름은 2~15자의 영문, 숫자, -, _로 이루어지며 영문으로 시작해야 해요",
+  invalidUsername: "사용자 이름은 {min}~15자의 영문, 숫자, -, _로 이루어지며 영문으로 시작해야 해요",
   chooseDifferentUsername: "다른 사용자 이름을 선택해 주세요",
   usernameTakenTemporarilyReserved: "이미 사용 중이거나 일시적으로 예약된 사용자 이름이에요",
   trackListedTwice: "같은 트랙이 두 번 들어 있어요",

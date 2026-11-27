@@ -11,10 +11,9 @@ import { clearActAsCookie, sessionCookie } from "./session";
 import type { Me } from "../../shared/auth";
 import { isLocale, type Locale } from "../../shared/i18n/core";
 import { storedProfileLinks } from "../../shared/profile-links";
-import { USERNAME } from "../account/username-policy";
+import { checkUsername } from "../account/username-policy";
 import { usernameUnavailable } from "../account/usernames";
 import { appearanceFor } from "../users/appearance";
-export { USERNAME } from "../account/username-policy";
 
 export async function me(u: User, actor?: User | null): Promise<Me> {
   return {
@@ -83,7 +82,7 @@ export async function endSession(headers: Headers, token = ""): Promise<void> {
 export async function checkNewAccount(username: string, email: string, ip: string): Promise<void> {
   const open = await setting("registrationsOpen");
   if (!open && !(await configAdmins()).includes(norm(username))) fail(403, "registrationsClosedMoment");
-  if (!USERNAME.test(username)) bad("invalidUsername");
+  checkUsername(username);
   if (!validEmail(email)) bad("enterValidEmailAddress");
   if (await usernameUnavailable(username)) bad("usernameTaken");
   if (await repo.emailTaken(email)) bad("accountEmailAlreadyExists");

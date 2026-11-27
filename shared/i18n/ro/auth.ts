@@ -34,7 +34,7 @@ export default {
   backToJoin: "Înapoi la pagina de înscriere",
   oauthSigningUp: "Te înscrii cu {provider} ca {email}. Alege un nume de utilizator pentru a termina.",
   oauthUsernameHint:
-    "Între 2 și 15 caractere: litere, cifre, - și _, începând cu o literă. Poți seta o parolă mai târziu în Setări, de care au nevoie unele aplicații de scrobble.",
+    "Între 3 și 15 caractere: litere, cifre, - și _, începând cu o literă. Poți seta o parolă mai târziu în Setări, de care au nevoie unele aplicații de scrobble.",
   resetTitle: "Resetează-ți parola",
   resetSent:
     "Dacă există un cont cu {email}, un link pentru alegerea unei parole noi este pe drum. Este valabil o oră.",

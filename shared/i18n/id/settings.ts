@@ -143,7 +143,8 @@ export default {
   username: "Nama pengguna",
   usernameIntro:
     "Kamu dapat mengubah nama pengguna sekali setiap 7 hari. Nama sebelumnya dialihkan ke profilmu selama 14 hari, lalu tersedia untuk orang lain.",
-  usernameRules: "2–15 karakter: huruf, angka, - dan _, dimulai dengan huruf.",
+  usernameRules: "{min}–15 karakter: huruf, angka, - dan _, dimulai dengan huruf.",
+  usernameShortUnlock: "Undang 25 orang untuk membuka nama pengguna 2 karakter, atau 100 untuk 1 karakter.",
   usernameChangeAfter: "Kamu dapat mengubah nama pengguna lagi pada {date}.",
   changeUsername: "Ubah nama pengguna",
   usernameRestoreUntil: "Pulihkan {name} hingga {date}. Membatalkan memulai masa tunggu 7 hari baru.",

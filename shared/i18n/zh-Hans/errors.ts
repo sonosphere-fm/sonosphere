@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "你已经下载过几次数据了。请一小时后再试。",
   usernameChangeNoLongerUndone: "这次用户名更改已无法撤销",
   changeUsernameOnceEvery7: "每 7 天只能更改一次用户名",
-  invalidUsername: "用户名为 2–15 个字符：字母、数字、- 和 _，并以字母开头",
+  invalidUsername: "用户名为 {min}–15 个字符：字母、数字、- 和 _，并以字母开头",
   chooseDifferentUsername: "请选择其他用户名",
   usernameTakenTemporarilyReserved: "该用户名已被占用或暂时保留",
   trackListedTwice: "有一首曲目重复列出",

@@ -34,7 +34,7 @@ export default {
   backToJoin: "Katılma sayfasına dön",
   oauthSigningUp: "{provider} ile kaydoluyorsun, e-posta adresin: {email}. Bitirmek için bir kullanıcı adı seç.",
   oauthUsernameHint:
-    "2 ila 15 karakter: harf, rakam, - ve _; bir harfle başlamalı. Bazı scrobbler uygulamalarının ihtiyaç duyduğu şifreyi daha sonra Ayarlar'dan belirleyebilirsin.",
+    "3 ila 15 karakter: harf, rakam, - ve _; bir harfle başlamalı. Bazı scrobbler uygulamalarının ihtiyaç duyduğu şifreyi daha sonra Ayarlar'dan belirleyebilirsin.",
   resetTitle: "Şifreni sıfırla",
   resetSent:
     "{email} adresini kullanan bir hesap varsa, yeni şifre seçmen için bir bağlantı yolda. Bağlantı bir saat geçerli.",

@@ -50,14 +50,15 @@ export function UsernameSettings() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 required
-                minLength={2}
+                minLength={status.shortest}
                 maxLength={15}
-                pattern="[a-zA-Z][a-zA-Z0-9_\-]{1,14}"
+                pattern={`[a-zA-Z][a-zA-Z0-9_\\-]{${status.shortest - 1},14}`}
                 autoComplete="username"
                 disabled={action.busy}
               />
             </label>
-            <p className="muted small">{t("settings.usernameRules")}</p>
+            <p className="muted small">{t("settings.usernameRules", { min: status.shortest })}</p>
+            {status.shortest > 1 && <p className="muted small">{t("settings.usernameShortUnlock")}</p>}
             {status.changeAfter > at && (
               <p className="muted small">{t("settings.usernameChangeAfter", { date: dateTime(status.changeAfter) })}</p>
             )}

@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Ты уже несколько раз скачивал свои данные. Попробуй через час.",
   usernameChangeNoLongerUndone: "Эту смену имени уже нельзя отменить",
   changeUsernameOnceEvery7: "Имя пользователя можно менять раз в 7 дней",
-  invalidUsername: "Имя пользователя: 2–15 символов, буквы, цифры, - и _, начинается с буквы",
+  invalidUsername: "Имя пользователя: {min}–15 символов, буквы, цифры, - и _, начинается с буквы",
   chooseDifferentUsername: "Выбери другое имя пользователя",
   usernameTakenTemporarilyReserved: "Это имя занято или временно зарезервировано",
   trackListedTwice: "Трек указан дважды",

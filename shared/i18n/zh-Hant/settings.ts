@@ -139,7 +139,8 @@ export default {
   username: "使用者名稱",
   usernameIntro:
     "使用者名稱每 7 天可以變更一次。你之前的使用者名稱會在 14 天內重新導向到你的個人檔案，之後可供他人使用。",
-  usernameRules: "2 到 15 個字元：字母、數字、- 和 _，須以字母開頭。",
+  usernameRules: "{min} 到 15 個字元：字母、數字、- 和 _，須以字母開頭。",
+  usernameShortUnlock: "邀請 25 人即可解鎖 2 個字元的使用者名稱，邀請 100 人可解鎖 1 個字元。",
   usernameChangeAfter: "你可以在 {date} 再次變更使用者名稱。",
   changeUsername: "變更使用者名稱",
   usernameRestoreUntil: "在 {date} 之前可以還原為 {name}。復原後將重新開始 7 天的冷卻期。",

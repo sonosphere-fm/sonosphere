@@ -33,7 +33,7 @@ export default {
   backToJoin: "Volver al registro",
   oauthSigningUp: "Te estás registrando con {provider} como {email}. Elige un nombre de usuario para terminar.",
   oauthUsernameHint:
-    "De 2 a 15 caracteres: letras, números, - y _, empezando por una letra. Más adelante puedes poner una contraseña en Ajustes, que algunas apps de scrobbling necesitan.",
+    "De 3 a 15 caracteres: letras, números, - y _, empezando por una letra. Más adelante puedes poner una contraseña en Ajustes, que algunas apps de scrobbling necesitan.",
   resetTitle: "Restablece tu contraseña",
   resetSent:
     "Si hay una cuenta con {email}, te llegará un enlace para elegir una contraseña nueva. Funciona durante una hora.",

@@ -29,7 +29,7 @@ export default {
   tooManyDataDownloads: "You have downloaded your data a few times already. Try again in an hour.",
   usernameChangeNoLongerUndone: "This username change can no longer be undone",
   changeUsernameOnceEvery7: "You can change your username once every 7 days",
-  invalidUsername: "Usernames are 2–15 characters: letters, numbers, - and _, starting with a letter",
+  invalidUsername: "Usernames are {min}–15 characters: letters, numbers, - and _, starting with a letter",
   chooseDifferentUsername: "Choose a different username",
   usernameTakenTemporarilyReserved: "That username is taken or temporarily reserved",
   trackListedTwice: "A track is listed twice",

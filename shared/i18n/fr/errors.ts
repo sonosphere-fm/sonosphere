@@ -33,7 +33,7 @@ export default {
   usernameChangeNoLongerUndone: "Ce changement de nom d’utilisateur ne peut plus être annulé",
   changeUsernameOnceEvery7: "Tu peux changer de nom d’utilisateur une fois tous les 7 jours",
   invalidUsername:
-    "Les noms d’utilisateur font 2 à 15 caractères : lettres, chiffres, - et _, en commençant par une lettre",
+    "Les noms d’utilisateur font {min} à 15 caractères : lettres, chiffres, - et _, en commençant par une lettre",
   chooseDifferentUsername: "Choisis un autre nom d’utilisateur",
   usernameTakenTemporarilyReserved: "Ce nom d’utilisateur est pris ou temporairement réservé",
   trackListedTwice: "Un titre figure deux fois",

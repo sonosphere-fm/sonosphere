@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "آپ اپنا ڈیٹا کئی بار ڈاؤن لوڈ کر چکے ہیں۔ ایک گھنٹے بعد دوبارہ کوشش کریں۔",
   usernameChangeNoLongerUndone: "صارف نام کی یہ تبدیلی اب واپس نہیں لی جا سکتی",
   changeUsernameOnceEvery7: "آپ ہر 7 دن میں ایک بار اپنا صارف نام تبدیل کر سکتے ہیں",
-  invalidUsername: "صارف نام 2 سے 15 حروف کے ہوتے ہیں: حروف، ہندسے، - اور _، اور پہلا حرف انگریزی حرف ہو",
+  invalidUsername: "صارف نام {min} سے 15 حروف کے ہوتے ہیں: حروف، ہندسے، - اور _، اور پہلا حرف انگریزی حرف ہو",
   chooseDifferentUsername: "کوئی دوسرا صارف نام منتخب کریں",
   usernameTakenTemporarilyReserved: "یہ صارف نام لیا جا چکا ہے یا عارضی طور پر محفوظ ہے",
   trackListedTwice: "ایک ٹریک دو بار درج ہے",

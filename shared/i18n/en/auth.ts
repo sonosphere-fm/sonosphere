@@ -30,7 +30,7 @@ export default {
   backToJoin: "Back to the join page",
   oauthSigningUp: "You're signing up with {provider} as {email}. Pick a username to finish.",
   oauthUsernameHint:
-    "2 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in Settings, which some scrobbler apps need.",
+    "3 to 15 characters: letters, numbers, - and _, starting with a letter. You can set a password later in Settings, which some scrobbler apps need.",
   resetTitle: "Reset your password",
   resetSent: "If an account uses {email}, a link to choose a new password is on its way. It works for one hour.",
   resetSpam:

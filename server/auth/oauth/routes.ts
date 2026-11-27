@@ -13,7 +13,8 @@ import { clean, digest, rid } from "../../util";
 import * as Sentry from "@sentry/bun";
 import { loginBanned } from "../ips";
 import { emailTaken } from "../repo";
-import { checkNewAccount, createAccount, me, startSession, USERNAME } from "../service";
+import { fitsUsername } from "../../account/username-policy";
+import { checkNewAccount, createAccount, me, startSession } from "../service";
 import { PROVIDERS, providerById, providerLabel, type Provider } from "./providers";
 import { finishLogin } from "../totp";
 import * as repo from "./repo";
@@ -167,7 +168,7 @@ function suggest(name: string): string {
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .replace(/^[^a-zA-Z]+/, "")
     .slice(0, 15);
-  return USERNAME.test(s) ? s : "";
+  return fitsUsername(s) ? s : "";
 }
 
 router.get<OAuthPending>("/api/auth/oauth/pending", async (c) => {

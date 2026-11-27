@@ -143,7 +143,9 @@ export default {
   username: "Lietotājvārds",
   usernameIntro:
     "Lietotājvārdu var mainīt reizi 7 dienās. Tavs iepriekšējais vārds 14 dienas novirza uz tavu profilu, pēc tam tas kļūst pieejams citiem.",
-  usernameRules: "2–15 rakstzīmes: burti, cipari, - un _, jāsākas ar burtu.",
+  usernameRules: "{min}–15 rakstzīmes: burti, cipari, - un _, jāsākas ar burtu.",
+  usernameShortUnlock:
+    "Uzaicini 25 cilvēkus, lai atbloķētu 2 rakstzīmju lietotājvārdus, vai 100, lai atbloķētu 1 rakstzīmi.",
   usernameChangeAfter: "Lietotājvārdu atkal varēsi mainīt {date}.",
   changeUsername: "Mainīt lietotājvārdu",
   usernameRestoreUntil: "Vari atjaunot {name} līdz {date}. Atsaukšana sāk jaunu 7 dienu gaidīšanas periodu.",

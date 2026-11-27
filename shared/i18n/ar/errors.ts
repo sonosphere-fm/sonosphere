@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "نزّلت بياناتك عدة مرات بالفعل. حاول مجددًا بعد ساعة.",
   usernameChangeNoLongerUndone: "لم يعد بالإمكان التراجع عن تغيير اسم المستخدم هذا",
   changeUsernameOnceEvery7: "يمكنك تغيير اسم المستخدم مرة واحدة كل 7 أيام",
-  invalidUsername: "اسم المستخدم من 2 إلى 15 حرفًا: أحرف وأرقام و- و_، ويبدأ بحرف",
+  invalidUsername: "اسم المستخدم من {min} إلى 15 حرفًا: أحرف وأرقام و- و_، ويبدأ بحرف",
   chooseDifferentUsername: "اختر اسم مستخدم آخر",
   usernameTakenTemporarilyReserved: "اسم المستخدم هذا مأخوذ أو محجوز مؤقتًا",
   trackListedTwice: "هناك مقطوعة مدرجة مرتين",

@@ -33,7 +33,7 @@ export default {
   backToJoin: "Tillbaka till registreringen",
   oauthSigningUp: "Du registrerar dig med {provider} som {email}. Välj ett användarnamn för att slutföra.",
   oauthUsernameHint:
-    "2 till 15 tecken: bokstäver, siffror, - och _, och det måste börja med en bokstav. Du kan välja ett lösenord senare under Inställningar, vilket vissa scrobblingappar behöver.",
+    "3 till 15 tecken: bokstäver, siffror, - och _, och det måste börja med en bokstav. Du kan välja ett lösenord senare under Inställningar, vilket vissa scrobblingappar behöver.",
   resetTitle: "Återställ ditt lösenord",
   resetSent: "Om ett konto använder {email} är en länk för att välja nytt lösenord på väg. Den fungerar i en timme.",
   resetSpam:

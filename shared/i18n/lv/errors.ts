@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Tu jau vairākas reizes esi lejupielādējis savus datus. Mēģini vēlreiz pēc stundas.",
   usernameChangeNoLongerUndone: "Šo lietotājvārda maiņu vairs nevar atsaukt",
   changeUsernameOnceEvery7: "Lietotājvārdu var mainīt reizi 7 dienās",
-  invalidUsername: "Lietotājvārdā ir 2–15 rakstzīmes: burti, cipari, - un _, un tam jāsākas ar burtu",
+  invalidUsername: "Lietotājvārdā ir {min}–15 rakstzīmes: burti, cipari, - un _, un tam jāsākas ar burtu",
   chooseDifferentUsername: "Izvēlies citu lietotājvārdu",
   usernameTakenTemporarilyReserved: "Šis lietotājvārds ir aizņemts vai uz laiku rezervēts",
   trackListedTwice: "Kāds ieraksts sarakstā ir divreiz",

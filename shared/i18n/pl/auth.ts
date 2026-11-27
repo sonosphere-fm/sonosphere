@@ -34,7 +34,7 @@ export default {
   backToJoin: "Wróć do rejestracji",
   oauthSigningUp: "Rejestrujesz się przez {provider} jako {email}. Wybierz nazwę użytkownika, aby dokończyć.",
   oauthUsernameHint:
-    "Od 2 do 15 znaków: litery, cyfry, - i _, zaczynając od litery. Hasło możesz ustawić później w Ustawieniach. Niektóre aplikacje do scrobblowania go wymagają.",
+    "Od 3 do 15 znaków: litery, cyfry, - i _, zaczynając od litery. Hasło możesz ustawić później w Ustawieniach. Niektóre aplikacje do scrobblowania go wymagają.",
   resetTitle: "Zresetuj hasło",
   resetSent:
     "Jeśli jakieś konto używa adresu {email}, wysłaliśmy na niego link do ustawienia nowego hasła. Link działa przez godzinę.",

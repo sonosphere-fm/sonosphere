@@ -33,7 +33,7 @@ export default {
   backToJoin: "Retour à l'inscription",
   oauthSigningUp: "Tu t'inscris avec {provider} en tant que {email}. Choisis un nom d'utilisateur pour terminer.",
   oauthUsernameHint:
-    "2 à 15 caractères : lettres, chiffres, - et _, en commençant par une lettre. Tu pourras définir un mot de passe plus tard dans les Paramètres, certaines applis de scrobbling en ont besoin.",
+    "3 à 15 caractères : lettres, chiffres, - et _, en commençant par une lettre. Tu pourras définir un mot de passe plus tard dans les Paramètres, certaines applis de scrobbling en ont besoin.",
   resetTitle: "Réinitialiser ton mot de passe",
   resetSent:
     "Si un compte utilise {email}, un lien pour choisir un nouveau mot de passe est en route. Il est valable une heure.",

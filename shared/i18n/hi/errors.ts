@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "आप अपना डेटा पहले ही कई बार डाउनलोड कर चुके हैं। एक घंटे बाद फिर से कोशिश करें।",
   usernameChangeNoLongerUndone: "यूज़रनेम के इस बदलाव को अब पहले जैसा नहीं किया जा सकता",
   changeUsernameOnceEvery7: "आप हर 7 दिन में एक बार अपना यूज़रनेम बदल सकते हैं",
-  invalidUsername: "यूज़रनेम 2-15 अक्षरों का होता है: अक्षर, अंक, - और _, और अक्षर से शुरू होना चाहिए",
+  invalidUsername: "यूज़रनेम {min}-15 अक्षरों का होता है: अक्षर, अंक, - और _, और अक्षर से शुरू होना चाहिए",
   chooseDifferentUsername: "कोई दूसरा यूज़रनेम चुनें",
   usernameTakenTemporarilyReserved: "यह यूज़रनेम लिया जा चुका है या अस्थायी रूप से आरक्षित है",
   trackListedTwice: "एक ट्रैक दो बार सूची में है",

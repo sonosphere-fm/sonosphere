@@ -33,7 +33,7 @@ export default {
   backToJoin: "Voltar para a página de cadastro",
   oauthSigningUp: "Você está se cadastrando com {provider} como {email}. Escolha um nome de usuário para terminar.",
   oauthUsernameHint:
-    "De 2 a 15 caracteres: letras, números, - e _, começando com uma letra. Você pode definir uma senha depois em Configurações, o que alguns apps de scrobble exigem.",
+    "De 3 a 15 caracteres: letras, números, - e _, começando com uma letra. Você pode definir uma senha depois em Configurações, o que alguns apps de scrobble exigem.",
   resetTitle: "Redefina sua senha",
   resetSent:
     "Se houver uma conta com {email}, um link para escolher uma nova senha está a caminho. Ele vale por uma hora.",

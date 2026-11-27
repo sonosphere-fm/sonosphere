@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Twoje dane były już pobierane kilka razy. Spróbuj ponownie za godzinę.",
   usernameChangeNoLongerUndone: "Tej zmiany nazwy użytkownika nie można już cofnąć",
   changeUsernameOnceEvery7: "Nazwę użytkownika możesz zmieniać raz na 7 dni",
-  invalidUsername: "Nazwa użytkownika ma 2–15 znaków: litery, cyfry, - i _, i zaczyna się od litery",
+  invalidUsername: "Nazwa użytkownika ma {min}–15 znaków: litery, cyfry, - i _, i zaczyna się od litery",
   chooseDifferentUsername: "Wybierz inną nazwę użytkownika",
   usernameTakenTemporarilyReserved: "Ta nazwa użytkownika jest zajęta lub tymczasowo zarezerwowana",
   trackListedTwice: "Utwór występuje na liście dwa razy",

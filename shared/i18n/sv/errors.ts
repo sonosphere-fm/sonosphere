@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Du har redan laddat ner din data några gånger. Försök igen om en timme.",
   usernameChangeNoLongerUndone: "Det här bytet av användarnamn kan inte längre ångras",
   changeUsernameOnceEvery7: "Du kan byta användarnamn en gång var 7:e dag",
-  invalidUsername: "Användarnamn har 2–15 tecken: bokstäver, siffror, - och _, och börjar med en bokstav",
+  invalidUsername: "Användarnamn har {min}–15 tecken: bokstäver, siffror, - och _, och börjar med en bokstav",
   chooseDifferentUsername: "Välj ett annat användarnamn",
   usernameTakenTemporarilyReserved: "Det användarnamnet är upptaget eller tillfälligt reserverat",
   trackListedTwice: "En låt finns med två gånger",

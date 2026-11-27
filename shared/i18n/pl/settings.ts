@@ -148,7 +148,8 @@ export default {
   username: "Nazwa użytkownika",
   usernameIntro:
     "Nazwę użytkownika możesz zmieniać raz na 7 dni. Poprzednia nazwa przez 14 dni przekierowuje na Twój profil, a potem staje się dostępna dla innych.",
-  usernameRules: "2–15 znaków: litery, cyfry, - i _, zaczynając od litery.",
+  usernameRules: "{min}–15 znaków: litery, cyfry, - i _, zaczynając od litery.",
+  usernameShortUnlock: "Zaproś 25 osób, aby odblokować nazwy 2-znakowe, lub 100, aby odblokować 1 znak.",
   usernameChangeAfter: "Nazwę użytkownika możesz znowu zmienić {date}.",
   changeUsername: "Zmień nazwę użytkownika",
   usernameRestoreUntil: "Możesz przywrócić {name} do {date}. Cofnięcie zaczyna nowe 7 dni oczekiwania.",

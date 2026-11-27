@@ -143,7 +143,8 @@ export default {
   username: "Användarnamn",
   usernameIntro:
     "Du kan byta användarnamn en gång var 7:e dag. Ditt tidigare namn leder till din profil i 14 dagar och blir sedan ledigt för andra.",
-  usernameRules: "2–15 tecken: bokstäver, siffror, - och _, och det måste börja med en bokstav.",
+  usernameRules: "{min}–15 tecken: bokstäver, siffror, - och _, och det måste börja med en bokstav.",
+  usernameShortUnlock: "Bjud in 25 personer för att låsa upp användarnamn med 2 tecken, eller 100 för 1 tecken.",
   usernameChangeAfter: "Du kan byta användarnamn igen den {date}.",
   changeUsername: "Byt användarnamn",
   usernameRestoreUntil: "Återställ {name} fram till {date}. Ångra startar en ny väntetid på 7 dagar.",

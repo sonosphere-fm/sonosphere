@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Hai già scaricato i tuoi dati diverse volte. Riprova tra un’ora.",
   usernameChangeNoLongerUndone: "Questo cambio di nome utente non può più essere annullato",
   changeUsernameOnceEvery7: "Puoi cambiare il nome utente una volta ogni 7 giorni",
-  invalidUsername: "I nomi utente hanno 2–15 caratteri: lettere, numeri, - e _, e iniziano con una lettera",
+  invalidUsername: "I nomi utente hanno {min}–15 caratteri: lettere, numeri, - e _, e iniziano con una lettera",
   chooseDifferentUsername: "Scegli un nome utente diverso",
   usernameTakenTemporarilyReserved: "Questo nome utente è già in uso o temporaneamente riservato",
   trackListedTwice: "Un brano compare due volte",

@@ -29,6 +29,7 @@ export type ScrobblesCleared = { deleted: number };
 export type UsernameStatus = {
   username: string;
   changeAfter: number;
+  shortest: number;
   undo: { username: string; expiresAt: number } | null;
 };
 export type AdminUsernameStatus = UsernameStatus & {

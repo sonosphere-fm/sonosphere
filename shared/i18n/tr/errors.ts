@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Verilerini zaten birkaç kez indirdin. Bir saat sonra tekrar dene.",
   usernameChangeNoLongerUndone: "Bu kullanıcı adı değişikliği artık geri alınamaz",
   changeUsernameOnceEvery7: "Kullanıcı adını 7 günde bir değiştirebilirsin",
-  invalidUsername: "Kullanıcı adları 2–15 karakterdir: harf, rakam, - ve _ içerir ve harfle başlar",
+  invalidUsername: "Kullanıcı adları {min}–15 karakterdir: harf, rakam, - ve _ içerir ve harfle başlar",
   chooseDifferentUsername: "Farklı bir kullanıcı adı seç",
   usernameTakenTemporarilyReserved: "Bu kullanıcı adı alınmış ya da geçici olarak ayrılmış",
   trackListedTwice: "Bir parça iki kez listelenmiş",

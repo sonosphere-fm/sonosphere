@@ -5,7 +5,9 @@ import { usernameHistory, users } from "../db/schema";
 import { bad, fail, missing } from "../http";
 import { auditTx } from "../site/audit";
 import { first, norm, now } from "../util";
-import { canUndoUsername, USERNAME, USERNAME_COOLDOWN, USERNAME_RESERVATION } from "./username-policy";
+import { shortestUsername } from "../../shared/invites";
+import { inviteCount } from "../invites/repo";
+import { canUndoUsername, checkUsername, USERNAME_COOLDOWN, USERNAME_RESERVATION } from "./username-policy";
 
 // Registration and renames share a lock: current names and unexpired aliases form one namespace.
 export const lockUsernameClaims = (conn: Conn) => conn.execute(sql`SELECT pg_advisory_xact_lock(727002)`);
@@ -55,6 +57,7 @@ export async function usernameStatus(userId: number): Promise<UsernameStatus> {
   return {
     username: user.username,
     changeAfter: user.usernameChangeAfter,
+    shortest: shortestUsername(await inviteCount(userId)),
     undo:
       canUndoUsername(latest, now()) && latest ? { username: latest.previous, expiresAt: latest.reservedUntil } : null,
   };
@@ -81,7 +84,7 @@ export async function changeUsername(
       await tx.update(usernameHistory).set({ releasedAt: at, undoneAt: at }).where(eq(usernameHistory.id, latest.id));
     } else {
       if (!adminOverride && user.usernameChangeAfter > at) return fail(429, "changeUsernameOnceEvery7");
-      if (typeof requested !== "string" || !USERNAME.test(requested)) return bad("invalidUsername");
+      checkUsername(requested, adminOverride ? 1 : shortestUsername(await inviteCount(userId)));
       next = requested;
     }
     if (norm(next) === user.usernameNorm) return bad("chooseDifferentUsername");

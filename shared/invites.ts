@@ -12,4 +12,7 @@ export const INVITE_TIERS = [
   { invited: 25, role: "Ambassador", color: "#ff7a59", cosmetics: ["acc.crown", "name.halo"], earlyAccess: true },
 ] as const;
 
+// Shorter usernames are a reward for bringing people in.
+export const shortestUsername = (invited: number) => (invited >= 100 ? 1 : invited >= 25 ? 2 : 3);
+
 export const tierFor = (invited: number) => INVITE_TIERS.filter((t) => invited >= t.invited).length - 1;

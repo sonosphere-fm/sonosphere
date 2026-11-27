@@ -33,7 +33,7 @@ export default {
   backToJoin: "Atpakaļ uz reģistrāciju",
   oauthSigningUp: "Tu reģistrējies ar {provider} kā {email}. Izvēlies lietotājvārdu, lai pabeigtu.",
   oauthUsernameHint:
-    "2 līdz 15 rakstzīmes: burti, cipari, - un _, jāsākas ar burtu. Paroli vari iestatīt vēlāk iestatījumos; dažām skroblēšanas lietotnēm tā ir vajadzīga.",
+    "3 līdz 15 rakstzīmes: burti, cipari, - un _, jāsākas ar burtu. Paroli vari iestatīt vēlāk iestatījumos; dažām skroblēšanas lietotnēm tā ir vajadzīga.",
   resetTitle: "Atiestati paroli",
   resetSent: "Ja kāds konts izmanto {email}, saite jaunas paroles izvēlei jau ir ceļā. Tā derīga vienu stundu.",
   resetSpam:

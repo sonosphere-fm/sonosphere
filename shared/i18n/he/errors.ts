@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "כבר הורדת את הנתונים שלך כמה פעמים. אפשר לנסות שוב בעוד שעה.",
   usernameChangeNoLongerUndone: "כבר אי אפשר לבטל את שינוי שם המשתמש הזה",
   changeUsernameOnceEvery7: "אפשר לשנות את שם המשתמש פעם ב־7 ימים",
-  invalidUsername: "שם משתמש הוא 2–15 תווים: אותיות, ספרות, - ו־_, ומתחיל באות",
+  invalidUsername: "שם משתמש הוא {min}–15 תווים: אותיות, ספרות, - ו־_, ומתחיל באות",
   chooseDifferentUsername: "יש לבחור שם משתמש אחר",
   usernameTakenTemporarilyReserved: "שם המשתמש הזה תפוס או שמור זמנית",
   trackListedTwice: "שיר מופיע פעמיים",

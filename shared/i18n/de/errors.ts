@@ -33,7 +33,8 @@ export default {
     "Du hast deine Daten schon ein paar Mal heruntergeladen. Versuch es in einer Stunde noch einmal.",
   usernameChangeNoLongerUndone: "Diese Änderung des Benutzernamens kann nicht mehr rückgängig gemacht werden",
   changeUsernameOnceEvery7: "Du kannst deinen Benutzernamen einmal alle 7 Tage ändern",
-  invalidUsername: "Benutzernamen haben 2–15 Zeichen: Buchstaben, Zahlen, - und _, und beginnen mit einem Buchstaben",
+  invalidUsername:
+    "Benutzernamen haben {min}–15 Zeichen: Buchstaben, Zahlen, - und _, und beginnen mit einem Buchstaben",
   chooseDifferentUsername: "Wähle einen anderen Benutzernamen",
   usernameTakenTemporarilyReserved: "Dieser Benutzername ist vergeben oder vorübergehend reserviert",
   trackListedTwice: "Ein Titel ist doppelt aufgeführt",

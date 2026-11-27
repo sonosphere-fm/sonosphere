@@ -33,7 +33,7 @@ export default {
   usernameChangeNoLongerUndone: "Este cambio de nombre de usuario ya no se puede deshacer",
   changeUsernameOnceEvery7: "Puedes cambiar tu nombre de usuario una vez cada 7 días",
   invalidUsername:
-    "Los nombres de usuario tienen de 2 a 15 caracteres: letras, números, - y _, y empiezan por una letra",
+    "Los nombres de usuario tienen de {min} a 15 caracteres: letras, números, - y _, y empiezan por una letra",
   chooseDifferentUsername: "Elige otro nombre de usuario",
   usernameTakenTemporarilyReserved: "Ese nombre de usuario está ocupado o reservado temporalmente",
   trackListedTwice: "Hay una canción repetida en la lista",

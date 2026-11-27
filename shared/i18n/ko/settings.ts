@@ -141,7 +141,8 @@ export default {
   username: "사용자 이름",
   usernameIntro:
     "사용자 이름은 7일에 한 번 바꿀 수 있어요. 이전 이름은 14일 동안 내 프로필로 연결되고, 그 후에는 다른 사람이 쓸 수 있게 돼요.",
-  usernameRules: "2~15자의 영문자, 숫자, - 및 _만 가능하며 영문자로 시작해야 해요.",
+  usernameRules: "{min}~15자의 영문자, 숫자, - 및 _만 가능하며 영문자로 시작해야 해요.",
+  usernameShortUnlock: "25명을 초대하면 2자, 100명을 초대하면 1자 사용자 이름을 쓸 수 있어요.",
   usernameChangeAfter: "{date}에 사용자 이름을 다시 바꿀 수 있어요.",
   changeUsername: "사용자 이름 변경",
   usernameRestoreUntil: "{date}까지 {name}(으)로 되돌릴 수 있어요. 되돌리면 7일 대기 기간이 새로 시작돼요.",

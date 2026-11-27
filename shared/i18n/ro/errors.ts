@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Ți-ai descărcat datele de câteva ori deja. Încearcă din nou peste o oră.",
   usernameChangeNoLongerUndone: "Această schimbare a numelui de utilizator nu mai poate fi anulată",
   changeUsernameOnceEvery7: "Poți schimba numele de utilizator o dată la 7 zile",
-  invalidUsername: "Numele de utilizator au 2–15 caractere: litere, cifre, - și _, și încep cu o literă",
+  invalidUsername: "Numele de utilizator au {min}–15 caractere: litere, cifre, - și _, și încep cu o literă",
   chooseDifferentUsername: "Alege alt nume de utilizator",
   usernameTakenTemporarilyReserved: "Numele de utilizator este ocupat sau rezervat temporar",
   trackListedTwice: "O piesă apare de două ori",

@@ -33,7 +33,7 @@ export default {
   backToJoin: "Torna alla pagina di iscrizione",
   oauthSigningUp: "Ti stai iscrivendo con {provider} come {email}. Scegli un nome utente per finire.",
   oauthUsernameHint:
-    "Da 2 a 15 caratteri: lettere, numeri, - e _, iniziando con una lettera. Potrai impostare una password più tardi nelle Impostazioni, che serve ad alcune app di scrobbling.",
+    "Da 3 a 15 caratteri: lettere, numeri, - e _, iniziando con una lettera. Potrai impostare una password più tardi nelle Impostazioni, che serve ad alcune app di scrobbling.",
   resetTitle: "Reimposta la password",
   resetSent:
     "Se un account usa {email}, ti stiamo inviando un link per scegliere una nuova password. Funziona per un'ora.",

@@ -142,7 +142,8 @@ export default {
   username: "ユーザー名",
   usernameIntro:
     "ユーザー名は7日に1回変更できます。以前の名前は14日間あなたのプロフィールに転送され、その後はほかの人が使えるようになります。",
-  usernameRules: "2〜15文字。英字、数字、-、_ が使え、英字で始まる必要があります。",
+  usernameRules: "{min}〜15文字。英字、数字、-、_ が使え、英字で始まる必要があります。",
+  usernameShortUnlock: "25人を招待すると2文字、100人で1文字のユーザー名が使えるようになります。",
   usernameChangeAfter: "{date}にユーザー名を再び変更できます。",
   changeUsername: "ユーザー名を変更",
   usernameRestoreUntil: "{date}まで{name}に戻せます。元に戻すと、新たに7日間の待機期間が始まります。",

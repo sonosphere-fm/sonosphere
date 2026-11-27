@@ -144,7 +144,8 @@ export default {
   username: "Nume de utilizator",
   usernameIntro:
     "Îți poți schimba numele de utilizator o dată la 7 zile. Numele vechi redirecționează către profilul tău timp de 14 zile, apoi devine disponibil pentru alții.",
-  usernameRules: "2–15 caractere: litere, cifre, - și _, începând cu o literă.",
+  usernameRules: "{min}–15 caractere: litere, cifre, - și _, începând cu o literă.",
+  usernameShortUnlock: "Invită 25 de persoane pentru nume de utilizator de 2 caractere sau 100 pentru 1 caracter.",
   usernameChangeAfter: "Îți poți schimba din nou numele de utilizator pe {date}.",
   changeUsername: "Schimbă numele de utilizator",
   usernameRestoreUntil: "Poți reveni la {name} până pe {date}. Anularea pornește o nouă perioadă de 7 zile.",

@@ -35,7 +35,7 @@ export default {
   backToJoin: "Zurück zur Registrierung",
   oauthSigningUp: "Du registrierst dich mit {provider} als {email}. Wähle einen Nutzernamen, um fertig zu werden.",
   oauthUsernameHint:
-    "2 bis 15 Zeichen: Buchstaben, Zahlen, - und _, beginnend mit einem Buchstaben. Ein Passwort kannst du später in den Einstellungen festlegen, das brauchen manche Scrobbler-Apps.",
+    "3 bis 15 Zeichen: Buchstaben, Zahlen, - und _, beginnend mit einem Buchstaben. Ein Passwort kannst du später in den Einstellungen festlegen, das brauchen manche Scrobbler-Apps.",
   resetTitle: "Passwort zurücksetzen",
   resetSent:
     "Falls ein Konto {email} nutzt, ist ein Link zum Festlegen eines neuen Passworts unterwegs. Er ist eine Stunde lang gültig.",

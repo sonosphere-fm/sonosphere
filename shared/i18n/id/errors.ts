@@ -32,7 +32,7 @@ export default {
   tooManyDataDownloads: "Kamu sudah mengunduh datamu beberapa kali. Coba lagi dalam satu jam.",
   usernameChangeNoLongerUndone: "Perubahan nama pengguna ini tidak bisa dibatalkan lagi",
   changeUsernameOnceEvery7: "Kamu dapat mengubah nama pengguna sekali setiap 7 hari",
-  invalidUsername: "Nama pengguna 2–15 karakter: huruf, angka, - dan _, dimulai dengan huruf",
+  invalidUsername: "Nama pengguna {min}–15 karakter: huruf, angka, - dan _, dimulai dengan huruf",
   chooseDifferentUsername: "Pilih nama pengguna lain",
   usernameTakenTemporarilyReserved: "Nama pengguna itu diambil atau sementara dicadangkan",
   trackListedTwice: "Sebuah lagu terdaftar dua kali",
