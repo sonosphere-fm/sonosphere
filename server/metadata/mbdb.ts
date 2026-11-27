@@ -31,6 +31,17 @@ export async function artist(name: string): Promise<MbArtist | null> {
   return r ? { mbid: r.mbid, name: tidy(shownName(r.name, r.alias, name)) } : null;
 }
 
+/** Whether MusicBrainz credits any of these recordings to the artist first. */
+export async function creditsAny(recordings: string[], artistMbid: string): Promise<boolean> {
+  if (!recordings.length) return false;
+  const [r] = await db()`
+    SELECT 1 FROM recording r
+    JOIN artist_credit_name acn ON acn.artist_credit = r.artist_credit AND acn.position = 0
+    JOIN artist a ON a.id = acn.artist
+    WHERE r.gid = ANY(${recordings}::uuid[]) AND a.gid = ${artistMbid}::uuid LIMIT 1`;
+  return !!r;
+}
+
 /** What MusicBrainz tells this artist apart from others of the name by, empty when it has none. */
 export async function artistComment(mbid: string): Promise<string> {
   const [r] = await db()<{ comment: string }[]>`SELECT comment FROM artist WHERE gid = ${mbid}::uuid`;

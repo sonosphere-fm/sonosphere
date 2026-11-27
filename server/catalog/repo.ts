@@ -26,6 +26,7 @@ import {
   events,
   journals,
   lovedTracks,
+  recordingMbids,
   tags,
   tracks,
   userAlbums,
@@ -33,7 +34,7 @@ import {
   userTracks,
   users,
 } from "../db/schema";
-import { artistComment, mbdbOn } from "../metadata/mbdb";
+import { artistComment, creditsAny, mbdbOn } from "../metadata/mbdb";
 import { openListener, publicCols } from "../users/repo";
 import { clean, first, norm, now } from "../util";
 import type {
@@ -115,6 +116,19 @@ export const findItem = <K extends ItemType>(type: K, id: number): Promise<ItemR
 
 const commentOf = (mbid: string) => (mbdbOn ? artistComment(mbid).catch(() => "") : Promise.resolve(""));
 const labelled = (name: string, disambig: string) => `${name} (${disambig})`;
+/** Whether a recording listened to as the artist's is credited to that id, or null when that can't be told. */
+async function heard(tx: Tx, artistId: number, mbid: string): Promise<boolean | null> {
+  if (!mbdbOn) return null;
+  const recordings = await tx
+    .select({ mbid: recordingMbids.mbid })
+    .from(recordingMbids)
+    .innerJoin(tracks, eq(tracks.id, recordingMbids.trackId))
+    .where(eq(tracks.artistId, artistId));
+  return creditsAny(
+    recordings.map((r) => r.mbid),
+    mbid
+  ).catch(() => null);
+}
 const taken = async (tx: Tx, name: string) =>
   !!(await first(
     tx
@@ -140,9 +154,14 @@ export async function getOrCreateArtistTx(tx: Tx, name: string, mbid?: string | 
     const known = others.find((a) => a.nameNorm === norm(labelled(n, a.disambig)));
     if (known) return known.id;
   }
-  if (main && !main.mbid) {
-    await tx.update(artists).set({ mbid }).where(eq(artists.id, main.id));
-    return main.id;
+  if (main) {
+    const confirmed = main.mbid ? await heard(tx, main.id, main.mbid) : false;
+    if (confirmed === null) return main.id;
+    // an id found by looking the name up can be another artist of it; one sent with a listen is what was heard
+    if (!confirmed) {
+      await tx.update(artists).set({ mbid, metaAt: null }).where(eq(artists.id, main.id));
+      return main.id;
+    }
   }
   let shown = clean(name);
   let disambig = "";
