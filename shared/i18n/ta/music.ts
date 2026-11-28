@@ -325,4 +325,12 @@ export default {
   yearCardScrobbles: "ஸ்க்ராபிள்கள்",
   yearCardDays: "இசையுடன் நாட்கள்",
   thisWeekIn: "{year} இல் இந்த வாரம்",
+  leaderboard: "தரவரிசை",
+  leaderHours: "கேட்ட மணிநேரம்",
+  leaderScrobbles: "அதிக ஸ்க்ராபிள்கள்",
+  leaderArtists: "அதிக கலைஞர்கள்",
+  leaderDevoted: "பெரிய ரசிகர்கள்",
+  leaderLoves: "அதிக விருப்பங்கள்",
+  hoursShort: "{hours} ம",
+  leaderNobody: "இந்தக் காலத்தில் இன்னும் எதுவும் கேட்கப்படவில்லை",
 } satisfies Translation<typeof en>;

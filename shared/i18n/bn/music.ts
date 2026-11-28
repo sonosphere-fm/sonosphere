@@ -320,4 +320,12 @@ export default {
   yearCardScrobbles: "স্ক্রবল",
   yearCardDays: "সংগীতময় দিন",
   thisWeekIn: "{year} সালের এই সপ্তাহ",
+  leaderboard: "লিডারবোর্ড",
+  leaderHours: "শোনার ঘণ্টা",
+  leaderScrobbles: "সবচেয়ে বেশি স্ক্রবল",
+  leaderArtists: "সবচেয়ে বেশি শিল্পী",
+  leaderDevoted: "সবচেয়ে বড় ভক্ত",
+  leaderLoves: "সবচেয়ে বেশি পছন্দ",
+  hoursShort: "{hours} ঘণ্টা",
+  leaderNobody: "এই সময়ে এখনও কিছু শোনা হয়নি",
 } satisfies Translation<typeof en>;

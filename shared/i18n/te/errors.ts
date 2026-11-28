@@ -364,4 +364,5 @@ export default {
   musicServerNotConnected: "సంగీత సర్వర్ కనెక్ట్ కాలేదు",
   musicServerNoMatch: "ఆ సంగీత సర్వర్‌లో సరిపోలే ట్రాక్ లేదు.",
   pickMusicServerKind: "సంగీత సర్వర్ రకాన్ని ఎంచుకోండి.",
+  periodWeekMonthYearOverall: "period 7day, 1month, 12month లేదా overall అయి ఉండాలి",
 } satisfies Translation<typeof en>;

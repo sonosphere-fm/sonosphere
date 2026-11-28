@@ -365,4 +365,5 @@ export default {
   musicServerNotConnected: "میوزک سرور جڑا ہوا نہیں ہے",
   musicServerNoMatch: "اس میوزک سرور پر کوئی ملتا ٹریک نہیں۔",
   pickMusicServerKind: "میوزک سرور کی قسم منتخب کریں۔",
+  periodWeekMonthYearOverall: "period کی ویلیو 7day، 1month، 12month یا overall ہونی چاہیے",
 } satisfies Translation<typeof en>;

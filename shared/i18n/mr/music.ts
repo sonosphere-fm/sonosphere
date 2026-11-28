@@ -321,4 +321,12 @@ export default {
   yearCardScrobbles: "स्क्रॉबल",
   yearCardDays: "संगीताचे दिवस",
   thisWeekIn: "{year} मधील हा आठवडा",
+  leaderboard: "लीडरबोर्ड",
+  leaderHours: "ऐकण्याचे तास",
+  leaderScrobbles: "सर्वाधिक स्क्रॉबल",
+  leaderArtists: "सर्वाधिक कलाकार",
+  leaderDevoted: "सर्वात मोठे चाहते",
+  leaderLoves: "सर्वाधिक आवडलेले",
+  hoursShort: "{hours} तास",
+  leaderNobody: "या कालावधीत अद्याप काहीही ऐकले नाही",
 } satisfies Translation<typeof en>;

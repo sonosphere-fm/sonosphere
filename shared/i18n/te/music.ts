@@ -321,4 +321,12 @@ export default {
   yearCardScrobbles: "స్క్రాబుల్స్",
   yearCardDays: "సంగీతంతో రోజులు",
   thisWeekIn: "{year}లో ఈ వారం",
+  leaderboard: "లీడర్‌బోర్డ్",
+  leaderHours: "విన్న గంటలు",
+  leaderScrobbles: "అత్యధిక స్క్రోబుల్‌లు",
+  leaderArtists: "అత్యధిక కళాకారులు",
+  leaderDevoted: "అతిపెద్ద అభిమానులు",
+  leaderLoves: "అత్యధిక లవ్‌లు",
+  hoursShort: "{hours} గం",
+  leaderNobody: "ఈ వ్యవధిలో ఇంకా ఏమీ వినలేదు",
 } satisfies Translation<typeof en>;

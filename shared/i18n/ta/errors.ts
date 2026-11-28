@@ -366,4 +366,5 @@ export default {
   musicServerNotConnected: "இசை சேவையகம் இணைக்கப்படவில்லை",
   musicServerNoMatch: "அந்த இசை சேவையகத்தில் பொருந்தும் பாடல் இல்லை.",
   pickMusicServerKind: "இசை சேவையக வகையைத் தேர்ந்தெடுக்கவும்.",
+  periodWeekMonthYearOverall: "period என்பது 7day, 1month, 12month அல்லது overall ஆக இருக்க வேண்டும்",
 } satisfies Translation<typeof en>;

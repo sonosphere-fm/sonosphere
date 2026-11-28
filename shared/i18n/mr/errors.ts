@@ -364,4 +364,5 @@ export default {
   musicServerNotConnected: "संगीत सर्व्हर जोडलेला नाही",
   musicServerNoMatch: "त्या संगीत सर्व्हरवर जुळणारा ट्रॅक नाही.",
   pickMusicServerKind: "संगीत सर्व्हरचा प्रकार निवडा.",
+  periodWeekMonthYearOverall: "period हे 7day, 1month, 12month किंवा overall असावे",
 } satisfies Translation<typeof en>;

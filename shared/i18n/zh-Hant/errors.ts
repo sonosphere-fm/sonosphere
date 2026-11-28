@@ -364,4 +364,5 @@ export default {
   musicServerNotConnected: "音樂伺服器未連接",
   musicServerNoMatch: "該音樂伺服器上沒有符合的曲目。",
   pickMusicServerKind: "請選擇音樂伺服器類型。",
+  periodWeekMonthYearOverall: "period 必須為 7day、1month、12month 或 overall",
 } satisfies Translation<typeof en>;
