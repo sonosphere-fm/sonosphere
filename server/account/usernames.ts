@@ -4,6 +4,7 @@ import { db, transact, type Conn } from "../db/client";
 import { usernameHistory, users } from "../db/schema";
 import { bad, fail, missing } from "../http";
 import { auditTx } from "../site/audit";
+import { configAdminClaims, configAdmins } from "../site/roles";
 import { first, norm, now } from "../util";
 import { shortestUsername } from "../../shared/invites";
 import { inviteCount } from "../invites/repo";
@@ -44,6 +45,12 @@ export async function aliasUser(name: string) {
       .limit(1)
   );
   return row?.user ?? null;
+}
+
+// ADMIN_USERS grants staff by name, so only the account already holding a configured name may rename into it.
+async function adminNameOfOther(name: string, userId: number, conn: Conn) {
+  if (!(await configAdmins()).includes(norm(name))) return false;
+  return (await configAdminClaims(conn)).get(norm(name)) !== userId;
 }
 
 const latestChange = (conn: Conn, id: number) =>
@@ -89,6 +96,7 @@ export async function changeUsername(
     }
     if (norm(next) === user.usernameNorm) return bad("chooseDifferentUsername");
     if (await usernameUnavailable(next, tx, at)) return bad("usernameTakenTemporarilyReserved");
+    if (await adminNameOfOther(next, userId, tx)) return bad("usernameTakenTemporarilyReserved");
 
     await tx.insert(usernameHistory).values({
       userId,
