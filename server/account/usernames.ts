@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import type { UsernameStatus } from "../../shared/account";
 import { db, transact, type Conn } from "../db/client";
 import { usernameHistory, users } from "../db/schema";
@@ -20,7 +20,8 @@ const reservation = (name: string, at: number) =>
     isNull(usernameHistory.releasedAt)
   );
 
-export async function usernameUnavailable(name: string, conn: Conn = db, at = now()) {
+// A user's own reserved names stay open to them.
+export async function usernameUnavailable(name: string, conn: Conn = db, at = now(), self?: number) {
   const current = await first(
     conn
       .select({ id: users.id })
@@ -30,7 +31,11 @@ export async function usernameUnavailable(name: string, conn: Conn = db, at = no
   );
   if (current) return true;
   return !!(await first(
-    conn.select({ id: usernameHistory.id }).from(usernameHistory).where(reservation(name, at)).limit(1)
+    conn
+      .select({ id: usernameHistory.id })
+      .from(usernameHistory)
+      .where(and(reservation(name, at), self === undefined ? undefined : ne(usernameHistory.userId, self)))
+      .limit(1)
   ));
 }
 
@@ -95,9 +100,13 @@ export async function changeUsername(
       next = requested;
     }
     if (norm(next) === user.usernameNorm) return bad("chooseDifferentUsername");
-    if (await usernameUnavailable(next, tx, at)) return bad("usernameTakenTemporarilyReserved");
+    if (await usernameUnavailable(next, tx, at, userId)) return bad("usernameTakenTemporarilyReserved");
     if (await adminNameOfOther(next, userId, tx)) return bad("usernameTakenTemporarilyReserved");
 
+    await tx
+      .update(usernameHistory)
+      .set({ releasedAt: at })
+      .where(and(reservation(next, at), eq(usernameHistory.userId, userId)));
     await tx.insert(usernameHistory).values({
       userId,
       previous: user.username,
