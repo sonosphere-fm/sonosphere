@@ -345,4 +345,13 @@ export default {
   leaderLoves: "Visvairāk mīl",
   hoursShort: "{hours} h",
   leaderNobody: "Šajā periodā vēl nav bijusi klausīšanās",
+  leaderboards: "Reitingu tabulas",
+  allLeaderboards: "Visi reitingu saraksti",
+  leaderRanked: "Klausītāju reitings: {count}",
+  leaderListener: "Klausītājs",
+  leaderHoursCol: "Darba laiks",
+  leaderArtistsCol: "Mākslinieki",
+  leaderTopArtist: "Vadošais mākslinieks",
+  leaderShare: "To lugu īpatsvars",
+  leaderLovesCol: "Iemīļotās dziesmas",
 } satisfies Translation<typeof en>;

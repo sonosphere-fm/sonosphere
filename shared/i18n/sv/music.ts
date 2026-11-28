@@ -331,4 +331,13 @@ export default {
   leaderLoves: "Mest älskade",
   hoursShort: "{hours} h",
   leaderNobody: "Inget lyssnande ännu under den här perioden",
+  leaderboards: "Topplistor",
+  allLeaderboards: "Alla topplistor",
+  leaderRanked: "Rankade lyssnare: {count}",
+  leaderListener: "Lyssnare",
+  leaderHoursCol: "Öppettider",
+  leaderArtistsCol: "Konstnärer",
+  leaderTopArtist: "Toppartist",
+  leaderShare: "Andel av deras pjäser",
+  leaderLovesCol: "Favoritlåtar",
 } satisfies Translation<typeof en>;

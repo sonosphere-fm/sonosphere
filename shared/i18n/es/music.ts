@@ -334,4 +334,13 @@ export default {
   leaderLoves: "Los más queridos",
   hoursShort: "{hours} h",
   leaderNobody: "Todavía no se ha realizado ninguna sesión de escucha en este periodo",
+  leaderboards: "Tablas de clasificación",
+  allLeaderboards: "Todas las clasificaciones",
+  leaderRanked: "Oyentes clasificados: {count}",
+  leaderListener: "Oyente",
+  leaderHoursCol: "Horario",
+  leaderArtistsCol: "Artistas",
+  leaderTopArtist: "Artista destacado",
+  leaderShare: "Porcentaje de sus obras",
+  leaderLovesCol: "Canciones favoritas",
 } satisfies Translation<typeof en>;

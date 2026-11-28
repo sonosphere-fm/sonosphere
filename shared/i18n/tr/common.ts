@@ -252,4 +252,6 @@ export default {
   mdExternalImage: "Harici resim",
   mdUploadToDisplay: "{alt} (görüntülemek için bu resmi yükle)",
   artistTabImages: "Images",
+  titleLeaderboards: "Sıralama Tabloları",
+  leaderboards: "Sıralama Tabloları",
 } satisfies Translation<typeof en>;

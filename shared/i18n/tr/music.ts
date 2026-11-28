@@ -330,4 +330,13 @@ export default {
   leaderLoves: "En çok sevilenler",
   hoursShort: "{hours} h",
   leaderNobody: "Bu dönemde henüz dinleme yapılmamıştır",
+  leaderboards: "Sıralama Tabloları",
+  allLeaderboards: "Tüm liderlik tabloları",
+  leaderRanked: "Sıralamaya giren dinleyiciler: {count}",
+  leaderListener: "Dinleyici",
+  leaderHoursCol: "Çalışma Saatleri",
+  leaderArtistsCol: "Sanatçılar",
+  leaderTopArtist: "En iyi sanatçı",
+  leaderShare: "Oyunlarının payı",
+  leaderLovesCol: "Beğenilen şarkılar",
 } satisfies Translation<typeof en>;

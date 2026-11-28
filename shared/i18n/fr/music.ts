@@ -337,4 +337,13 @@ export default {
   leaderLoves: "Avec toute mon affection",
   hoursShort: "{hours} h",
   leaderNobody: "Aucune écoute n'a encore eu lieu pendant cette période",
+  leaderboards: "Classements",
+  allLeaderboards: "Tous les classements",
+  leaderRanked: "Auditeurs classés : {count}",
+  leaderListener: "Auditeur",
+  leaderHoursCol: "Horaires",
+  leaderArtistsCol: "Artistes",
+  leaderTopArtist: "Artiste phare",
+  leaderShare: "Part de leurs pièces",
+  leaderLovesCol: "Mes morceaux préférés",
 } satisfies Translation<typeof en>;

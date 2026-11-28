@@ -405,4 +405,13 @@ export default {
   leaderLoves: "أكثر الحب",
   hoursShort: "{hours} ساعة",
   leaderNobody: "لم يتم الاستماع خلال هذه الفترة حتى الآن",
+  leaderboards: "قوائم المتصدرين",
+  allLeaderboards: "جميع قوائم المتصدرين",
+  leaderRanked: "المستمعون المصنفون: {count}",
+  leaderListener: "المستمع",
+  leaderHoursCol: "ساعات العمل",
+  leaderArtistsCol: "الفنانون",
+  leaderTopArtist: "أبرز الفنانين",
+  leaderShare: "نسبة مسرحياتهم",
+  leaderLovesCol: "الأغاني المفضلة",
 } satisfies Translation<typeof en>;

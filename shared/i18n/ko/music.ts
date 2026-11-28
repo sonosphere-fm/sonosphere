@@ -323,4 +323,13 @@ export default {
   leaderLoves: "가장 많은 좋아요",
   hoursShort: "{hours} h",
   leaderNobody: "이 기간 동안은 아직 청취가 불가능합니다",
+  leaderboards: "순위표",
+  allLeaderboards: "모든 순위표",
+  leaderRanked: "순위별 청취자 수: {count}",
+  leaderListener: "청취자",
+  leaderHoursCol: "운영 시간",
+  leaderArtistsCol: "아티스트",
+  leaderTopArtist: "최고의 아티스트",
+  leaderShare: "연극 작품 중 차지하는 비중",
+  leaderLovesCol: "좋아하는 곡들",
 } satisfies Translation<typeof en>;

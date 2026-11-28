@@ -251,4 +251,6 @@ export default {
   mdExternalImage: "Extern bild",
   mdUploadToDisplay: "{alt} (ladda upp bilden för att visa den)",
   artistTabImages: "Images",
+  titleLeaderboards: "Topplistor",
+  leaderboards: "Topplistor",
 } satisfies Translation<typeof en>;

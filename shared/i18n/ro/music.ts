@@ -348,4 +348,13 @@ export default {
   leaderLoves: "Cele mai multe aprecieri",
   hoursShort: "{hours} h",
   leaderNobody: "În această perioadă nu s-a ascultat încă nimic",
+  leaderboards: "Clasamente",
+  allLeaderboards: "Toate clasamentele",
+  leaderRanked: "Ascultători clasați: {count}",
+  leaderListener: "Ascultător",
+  leaderHoursCol: "Program",
+  leaderArtistsCol: "Artiști",
+  leaderTopArtist: "Artist de top",
+  leaderShare: "Proporția pieselor lor",
+  leaderLovesCol: "Melodii preferate",
 } satisfies Translation<typeof en>;

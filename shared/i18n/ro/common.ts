@@ -252,4 +252,6 @@ export default {
   mdExternalImage: "Imagine externă",
   mdUploadToDisplay: "{alt} (încarcă imaginea pentru a o afișa)",
   artistTabImages: "Images",
+  titleLeaderboards: "Clasamente",
+  leaderboards: "Clasamente",
 } satisfies Translation<typeof en>;

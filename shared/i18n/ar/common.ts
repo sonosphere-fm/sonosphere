@@ -265,4 +265,6 @@ export default {
   mdExternalImage: "صورة خارجية",
   mdUploadToDisplay: "{alt} (ارفع هذه الصورة لعرضها)",
   artistTabImages: "Images",
+  titleLeaderboards: "قوائم المتصدرين",
+  leaderboards: "قوائم المتصدرين",
 } satisfies Translation<typeof en>;

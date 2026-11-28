@@ -324,4 +324,13 @@ export default {
   leaderLoves: "最も愛されている",
   hoursShort: "{hours} h",
   leaderNobody: "この期間中はまだ聴講は行っていません",
+  leaderboards: "ランキング",
+  allLeaderboards: "すべてのランキング",
+  leaderRanked: "ランキング入りしたリスナー：{count}",
+  leaderListener: "リスナー",
+  leaderHoursCol: "営業時間",
+  leaderArtistsCol: "アーティスト",
+  leaderTopArtist: "トップアーティスト",
+  leaderShare: "彼らの演目の割合",
+  leaderLovesCol: "お気に入りの曲",
 } satisfies Translation<typeof en>;

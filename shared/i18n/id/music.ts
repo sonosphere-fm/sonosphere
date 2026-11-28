@@ -330,4 +330,13 @@ export default {
   leaderLoves: "Cinta yang paling dalam",
   hoursShort: "{hours} h",
   leaderNobody: "Belum ada sesi mendengarkan pada periode ini",
+  leaderboards: "Papan Peringkat",
+  allLeaderboards: "Semua papan peringkat",
+  leaderRanked: "Pendengar berdasarkan peringkat: {count}",
+  leaderListener: "Pendengar",
+  leaderHoursCol: "Jam Operasional",
+  leaderArtistsCol: "Seniman",
+  leaderTopArtist: "Artis papan atas",
+  leaderShare: "Persentase dari pertunjukan mereka",
+  leaderLovesCol: "Lagu-lagu favorit",
 } satisfies Translation<typeof en>;

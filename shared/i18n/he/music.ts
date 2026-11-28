@@ -334,4 +334,13 @@ export default {
   leaderLoves: "אהבה רבה",
   hoursShort: "{hours} h",
   leaderNobody: "בפרק זמן זה עדיין אין האזנה",
+  leaderboards: "טבלאות דירוג",
+  allLeaderboards: "כל טבלאות הדירוג",
+  leaderRanked: "מאזינים לפי דירוג: {count}",
+  leaderListener: "מאזין",
+  leaderHoursCol: "שעות פתיחה",
+  leaderArtistsCol: "אמנים",
+  leaderTopArtist: "אמן מוביל",
+  leaderShare: "חלקן של ההצגות שלהם",
+  leaderLovesCol: "שירים אהובים",
 } satisfies Translation<typeof en>;

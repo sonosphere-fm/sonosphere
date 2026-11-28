@@ -335,4 +335,13 @@ export default {
   leaderLoves: "Mais curtidas",
   hoursShort: "{hours} h",
   leaderNobody: "Ainda não houve audições nesse período",
+  leaderboards: "Tabelas de classificação",
+  allLeaderboards: "Todas as tabelas de classificação",
+  leaderRanked: "Ouvintes classificados: {count}",
+  leaderListener: "Ouvinte",
+  leaderHoursCol: "Horário de funcionamento",
+  leaderArtistsCol: "Artistas",
+  leaderTopArtist: "Artista de destaque",
+  leaderShare: "Proporção de suas peças",
+  leaderLovesCol: "Músicas favoritas",
 } satisfies Translation<typeof en>;

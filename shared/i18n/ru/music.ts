@@ -367,4 +367,13 @@ export default {
   leaderLoves: "Самые популярные",
   hoursShort: "{hours} ч",
   leaderNobody: "В этот период прослушивание пока не проводится",
+  leaderboards: "Таблицы лидеров",
+  allLeaderboards: "Все таблицы лидеров",
+  leaderRanked: "Рейтинг слушателей: {count}",
+  leaderListener: "Слушатель",
+  leaderHoursCol: "Часы работы",
+  leaderArtistsCol: "Художники",
+  leaderTopArtist: "Лучший артист",
+  leaderShare: "Доля их пьес",
+  leaderLovesCol: "Понравившиеся треки",
 } satisfies Translation<typeof en>;

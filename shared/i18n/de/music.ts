@@ -335,4 +335,13 @@ export default {
   leaderLoves: "Die meisten Likes",
   hoursShort: "{hours} h",
   leaderNobody: "In diesem Zeitraum gibt es noch keine Hörbeispiele",
+  leaderboards: "Ranglisten",
+  allLeaderboards: "Alle Ranglisten",
+  leaderRanked: "Zuhörer in der Rangliste: {count}",
+  leaderListener: "Zuhörer",
+  leaderHoursCol: "Öffnungszeiten",
+  leaderArtistsCol: "Künstler",
+  leaderTopArtist: "Top-Künstler",
+  leaderShare: "Anteil ihrer Stücke",
+  leaderLovesCol: "Lieblingssongs",
 } satisfies Translation<typeof en>;

@@ -322,4 +322,13 @@ export default {
   leaderLoves: "最受欢迎",
   hoursShort: "{hours} h",
   leaderNobody: "本节课目前还没有听力内容",
+  leaderboards: "排行榜",
+  allLeaderboards: "所有排行榜",
+  leaderRanked: "排行榜听众：{count}",
+  leaderListener: "听众",
+  leaderHoursCol: "营业时间",
+  leaderArtistsCol: "艺术家",
+  leaderTopArtist: "顶级艺人",
+  leaderShare: "其剧目的占比",
+  leaderLovesCol: "喜欢的歌曲",
 } satisfies Translation<typeof en>;

@@ -251,4 +251,6 @@ export default {
   mdExternalImage: "外部图片",
   mdUploadToDisplay: "{alt}（上传这张图片才能显示）",
   artistTabImages: "Images",
+  titleLeaderboards: "排行榜",
+  leaderboards: "排行榜",
 } satisfies Translation<typeof en>;

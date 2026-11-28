@@ -251,4 +251,6 @@ export default {
   mdExternalImage: "תמונה חיצונית",
   mdUploadToDisplay: "{alt} (יש להעלות את התמונה כדי להציג אותה)",
   artistTabImages: "Images",
+  titleLeaderboards: "טבלאות דירוג",
+  leaderboards: "טבלאות דירוג",
 } satisfies Translation<typeof en>;

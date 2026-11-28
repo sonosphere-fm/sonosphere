@@ -363,4 +363,13 @@ export default {
   leaderLoves: "Najwięcej polubień",
   hoursShort: "{hours} h",
   leaderNobody: "W tym okresie nie ma jeszcze zajęć z słuchania",
+  leaderboards: "Tabele wyników",
+  allLeaderboards: "Wszystkie tabele wyników",
+  leaderRanked: "Liczba słuchaczy w rankingu: {count}",
+  leaderListener: "Słuchacz",
+  leaderHoursCol: "Godziny otwarcia",
+  leaderArtistsCol: "Artyści",
+  leaderTopArtist: "Najlepszy artysta",
+  leaderShare: "Udział ich sztuk teatralnych",
+  leaderLovesCol: "Ulubione utwory",
 } satisfies Translation<typeof en>;

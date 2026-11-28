@@ -336,4 +336,13 @@ export default {
   leaderLoves: "I più amati",
   hoursShort: "{hours} h",
   leaderNobody: "In questo periodo non è ancora possibile ascoltare",
+  leaderboards: "Classifiche",
+  allLeaderboards: "Tutte le classifiche",
+  leaderRanked: "Ascoltatori in classifica: {count}",
+  leaderListener: "Ascoltatore",
+  leaderHoursCol: "Orari",
+  leaderArtistsCol: "Artisti",
+  leaderTopArtist: "Artista di punta",
+  leaderShare: "Percentuale delle loro opere teatrali",
+  leaderLovesCol: "Brani preferiti",
 } satisfies Translation<typeof en>;

@@ -252,4 +252,6 @@ export default {
   mdExternalImage: "Imagem externa",
   mdUploadToDisplay: "{alt} (envie esta imagem para exibi-la)",
   artistTabImages: "Images",
+  titleLeaderboards: "Tabelas de classificação",
+  leaderboards: "Tabelas de classificação",
 } satisfies Translation<typeof en>;

@@ -251,4 +251,6 @@ export default {
   mdExternalImage: "Ārējs attēls",
   mdUploadToDisplay: "{alt} (augšupielādē šo attēlu, lai to parādītu)",
   artistTabImages: "Images",
+  titleLeaderboards: "Reitingu tabulas",
+  leaderboards: "Reitingu tabulas",
 } satisfies Translation<typeof en>;

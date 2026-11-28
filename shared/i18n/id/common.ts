@@ -252,4 +252,6 @@ export default {
   mdExternalImage: "Gambar eksternal",
   mdUploadToDisplay: "{alt} (unggah gambar ini untuk menampilkannya)",
   artistTabImages: "Images",
+  titleLeaderboards: "Papan Peringkat",
+  leaderboards: "Papan Peringkat",
 } satisfies Translation<typeof en>;

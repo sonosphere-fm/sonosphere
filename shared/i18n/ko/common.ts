@@ -251,4 +251,6 @@ export default {
   mdExternalImage: "외부 이미지",
   mdUploadToDisplay: "{alt} (이미지를 업로드해야 표시돼요)",
   artistTabImages: "Images",
+  titleLeaderboards: "순위표",
+  leaderboards: "순위표",
 } satisfies Translation<typeof en>;

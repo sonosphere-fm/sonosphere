@@ -363,4 +363,13 @@ export default {
   leaderLoves: "Найбільше вподобань",
   hoursShort: "{hours} год",
   leaderNobody: "У цей період прослуховування ще не проводилося",
+  leaderboards: "Таблиці лідерів",
+  allLeaderboards: "Усі рейтинги",
+  leaderRanked: "Слухачі за рейтингом: {count}",
+  leaderListener: "Слухач",
+  leaderHoursCol: "Години роботи",
+  leaderArtistsCol: "Художники",
+  leaderTopArtist: "Найкращий виконавець",
+  leaderShare: "Частка їхніх п’єс",
+  leaderLovesCol: "Улюблені треки",
 } satisfies Translation<typeof en>;
