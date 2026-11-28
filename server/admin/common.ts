@@ -1,6 +1,6 @@
 import { bad, fail, paging as pageInput, type Ctx } from "../http";
 import type { ErrorKey } from "../i18n";
-import { configAdmins, isAdmin, isStaff } from "../site/roles";
+import { configAdminIds, isAdmin, isStaff } from "../site/roles";
 import type { User } from "../users/repo";
 
 export const note = (c: Ctx): string =>
@@ -22,11 +22,11 @@ const OWN_ACCOUNT: Record<AccountAction, ErrorKey> = {
   impersonate: "cantImpersonateOwnAccount",
 };
 
-// `configured` is configAdmins(), passed in so this can run inside a transaction.
-export function checkCanAct(actor: User, target: User, action: AccountAction, configured: string[]): void {
+// `configured` is configAdminIds(), passed in so this can run inside a transaction.
+export function checkCanAct(actor: User, target: User, action: AccountAction, configured: number[]): void {
   if (target.id === actor.id) bad(OWN_ACCOUNT[action]);
   if (isStaff(target) && !isAdmin(actor)) fail(403, "onlyAdminsActStaffAccounts");
-  if (action !== "sessions" && configured.includes(target.usernameNorm)) {
+  if (action !== "sessions" && configured.includes(target.id)) {
     bad("configuredAdmin", { username: target.username });
   }
   if (action !== "role" && action !== "sessions" && isStaff(target)) {
@@ -35,4 +35,4 @@ export function checkCanAct(actor: User, target: User, action: AccountAction, co
 }
 
 export const canAct = async (actor: User, target: User, action: AccountAction): Promise<void> =>
-  checkCanAct(actor, target, action, await configAdmins());
+  checkCanAct(actor, target, action, await configAdminIds());

@@ -92,7 +92,7 @@ async function decideTx(
   r: ReportRow,
   action: Decision,
   why: string,
-  configured: string[],
+  configured: number[],
   removed: (Removed | GroupRemoved)[]
 ): Promise<number> {
   const t = await reportTargetTx(tx, r.targetType, r.targetId);
@@ -152,7 +152,7 @@ export async function resolve(
   r: ReportRow,
   action: Decision,
   why: string,
-  configured: string[]
+  configured: number[]
 ): Promise<number> {
   const removed: (Removed | GroupRemoved)[] = [];
   const closed = await transact((tx) => decideTx(tx, me, r, action, why, configured, removed));

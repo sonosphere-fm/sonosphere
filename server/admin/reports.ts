@@ -1,6 +1,6 @@
 import { bad, missing, oneOf, Router } from "../http";
 import { staff } from "../guards";
-import { configAdmins, isAdmin, isStaff } from "../site/roles";
+import { configAdminIds, isAdmin, isStaff } from "../site/roles";
 import { findById } from "../users/repo";
 import { idList, note, paging } from "./common";
 import { reportTarget, snapshotOf } from "../moderation/repo";
@@ -85,5 +85,5 @@ router.post<ReportResolved>("/api/admin/reports/:id", async (c) => {
   const r = (await repo.findReport(Number(c.params[0]))) ?? missing("reportNotFound");
   const action = oneOf(String(c.body.action), DECISIONS) ?? bad("unknownAction");
   if (r.status !== "open") bad("reportAlreadyResolved");
-  return { ok: true, closed: await repo.resolve(me, r, action, note(c), await configAdmins()) };
+  return { ok: true, closed: await repo.resolve(me, r, action, note(c), await configAdminIds()) };
 });

@@ -1,5 +1,6 @@
 import type { Role } from "../../shared/site";
-import { metaValue, promote } from "./repo";
+import type { Conn } from "../db/client";
+import { claimAdmins, metaValue, promote } from "./repo";
 export { adminCount, setRole } from "./repo";
 
 type Account = { isAdmin: boolean; banned: boolean; role: string };
@@ -26,4 +27,9 @@ export async function configAdmins(): Promise<string[]> {
   return names;
 }
 
-export const syncAdmins = async (): Promise<void> => promote(await configAdmins());
+export const configAdminClaims = async (conn?: Conn): Promise<Map<string, number>> =>
+  claimAdmins(await configAdmins(), conn);
+
+export const configAdminIds = async (conn?: Conn): Promise<number[]> => [...(await configAdminClaims(conn)).values()];
+
+export const syncAdmins = async (): Promise<void> => promote(await configAdminIds());

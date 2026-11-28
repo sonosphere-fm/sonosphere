@@ -1,7 +1,7 @@
 import { bad, fail, missing, oneOf, Router } from "../http";
 import { ipsOf } from "../auth/ips";
 import { adminOnly, staff } from "../guards";
-import { adminCount, configAdmins, isAdmin, isStaff, roleOf, setRole } from "../site/roles";
+import { adminCount, configAdminIds, isAdmin, isStaff, roleOf, setRole } from "../site/roles";
 import { audit } from "../site/audit";
 import { like, norm, now } from "../util";
 import { disconnect } from "../realtime";
@@ -41,6 +41,9 @@ router.get<AdminUsernameStatus>("/api/admin/users/:name/username", async (c) => 
 router.post<{ username: string }>("/api/admin/users/:name/username", async (c) => {
   const actor = adminOnly(c);
   const target = await requireUser(c.params[0]!);
+  if (target.id !== actor.id && (await configAdminIds()).includes(target.id)) {
+    bad("configuredAdmin", { username: target.username });
+  }
   const updated = await changeUsername(target.id, actor, c.body.username, false, true, note(c));
   return { username: updated.username };
 });
@@ -173,7 +176,7 @@ router.get<StaffUserPage>("/api/admin/users/:name", async (c) => {
       emailVerifiedAt: u.emailVerifiedAt,
       placeholder: placeholder(u),
       unconfirmed: unconfirmed(u),
-      configAdmin: (await configAdmins()).includes(u.usernameNorm),
+      configAdmin: (await configAdminIds()).includes(u.id),
       self: id === me.id,
     },
     counts: await repo.userCounts(id),
