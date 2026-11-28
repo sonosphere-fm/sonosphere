@@ -36,3 +36,17 @@ export type Home = {
   week?: { now: number; before: number };
 };
 export type Recommended = { artists: Recommendation[]; tracks: TopTrack[]; albums: TopAlbum[]; events: EventSummary[] };
+
+export const LEADER_PERIODS = ["7day", "1month", "12month", "overall"] as const;
+export type LeaderPeriod = (typeof LEADER_PERIODS)[number];
+export type Leader = PublicUser & { value: number };
+export type Devotee = Leader & { artist: string };
+export type Leaderboard = {
+  period: LeaderPeriod;
+  totals: { seconds: number; plays: number; listeners: number };
+  seconds: Leader[];
+  plays: Leader[];
+  artists: Leader[];
+  loves: Leader[];
+  devoted: Devotee[];
+};

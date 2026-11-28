@@ -363,4 +363,5 @@ export default {
   timestampTooOld: "Timestamp is too old",
   duplicateScrobble: "Duplicate scrobble",
   pickMusicServerKind: "Pick a music server type.",
+  periodWeekMonthYearOverall: "period must be 7day, 1month, 12month or overall",
 };

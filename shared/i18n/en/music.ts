@@ -318,4 +318,12 @@ export default {
   yearCardScrobbles: "Scrobbles",
   yearCardDays: "Days with music",
   thisWeekIn: "This week in {year}",
+  leaderboard: "Leaderboard",
+  leaderHours: "Hours listened",
+  leaderScrobbles: "Most scrobbles",
+  leaderArtists: "Most artists",
+  leaderDevoted: "Biggest fans",
+  leaderLoves: "Most loves",
+  hoursShort: "{hours} h",
+  leaderNobody: "No listening in this period yet",
 };

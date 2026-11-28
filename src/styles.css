@@ -6453,7 +6453,26 @@
     height: 12px;
     flex: none;
   }
-  .invite-leaders .rank {
+  .leader-periods {
+    margin-bottom: 16px;
+  }
+  .leaderboards {
+    columns: 2 260px;
+    column-gap: 28px;
+  }
+  .leaderboards > .section {
+    break-inside: avoid;
+  }
+  .leaders li {
+    gap: 10px;
+    padding: 8px 0;
+  }
+  .leaders b {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .invite-leaders .rank,
+  .leaders .rank {
     width: 24px;
     text-align: end;
     color: var(--muted);

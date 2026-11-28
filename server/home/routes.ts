@@ -8,7 +8,15 @@ import { setDislike } from "../recommend/repo";
 import { feedback, recommendations } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
-import type { Charts, FriendActivity, Friends, Home, Recommended } from "../../shared/home";
+import {
+  LEADER_PERIODS,
+  type Charts,
+  type FriendActivity,
+  type Friends,
+  type Home,
+  type Leaderboard,
+  type Recommended,
+} from "../../shared/home";
 import type { TopAlbum } from "../../shared/listening";
 import { wantCovers } from "../metadata/wanted";
 
@@ -110,3 +118,9 @@ router.post<{ dismissed: boolean }>("/api/recommended/dismiss", async (c) => {
   await setDislike(u.id, kind, row.id, artistId, dismissed);
   return { dismissed };
 });
+
+router.get<Leaderboard>(
+  "/api/leaderboard",
+  (c) => repo.leaderboard(oneOf(c.q.get("period") ?? "7day", LEADER_PERIODS) ?? bad("periodWeekMonthYearOverall")),
+  { edgeMaxAge: 60 }
+);

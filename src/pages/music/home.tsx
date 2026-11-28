@@ -13,6 +13,7 @@ import { TagChips } from "../../ui/tags";
 import { StationRow } from "../../player";
 import { HomeHero, HomeHeroChart, HomeHeroStats } from "./home-hero";
 import { HomeTabs, ImportPrompt, mixRecs } from "./shared";
+import { Leaderboard } from "./leaderboard";
 import type { FriendActivity, FriendLove, Friends, Home as HomeData, Recommended } from "../../../shared/home";
 import type { Blasts } from "../../../shared/listening";
 import type { UserRecent } from "../../../shared/users";
@@ -257,6 +258,9 @@ function HomeContent({ name }: { name?: string }) {
                 <Section title={week ? t("music.albumsOnTheRise") : t("music.topAlbums")} more="/charts?kind=albums">
                   <Grid kind="album" items={d.trendingAlbums} />
                 </Section>
+                <Suspense fallback={null}>
+                  <Leaderboard />
+                </Suspense>
               </div>
               <aside className="side">
                 {name && <PlayRows />}
