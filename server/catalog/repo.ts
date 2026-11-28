@@ -173,8 +173,17 @@ export async function getOrCreateArtistTx(tx: Tx, name: string, mbid?: string | 
   const [created] = await tx
     .insert(artists)
     .values({ name: shown, nameNorm: norm(shown), disambig, mbid: mbid || null, createdAt: now() })
+    .onConflictDoNothing({ target: artists.nameNorm })
     .returning({ id: artists.id });
-  return created.id;
+  if (created) return created.id;
+
+  // a concurrent caller created it first; take that row
+  const [existing] = await tx
+    .select({ id: artists.id })
+    .from(artists)
+    .where(eq(artists.nameNorm, norm(shown)));
+  if (!existing) throw new Error("Artist disappeared after concurrent creation");
+  return existing.id;
 }
 
 export async function getOrCreateAlbumTx(
