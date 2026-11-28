@@ -365,4 +365,5 @@ export default {
   musicServerNotConnected: "The music server is not connected",
   musicServerNoMatch: "No matching track on that music server.",
   pickMusicServerKind: "Pick a music server type.",
+  periodWeekMonthYearOverall: "يجب أن تكون المدة 7 أيام، أو شهرًا واحدًا، أو 12 شهرًا، أو بشكل عام",
 } satisfies Translation<typeof en>;

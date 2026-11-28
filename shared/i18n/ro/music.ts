@@ -340,4 +340,12 @@ export default {
   yearCardScrobbles: "Scrobbleuri",
   yearCardDays: "Zile cu muzică",
   thisWeekIn: "Săptămâna aceasta în {year}",
+  leaderboard: "Clasament",
+  leaderHours: "Ore de ascultare",
+  leaderScrobbles: "Cele mai multe scrobble-uri",
+  leaderArtists: "Majoritatea artiștilor",
+  leaderDevoted: "Cei mai mari fani",
+  leaderLoves: "Cele mai multe aprecieri",
+  hoursShort: "{hours} h",
+  leaderNobody: "În această perioadă nu s-a ascultat încă nimic",
 } satisfies Translation<typeof en>;

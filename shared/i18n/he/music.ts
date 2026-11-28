@@ -326,4 +326,12 @@ export default {
   yearCardScrobbles: "סקרובלים",
   yearCardDays: "ימים עם מוזיקה",
   thisWeekIn: "השבוע ב־{year}",
+  leaderboard: "טבלת המובילים",
+  leaderHours: "שעות האזנה",
+  leaderScrobbles: "הכי הרבה סקרובלים",
+  leaderArtists: "רוב האמנים",
+  leaderDevoted: "המעריצים הגדולים ביותר",
+  leaderLoves: "אהבה רבה",
+  hoursShort: "{hours} h",
+  leaderNobody: "בפרק זמן זה עדיין אין האזנה",
 } satisfies Translation<typeof en>;

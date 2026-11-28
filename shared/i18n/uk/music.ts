@@ -355,4 +355,12 @@ export default {
   yearCardScrobbles: "Скробли",
   yearCardDays: "Дні з музикою",
   thisWeekIn: "Цей тиждень у {year}",
+  leaderboard: "Таблиця лідерів",
+  leaderHours: "Кількість годин прослуховування",
+  leaderScrobbles: "Найбільше скробблів",
+  leaderArtists: "Більшість художників",
+  leaderDevoted: "Найбільші шанувальники",
+  leaderLoves: "Найбільше вподобань",
+  hoursShort: "{hours} год",
+  leaderNobody: "У цей період прослуховування ще не проводилося",
 } satisfies Translation<typeof en>;

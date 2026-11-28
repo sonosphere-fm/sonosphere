@@ -323,4 +323,12 @@ export default {
   yearCardScrobbles: "Scrobbles",
   yearCardDays: "Dagar med musik",
   thisWeekIn: "Den här veckan {year}",
+  leaderboard: "Resultatlista",
+  leaderHours: "Lyssningstid",
+  leaderScrobbles: "Flest scrobbles",
+  leaderArtists: "De flesta konstnärer",
+  leaderDevoted: "De största fansen",
+  leaderLoves: "Mest älskade",
+  hoursShort: "{hours} h",
+  leaderNobody: "Inget lyssnande ännu under den här perioden",
 } satisfies Translation<typeof en>;

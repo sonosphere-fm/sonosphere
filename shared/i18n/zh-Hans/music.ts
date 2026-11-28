@@ -314,4 +314,12 @@ export default {
   yearCardScrobbles: "记录",
   yearCardDays: "听歌天数",
   thisWeekIn: "{year} 年的这一周",
+  leaderboard: "排行榜",
+  leaderHours: "收听时长",
+  leaderScrobbles: "最多被标记的歌曲",
+  leaderArtists: "大多数艺术家",
+  leaderDevoted: "最忠实的粉丝",
+  leaderLoves: "最受欢迎",
+  hoursShort: "{hours} h",
+  leaderNobody: "本节课目前还没有听力内容",
 } satisfies Translation<typeof en>;

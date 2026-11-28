@@ -377,4 +377,5 @@ export default {
   musicServerNotConnected: "The music server is not connected",
   musicServerNoMatch: "No matching track on that music server.",
   pickMusicServerKind: "Pick a music server type.",
+  periodWeekMonthYearOverall: "Der Zeitraum muss 7 Tage, 1 Monat, 12 Monate oder „insgesamt“ betragen.",
 } satisfies Translation<typeof en>;

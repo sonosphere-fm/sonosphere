@@ -366,4 +366,5 @@ export default {
   musicServerNotConnected: "The music server is not connected",
   musicServerNoMatch: "No matching track on that music server.",
   pickMusicServerKind: "Pick a music server type.",
+  periodWeekMonthYearOverall: "periodam jābūt 7 dienām, 1 mēnesim, 12 mēnešiem vai kopējam periodam",
 } satisfies Translation<typeof en>;

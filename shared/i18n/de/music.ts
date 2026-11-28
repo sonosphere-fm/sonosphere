@@ -327,4 +327,12 @@ export default {
   yearCardScrobbles: "Scrobbles",
   yearCardDays: "Tage mit Musik",
   thisWeekIn: "Diese Woche im Jahr {year}",
+  leaderboard: "Rangliste",
+  leaderHours: "Hörzeit",
+  leaderScrobbles: "Die meisten Scrobbles",
+  leaderArtists: "Die meisten Künstler",
+  leaderDevoted: "Die größten Fans",
+  leaderLoves: "Die meisten Likes",
+  hoursShort: "{hours} h",
+  leaderNobody: "In diesem Zeitraum gibt es noch keine Hörbeispiele",
 } satisfies Translation<typeof en>;

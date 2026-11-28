@@ -367,4 +367,5 @@ export default {
   musicServerNotConnected: "The music server is not connected",
   musicServerNoMatch: "No matching track on that music server.",
   pickMusicServerKind: "Pick a music server type.",
+  periodWeekMonthYearOverall: "perioada trebuie să fie de 7 zile, 1 lună, 12 luni sau totală",
 } satisfies Translation<typeof en>;

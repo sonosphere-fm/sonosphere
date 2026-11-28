@@ -322,4 +322,12 @@ export default {
   yearCardScrobbles: "Scrobble'lar",
   yearCardDays: "Müzikli günler",
   thisWeekIn: "{year} yılında bu hafta",
+  leaderboard: "Sıralama Tablosu",
+  leaderHours: "Dinleme süresi",
+  leaderScrobbles: "En çok scrobble yapılanlar",
+  leaderArtists: "Çoğu sanatçı",
+  leaderDevoted: "En büyük hayranlar",
+  leaderLoves: "En çok sevilenler",
+  hoursShort: "{hours} h",
+  leaderNobody: "Bu dönemde henüz dinleme yapılmamıştır",
 } satisfies Translation<typeof en>;

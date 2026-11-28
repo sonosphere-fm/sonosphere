@@ -337,4 +337,12 @@ export default {
   yearCardScrobbles: "Skrobli",
   yearCardDays: "Dienas ar mūziku",
   thisWeekIn: "Šī nedēļa {year}. gadā",
+  leaderboard: "Reitingu tabula",
+  leaderHours: "Klausīšanās laiks",
+  leaderScrobbles: "Visvairāk skrobbu",
+  leaderArtists: "Lielākā daļa mākslinieku",
+  leaderDevoted: "Lielākie fani",
+  leaderLoves: "Visvairāk mīl",
+  hoursShort: "{hours} h",
+  leaderNobody: "Šajā periodā vēl nav bijusi klausīšanās",
 } satisfies Translation<typeof en>;

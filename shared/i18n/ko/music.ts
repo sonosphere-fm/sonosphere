@@ -315,4 +315,12 @@ export default {
   yearCardScrobbles: "스크로블",
   yearCardDays: "음악을 들은 날",
   thisWeekIn: "{year}년 이번 주",
+  leaderboard: "순위표",
+  leaderHours: "청취 시간",
+  leaderScrobbles: "스크로블 횟수가 가장 많은 곡",
+  leaderArtists: "대부분의 예술가들은",
+  leaderDevoted: "가장 열성적인 팬들",
+  leaderLoves: "가장 많은 좋아요",
+  hoursShort: "{hours} h",
+  leaderNobody: "이 기간 동안은 아직 청취가 불가능합니다",
 } satisfies Translation<typeof en>;

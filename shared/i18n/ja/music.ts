@@ -316,4 +316,12 @@ export default {
   yearCardScrobbles: "スクロブル",
   yearCardDays: "音楽を聴いた日",
   thisWeekIn: "{year}年の今週",
+  leaderboard: "ランキング",
+  leaderHours: "再生時間",
+  leaderScrobbles: "スクロブル数最多",
+  leaderArtists: "ほとんどのアーティスト",
+  leaderDevoted: "最大のファン",
+  leaderLoves: "最も愛されている",
+  hoursShort: "{hours} h",
+  leaderNobody: "この期間中はまだ聴講は行っていません",
 } satisfies Translation<typeof en>;

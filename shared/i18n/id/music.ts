@@ -322,4 +322,12 @@ export default {
   yearCardScrobbles: "Scrobble",
   yearCardDays: "Hari dengan musik",
   thisWeekIn: "Minggu ini di {year}",
+  leaderboard: "Papan Peringkat",
+  leaderHours: "Lama mendengarkan",
+  leaderScrobbles: "Scrobble terbanyak",
+  leaderArtists: "Sebagian besar seniman",
+  leaderDevoted: "Penggemar setia",
+  leaderLoves: "Cinta yang paling dalam",
+  hoursShort: "{hours} h",
+  leaderNobody: "Belum ada sesi mendengarkan pada periode ini",
 } satisfies Translation<typeof en>;

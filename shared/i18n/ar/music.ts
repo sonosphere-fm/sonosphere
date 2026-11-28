@@ -397,4 +397,12 @@ export default {
   yearCardScrobbles: "السكروبلات",
   yearCardDays: "أيام مع الموسيقى",
   thisWeekIn: "هذا الأسبوع في {year}",
+  leaderboard: "لوحة المتصدرين",
+  leaderHours: "عدد ساعات الاستماع",
+  leaderScrobbles: "أكثر الأغاني التي تم تسجيلها",
+  leaderArtists: "معظم الفنانين",
+  leaderDevoted: "أكبر المعجبين",
+  leaderLoves: "أكثر الحب",
+  hoursShort: "{hours} ساعة",
+  leaderNobody: "لم يتم الاستماع خلال هذه الفترة حتى الآن",
 } satisfies Translation<typeof en>;
