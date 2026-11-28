@@ -12,6 +12,7 @@ const TITLE_KEYS = {
   home: "titleHome",
   guestHome: "titleGuestHome",
   charts: "titleCharts",
+  leaderboards: "titleLeaderboards",
   chartMaker: "titleChartMaker",
   events: "titleEvents",
   addEvent: "titleAddEvent",

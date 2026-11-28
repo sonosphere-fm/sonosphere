@@ -1,5 +1,7 @@
 import en from "../shared/i18n/en";
 import { type Block, catalogText, docPages, interpolate, isNested, type Item, type Span } from "../shared/docs";
+import { LEADER_BOARDS, type LeaderBoard } from "../shared/home";
+import { format } from "../shared/i18n/core";
 import { albumUrl, artistUrl, dec, tagUrl, trackUrl, userUrl } from "../shared/paths";
 import {
   ARTIST_TABS,
@@ -29,6 +31,10 @@ export const landing = {
     "Scrobble the music you play, explore your listening history, and discover artists through community charts and recommendations.",
   ],
   "/charts": [TITLES.charts, "Explore the artists, albums, and tracks the Sonosphere community is listening to."],
+  "/leaderboards": [
+    TITLES.leaderboards,
+    "See who listened the most this week, month, year, and all time on Sonosphere.",
+  ],
   "/charts/maker": [TITLES.chartMaker, "Make an album or artist chart from your Sonosphere listening history."],
   "/events": [TITLES.events, "Find upcoming concerts and festivals, browse lineups, and see who’s going."],
   "/help": [
@@ -76,6 +82,13 @@ const artistTabs: Record<string, string> = {
   "+wall": "shoutbox",
 };
 const userAliases: Record<string, string> = { wall: "shoutbox", earworms: "obsessions", soundalikes: "neighbours" };
+const LEADER_TITLE_KEYS = {
+  hours: "leaderHours",
+  scrobbles: "leaderScrobbles",
+  artists: "leaderArtists",
+  fans: "leaderDevoted",
+  loves: "leaderLoves",
+} as const satisfies Record<LeaderBoard, keyof typeof en.music>;
 const own = (map: object, key: string) => Object.hasOwn(map, key);
 const summary = (s: string) => Array.from(s.replace(/\s+/g, " ").trim()).slice(0, 180).join("");
 const idOf = (s: string) => (/^\d+$/.test(s) && Number(s) > 0 && Number(s) <= 2147483647 ? Number(s) : 0);
@@ -138,6 +151,18 @@ async function lookup(url: URL): Promise<Page> {
     return account(accountPages[family]);
   if (key === "/events/add") return account(TITLES.addEvent);
   if (!first || rest.length) return missing;
+
+  if (family === "leaderboards" && !second) {
+    const board = LEADER_BOARDS.find((b) => b === first);
+    if (!board) return missing;
+    const title = en.music[LEADER_TITLE_KEYS[board]];
+    return {
+      title: format("en", en.common.titleSubpage, { name: TITLES.leaderboards, tab: title }),
+      description: `See the Sonosphere listeners on the ${title.toLowerCase()} leaderboard.`,
+      path: `/leaderboards/${board}`,
+      index: true,
+    };
+  }
 
   if (family === "music") {
     // React Router decodes each segment before the catalog's legacy plus decoding.

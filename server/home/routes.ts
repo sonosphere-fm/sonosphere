@@ -1,5 +1,5 @@
 import { need } from "../guards";
-import { bad, oneOf, paging, Router, throttle } from "../http";
+import { bad, missing, oneOf, paging, Router, throttle } from "../http";
 import { range } from "../listening/period";
 import { counts, nowPlaying, recent, siteTop, topAlbums } from "../listening/repo";
 import { requireItem } from "../catalog/service";
@@ -9,12 +9,14 @@ import { feedback, recommendations } from "../recommend/service";
 import { now } from "../util";
 import * as repo from "./repo";
 import {
+  LEADER_BOARDS,
   LEADER_PERIODS,
   type Charts,
   type FriendActivity,
   type Friends,
   type Home,
   type Leaderboard,
+  type LeaderPage,
   type Recommended,
 } from "../../shared/home";
 import type { TopAlbum } from "../../shared/listening";
@@ -119,8 +121,16 @@ router.post<{ dismissed: boolean }>("/api/recommended/dismiss", async (c) => {
   return { dismissed };
 });
 
-router.get<Leaderboard>(
-  "/api/leaderboard",
-  (c) => repo.leaderboard(oneOf(c.q.get("period") ?? "7day", LEADER_PERIODS) ?? bad("periodWeekMonthYearOverall")),
+const leaderPeriod = (q: URLSearchParams) =>
+  oneOf(q.get("period") ?? "7day", LEADER_PERIODS) ?? bad("periodWeekMonthYearOverall");
+
+router.get<Leaderboard>("/api/leaderboard", (c) => repo.leaderboard(leaderPeriod(c.q)), { edgeMaxAge: 60 });
+
+router.get<LeaderPage>(
+  "/api/leaderboard/:board",
+  (c) => {
+    const board = oneOf(c.params[0], LEADER_BOARDS) ?? missing("notFound");
+    return repo.leaderPage(board, leaderPeriod(c.q), paging(c.q, 50, 100));
+  },
   { edgeMaxAge: 60 }
 );

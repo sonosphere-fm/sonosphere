@@ -23,9 +23,20 @@ import {
 import { openListener, publicCols, publicUser } from "../users/repo";
 import { now } from "../util";
 import type { EventSummary } from "../../shared/events";
-import type { ChartTag, Devotee, FriendLove, Leader, Leaderboard, LeaderPeriod, SiteTotals } from "../../shared/home";
+import type {
+  ChartTag,
+  FanEntry,
+  FriendLove,
+  Leader,
+  LeaderBoard,
+  Leaderboard,
+  LeaderPage,
+  LeaderPeriod,
+  ListenerEntry,
+  SiteTotals,
+} from "../../shared/home";
 import type { TagCount } from "../../shared/tags";
-import type { PublicUser } from "../../shared/users";
+import type { Paging, PublicUser } from "../../shared/users";
 
 const total = async (rows: PromiseLike<{ c: number }[]>) => (await rows)[0]?.c ?? 0;
 
@@ -223,21 +234,47 @@ async function listenerBoards(from: number) {
   };
 }
 
-async function loveBoard(from: number): Promise<Leader[]> {
+const totalRows = sql<number>`COUNT(*) OVER ()`.mapWith(Number);
+
+async function listenerPage(from: number, metric: Metric, limit: number, offset: number) {
+  const t = perListener(from);
+  const rows = await db
+    .select({ ...publicCols, seconds: t.seconds, plays: t.plays, artists: t.artists, total: totalRows })
+    .from(t)
+    .innerJoin(users, eq(users.id, t.userId))
+    .where(ranked)
+    .orderBy(desc(t[metric]), t.userId)
+    .limit(limit)
+    .offset(offset);
+  const items = rows.map(
+    (row): ListenerEntry => ({
+      ...publicUser(row),
+      value: row[metric],
+      seconds: row.seconds,
+      plays: row.plays,
+      artists: row.artists,
+    })
+  );
+  return { items, total: rows[0]?.total ?? 0 };
+}
+
+async function loveBoard(from: number, limit = LEADERS, offset = 0) {
   const loves = count().as("loves");
   const rows = await db
-    .select({ ...publicCols, value: loves })
+    .select({ ...publicCols, value: loves, total: totalRows })
     .from(lovedTracks)
     .innerJoin(users, eq(users.id, lovedTracks.userId))
     .where(and(ranked, gte(lovedTracks.createdAt, from)))
     .groupBy(users.id)
     .orderBy(desc(loves), users.id)
-    .limit(LEADERS);
-  return rows.map((row) => ({ ...publicUser(row), value: row.value }));
+    .limit(limit)
+    .offset(offset);
+  const items = rows.map((row): Leader => ({ ...publicUser(row), value: row.value }));
+  return { items, total: rows[0]?.total ?? 0 };
 }
 
-/** Each open listener's most played artist, the biggest such devotion first. */
-async function devotedBoard(from: number): Promise<Devotee[]> {
+/** Each open listener's most played artist, the biggest such devotion first, with its share of their plays. */
+async function devotedBoard(from: number, limit = LEADERS, offset = 0) {
   const pairs = from
     ? db
         .select({ userId: scrobbles.userId, artistId: scrobbles.artistId, n: count().as("n") })
@@ -254,33 +291,63 @@ async function devotedBoard(from: number): Promise<Devotee[]> {
         .from(userArtists)
         .as("p");
   const best = db
-    .selectDistinctOn([pairs.userId], { userId: pairs.userId, artistId: pairs.artistId, n: pairs.n })
+    .selectDistinctOn([pairs.userId], {
+      userId: pairs.userId,
+      artistId: pairs.artistId,
+      n: pairs.n,
+      all: sql<number>`SUM(${pairs.n}) OVER (PARTITION BY ${pairs.userId})`.as("all"),
+    })
     .from(pairs)
     .innerJoin(users, eq(users.id, pairs.userId))
     .where(ranked)
     .orderBy(pairs.userId, desc(pairs.n), pairs.artistId)
     .as("b");
   const rows = await db
-    .select({ ...publicCols, value: best.n, artist: artists.name })
+    .select({ ...publicCols, value: best.n, all: best.all, artist: artists.name, total: totalRows })
     .from(best)
     .innerJoin(users, eq(users.id, best.userId))
     .innerJoin(artists, eq(artists.id, best.artistId))
     .orderBy(desc(best.n), best.userId)
-    .limit(LEADERS);
-  return rows.map((row) => ({ ...publicUser(row), value: Number(row.value), artist: row.artist }));
+    .limit(limit)
+    .offset(offset);
+  const items = rows.map((row): FanEntry => {
+    const value = Number(row.value);
+    return { ...publicUser(row), value, artist: row.artist, share: value / (Number(row.all) || 1) };
+  });
+  return { items, total: rows[0]?.total ?? 0 };
 }
 
 const LEADER_DAYS: Record<LeaderPeriod, number> = { "7day": 7, "1month": 30, "12month": 365, overall: 0 };
+const since = (period: LeaderPeriod) => (LEADER_DAYS[period] ? now() - LEADER_DAYS[period] * 86400 : 0);
 
 // These scan a whole window of plays; ten minutes old is fresh enough for a leaderboard.
 export async function leaderboard(period: LeaderPeriod): Promise<Leaderboard> {
   const key = `leaderboard:${period}`;
   const cached = await getJson<Leaderboard>(key);
   if (cached) return cached;
-  const days = LEADER_DAYS[period];
-  const from = days ? now() - days * 86400 : 0;
+  const from = since(period);
   const [listeners, loves, devoted] = await Promise.all([listenerBoards(from), loveBoard(from), devotedBoard(from)]);
-  const out = { period, ...listeners, loves, devoted };
+  const out = { period, ...listeners, loves: loves.items, devoted: devoted.items };
+  await setJson(key, out, 600_000);
+  return out;
+}
+
+const LISTENER_METRIC: Record<"hours" | "scrobbles" | "artists", Metric> = {
+  hours: "seconds",
+  scrobbles: "plays",
+  artists: "artists",
+};
+
+export async function leaderPage(board: LeaderBoard, period: LeaderPeriod, pg: Paging): Promise<LeaderPage> {
+  const key = `leaderboard:${board}:${period}:${pg.limit}:${pg.offset}`;
+  const cached = await getJson<LeaderPage>(key);
+  if (cached) return cached;
+  const from = since(period);
+  const base = { period, ...pg };
+  let out: LeaderPage;
+  if (board === "fans") out = { ...base, board, ...(await devotedBoard(from, pg.limit, pg.offset)) };
+  else if (board === "loves") out = { ...base, board, ...(await loveBoard(from, pg.limit, pg.offset)) };
+  else out = { ...base, board, ...(await listenerPage(from, LISTENER_METRIC[board], pg.limit, pg.offset)) };
   await setJson(key, out, 600_000);
   return out;
 }

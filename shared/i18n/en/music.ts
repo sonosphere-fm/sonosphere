@@ -326,4 +326,13 @@ export default {
   leaderLoves: "Most loves",
   hoursShort: "{hours} h",
   leaderNobody: "No listening in this period yet",
+  leaderboards: "Leaderboards",
+  allLeaderboards: "All leaderboards",
+  leaderRanked: "Ranked listeners: {count}",
+  leaderListener: "Listener",
+  leaderHoursCol: "Hours",
+  leaderArtistsCol: "Artists",
+  leaderTopArtist: "Top artist",
+  leaderShare: "Share of their plays",
+  leaderLovesCol: "Loved tracks",
 };

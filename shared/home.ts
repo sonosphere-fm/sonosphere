@@ -50,3 +50,14 @@ export type Leaderboard = {
   loves: Leader[];
   devoted: Devotee[];
 };
+
+export const LEADER_BOARDS = ["hours", "scrobbles", "artists", "fans", "loves"] as const;
+export type LeaderBoard = (typeof LEADER_BOARDS)[number];
+export type ListenerEntry = Leader & { seconds: number; plays: number; artists: number };
+export type FanEntry = Devotee & { share: number };
+export type LeaderPage = { period: LeaderPeriod; total: number } & Paging &
+  (
+    | { board: "hours" | "scrobbles" | "artists"; items: ListenerEntry[] }
+    | { board: "fans"; items: FanEntry[] }
+    | { board: "loves"; items: Leader[] }
+  );

@@ -6471,6 +6471,44 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  .leader-boards-nav {
+    margin-bottom: 12px;
+  }
+  .leader-scroll {
+    overflow-x: auto;
+    margin-bottom: 14px;
+  }
+  .leader-table th {
+    padding: 8px;
+    border-bottom: 2px solid var(--line);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-align: start;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .leader-table :is(th, td).c-num {
+    width: 1%;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .leader-table .c-user {
+    width: 100%;
+  }
+  .leader-table .c-artist {
+    white-space: nowrap;
+  }
+  .leader-table .bar {
+    font-variant-numeric: tabular-nums;
+  }
+  .leader-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
   .invite-leaders .rank,
   .leaders .rank {
     width: 24px;
