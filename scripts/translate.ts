@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { type Entry, LOCALES, type Namespace } from "../shared/i18n/core";
+import { type Entry, LOCALES, type Locale, type Namespace } from "../shared/i18n/core";
 
 const API = Bun.env.TRANSLATE_API ?? "https://translate-api.edideaur.workers.dev/hi/translate";
 const TOKEN = Bun.env.TOKEN;
@@ -11,7 +11,7 @@ if (!TOKEN) {
 }
 const DIR = "shared/i18n";
 
-const TARGET: Record<string, string> = {
+const TARGET: Record<Exclude<Locale, "en">, string> = {
   es: "ES",
   de: "DE",
   ro: "RO",
@@ -35,7 +35,7 @@ const TARGET: Record<string, string> = {
 const CONCURRENCY = 3;
 const RETRIES = 3;
 
-type Job = { locale: string; ns: string; key: string; form?: string; text: string };
+type Job = { locale: Exclude<Locale, "en">; ns: string; key: string; form?: string; text: string };
 
 const load = async (path: string): Promise<Namespace> => (await import(resolve(path))).default;
 
@@ -84,10 +84,6 @@ async function main() {
   const jobs: Job[] = [];
   for (const locale of LOCALES) {
     if (locale === "en") continue;
-    if (!TARGET[locale]) {
-      console.log(`skip ${locale}: no DeepL target`);
-      continue;
-    }
     for (const [ns, source] of namespaces) {
       const path = `${DIR}/${locale}/${ns}.ts`;
       if (!(await Bun.file(path).exists())) continue;

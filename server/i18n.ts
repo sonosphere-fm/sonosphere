@@ -12,19 +12,12 @@ import pl from "../shared/i18n/pl/server";
 import ru from "../shared/i18n/ru/server";
 import it from "../shared/i18n/it/server";
 import indonesian from "../shared/i18n/id/server";
-import hindi from "../shared/i18n/hi/server";
-import bengali from "../shared/i18n/bn/server";
-import marathi from "../shared/i18n/mr/server";
-import telugu from "../shared/i18n/te/server";
-import tamil from "../shared/i18n/ta/server";
-import urdu from "../shared/i18n/ur/server";
 import turkish from "../shared/i18n/tr/server";
 import sv from "../shared/i18n/sv/server";
 import uk from "../shared/i18n/uk/server";
 import he from "../shared/i18n/he/server";
 import ar from "../shared/i18n/ar/server";
 import zhHans from "../shared/i18n/zh-Hans/server";
-import zhHant from "../shared/i18n/zh-Hant/server";
 import {
   acceptLanguage,
   format,
@@ -50,19 +43,12 @@ const CATALOGS: Record<Locale, Catalog<typeof en>> = {
   ru,
   it,
   id: indonesian,
-  hi: hindi,
-  bn: bengali,
-  mr: marathi,
-  te: telugu,
-  ta: tamil,
-  ur: urdu,
   tr: turkish,
   sv,
   uk,
   he,
   ar,
   "zh-Hans": zhHans,
-  "zh-Hant": zhHant,
 };
 
 type FactorError = "invalidTwoFactorCode" | "twoFactorExpired" | "twoFactorAlreadyEnabled";

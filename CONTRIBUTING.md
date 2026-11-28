@@ -25,7 +25,7 @@ Before opening a pull request, please run these checks locally and ensure they p
 - `bun run check` (Biome lint and format)
 - `bun run build` (for frontend changes)
 
-If you add or change user-facing text, put the new keys in `shared/i18n/en`. Most locales are translated automatically, with the exception of `hi`, `bn`, `mr`, `te`, `ta`, `ur`, and `zh-Hant`, which are maintained by hand. You are welcome to do this yourself, but we can also take care of translations for you.
+If you add or change user-facing text, put the new keys in `shared/i18n/en`. The other locales are translated automatically.
 
 ## AI and LLM-assisted contributions
 

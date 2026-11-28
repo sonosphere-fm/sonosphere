@@ -12,19 +12,12 @@ export const LOCALES = [
   "ru",
   "it",
   "id",
-  "hi",
-  "bn",
-  "mr",
-  "te",
-  "ta",
-  "ur",
   "tr",
   "sv",
   "uk",
   "he",
   "ar",
   "zh-Hans",
-  "zh-Hant",
 ] as const;
 export type Locale = (typeof LOCALES)[number];
 export const LOCALE_NAMES: Record<Locale, string> = {
@@ -41,21 +34,14 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   ru: "Русский",
   it: "Italiano",
   id: "Bahasa Indonesia",
-  hi: "हिन्दी",
-  bn: "বাংলা",
-  mr: "मराठी",
-  te: "తెలుగు",
-  ta: "தமிழ்",
-  ur: "اردو",
   tr: "Türkçe",
   sv: "Svenska",
   uk: "Українська",
   he: "עברית",
   ar: "العربية",
   "zh-Hans": "简体中文",
-  "zh-Hant": "繁體中文",
 };
-export const RTL: ReadonlySet<Locale> = new Set(["he", "ar", "ur"]);
+export const RTL: ReadonlySet<Locale> = new Set(["he", "ar"]);
 export const isLocale = (v: unknown): v is Locale => LOCALES.includes(v as Locale);
 
 export type Plural = Partial<Record<Intl.LDMLPluralRule, string>> & { other: string };
@@ -68,10 +54,10 @@ export type Translation<T> = { [K in keyof T]: T[K] extends string ? string : Pl
 export type Catalog<D> = { [N in keyof D]: Translation<D[N]> };
 export type Key<D> = { [N in keyof D & string]: `${N}.${keyof D[N] & string}` }[keyof D & string];
 
-/** Chinese is told apart by script, which older browsers only imply through the region. */
+// Traditional Chinese readers get Simplified rather than English.
 function baseLocale(tag: string) {
   const t = tag.trim().toLowerCase();
-  if (/^zh(?![a-z])/.test(t)) return /^zh[-_](hant|tw|hk|mo)(?![a-z])/.test(t) ? "zh-Hant" : "zh-Hans";
+  if (/^zh(?![a-z])/.test(t)) return "zh-Hans";
   return t.split(/[-_;]/)[0];
 }
 

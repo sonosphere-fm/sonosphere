@@ -13,15 +13,12 @@ import PL from "country-flag-icons/react/3x2/PL";
 import RU from "country-flag-icons/react/3x2/RU";
 import IT from "country-flag-icons/react/3x2/IT";
 import ID from "country-flag-icons/react/3x2/ID";
-import IN from "country-flag-icons/react/3x2/IN";
-import PK from "country-flag-icons/react/3x2/PK";
 import TR from "country-flag-icons/react/3x2/TR";
 import SE from "country-flag-icons/react/3x2/SE";
 import UA from "country-flag-icons/react/3x2/UA";
 import IL from "country-flag-icons/react/3x2/IL";
 import SA from "country-flag-icons/react/3x2/SA";
 import CN from "country-flag-icons/react/3x2/CN";
-import TW from "country-flag-icons/react/3x2/TW";
 import { Globe } from "@phosphor-icons/react";
 import { api, useAuth } from "../lib";
 import { Select } from "../kit";
@@ -45,19 +42,12 @@ const FLAGS: Record<Locale, ComponentType<{ className?: string }>> = {
   ru: RU,
   it: IT,
   id: ID,
-  hi: IN,
-  bn: IN,
-  mr: IN,
-  te: IN,
-  ta: IN,
-  ur: PK,
   tr: TR,
   sv: SE,
   uk: UA,
   he: IL,
   ar: SA,
   "zh-Hans": CN,
-  "zh-Hant": TW,
 };
 
 function LanguageIcon({ value }: { value: string }) {

@@ -16,19 +16,12 @@ const offlineText: Record<Locale, [string, string]> = {
   ru: ["Нет подключения", "Подключитесь к интернету и попробуйте снова."],
   it: ["Sei offline", "Riconnettiti per usare Sonosphere e riprova."],
   id: ["Kamu sedang offline", "Hubungkan kembali untuk menggunakan Sonosphere, lalu coba lagi."],
-  hi: ["आप ऑफ़लाइन हैं", "Sonosphere इस्तेमाल करने के लिए फिर से कनेक्ट करें और दोबारा कोशिश करें।"],
-  bn: ["আপনি অফলাইনে আছেন", "Sonosphere ব্যবহার করতে সংযোগ ফিরিয়ে আনুন, তারপর আবার চেষ্টা করুন।"],
-  mr: ["तुम्ही ऑफलाइन आहात", "Sonosphere वापरण्यासाठी पुन्हा कनेक्ट करा आणि पुन्हा प्रयत्न करा."],
-  te: ["మీరు ఆఫ్‌లైన్‌లో ఉన్నారు", "Sonosphere ఉపయోగించడానికి మళ్లీ కనెక్ట్ చేసి ప్రయత్నించండి."],
-  ta: ["நீங்கள் ஆஃப்லைனில் உள்ளீர்கள்", "Sonosphere பயன்படுத்த மீண்டும் இணைத்து முயற்சிக்கவும்."],
-  ur: ["آپ آف لائن ہیں", "Sonosphere استعمال کرنے کے لیے دوبارہ جڑیں اور پھر کوشش کریں۔"],
   tr: ["Çevrimdışısın", "Sonosphere'ı kullanmak için yeniden bağlanıp tekrar dene."],
   sv: ["Du är offline", "Anslut igen för att använda Sonosphere och försök på nytt."],
   uk: ["Немає з’єднання", "Підключіться до інтернету та спробуйте знову."],
   he: ["אין חיבור לרשת", "התחברו מחדש כדי להשתמש ב־Sonosphere ונסו שוב."],
   ar: ["أنت غير متصل", "أعد الاتصال لاستخدام Sonosphere ثم حاول مجددًا."],
   "zh-Hans": ["你已离线", "重新连接网络后再使用 Sonosphere。"],
-  "zh-Hant": ["你已離線", "重新連接網路後再使用 Sonosphere。"],
 };
 
 const manifest = await Bun.file(
