@@ -9651,3 +9651,20 @@ html[data-profile-shell="custom"] :focus-visible {
     }
   }
 }
+.listening-investigation {
+  margin-block: 1rem;
+}
+.listening-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(9rem, 0.65fr);
+  gap: 1rem;
+  padding-block: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .listening-pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+}

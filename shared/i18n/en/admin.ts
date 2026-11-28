@@ -550,6 +550,28 @@ export default {
   flaggedAutomatically: "flagged automatically {ago}",
   openTranscript: "Open transcript",
   viewInContext: "View in context",
+  listeningInspect: "Inspect listening evidence",
+  listeningCaution:
+    "Timing anomalies are not proof of abuse. Check for duplicate services, offline batches, client timestamp bugs, and incorrect track durations before taking action.",
+  listeningRule:
+    "The detector compares neighbouring non-import plays. The minimum gap is half the previous track's duration, capped at 240 seconds, minus 5 seconds of tolerance. Unknown durations use 25 seconds. The same track from different sources less than 60 seconds apart is excluded. Scores decay by 10 points per hour; concentrated plays carry 2× or 3× weight.",
+  listeningCaptured: "Saved evidence from the latest triggering batch",
+  listeningScore: "{count} pairs added {points} points at {weight}× weight; accumulated score {score}. Captured {at}.",
+  listeningSample:
+    "Up to 100 pairs from the triggering batch are saved. Earlier batches contributing to the accumulated score are not included. Track durations are catalogue values, not verified playback lengths.",
+  listeningLegacy:
+    "This older report has no saved play evidence. Its exact triggering batch and submission time cannot be recovered. The range below defaults to the 24 hours before the report, but delayed submissions may refer to much older plays.",
+  listeningReconstruct: "Inspect stored play times",
+  listeningRangeHelp:
+    "Choose up to 7 days, in your local timezone. This recalculates anomalies from current scrobbles and catalogue durations, not the original report. Sources are the recorded client or service labels, not verified devices; submission times and client versions were not recorded.",
+  listeningFrom: "From",
+  listeningTo: "To",
+  listeningSource: "Source / client: {source}",
+  listeningGap: "Gap {gap}s · minimum {minimum}s",
+  listeningDuration: "Previous track duration: {seconds}s",
+  listeningUnknownDuration: "Previous track duration unknown; fallback applied.",
+  listeningNone: "No matching anomalies in this range. This does not establish whether the original flag was correct.",
+  listeningLimit: "Showing the first 100 pairs. Narrow the range to inspect more.",
   reportersNote: "{label} {note}",
   reportersNoteLabel: "Reporter's note:",
   removeAndSuspendAuthor: "Remove and suspend author",

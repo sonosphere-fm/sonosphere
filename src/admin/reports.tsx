@@ -8,6 +8,7 @@ import { CHECK, NOTE, PICKED_BG, TOOLBAR, TYPE_LABEL } from "./common";
 import { REASONS, TYPES, adminUrl, outcomeLabel, reasonLabel, typeLabel, useQuery, useConfirm } from "./common";
 import type { AdminKey } from "./common";
 import { t, tx } from "./i18n";
+import { ListeningInvestigationView } from "./listening";
 import type { ReportResolved, ReportsClosed, StaffReport, StaffReportList } from "../../shared/admin";
 
 type Decision = "dismiss" | "remove" | "suspend" | "mute";
@@ -276,6 +277,7 @@ export function Reports() {
                           {tx("admin.reportersNote", { label: <b>{t("admin.reportersNoteLabel")}</b>, note: r.detail })}
                         </p>
                       )}
+                      {automatic && <ListeningInvestigationView id={r.id} />}
                       {r.status === "open" ? (
                         <div className="row">
                           <Button kind="btn ghost small" type="button" onClick={() => decide(r, "dismiss")}>

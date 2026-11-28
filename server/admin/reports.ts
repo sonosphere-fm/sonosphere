@@ -7,6 +7,9 @@ import { reportTarget, snapshotOf } from "../moderation/repo";
 import * as repo from "./reports.repo";
 import { removed as groupMessageRemoved } from "../dm/groups.repo";
 import type { ReportResolved, ReportsClosed, StaffReport, StaffReportList } from "../../shared/admin";
+import type { ListeningEvidence, ListeningInvestigation } from "../../shared/listening-evidence";
+import { listeningPairs } from "../listening/evidence";
+import { parseObject } from "../site/repo";
 
 export const router = new Router({ jsonOnly: true });
 
@@ -71,6 +74,20 @@ router.get<StaffReportList>("/api/admin/reports", async (c) => {
     byType: await repo.facet(status, "type"),
     byReason: await repo.facet(status, "reason"),
   };
+});
+
+router.get<ListeningInvestigation>("/api/admin/reports/:id/listening", async (c) => {
+  staff(c);
+  const r = (await repo.findReport(Number(c.params[0]))) ?? missing("reportNotFound");
+  if (r.reason !== "listening" || r.targetType !== "user") bad("unknownAction");
+  const captured = (parseObject(r.snapshot).listening as ListeningEvidence | undefined) ?? null;
+  const to = c.q.has("to") ? Number(c.q.get("to")) : (captured?.to ?? r.createdAt);
+  const defaultFrom = Math.max(captured?.from ?? r.createdAt - 86400, to - 7 * 86400);
+  const from = c.q.has("from") ? Number(c.q.get("from")) : defaultFrom;
+  if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < 0 || to < from || to - from > 7 * 86400) {
+    bad("invalidRange", { range: `${from}:${to}` });
+  }
+  return { captured, from, to, pairs: await listeningPairs(r.targetId, from, to) };
 });
 
 router.post<ReportsClosed>("/api/admin/reports/bulk", async (c) => {
