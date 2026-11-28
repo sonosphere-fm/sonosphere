@@ -20,13 +20,15 @@ const reservation = (name: string, at: number) =>
     isNull(usernameHistory.releasedAt)
   );
 
-// A user's own reserved names stay open to them.
+// A user's own name and reserved names stay open to them.
 export async function usernameUnavailable(name: string, conn: Conn = db, at = now(), self?: number) {
+  const others = (column: typeof users.id | typeof usernameHistory.userId) =>
+    self === undefined ? undefined : ne(column, self);
   const current = await first(
     conn
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.usernameNorm, norm(name)))
+      .where(and(eq(users.usernameNorm, norm(name)), others(users.id)))
       .limit(1)
   );
   if (current) return true;
@@ -34,7 +36,7 @@ export async function usernameUnavailable(name: string, conn: Conn = db, at = no
     conn
       .select({ id: usernameHistory.id })
       .from(usernameHistory)
-      .where(and(reservation(name, at), self === undefined ? undefined : ne(usernameHistory.userId, self)))
+      .where(and(reservation(name, at), others(usernameHistory.userId)))
       .limit(1)
   ));
 }
@@ -99,7 +101,7 @@ export async function changeUsername(
       checkUsername(requested, adminOverride ? 1 : shortestUsername(await inviteCount(userId)));
       next = requested;
     }
-    if (norm(next) === user.usernameNorm) return bad("chooseDifferentUsername");
+    if (next === user.username) return bad("chooseDifferentUsername");
     if (await usernameUnavailable(next, tx, at, userId)) return bad("usernameTakenTemporarilyReserved");
     if (await adminNameOfOther(next, userId, tx)) return bad("usernameTakenTemporarilyReserved");
 
